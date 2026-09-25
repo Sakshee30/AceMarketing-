@@ -113,6 +113,7 @@ export const api = {
   saveReportSchedule: (payload:any) => request('/report-schedules',{method:'POST',body:JSON.stringify(payload)}),
   runReportNow: (id:string) => request('/report-schedules/run-now',{method:'POST',body:JSON.stringify({id})}),
   planner: () => request('/planner'),
+  savePlannerScenario: (payload: Record<string, unknown>) => request('/planner/scenarios', { method: 'POST', body: JSON.stringify(payload) }),
   sendReportTest: (report: string) => request('/reports/send-test', { method: 'POST', body: JSON.stringify({ report }) }),
   agents: () => request('/agents'),
   routing: () => request('/routing'),
