@@ -1,8 +1,11 @@
 export type DemoRequest = Record<string, FormDataEntryValue>
 
+const getToken = () => typeof window !== 'undefined' ? window.localStorage.getItem('ace_token') : null
+
 const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
+  const token=getToken()
   const response = await fetch(`/api${path}`, {
-    headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(init?.headers || {}) },
     ...init,
   })
   if (!response.ok) throw new Error(`API request failed: ${response.status}`)
@@ -13,11 +16,15 @@ export const api = {
   health: () => request<{ ok: boolean; service: string }>('/health'),
   launchpad: () => request('/launchpad'),
   saveLaunchpad: (payload: Record<string, unknown>) => request('/launchpad', { method: 'POST', body: JSON.stringify(payload) }),
-  login: (email: string, password: string) =>
-    request<{ token: string; user: { email: string; role: string } }>('/auth/login', {
+  login: async (email: string, password: string) => {
+    const result = await request<{ token: string; user: { email: string; role: string }; expiresIn: number }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
-    }),
+    })
+    if (typeof window !== 'undefined') window.localStorage.setItem('ace_token', result.token)
+    return result
+  },
+  logout: () => { if (typeof window !== 'undefined') window.localStorage.removeItem('ace_token') },
   submitDemo: (payload: DemoRequest) =>
     request<{ id: string; status: string }>('/demo-requests', {
       method: 'POST',
