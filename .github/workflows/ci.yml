@@ -44,6 +44,8 @@ jobs:
         run: npm run build
       - name: Run database migrations
         run: npm run migrate
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
       - name: Boot API and run smoke tests
         shell: bash
         run: |
@@ -56,6 +58,7 @@ jobs:
           npm run smoke
           npm run security:smoke
           npm run load:smoke
+          npm run e2e
           kill "$(cat /tmp/ace-api.pid)"
       - name: Build production containers
         run: |
@@ -102,3 +105,5 @@ jobs:
           test -f deploy/nginx.conf
           test -f docker-compose.yml
           test -f docs/PRODUCTION_RUNBOOK.md
+          test -f playwright.config.ts
+          test -f tests/e2e/platform.spec.ts
