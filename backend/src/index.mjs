@@ -1690,7 +1690,12 @@ const server = http.createServer(async (req,res)=>{
             attendees:body.attendees||[]
           })
         }
-        const item=await createMeeting(workspaceId,{...body,externalCalendarId:calendar?.externalId||body.externalCalendarId||''})
+        const item=await createMeeting(workspaceId,{
+          ...body,
+          externalCalendarId:calendar?.externalId||body.externalCalendarId||'',
+          meetingLink:calendar?.meetingLink||body.meetingLink||'',
+          calendarHtmlLink:calendar?.htmlLink||body.calendarHtmlLink||''
+        })
         return send(req,res,201,{...item,calendar})
       }catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'meeting creation failed'})}
     }
@@ -1706,15 +1711,33 @@ const server = http.createServer(async (req,res)=>{
         }else if(body.syncCalendar!==false){
           calendar=await createCalendarEvent(workspaceId,{...body,leadRef:current.lead_ref,startsAt:body.startsAt,title:'Consultation · '+current.lead_ref})
         }
-        const item=await rescheduleMeeting(workspaceId,String(body.id),{startsAt:body.startsAt,externalCalendarId:calendar?.externalId||null})
+        const item=await rescheduleMeeting(workspaceId,String(body.id),{
+          startsAt:body.startsAt,
+          externalCalendarId:calendar?.externalId||null,
+          meetingLink:calendar?.meetingLink||null,
+          calendarHtmlLink:calendar?.htmlLink||null
+        })
         return send(req,res,200,{...item,calendar})
       }catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'meeting reschedule failed'})}
     }
     if (req.method === 'POST' && url.pathname === '/api/meetings/remind') {
       const body=await readBody(req)
       if(!body.id) return send(req,res,400,{error:'id required'})
-      const run=await createAgentRun(workspaceId,{agentType:'meeting_reminder',entityId:String(body.id),triggerKey:'manual_reminder',input:{meetingId:String(body.id)}})
-      const job=await enqueueJob({workspaceId,kind:'agent_action',idempotencyKey:'agent:'+run.id,payload:{agentRunId:run.id,actionType:'meeting_reminder',payload:{meetingId:String(body.id),runId:run.id}}})
+      const meeting=await getMeeting(workspaceId,String(body.id))
+      if(!meeting) return send(req,res,404,{error:'meeting not found'})
+      if(!meeting.attendee_phone&&!meeting.attendee_email) return send(req,res,400,{error:'meeting has no attendee contact; add attendeePhone or attendeeEmail when scheduling'})
+      const reminderPayload={
+        meetingId:meeting.id,
+        leadRef:meeting.lead_ref,
+        startsAt:meeting.starts_at,
+        owner:meeting.owner,
+        attendeePhone:meeting.attendee_phone||null,
+        attendeeEmail:meeting.attendee_email||null,
+        meetingLink:meeting.meeting_link||null,
+        calendarHtmlLink:meeting.calendar_html_link||null
+      }
+      const run=await createAgentRun(workspaceId,{agentType:'meeting_reminder',entityId:String(body.id),triggerKey:'manual_reminder',input:reminderPayload})
+      const job=await enqueueJob({workspaceId,kind:'agent_action',idempotencyKey:'agent:'+run.id,payload:{agentRunId:run.id,actionType:'meeting_reminder',payload:{...reminderPayload,runId:run.id}}})
       return send(req,res,202,{id:body.id,runId:run.id,status:'queued',jobId:job?.id||null})
     }
     if (req.method === 'GET' && url.pathname === '/api/feedback') return send(req,res,200,await listPersistedFeedback(workspaceId))
