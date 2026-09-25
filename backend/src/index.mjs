@@ -364,6 +364,90 @@ const server = http.createServer(async (req,res)=>{
       if(!body.id) return send(req,res,400,{error:'id required'})
       return send(req,res,200,{id:body.id,status:'resolved',resolvedAt:new Date().toISOString()})
     }
+    if (req.method === 'GET' && url.pathname === '/api/signal-deliveries') {
+      const state=await getState()
+      const items=(state.signalDeliveries||[]).slice().sort((a,b)=>String(b.updatedAt||b.createdAt).localeCompare(String(a.updatedAt||a.createdAt)))
+      const summary={
+        total:items.length,
+        delivered:items.filter(x=>x.status==='delivered').length,
+        retrying:items.filter(x=>x.status==='retrying'||x.status==='queued').length,
+        deadLetter:items.filter(x=>x.status==='dead_letter').length
+      }
+      return send(req,res,200,{summary,items})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/signal-deliveries/dispatch') {
+      const body=await readBody(req)
+      if(!body.event || !body.destination) return send(req,res,400,{error:'event and destination required'})
+      const rawKey=String(body.idempotencyKey||JSON.stringify([body.event,body.destination,body.customerId||'',body.externalEventId||'',body.occurredAt||'']))
+      const idempotencyKey=createHash('sha256').update(rawKey).digest('hex')
+      const state=await getState()
+      const existing=(state.signalDeliveries||[]).find(x=>x.idempotencyKey===idempotencyKey)
+      if(existing) return send(req,res,200,{duplicate:true,item:existing})
+      const now=new Date().toISOString()
+      const item={
+        id:'sig_'+randomUUID(),
+        event:String(body.event),
+        destination:String(body.destination),
+        customerId:body.customerId?String(body.customerId):null,
+        externalEventId:body.externalEventId?String(body.externalEventId):null,
+        status:'queued',
+        attempts:0,
+        idempotencyKey,
+        createdAt:now,
+        updatedAt:now,
+        nextAttemptAt:now
+      }
+      await mutateState(s=>{
+        s.signalDeliveries=s.signalDeliveries||[]
+        s.signalDeliveries.unshift(item)
+        s.signalDeliveries=s.signalDeliveries.slice(0,10000)
+        s.audit.unshift({id:randomUUID(),action:'signal.queued',entityId:item.id,destination:item.destination,event:item.event,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,202,{duplicate:false,item})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/signal-deliveries/retry') {
+      const body=await readBody(req)
+      if(!body.id) return send(req,res,400,{error:'id required'})
+      let updated=null
+      const now=new Date().toISOString()
+      await mutateState(s=>{
+        const item=(s.signalDeliveries||[]).find(x=>x.id===body.id)
+        if(item){
+          item.status='queued'
+          item.attempts=Number(item.attempts||0)+1
+          item.nextAttemptAt=now
+          item.updatedAt=now
+          item.lastError=null
+          updated={...item}
+        }
+        s.audit.unshift({id:randomUUID(),action:'signal.retry_queued',entityId:String(body.id),at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return updated?send(req,res,202,updated):send(req,res,404,{error:'delivery not found'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/signal-deliveries/replay-dlq') {
+      const now=new Date().toISOString()
+      let replayed=0
+      await mutateState(s=>{
+        for(const item of (s.signalDeliveries||[])){
+          if(item.status==='dead_letter'){
+            item.status='queued'
+            item.nextAttemptAt=now
+            item.updatedAt=now
+            item.lastError=null
+            replayed+=1
+          }
+        }
+        s.audit.unshift({id:randomUUID(),action:'signal.dlq_replayed',count:replayed,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,202,{replayed,queuedAt:now})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/connector-health') {
+      const state=await getState()
+      return send(req,res,200,{items:state.connectorHealth||[],checkedAt:new Date().toISOString()})
+    }
     if (req.method === 'GET' && url.pathname === '/api/webhooks/deliveries') return send(req,res,200,{items:[
       {id:'evt_91',event:'lead.qualified',statusCode:200,latencyMs:412,status:'delivered'},
       {id:'evt_90',event:'revenue.closed',statusCode:200,latencyMs:588,status:'delivered'},
