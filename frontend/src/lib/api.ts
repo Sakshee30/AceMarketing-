@@ -118,6 +118,7 @@ export const api = {
   recordDeepLinkEvent: (payload: Record<string, unknown>) => request('/deep-links/event', { method: 'POST', body: JSON.stringify(payload) }),
   activateDeepLink: (slug: string) => request('/deep-links/activate', { method: 'POST', body: JSON.stringify({ slug }) }),
   sites: () => request('/sites'),
+  createSite: (payload: Record<string, unknown>) => request('/sites', { method: 'POST', body: JSON.stringify(payload) }),
   fingerprinting: () => request('/fingerprinting'),
   fingerprintMatches: () => request('/fingerprinting/matches'),
   testFingerprint: (scenario: string) => request('/fingerprinting/test', { method: 'POST', body: JSON.stringify({ scenario }) }),
