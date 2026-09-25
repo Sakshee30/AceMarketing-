@@ -293,20 +293,40 @@ function Marketing({openHome,openApp,openLogin,openPricing,openDemo,openCompany,
 }
 
 
-function PublicFooter({openHome,openApp,openDemo,openCompany,openResources,openSolutions}:{openHome:()=>void,openApp:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void,openSolutions:()=>void}){
+function PublicFooter({openHome,openApp,openDemo,openCompany,openResources,openSolutions,openIntegrations}:{openHome:()=>void,openApp:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void,openSolutions:()=>void,openIntegrations:()=>void}){
+ const [footerCopy,setFooterCopy]=useState<any>(null)
+ useEffect(()=>{api.publicNavigation().then((r:any)=>setFooterCopy(r?.footer||null)).catch(()=>null)},[])
+ const fallback={
+  platform:[{label:'Data activation',target:'workspace'},{label:'Data enrichment',target:'workspace'}],
+  solutions:[{label:'Lead generation',target:'solutions'},{label:'Enterprise',target:'solutions'},{label:'Mid-market teams',target:'solutions'},{label:'Attribution',target:'solutions'},{label:'Alerts & monitoring',target:'workspace'},{label:'Server-to-server integration',target:'integrations'}],
+  resources:[{label:'About AceMarketing',target:'company'},{label:'Use cases',target:'resources'},{label:'Blogs',target:'resources'},{label:'Ebooks',target:'resources'},{label:'Hash utility',target:'resources'},{label:'Documentation',target:'resources'},{label:'Contact',target:'demo'}]
+ }
+ const copy=footerCopy||fallback
+ const go=(target:string)=>{
+  if(target==='workspace')return openApp()
+  if(target==='solutions')return openSolutions()
+  if(target==='integrations')return openIntegrations()
+  if(target==='company')return openCompany()
+  if(target==='resources')return openResources()
+  if(target==='demo')return openDemo()
+ }
  const goLegal=(view:'privacy'|'terms'|'security')=>window.dispatchEvent(new CustomEvent('ace-view',{detail:view}))
  return <footer className="ei-footer">
   <div className="ei-footer-top">
    <div className="ei-footer-brand">
     <button className="public-footer-brand" onClick={openHome}><Brand/></button>
-    <p>First-party journey intelligence, activation, and conversion operations for performance teams.</p>
+    <p>Connected first-party data, journey intelligence, and conversion operations for performance teams.</p>
     <button className="ei-footer-demo" onClick={openDemo}>Book a demo</button>
    </div>
-   <div className="ei-footer-column"><h4>Platform</h4><button onClick={openApp}>Activation workspace</button><button onClick={openApp}>Journey intelligence</button><button onClick={openApp}>Audience operations</button></div>
-   <div className="ei-footer-column"><h4>Solutions</h4><button onClick={openSolutions}>Lead generation</button><button onClick={openSolutions}>Attribution</button><button onClick={openSolutions}>Enterprise operations</button></div>
-   <div className="ei-footer-column"><h4>Resources</h4><button onClick={openCompany}>About AceMarketing</button><button onClick={openResources}>Guides & tools</button><button onClick={openResources}>Documentation</button></div>
+   <div className="ei-footer-column"><h4>Platform</h4>{copy.platform.map((x:any)=><button key={x.label} onClick={()=>go(x.target)}>{x.label}</button>)}</div>
+   <div className="ei-footer-column"><h4>Solutions</h4>{copy.solutions.map((x:any)=><button key={x.label} onClick={()=>go(x.target)}>{x.label}</button>)}</div>
+   <div className="ei-footer-column"><h4>Resources</h4>{copy.resources.map((x:any)=><button key={x.label} onClick={()=>go(x.target)}>{x.label}</button>)}</div>
   </div>
-  <div className="ei-footer-legal"><span>© 2026 AceMarketing</span><div><button onClick={()=>goLegal('privacy')}>Privacy</button><button onClick={()=>goLegal('terms')}>Terms</button><button onClick={()=>goLegal('security')}>Security</button></div></div>
+  <div className="ei-footer-meta">
+   <div><b>India</b><span>Built for multi-channel growth teams operating across online and offline customer journeys.</span></div>
+   <div><b>Platform support</b><span>Use the demo route to discuss onboarding, integrations, and deployment requirements.</span></div>
+  </div>
+  <div className="ei-footer-legal"><span>© 2026 AceMarketing. All rights reserved.</span><div><button onClick={()=>goLegal('privacy')}>Privacy Policy</button><span>•</span><button onClick={()=>goLegal('terms')}>Terms & Conditions</button><span>•</span><button onClick={()=>goLegal('security')}>Security</button></div></div>
  </footer>
 }
 
@@ -315,7 +335,7 @@ function PublicPageFrame({children,openHome,openApp,openLogin,openPricing,openDe
   <div className="ei-promo-bar"><span>Cleaner first-party signals help growth teams optimize for business outcomes, not shallow clicks.</span><button onClick={openDemo}>See the operating model <ArrowRight/></button></div>
   <Header openHome={openHome} openApp={openApp} openLogin={openLogin} openPricing={openPricing} openDemo={openDemo} openCompany={openCompany} openResources={openResources} openCaseStudies={openCaseStudies} openSolutions={openSolutions} openIndustries={openIndustries} openAgents={openAgents} openIntegrations={openIntegrations}/>
   {children}
-  <PublicFooter openHome={openHome} openApp={openApp} openDemo={openDemo} openCompany={openCompany} openResources={openResources} openSolutions={openSolutions}/>
+  <PublicFooter openHome={openHome} openApp={openApp} openDemo={openDemo} openCompany={openCompany} openResources={openResources} openSolutions={openSolutions} openIntegrations={openIntegrations}/>
  </div>
 }
 
@@ -458,7 +478,7 @@ function LegalPage({kind,back}:{kind:'privacy'|'terms'|'security',back:()=>void}
  return <div className="standalone-page legal-page"><div className="standalone-top"><Brand/><button onClick={back}>Back to website</button></div><section className="standalone-hero"><span className="kicker">{content[0]}</span><h1>{content[1]}</h1></section><section className="legal-content">{(content[2] as string[]).map((x,i)=><article key={x}><span>{String(i+1).padStart(2,'0')}</span><p>{x}</p></article>)}</section></div>
 }
 
-function Pricing({back,openApp}:{back:()=>void,openApp:()=>void}){
+function Pricing({back,openApp,openDemo}:{back:()=>void,openApp:()=>void,openDemo:()=>void}){
  const [leads,setLeads]=useState(5000)
  const [dataHomes,setDataHomes]=useState<string[]>(['CRM'])
  const [challenges,setChallenges]=useState<string[]>(['Lead quality'])
@@ -485,7 +505,7 @@ function Pricing({back,openApp}:{back:()=>void,openApp:()=>void}){
    </div>
    <div className="pricing-step"><span>2</span><div><h2>Choose your agents</h2><p>Recommended agents are pre-selected from your stated challenges.</p></div></div>
    <div className="pricing-agent-grid">{agents.map(a=>{const isOn=activeSelected.includes(a[0]);return <article className={isOn?'selected':''} key={a[0]}><div><span>{a[2]}</span>{recommended.some(r=>r[0]===a[0])&&<b>RECOMMENDED</b>}</div><h3>{a[0]}</h3><strong>{a[3]}</strong><p>{a[1]}</p><button onClick={()=>setSelected(isOn?activeSelected.filter(x=>x!==a[0]):[...activeSelected,a[0]])}>{isOn?'Remove':'Add agent'}</button></article>})}</div>
-   <aside className="pricing-summary"><div><span>Your stack</span><strong>{activeSelected.length} agents</strong></div><div><span>Monthly lead volume</span><strong>{leads.toLocaleString()}</strong></div><div><span>Channels</span><strong>{channels.length}</strong></div><div className="quote"><span>Estimated total</span><strong>Custom quote</strong><small>Pricing depends on selected agents, data volume, destinations and deployment requirements.</small></div><button onClick={openApp}>Open workspace <ArrowRight/></button><button className="outline" onClick={back}>Talk to sales</button></aside>
+   <aside className="pricing-summary"><div><span>Your stack</span><strong>{activeSelected.length} agents</strong></div><div><span>Monthly lead volume</span><strong>{leads.toLocaleString()}</strong></div><div><span>Channels</span><strong>{channels.length}</strong></div><div className="quote"><span>Estimated total</span><strong>Custom quote</strong><small>Pricing depends on selected agents, data volume, destinations and deployment requirements.</small></div><button onClick={openApp}>Open workspace <ArrowRight/></button><button className="outline" onClick={openDemo}>Talk to sales</button></aside>
   </section>
  </div>
 }
@@ -1247,7 +1267,7 @@ export default function AcePlatform(){
  }
  const chrome=(child:any)=><PublicPageFrame {...nav}>{child}</PublicPageFrame>
  if(view==='login')return <Login back={goHome} openApp={nav.openApp}/>
- if(view==='pricing')return chrome(<Pricing back={goHome} openApp={nav.openApp}/>)
+ if(view==='pricing')return chrome(<Pricing back={goHome} openApp={nav.openApp} openDemo={nav.openDemo}/>)
  if(view==='demo')return chrome(<DemoPage back={goHome} openApp={nav.openApp}/>)
  if(view==='company')return chrome(<CompanyPage back={goHome} openDemo={nav.openDemo}/>)
  if(view==='resources')return chrome(<ResourcesPage back={goHome}/>)
