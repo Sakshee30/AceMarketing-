@@ -285,3 +285,36 @@ This pass expands AceMarketing beyond the landing page and workspace into the pu
 - Added `GET /api/resources`.
 
 The public EasyInsights demo page currently emphasizes junk-lead reduction, lead quality, CRM/ad-platform connectivity, intuitive UI, setup speed and usage-based/flexible pricing. AceMarketing mirrors that page structure and workflow without copying third-party images, addresses, logos, or proprietary text verbatim.
+
+
+## Parity pass: detailed case studies, custom events and automated monitoring
+
+This pass adds three brochure-driven areas that were still shallow:
+
+- Dedicated **Case Studies** page with paraphrased implementation patterns for:
+  - Apollo Ayurvaid — call attribution + WhatsApp conversions;
+  - Jaro Education — high-volume OCI/ECL and LeadSquared stage mapping;
+  - GemPundit — GCLID persistence through WhatsApp and partial-payment adjustments;
+  - Berger Paints — server-side CAPI, CTWA custom events and automated monitoring.
+- **Conversion Event Manager** now includes:
+  - pricing-page lead;
+  - high-value purchase;
+  - prepaid order;
+  - fulfilled order;
+  - returned order;
+  - partial payment;
+  - conversion-adjustment mappings and deduplication patterns.
+- **Monitoring** now includes configurable alert-rule surfaces for:
+  - delivery-rate degradation;
+  - GCLID coverage loss;
+  - CRM sync latency;
+  - stale audience syncs;
+  - token expiry;
+  - failed-event queue growth.
+
+New API endpoints:
+- `GET /api/case-studies`
+- `GET /api/event-templates`
+- `GET /api/monitoring-rules`
+
+All case-study results are labeled/reference-framed so they are not represented as AceMarketing customer claims.
