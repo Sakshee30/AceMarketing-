@@ -3634,3 +3634,16 @@ Conversion Adjustments now uses production-truthful state only.
 - Existing preview/apply flows remain unchanged and operate on the newly persisted adjustment.
 - The UI exposes **New adjustment**, shows a truthful empty state, and selects the newly created adjustment after persistence.
 - Values accept either numeric corrections or bounded text outcomes such as `lead → excluded`.
+
+
+### Persisted lead-routing rules
+
+Lead Routing is now an operational workspace rule system instead of a read-only list of hard-coded cards.
+
+- Built-in routing templates remain visible as safe defaults.
+- `POST /api/routing/rules` creates persisted workspace routing rules.
+- Custom rules can be paused and enabled through `POST /api/routing/rules/toggle`.
+- The frontend displays built-in versus workspace rule type and current status.
+- **Test selected rule** now passes the selected rule to the routing engine and persists the resulting routing decision.
+- Routing decisions continue to populate destination load, routed-today metrics and recent routing history.
+- Existing default routing behavior remains available when no configured rule is forced.
