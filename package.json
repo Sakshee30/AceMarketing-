@@ -13,7 +13,7 @@
     "preview": "vite preview",
     "check": "tsc -b",
     "check:frontend": "tsc -b",
-    "check:backend": "node --check backend/src/index.mjs && node --check backend/src/security.mjs && node --check backend/src/store.mjs && node --check backend/src/public-content.mjs && node --check backend/src/vault.mjs && node --check backend/src/queue.mjs && node --check backend/src/providers.mjs && node --check backend/src/worker.mjs && node --check backend/src/attribution-store.mjs && node --check backend/src/lead-ops.mjs && node --check backend/scripts/migrate.mjs",
+    "check:backend": "node --check backend/src/index.mjs && node --check backend/src/security.mjs && node --check backend/src/store.mjs && node --check backend/src/public-content.mjs && node --check backend/src/vault.mjs && node --check backend/src/queue.mjs && node --check backend/src/providers.mjs && node --check backend/src/worker.mjs && node --check backend/src/attribution-store.mjs && node --check backend/src/lead-ops.mjs && node --check backend/src/activation-adapters.mjs && node --check backend/scripts/migrate.mjs",
     "check:all": "npm run check:frontend && npm run check:backend",
     "migrate": "node backend/scripts/migrate.mjs",
     "worker": "node backend/src/worker.mjs"
