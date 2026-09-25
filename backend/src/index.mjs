@@ -1298,11 +1298,45 @@ const server = http.createServer(async (req,res)=>{
       })
       return send(req,res,202,{queued:true,issue:body.issue,replayId,status:'queued'})
     }
-    if (req.method === 'GET' && url.pathname === '/api/funnel') return send(req,res,200,{stages:{leads:12842,qualified:7621,appointments:2314,consultations:1506,bookings:982},campaigns:[
-      {name:'MBA Search - Brand',channel:'Google Ads',leads:2841,qualified:1812,appointments:932,consultations:421,bookings:188},
-      {name:'Executive Program',channel:'Meta Ads',leads:1964,qualified:1048,appointments:641,consultations:288,bookings:119},
-      {name:'PGDM Retargeting',channel:'Meta Ads',leads:1510,qualified:903,appointments:527,consultations:210,bookings:96}
-    ]})
+    if (req.method === 'GET' && url.pathname === '/api/funnel') {
+      const [profiles,meetings]=await Promise.all([listLeadProfiles(workspaceId,500),listPersistedMeetings(workspaceId)])
+      const qualifiedStages=new Set(['qualified','consultation','opportunity','converted','enrolled','closed_won','customer'])
+      const consultationStages=new Set(['consultation','opportunity','converted','enrolled','closed_won','customer'])
+      const bookingStages=new Set(['converted','enrolled','closed_won','customer'])
+      const leadKey=lead=>String(lead.external_lead_id||lead.name||lead.id)
+      const profileByLead=new Map()
+      for(const lead of profiles){
+        profileByLead.set(leadKey(lead),lead)
+        if(lead.name)profileByLead.set(String(lead.name),lead)
+      }
+      const campaigns=new Map()
+      const ensure=lead=>{
+        const name=String(lead.campaign||lead.source||'Unattributed')
+        const row=campaigns.get(name)||{name,channel:String(lead.source||'First-party'),leads:0,qualified:0,appointments:0,consultations:0,bookings:0}
+        campaigns.set(name,row)
+        return row
+      }
+      for(const lead of profiles){
+        const row=ensure(lead)
+        row.leads++
+        const stage=String(lead.crm_stage||'').toLowerCase()
+        if(['A','B'].includes(String(lead.grade))||qualifiedStages.has(stage))row.qualified++
+        if(consultationStages.has(stage))row.consultations++
+        if(bookingStages.has(stage))row.bookings++
+      }
+      for(const meeting of meetings){
+        const lead=profileByLead.get(String(meeting.lead_ref||''))
+        if(lead)ensure(lead).appointments++
+      }
+      const stages={
+        leads:profiles.length,
+        qualified:profiles.filter(lead=>['A','B'].includes(String(lead.grade))||qualifiedStages.has(String(lead.crm_stage||'').toLowerCase())).length,
+        appointments:meetings.length,
+        consultations:profiles.filter(lead=>consultationStages.has(String(lead.crm_stage||'').toLowerCase())).length,
+        bookings:profiles.filter(lead=>bookingStages.has(String(lead.crm_stage||'').toLowerCase())).length
+      }
+      return send(req,res,200,{available:true,stages,campaigns:[...campaigns.values()].sort((a,b)=>b.leads-a.leads),generatedAt:new Date().toISOString()})
+    }
     if (req.method === 'GET' && url.pathname === '/api/data-hub') {
       const [state,leadStats,attr]=await Promise.all([getState(),leadOpsStats(workspaceId),attributionStats(workspaceId)])
       const now=Date.now()
@@ -1573,11 +1607,37 @@ const server = http.createServer(async (req,res)=>{
       const stats=await attributionStats(workspaceId)
       return send(req,res,200,stats)
     }
-    if (req.method === 'GET' && url.pathname === '/api/journeys') return send(req,res,200,{items:[
-      {lead:'Aarav Sharma',source:'Google Ads',stage:'Qualified',touchpoints:6,duration:'18m'},
-      {lead:'Meera Patel',source:'Meta Ads',stage:'Consultation',touchpoints:8,duration:'4h'},
-      {lead:'Rohan Kumar',source:'WhatsApp',stage:'Enrolled',touchpoints:11,duration:'2d'}
-    ]})
+    if (req.method === 'GET' && url.pathname === '/api/journeys') {
+      const profiles=await listLeadProfiles(workspaceId,500)
+      const humanDuration=(from,to)=>{
+        const ms=Math.max(0,Date.parse(to||'')-Date.parse(from||''))
+        if(!Number.isFinite(ms)||ms<=0)return '—'
+        const minutes=Math.round(ms/60000)
+        if(minutes<60)return minutes+'m'
+        const hours=Math.round(minutes/60)
+        if(hours<48)return hours+'h'
+        return Math.round(hours/24)+'d'
+      }
+      const items=profiles.map(lead=>{
+        const journey=lead.journey||{}
+        const touchpoints=Math.max(0,Number(journey.journeyDepth||0))+Number(journey.pricingPageViews||0)+(journey.whatsappEngaged?1:0)+(journey.callOutcome?1:0)+(journey.meetingStatus?1:0)
+        return {
+          id:lead.id,
+          lead:lead.name||lead.external_lead_id,
+          externalLeadId:lead.external_lead_id,
+          source:lead.source||'First-party',
+          campaign:lead.campaign||null,
+          stage:lead.crm_stage||lead.grade||'Lead',
+          grade:lead.grade,
+          score:lead.score,
+          touchpoints,
+          duration:humanDuration(lead.created_at,journey.lastActivity||lead.updated_at),
+          lastActivity:journey.lastActivity||lead.updated_at,
+          devicePlatform:lead.device_platform||null
+        }
+      })
+      return send(req,res,200,{available:true,items,generatedAt:new Date().toISOString()})
+    }
     if (req.method === 'GET' && url.pathname === '/api/planner') return send(req,res,200,{budget:2500000,channels:[
       {name:'Google Search',share:38,quality:91,cac:6760,action:'scale'},
       {name:'Meta Prospecting',share:28,quality:74,cac:8120,action:'hold'},
