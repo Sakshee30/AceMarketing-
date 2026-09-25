@@ -3,7 +3,7 @@ import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from
 import { URL } from 'node:url'
 import { createToken, verifyToken, verifyPassword, hashPassword, hasPermission, createRateLimiter, securityHeaders, resolveCorsOrigin } from './security.mjs'
 import { closeStore, getState, mutateState, storageHealth, withWorkspace } from './store.mjs'
-import { connectorVaultReady, encryptSecret } from './vault.mjs'
+import { connectorVaultReady, decryptSecret, encryptSecret } from './vault.mjs'
 import { enqueueJob, queueAvailable, queueStats } from './queue.mjs'
 import { attributionStats, captureClickSession, closeAttributionStore, recordAssistedEvent, reconcileAttribution } from './attribution-store.mjs'
 import { audienceOpsStats, closeLeadOps, createActivationRun, createAudience as createLeadAudience, getAudienceBundle, getLeadProfile, leadOpsStats, listActivationRuns, listAudiences as listLeadAudiences, listLeadProfiles, materializeAudience, overrideLeadGrade as persistLeadGrade, previewAudience as previewLeadAudience, scoreLead, upsertLeadProfile, updateAudienceSyncState } from './lead-ops.mjs'
@@ -51,6 +51,62 @@ const CONNECTOR_PROVIDERS={
   'Google Calendar':{provider:'google',authType:'oauth2',clientId:process.env.GOOGLE_OAUTH_CLIENT_ID||'',clientSecret:process.env.GOOGLE_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://accounts.google.com/o/oauth2/v2/auth',tokenUrl:'https://oauth2.googleapis.com/token',scopes:['openid','email','https://www.googleapis.com/auth/calendar.events']},
   'WhatsApp':{provider:'meta',authType:'oauth2',clientId:process.env.META_OAUTH_CLIENT_ID||'',clientSecret:process.env.META_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://www.facebook.com/v23.0/dialog/oauth',tokenUrl:'https://graph.facebook.com/v23.0/oauth/access_token',scopes:['whatsapp_business_management','whatsapp_business_messaging']}
 }
+const connectorTokenHealth=async(workspaceId)=>{
+  const state=await getState()
+  const connections=state.connectorConnections||[]
+  const credentials=state.connectorCredentials||[]
+  return connections.map(connection=>{
+    const credential=credentials.find(x=>x.connector===connection.connector)
+    const expiresAt=credential?.expiresAt||connection.expiresAt||null
+    const expiresInSeconds=expiresAt?Math.floor((Date.parse(expiresAt)-Date.now())/1000):null
+    const needsRefresh=expiresInSeconds!==null&&expiresInSeconds<=15*60
+    const expired=expiresInSeconds!==null&&expiresInSeconds<=0
+    return {
+      connector:connection.connector,
+      expiresAt,
+      expiresInSeconds,
+      needsRefresh,
+      expired,
+      status:expired?'expired':needsRefresh?'refresh_required':connection.status||'connected'
+    }
+  })
+}
+
+const refreshConnectorCredential=async(workspaceId,connector)=>{
+  const provider=CONNECTOR_PROVIDERS[connector]
+  if(!provider) throw new Error('connector does not support OAuth refresh')
+  if(!provider.clientId||!provider.clientSecret) throw new Error('connector OAuth credentials are not configured')
+  if(!connectorVaultReady()) throw new Error('connector credential vault is not configured')
+  const state=await getState()
+  const credential=(state.connectorCredentials||[]).find(x=>x.connector===connector)
+  if(!credential?.encrypted) throw new Error(connector+' credential is not connected')
+  const current=decryptSecret(credential.encrypted)
+  const refreshToken=current?.refresh_token
+  if(!refreshToken) throw new Error(connector+' did not provide a refresh token; reconnect the integration')
+  const form=new URLSearchParams({
+    grant_type:'refresh_token',
+    refresh_token:String(refreshToken),
+    client_id:provider.clientId,
+    client_secret:provider.clientSecret
+  })
+  const response=await fetch(provider.tokenUrl,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:form})
+  const body=await response.json().catch(()=>({}))
+  if(!response.ok||!body.access_token) throw new Error('OAuth token refresh failed: '+response.status)
+  const merged={...current,...body,refresh_token:body.refresh_token||refreshToken}
+  const now=new Date().toISOString()
+  const expiresAt=body.expires_in?new Date(Date.now()+Number(body.expires_in)*1000).toISOString():credential.expiresAt||null
+  await mutateState(s=>{
+    const saved=(s.connectorCredentials||[]).find(x=>x.connector===connector)
+    if(saved){saved.encrypted=encryptSecret(merged);saved.expiresAt=expiresAt;saved.updatedAt=now}
+    const connection=(s.connectorConnections||[]).find(x=>x.connector===connector)
+    if(connection){connection.status='connected';connection.expiresAt=expiresAt;connection.updatedAt=now}
+    s.audit=s.audit||[]
+    s.audit.unshift({id:randomUUID(),action:'connector.token_refreshed',entityId:connector,provider:provider.provider,at:now})
+    s.audit=s.audit.slice(0,1000)
+  })
+  return {refreshed:true,expiresAt}
+}
+
 const CONNECTOR_REDIRECT_URI=process.env.CONNECTOR_OAUTH_REDIRECT_URI||''
 const AUTH_GOOGLE_REDIRECT_URI=process.env.AUTH_GOOGLE_REDIRECT_URI||''
 const AUTH_GOOGLE_SUCCESS_URL=process.env.AUTH_GOOGLE_SUCCESS_URL||''
