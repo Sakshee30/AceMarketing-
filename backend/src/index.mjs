@@ -57,7 +57,7 @@ const send = (req,res,status,data,extra={}) => {
   res.end(status===204?'':JSON.stringify(data))
 }
 
-const publicPaths=new Set(['/api/health','/api/ready','/api/auth/login','/api/demo-requests','/api/track','/api/public/navigation','/api/public/industries','/api/public/agents','/api/public/integrations'])
+const publicPaths=new Set(['/api/health','/api/ready','/api/auth/login','/api/demo-requests','/api/track','/api/pricing/recommend','/api/pricing/quote','/api/public/navigation','/api/public/industries','/api/public/agents','/api/public/integrations'])
 const server = http.createServer(async (req,res)=>{
   req.requestId=String(req.headers['x-request-id']||randomUUID())
   const ip=String(req.headers['x-forwarded-for']||req.socket.remoteAddress||'unknown').split(',')[0].trim()
@@ -79,6 +79,27 @@ const server = http.createServer(async (req,res)=>{
     if (req.method === 'GET' && url.pathname === '/api/public/industries') return send(req,res,200,{items:publicIndustries})
     if (req.method === 'GET' && url.pathname === '/api/public/agents') return send(req,res,200,{items:publicAgents})
     if (req.method === 'GET' && url.pathname === '/api/public/integrations') return send(req,res,200,{groups:publicIntegrations})
+    if (req.method === 'POST' && url.pathname === '/api/pricing/recommend') {
+      const body=await readBody(req)
+      const challenges=Array.isArray(body.challenges)?body.challenges:[]
+      const names=[]
+      if(challenges.includes('Lead quality')) names.push('Meta Advanced CAPI','Google ECL / OCI','Call Tracking Events','Custom Integration')
+      if(challenges.includes('Conversion leakage')) names.push('Lead Grading','CRM Enrichment','Voice Lead Qualification','Voice Scheduler','Meeting Reminder','Feedback Agent')
+      if(challenges.includes('Attribution')) names.push('Ask Ace')
+      return send(req,res,200,{recommended:[...new Set(names)],generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/pricing/quote') {
+      const body=await readBody(req)
+      const leads=Number(body.leads||0)
+      const channels=Array.isArray(body.channels)?body.channels:[]
+      const agents=Array.isArray(body.agents)?body.agents:[]
+      if(!Number.isFinite(leads)||leads<1) return send(req,res,400,{error:'valid lead volume required'})
+      if(channels.length===0) return send(req,res,400,{error:'at least one channel required'})
+      if(agents.length===0) return send(req,res,400,{error:'at least one agent required'})
+      const item={id:'quote_'+randomUUID(),status:'captured',leads,channels,agents,dataHomes:Array.isArray(body.dataHomes)?body.dataHomes:[],challenges:Array.isArray(body.challenges)?body.challenges:[],createdAt:new Date().toISOString()}
+      await mutateState(s=>{s.quoteRequests.unshift(item);s.quoteRequests=s.quoteRequests.slice(0,5000);s.audit.unshift({id:randomUUID(),action:'pricing.quote_requested',entityId:item.id,at:item.createdAt})})
+      return send(req,res,201,item)
+    }
     if (req.method === 'POST' && url.pathname === '/api/auth/login') {
       const body = await readBody(req)
       if (!body.email || !String(body.email).includes('@') || String(body.password || '').length < 6) return send(req,res,400,{error:'valid email and password length >= 6 required'})
