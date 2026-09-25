@@ -1137,13 +1137,24 @@ function Approvals(){
 }
 
 function AskAce(){
- const starters=['Why did qualified leads drop this week?','Which campaigns generated the most enrolled revenue?','Where is the biggest funnel leak?','Which audience should we suppress?']
- const [messages,setMessages]=useState<any[]>([{role:'assistant',text:'Ask me about journeys, attribution, lead quality, campaign performance or signal health.'}])
+ const starters=['Which campaign is producing the best-quality leads?','How much matched revenue is currently attributed?','Where is attribution breaking?','Which audience should we suppress?','Are any connectors or activation runs unhealthy?']
+ const [messages,setMessages]=useState<any[]>([{role:'assistant',text:'Ask me about journeys, attribution, lead quality, campaign performance, audiences, or signal health. I will only answer from data available in this workspace.',confidence:'grounded'}])
  const [q,setQ]=useState('')
- const ask=async(question?:string)=>{const text=question||q;if(!text.trim())return;setMessages(m=>[...m,{role:'user',text}]);setQ('');try{const r:any=await api.askAce(text);setMessages(m=>[...m,{role:'assistant',text:r.answer,insights:r.insights}])}catch{setMessages(m=>[...m,{role:'assistant',text:'The analysis API is unavailable. Start the local API with npm run api.'}])}}
- return <><PageHead crumb="AI / Ask Ace" title="Journey & attribution assistant" sub="Ask natural-language questions over stitched funnel, attribution and signal-health data."/>
- <div className="ask-ace-layout"><div className="app-panel ask-chat"><div className="ask-starters">{starters.map(x=><button key={x} onClick={()=>ask(x)}>{x}</button>)}</div><div className="ask-messages">{messages.map((m,i)=><div key={i} className={'ask-msg '+m.role}><span>{m.role==='assistant'?<Sparkles/>:'S'}</span><div><p>{m.text}</p>{m.insights&&<div className="ask-insights">{m.insights.map((x:any)=><article key={x.label}><span>{x.label}</span><b>{x.value}</b><small>{x.note}</small></article>)}</div>}</div></div>)}</div><div className="ask-input"><input value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==='Enter'&&ask()} placeholder="Ask about revenue, leads, campaigns or journeys..."/><button onClick={()=>ask()}><ArrowRight/></button></div></div>
- <div className="app-panel ask-context"><div className="panel-head"><div><h3>Connected analysis context</h3><p>What Ask Ace can inspect</p></div></div>{[['Journey graph','92,418 stitched journeys'],['Attribution','₹2.84Cr measured revenue'],['CRM outcomes','12,842 recent leads'],['Signal health','94.8% destination match'],['Audience state','5 active segments'],['Agent activity','7 active agents']].map(x=><div className="ask-context-row" key={x[0]}><Check/><div><b>{x[0]}</b><small>{x[1]}</small></div></div>)}</div></div></>
+ const [busy,setBusy]=useState(false)
+ const ask=async(question?:string)=>{
+  const text=(question||q).trim()
+  if(!text||busy)return
+  setMessages(m=>[...m,{role:'user',text}]);setQ('');setBusy(true)
+  try{
+   const r:any=await api.askAce(text)
+   setMessages(m=>[...m,{role:'assistant',text:r.answer,insights:r.insights,confidence:r.confidence,intent:r.intent,followUps:r.followUps,generatedAt:r.generatedAt}])
+  }catch{
+   setMessages(m=>[...m,{role:'assistant',text:'The grounded analysis API is unavailable. Check the API process, workspace access, and data connections before retrying.',confidence:'unavailable'}])
+  }finally{setBusy(false)}
+ }
+ return <><PageHead crumb="AI / Ask Ace" title="Journey & attribution assistant" sub="Ask natural-language questions over stitched workspace data. Answers include confidence and the evidence used."/>
+ <div className="ask-ace-layout"><div className="app-panel ask-chat"><div className="ask-starters">{starters.map(x=><button key={x} onClick={()=>ask(x)} disabled={busy}>{x}</button>)}</div><div className="ask-messages">{messages.map((m,i)=><div key={i} className={'ask-msg '+m.role}><span>{m.role==='assistant'?<Sparkles/>:'S'}</span><div><div className="ask-answer-meta">{m.role==='assistant'&&m.confidence&&<em className={'ask-confidence '+m.confidence}>{m.confidence==='grounded'?'Grounded workspace analysis':m.confidence+' confidence'}</em>}{m.intent&&<small>{String(m.intent).replaceAll('_',' ')}</small>}</div><p>{m.text}</p>{m.insights&&<div className="ask-insights">{m.insights.map((x:any)=><article key={x.label}><span>{x.label}</span><b>{x.value}</b><small>{x.note}</small>{x.source&&<em>{x.source}</em>}</article>)}</div>}{m.followUps?.length>0&&<div className="ask-followups">{m.followUps.map((x:string)=><button key={x} onClick={()=>ask(x)} disabled={busy}>{x}</button>)}</div>}</div></div>)}</div><div className="ask-input"><input value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==='Enter'&&ask()} placeholder="Ask about revenue, leads, campaigns, audiences or signal health..." disabled={busy}/><button onClick={()=>ask()} disabled={busy}>{busy?<Activity/>:<ArrowRight/>}</button></div></div>
+ <div className="app-panel ask-context"><div className="panel-head"><div><h3>Grounded analysis context</h3><p>Ask Ace queries live workspace stores rather than fixed demo metrics</p></div><span className="healthy">Evidence-backed</span></div>{[['Lead operations','Scores, grades, source and campaign quality'],['Attribution store','Matched/unmatched assisted events and value'],['Connector state','Connection and health records'],['Audience store','Activation, suppression and sync state'],['Activation runs','Succeeded, failed and queued external actions'],['Observability','Current API and operational health']].map(x=><div className="ask-context-row" key={x[0]}><Check/><div><b>{x[0]}</b><small>{x[1]}</small></div></div>)}<div className="source-conflict-note"><ShieldCheck/><div><b>No fabricated metrics</b><p>If a workspace does not have enough connected data, Ask Ace reports that limitation instead of substituting sample numbers.</p></div></div></div></div></>
 }
 
 function Integrations(){
