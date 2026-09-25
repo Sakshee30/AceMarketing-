@@ -208,7 +208,8 @@ test.describe('privacy consent runtime',()=>{
 
 
 test('dashboard navigator opens primary operating sections', async ({ page }) => {
-  await page.goto('/#/workspace')\n  await dismissConsent(page)
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
   await expect(page.getByRole('button', { name: 'Open dashboard section navigator' })).toBeVisible()
   await page.getByRole('button', { name: 'Open dashboard section navigator' }).click()
   await expect(page.getByRole('dialog', { name: 'Dashboard section navigator' })).toBeVisible()
@@ -218,7 +219,8 @@ test('dashboard navigator opens primary operating sections', async ({ page }) =>
 
 
 test('live dashboard section strip navigates between operating areas', async ({ page }) => {
-  await page.goto('/#/workspace')\n  await dismissConsent(page)
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
   await expect(page.getByLabel('Dashboard sections')).toBeVisible()
   await page.getByLabel('Dashboard sections').getByRole('button', { name: /Measurement & Intelligence/ }).click()
   await expect(page.getByText('Journeys', { exact: true }).first()).toBeVisible()
@@ -226,7 +228,8 @@ test('live dashboard section strip navigates between operating areas', async ({ 
 
 
 test('dashboard keeps section navigation visible on workspace', async ({ page }) => {
-  await page.goto('/#/workspace')\n  await dismissConsent(page)
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
   await expect(page.getByLabel('Dashboard sections')).toBeVisible()
   const sections=page.getByLabel('Dashboard sections')
   await expect(sections.getByRole('button', { name: 'Tracking & Data', exact: true })).toBeVisible()
@@ -236,7 +239,8 @@ test('dashboard keeps section navigation visible on workspace', async ({ page })
 
 
 test('manual integration cards open the custom adapter builder', async ({ page }) => {
-  await page.goto('/#/workspace')\n  await dismissConsent(page)
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
   await page.getByLabel('Dashboard sections').getByRole('button', { name: 'Activation & Integrations', exact: true }).click()
   await openWorkspaceTab(page,'Integrations')
   const meritto = page.locator('article').filter({ hasText: 'Meritto' })
@@ -248,7 +252,8 @@ test('manual integration cards open the custom adapter builder', async ({ page }
 
 
 test('built-in agent opens its live operational module', async ({ page }) => {
-  await page.goto('/#/workspace')\n  await dismissConsent(page)
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
   await page.getByLabel('Dashboard sections').getByRole('button', { name: 'Lead & Conversion', exact: true }).click()
   await openWorkspaceTab(page,'Agents')
   await page.getByRole('button', { name: /Lead Grading/ }).first().click()
@@ -259,7 +264,8 @@ test('built-in agent opens its live operational module', async ({ page }) => {
 
 
 test('funnel period control updates backend-filtered workspace', async ({ page }) => {
-  await page.goto('/#/workspace')\n  await dismissConsent(page)
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
   await page.getByLabel('Dashboard sections').getByRole('button', { name: 'Tracking & Data', exact: true }).click()
   await openWorkspaceTab(page,'Funnel')
   await expect(page.getByRole('heading', { name: 'Channel & campaign funnel' })).toBeVisible()
@@ -269,7 +275,8 @@ test('funnel period control updates backend-filtered workspace', async ({ page }
 
 
 test('reports list reflects persisted schedules instead of static claims', async ({ page }) => {
-  await page.goto('/#/workspace')\n  await dismissConsent(page)
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
   await page.getByLabel('Dashboard sections').getByRole('button', { name: 'Measurement & Intelligence', exact: true }).click()
   await openWorkspaceTab(page,'Reports')
   await expect(page.getByRole('heading', { name: 'Cohort & automated reports' })).toBeVisible()
