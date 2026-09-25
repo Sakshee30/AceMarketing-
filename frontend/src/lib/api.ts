@@ -22,6 +22,7 @@ export const api = {
   publicChallenges: () => request('/public/challenges'),
   publicCaseStudies: () => request('/public/case-studies'),
   publicResources: () => request('/public/resources'),
+  publicResourceCenter: () => request('/public/resource-center'),
   launchpad: () => request('/launchpad'),
   saveLaunchpad: (payload: Record<string, unknown>) => request('/launchpad', { method: 'POST', body: JSON.stringify(payload) }),
   login: async (email: string, password: string) => {
