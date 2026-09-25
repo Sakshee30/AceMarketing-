@@ -340,9 +340,9 @@ const server = http.createServer(async (req,res)=>{
       if(!resolvedWorkspace) return send(req,res,400,{error:'unable to resolve workspace for call event'})
       workspaceId=resolvedWorkspace
       const event=normalizeCallEvent(body)
+      let duplicate=false
       await withWorkspace(workspaceId,async()=>{
         const now=new Date().toISOString()
-        let duplicate=false
         await mutateState(s=>{
           s.callEvents=s.callEvents||[]
           duplicate=s.callEvents.some(x=>x.id===event.id)
@@ -378,7 +378,7 @@ const server = http.createServer(async (req,res)=>{
           }).catch(()=>null)
         }
       })
-      return send(req,res,200,{received:true,duplicate:false,workspaceId,eventId:event.id})
+      return send(req,res,200,{received:true,duplicate,workspaceId,eventId:event.id})
     }catch(error){
       return send(req,res,400,{error:error instanceof Error?error.message:'invalid call webhook'})
     }
