@@ -1054,3 +1054,39 @@
 @media(prefers-reduced-motion:reduce){
   .product-nav-group-head>svg:last-child,.product-nav-group-items>button,.dashboard-area-card,.dashboard-quick-grid>button{transition:none!important}
 }
+
+
+/* Persisted settings controls */
+.setting-toggle{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  justify-self:end;
+  cursor:pointer;
+}
+.setting-toggle input{
+  appearance:none;
+  width:28px;
+  height:16px;
+  border-radius:20px;
+  background:#d9d2df;
+  position:relative;
+  transition:background .18s ease;
+}
+.setting-toggle input:before{
+  content:"";
+  position:absolute;
+  width:12px;
+  height:12px;
+  top:2px;
+  left:2px;
+  border-radius:50%;
+  background:#fff;
+  box-shadow:0 1px 4px rgba(0,0,0,.18);
+  transition:transform .18s ease;
+}
+.setting-toggle input:checked{background:#6d2bf1}
+.setting-toggle input:checked:before{transform:translateX(12px)}
+.setting-toggle span{font-size:8px;color:#746b7a}
+.settings-detail select{min-height:34px}
+.launchpad-detail .site-detail-grid{margin:14px 0}
