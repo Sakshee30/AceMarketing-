@@ -989,3 +989,24 @@ TOKEN_TTL_SECONDS=3600
 ```
 
 The current file-backed state layer is durable for a single API instance and is intentionally isolated behind `server/store.mjs`. Before multi-instance scale, replace it with PostgreSQL/managed relational storage and a distributed rate limiter/queue. Real provider OAuth, secret-vault storage and outbound conversion delivery are still required before claiming full production parity with a live EasyInsights deployment.
+
+
+## UI parity pass: public navbar, mega menus and hero alignment
+
+The public marketing shell was rebuilt to closely match the supplied EasyInsights reference screenshots while retaining AceMarketing branding and original assets.
+
+Implemented:
+- full-width purple performance banner;
+- white 74px navigation shell with centered navigation;
+- navigation order: Industries, Agents, Case Studies, Integrations, Pricing, Resources;
+- Voice Agent pill and rounded Book a demo CTA;
+- Industries mega menu with two-column layout, icon blocks, descriptions and divider;
+- Agents mega menu grouped by Lead Quality, Conversion and Visibility;
+- Resources mega menu;
+- active-menu underline behavior;
+- responsive mobile navigation;
+- large rounded off-white hero card directly below the navbar;
+- screenshot-matched headline scale, spacing, gradient emphasis, dark CTA and right-side visual panel;
+- adjusted trust row spacing beneath the hero.
+
+The implementation follows the visual structure, spacing and interaction model from the supplied screenshots without copying EasyInsights trademarks, customer artwork or proprietary source code.
