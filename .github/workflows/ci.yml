@@ -87,6 +87,7 @@ jobs:
           test -f backend/src/privacy-ops.mjs
           test -f backend/src/audience-scheduler.mjs
           test -f backend/src/cohort-analytics.mjs
+          test -f backend/src/event-rules.mjs
           test -f backend/scripts/privacy-retention.mjs
           test -f backend/scripts/migrate.mjs
           test -f backend/migrations/001_workspace_state.sql
@@ -102,6 +103,7 @@ jobs:
           test -f backend/migrations/011_consent.sql
           test -f backend/migrations/012_privacy_ops.sql
           test -f backend/migrations/013_audience_scheduler.sql
+          test -f backend/migrations/014_event_rules.sql
           test -f backend/scripts/preflight.mjs
           test -f backend/scripts/smoke.mjs
           test -f backend/scripts/backup.mjs
