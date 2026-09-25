@@ -1243,3 +1243,16 @@ Implemented:
 - pricing/agent card density was refined to the supplied reference proportions.
 
 AceMarketing keeps its own wording and brand assets while the public layout, typography scale, spacing, and interaction model track the supplied EasyInsights references closely.
+
+
+## End-to-end pricing configurator pass
+
+The public Pricing page now has real backend behavior rather than frontend-only selection state.
+
+New public backend endpoints:
+- `POST /api/pricing/recommend` — derives recommended agents from the selected growth challenges;
+- `POST /api/pricing/quote` — validates and persists the selected lead volume, data homes, challenges, channels and agents.
+
+Quote requests are written to the durable state store under `quoteRequests` and an audit event is recorded. The Pricing UI refreshes recommendations from the backend, lets the user override the recommended stack, captures the configuration, shows success/error state, and keeps a separate Talk to sales action that routes to the demo form.
+
+This moves another major public box from visual parity into an end-to-end functional workflow.
