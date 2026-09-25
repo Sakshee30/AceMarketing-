@@ -199,3 +199,13 @@ test.describe('privacy consent runtime',()=>{
     expect(stored).toEqual({gclid:null,fbclid:null})
   })
 })
+
+
+test('dashboard navigator opens primary operating sections', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await expect(page.getByRole('button', { name: 'Open dashboard section navigator' })).toBeVisible()
+  await page.getByRole('button', { name: 'Open dashboard section navigator' }).click()
+  await expect(page.getByRole('dialog', { name: 'Dashboard section navigator' })).toBeVisible()
+  await page.getByRole('button', { name: /Attribution/ }).click()
+  await expect(page.getByText('Attribution', { exact: false }).first()).toBeVisible()
+})
