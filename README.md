@@ -1,47 +1,166 @@
 # AceMarketing
 
-A first-party marketing intelligence and activation platform implementation inspired by the workflow patterns documented in the EasyInsights brochure and public product site.
+AceMarketing is a first-party marketing intelligence, activation, enrichment and attribution platform being implemented from the workflow and product concepts documented in the EasyInsights material supplied for this project.
 
-## Implemented foundation
+The implementation stays on the **main** branch. No parallel implementation branch is required for the current build.
 
-- Responsive marketing website with first-party growth positioning
-- Click → Signal → Lead → Revenue journey visualization
-- AdSync product module
-  - server-side signal activation UI
-  - conversion pipelines
-  - GCLID / FBCLID coverage
-  - funnel stage mapping
-  - real-time sync health
-- Klarity product module
-  - full-path attribution
-  - channel contribution
-  - stitched customer journey
-- Enrich product module
-  - CRM context
-  - lead grading
-  - enriched lead profile
+## Current implementation status
+
+### Marketing website
+- Responsive enterprise SaaS landing page
+- Lead-quality, conversion-leakage and attribution problem framing
+- Journey-stitching + agent operating model
+- AdSync, Enrich and Klarity-style core modules
 - 11-agent catalogue
-- Integrations workspace
-- Audience activation and suppression
-- Interactive SaaS dashboard with live-style sample data
+- Integration ecosystem
+- Industry/use-case sections
+- Case-study presentation for EdTech, healthcare, high-AOV commerce and home services
+- Diagnostic section for business, tracking/data quality and ad optimization
+- Demo-request form
+- Login experience
+
+### Product workspace
+The interactive workspace currently includes:
+- Overview / acquisition command center
+- AdSync
+- Conversion Event Manager
+- Customer Journeys
+- Full-path Attribution
+- Enrich / lead grading
+- Agent Library
+- Integrations
+- Audience Management
+- Monitoring
+- Workspace Settings
+
+### API foundation
+A local zero-dependency Node API is included at `server/index.mjs`.
+
+Available demo endpoints:
+- `GET /api/health`
+- `POST /api/auth/login`
+- `POST /api/demo-requests`
+- `GET /api/workspace/overview`
+- `GET /api/integrations`
+- `GET /api/events`
+- `GET /api/journeys`
+- `GET /api/attribution`
+- `GET /api/agents`
+- `GET /api/audiences`
+- `GET /api/monitoring`
+
+The Vite development server proxies `/api` to `http://127.0.0.1:3001`.
 
 ## Run locally
 
+Install packages:
+
 ```bash
 npm install
+```
+
+Terminal 1 — API:
+
+```bash
+npm run api
+```
+
+Terminal 2 — frontend:
+
+```bash
 npm run dev
 ```
 
-Open http://localhost:5173
+Open:
 
-## Build
+```text
+http://localhost:5173
+```
+
+The API health endpoint is:
+
+```text
+http://localhost:3001/api/health
+```
+
+## Build and type-check
 
 ```bash
+npm run check
 npm run build
 ```
 
-## Implementation direction
+## Functional architecture
 
-The next implementation passes should add real backend persistence, authentication/RBAC, connector OAuth, ingestion/event pipelines, identity stitching, attribution computation, agent execution, alerts/monitoring, audit logs, billing, and production deployment infrastructure.
+```text
+Paid click / organic / direct / offline source
+                 ↓
+     GCLID / FBCLID / first-party IDs
+                 ↓
+      Web / App / WhatsApp / Calls
+                 ↓
+          Identity stitching
+                 ↓
+              CRM Lead
+                 ↓
+      Enrichment + lead grading
+                 ↓
+       Funnel-agent automation
+                 ↓
+ Qualification / consultation / booking
+                 ↓
+              Revenue
+                 ↓
+       Full-path attribution
+                 ↓
+   Conversion adjustment / signal return
+                 ↓
+ Google / Meta / LinkedIn optimization
+                 ↓
+  Audience activation and suppression
+```
 
-> Brand note: the code uses the AceMarketing identity. Public/proprietary third-party trademarks, customer logos, screenshots and copyrighted assets are not bundled into this repository.
+## EasyInsights parity areas represented
+
+The supplied product material describes:
+- stitching online and offline customer journeys;
+- server-side conversion activation;
+- Google offline/enhanced conversions;
+- Meta CAPI-style conversion delivery;
+- CRM-context enrichment;
+- call and WhatsApp attribution;
+- audience activation and suppression;
+- continuous event synchronization;
+- full-path attribution;
+- prebuilt funnel agents.
+
+Those capabilities are represented in the current AceMarketing product UI and API foundation.
+
+## Production work still required
+
+This repository now has the front-end product experience and API contract foundation, but the following are still required before calling it production-ready:
+
+1. Persistent database and migrations
+2. Real user authentication and RBAC
+3. Workspace and tenant isolation
+4. OAuth for Google, Meta, LinkedIn, CRM and messaging connectors
+5. Secure credential vault / secret management
+6. Tracking SDK and server-side event ingestion
+7. Identity graph / deterministic stitching
+8. GCLID and FBCLID persistence
+9. Real Google ECL/OCI delivery
+10. Real Meta Conversions API delivery
+11. Retry queues, dead-letter handling and idempotency
+12. CRM ingestion and stage mapping
+13. WhatsApp and telephony ingestion
+14. Attribution computation engine
+15. Audience synchronization workers
+16. Agent runtime and approval workflow
+17. Audit logs and compliance controls
+18. Monitoring/alerting and operational dashboards
+19. Billing and usage metering
+20. Automated tests, CI/CD and production deployment
+
+## Brand and IP note
+
+AceMarketing reproduces comparable product workflows, capabilities, navigation patterns and visual direction under its own identity. Third-party proprietary source code, logos, screenshots, customer marks and copyrighted assets are not bundled into this repository unless separately licensed or provided with permission.
