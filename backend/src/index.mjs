@@ -1177,6 +1177,10 @@ const server = http.createServer(async (req,res)=>{
       if(!body.scenario) return send(req,res,400,{error:'scenario required'})
       return send(req,res,200,{scenario:body.scenario,status:'passed',deterministicMatch:true,testedAt:new Date().toISOString()})
     }
+    if (req.method === 'GET' && url.pathname === '/api/fingerprinting/matches') {
+      const live=await attributionStats(workspaceId)
+      return send(req,res,200,{items:(live?.recent||[]).filter(x=>x.status==='matched').slice(0,100),methods:live?.methods||[]})
+    }
     if (req.method === 'GET' && url.pathname === '/api/sites') return send(req,res,200,{items:[
       {domain:'www.aceedtech.example',environment:'production',pixel:'active',server:'connected',coverage:97.4},
       {domain:'apply.aceedtech.example',environment:'production',pixel:'active',server:'connected',coverage:95.8},
@@ -1207,6 +1211,21 @@ const server = http.createServer(async (req,res)=>{
       const body=await readBody(req)
       if(!body.pattern) return send(req,res,400,{error:'pattern required'})
       return send(req,res,200,{pattern:body.pattern,status:'blocked_from_optimization',ruleId:randomUUID(),appliedAt:new Date().toISOString()})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/fraud/review') {
+      const body=await readBody(req)
+      if(!body.pattern) return send(req,res,400,{error:'pattern required'})
+      const now=new Date().toISOString()
+      const item={id:'review_'+randomUUID(),kind:'fraud',pattern:String(body.pattern),status:'queued',createdAt:now,requestedBy:req.user?.email||req.user?.userId||null}
+      await mutateState(s=>{
+        s.reviewQueue=s.reviewQueue||[]
+        s.reviewQueue.unshift(item)
+        s.reviewQueue=s.reviewQueue.slice(0,1000)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'fraud.review_queued',entityId:item.id,pattern:item.pattern,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,202,item)
     }
     if (req.method === 'GET' && url.pathname === '/api/deep-links') return send(req,res,200,{items:[
       {name:'MBA Application',slug:'mba-apply',status:'active'},
@@ -1932,6 +1951,13 @@ const server = http.createServer(async (req,res)=>{
         s.audit.unshift({id:randomUUID(),action:'model.run',entityId:run.id,at:run.completedAt})
       })
       return send(req,res,202,run)
+    }
+    if (req.method === 'GET' && url.pathname === '/api/models/validation') {
+      const name=String(url.searchParams.get('name')||'')
+      const state=await getState()
+      const runs=(state.agentRuns||[]).filter(x=>x.kind==='model'&&(!name||x.name===name)).slice(0,20)
+      const leadStats=await leadOpsStats(workspaceId).catch(()=>({}))
+      return send(req,res,200,{name:name||null,runs,leadPopulation:Number(leadStats?.total||0),averageLeadScore:Number(leadStats?.averageScore||0),generatedAt:new Date().toISOString(),notice:'Validation surface reflects persisted scoring runs and lead population; it is not a substitute for offline statistical validation.'})
     }
     if (req.method === 'GET' && url.pathname === '/api/routing') {
       return send(req,res,200,{rules:[
