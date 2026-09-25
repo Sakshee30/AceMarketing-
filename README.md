@@ -1194,3 +1194,18 @@ The migration safety copies have now been removed after the canonical frontend/b
 ## Repository cleanup after migration
 
 After the canonical frontend/backend build passed CI, the duplicate root-level `src/`, `server/`, and root `index.html` migration copies were removed. This leaves one authoritative frontend tree and one authoritative backend tree, reducing drift risk and making local development, CI, deployment, and code ownership easier to reason about.
+
+
+## Backend-owned public navigation content
+
+The public navigation and marketing catalog data are now isolated in `backend/src/public-content.mjs` instead of being embedded directly inside the HTTP server.
+
+New public endpoint:
+
+```text
+GET /api/public/navigation
+```
+
+The frontend header requests this configuration and uses it for Industries, Agents and Resources menu copy, while keeping icons and route actions inside the frontend. Local fallback content remains in place so the navigation still renders if the public API is temporarily unavailable.
+
+This keeps the EasyInsights-inspired visual structure configurable from the backend while preserving original AceMarketing wording. Residual EasyInsights-like public phrases such as the exact "three problems" and "plug the leaks" wording were also rewritten in AceMarketing's own language.
