@@ -19,6 +19,7 @@ import { closeCohortAnalytics, cohortAnalytics } from './cohort-analytics.mjs'
 import { closeReportScheduler, listReportDeliveries, listReportSchedules, queueReportNow, reportMailConfigured, saveReportSchedule } from './report-scheduler.mjs'
 import { closeEventRules, createEventRule, evaluateEventRules, eventRuleStats, listEventRuleRuns, listEventRules, markEventRuleActivation, setEventRuleEnabled } from './event-rules.mjs'
 import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, publicChallenges, publicCaseStudies, publicResources, publicResourceCenter } from './public-content.mjs'
+import { parseWhatsAppWebhook, resolveWhatsAppWorkspace, sendWhatsAppMessage, verifyWhatsAppWebhookChallenge, verifyWhatsAppWebhookSignature } from './whatsapp-cloud.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -214,7 +215,7 @@ const send = (req,res,status,data,extra={}) => {
   res.end(status===204?'':JSON.stringify(data))
 }
 
-const publicPaths=new Set(['/api/health','/api/ready','/api/auth/login','/api/invitations/activate','/api/demo-requests','/api/track','/api/pricing/recommend','/api/pricing/quote','/api/public/navigation','/api/public/industries','/api/public/agents','/api/public/integrations','/api/public/challenges','/api/public/case-studies','/api/public/resources','/api/public/resource-center'])
+const publicPaths=new Set(['/api/health','/api/ready','/api/auth/login','/api/invitations/activate','/api/demo-requests','/api/track','/api/pricing/recommend','/api/pricing/quote','/api/public/navigation','/api/public/industries','/api/public/agents','/api/public/integrations','/api/public/challenges','/api/public/case-studies','/api/public/resources','/api/public/resource-center','/api/webhooks/whatsapp'])
 const isPublicRequest=(method,path)=>publicPaths.has(path)||(method==='GET'&&path==='/api/integrations/oauth/callback')||(method==='POST'&&path==='/api/billing/webhook')||path==='/api/consent'
 const meteredMetricFor=(method,path)=>{
   if(method!=='POST') return null
@@ -224,6 +225,7 @@ const meteredMetricFor=(method,path)=>{
   if(path==='/api/audiences/sync') return 'audience_syncs'
   if(path==='/api/custom-integrations/test') return 'custom_integration_tests'
   if(path==='/api/qualification-calls'||path==='/api/qualification-calls/retry'||path==='/api/meetings/remind'||path==='/api/feedback/request') return 'agent_actions'
+  if(path==='/api/whatsapp/messages') return 'agent_actions'
   return null
 }
 const server = http.createServer(async (req,res)=>{
@@ -261,6 +263,69 @@ const server = http.createServer(async (req,res)=>{
       return send(req,res,200,{received:true,...result})
     }catch(error){
       return send(req,res,400,{error:error instanceof Error?error.message:'invalid billing webhook'})
+    }
+  }
+  if(req.method==='GET'&&url.pathname==='/api/webhooks/whatsapp'){
+    const check=verifyWhatsAppWebhookChallenge({
+      mode:url.searchParams.get('hub.mode'),
+      verifyToken:url.searchParams.get('hub.verify_token'),
+      challenge:url.searchParams.get('hub.challenge')
+    })
+    if(!check.ok) return send(req,res,check.status,{error:check.error})
+    res.writeHead(200,{'Content-Type':'text/plain; charset=utf-8','X-Request-ID':req.requestId})
+    res.end(check.challenge)
+    return
+  }
+  if(req.method==='POST'&&url.pathname==='/api/webhooks/whatsapp'){
+    try{
+      const raw=await readRawBody(req)
+      if(!verifyWhatsAppWebhookSignature(raw,req.headers['x-hub-signature-256'])) return send(req,res,401,{error:'invalid WhatsApp webhook signature'})
+      let payload={}
+      try{payload=raw?JSON.parse(raw):{}}catch{return send(req,res,400,{error:'invalid WhatsApp webhook json'})}
+      const events=parseWhatsAppWebhook(payload)
+      const resolvedWorkspace=resolveWhatsAppWorkspace(events,req.headers['x-workspace-id'])
+      if(!resolvedWorkspace) return send(req,res,400,{error:'unable to resolve workspace for WhatsApp phone number'})
+      workspaceId=resolvedWorkspace
+      await withWorkspace(workspaceId,async()=>{
+        const now=new Date().toISOString()
+        await mutateState(s=>{
+          s.whatsappEvents=s.whatsappEvents||[]
+          for(const event of events){
+            const duplicate=s.whatsappEvents.some(x=>x.id===event.id&&x.kind===event.kind&&x.status===event.status)
+            if(!duplicate) s.whatsappEvents.unshift({...event,receivedAt:now})
+          }
+          s.whatsappEvents=s.whatsappEvents.slice(0,10000)
+          s.audit=s.audit||[]
+          s.audit.unshift({id:randomUUID(),action:'whatsapp.webhook.received',entityId:events[0]?.id||null,count:events.length,at:now})
+          s.audit=s.audit.slice(0,1000)
+        })
+        for(const event of events){
+          if(event.kind!=='message'||!event.from) continue
+          await upsertLeadProfile(workspaceId,{
+            externalLeadId:'whatsapp:'+event.from,
+            name:event.contactName||null,
+            phone:event.from,
+            source:'WhatsApp',
+            whatsappEngaged:true,
+            lastActivity:event.timestamp,
+            whatsappSummary:event.text||event.messageType,
+            attributes:{whatsappMessageId:event.id,messageType:event.messageType,phoneNumberId:event.phoneNumberId}
+          }).catch(()=>null)
+          await recordAssistedEvent(workspaceId,{
+            event:'whatsapp.message_received',
+            eventType:'whatsapp.message_received',
+            eventId:event.id,
+            customerId:'whatsapp:'+event.from,
+            phone:event.from,
+            source:'whatsapp',
+            occurredAt:event.timestamp,
+            data:{messageType:event.messageType,phoneNumberId:event.phoneNumberId}
+          }).catch(()=>null)
+        }
+      })
+      return send(req,res,200,{received:true,workspaceId,events:events.length})
+    }catch(error){
+      return send(req,res,400,{error:error instanceof Error?error.message:'invalid WhatsApp webhook'})
     }
   }
   if(req.method==='GET'&&url.pathname==='/api/integrations/oauth/callback'){
@@ -315,6 +380,49 @@ const server = http.createServer(async (req,res)=>{
     if (req.method === 'GET' && url.pathname === '/api/public/case-studies') return send(req,res,200,{items:publicCaseStudies})
     if (req.method === 'GET' && url.pathname === '/api/public/resources') return send(req,res,200,{items:publicResources})
     if (req.method === 'GET' && url.pathname === '/api/public/resource-center') return send(req,res,200,publicResourceCenter)
+    if (req.method === 'GET' && url.pathname === '/api/whatsapp/messages') {
+      const state=await getState()
+      return send(req,res,200,{items:(state.whatsappEvents||[]).slice(0,200)})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/whatsapp/messages') {
+      const body=await readBody(req)
+      const to=String(body.to||'').replace(/\D/g,'')
+      if(!to) return send(req,res,400,{error:'recipient phone is required'})
+      const purpose=String(body.purpose||'transactional').toLowerCase()
+      if(purpose==='marketing'){
+        const subjectId=String(body.customerId||to)
+        const consent=await consentAllows(workspaceId,{subjectType:body.customerId?'customer':'visitor',subjectId,category:'marketing'})
+        if(!consent.allowed) return send(req,res,403,{error:'marketing consent required',reason:consent.reason})
+      }
+      try{
+        const result=await sendWhatsAppMessage(workspaceId,body)
+        const now=new Date().toISOString()
+        await mutateState(s=>{
+          s.whatsappEvents=s.whatsappEvents||[]
+          s.whatsappEvents.unshift({
+            kind:'outbound',
+            id:result.externalId||('wa_out_'+randomUUID()),
+            phoneNumberId:String(body.phoneNumberId||process.env.WHATSAPP_PHONE_NUMBER_ID||''),
+            recipientId:to,
+            messageType:body.templateName?'template':'text',
+            text:body.text?String(body.text).slice(0,4000):'',
+            templateName:body.templateName||null,
+            status:'accepted',
+            timestamp:now,
+            provider:'whatsapp_cloud',
+            latencyMs:result.latencyMs,
+            receivedAt:now
+          })
+          s.whatsappEvents=s.whatsappEvents.slice(0,10000)
+          s.audit=s.audit||[]
+          s.audit.unshift({id:randomUUID(),action:'whatsapp.message.sent',entityId:result.externalId||null,recipient:to,at:now})
+          s.audit=s.audit.slice(0,1000)
+        })
+        return send(req,res,202,{accepted:true,provider:result.provider,externalId:result.externalId,latencyMs:result.latencyMs})
+      }catch(error){
+        return send(req,res,400,{error:error instanceof Error?error.message:'WhatsApp message failed'})
+      }
+    }
     if (req.method === 'POST' && url.pathname === '/api/pricing/recommend') {
       const body=await readBody(req)
       const challenges=Array.isArray(body.challenges)?body.challenges:[]
