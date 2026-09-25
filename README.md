@@ -3583,3 +3583,14 @@ The Reports workspace no longer renders hard-coded scheduled-report rows that im
 - Creating a schedule persists it first, refreshes the list, and selects the newly created schedule.
 - The UI no longer claims Slack delivery; the implemented delivery path is SMTP email with CSV attachment.
 - Recent delivery history remains sourced from persisted `ace_report_deliveries` records.
+
+
+### Backend-filtered attribution windows
+
+The Full-path Attribution period selector is now operational.
+
+- 7, 30 and 90 day windows are sent to `GET /api/attribution-identity/stats`.
+- The attribution store filters click sessions by `first_seen_at` and assisted events by `occurred_at` before calculating totals.
+- Match methods, matched/unmatched counts, match rate, matched value and recent evidence all use the selected backend time window.
+- Active click-session coverage is calculated from the same selected window.
+- The UI refreshes automatically when the period changes and exposes an explicit refresh action.
