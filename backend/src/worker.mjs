@@ -3,6 +3,7 @@ import { closeQueue, completeJob, failJob, leaseJobs, queueAvailable } from './q
 import { deliverSignal } from './providers.mjs'
 import { syncAudienceProvider, writebackLead } from './activation-adapters.mjs'
 import { updateActivationRun, updateAudienceSyncState } from './lead-ops.mjs'
+import { dispatchAgentTransport, markMeetingReminder, updateAgentRun } from './agent-orchestrator.mjs'
 import { closeStore, mutateState, withWorkspace } from './store.mjs'
 
 if(!queueAvailable()) throw new Error('DATABASE_URL is required for the worker runtime')
@@ -40,6 +41,14 @@ const handle=async job=>{
     await updateActivationRun(job.workspace_id,activationRunId,{status:'succeeded',externalId:result.externalId,responseSummary:{status:result.status},attempts:job.attempts})
     return result
   }
+  if(job.kind==='agent_action'){
+    const {agentRunId,actionType,payload}=job.payload||{}
+    await updateAgentRun(job.workspace_id,agentRunId,{status:'running',attempts:job.attempts})
+    const result=await dispatchAgentTransport(actionType,payload||{})
+    if(actionType==='meeting_reminder'&&payload?.meetingId) await markMeetingReminder(job.workspace_id,payload.meetingId)
+    await updateAgentRun(job.workspace_id,agentRunId,{status:'succeeded',externalId:result.externalId,output:{provider:result.provider,status:result.status},attempts:job.attempts})
+    return result
+  }
   throw new Error('unsupported job kind: '+job.kind)
 }
 
@@ -59,6 +68,9 @@ const runBatch=async()=>{
         const state=failed?.status==='dead_letter'?'failed':'retrying'
         await updateActivationRun(job.workspace_id,job.payload.activationRunId,{status:state,error:message,attempts:job.attempts}).catch(()=>{})
         await updateAudienceSyncState(job.workspace_id,job.payload.audienceId,String(job.payload.provider).toLowerCase(),{status:state==='failed'?'failed':'retrying',error:message}).catch(()=>{})
+      }
+      if(job.kind==='agent_action'&&job.payload?.agentRunId){
+        await updateAgentRun(job.workspace_id,job.payload.agentRunId,{status:failed?.status==='dead_letter'?'failed':'retrying',error:message,attempts:job.attempts}).catch(()=>{})
       }
       if(job.kind==='crm_writeback'&&job.payload?.activationRunId){
         await updateActivationRun(job.workspace_id,job.payload.activationRunId,{status:failed?.status==='dead_letter'?'failed':'retrying',error:message,attempts:job.attempts}).catch(()=>{})
