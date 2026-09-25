@@ -93,3 +93,79 @@ export const publicIntegrations = [
   {group:'Calling',items:['Exotel','Knowlarity','Tata Tele','MyOperator']},
   {group:'Web, App & Commerce',items:['WordPress','React App','WooCommerce','Magento','Custom Backend']},
 ]
+
+
+export const publicChallenges = [
+  {
+    key:'operations',
+    label:'Business & operational impact',
+    title:'Teams lose speed when every system tells a different story.',
+    points:[
+      'Acquisition cost rises while lead quality becomes harder to explain',
+      'Marketing, sales, and leadership work from different numbers',
+      'Teams spend time repairing tracking instead of scaling campaigns',
+      'Budget decisions are made without reliable funnel evidence'
+    ],
+    action:'Connect the operating truth'
+  },
+  {
+    key:'tracking',
+    label:'Tracking & data quality',
+    title:'Broken event chains make optimization noisy before anyone notices.',
+    points:[
+      'Conversions fire inconsistently across destinations',
+      'Duplicate events distort optimization signals',
+      'Cross-domain and messaging paths break continuity',
+      'Reporting lacks one normalized event model'
+    ],
+    action:'Repair signal quality'
+  },
+  {
+    key:'optimization',
+    label:'Ad platform optimization',
+    title:'Algorithms learn the wrong lesson when downstream quality never returns.',
+    points:[
+      'Campaigns optimize toward shallow form fills',
+      'Lookalike seeds are polluted by low-quality demand',
+      'Converted and irrelevant users remain targetable',
+      'CAC rises while platforms cannot see real business value'
+    ],
+    action:'Return stronger outcomes'
+  },
+  {
+    key:'measurement',
+    label:'Attribution & measurement',
+    title:'A fragmented journey turns every channel report into a partial answer.',
+    points:[
+      'Web, app, calls, and offline activity stay disconnected',
+      'Post-lead outcomes disappear from media measurement',
+      'High-value cohorts remain hidden from channel reporting',
+      'Leadership cannot defend budget decisions with one evidence trail'
+    ],
+    action:'Build full-path visibility'
+  },
+  {
+    key:'audience',
+    label:'Audience & personalization',
+    title:'Weak identity makes targeting broad, repetitive, and expensive.',
+    points:[
+      'Segments are too shallow for useful lookalikes',
+      'Retargeting ignores actual journey behavior',
+      'Upsell and retention lack purchase and lifecycle context',
+      'Returning customers are difficult to recognize consistently'
+    ],
+    action:'Activate better audiences'
+  },
+  {
+    key:'privacy',
+    label:'Privacy, consent & compliance',
+    title:'Growth systems need first-party controls that survive changing privacy rules.',
+    points:[
+      'Third-party tracking keeps losing reach and reliability',
+      'Consent state is disconnected from activation destinations',
+      'Regional rules complicate uncontrolled audience use',
+      'Teams lack a durable first-party governance layer'
+    ],
+    action:'Govern first-party activation'
+  }
+]
