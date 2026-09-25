@@ -1407,32 +1407,61 @@ function Alerts(){
  {current&&<div className="app-panel alert-center-detail"><div className="panel-head"><div><h3>{current.title}</h3><p>{current.source}</p></div><span className={'diag-severity '+String(current.severity).toLowerCase()}>{current.severity}</span></div><p className="alert-detail-copy">{current.detail}</p><div className="diagnostic-evidence">{[['Alert ID',current.id],['Detected',current.age],['Metric',current.metric||'—'],['Threshold',current.threshold??'—'],['Observed',current.metric_value??'—'],['Status',current.status]].map(x=><article key={x[0]}><span>{x[0]}</span><b>{String(x[1])}</b></article>)}</div>{current.status==='open'?<div className="approval-actions"><button className="approve" onClick={()=>resolve(current.id)}><Check/>Mark resolved</button></div>:<div className="approval-final approved"><Check/><b>Resolved</b></div>}</div>}</div></>
 }
 function Developers(){
- const [secret,setSecret]=useState('whsec••••••••••••')
- const [delivery,setDelivery]=useState<any[]>([
-  ['evt_91','lead.qualified','200','412ms','Delivered'],
-  ['evt_90','revenue.closed','200','588ms','Delivered'],
-  ['evt_89','sync.failed','500','1.9s','Failed'],
-  ['evt_88','audience.updated','200','376ms','Delivered']
- ])
- const rotate=async()=>{try{const r:any=await api.rotateWebhookSecret();setSecret(r.secret)}catch{setSecret('whsec_demo_rotated')}}
- const retry=async(id:string)=>{await api.retryWebhook(id).catch(()=>null);setDelivery(xs=>xs.map(x=>x[0]===id?[x[0],x[1],'202','Queued','Retry queued']:x))}
- return <><PageHead crumb="Platform / Developers" title="Developer & webhook console" sub="Integrate proprietary systems with API keys, webhooks and server-to-server event contracts." action="Open API reference"/>
- <div className="stats-grid"><Stat label="API uptime" value="99.99%" sub="Demo operational surface" Icon={Activity}/><Stat label="Webhook delivery" value="99.61%" sub="Last 24 hours" Icon={RadioTower}/><Stat label="P95 latency" value="1.7s" sub="API ingestion" Icon={Gauge}/><Stat label="Active endpoints" value="3" sub="Outbound webhooks" Icon={Cable}/></div>
- <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>API quick start</h3><p>Server-to-server event ingestion</p></div><span className="healthy">v1</span></div><div className="code-block"><code>{`POST /api/track
-Authorization: Bearer ace_workspace_key
-Content-Type: application/json
-
-{
-  "event": "lead.qualified",
-  "customerId": "cust_18421",
-  "gclid": "gclid_example",
-  "value": 0
-}`}</code></div><div className="sdk-tabs"><button>cURL</button><button>Node.js</button><button>Python</button></div></div>
- <div className="app-panel"><div className="panel-head"><div><h3>Webhook signing</h3><p>Verify outbound event authenticity</p></div></div><div className="api-key-box"><div><span>Signing secret</span><code>{secret}</code></div><button onClick={rotate}>Rotate secret</button></div><div className="setting-line"><span>Signature header</span><b>X-Ace-Signature</b><span className="healthy">HMAC-SHA256</span></div><div className="setting-line"><span>Timestamp header</span><b>X-Ace-Timestamp</b><span className="healthy">Required</span></div><div className="setting-line"><span>Replay tolerance</span><b>5 minutes</b><button>Edit</button></div></div></div>
- <div className="app-panel"><div className="panel-head"><div><h3>Webhook delivery log</h3><p>Inspect status, latency and retry state</p></div><button>+ Add endpoint</button></div><table><thead><tr><th>Delivery ID</th><th>Event</th><th>HTTP</th><th>Latency</th><th>Status</th><th></th></tr></thead><tbody>{delivery.map(x=><tr key={x[0]}><td><code>{x[0]}</code></td><td>{x[1]}</td><td>{x[2]}</td><td>{x[3]}</td><td><span className={x[4].toLowerCase().replace(' ','-')}>{x[4]}</span></td><td>{x[4]==='Failed'&&<button onClick={()=>retry(x[0])}>Retry</button>}</td></tr>)}</tbody></table></div>
- <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Event catalog</h3><p>Stable contracts for connected systems</p></div></div>{[['lead.created','Lead entered CRM'],['lead.qualified','Qualified outcome'],['consultation.booked','Meeting scheduled'],['revenue.closed','Closed revenue'],['audience.updated','Activation segment changed'],['sync.failed','Connector delivery failure']].map(x=><div className="developer-event-row" key={x[0]}><code>{x[0]}</code><span>{x[1]}</span><ChevronRight/></div>)}</div><div className="app-panel"><div className="panel-head"><div><h3>Reliability contract</h3><p>Delivery guarantees in the implementation design</p></div></div>{[['Idempotency','event_id required'],['Retries','Exponential backoff'],['Dead-letter queue','After retry exhaustion'],['Observability','Delivery history + alerting'],['Versioning','Stable event schema versions']].map(x=><div className="setting-line" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><Check/></div>)}</div></div></>
+ const [secret,setSecret]=useState('Hidden until rotated')
+ const [delivery,setDelivery]=useState<any[]>([])
+ const [endpoints,setEndpoints]=useState<any[]>([])
+ const [sdk,setSdk]=useState<'curl'|'node'|'python'>('curl')
+ const [builder,setBuilder]=useState(false)
+ const [endpointDraft,setEndpointDraft]=useState({event:'lead.qualified',url:''})
+ const [notice,setNotice]=useState('')
+ const [busy,setBusy]=useState('')
+ const load=async()=>{
+  try{
+   const r:any=await api.webhookDeliveries()
+   setDelivery(r.items||[])
+   setEndpoints(r.endpoints||[])
+  }catch(e:any){setNotice(e?.message||'Developer data could not be loaded.')}
+ }
+ useEffect(()=>{load()},[])
+ const rotate=async()=>{
+  setBusy('secret');setNotice('')
+  try{const r:any=await api.rotateWebhookSecret();setSecret(r.secret);setNotice('New signing secret generated. Copy it now; only its fingerprint is persisted.')}
+  catch(e:any){setNotice(e?.message||'Secret rotation failed.')}
+  finally{setBusy('')}
+ }
+ const retry=async(id:string)=>{
+  setBusy(id);setNotice('')
+  try{await api.retryWebhook(id);setNotice('Webhook delivery re-queued.');await load()}
+  catch(e:any){setNotice(e?.message||'Retry failed.')}
+  finally{setBusy('')}
+ }
+ const addEndpoint=async()=>{
+  if(!endpointDraft.event.trim()||!endpointDraft.url.trim())return
+  setBusy('endpoint');setNotice('')
+  try{await api.createWebhookEndpoint(endpointDraft);setBuilder(false);setEndpointDraft({event:'lead.qualified',url:''});setNotice('Webhook endpoint created.');await load()}
+  catch(e:any){setNotice(e?.message||'Endpoint could not be created.')}
+  finally{setBusy('')}
+ }
+ const copy=async(text:string)=>{try{await navigator.clipboard.writeText(text);setNotice('Copied to clipboard.')}catch{setNotice('Clipboard access is unavailable in this browser.')}}
+ const snippets:any={
+  curl:`curl -X POST "$ACE_API_BASE/api/track" \\\n  -H "Authorization: Bearer $ACE_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '{"event":"lead.qualified","customerId":"cust_18421","gclid":"gclid_example"}'`,
+  node:`await fetch(process.env.ACE_API_BASE + '/api/track', {\n  method: 'POST',\n  headers: { Authorization: 'Bearer ' + process.env.ACE_API_KEY, 'Content-Type': 'application/json' },\n  body: JSON.stringify({ event: 'lead.qualified', customerId: 'cust_18421', gclid: 'gclid_example' })\n})`,
+  python:`import os, requests\nrequests.post(os.environ["ACE_API_BASE"] + "/api/track", headers={"Authorization": "Bearer " + os.environ["ACE_API_KEY"]}, json={"event":"lead.qualified","customerId":"cust_18421","gclid":"gclid_example"})`
+ }
+ const delivered=delivery.filter((x:any)=>String(x.status).toLowerCase()==='delivered').length
+ const failed=delivery.filter((x:any)=>String(x.status).toLowerCase()==='failed').length
+ const successRate=delivery.length?((delivered/delivery.length)*100).toFixed(1):'—'
+ const p95=delivery.length?Math.max(...delivery.map((x:any)=>Number(x.latencyMs||0))):0
+ return <><PageHead crumb="Platform / Developers" title="Developer & webhook console" sub="Integrate proprietary systems with API keys, signed webhooks and server-to-server event contracts." action="Open API reference" onAction={()=>document.getElementById('api-quick-start')?.scrollIntoView({behavior:'smooth'})}/>
+ {notice&&<div className="delivery-notice ok"><CheckCircle2/><span>{notice}</span></div>}
+ <div className="stats-grid"><Stat label="Webhook deliveries" value={String(delivery.length)} sub="Persisted delivery records" Icon={Activity}/><Stat label="Delivery success" value={successRate==='—'?'—':successRate+'%'} sub={failed+' failed deliveries'} Icon={RadioTower}/><Stat label="Max observed latency" value={p95?p95+'ms':'—'} sub="Current loaded history" Icon={Gauge}/><Stat label="Active endpoints" value={String(endpoints.filter((x:any)=>x.status==='active').length)} sub="Persisted outbound endpoints" Icon={Cable}/></div>
+ <div className="two-col"><div className="app-panel" id="api-quick-start"><div className="panel-head"><div><h3>API quick start</h3><p>Server-to-server event ingestion</p></div><button onClick={()=>copy(snippets[sdk])}>Copy</button></div><div className="code-block"><code>{snippets[sdk]}</code></div><div className="sdk-tabs"><button className={sdk==='curl'?'active':''} onClick={()=>setSdk('curl')}>cURL</button><button className={sdk==='node'?'active':''} onClick={()=>setSdk('node')}>Node.js</button><button className={sdk==='python'?'active':''} onClick={()=>setSdk('python')}>Python</button></div></div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Webhook signing</h3><p>Verify outbound event authenticity</p></div></div><div className="api-key-box"><div><span>Signing secret</span><code>{secret}</code></div><button disabled={busy==='secret'} onClick={rotate}>{busy==='secret'?'Rotating…':'Rotate secret'}</button></div><div className="setting-line"><span>Signature header</span><b>X-Ace-Signature</b><span className="healthy">HMAC-SHA256</span></div><div className="setting-line"><span>Timestamp header</span><b>X-Ace-Timestamp</b><span className="healthy">Required</span></div><div className="setting-line"><span>Replay tolerance</span><b>5 minutes</b><span className="healthy">Enforced</span></div></div></div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Webhook endpoints</h3><p>Workspace-specific outbound subscriptions</p></div><button onClick={()=>setBuilder(true)}><Plus/>Add endpoint</button></div>{endpoints.length?endpoints.map((x:any)=><div className="setting-line" key={x.id}><code>{x.event}</code><b>{x.url}</b><span className={x.status==='active'?'healthy':'status'}>{x.status}</span></div>):<div className="empty-delivery-state"><Cable/><div><b>No webhook endpoints yet</b><small>Add an HTTPS endpoint to receive workspace events.</small></div></div>}</div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Webhook delivery log</h3><p>Inspect persisted status, latency and retry state</p></div><button onClick={load}>Refresh</button></div>{delivery.length?<table><thead><tr><th>Delivery ID</th><th>Event</th><th>HTTP</th><th>Latency</th><th>Status</th><th></th></tr></thead><tbody>{delivery.map((x:any)=><tr key={x.id}><td><code>{x.id}</code></td><td>{x.event}</td><td>{x.statusCode??'—'}</td><td>{x.latencyMs?x.latencyMs+'ms':'—'}</td><td><span className={String(x.status).toLowerCase().replace(' ','-')}>{x.status}</span></td><td>{String(x.status).toLowerCase()!=='delivered'&&<button disabled={busy===x.id} onClick={()=>retry(x.id)}>{busy===x.id?'Queuing…':'Retry'}</button>}</td></tr>)}</tbody></table>:<div className="empty-delivery-state"><RadioTower/><div><b>No webhook deliveries yet</b><small>Delivery history appears after an outbound endpoint receives an event.</small></div></div>}</div>
+ <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Event catalog</h3><p>Stable contracts for connected systems</p></div></div>{[['lead.created','Lead entered CRM'],['lead.qualified','Qualified outcome'],['consultation.booked','Meeting scheduled'],['revenue.closed','Closed revenue'],['audience.updated','Activation segment changed'],['sync.failed','Connector delivery failure']].map(x=><button className="developer-event-row developer-event-button" key={x[0]} onClick={()=>{setEndpointDraft({event:x[0],url:''});setBuilder(true)}}><code>{x[0]}</code><span>{x[1]}</span><ChevronRight/></button>)}</div><div className="app-panel"><div className="panel-head"><div><h3>Reliability contract</h3><p>Delivery guarantees in the implementation design</p></div></div>{[['Idempotency','event_id required'],['Retries','Exponential backoff'],['Dead-letter queue','After retry exhaustion'],['Observability','Delivery history + alerting'],['Versioning','Stable event schema versions']].map(x=><div className="setting-line" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><Check/></div>)}</div></div>
+ {builder&&<div className="connector-modal"><div className="connector-card"><div className="connector-modal-head"><div><Cable/><div><b>Add outbound webhook</b><small>Subscribe one HTTPS endpoint to one workspace event.</small></div></div><button onClick={()=>setBuilder(false)}><X/></button></div><div className="connector-step"><label>Event<input value={endpointDraft.event} onChange={e=>setEndpointDraft({...endpointDraft,event:e.target.value})}/></label><label>HTTPS endpoint<input placeholder="https://example.com/webhooks/ace" value={endpointDraft.url} onChange={e=>setEndpointDraft({...endpointDraft,url:e.target.value})}/></label><button disabled={busy==='endpoint'||!endpointDraft.event.trim()||!endpointDraft.url.trim()} onClick={addEndpoint}>{busy==='endpoint'?'Creating…':'Create endpoint'}</button></div></div></div>}</>
 }
-
 function UsersRolesSettings(){
  const [members,setMembers]=useState<any[]>([])
  const [email,setEmail]=useState('')
