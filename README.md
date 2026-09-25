@@ -3594,3 +3594,17 @@ The Full-path Attribution period selector is now operational.
 - Match methods, matched/unmatched counts, match rate, matched value and recent evidence all use the selected backend time window.
 - Active click-session coverage is calculated from the same selected window.
 - The UI refreshes automatically when the period changes and exposes an explicit refresh action.
+
+
+### Responsive workspace drawer
+
+The product workspace now uses a real mobile navigation drawer instead of compressing the full 40+ feature sidebar into a narrow rail.
+
+- Below 720px the main workspace becomes full width.
+- An explicit **Open workspace navigation** control opens the drawer.
+- The full feature search and grouped navigation remain available inside the drawer.
+- Selecting a feature closes the drawer and returns focus to the operating surface.
+- A backdrop provides a predictable close target.
+- The drawer respects reduced-motion preferences.
+- The floating Dashboard Navigator moves above the privacy banner when consent choices are visible so both controls remain usable.
+- Sidebar group, section-strip and header controls now have distinct accessible names to avoid ambiguous navigation targets.
