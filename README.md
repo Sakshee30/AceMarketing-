@@ -2574,3 +2574,114 @@ Additional visible controls converted from decorative to functional:
 The developer console no longer injects fake webhook delivery records when no real records exist. Empty delivery history is shown as an empty operational state.
 
 This continues the production-hardening rule used across signal delivery, WhatsApp, call tracking, calendar scheduling and Ask Ace: **missing data is represented as missing data, not replaced with invented production metrics.**
+
+
+## Diagnostics, review tooling and authentication hardening
+
+This pass continues the rule that visible controls must reflect real workspace operations rather than decorative SaaS states.
+
+### Live diagnostics
+
+`GET /api/diagnostics` is now derived from workspace state, including:
+
+- signal-delivery success/dead-letter state;
+- queue health;
+- connector health;
+- click-ID coverage from the attribution store;
+- quarantine state;
+- duplicate evidence from the workspace audit trail.
+
+`POST /api/diagnostics/scan` performs and persists an explicit workspace scan. The Diagnostics **Run full scan** button now calls this endpoint and reports the measured results.
+
+Diagnostic replay requests are persisted and audited instead of returning a throwaway synthetic ID.
+
+### Conversion adjustment preview
+
+Adjustment records are now persisted workspace state. New endpoint:
+
+```text
+POST /api/adjustments/preview
+```
+
+The **Preview payload** control renders the actual correction payload and deterministic idempotency key before the adjustment is applied. Applying the correction updates the persisted adjustment and audit trail.
+
+### Site event debugger
+
+New endpoint:
+
+```text
+GET /api/sites/debug?domain=<domain>
+```
+
+The Sites **Open event debugger** action now displays real recently tracked events associated with the selected domain. When no matching event exists, the UI shows an explicit empty state instead of seeded events.
+
+### Matchback unmatched review
+
+New endpoint:
+
+```text
+GET /api/matchback/unmatched
+```
+
+The Matchback **View unmatched records** action now reads recent unmatched assisted-attribution records from the attribution store rather than opening a fixed example queue.
+
+### Google workspace login
+
+The former decorative **Continue with Google** action now uses a dedicated workspace-authentication flow:
+
+```text
+GET  /api/auth/google/start
+GET  /api/auth/google/callback
+POST /api/auth/google/exchange
+```
+
+Security controls:
+
+- OAuth state is HMAC signed and time limited;
+- PKCE is mandatory;
+- Google email must be verified;
+- the email must already belong to an active workspace member;
+- the callback produces a short-lived, single-use exchange code instead of putting the session JWT into the redirect URL;
+- the one-time code is SHA-256 hashed in persisted state;
+- normal workspace JWT/session issuance happens only after the exchange.
+
+Required production settings:
+
+```text
+GOOGLE_OAUTH_CLIENT_ID=...
+GOOGLE_OAUTH_CLIENT_SECRET=...
+AUTH_GOOGLE_REDIRECT_URI=https://api.example.com/api/auth/google/callback
+AUTH_GOOGLE_SUCCESS_URL=https://app.example.com/
+```
+
+### Password recovery
+
+The former decorative **Forgot password?** action now uses:
+
+```text
+POST /api/auth/password/forgot
+POST /api/auth/password/reset
+```
+
+Reset security behavior:
+
+- reset tokens are random and expire after 30 minutes;
+- only SHA-256 token hashes are persisted;
+- the forgot-password response remains generic to avoid account enumeration;
+- reset mail is delivered with the existing SMTP provider;
+- a successful password reset revokes the user's existing sessions;
+- development mode can return the reset token only when mail is not configured, for local testing;
+- production does not expose the reset token.
+
+Required production mail settings:
+
+```text
+AUTH_PUBLIC_APP_URL=https://app.example.com
+SMTP_HOST=...
+SMTP_PORT=587
+SMTP_FROM=...
+SMTP_USER=...
+SMTP_PASS=...
+```
+
+Production preflight now checks the Google-login redirect/success URLs, public application URL and SMTP requirements. Backend syntax and CI structure checks include `backend/src/auth-mailer.mjs`.
