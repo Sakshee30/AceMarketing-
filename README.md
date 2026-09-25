@@ -2217,3 +2217,66 @@ This pass removes another demo-only behavior from the production path:
 - Production preflight fails when the voice, reminder, feedback or signing-secret configuration is incomplete.
 
 This means the corresponding workspace buttons can no longer report successful execution when no real communication provider is configured.
+
+
+## WhatsApp Cloud API production pipeline
+
+This pass turns WhatsApp from a catalog/integration label into a provider-backed operational path.
+
+### Inbound webhook
+
+AceMarketing now exposes:
+
+- `GET /api/webhooks/whatsapp` for Meta webhook verification.
+- `POST /api/webhooks/whatsapp` for signed WhatsApp Cloud API events.
+- HMAC verification through `X-Hub-Signature-256`.
+- Workspace routing by WhatsApp phone-number ID.
+- Duplicate-resistant persistence of inbound messages and delivery-status events.
+- Automatic lead-profile upsert using the WhatsApp sender identity.
+- WhatsApp engagement/context written into the lead profile.
+- Assisted attribution records created for inbound WhatsApp messages.
+
+Required production settings:
+
+```text
+WHATSAPP_WEBHOOK_VERIFY_TOKEN=<random verify token>
+WHATSAPP_APP_SECRET=<Meta app secret>
+WHATSAPP_PHONE_NUMBER_ID=<Cloud API phone number ID>
+
+# Single-workspace setup:
+WHATSAPP_WEBHOOK_WORKSPACE_ID=ws_default
+
+# Or multi-workspace phone routing:
+WHATSAPP_PHONE_WORKSPACE_MAP={"1234567890":"ws_brand_a","9876543210":"ws_brand_b"}
+```
+
+### Outbound messaging
+
+Authenticated workspace users can use:
+
+- `GET /api/whatsapp/messages`
+- `POST /api/whatsapp/messages`
+
+Outbound messages use the stored WhatsApp connector credential and Meta Graph API. Text and approved template messages are supported. Provider message IDs and latency are persisted in the workspace event history.
+
+The Integrations workspace now includes a **WhatsApp Cloud API operations** panel with:
+
+- recipient + message composer;
+- provider-backed send action;
+- explicit error/success feedback;
+- inbound messages;
+- outbound message records;
+- delivery-status webhook records;
+- manual refresh.
+
+Marketing-purpose sends pass through the platform consent check. Transactional messaging can be sent independently when legally/contractually permitted by the workspace's messaging policy.
+
+### Production safety
+
+- Webhook signatures are mandatory.
+- Production webhook/message configuration is validated by `npm run preflight`.
+- The backend syntax check and CI canonical-structure check include `backend/src/whatsapp-cloud.mjs`.
+- The UI does not fabricate WhatsApp events when none exist.
+- A provider credential or phone-number configuration failure is surfaced as an error instead of being represented as a successful send.
+
+The remaining WhatsApp work is account-specific launch verification: configure the real Meta app, approved phone number, templates, webhook subscription, business verification and live delivery tests for the target production account.
