@@ -2355,7 +2355,7 @@ const server = http.createServer(async (req,res)=>{
       for(const x of state.customFeedAttributes||[])attrs.set(x.key,{...x,status:'mapped'})
       const deliveries=state.signalDeliveries||[]
       const destinations=[...new Set(deliveries.map(x=>x.destination).filter(Boolean))].map(destination=>{const list=deliveries.filter(x=>x.destination===destination);const enriched=list.filter(x=>Object.keys(x.replayPayload?.data||{}).length>0).length;return {destination,total:list.length,enriched,enrichedRate:list.length?Number((enriched/list.length*100).toFixed(1)):0}})
-      return send(req,res,200,{attributes:[...attrs.values()],stats:{activeAttributes:attrs.size,profiles:profiles.length,deliveries:deliveries.length,quarantined:Number((state.quarantinedEvents||[]).length)},destinations})
+      return send(req,res,200,{attributes:[...attrs.values()],mappings:(state.feedMappings||[]),stats:{activeAttributes:attrs.size,profiles:profiles.length,deliveries:deliveries.length,quarantined:Number((state.quarantinedEvents||[]).length)},destinations})
     }
     if (req.method === 'POST' && url.pathname === '/api/feed/attributes') {
       const body=await readBody(req)
@@ -2364,6 +2364,65 @@ const server = http.createServer(async (req,res)=>{
       const item={key,source:String(body.source||'custom'),sample:body.sample==null?null:String(body.sample).slice(0,120),status:'mapped',createdAt:new Date().toISOString()}
       await mutateState(s=>{s.customFeedAttributes=s.customFeedAttributes||[];const i=s.customFeedAttributes.findIndex(x=>x.key===key);if(i>=0)s.customFeedAttributes[i]=item;else s.customFeedAttributes.unshift(item);s.customFeedAttributes=s.customFeedAttributes.slice(0,500)})
       return send(req,res,201,item)
+    }
+    if (req.method === 'POST' && url.pathname === '/api/feed/mappings') {
+      const body=await readBody(req)
+      const sourceKey=String(body.sourceKey||'').trim()
+      const destination=String(body.destination||'').trim()
+      const targetKey=String(body.targetKey||'').trim()
+      if(!/^[A-Za-z][A-Za-z0-9_]{1,63}$/.test(sourceKey))return send(req,res,400,{error:'sourceKey must be 2-64 alphanumeric/underscore characters'})
+      if(!destination||!targetKey)return send(req,res,400,{error:'destination and targetKey are required'})
+      const now=new Date().toISOString()
+      const item={id:'feedmap_'+randomUUID(),sourceKey,destination:destination.slice(0,120),targetKey:targetKey.slice(0,120),transform:String(body.transform||'copy').slice(0,60),enabled:true,createdAt:now}
+      await mutateState(s=>{
+        s.feedMappings=s.feedMappings||[]
+        const i=s.feedMappings.findIndex(x=>x.sourceKey===sourceKey&&x.destination===item.destination&&x.targetKey===item.targetKey)
+        if(i>=0)s.feedMappings[i]={...s.feedMappings[i],...item,id:s.feedMappings[i].id,createdAt:s.feedMappings[i].createdAt,updatedAt:now}
+        else s.feedMappings.unshift(item)
+        s.feedMappings=s.feedMappings.slice(0,500)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'feed.mapping_saved',entityId:item.id,sourceKey,destination:item.destination,targetKey:item.targetKey,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,{item})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/feed/mappings/toggle') {
+      const body=await readBody(req)
+      if(!body.id||typeof body.enabled!=='boolean')return send(req,res,400,{error:'id and enabled required'})
+      let updated=null
+      await mutateState(s=>{
+        const item=(s.feedMappings||[]).find(x=>x.id===body.id)
+        if(item){item.enabled=body.enabled;item.updatedAt=new Date().toISOString();updated={...item}}
+      })
+      return updated?send(req,res,200,{item:updated}):send(req,res,404,{error:'feed mapping not found'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/feed/preview') {
+      const body=await readBody(req)
+      const state=await getState()
+      const profiles=await listLeadProfiles(workspaceId,20)
+      const destination=String(body.destination||'').trim()
+      const mappings=(state.feedMappings||[]).filter(x=>x.enabled!==false&&(!destination||x.destination===destination))
+      const profile=profiles[0]||null
+      const lookup=(key)=>{
+        if(!profile)return null
+        if(key==='lead_score')return profile.score
+        if(key==='lead_grade')return profile.grade
+        if(key==='lifecycle_stage')return profile.crm_stage
+        if(key==='device_platform')return profile.device_platform
+        if(key==='app_id')return profile.app_id
+        if(Object.prototype.hasOwnProperty.call(profile.attributes||{},key))return profile.attributes[key]
+        if(Object.prototype.hasOwnProperty.call(profile.journey||{},key))return profile.journey[key]
+        const custom=(state.customFeedAttributes||[]).find(x=>x.key===key)
+        return custom?.sample??null
+      }
+      const payload={}
+      for(const mapping of mappings){
+        let value=lookup(mapping.sourceKey)
+        if(mapping.transform==='string'&&value!=null)value=String(value)
+        if(mapping.transform==='number'&&value!=null&&Number.isFinite(Number(value)))value=Number(value)
+        payload[mapping.targetKey]=value
+      }
+      return send(req,res,200,{destination:destination||null,profileId:profile?.id||null,mappings:mappings.length,payload,generatedAt:new Date().toISOString(),notice:profile?'Preview generated from the latest persisted profile plus custom attribute samples.':'No persisted profile available; custom samples may still appear.'})
     }
     if (req.method === 'GET' && url.pathname === '/api/solutions') return send(req,res,200,{items:['Agency','Lead Generation','Enterprise','Mid Market Brand','Attribution Model','Alerts and Monitoring','Server to Server Integration']})
     if (req.method === 'POST' && url.pathname === '/api/audiences/preview') {
