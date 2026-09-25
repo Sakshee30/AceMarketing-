@@ -1,13 +1,10 @@
-import {decryptSecret} from './vault.mjs'
-import {getState,withWorkspace} from './store.mjs'
+import {connectorCredential} from './connector-auth.mjs'
 import {getAudienceBundle,getLeadProfile} from './lead-ops.mjs'
 
-const credentialFor=async(workspaceId,connector)=>withWorkspace(workspaceId,async()=>{
-  const state=await getState()
-  const record=(state.connectorCredentials||[]).find(x=>x.connector===connector)
-  if(!record?.encrypted) throw new Error(connector+' credential is not connected')
-  return decryptSecret(record.encrypted)
-})
+const credentialFor=async(workspaceId,connector)=>{
+  const result=await connectorCredential(workspaceId,connector)
+  return result.token
+}
 
 const requestJson=async(url,options={})=>{
   const started=Date.now()
