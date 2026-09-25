@@ -9,8 +9,8 @@ import {
 import './ace-platform.css'
 import { api } from './lib/api'
 
-type View='site'|'app'|'login'|'pricing'|'demo'|'company'|'resources'|'case-studies'|'privacy'|'terms'|'security'
-type AppTab='Overview'|'AdSync'|'Funnel'|'Events'|'Live Sync'|'Offline Attribution'|'Journeys'|'Attribution'|'Enrich'|'Agents'|'Integrations'|'Audiences'|'Monitoring'|'Settings'
+type View='site'|'app'|'login'|'pricing'|'demo'|'company'|'resources'|'case-studies'|'privacy'|'terms'|'security'|'solutions'
+type AppTab='Overview'|'AdSync'|'Funnel'|'Events'|'Live Sync'|'Offline Attribution'|'Journeys'|'Attribution'|'Enrich'|'Behavior'|'Feed'|'Agents'|'Integrations'|'Audiences'|'Monitoring'|'Settings'
 
 const agents=[
  ['Meta Advanced CAPI','Return qualified outcomes to Meta server-side with deduplication.','Lead Quality','+25–40% ROAS'],
@@ -45,14 +45,14 @@ const caseStudies=[
 function Brand({dark=false}:{dark?:boolean}){
  return <div className={'ace-brand '+(dark?'dark':'')}><span className="ace-mark"><i/><i/><i/></span><b>AceMarketing</b></div>
 }
-function Header({openApp,openLogin,openPricing,openDemo,openCompany,openResources,openCaseStudies}:{openApp:()=>void,openLogin:()=>void,openPricing:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void,openCaseStudies:()=>void}){
+function Header({openApp,openLogin,openPricing,openDemo,openCompany,openResources,openCaseStudies,openSolutions}:{openApp:()=>void,openLogin:()=>void,openPricing:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void,openCaseStudies:()=>void,openSolutions:()=>void}){
  const [open,setOpen]=useState(false)
  return <header className="marketing-header"><Brand/><nav className={open?'mobile-open':''}>
-  <a href="#platform">Platform</a><a href="#problems">Use cases</a><a href="#agents">Agents</a><a href="#integrations">Integrations</a><a href="#industries">Industries</a><button className="ghost-nav" onClick={openCaseStudies}>Case Studies</button><button className="ghost-nav" onClick={openResources}>Resources</button><button className="ghost-nav" onClick={openCompany}>Company</button><button className="ghost-nav" onClick={openPricing}>Pricing</button>
+  <a href="#platform">Platform</a><button className="ghost-nav" onClick={openSolutions}>Solutions</button><a href="#problems">Use cases</a><a href="#agents">Agents</a><a href="#integrations">Integrations</a><a href="#industries">Industries</a><button className="ghost-nav" onClick={openCaseStudies}>Case Studies</button><button className="ghost-nav" onClick={openResources}>Resources</button><button className="ghost-nav" onClick={openCompany}>Company</button><button className="ghost-nav" onClick={openPricing}>Pricing</button>
   <button className="ghost-nav" onClick={openLogin}>Login</button><button className="ghost-nav" onClick={openApp}>Open product</button><button onClick={openDemo} className="header-cta">Book a demo <ArrowRight size={15}/></button>
  </nav><button className="menu-toggle" onClick={()=>setOpen(!open)}>{open?<X/>:<Menu/>}</button></header>
 }
-function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResources,openCaseStudies}:{openApp:()=>void,openLogin:()=>void,openPricing:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void,openCaseStudies:()=>void}){
+function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResources,openCaseStudies,openSolutions}:{openApp:()=>void,openLogin:()=>void,openPricing:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void,openCaseStudies:()=>void,openSolutions:()=>void}){
  const [agentFilter,setAgentFilter]=useState('All')
  const [cookieOpen,setCookieOpen]=useState(true)
  const [cookiePrefs,setCookiePrefs]=useState({analytics:false,advertising:false,functionality:false})
@@ -60,7 +60,7 @@ function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResou
  return <div className="marketing-page">
   <div className="reference-banner"><span>Public EasyInsights benchmark referenced for parity:</span><b>up to 45% incremental revenue uplift</b><a href="#impact">See impact model <ArrowRight/></a></div>
   <section className="hero-wrap">
-   <Header openApp={openApp} openLogin={openLogin} openPricing={openPricing} openDemo={openDemo} openCompany={openCompany} openResources={openResources} openCaseStudies={openCaseStudies}/>
+   <Header openApp={openApp} openLogin={openLogin} openPricing={openPricing} openDemo={openDemo} openCompany={openCompany} openResources={openResources} openCaseStudies={openCaseStudies} openSolutions={openSolutions}/>
    <div className="hero-grid">
     <div className="hero-copy">
      <span className="kicker">FIRST-PARTY PERFORMANCE MARKETING INFRASTRUCTURE</span>
@@ -142,6 +142,16 @@ function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResou
     <article><span>WHATSAPP & MARKETING</span><b>WhatsApp · WATI · Gupshup · MoEngage · CleverTap</b></article>
     <article><span>CALLING</span><b>Exotel · Knowlarity · Tata Tele · MyOperator</b></article>
     <article><span>WEB & APP</span><b>Shopify · WooCommerce · Magento · WordPress · React · Custom</b></article>
+   </div>
+  </section>
+
+  <section className="activation-capabilities">
+   <div className="section-title"><span className="kicker dark">FIRST-PARTY DATA ACTIVATION</span><h2>More than conversion uploads.</h2><p>The current EasyInsights product also emphasizes website behavior, dynamic audiences, device exclusions and feed enhancement. AceMarketing now represents those workflows directly.</p></div>
+   <div className="activation-cap-grid">
+    <article><MousePointer2/><h3>Website behavior</h3><p>Capture visits, high-intent page sequences, form starts, button clicks and authenticated activity across the journey.</p><span>Server-side event stream</span></article>
+    <article><UsersRound/><h3>Dynamic audiences</h3><p>Keep acquisition, nurturing, decision and post-purchase segments fresh as customer behavior changes.</p><span>Real-time activate / suppress</span></article>
+    <article><ShieldCheck/><h3>Device & identity exclusion</h3><p>Suppress existing customers or irrelevant identities so campaigns do not repeatedly spend against the same people.</p><span>Waste-control workflow</span></article>
+    <article><Layers3/><h3>Feed enhancement</h3><p>Attach custom product, customer and event attributes to activation payloads for more granular targeting and personalization.</p><span>Custom attributes</span></article>
    </div>
   </section>
 
@@ -269,6 +279,23 @@ function CompanyPage({back,openDemo}:{back:()=>void,openDemo:()=>void}){
  </div>
 }
 
+function SolutionsPage({back,openDemo,openApp}:{back:()=>void,openDemo:()=>void,openApp:()=>void}){
+ const solutions=[
+  ['Agency','Manage multiple client funnels, workspaces, conversion definitions and signal destinations with repeatable implementation patterns.','Multi-workspace operations'],
+  ['Lead Generation','Return qualified and closed outcomes to ad platforms, enrich leads and automate handoffs between form, CRM, calls and sales.','Quality over raw volume'],
+  ['Enterprise','Add RBAC, auditability, retention policies, monitoring and custom integration patterns for complex organizations.','Governed activation'],
+  ['Mid-Market Brand','Connect the existing stack quickly and focus on signal quality, attribution and audience suppression without a large data team.','Fast implementation'],
+  ['Attribution Model','Stitch sessions, CRM stages, calls and offline outcomes to measure first touch, last touch and full-path contribution.','Journey-level ROI'],
+  ['Alerts & Monitoring','Watch delivery rates, click-ID coverage, sync freshness, connector tokens and failed-event queues.','Operational reliability'],
+  ['Server-to-Server Integration','Move event and identity data directly between backend systems when browser pixels or standard connectors are insufficient.','Custom pipelines']
+ ]
+ return <div className="standalone-page solutions-page"><div className="standalone-top"><Brand/><button onClick={back}>Back to website</button></div>
+  <section className="standalone-hero solutions-hero"><span className="kicker">SOLUTIONS</span><h1>Different operating models, one first-party data layer.</h1><p>AceMarketing mirrors the solution categories currently exposed by EasyInsights while keeping the implementation and wording original.</p><div className="hero-actions"><button className="btn-primary" onClick={openApp}>Explore product <ArrowRight/></button><button className="btn-secondary-light" onClick={openDemo}>Book a demo</button></div></section>
+  <section className="solution-detail-grid">{solutions.map((x,i)=><article key={x[0]}><span>{String(i+1).padStart(2,'0')}</span><div><h2>{x[0]}</h2><p>{x[1]}</p><b>{x[2]}</b></div><ChevronRight/></article>)}</section>
+  <section className="solution-architecture"><div><span className="kicker">SERVER-TO-SERVER</span><h2>When a standard connector is not enough.</h2><p>Use authenticated API calls, webhooks and idempotent event IDs to connect proprietary CRMs, billing systems, call centers and internal data stores.</p></div><div className="s2s-flow">{['Source system','Normalize','Identity match','Business event','Destination'].map((x,i)=><div key={x}><span>{i+1}</span><b>{x}</b>{i<4&&<ArrowRight/>}</div>)}</div></section>
+ </div>
+}
+
 function CaseStudiesPage({back,openDemo}:{back:()=>void,openDemo:()=>void}){
  const studies=[
   {
@@ -363,7 +390,7 @@ function Login({back,openApp}:{back:()=>void,openApp:()=>void}){
 }
 
 const appTabs=[
- ['Overview',Gauge],['AdSync',RadioTower],['Funnel',BarChart3],['Events',Zap],['Live Sync',Activity],['Offline Attribution',PhoneCall],['Journeys',Network],['Attribution',PieChart],['Enrich',DatabaseZap],['Agents',Bot],['Integrations',Cable],['Audiences',UsersRound],['Monitoring',Activity],['Settings',Settings2]
+ ['Overview',Gauge],['AdSync',RadioTower],['Funnel',BarChart3],['Events',Zap],['Live Sync',Activity],['Offline Attribution',PhoneCall],['Journeys',Network],['Attribution',PieChart],['Enrich',DatabaseZap],['Behavior',MousePointer2],['Feed',Layers3],['Agents',Bot],['Integrations',Cable],['Audiences',UsersRound],['Monitoring',Activity],['Settings',Settings2]
 ] as const
 function Stat({label,value,sub,Icon}:{label:string,value:string,sub:string,Icon:any}){return <article className="stat"><div><span>{label}</span><Icon/></div><strong>{value}</strong><small>{sub}</small></article>}
 function PageHead({crumb,title,sub,action}:{crumb:string,title:string,sub:string,action?:string}){return <div className="page-head"><div><span>{crumb}</span><h1>{title}</h1><p>{sub}</p></div>{action&&<button className="app-primary"><Sparkles/>{action}</button>}</div>}
@@ -482,6 +509,22 @@ function Enrich(){
  <div className="two-col"><div className="app-panel profile-card"><div className="panel-head"><div><h3>Enriched lead profile</h3><p>Latest high-intent lead</p></div><span className="score">92 intent</span></div><div className="profile-avatar">AS</div><h3>Aarav Sharma</h3><p>Executive MBA · Delhi NCR</p><div className="profile-fields">{[['First touch','Google Ads'],['Campaign','MBA Search'],['Pages viewed','7'],['Pricing page','Visited 2×'],['WhatsApp','Started'],['Call','Connected'],['Last action','Brochure viewed'],['Predicted stage','Consultation']].map(x=><div key={x[0]}><span>{x[0]}</span><b>{x[1]}</b></div>)}</div></div>
  <div className="app-panel"><div className="panel-head"><div><h3>Lead grading</h3><p>Rules + journey evidence</p></div></div>{[['High intent','3,106',24,'green'],['Medium intent','6,482',50,'amber'],['Low intent','3,254',26,'red']].map(x=><div className={'grade '+x[3]} key={x[0]}><div><b>{x[0]}</b><small>{x[1]} leads</small></div><strong>{x[2]}%</strong></div>)}<div className="ai-note"><Sparkles/><div><b>Why this lead scored 92</b><p>Pricing revisit, branded search, WhatsApp initiation and counsellor connection indicate strong purchase intent.</p></div></div></div></div></>
 }
+function Behavior(){
+ const events=[['Page View','92,418','All pages'],['Pricing Page Viewed','18,204','High intent'],['Form Started','14,066','Lead intent'],['Form Submitted','12,842','Lead'],['WhatsApp Click','6,904','Messaging intent'],['Call CTA Click','4,882','Call intent']]
+ return <><PageHead crumb="Activation / Behavior" title="Website & app behavior" sub="Capture first-party engagement signals across sessions and use them in enrichment, attribution and audience logic." action="New behavior rule"/>
+ <div className="stats-grid"><Stat label="Tracked sessions" value="92,418" sub="Last 30 days" Icon={MousePointer2}/><Stat label="Known identities" value="61.2%" sub="Resolved to first-party ID" Icon={UsersRound}/><Stat label="High-intent sessions" value="18,204" sub="Pricing / contact behavior" Icon={Target}/><Stat label="Server events" value="248K" sub="Delivered today" Icon={Zap}/></div>
+ <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Behavior events</h3><p>First-party activity available to downstream modules</p></div><span className="healthy">Streaming</span></div>{events.map(x=><div className="behavior-row" key={x[0]}><MousePointer2/><div><b>{x[0]}</b><small>{x[2]}</small></div><strong>{x[1]}</strong><span>Active</span></div>)}</div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Journey sequence</h3><p>Example high-intent visitor</p></div></div><div className="behavior-timeline">{[['Google Ad','09:41'],['Program Page','09:42'],['Pricing Page','09:44'],['WhatsApp CTA','09:47'],['CRM Lead','09:49']].map((x,i)=><div key={x[0]}><span>{i+1}</span><div><b>{x[0]}</b><small>{x[1]}</small></div></div>)}</div><div className="ai-note"><Sparkles/><div><b>Behavior enrichment</b><p>This sequence can raise lead intent, build an audience, influence attribution and trigger faster qualification.</p></div></div></div></div></>
+}
+
+function Feed(){
+ const attrs=[['customer_tier','High LTV','Customer attribute'],['order_type','Prepaid','Order attribute'],['product_category','Executive Program','Product attribute'],['lead_score','92','Model output'],['lifecycle_stage','Consultation','CRM attribute'],['return_risk','Low','Model output']]
+ return <><PageHead crumb="Activation / Feed" title="Feed & payload enhancement" sub="Enrich activation payloads with business-specific customer, product and event attributes." action="Add attribute"/>
+ <div className="stats-grid"><Stat label="Active attributes" value="46" sub="Across event payloads" Icon={Layers3}/><Stat label="Feeds" value="8" sub="Connected destinations" Icon={Cable}/><Stat label="Enriched events" value="96.4%" sub="Last 24 hours" Icon={DatabaseZap}/><Stat label="Schema errors" value="0.12%" sub="Auto-quarantined" Icon={Activity}/></div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Custom attributes</h3><p>Values appended before activation</p></div><button>Schema settings</button></div>{attrs.map(x=><div className="feed-row" key={x[0]}><Layers3/><code>{x[0]}</code><b>{x[1]}</b><span>{x[2]}</span><em>Mapped</em></div>)}</div>
+ <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Payload destinations</h3><p>Enhanced attributes by connector</p></div></div>{[['Meta Ads',96],['Google Ads',94],['CRM',100],['Audience Engine',100]].map(x=><div className="health-line" key={x[0]}><span>{x[0]}</span><div className="progress"><i style={{width:x[1]+'%'}}/></div><b>{x[1]}%</b></div>)}</div><div className="app-panel"><div className="panel-head"><div><h3>Schema guardrails</h3><p>Protect destination quality</p></div></div>{[['Required identifier','customer_id or hashed email'],['Revenue','numeric + currency'],['Event ID','unique / idempotent'],['PII policy','hash before activation']].map(x=><div className="mapping-rule" key={x[0]}><span>{x[0]}</span><ArrowRight/><b>{x[1]}</b></div>)}</div></div></>
+}
+
 function Agents(){
  return <><PageHead crumb="Automation / Agents" title="Agent library" sub="Deploy specialist agents at each point where your funnel loses context or speed." action="Build custom agent"/><div className="agent-app-grid">{agents.map((a,i)=><article key={a[0]}><div><span className={i<7?'active-agent':''}>{i<7?'Active':'Available'}</span><Bot/></div><h3>{a[0]}</h3><p>{a[1]}</p><footer><small>{a[2]}</small><button>{i<7?'Manage':'Deploy'} <ChevronRight/></button></footer></article>)}</div></>
 }
@@ -504,7 +547,9 @@ function Audiences(){
  ['Website visitors · 180d','82,416','Meta Ads','Hourly','Retarget'],
  ['WhatsApp leads','11,284','Google Ads · Meta Ads','Real time','Activate'],
  ['Low intent leads','24,901','Google Ads · Meta Ads','Daily','Suppress']
- ].map(x=><div className="audience-row" key={x[0]}><UsersRound/><div><b>{x[0]}</b><small>{x[2]}</small></div><strong>{x[1]}</strong><span>{x[3]}</span><em className={x[4].toLowerCase()}>{x[4]}</em><ChevronRight/></div>)}</div></>
+ ].map(x=><div className="audience-row" key={x[0]}><UsersRound/><div><b>{x[0]}</b><small>{x[2]}</small></div><strong>{x[1]}</strong><span>{x[3]}</span><em className={x[4].toLowerCase()}>{x[4]}</em><ChevronRight/></div>)}</div>
+ <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Lifecycle audiences</h3><p>Acquisition → nurture → decision → post-purchase</p></div></div>{[['Acquisition','New prospects','18,204'],['Nurture','Engaged / not qualified','8,441'],['Decision','Consultation / high intent','3,106'],['Post-purchase','Converted customers','18,204']].map(x=><div className="lifecycle-row" key={x[0]}><span>{x[0]}</span><div><b>{x[1]}</b><small>{x[2]} identities</small></div><ChevronRight/></div>)}</div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Waste-control exclusions</h3><p>Prevent repeat spend on irrelevant identities</p></div></div>{[['Converted customers','Customer ID + hashed PII','18,204'],['Device-ID exclusion','First-party device IDs','22,891'],['Duplicate / invalid leads','CRM disposition','4,118'],['Low-LTV customers','Value threshold','3,409']].map(x=><div className="exclusion-row" key={x[0]}><ShieldCheck/><div><b>{x[0]}</b><small>{x[1]}</small></div><strong>{x[2]}</strong><span>Suppressed</span></div>)}</div></div></>
 }
 function Monitoring(){
  return <><PageHead crumb="Operations / Monitoring" title="Platform monitoring" sub="Observe connector health, event delivery, sync latency and processing failures." action="Create alert"/>
@@ -528,8 +573,8 @@ function Settings(){
 }
 function Product({back}:{back:()=>void}){
  const [tab,setTab]=useState<AppTab>('Overview')
- const view=useMemo(()=>({Overview:<Overview/>,AdSync:<AdSync/>,Funnel:<Funnel/>,Events:<Events/>,"Live Sync":<LiveSync/>,"Offline Attribution":<OfflineAttribution/>,Journeys:<Journeys/>,Attribution:<Attribution/>,Enrich:<Enrich/>,Agents:<Agents/>,Integrations:<Integrations/>,Audiences:<Audiences/>,Monitoring:<Monitoring/>,Settings:<Settings/>}[tab]),[tab])
+ const view=useMemo(()=>({Overview:<Overview/>,AdSync:<AdSync/>,Funnel:<Funnel/>,Events:<Events/>,"Live Sync":<LiveSync/>,"Offline Attribution":<OfflineAttribution/>,Journeys:<Journeys/>,Attribution:<Attribution/>,Enrich:<Enrich/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Integrations:<Integrations/>,Audiences:<Audiences/>,Monitoring:<Monitoring/>,Settings:<Settings/>}[tab]),[tab])
  return <div className="product"><aside><Brand/><div className="workspace"><span>AM</span><div><b>Ace EdTech</b><small>Production workspace</small></div><ChevronDown/></div><nav>{appTabs.map(([x,I])=><button key={x} className={tab===x?'active':''} onClick={()=>setTab(x)}><I/>{x}</button>)}</nav><div className="aside-footer"><button onClick={back}><ArrowRight/>Back to website</button><div className="profile-mini"><span>S</span><div><b>Sakshee</b><small>Workspace owner</small></div></div></div></aside>
  <main><header className="product-head"><div className="global-search"><Search/>Search journeys, leads, campaigns...</div><div><span className="sync">● Live sync healthy</span><button><Headphones/></button><button><Globe2/></button><span className="avatar-sm">S</span></div></header><div className="product-body">{view}</div></main></div>
 }
-export default function AcePlatform(){const[view,setView]=useState<View>('site');if(view==='login')return <Login back={()=>setView('site')} openApp={()=>setView('app')}/>;if(view==='pricing')return <Pricing back={()=>setView('site')} openApp={()=>setView('app')}/>;if(view==='demo')return <DemoPage back={()=>setView('site')} openApp={()=>setView('app')}/>;if(view==='company')return <CompanyPage back={()=>setView('site')} openDemo={()=>setView('demo')}/>;if(view==='resources')return <ResourcesPage back={()=>setView('site')}/>;if(view==='case-studies')return <CaseStudiesPage back={()=>setView('site')} openDemo={()=>setView('demo')}/>;if(view==='privacy')return <LegalPage kind="privacy" back={()=>setView('site')}/>;if(view==='terms')return <LegalPage kind="terms" back={()=>setView('site')}/>;if(view==='security')return <LegalPage kind="security" back={()=>setView('site')}/>;return view==='site'?<Marketing openApp={()=>setView('app')} openLogin={()=>setView('login')} openPricing={()=>setView('pricing')} openDemo={()=>setView('demo')} openCompany={()=>setView('company')} openResources={()=>setView('resources')} openCaseStudies={()=>setView('case-studies')}/>:<Product back={()=>setView('site')}/>}
+export default function AcePlatform(){const[view,setView]=useState<View>('site');if(view==='login')return <Login back={()=>setView('site')} openApp={()=>setView('app')}/>;if(view==='pricing')return <Pricing back={()=>setView('site')} openApp={()=>setView('app')}/>;if(view==='demo')return <DemoPage back={()=>setView('site')} openApp={()=>setView('app')}/>;if(view==='company')return <CompanyPage back={()=>setView('site')} openDemo={()=>setView('demo')}/>;if(view==='resources')return <ResourcesPage back={()=>setView('site')}/>;if(view==='case-studies')return <CaseStudiesPage back={()=>setView('site')} openDemo={()=>setView('demo')}/>;if(view==='privacy')return <LegalPage kind="privacy" back={()=>setView('site')}/>;if(view==='terms')return <LegalPage kind="terms" back={()=>setView('site')}/>;if(view==='security')return <LegalPage kind="security" back={()=>setView('site')}/>;if(view==='solutions')return <SolutionsPage back={()=>setView('site')} openDemo={()=>setView('demo')} openApp={()=>setView('app')}/>;return view==='site'?<Marketing openApp={()=>setView('app')} openLogin={()=>setView('login')} openPricing={()=>setView('pricing')} openDemo={()=>setView('demo')} openCompany={()=>setView('company')} openResources={()=>setView('resources')} openCaseStudies={()=>setView('case-studies')} openSolutions={()=>setView('solutions')}/>:<Product back={()=>setView('site')}/>}
