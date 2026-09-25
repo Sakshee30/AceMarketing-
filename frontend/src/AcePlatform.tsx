@@ -134,7 +134,7 @@ function Header({openHome,openApp,openLogin,openPricing,openDemo,openCompany,ope
    <div className="ei-mega-label">INDUSTRIES</div>
    <div className="ei-industry-columns">
     <div>{industryDisplay.slice(0,4).map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();window.location.hash='#/industries?industry='+encodeURIComponent(x[0])}} className="ei-industry-item" role="menuitem"><span className="ei-industry-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>})}</div>
-    <div>{industryDisplay.slice(4).map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();openIndustries()}} className="ei-industry-item"><span className="ei-industry-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>})}</div>
+    <div>{industryDisplay.slice(4).map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();window.location.hash='#/industries?industry='+encodeURIComponent(x[0])}} className="ei-industry-item" role="menuitem"><span className="ei-industry-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>})}</div>
    </div>
   </div>}
 
