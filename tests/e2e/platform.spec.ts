@@ -397,3 +397,21 @@ test('journey explorer renders stitched chronology', async ({ page }) => {
   await expect(detail.getByText(/CI chronology follow-up/)).toBeVisible()
   await expect(detail.getByText(/Journey timeline source/)).toHaveCount(0)
 })
+
+
+test('offline attribution rules persist and test through the attribution store', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  await openWorkspaceTab(page,'Offline Attribution')
+  await expect(page.getByRole('heading', { name: 'Calls, WhatsApp & offline revenue' })).toBeVisible()
+  await page.getByRole('button', { name: 'New offline rule' }).click()
+  await page.getByLabel('Conversion').fill('CI Offline Sale')
+  await page.getByLabel('Source').fill('CI POS')
+  await page.getByLabel('Matching method').fill('customer_id + click history')
+  await page.getByLabel('Identifier').fill('Customer ID / GCLID')
+  await page.getByRole('button', { name: 'Create offline rule' }).click()
+  await expect(page.getByText('CI Offline Sale', { exact: true })).toBeVisible()
+  await page.getByLabel('Customer ID').fill('ci_offline_customer')
+  await page.getByRole('button', { name: 'Send offline test event' }).click()
+  await expect(page.getByText(/Test event recorded with status/)).toBeVisible()
+})
