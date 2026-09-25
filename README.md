@@ -1045,3 +1045,18 @@ Desktop measurements were tightened around the reference proportions:
 - hero top offset, radius, typography and desktop proportions refined to align directly beneath the navigation.
 
 AceMarketing branding remains original while the layout measurements, hierarchy and interactions closely follow the provided reference.
+
+
+## Navigation completeness pass: live public menu structure
+
+The public navigation was updated again against the current EasyInsights homepage information architecture.
+
+Changes:
+- Agents dropdown now exposes all 11 public agent categories as individual menu entries with descriptions and icons;
+- Resources dropdown now mirrors the current public structure with About Us, Blogs, Ebooks, No Net Hash, ROAS Calculator and Documentation;
+- Resources includes a separate Latest from Blogs column;
+- dropdown widths, two-column density and menu card spacing were refined;
+- all menu actions stay inside AceMarketing routes/views rather than linking to EasyInsights;
+- AceMarketing branding and original artwork remain unchanged.
+
+Current EasyInsights public navigation was rechecked before this pass and currently exposes Industries, Agents, Case Studies, Integrations, Pricing and Resources, with the 11-agent list and the listed resource categories.
