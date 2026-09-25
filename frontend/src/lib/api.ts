@@ -104,6 +104,7 @@ export const api = {
   retryQualificationCall: (id: string) => request('/qualification-calls/retry', { method: 'POST', body: JSON.stringify({ id }) }),
   meetings: () => request('/meetings'),
   createMeeting: (payload: Record<string, unknown>) => request('/meetings', { method: 'POST', body: JSON.stringify(payload) }),
+  rescheduleMeeting: (id: string, startsAt: string) => request('/meetings/reschedule', { method: 'POST', body: JSON.stringify({ id, startsAt }) }),
   sendMeetingReminder: (id: string) => request('/meetings/remind', { method: 'POST', body: JSON.stringify({ id }) }),
   feedback: () => request('/feedback'),
   recordFeedback: (payload: Record<string, unknown>) => request('/feedback', { method: 'POST', body: JSON.stringify(payload) }),
