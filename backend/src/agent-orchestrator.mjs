@@ -159,14 +159,29 @@ const signedHeaders=(body,secret)=>{
 }
 
 export const dispatchAgentTransport=async(kind,payload={})=>{
-  const url=kind==='meeting_reminder'?process.env.MEETING_REMINDER_WEBHOOK_URL:process.env.VOICE_AGENT_WEBHOOK_URL
-  if(!url) return {provider:'internal',status:202,externalId:null,accepted:true}
+  const routes={
+    voice_qualification:process.env.VOICE_QUALIFICATION_WEBHOOK_URL||process.env.VOICE_AGENT_WEBHOOK_URL||'',
+    meeting_reminder:process.env.MEETING_REMINDER_WEBHOOK_URL||'',
+    feedback:process.env.FEEDBACK_WEBHOOK_URL||''
+  }
+  const url=routes[kind]||''
+  if(!url){
+    if(process.env.AGENT_TRANSPORT_ALLOW_INTERNAL==='true'&&process.env.NODE_ENV!=='production') return {provider:'internal',status:202,externalId:null,accepted:true,simulated:true}
+    throw new Error('agent transport not configured for '+kind)
+  }
+  const target=new URL(url)
+  if(target.protocol!=='https:'&&!(process.env.NODE_ENV!=='production'&&target.protocol==='http:')) throw new Error('agent transport URL must use HTTPS')
   const body=JSON.stringify({kind,...payload})
-  const response=await fetch(url,{method:'POST',headers:signedHeaders(body,process.env.AGENT_WEBHOOK_SECRET||''),body})
+  const response=await fetch(target,{method:'POST',headers:signedHeaders(body,process.env.AGENT_WEBHOOK_SECRET||''),body})
   const raw=await response.text()
   let parsed={}
   try{parsed=raw?JSON.parse(raw):{}}catch{parsed={raw:raw.slice(0,1000)}}
-  if(!response.ok) throw new Error('agent transport failed: '+response.status)
+  if(!response.ok){
+    const error=new Error('agent transport failed: '+response.status)
+    error.status=response.status
+    error.providerBody=parsed
+    throw error
+  }
   return {provider:'webhook',status:response.status,externalId:parsed.id||parsed.callId||parsed.jobId||null,accepted:true,response:parsed}
 }
 
