@@ -2905,3 +2905,122 @@ The waste-control panel is labeled **eligible pool** rather than pretending ever
 Mobile advertising identifiers must be first-party data collected with the appropriate user permission and platform policy compliance. Google mobile-ID Customer Match additionally needs a valid app ID associated with the source application.
 
 CI now validates that migration 017 is present.
+
+
+## Live first-party data parity hardening: audiences, Live Sync, Data Hub, Funnel, Journeys and Planner
+
+This pass removes several remaining fixed operational metrics and extends first-party identity activation.
+
+### Device identity + first-party audience suppression
+
+AceMarketing now supports first-party device identity in the tracking/audience pipeline:
+
+- `deviceId / device_id`
+- `devicePlatform / device_platform`
+- `appId / app_id`
+
+Tracked customer/contact/device identities are promoted into the persisted lead/audience profile store.
+
+Migration:
+
+```text
+backend/migrations/017_device_audience_identity.sql
+```
+
+Audience definitions can use:
+
+- contact identity;
+- device identity;
+- automatic contact-first/device-fallback identity.
+
+Audience conditions now include:
+
+- Device ID present
+- Device platform
+- App ID
+
+Provider sync re-checks marketing consent for every member before any identifier leaves AceMarketing.
+
+Meta audience delivery supports a device-advertising-ID schema for device-mode audiences.
+
+Google Customer Match device audiences use the mobile advertising ID upload-key type and require an application ID from the profile or `GOOGLE_CUSTOMER_MATCH_APP_ID`.
+
+The Audiences page no longer displays fixed activated/suppressed/device/lifecycle counts. All those boxes now read persisted audience/profile state.
+
+### Live Sync
+
+`GET /api/live-sync` now derives:
+
+- accepted events per minute;
+- provider delivery rate;
+- median observed delivery latency;
+- recent ingestion/delivery activity;
+- destination-level delivery history.
+
+The previous fixed values such as `42s`, `8,412/min` and `99.82%` were removed.
+
+The **Create alert** action now persists a real monitoring rule.
+
+### Data Hub
+
+`GET /api/data-hub` now builds its source registry from:
+
+- first-party tracked events;
+- lead/customer profiles;
+- WhatsApp webhook activity;
+- call events;
+- attribution sessions/events;
+- provider delivery state;
+- connector-health records.
+
+The previous fixed source volumes, freshness values, unified-record count and schema-health value were removed.
+
+`POST /api/data-hub/rebuild` now performs and persists a canonical-state snapshot instead of returning a random queued job ID.
+
+**Add data source** now routes directly to the Integrations workspace.
+
+### Funnel
+
+`GET /api/funnel` now derives funnel stages and campaign/source rows from:
+
+- persisted lead profiles;
+- lead grade / CRM stage;
+- persisted meetings.
+
+The previous fixed MBA/Meta campaign sample counts were removed.
+
+### Journeys
+
+`GET /api/journeys` now returns persisted lead-profile journey evidence:
+
+- source;
+- campaign;
+- CRM stage / grade;
+- score;
+- touchpoint count;
+- observed journey duration;
+- last activity;
+- device platform.
+
+The previous hard-coded example people were removed.
+
+### Planner
+
+The strategic media planner no longer presents invented channel shares, CAC, quality scores or projected outcomes.
+
+`GET /api/planner` now derives source allocation weights from persisted cohort analytics:
+
+1. attributed revenue contribution when matched revenue exists;
+2. acquisition-volume contribution only when revenue evidence is unavailable.
+
+`POST /api/planner/scenarios` persists a human-approved planning scenario.
+
+The planner explicitly states when evidence is insufficient and does not infer spend/CAC without connected spend data.
+
+### Truthfulness rule
+
+Operational boxes must now follow the same rule used elsewhere in the product:
+
+> no workspace evidence → show an empty/unavailable state, not a fabricated production metric.
+
+The UI may still contain marketing/reference examples where clearly labeled, but operational dashboards must be backed by current workspace state.
