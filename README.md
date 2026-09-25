@@ -2098,3 +2098,41 @@ EVENT_RULE_DB_POOL_MAX=5
 ```
 
 The engine intentionally supports a constrained rules language. More complex transformations should be implemented through versioned custom integrations rather than executing untrusted expressions inside the ingestion process.
+
+
+## Automated email reports pass
+
+The Reports workspace now supports real scheduled cohort email delivery rather than display-only cadence labels.
+
+Implemented:
+- `backend/migrations/015_report_scheduler.sql`;
+- `backend/src/report-scheduler.mjs`;
+- persisted daily, weekly, and monthly report schedules;
+- PostgreSQL due-schedule leasing with `FOR UPDATE SKIP LOCKED`;
+- durable `report_delivery` jobs through the existing queue/retry/dead-letter pipeline;
+- live cohort snapshot generation at send time;
+- HTML email summary plus CSV cohort attachment;
+- SMTP delivery via Nodemailer only when deployment credentials are configured;
+- delivery receipts with queued/sending/sent/retrying/failed states and provider message IDs;
+- Reports UI for recipients, cadence, lookback period, manual send-now, SMTP readiness, and recent delivery history.
+
+New APIs:
+- `GET /api/report-schedules`
+- `POST /api/report-schedules`
+- `POST /api/report-schedules/run-now`
+
+Configuration:
+
+```text
+REPORT_DB_POOL_MAX=5
+REPORT_SCHEDULER_BATCH_SIZE=5
+REPORT_SCHEDULER_POLL_MS=30000
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=
+SMTP_PASS=
+SMTP_FROM=
+```
+
+No email is reported as delivered unless the SMTP provider accepts it. Provider/account credentials remain deployment secrets and are intentionally not committed.
