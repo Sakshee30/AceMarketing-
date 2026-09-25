@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import { closeQueue, completeJob, failJob, leaseJobs, queueAvailable } from './queue.mjs'
 import { deliverSignal } from './providers.mjs'
+import { syncAudienceProvider, writebackLead } from './activation-adapters.mjs'
+import { updateActivationRun, updateAudienceSyncState } from './lead-ops.mjs'
 import { closeStore, mutateState, withWorkspace } from './store.mjs'
 
 if(!queueAvailable()) throw new Error('DATABASE_URL is required for the worker runtime')
@@ -16,18 +18,29 @@ const updateDelivery=async(workspaceId,deliveryId,patch)=>withWorkspace(workspac
 }))
 
 const handle=async job=>{
-  if(job.kind!=='signal_delivery') throw new Error('unsupported job kind: '+job.kind)
-  const signal={...(job.payload||{}),deliveryId:job.payload?.deliveryId}
-  const result=await deliverSignal(job.workspace_id,signal)
-  await updateDelivery(job.workspace_id,signal.deliveryId,{
-    status:'delivered',
-    attempts:job.attempts,
-    httpStatus:result.status,
-    latencyMs:result.latencyMs,
-    lastError:null,
-    deliveredAt:new Date().toISOString()
-  })
-  return {provider:result.provider,httpStatus:result.status,latencyMs:result.latencyMs}
+  if(job.kind==='signal_delivery'){
+    const signal={...(job.payload||{}),deliveryId:job.payload?.deliveryId}
+    const result=await deliverSignal(job.workspace_id,signal)
+    await updateDelivery(job.workspace_id,signal.deliveryId,{status:'delivered',attempts:job.attempts,httpStatus:result.status,latencyMs:result.latencyMs,lastError:null,deliveredAt:new Date().toISOString()})
+    return {provider:result.provider,httpStatus:result.status,latencyMs:result.latencyMs}
+  }
+  if(job.kind==='audience_sync'){
+    const {audienceId,provider,activationRunId}=job.payload||{}
+    await updateActivationRun(job.workspace_id,activationRunId,{status:'running',attempts:job.attempts})
+    await updateAudienceSyncState(job.workspace_id,audienceId,String(provider).toLowerCase(),{status:'running'})
+    const result=await syncAudienceProvider(job.workspace_id,audienceId,provider)
+    await updateActivationRun(job.workspace_id,activationRunId,{status:'succeeded',externalId:result.externalId,responseSummary:{received:result.received||0,job:result.job||null},attempts:job.attempts})
+    await updateAudienceSyncState(job.workspace_id,audienceId,String(provider).toLowerCase(),{status:'succeeded',externalId:result.externalId,received:result.received||0})
+    return result
+  }
+  if(job.kind==='crm_writeback'){
+    const {leadRef,provider,fields,activationRunId}=job.payload||{}
+    await updateActivationRun(job.workspace_id,activationRunId,{status:'running',attempts:job.attempts})
+    const result=await writebackLead(job.workspace_id,leadRef,provider,fields||{})
+    await updateActivationRun(job.workspace_id,activationRunId,{status:'succeeded',externalId:result.externalId,responseSummary:{status:result.status},attempts:job.attempts})
+    return result
+  }
+  throw new Error('unsupported job kind: '+job.kind)
 }
 
 const runBatch=async()=>{
@@ -38,13 +51,17 @@ const runBatch=async()=>{
       await completeJob(job.id,result)
     }catch(error){
       const failed=await failJob(job.id,error instanceof Error?error.message:String(error))
+      const message=error instanceof Error?error.message:String(error)
       if(job.payload?.deliveryId){
-        await updateDelivery(job.workspace_id,job.payload.deliveryId,{
-          status:failed?.status==='dead_letter'?'dead_letter':'retrying',
-          attempts:job.attempts,
-          lastError:error instanceof Error?error.message:String(error),
-          nextAttemptAt:failed?.available_at||null
-        }).catch(()=>{})
+        await updateDelivery(job.workspace_id,job.payload.deliveryId,{status:failed?.status==='dead_letter'?'dead_letter':'retrying',attempts:job.attempts,lastError:message,nextAttemptAt:failed?.available_at||null}).catch(()=>{})
+      }
+      if(job.kind==='audience_sync'&&job.payload?.activationRunId){
+        const state=failed?.status==='dead_letter'?'failed':'retrying'
+        await updateActivationRun(job.workspace_id,job.payload.activationRunId,{status:state,error:message,attempts:job.attempts}).catch(()=>{})
+        await updateAudienceSyncState(job.workspace_id,job.payload.audienceId,String(job.payload.provider).toLowerCase(),{status:state==='failed'?'failed':'retrying',error:message}).catch(()=>{})
+      }
+      if(job.kind==='crm_writeback'&&job.payload?.activationRunId){
+        await updateActivationRun(job.workspace_id,job.payload.activationRunId,{status:failed?.status==='dead_letter'?'failed':'retrying',error:message,attempts:job.attempts}).catch(()=>{})
       }
     }
   }
