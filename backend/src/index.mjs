@@ -842,7 +842,24 @@ const server = http.createServer(async (req,res)=>{
       await mutateState(s=>{s.demoRequests.unshift(item);s.demoRequests=s.demoRequests.slice(0,5000)})
       return send(req,res,201,item)
     }
-    if (req.method === 'GET' && url.pathname === '/api/workspace/overview') return send(req,res,200,{revenueAttributed:28400000,qualifiedLeads:7621,signalCoverage:94.8,activeAgents:7})
+    if (req.method === 'GET' && url.pathname === '/api/workspace/overview') {
+      const [leadStats,attr,agentRuns]=await Promise.all([
+        leadOpsStats(workspaceId).catch(()=>({available:false,total:0,abQuality:0})),
+        attributionStats(workspaceId).catch(()=>({available:false,matchedEvents:0,matchedValue:0,matchRate:0})),
+        listAgentRuns(workspaceId,100).catch(()=>[])
+      ])
+      const state=await getState()
+      const activeAgents=new Set(agentRuns.filter(x=>['queued','running','succeeded','completed'].includes(String(x.status||'').toLowerCase())).map(x=>x.agent_type||x.agentType)).size
+      return send(req,res,200,{
+        revenueAttributed:Number(attr?.matchedValue||0),
+        qualifiedLeads:Number(leadStats?.abQuality||0),
+        signalCoverage:attr?.matchRate==null?null:Number(attr.matchRate),
+        activeAgents,
+        profiles:Number(leadStats?.total||0),
+        matchedEvents:Number(attr?.matchedEvents||0),
+        deliveries:Number((state.signalDeliveries||[]).length)
+      })
+    }
     if (req.method === 'GET' && url.pathname === '/api/integrations') {
       const state=await getState()
       const tokenHealth=await connectorTokenHealth(workspaceId).catch(()=>[])
@@ -2477,19 +2494,48 @@ const server = http.createServer(async (req,res)=>{
       return send(req,res,200,{name:name||null,runs,leadPopulation:Number(leadStats?.total||0),averageLeadScore:Number(leadStats?.averageScore||0),generatedAt:new Date().toISOString(),notice:'Validation surface reflects persisted scoring runs and lead population; it is not a substitute for offline statistical validation.'})
     }
     if (req.method === 'GET' && url.pathname === '/api/routing') {
-      return send(req,res,200,{rules:[
-        {id:'rr_1',name:'High-intent education lead',when:'score >= 85',destination:'Senior counsellor pool',slaSeconds:60,status:'active'},
-        {id:'rr_2',name:'Financing requested',when:'financingInterest = true',destination:'Finance-trained counsellor',slaSeconds:300,status:'active'},
-        {id:'rr_3',name:'WhatsApp re-engagement',when:'source = whatsapp',destination:'WhatsApp nurture',slaSeconds:180,status:'active'},
-        {id:'rr_4',name:'Low confidence review',when:'identityConfidence < 0.65',destination:'Manual review',slaSeconds:900,status:'active'}
-      ],recent:await listRoutingDecisions(workspaceId,50)})
+      const recent=await listRoutingDecisions(workspaceId,200)
+      const today=new Date();today.setHours(0,0,0,0)
+      const routedToday=recent.filter(x=>Date.parse(x.created_at||x.createdAt||0)>=today.getTime())
+      const destinations={}
+      for(const row of recent){
+        const key=String(row.destination||'Unknown')
+        destinations[key]=(destinations[key]||0)+1
+      }
+      const rules=[
+        {id:'rr_1',name:'High-intent education lead',when:'score >= 85',destination:'Senior counsellor pool',slaSeconds:60,status:'active',priority:'Priority'},
+        {id:'rr_2',name:'Financing requested',when:'financingInterest = true',destination:'Finance-trained counsellor',slaSeconds:300,status:'active',priority:'Priority'},
+        {id:'rr_3',name:'WhatsApp re-engagement',when:'source = whatsapp',destination:'WhatsApp nurture',slaSeconds:180,status:'active',priority:'Automated'},
+        {id:'rr_4',name:'Low confidence review',when:'identityConfidence < 0.65',destination:'Manual review',slaSeconds:900,status:'active',priority:'Review'},
+        {id:'rr_default',name:'Default routing',when:'fallback',destination:'General admissions queue',slaSeconds:600,status:'active',priority:'Fallback'}
+      ]
+      return send(req,res,200,{
+        rules,
+        recent:recent.slice(0,50),
+        stats:{
+          routedToday:routedToday.length,
+          totalDecisions:recent.length,
+          destinations:Object.keys(destinations).length,
+          matchedRules:new Set(recent.map(x=>x.rule_name).filter(Boolean)).size
+        },
+        destinationLoad:Object.entries(destinations).map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count)
+      })
     }
     if (req.method === 'POST' && url.pathname === '/api/routing/test') {
       const body=await readBody(req)
       const decision=await routeLead(workspaceId,{leadRef:body.leadRef||'test_lead',score:body.score??90,source:body.source||'web',financingInterest:body.financingInterest,identityConfidence:body.identityConfidence??0.95})
       return send(req,res,200,{rule:decision.rule_name,matched:true,destination:decision.destination,reason:decision.reason,slaSeconds:decision.sla_seconds,evaluatedAt:decision.created_at})
     }
-    if (req.method === 'GET' && url.pathname === '/api/follow-ups') return send(req,res,200,{items:await listPersistedFollowUps(workspaceId)})
+    if (req.method === 'GET' && url.pathname === '/api/follow-ups') {
+      const items=await listPersistedFollowUps(workspaceId)
+      const now=Date.now()
+      const start=new Date();start.setHours(0,0,0,0)
+      const open=items.filter(x=>x.status==='open')
+      const completed=items.filter(x=>x.status==='completed')
+      const completedToday=completed.filter(x=>Date.parse(x.completed_at||0)>=start.getTime()).length
+      const overdue=open.filter(x=>x.due_at&&Date.parse(x.due_at)<now).length
+      return send(req,res,200,{items,stats:{open:open.length,completedToday,completedTotal:completed.length,overdue}})
+    }
     if (req.method === 'POST' && url.pathname === '/api/follow-ups') {
       const body=await readBody(req)
       const item=await createFollowUp(workspaceId,body)
@@ -2583,7 +2629,21 @@ const server = http.createServer(async (req,res)=>{
       const job=await enqueueJob({workspaceId,kind:'agent_action',idempotencyKey:'agent:'+run.id,payload:{agentRunId:run.id,actionType:'meeting_reminder',payload:{...reminderPayload,runId:run.id}}})
       return send(req,res,202,{id:body.id,runId:run.id,status:'queued',jobId:job?.id||null})
     }
-    if (req.method === 'GET' && url.pathname === '/api/feedback') return send(req,res,200,await listPersistedFeedback(workspaceId))
+    if (req.method === 'GET' && url.pathname === '/api/feedback') {
+      const result=await listPersistedFeedback(workspaceId)
+      const items=result.items||[]
+      const themes={}
+      for(const item of items){
+        const key=String(item.theme||'Uncategorized')
+        themes[key]=(themes[key]||0)+1
+      }
+      const low=items.filter(x=>x.score!=null&&Number(x.score)<=2).length
+      return send(req,res,200,{
+        ...result,
+        stats:{responses:items.length,average:result.average,lowSatisfaction:low,themes:Object.keys(themes).length},
+        themes:Object.entries(themes).map(([theme,count])=>({theme,count})).sort((a,b)=>b.count-a.count)
+      })
+    }
     if (req.method === 'POST' && url.pathname === '/api/feedback') {
       const body=await readBody(req)
       if(!body.lead) return send(req,res,400,{error:'lead required'})
