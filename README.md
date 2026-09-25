@@ -1296,3 +1296,35 @@ Resources:
 - local SHA-256 utility remains browser-only and does not submit the source identifier to the backend.
 
 This directly addresses the requirement that visible public boxes and actions should perform a meaningful workflow instead of acting as decorative UI.
+
+
+## End-to-end API contract completion pass
+
+This pass closes the remaining frontend/backend route mismatch discovered during the EasyInsights parity audit.
+
+Implemented backend routes:
+- `GET/POST /api/launchpad`
+- `GET /api/identity`
+- `GET /api/models` and `POST /api/models/run`
+- `GET /api/routing` and `POST /api/routing/test`
+- `GET /api/follow-ups` and `POST /api/follow-ups/complete`
+- `GET /api/qualification-calls` and `POST /api/qualification-calls/retry`
+- `GET /api/meetings` and `POST /api/meetings/remind`
+- `GET /api/feedback`
+- `GET /api/approvals` and `POST /api/approvals/decision`
+- `POST /api/agents/custom`
+- `GET /api/settings`
+- `GET /api/workspaces`
+- `GET /api/audit-log`
+- `POST /api/api-keys`
+
+Operational behavior added:
+- custom agents are persisted and can require explicit human approval before activation;
+- approval decisions update custom-agent lifecycle state;
+- qualification retries, meeting reminders and follow-up completion mutate durable state;
+- model runs and launchpad changes create audit entries;
+- the agent listing now includes persisted custom agents alongside built-ins;
+- API keys are returned only at creation time while only a SHA-256 fingerprint is stored;
+- seeded operational records make the connected UI surfaces usable immediately in a fresh environment.
+
+This pass resolves the previously observed 20-path frontend/backend contract gap without creating an implementation branch.
