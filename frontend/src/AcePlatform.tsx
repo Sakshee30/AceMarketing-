@@ -49,7 +49,9 @@ function Brand({dark=false}:{dark?:boolean}){
 function Header({openHome,openApp,openLogin,openPricing,openDemo,openCompany,openResources,openCaseStudies,openSolutions,openIndustries,openAgents,openIntegrations}:{openHome:()=>void,openApp:()=>void,openLogin:()=>void,openPricing:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void,openCaseStudies:()=>void,openSolutions:()=>void,openIndustries:()=>void,openAgents:()=>void,openIntegrations:()=>void}){
  const [open,setOpen]=useState(false)
  const [menu,setMenu]=useState<'industries'|'agents'|'resources'|null>(null)
+ const [navCopy,setNavCopy]=useState<any>(null)
  const closeMenu=()=>setMenu(null)
+ useEffect(()=>{api.publicNavigation().then((r:any)=>setNavCopy(r)).catch(()=>null)},[])
  const industryItems:any[]=[
   ['Edtech','Track and activate student data across channels to improve lead quality, personalize outreach, and increase enrollments.',GraduationCap],
   ['Fintech','Enable teams to activate data wherever it lives - while maintaining strict privacy, security, and regulatory compliance.',Landmark],
@@ -80,6 +82,13 @@ function Header({openHome,openApp,openLogin,openPricing,openDemo,openCompany,ope
   ['ROAS Calculator','Model advertising return and efficiency',CircleDollarSign,openResources],
   ['Documentation','Implementation and product documentation',Code2,openResources]
  ]
+ const industryCopy=navCopy?.industries?.length?navCopy.industries:industryItems.map((x:any)=>({name:x[0],summary:x[1]}))
+ const industryDisplay=industryItems.map((x:any,i:number)=>[industryCopy[i]?.name||x[0],industryCopy[i]?.summary||x[1],x[2]])
+ const agentCopy=navCopy?.agents?.length?navCopy.agents:agentDisplay.map((x:any)=>({name:x[0],summary:x[1]}))
+ const agentDisplay=agentItems.map((x:any,i:number)=>[agentCopy[i]?.name||x[0],agentCopy[i]?.summary||x[1],x[2]])
+ const resourceCopy=navCopy?.resources?.length?navCopy.resources:resourceDisplay.map((x:any)=>({name:x[0],summary:x[1]}))
+ const resourceDisplay=resourceItems.map((x:any,i:number)=>[resourceCopy[i]?.name||x[0],resourceCopy[i]?.summary||x[1],x[2],x[3]])
+
  return <header className="ei-header-shell" onMouseLeave={closeMenu}>
   <div className="ei-header">
    <button className="ei-brand-button" onClick={openHome}><Brand dark/></button>
@@ -101,8 +110,8 @@ function Header({openHome,openApp,openLogin,openPricing,openDemo,openCompany,ope
   {menu==='industries'&&<div className="ei-mega-menu industries-menu" onMouseEnter={()=>setMenu('industries')}>
    <div className="ei-mega-label">INDUSTRIES</div>
    <div className="ei-industry-columns">
-    <div>{industryItems.slice(0,4).map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();openIndustries()}} className="ei-industry-item"><span className="ei-industry-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>})}</div>
-    <div>{industryItems.slice(4).map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();openIndustries()}} className="ei-industry-item"><span className="ei-industry-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>})}</div>
+    <div>{industryDisplay.slice(0,4).map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();openIndustries()}} className="ei-industry-item"><span className="ei-industry-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>})}</div>
+    <div>{industryDisplay.slice(4).map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();openIndustries()}} className="ei-industry-item"><span className="ei-industry-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>})}</div>
    </div>
   </div>}
 
@@ -160,8 +169,8 @@ function Marketing({openHome,openApp,openLogin,openPricing,openDemo,openCompany,
 
   <section className="ei-problems" id="problems">
    <div className="ei-section-heading">
-    <span>THREE PROBLEMS EVERY PAID FUNNEL HAS.</span>
-    <h2>One platform that fixes all three.</h2>
+    <span>THREE SIGNAL BREAKS THAT HOLD GROWTH BACK.</span>
+    <h2>Repair the data flow before media efficiency slips.</h2>
    </div>
    <div className="ei-problem-tabs">{(['Lead Quality','Conversion','Attribution'] as const).map(x=><button key={x} className={problemTab===x?'active':''} onClick={()=>setProblemTab(x)}>{x}</button>)}</div>
    <div className="ei-problem-stage">
@@ -169,14 +178,14 @@ function Marketing({openHome,openApp,openLogin,openPricing,openDemo,openCompany,
     {problemTab==='Conversion'&&<><div className="ei-problem-no">02</div><div className="ei-problem-main"><span>CONVERSION</span><h3>Leads disappear between tools, teams, and follow-up steps.</h3><p><b>Why it happens:</b> Forms, CRM, call centers and offline teams operate in fragments. Every handoff loses context, time and leads.</p></div><div className="ei-problem-solution"><span>WHAT ACEMARKETING DOES</span><p>Grade and enrich on arrival, qualify quickly, route with full context, schedule, remind and match closures back to source.</p><span>WHAT YOU GET</span><h4>More conversion</h4><p>Each step moves faster, with context and accountability across every path.</p></div></>}
     {problemTab==='Attribution'&&<><div className="ei-problem-no">03</div><div className="ei-problem-main"><span>VISIBILITY & ATTRIBUTION</span><h3>Each system reports its own slice, while the complete journey stays hidden.</h3><p><b>Why it happens:</b> Each tool reports only its own step. Multi-source, multi-path and online-offline journeys remain fragmented.</p></div><div className="ei-problem-solution"><span>WHAT ACEMARKETING DOES</span><p>Stitch every source, tool and offline step into one journey per customer with step monitoring and full-path revenue attribution.</p><span>WHAT YOU GET</span><h4>Visibility and accountability</h4><p>See every step and defend budget decisions with journey-level evidence.</p></div></>}
    </div>
-   <div className="ei-problem-cta"><span>See all three fixed in one platform.</span><button onClick={openDemo}>Get a Demo</button></div>
+   <div className="ei-problem-cta"><span>See how one operating layer connects all three breakpoints.</span><button onClick={openDemo}>Get a Demo</button></div>
   </section>
 
   <section className="ei-system-overview" id="platform">
    <div className="ei-section-heading centered"><span>ONE OPERATING LAYER, TWO CORE JOBS</span><h2>Unify the journey, then let automation act with context.</h2><p>Measurement and execution work better when every workflow sees the same customer and revenue truth.</p></div>
    <div className="ei-capability-layout">
-    <article><div className="ei-cap-num">01</div><Network/><span>CAPABILITY 01</span><h3>Stitch the journey</h3><p>Every lead source — forms, website, app, calls, walk-ins — and every tool connected into one journey per customer, online and offline, from first touch to closed revenue.</p><ul><li>Identity stitching</li><li>Click-ID persistence</li><li>Online + offline events</li><li>Chronological journey view</li></ul></article>
-    <article><div className="ei-cap-num">02</div><Bot/><span>CAPABILITY 02</span><h3>Deploy agents that plug the leaks</h3><p>Choose specialized agents for qualification, routing, follow-up, closure match-back and signal return. Each agent acts with shared journey context.</p><ul><li>11 prebuilt agents</li><li>Custom agents</li><li>Human approval controls</li><li>Audit trail</li></ul></article>
+    <article><div className="ei-cap-num">01</div><Network/><span>CAPABILITY 01</span><h3>Unify the customer path</h3><p>Every lead source — forms, website, app, calls, walk-ins — and every tool connected into one journey per customer, online and offline, from first touch to closed revenue.</p><ul><li>Identity stitching</li><li>Click-ID persistence</li><li>Online + offline events</li><li>Chronological journey view</li></ul></article>
+    <article><div className="ei-cap-num">02</div><Bot/><span>CAPABILITY 02</span><h3>Automate the handoffs that slow revenue</h3><p>Choose specialized agents for qualification, routing, follow-up, closure match-back and signal return. Each agent acts with shared journey context.</p><ul><li>11 prebuilt agents</li><li>Custom agents</li><li>Human approval controls</li><li>Audit trail</li></ul></article>
    </div>
    <div className="ei-equation"><b>stitched journey</b><span>+</span><b>agents at every step</b><span>=</span><strong>a funnel that learns</strong></div>
   </section>
