@@ -158,6 +158,15 @@ const server = http.createServer(async (req,res)=>{
       {name:'Executive Program',channel:'Meta Ads',leads:1964,qualified:1048,appointments:641,consultations:288,bookings:119},
       {name:'PGDM Retargeting',channel:'Meta Ads',leads:1510,qualified:903,appointments:527,consultations:210,bookings:96}
     ]})
+    if (req.method === 'GET' && url.pathname === '/api/data-hub') return send(res,200,{records:742000,knownIdentities:56582,schemaHealth:99.8,sources:[
+      {name:'Google Ads',type:'ad_platform',freshnessSeconds:38,records:248916,status:'healthy'},
+      {name:'Meta Ads',type:'ad_platform',freshnessSeconds:42,records:311400,status:'healthy'},
+      {name:'LeadSquared',type:'crm',freshnessSeconds:72,records:92400,status:'healthy'},
+      {name:'WhatsApp',type:'messaging',freshnessSeconds:19,records:66800,status:'healthy'},
+      {name:'Exotel',type:'calling',freshnessSeconds:124,records:18200,status:'review'},
+      {name:'POS / Billing',type:'offline_revenue',freshnessSeconds:451,records:5800,status:'healthy'}
+    ]})
+    if (req.method === 'POST' && url.pathname === '/api/data-hub/rebuild') return send(res,202,{jobId:randomUUID(),status:'queued',scope:'canonical_view',queuedAt:new Date().toISOString()})
     if (req.method === 'GET' && url.pathname === '/api/live-sync') return send(res,200,{status:'always_on',medianLatencySeconds:42,deliveryRate:99.82,eventsPerMinute:8412,recent:trackedEvents.slice(-25).reverse()})
     if (req.method === 'GET' && url.pathname === '/api/matchback') return send(res,200,{rules:[
       {name:'closed_won_mba_search',source:'crm_billing',destination:'google_ads',matchedRevenue:8400000,closedOutcomes:982,matchRate:96.8},
