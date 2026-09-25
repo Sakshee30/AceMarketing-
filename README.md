@@ -1132,3 +1132,20 @@ New public API routes:
 ### Content policy for this implementation
 
 Visual structure, alignment, spacing, information architecture and interaction patterns are modeled closely on the current EasyInsights public site. AceMarketing does **not** reuse EasyInsights taglines, long-form marketing copy, logos, customer artwork or proprietary source code. Headlines, descriptions and CTAs on the new routed pages are original AceMarketing copy.
+
+
+## Public navigation production pass: one shared chrome, real routes, original copy
+
+This pass makes the public website behave like a real multi-page SaaS site while preserving the EasyInsights-like visual rhythm.
+
+Implemented:
+- hash routes for homepage, Industries, Agents, Integrations, Case Studies, Pricing, Resources, Company, Solutions, Demo, Privacy, Terms and Security;
+- browser back/forward navigation now updates the visible page;
+- every public route uses the same announcement bar, navbar, typography system and footer;
+- duplicate standalone top bars are hidden when a page is rendered inside the shared public chrome;
+- footer legal actions are now handled by the root router;
+- navbar menu actions open dedicated routes instead of homepage-only anchors;
+- the product workspace remains a separate authenticated-style route;
+- key public headings and marketing text were rewritten so AceMarketing keeps original copy rather than reusing EasyInsights taglines.
+
+The design goal remains close visual parity in spacing, hierarchy, menu behavior, typography scale and layout while keeping AceMarketing branding, wording, artwork and code independent.
