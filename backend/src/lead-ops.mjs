@@ -61,12 +61,15 @@ export const upsertLeadProfile=async(workspaceId,input={})=>{
   const id='lead_'+randomUUID()
   const {rows}=await pool.query(
     `INSERT INTO ace_lead_profiles
-      (id,workspace_id,external_lead_id,name,email_sha256,phone_sha256,source,campaign,crm_stage,intent,score,grade,score_version,score_drivers,attributes,journey,call_summary,whatsapp_summary)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::jsonb,$15::jsonb,$16::jsonb,$17,$18)
+      (id,workspace_id,external_lead_id,name,email_sha256,phone_sha256,device_id,device_platform,app_id,source,campaign,crm_stage,intent,score,grade,score_version,score_drivers,attributes,journey,call_summary,whatsapp_summary)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17::jsonb,$18::jsonb,$19::jsonb,$20,$21)
      ON CONFLICT (workspace_id,external_lead_id) DO UPDATE SET
       name=COALESCE(EXCLUDED.name,ace_lead_profiles.name),
       email_sha256=COALESCE(EXCLUDED.email_sha256,ace_lead_profiles.email_sha256),
       phone_sha256=COALESCE(EXCLUDED.phone_sha256,ace_lead_profiles.phone_sha256),
+      device_id=COALESCE(EXCLUDED.device_id,ace_lead_profiles.device_id),
+      device_platform=COALESCE(EXCLUDED.device_platform,ace_lead_profiles.device_platform),
+      app_id=COALESCE(EXCLUDED.app_id,ace_lead_profiles.app_id),
       source=COALESCE(EXCLUDED.source,ace_lead_profiles.source),
       campaign=COALESCE(EXCLUDED.campaign,ace_lead_profiles.campaign),
       crm_stage=COALESCE(EXCLUDED.crm_stage,ace_lead_profiles.crm_stage),
@@ -78,7 +81,7 @@ export const upsertLeadProfile=async(workspaceId,input={})=>{
       whatsapp_summary=COALESCE(EXCLUDED.whatsapp_summary,ace_lead_profiles.whatsapp_summary),
       updated_at=now()
      RETURNING *`,
-    [id,workspaceId,externalLeadId,safeText(input.name),emailHash,phoneHash,safeText(input.source),safeText(input.campaign),
+    [id,workspaceId,externalLeadId,safeText(input.name),emailHash,phoneHash,safeText(input.deviceId||input.device_id,512),safeText(input.devicePlatform||input.device_platform,32),safeText(input.appId||input.app_id,256),safeText(input.source),safeText(input.campaign),
      safeText(input.crmStage||input.stage),safeText(input.intent),scoring.score,scoring.grade,scoring.version,JSON.stringify(scoring.drivers),
      json(input.attributes),json({journeyDepth:Number(input.journeyDepth||input.pagesViewed||0),pricingPageViews:Number(input.pricingPageViews||0),lastActivity:input.lastActivity||null,conversionPropensity:Number(input.conversionPropensity||0),ltvTier:input.ltvTier||null,whatsappEngaged:Boolean(input.whatsappEngaged),callOutcome:input.callOutcome||null,meetingStatus:input.meetingStatus||null}),
      safeText(input.callSummary,4000),safeText(input.whatsappSummary,4000)]
@@ -123,7 +126,10 @@ const fieldMap={
   'Conversion propensity':{expr:"COALESCE((journey->>'conversionPropensity')::numeric,0)",type:'number'},
   'Pricing-page views':{expr:"COALESCE((journey->>'pricingPageViews')::numeric,0)",type:'number'},
   'LTV tier':{expr:"COALESCE(journey->>'ltvTier','')",type:'text'},
-  'Last activity':{expr:"COALESCE(journey->>'lastActivity','')",type:'text'}
+  'Last activity':{expr:"COALESCE(journey->>'lastActivity','')",type:'text'},
+  'Device ID present':{expr:"CASE WHEN COALESCE(device_id,'')<>'' THEN 'yes' ELSE 'no' END",type:'text'},
+  'Device platform':{expr:"COALESCE(device_platform,'')",type:'text'},
+  'App ID':{expr:"COALESCE(app_id,'')",type:'text'}
 }
 
 const audienceWhere=(condition,operator,value)=>{
@@ -157,9 +163,9 @@ export const createAudience=async(workspaceId,input)=>{
   const preview=await previewAudience(workspaceId,input)
   const id='aud_'+randomUUID()
   const {rows}=await pool.query(
-    `INSERT INTO ace_audiences (id,workspace_id,name,mode,destination,definition,status,estimated_size,matched_size,last_materialized_at)
-     VALUES ($1,$2,$3,$4,$5,$6::jsonb,'materialized',$7,$7,now()) RETURNING *`,
-    [id,workspaceId,String(input.name),String(input.mode||'Activate'),String(input.destination),JSON.stringify({condition:input.condition,operator:input.operator,value:input.value}),preview.estimatedSize]
+    `INSERT INTO ace_audiences (id,workspace_id,name,mode,destination,definition,identity_mode,status,estimated_size,matched_size,last_materialized_at)
+     VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7,'materialized',$8,$8,now()) RETURNING *`,
+    [id,workspaceId,String(input.name),String(input.mode||'Activate'),String(input.destination),JSON.stringify({condition:input.condition,operator:input.operator,value:input.value}),String(input.identityMode||'auto').toLowerCase(),preview.estimatedSize]
   )
   await materializeAudience(workspaceId,id)
   return rows[0]
@@ -173,18 +179,19 @@ export const materializeAudience=async(workspaceId,audienceId)=>{
   const def=audience.definition||{}
   const where=audienceWhere(def.condition,def.operator,def.value)
   const leads=await pool.query(
-    `SELECT id,external_lead_id,email_sha256,phone_sha256,grade,score,crm_stage FROM ace_lead_profiles
+    `SELECT id,external_lead_id,email_sha256,phone_sha256,device_id,device_platform,app_id,grade,score,crm_stage FROM ace_lead_profiles
      WHERE workspace_id=$1 AND status='active' AND ${where.sql}`,[workspaceId,where.value])
   const client=await pool.connect()
   try{
     await client.query('BEGIN')
     await client.query('DELETE FROM ace_audience_members WHERE workspace_id=$1 AND audience_id=$2',[workspaceId,audienceId])
     for(const lead of leads.rows){
-      const identity=lead.email_sha256||lead.phone_sha256||sha(lead.external_lead_id)
+      const identityMode=String(audience.identity_mode||'auto').toLowerCase()
+      const identity=identityMode==='device'?(lead.device_id||sha(lead.external_lead_id)):(lead.email_sha256||lead.phone_sha256||lead.device_id||sha(lead.external_lead_id))
       await client.query(
         `INSERT INTO ace_audience_members (audience_id,workspace_id,lead_profile_id,identity_key,action,attributes)
          VALUES ($1,$2,$3,$4,$5,$6::jsonb) ON CONFLICT DO NOTHING`,
-        [audienceId,workspaceId,lead.id,identity,String(audience.mode).toLowerCase(),JSON.stringify({grade:lead.grade,score:lead.score,stage:lead.crm_stage})]
+        [audienceId,workspaceId,lead.id,identity,String(audience.mode).toLowerCase(),JSON.stringify({grade:lead.grade,score:lead.score,stage:lead.crm_stage,deviceId:lead.device_id||null,devicePlatform:lead.device_platform||null,appId:lead.app_id||null})]
       )
     }
     await client.query(`UPDATE ace_audiences SET matched_size=$3,status='ready_for_sync',last_materialized_at=now(),updated_at=now() WHERE workspace_id=$1 AND id=$2`,[workspaceId,audienceId,leads.rowCount])
@@ -211,7 +218,7 @@ export const getAudienceBundle=async(workspaceId,audienceId)=>{
   const audience=rows[0]
   if(!audience)return null
   const members=await pool.query(
-    `SELECT m.identity_key,m.action,m.attributes,p.email_sha256,p.phone_sha256,p.external_lead_id
+    `SELECT m.identity_key,m.action,m.attributes,p.email_sha256,p.phone_sha256,p.device_id,p.device_platform,p.app_id,p.external_lead_id
      FROM ace_audience_members m
      JOIN ace_lead_profiles p ON p.id=m.lead_profile_id
      WHERE m.workspace_id=$1 AND m.audience_id=$2 ORDER BY m.created_at ASC`,
@@ -274,8 +281,41 @@ export const listActivationRuns=async(workspaceId,limit=100)=>{
 
 export const listAudiences=async workspaceId=>{
   if(!pool)return []
-  const {rows}=await pool.query(`SELECT id,name,mode,destination,status,estimated_size,matched_size,last_materialized_at,definition,provider_state,last_sync_error,last_synced_at,created_at,updated_at FROM ace_audiences WHERE workspace_id=$1 ORDER BY updated_at DESC`,[workspaceId])
+  const {rows}=await pool.query(`SELECT id,name,mode,destination,identity_mode,status,estimated_size,matched_size,last_materialized_at,definition,provider_state,last_sync_error,last_synced_at,created_at,updated_at FROM ace_audiences WHERE workspace_id=$1 ORDER BY updated_at DESC`,[workspaceId])
   return rows
+}
+
+
+export const audienceOpsStats=async workspaceId=>{
+  if(!pool)return {available:false}
+  const [audiences,profiles]=await Promise.all([
+    pool.query(`SELECT
+      COUNT(*)::int total,
+      COALESCE(SUM(matched_size) FILTER (WHERE LOWER(mode)<>'suppress'),0)::int activated,
+      COALESCE(SUM(matched_size) FILTER (WHERE LOWER(mode)='suppress'),0)::int suppressed,
+      COUNT(*) FILTER (WHERE status='active')::int active,
+      COUNT(*) FILTER (WHERE status='error')::int errors,
+      COUNT(*) FILTER (WHERE identity_mode='device')::int device_audiences,
+      AVG(EXTRACT(EPOCH FROM (COALESCE(last_synced_at,updated_at)-created_at))) FILTER (WHERE last_synced_at IS NOT NULL) avg_sync_seconds
+     FROM ace_audiences WHERE workspace_id=$1`,[workspaceId]),
+    pool.query(`SELECT
+      COUNT(*)::int total,
+      COUNT(*) FILTER (WHERE COALESCE(device_id,'')<>'')::int device_ids,
+      COUNT(*) FILTER (WHERE LOWER(COALESCE(crm_stage,'')) IN ('converted','enrolled','closed_won','customer'))::int converted,
+      COUNT(*) FILTER (WHERE grade IN ('C','D'))::int low_quality,
+      COUNT(*) FILTER (WHERE grade IN ('A','B'))::int high_quality,
+      COUNT(*) FILTER (WHERE LOWER(COALESCE(crm_stage,'')) IN ('consultation','opportunity','qualified'))::int decision,
+      COUNT(*) FILTER (WHERE LOWER(COALESCE(crm_stage,'')) IN ('lead','new','contacted','connected'))::int nurture
+     FROM ace_lead_profiles WHERE workspace_id=$1 AND status='active'`,[workspaceId])
+  ])
+  const a=audiences.rows[0],p=profiles.rows[0]
+  return {
+    available:true,
+    audiences:{total:a.total,active:a.active,activatedIdentities:a.activated,suppressedIdentities:a.suppressed,errors:a.errors,deviceAudiences:a.device_audiences,medianSyncLatencySeconds:a.avg_sync_seconds?Math.round(Number(a.avg_sync_seconds)):null},
+    lifecycle:{acquisition:Math.max(0,Number(p.total||0)-Number(p.converted||0)-Number(p.decision||0)),nurture:p.nurture,decision:p.decision,postPurchase:p.converted},
+    exclusions:{converted:p.converted,deviceIds:p.device_ids,lowQuality:p.low_quality},
+    profiles:{total:p.total,highQuality:p.high_quality}
+  }
 }
 
 export const closeLeadOps=async()=>{if(pool)await pool.end()}
