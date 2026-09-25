@@ -1256,3 +1256,18 @@ New public backend endpoints:
 Quote requests are written to the durable state store under `quoteRequests` and an audit event is recorded. The Pricing UI refreshes recommendations from the backend, lets the user override the recommended stack, captures the configuration, shows success/error state, and keeps a separate Talk to sales action that routes to the demo form.
 
 This moves another major public box from visual parity into an end-to-end functional workflow.
+
+
+## Homepage parity + backend-driven challenge explorer
+
+This pass aligns the lower half of the public homepage more closely with the current EasyInsights structure while keeping original AceMarketing copy.
+
+Implemented:
+- new backend-owned six-category challenge catalog in `backend/src/public-content.mjs`;
+- new public endpoint `GET /api/public/challenges`;
+- interactive homepage challenge explorer for operations, tracking/data quality, ad-platform optimization, attribution, audiences, and privacy/consent;
+- each challenge panel is functional and routes into AceMarketing Solutions;
+- removed duplicate public data-ownership/security sections so the homepage uses one security/data-ownership presentation instead of repeated variants;
+- replaced the older homepage-only footer with the same shared backend-driven footer used by all public routes.
+
+This reduces visual duplication, improves public-page consistency, and moves another major homepage section under backend configuration.
