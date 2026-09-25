@@ -2165,3 +2165,8 @@ ZOHO_ACCOUNTS_URL=https://accounts.zoho.com
 ```
 
 Provider refresh tokens and access tokens remain encrypted by the connector vault. If a provider does not issue a refresh token, the workspace reports that reconnection is required instead of fabricating continuity.
+
+
+## Ask Ace grounded analytics
+
+Ask Ace now answers from current workspace data instead of fixed demo values. It uses lead profiles, attribution statistics, connector state, audience state, activation runs, and monitoring context. Responses include confidence, evidence-source labels, and follow-up questions. When data is insufficient, the assistant reports the limitation instead of inventing metrics.
