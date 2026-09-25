@@ -84,9 +84,9 @@ function Header({openHome,openApp,openLogin,openPricing,openDemo,openCompany,ope
  ]
  const industryCopy=navCopy?.industries?.length?navCopy.industries:industryItems.map((x:any)=>({name:x[0],summary:x[1]}))
  const industryDisplay=industryItems.map((x:any,i:number)=>[industryCopy[i]?.name||x[0],industryCopy[i]?.summary||x[1],x[2]])
- const agentCopy=navCopy?.agents?.length?navCopy.agents:agentDisplay.map((x:any)=>({name:x[0],summary:x[1]}))
+ const agentCopy=navCopy?.agents?.length?navCopy.agents:agentItems.map((x:any)=>({name:x[0],summary:x[1]}))
  const agentDisplay=agentItems.map((x:any,i:number)=>[agentCopy[i]?.name||x[0],agentCopy[i]?.summary||x[1],x[2]])
- const resourceCopy=navCopy?.resources?.length?navCopy.resources:resourceDisplay.map((x:any)=>({name:x[0],summary:x[1]}))
+ const resourceCopy=navCopy?.resources?.length?navCopy.resources:resourceItems.map((x:any)=>({name:x[0],summary:x[1]}))
  const resourceDisplay=resourceItems.map((x:any,i:number)=>[resourceCopy[i]?.name||x[0],resourceCopy[i]?.summary||x[1],x[2],x[3]])
 
  return <header className="ei-header-shell" onMouseLeave={closeMenu}>
@@ -294,14 +294,19 @@ function Marketing({openHome,openApp,openLogin,openPricing,openDemo,openCompany,
 
 
 function PublicFooter({openHome,openApp,openDemo,openCompany,openResources,openSolutions}:{openHome:()=>void,openApp:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void,openSolutions:()=>void}){
+ const goLegal=(view:'privacy'|'terms'|'security')=>window.dispatchEvent(new CustomEvent('ace-view',{detail:view}))
  return <footer className="ei-footer">
   <div className="ei-footer-top">
-   <div className="ei-footer-brand"><button className="public-footer-brand" onClick={openHome}><Brand/></button><p>First-party journey intelligence, activation, and conversion operations for performance teams.</p><button onClick={openDemo}>Book a demo</button></div>
-   <div><h4>Platform</h4><button onClick={openApp}>Activation workspace</button><button onClick={openApp}>Journey intelligence</button><button onClick={openApp}>Audience operations</button></div>
-   <div><h4>Solutions</h4><button onClick={openSolutions}>Lead generation</button><button onClick={openSolutions}>Attribution</button><button onClick={openSolutions}>Enterprise operations</button></div>
-   <div><h4>Resources</h4><button onClick={openCompany}>About AceMarketing</button><button onClick={openResources}>Guides & tools</button><button onClick={openResources}>Documentation</button></div>
+   <div className="ei-footer-brand">
+    <button className="public-footer-brand" onClick={openHome}><Brand/></button>
+    <p>First-party journey intelligence, activation, and conversion operations for performance teams.</p>
+    <button className="ei-footer-demo" onClick={openDemo}>Book a demo</button>
+   </div>
+   <div className="ei-footer-column"><h4>Platform</h4><button onClick={openApp}>Activation workspace</button><button onClick={openApp}>Journey intelligence</button><button onClick={openApp}>Audience operations</button></div>
+   <div className="ei-footer-column"><h4>Solutions</h4><button onClick={openSolutions}>Lead generation</button><button onClick={openSolutions}>Attribution</button><button onClick={openSolutions}>Enterprise operations</button></div>
+   <div className="ei-footer-column"><h4>Resources</h4><button onClick={openCompany}>About AceMarketing</button><button onClick={openResources}>Guides & tools</button><button onClick={openResources}>Documentation</button></div>
   </div>
-  <div className="ei-footer-bottom"><span>© 2026 AceMarketing. All rights reserved.</span><span>Original product copy and visual assets.</span></div>
+  <div className="ei-footer-legal"><span>© 2026 AceMarketing</span><div><button onClick={()=>goLegal('privacy')}>Privacy</button><button onClick={()=>goLegal('terms')}>Terms</button><button onClick={()=>goLegal('security')}>Security</button></div></div>
  </footer>
 }
 
