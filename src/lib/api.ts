@@ -33,4 +33,6 @@ export const api = {
   agents: () => request('/agents'),
   audiences: () => request('/audiences'),
   monitoring: () => request('/monitoring'),
+  signalConsole: () => request('/signal-console'),
+  securityPosture: () => request('/security-posture'),
 }
