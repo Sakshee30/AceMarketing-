@@ -130,7 +130,7 @@ export const recordApiTelemetry=async(workspaceId,{requestId,method,path,statusC
     [workspaceId,String(requestId),String(method),String(path),Number(statusCode),Math.max(0,Math.round(Number(latencyMs)||0))]
   )
   const usage=usageColumn(String(method),String(path))
-  const columns=['api_requests',usage].filter(Boolean)
+  const columns=['api_requests',...(statusCode<400&&usage?[usage]:[])].filter(Boolean)
   const updates=columns.map(x=>`${x}=ace_usage_daily.${x}+1`).join(',')
   await pool.query(
     `INSERT INTO ace_usage_daily (workspace_id,usage_date,${columns.join(',')})
