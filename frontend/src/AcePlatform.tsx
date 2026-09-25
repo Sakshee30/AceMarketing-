@@ -916,28 +916,26 @@ function Planner(){
 }
 
 function Reports(){
- const [selected,setSelected]=useState('Executive MBA Cohort')
+ const [selected,setSelected]=useState('Cohort Performance')
+ const [cohorts,setCohorts]=useState<any>({cohorts:[],sources:[],totals:null,eventDefinitions:null})
  const reports=[
-  ['Executive MBA Cohort','Weekly','Email','Active'],
+  ['Cohort Performance','Live','Workspace','Active'],
   ['Paid Funnel Performance','Daily','Email + Slack','Active'],
   ['Attribution Summary','Monday 08:00','Leadership','Active'],
   ['Lead Quality by Campaign','Monthly','Growth Team','Draft']
  ]
- const cohort=[
-  ['Jan','1,240','38%','22%','8.4%','₹7,940'],
-  ['Feb','1,410','41%','25%','9.8%','₹7,520'],
-  ['Mar','1,622','45%','28%','11.1%','₹7,080'],
-  ['Apr','1,884','47%','30%','12.4%','₹6,760']
- ]
+ useEffect(()=>{api.cohorts(6).then((r:any)=>setCohorts(r)).catch(()=>null)},[])
+ const rows=cohorts.cohorts||[]
+ const latest=rows[rows.length-1]||{}
+ const money=(n:any)=>'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:0})
  return <><PageHead crumb="Measurement / Reports" title="Cohort & automated reports" sub="Turn stitched journey and attribution data into recurring decision-ready reports." action="New report"/>
- <div className="stats-grid"><Stat label="Scheduled reports" value="4" sub="3 active · 1 draft" Icon={BarChart3}/><Stat label="Recipients" value="18" sub="Across growth + leadership" Icon={UsersRound}/><Stat label="Last delivery" value="08:00" sub="Delivered successfully" Icon={Check}/><Stat label="Report failures" value="0" sub="Last 30 days" Icon={Activity}/></div>
- <div className="reports-layout"><div className="app-panel report-list"><div className="panel-head"><div><h3>Scheduled reports</h3><p>Automated email and stakeholder reporting</p></div></div>{reports.map(r=><button key={r[0]} className={selected===r[0]?'selected':''} onClick={()=>setSelected(r[0])}><BarChart3/><div><b>{r[0]}</b><small>{r[1]} · {r[2]}</small></div><span className={r[3].toLowerCase()}>{r[3]}</span><ChevronRight/></button>)}</div>
- <div className="app-panel report-preview"><div className="panel-head"><div><h3>{selected}</h3><p>Preview · stitched journey cohort analysis</p></div><button>Send test email</button></div><div className="report-summary-grid">{[['Cohort size','1,884'],['Qualified rate','47%'],['Consultation rate','30%'],['Enrolment rate','12.4%'],['CAC','₹6,760'],['Attributed revenue','₹1.27Cr']].map(x=><div key={x[0]}><span>{x[0]}</span><b>{x[1]}</b></div>)}</div><div className="report-insight"><Sparkles/><div><b>Automated insight</b><p>April's cohort has the strongest qualification and enrolment rates while CAC is 14.9% lower than January.</p></div></div></div></div>
- <div className="app-panel"><div className="panel-head"><div><h3>Cohort performance</h3><p>Acquisition month → downstream conversion and CAC</p></div><button>Export CSV</button></div><table><thead><tr><th>Cohort</th><th>Leads</th><th>Qualified</th><th>Consultation</th><th>Enrolment</th><th>CAC</th></tr></thead><tbody>{cohort.map(r=><tr key={r[0]}>{r.map((v,i)=><td key={i}>{v}</td>)}</tr>)}</tbody></table></div>
- <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Media planning view</h3><p>Quality-adjusted channel recommendation</p></div></div>{[['Google Search','Scale','High close rate · stable CAC'],['Meta Prospecting','Hold','Volume strong · lead quality mixed'],['WhatsApp Retargeting','Scale','High consultation progression'],['LinkedIn','Optimize','High CPL · good downstream quality']].map(x=><div className="planning-row" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><small>{x[2]}</small></div>)}</div>
- <div className="app-panel"><div className="panel-head"><div><h3>Delivery configuration</h3><p>Automated report distribution</p></div></div>{[['Cadence','Weekly · Monday 08:00'],['Recipients','growth@company.com · leadership@company.com'],['Format','Email summary + CSV attachment'],['Lookback','Previous 7 days'],['Failure alert','Slack #growth-ops']].map(x=><div className="setting-line" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><button>Edit</button></div>)}</div></div></>
+ <div className="stats-grid"><Stat label="Acquired" value={Number(cohorts.totals?.acquired||0).toLocaleString('en-IN')} sub="Across cohort lookback" Icon={UsersRound}/><Stat label="Conversions" value={Number(cohorts.totals?.conversions||0).toLocaleString('en-IN')} sub={(cohorts.totals?.conversionRate||0)+'% conversion rate'} Icon={Target}/><Stat label="Attributed revenue" value={money(cohorts.totals?.revenue)} sub="Matched conversion events" Icon={CircleDollarSign}/><Stat label="Revenue / acquired" value={money(cohorts.totals?.revenuePerAcquired)} sub="Quality-adjusted cohort value" Icon={Activity}/></div>
+ <div className="reports-layout"><div className="app-panel report-list"><div className="panel-head"><div><h3>Reports</h3><p>Live cohort analytics plus scheduled reporting surfaces</p></div></div>{reports.map(r=><button key={r[0]} className={selected===r[0]?'selected':''} onClick={()=>setSelected(r[0])}><BarChart3/><div><b>{r[0]}</b><small>{r[1]} · {r[2]}</small></div><span className={r[3].toLowerCase()}>{r[3]}</span><ChevronRight/></button>)}</div>
+ <div className="app-panel report-preview"><div className="panel-head"><div><h3>{selected}</h3><p>{cohorts.available?'Persisted click + matched offline event cohorts':'Waiting for cohort data'}</p></div><span className="status">{cohorts.lookbackMonths||6} months</span></div><div className="report-summary-grid">{[['Latest cohort size',latest.acquired||0],['Qualified rate',(latest.qualifiedRate||0)+'%'],['Consultation rate',(latest.consultationRate||0)+'%'],['Conversion rate',(latest.conversionRate||0)+'%'],['Revenue / acquired',money(latest.revenuePerAcquired)],['Attributed revenue',money(latest.revenue)]].map(x=><div key={x[0]}><span>{x[0]}</span><b>{String(x[1])}</b></div>)}</div><div className="report-insight"><Sparkles/><div><b>Measurement definition</b><p>Conversion stages are configured from deployment event definitions, not inferred from marketing copy. Current conversion events: {(cohorts.eventDefinitions?.conversion||[]).join(', ')||'not loaded'}.</p></div></div></div></div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Cohort performance</h3><p>First-acquisition month → qualified, consultation, conversion and attributed revenue</p></div><span className="healthy">Live data</span></div><table><thead><tr><th>Cohort</th><th>Acquired</th><th>Qualified</th><th>Consultation</th><th>Conversion</th><th>Revenue</th><th>Revenue / acquired</th></tr></thead><tbody>{rows.length?rows.map((r:any)=><tr key={String(r.month)}><td>{new Date(r.month).toLocaleDateString('en-IN',{month:'short',year:'numeric'})}</td><td>{Number(r.acquired).toLocaleString('en-IN')}</td><td>{r.qualifiedRate}%</td><td>{r.consultationRate}%</td><td>{r.conversionRate}%</td><td>{money(r.revenue)}</td><td>{money(r.revenuePerAcquired)}</td></tr>):<tr><td colSpan={7}>No matched cohort data yet. Tracking sessions and assisted conversion events will populate this view.</td></tr>}</tbody></table></div>
+ <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Source quality</h3><p>Acquisition source ranked by downstream value</p></div></div>{(cohorts.sources||[]).slice(0,8).map((x:any)=><div className="planning-row" key={x.source}><span>{x.source}</span><b>{x.conversionRate}% conversion</b><small>{Number(x.acquired).toLocaleString('en-IN')} acquired</small><strong>{money(x.revenue)}</strong></div>)}</div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Data contract</h3><p>Events that define each cohort stage</p></div></div>{[['Qualified',cohorts.eventDefinitions?.qualified],['Consultation',cohorts.eventDefinitions?.consultation],['Conversion',cohorts.eventDefinitions?.conversion]].map(x=><div className="setting-line" key={x[0]}><span>{x[0]}</span><b>{(x[1]||[]).join(', ')||'Not configured'}</b></div>)}</div></div></>
 }
-
 function Enrich(){
  const [live,setLive]=useState<any>({items:[],stats:null})
  useEffect(()=>{api.enrich().then((r:any)=>setLive(r)).catch(()=>null)},[])
