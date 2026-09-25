@@ -1349,3 +1349,28 @@ Implemented:
 This closes an important production-readiness gap between the existing AdSync/Monitoring UI and the backend: failed outbound signals now have explicit persisted lifecycle state, idempotency, retry controls and dead-letter visibility.
 
 Provider credentials and vendor-specific OAuth/API payload delivery are still environment-dependent and must be configured before live external writes are enabled.
+
+
+## Secure connector OAuth and credential-vault pass
+
+The integration workspace no longer treats provider connection as a simple local toggle.
+
+Implemented:
+- AES-256-GCM connector credential vault in `backend/src/vault.mjs`;
+- connector tokens are encrypted before persistence and are never returned by the integrations listing API;
+- short-lived OAuth state records with 10-minute expiry;
+- PKCE verifier/challenge generation for authorization requests;
+- OAuth authorization initiation for Google Ads/GA4, Meta Ads/WhatsApp, LinkedIn Ads, HubSpot, Salesforce and Zoho CRM;
+- provider-specific scopes and authorization/token endpoints;
+- `POST /api/integrations/oauth/callback` token exchange and encrypted credential persistence;
+- `POST /api/integrations/disconnect` credential removal and lifecycle update;
+- `GET /api/integrations` now reports actual persisted connector lifecycle state and whether backend OAuth configuration exists;
+- frontend integration state loads from the backend instead of assuming seed connectors are connected;
+- the UI redirects to the provider authorization URL when OAuth is configured;
+- connector connect/disconnect actions create audit entries;
+- production environment variables for OAuth clients, redirect URI and connector encryption are documented.
+
+Required production secret:
+`CONNECTOR_ENCRYPTION_KEY` must be a high-entropy secret stored in your deployment secret manager, not committed to source control.
+
+Provider client IDs/secrets must likewise be injected through the deployment environment. The repository intentionally does not contain live third-party credentials.
