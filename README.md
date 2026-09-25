@@ -2347,3 +2347,42 @@ The previous fixed call totals, example transcript and synthetic call activity h
 `GET /api/offline-attribution` now reads persisted call events, WhatsApp events and the real attribution store. It no longer returns the earlier fixed demonstration counters for call matches, WhatsApp matches or unmatched outcomes.
 
 Production preflight and CI checks include the call-tracking module. Provider-specific adapter mappings can normalize Exotel, Knowlarity, Tata Tele, MyOperator or custom telephony payloads into this signed canonical contract.
+
+
+## Interactive marketing animation and motion pass
+
+The public website and product workspace now include a restrained animation system designed to make the interface feel more polished without turning operational screens into decorative motion.
+
+Implemented:
+
+- The landing hero's previous decorative next-arrow is now a **functional three-slide carousel**.
+- Hero slides cover:
+  - stitched customer journey;
+  - server-side signal return;
+  - agent-driven funnel execution.
+- Users can move through hero slides using:
+  - the circular next control;
+  - direct slide-indicator dots.
+- Hero transitions use short fade/translate motion rather than auto-advancing, so visitors remain in control.
+- Unified-journey cards float subtly and the LIVE state uses a low-intensity pulse.
+- Hero background glows move slowly to add depth without blocking content.
+- Journey rows animate in sequence when a hero slide changes.
+- Agent, capability, proof, AI-action, resource, case-study and solution cards now have consistent hover elevation.
+- KPI/stat cards and operational panels have restrained interaction feedback.
+- Progress/health indicators use a subtle flowing highlight.
+- Buttons and arrow icons have lightweight hover/press feedback.
+- Connector dialogs, login/demo cards, cookie controls and delivery notifications enter with short transition motion.
+- The motion system is shared across public pages and workspace UI instead of adding one-off animation libraries.
+
+### Accessibility
+
+The motion layer includes a global `prefers-reduced-motion: reduce` override. Visitors who request reduced motion receive effectively static transitions while preserving all content and controls.
+
+No autoplaying hero carousel was introduced. This keeps the experience user-controlled and avoids distracting motion while reading or reviewing marketing data.
+
+### Implementation files
+
+- `frontend/src/AcePlatform.tsx` — interactive hero-carousel state and controls.
+- `frontend/src/ace-platform.css` — shared keyframes, hover interactions, hero motion, operational feedback motion, and reduced-motion behavior.
+
+The animation system uses CSS and the existing React application only; no new client-side animation dependency or recurring third-party cost was added.
