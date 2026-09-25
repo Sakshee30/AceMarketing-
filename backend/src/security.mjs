@@ -3,9 +3,9 @@ import { createHmac, timingSafeEqual, randomUUID, scryptSync } from 'node:crypto
 const b64url = value => Buffer.from(value).toString('base64url')
 const fromB64url = value => Buffer.from(value,'base64url').toString('utf8')
 
-export const createToken = ({email,role='workspace_owner'}, secret, ttlSeconds=3600) => {
+export const createToken = ({email,userId=null,workspaceId='ws_default',role='owner',jti=randomUUID()}, secret, ttlSeconds=3600) => {
   const now=Math.floor(Date.now()/1000)
-  const payload={sub:email,role,iat:now,exp:now+ttlSeconds,jti:randomUUID()}
+  const payload={sub:email,userId,workspaceId,role,iat:now,exp:now+ttlSeconds,jti}
   const encoded=b64url(JSON.stringify(payload))
   const sig=createHmac('sha256',secret).update(encoded).digest('base64url')
   return encoded+'.'+sig
@@ -23,6 +23,11 @@ export const verifyToken = (token, secret) => {
     if(!payload.exp || payload.exp < Math.floor(Date.now()/1000)) return null
     return payload
   }catch{return null}
+}
+
+export const hashPassword = (password, salt=randomUUID().replaceAll('-','')) => {
+  const hash=scryptSync(String(password),salt,64).toString('hex')
+  return salt+':'+hash
 }
 
 export const verifyPassword = (password, encodedHash) => {
@@ -62,4 +67,18 @@ export const resolveCorsOrigin = (origin, allowedOrigins) => {
   if(!origin) return allowedOrigins.has('*') ? '*' : ''
   if(allowedOrigins.has('*') || allowedOrigins.has(origin)) return origin
   return ''
+}
+
+
+const rolePermissions={
+  owner:['*'],
+  admin:['workspace.read','workspace.write','members.read','members.write','integrations.write','agents.write','audiences.write','reports.write','developer.write'],
+  analyst:['workspace.read','members.read','reports.read','journeys.read','attribution.read','audiences.read','monitoring.read'],
+  operator:['workspace.read','integrations.read','agents.run','approvals.write','followups.write','calls.write','meetings.write','delivery.write','monitoring.read']
+}
+
+export const permissionsForRole=role=>rolePermissions[role]||[]
+export const hasPermission=(role,permission)=>{
+  const permissions=permissionsForRole(role)
+  return permissions.includes('*')||permissions.includes(permission)
 }
