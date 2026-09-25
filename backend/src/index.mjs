@@ -33,6 +33,7 @@ const CONNECTOR_PROVIDERS={
   'WhatsApp':{provider:'meta',authType:'oauth2',clientId:process.env.META_OAUTH_CLIENT_ID||'',clientSecret:process.env.META_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://www.facebook.com/v23.0/dialog/oauth',tokenUrl:'https://graph.facebook.com/v23.0/oauth/access_token',scopes:['whatsapp_business_management','whatsapp_business_messaging']}
 }
 const CONNECTOR_REDIRECT_URI=process.env.CONNECTOR_OAUTH_REDIRECT_URI||''
+const CONNECTOR_SUCCESS_URL=process.env.CONNECTOR_OAUTH_SUCCESS_URL||''
 const base64url=value=>Buffer.from(value).toString('base64url')
 const createPkce=()=>{
   const verifier=base64url(randomBytes(48))
@@ -218,6 +219,53 @@ const server = http.createServer(async (req,res)=>{
       if(provider.provider==='google') auth.searchParams.set('access_type','offline')
       if(provider.provider==='google') auth.searchParams.set('prompt','consent')
       return send(req,res,200,{connector,status:'authorization_required',authorizationUrl:auth.toString(),expiresAt})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/integrations/oauth/callback') {
+      const stateToken=String(url.searchParams.get('state')||'')
+      const code=String(url.searchParams.get('code')||'')
+      const providerError=String(url.searchParams.get('error')||'')
+      if(providerError) return send(req,res,400,{error:'provider authorization failed',providerError})
+      if(!stateToken||!code) return send(req,res,400,{error:'state and code required'})
+      const snapshot=await getState()
+      const pending=(snapshot.oauthStates||[]).find(x=>x.state===stateToken)
+      if(!pending || Date.parse(pending.expiresAt)<=Date.now()) return send(req,res,400,{error:'invalid or expired oauth state'})
+      const provider=CONNECTOR_PROVIDERS[pending.connector]
+      if(!provider) return send(req,res,400,{error:'unsupported connector provider'})
+      const tokenBody=new URLSearchParams({
+        client_id:provider.clientId,
+        client_secret:provider.clientSecret,
+        redirect_uri:CONNECTOR_REDIRECT_URI,
+        code,
+        grant_type:'authorization_code',
+        code_verifier:pending.verifier
+      })
+      const tokenResponse=await fetch(provider.tokenUrl,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:tokenBody})
+      const tokenPayload=await tokenResponse.json().catch(()=>({}))
+      if(!tokenResponse.ok) return send(req,res,502,{error:'oauth token exchange failed',provider:provider.provider,status:tokenResponse.status})
+      if(!connectorVaultReady()) return send(req,res,503,{error:'connector credential vault is not configured'})
+      const encrypted=encryptSecret(tokenPayload)
+      const now=new Date().toISOString()
+      const expiresAt=tokenPayload.expires_in?new Date(Date.now()+Number(tokenPayload.expires_in)*1000).toISOString():null
+      await mutateState(s=>{
+        s.oauthStates=(s.oauthStates||[]).filter(x=>x.state!==stateToken)
+        s.connectorCredentials=s.connectorCredentials||[]
+        const old=s.connectorCredentials.find(x=>x.connector===pending.connector)
+        const credential={id:old?.id||'cred_'+randomUUID(),connector:pending.connector,provider:provider.provider,encrypted,expiresAt,updatedAt:now,createdAt:old?.createdAt||now}
+        if(old) Object.assign(old,credential); else s.connectorCredentials.unshift(credential)
+        s.connectorConnections=s.connectorConnections||[]
+        const connection=s.connectorConnections.find(x=>x.connector===pending.connector)
+        const record={id:connection?.id||'conn_'+randomUUID(),connector:pending.connector,provider:provider.provider,status:'connected',authType:'oauth2',createdAt:connection?.createdAt||now,updatedAt:now,expiresAt}
+        if(connection) Object.assign(connection,record); else s.connectorConnections.unshift(record)
+        s.audit.unshift({id:randomUUID(),action:'connector.connected',entityId:pending.connector,provider:provider.provider,at:now})
+      })
+      if(CONNECTOR_SUCCESS_URL){
+        const success=new URL(CONNECTOR_SUCCESS_URL)
+        success.searchParams.set('connector',pending.connector)
+        success.searchParams.set('status','connected')
+        res.writeHead(302,{Location:success.toString(),'Cache-Control':'no-store'})
+        return res.end()
+      }
+      return send(req,res,200,{connector:pending.connector,status:'connected',expiresAt})
     }
     if (req.method === 'POST' && url.pathname === '/api/integrations/oauth/callback') {
       const body=await readBody(req)
