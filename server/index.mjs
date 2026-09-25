@@ -55,6 +55,25 @@ const server = http.createServer(async (req,res)=>{
     }
     if (req.method === 'GET' && url.pathname === '/api/workspace/overview') return send(res,200,{revenueAttributed:28400000,qualifiedLeads:7621,signalCoverage:94.8,activeAgents:7})
     if (req.method === 'GET' && url.pathname === '/api/integrations') return send(res,200,{items:integrations.map((name,i)=>({name,status:i<12?'connected':'available'}))})
+    if (req.method === 'POST' && url.pathname === '/api/integrations/connect') {
+      const body = await readBody(req)
+      if (!body.connector) return send(res,400,{error:'connector required'})
+      return send(res,200,{connector:body.connector,status:'connected',sync:'enabled'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/ask-ace') {
+      const body = await readBody(req)
+      const q = String(body.question || '').toLowerCase()
+      let answer='Qualified-lead quality is stable, but the largest measurable leak is between connected leads and consultations.'
+      let insights=[
+        {label:'Largest leak',value:'Connected → Consultation',note:'57% drop in the sample funnel'},
+        {label:'Strongest revenue source',value:'Google Ads',note:'42% measured contribution'},
+        {label:'Signal coverage',value:'94.8%',note:'Healthy destination matching'}
+      ]
+      if(q.includes('campaign')||q.includes('revenue')) answer='Google Ads currently contributes the largest share of measured revenue, led by the MBA Search campaign in the sample workspace.'
+      if(q.includes('qualified')||q.includes('lead')) answer='Qualified leads are 7,621 in the sample period. The biggest opportunity is improving progression from qualified/connected leads into consultation.'
+      if(q.includes('suppress')||q.includes('audience')) answer='Converted customers and low-intent leads are the strongest suppression candidates because they create avoidable retargeting spend.'
+      return send(res,200,{answer,insights})
+    }
     if (req.method === 'GET' && url.pathname === '/api/events') return send(res,200,{items:events})
     if (req.method === 'GET' && url.pathname === '/api/funnel') return send(res,200,{stages:{leads:12842,qualified:7621,appointments:2314,consultations:1506,bookings:982},campaigns:[
       {name:'MBA Search - Brand',channel:'Google Ads',leads:2841,qualified:1812,appointments:932,consultations:421,bookings:188},
