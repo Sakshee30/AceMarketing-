@@ -221,11 +221,15 @@ function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResou
    </div>
   </section>
 
-  <section className="agents-section" id="agents">
-   <div className="section-title light"><span className="kicker">AGENTS</span><h2>11 specialized agents across the funnel.</h2><p>Activate only the agents your workflow needs, with shared context from the same stitched journey.</p></div>
-   <div className="agent-filters">{['All','Lead Quality','Conversion','Visibility'].map(x=><button key={x} className={agentFilter===x?'active':''} onClick={()=>setAgentFilter(x)}>{x}</button>)}</div>
-   <div className="agent-reference-note">Impact figures below mirror metrics published on the current EasyInsights public website and are shown as parity/reference targets, not AceMarketing performance claims.</div>
-   <div className="agent-showcase">{visibleAgents.map((a,i)=><article key={a[0]}><div><span>{String(i+1).padStart(2,'0')}</span><Bot/></div><h3>{a[0]}</h3><p>{a[1]}</p><footer><small>{a[2]}</small><b>{a[3]}</b></footer></article>)}</div>
+  <section className="ei-agents-section" id="agents">
+   <div className="ei-agents-head"><div><span>11 AGENTS. EVERY LEAK COVERED.</span><h2>Deploy the ones your funnel needs.</h2><p>Every agent works on the same stitched journey, so each handoff has the context it needs.</p></div><button onClick={openApp}>Explore agents <ArrowRight/></button></div>
+   <div className="ei-agent-tabs">{['Lead Quality','Conversion','Visibility'].map(x=><button key={x} className={agentFilter===x?'active':''} onClick={()=>setAgentFilter(x)}>{x}</button>)}</div>
+   <div className="ei-agent-groups">
+    {agentFilter==='Lead Quality'&&<><div className="ei-agent-group-label"><span>01</span><b>LEAD QUALITY — SIGNAL RETURN</b></div><div className="ei-agent-cards four">{agents.filter(a=>a[2]==='Lead Quality').map((a,i)=><article key={a[0]}><div className="ei-agent-card-top"><span>{String(i+1).padStart(2,'0')}</span><RadioTower/></div><h3>{a[0]}</h3><strong>{a[3]}</strong><p>{a[1]}</p><button onClick={openApp}>View agent <ArrowRight/></button></article>)}</div></>}
+    {agentFilter==='Conversion'&&<><div className="ei-agent-group-label"><span>02</span><b>CONVERSION — EVERY HANDOFF WORKED</b></div><div className="ei-agent-cards three">{agents.filter(a=>a[2]==='Conversion').map((a,i)=><article key={a[0]}><div className="ei-agent-card-top"><span>{String(i+1).padStart(2,'0')}</span><Bot/></div><h3>{a[0]}</h3><strong>{a[3]}</strong><p>{a[1]}</p><button onClick={openApp}>View agent <ArrowRight/></button></article>)}</div></>}
+    {agentFilter==='Visibility'&&<><div className="ei-agent-group-label"><span>03</span><b>VISIBILITY & ATTRIBUTION</b></div><div className="ei-agent-cards one">{agents.filter(a=>a[2]==='Visibility').map((a,i)=><article key={a[0]}><div className="ei-agent-card-top"><span>{String(i+1).padStart(2,'0')}</span><Sparkles/></div><h3>{a[0]}</h3><strong>{a[3]}</strong><p>{a[1]}</p><button onClick={openApp}>View agent <ArrowRight/></button></article>)}</div></>}
+   </div>
+   <div className="ei-agent-builder-note"><span>Don’t see your leak?</span><b>Build your own agent on the stitched journey — or configure one with the workspace builder.</b><button onClick={openApp}>Build custom agent</button></div>
   </section>
 
   <section className="section white" id="integrations">
@@ -246,24 +250,13 @@ function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResou
    <div className="impact-total"><span>Total expected impact</span><strong>45%</strong><small>Compounded gain across signal quality, coverage and audience control (as presented in the supplied brochure).</small></div>
   </section>
 
-  <section className="proof-section" id="proof">
-   <div className="section-title light"><span className="kicker">WORKFLOW PROOF</span><h2>Complex funnels become one measurable operating system.</h2></div>
-   <div className="proof-cards">{caseStudies.map(x=><article key={x[0]}><span>{x[0]}</span><p>{x[1]}</p><strong>{x[2]}</strong><small>{x[3]}</small></article>)}</div>
-   <div className="case-study-grid">
-    <article><span>EDTECH · JARO EDUCATION</span><h3>High-volume lead management</h3><p>Unified CRM stage mapping and offline conversion pipelines across Google, Meta, Bing and LinkedIn.</p><div><b>14,000+</b><small>daily leads</small><b>250,000+</b><small>conversions imported daily</small><b>15+</b><small>ad accounts</small></div></article>
-    <article><span>HEALTHCARE · APOLLO AYURVAID</span><h3>Call + WhatsApp attribution</h3><p>Connected telephony timestamps and website sessions to restore offline call attribution and return conversion events to advertising platforms.</p><div><b>Calls</b><small>matched to source</small><b>WhatsApp</b><small>conversion events</small><b>Real time</b><small>signal return</small></div></article>
-    <article><span>HIGH-AOV · GEMPUNDIT</span><h3>WhatsApp + partial payment journey</h3><p>Persisted click identifiers from landing-page session into WhatsApp intent and custom partial-payment outcomes.</p><div><b>GCLID</b><small>persisted server-side</small><b>Partial</b><small>payments classified</small><b>Revenue</b><small>fed to bidding</small></div></article>
-    <article><span>HOME SERVICES · BERGER PAINTS</span><h3>Quality-first lead optimization</h3><p>Activated CRM data through server-side conversions and custom CTWA events so bidding optimized toward high-quality enquiries.</p><div><b>19%</b><small>CAC reduction</small><b>4×</b><small>quality-lead growth</small><b>24×7</b><small>monitoring</small></div></article>
-   </div>
-  </section>
-
-  <section className="public-proof-section">
-   <div className="section-title"><span className="kicker dark">PUBLIC PARITY REFERENCES</span><h2>Three proof patterns represented in the current EasyInsights site.</h2><p>These cards are clearly labeled reference results from the public site so AceMarketing does not present third-party outcomes as its own.</p></div>
-   <div className="public-proof-grid">
-    <article><span>LEAD QUALITY · LEVERAGE EDU</span><strong>−38%</strong><h3>cost per qualified lead</h3><p>Reference pattern: enrolment outcomes returned server-side to paid platforms, deduplicated across acquisition and counselor sources.</p></article>
-    <article><span>CONVERSION · INDIA IVF</span><strong>+52%</strong><h3>lead-to-consultation conversion</h3><p>Reference pattern: leads graded on arrival, enriched with context and qualified quickly across the funnel.</p></article>
-    <article><span>VISIBILITY · BLUE TOKAI</span><strong>31%</strong><h3>revenue re-attributed</h3><p>Reference pattern: web, app and offline touchpoints stitched into full-path attribution.</p></article>
-    <article><span>CONVERSION · JARO EDUCATION</span><strong>+41%</strong><h3>enrolment rate</h3><p>Reference pattern: counselor calls and follow-ups tracked with full journey context so high-intent learners do not disappear between steps.</p></article>
+  <section className="ei-proof-section" id="proof">
+   <div className="ei-proof-head"><div><span>PROOF, NOT PROMISES</span><h2>One result for each leak we plug.</h2><p>Reference outcomes published by EasyInsights are shown only as external benchmarks, not as AceMarketing customer claims.</p></div><button onClick={openCaseStudies}>See all case studies <ArrowRight/></button></div>
+   <div className="ei-proof-grid">
+    <article><div className="ei-proof-label">LEAD QUALITY</div><div className="ei-proof-mark">LE</div><strong>−38%</strong><h3>cost per qualified lead</h3><p>Reference pattern: enrolment outcomes returned server-side and deduplicated across form, call and counsellor sources.</p><footer><span>Leverage Edu</span><small>Edtech</small><ArrowRight/></footer></article>
+    <article><div className="ei-proof-label">CONVERSION</div><div className="ei-proof-mark">IVF</div><strong>+52%</strong><h3>lead-to-consultation conversion</h3><p>Reference pattern: every lead graded on arrival, routed with context and qualified quickly.</p><footer><span>India IVF</span><small>Healthcare</small><ArrowRight/></footer></article>
+    <article><div className="ei-proof-label">VISIBILITY & ATTRIBUTION</div><div className="ei-proof-mark">BT</div><strong>31%</strong><h3>revenue re-attributed</h3><p>Reference pattern: web, app and offline interactions stitched into full-path attribution.</p><footer><span>Blue Tokai</span><small>Consumer goods</small><ArrowRight/></footer></article>
+    <article><div className="ei-proof-label">CONVERSION</div><div className="ei-proof-mark">JE</div><strong>+41%</strong><h3>enrolment rate</h3><p>Reference pattern: counsellor calls and follow-ups tracked with full journey context.</p><footer><span>Jaro Education</span><small>Edtech</small><ArrowRight/></footer></article>
    </div>
   </section>
 
@@ -281,6 +274,11 @@ function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResou
    </div>
   </section>
 
+  <section className="ei-data-problem-banner">
+   <div><span>THE ROOT CAUSE IS OFTEN THE SIGNAL</span><h2>Your campaigns aren’t underperforming.<br/><em>Your data is.</em></h2><p>The visible symptoms — rising acquisition cost, weaker lead quality, conflicting reports and broken attribution — often start with fragmented first-party data and weak conversion feedback.</p></div>
+   <div className="ei-data-visual"><div className="ei-data-orbit o1"/><div className="ei-data-orbit o2"/><div className="ei-data-core"><DatabaseZap/><b>Shared data truth</b><span>Ads · CRM · Calls · WhatsApp · Revenue</span></div></div>
+  </section>
+
   <section className="diagnostics-section">
    <div className="section-title"><span className="kicker dark">DIAGNOSE THE ROOT CAUSE</span><h2>Your campaigns may be showing symptoms of a data problem.</h2><p>The current EasyInsights public site groups its diagnostic story into six recurring failure areas. AceMarketing now mirrors that structure with original wording and product links.</p></div>
    <div className="diagnostic-grid six">
@@ -295,7 +293,16 @@ function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResou
    </div>
   </section>
 
-  <section className="security-band"><ShieldCheck/><div><span className="kicker dark">DATA CONTROLS</span><h2>Enterprise-ready governance foundation.</h2><p>Consent-aware collection, hashed identifiers, role-based permissions, audit logging, configurable retention and monitored event delivery are part of the implementation plan.</p></div><div className="badges"><span>RBAC</span><span>Audit Logs</span><span>Encryption</span><span>Retention</span></div></section>
+  <section className="ei-security-section">
+   <div className="ei-security-copy"><span>SECURITY & DATA OWNERSHIP</span><h2>Your data stays yours. Always.</h2><p>Enterprise security architecture and a business model designed around first-party data control, explicit consent and scoped activation.</p><div className="ei-security-actions"><button onClick={openApp}>Review security controls</button><small>Certification badges are shown as roadmap targets until independently verified.</small></div></div>
+   <div className="ei-security-badges">
+    <article><ShieldCheck/><b>ISO 27001</b><span>Control framework target</span></article>
+    <article><ShieldCheck/><b>SHA-256</b><span>Identifier hashing design</span></article>
+    <article><ShieldCheck/><b>GDPR</b><span>Consent / deletion target</span></article>
+    <article><ShieldCheck/><b>HIPAA</b><span>Healthcare safeguards target</span></article>
+    <article><ShieldCheck/><b>India DPDP</b><span>Readiness roadmap</span></article>
+   </div>
+  </section>
 
   <section className="data-ownership-section">
    <div className="data-ownership-copy"><span className="kicker">DATA OWNERSHIP</span><h2>Your data remains your operating asset.</h2><p>AceMarketing is designed around first-party collection, explicit consent state, configurable retention, scoped access and auditable activation. Advertising and analytics destinations receive only the event fields required by the configured workflow.</p><div className="ownership-points"><span><ShieldCheck/> Workspace-level RBAC</span><span><Check/> Consent-aware activation</span><span><Check/> Identifier hashing</span><span><Check/> Configurable retention</span><span><Check/> Audit history</span><span><Check/> Data deletion workflow</span></div></div>
