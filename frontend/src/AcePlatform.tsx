@@ -1672,6 +1672,7 @@ function Product({back}:{back:()=>void}){
  const [search,setSearch]=useState('')
  const [regionOpen,setRegionOpen]=useState(false)
  useEffect(()=>{api.workspaces().then((r:any)=>{if(r.items?.length){setWorkspaces(r.items);if(!r.items.some((x:any)=>x.name===workspace))setWorkspace(r.items[0].name)}}).catch(()=>null)},[])
+ useEffect(()=>{const openTab=(event:any)=>{const next=event?.detail as AppTab;if(appTabs.some(([name])=>name===next))setTab(next)};window.addEventListener('ace-app-tab',openTab as EventListener);return()=>window.removeEventListener('ace-app-tab',openTab as EventListener)},[])
  const createWorkspace=async()=>{
   if(!workspaceDraft.name.trim())return
   setWorkspaceBusy(true)
