@@ -1638,13 +1638,55 @@ const server = http.createServer(async (req,res)=>{
       })
       return send(req,res,200,{available:true,items,generatedAt:new Date().toISOString()})
     }
-    if (req.method === 'GET' && url.pathname === '/api/planner') return send(req,res,200,{budget:2500000,channels:[
-      {name:'Google Search',share:38,quality:91,cac:6760,action:'scale'},
-      {name:'Meta Prospecting',share:28,quality:74,cac:8120,action:'hold'},
-      {name:'WhatsApp Retargeting',share:18,quality:88,cac:7040,action:'scale'},
-      {name:'LinkedIn',share:10,quality:81,cac:10340,action:'optimize'},
-      {name:'Other',share:6,quality:62,cac:11980,action:'reduce'}
-    ]})
+    if (req.method === 'GET' && url.pathname === '/api/planner') {
+      const analytics=await cohortAnalytics(workspaceId,{months:6})
+      const sources=analytics?.sources||[]
+      const totalRevenue=sources.reduce((n,x)=>n+Number(x.revenue||0),0)
+      const totalAcquired=sources.reduce((n,x)=>n+Number(x.acquired||0),0)
+      const channels=sources.map(x=>{
+        const revenue=Number(x.revenue||0),acquired=Number(x.acquired||0),conversions=Number(x.conversions||0)
+        const shareBase=totalRevenue>0?revenue:acquired
+        const shareTotal=totalRevenue>0?totalRevenue:totalAcquired
+        const share=shareTotal?Number((shareBase/shareTotal*100).toFixed(1)):0
+        return {
+          name:x.source,
+          share,
+          acquired,
+          conversions,
+          conversionRate:Number(x.conversionRate||0),
+          revenue,
+          revenuePerAcquired:Number(x.revenuePerAcquired||0),
+          evidence:totalRevenue>0?'revenue_contribution':'acquisition_volume'
+        }
+      }).sort((a,b)=>b.share-a.share)
+      const state=await getState()
+      return send(req,res,200,{
+        available:Boolean(analytics?.available&&channels.length),
+        channels,
+        evidence:{months:analytics?.lookbackMonths||6,totalRevenue,totalAcquired,eventDefinitions:analytics?.eventDefinitions||null},
+        savedScenarios:(state.plannerScenarios||[]).slice(0,20),
+        notice:channels.length?'Allocation weights are derived from observed '+(totalRevenue>0?'attributed revenue':'acquisition volume')+'. Spend/CAC is not inferred when spend data is unavailable.':'Not enough source-level cohort evidence to recommend an allocation.'
+      })
+    }
+    if (req.method === 'POST' && url.pathname === '/api/planner/scenarios') {
+      const body=await readBody(req)
+      const budget=Number(body.budget)
+      if(!Number.isFinite(budget)||budget<=0) return send(req,res,400,{error:'positive budget required'})
+      const allocations=Array.isArray(body.allocations)?body.allocations:[]
+      if(!allocations.length) return send(req,res,400,{error:'allocations required'})
+      const totalShare=allocations.reduce((n,x)=>n+Number(x.share||0),0)
+      if(Math.abs(totalShare-100)>0.5) return send(req,res,400,{error:'allocation shares must total 100%'})
+      const item={id:'plan_'+randomUUID(),name:String(body.name||'Media scenario'),budget,allocations,createdAt:new Date().toISOString(),createdBy:req.user?.email||req.user?.userId||null}
+      await mutateState(s=>{
+        s.plannerScenarios=s.plannerScenarios||[]
+        s.plannerScenarios.unshift(item)
+        s.plannerScenarios=s.plannerScenarios.slice(0,100)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'planner.scenario_saved',entityId:item.id,budget,at:item.createdAt})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,item)
+    }
     if (req.method === 'GET' && url.pathname === '/api/cohorts') {
       const months=Number(url.searchParams.get('months')||6)
       return send(req,res,200,await cohortAnalytics(workspaceId,{months}))
