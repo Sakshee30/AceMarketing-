@@ -127,13 +127,13 @@ function Marketing({openHome,openApp,openLogin,openPricing,openDemo,openCompany,
  const [cookiePrefs,setCookiePrefs]=useState({analytics:false,advertising:false,functionality:false})
  const visibleAgents=agentFilter==='All'?agents:agents.filter(a=>a[2]===agentFilter)
  return <div className="marketing-page">
-  <div className="ei-promo-bar"><span>Performance marketers can drive up to <b>45% incremental revenue uplift</b> with better first-party signals.</span><a href="#impact">Can your brand achieve the same uplift? <ArrowRight/></a></div>
+  <div className="ei-promo-bar"><span>Better first-party signals help teams turn paid attention into <b>measurable business outcomes</b>.</span><button onClick={openDemo}>See how AceMarketing closes the loop <ArrowRight/></button></div>
   <Header openHome={openHome} openApp={openApp} openLogin={openLogin} openPricing={openPricing} openDemo={openDemo} openCompany={openCompany} openResources={openResources} openCaseStudies={openCaseStudies} openSolutions={openSolutions} openIndustries={openIndustries} openAgents={openAgents} openIntegrations={openIntegrations}/>
   <section className="ei-hero-wrap">
    <div className="ei-hero-card">
     <div className="ei-hero-copy">
-     <h1>Generate and convert<br/><em>more leads</em> from paid<br/>advertising.</h1>
-     <p>AceMarketing stitches your entire funnel — every source, tool, and offline step — into one journey and deploys agents that plug leaks across acquisition, qualification, follow-up, and revenue.</p>
+     <h1>Make paid media learn<br/><em>from real outcomes</em>, not<br/>surface-level clicks.</h1>
+     <p>AceMarketing connects acquisition, CRM, calls, messaging, and revenue into one operating layer so teams can improve signal quality, conversion handoffs, and measurement without rebuilding their stack.</p>
      <button className="ei-hero-cta" onClick={openDemo}>Get a Demo</button>
     </div>
     <div className="ei-hero-visual">
@@ -165,15 +165,15 @@ function Marketing({openHome,openApp,openLogin,openPricing,openDemo,openCompany,
    </div>
    <div className="ei-problem-tabs">{(['Lead Quality','Conversion','Attribution'] as const).map(x=><button key={x} className={problemTab===x?'active':''} onClick={()=>setProblemTab(x)}>{x}</button>)}</div>
    <div className="ei-problem-stage">
-    {problemTab==='Lead Quality'&&<><div className="ei-problem-no">01</div><div className="ei-problem-main"><span>LEAD QUALITY</span><h3>“Sales keeps telling me my leads are junk.”</h3><p><b>Why it happens:</b> Ad platforms optimize on form-fills when closed revenue never flows back. The algorithm learns to find submitters rather than buyers.</p></div><div className="ei-problem-solution"><span>WHAT ACEMARKETING DOES</span><p>Connect first-party outcomes and return qualified leads, enrolments, bookings and store sales server-side, with deduplication across sources.</p><span>WHAT YOU GET</span><h4>Better lead quality</h4><p>Optimization moves toward the people who actually progress and close.</p></div></>}
-    {problemTab==='Conversion'&&<><div className="ei-problem-no">02</div><div className="ei-problem-main"><span>CONVERSION</span><h3>“Conversion drops between steps, and I only find out later.”</h3><p><b>Why it happens:</b> Forms, CRM, call centers and offline teams operate in fragments. Every handoff loses context, time and leads.</p></div><div className="ei-problem-solution"><span>WHAT ACEMARKETING DOES</span><p>Grade and enrich on arrival, qualify quickly, route with full context, schedule, remind and match closures back to source.</p><span>WHAT YOU GET</span><h4>More conversion</h4><p>Each step moves faster, with context and accountability across every path.</p></div></>}
-    {problemTab==='Attribution'&&<><div className="ei-problem-no">03</div><div className="ei-problem-main"><span>VISIBILITY & ATTRIBUTION</span><h3>“I own the whole funnel, but I can only see pieces of it.”</h3><p><b>Why it happens:</b> Each tool reports only its own step. Multi-source, multi-path and online-offline journeys remain fragmented.</p></div><div className="ei-problem-solution"><span>WHAT ACEMARKETING DOES</span><p>Stitch every source, tool and offline step into one journey per customer with step monitoring and full-path revenue attribution.</p><span>WHAT YOU GET</span><h4>Visibility and accountability</h4><p>See every step and defend budget decisions with journey-level evidence.</p></div></>}
+    {problemTab==='Lead Quality'&&<><div className="ei-problem-no">01</div><div className="ei-problem-main"><span>LEAD QUALITY</span><h3>Campaigns keep finding form-fillers instead of people who actually progress.</h3><p><b>Why it happens:</b> Ad platforms optimize on form-fills when closed revenue never flows back. The algorithm learns to find submitters rather than buyers.</p></div><div className="ei-problem-solution"><span>WHAT ACEMARKETING DOES</span><p>Connect first-party outcomes and return qualified leads, enrolments, bookings and store sales server-side, with deduplication across sources.</p><span>WHAT YOU GET</span><h4>Better lead quality</h4><p>Optimization moves toward the people who actually progress and close.</p></div></>}
+    {problemTab==='Conversion'&&<><div className="ei-problem-no">02</div><div className="ei-problem-main"><span>CONVERSION</span><h3>Leads disappear between tools, teams, and follow-up steps.</h3><p><b>Why it happens:</b> Forms, CRM, call centers and offline teams operate in fragments. Every handoff loses context, time and leads.</p></div><div className="ei-problem-solution"><span>WHAT ACEMARKETING DOES</span><p>Grade and enrich on arrival, qualify quickly, route with full context, schedule, remind and match closures back to source.</p><span>WHAT YOU GET</span><h4>More conversion</h4><p>Each step moves faster, with context and accountability across every path.</p></div></>}
+    {problemTab==='Attribution'&&<><div className="ei-problem-no">03</div><div className="ei-problem-main"><span>VISIBILITY & ATTRIBUTION</span><h3>Each system reports its own slice, while the complete journey stays hidden.</h3><p><b>Why it happens:</b> Each tool reports only its own step. Multi-source, multi-path and online-offline journeys remain fragmented.</p></div><div className="ei-problem-solution"><span>WHAT ACEMARKETING DOES</span><p>Stitch every source, tool and offline step into one journey per customer with step monitoring and full-path revenue attribution.</p><span>WHAT YOU GET</span><h4>Visibility and accountability</h4><p>See every step and defend budget decisions with journey-level evidence.</p></div></>}
    </div>
    <div className="ei-problem-cta"><span>See all three fixed in one platform.</span><button onClick={openDemo}>Get a Demo</button></div>
   </section>
 
   <section className="ei-system-overview" id="platform">
-   <div className="ei-section-heading centered"><span>TWO CAPABILITIES, ONE SYSTEM</span><h2>The stitched journey is what makes the agents effective.</h2><p>Every automation works with the full picture instead of isolated fragments.</p></div>
+   <div className="ei-section-heading centered"><span>ONE OPERATING LAYER, TWO CORE JOBS</span><h2>Unify the journey, then let automation act with context.</h2><p>Measurement and execution work better when every workflow sees the same customer and revenue truth.</p></div>
    <div className="ei-capability-layout">
     <article><div className="ei-cap-num">01</div><Network/><span>CAPABILITY 01</span><h3>Stitch the journey</h3><p>Every lead source — forms, website, app, calls, walk-ins — and every tool connected into one journey per customer, online and offline, from first touch to closed revenue.</p><ul><li>Identity stitching</li><li>Click-ID persistence</li><li>Online + offline events</li><li>Chronological journey view</li></ul></article>
     <article><div className="ei-cap-num">02</div><Bot/><span>CAPABILITY 02</span><h3>Deploy agents that plug the leaks</h3><p>Choose specialized agents for qualification, routing, follow-up, closure match-back and signal return. Each agent acts with shared journey context.</p><ul><li>11 prebuilt agents</li><li>Custom agents</li><li>Human approval controls</li><li>Audit trail</li></ul></article>
@@ -182,7 +182,7 @@ function Marketing({openHome,openApp,openLogin,openPricing,openDemo,openCompany,
   </section>
 
   <section className="ei-agents-section" id="agents">
-   <div className="ei-agents-head"><div><span>11 AGENTS. EVERY LEAK COVERED.</span><h2>Deploy the ones your funnel needs.</h2><p>Every agent works on the same stitched journey, so each handoff has the context it needs.</p></div><button onClick={openApp}>Explore agents <ArrowRight/></button></div>
+   <div className="ei-agents-head"><div><span>SPECIALIST AUTOMATION FOR EVERY HANDOFF</span><h2>Choose the agents that improve your funnel where it matters most.</h2><p>Each agent works from shared journey context instead of isolated channel data.</p></div><button onClick={openApp}>Explore agents <ArrowRight/></button></div>
    <div className="ei-agent-tabs">{['Lead Quality','Conversion','Visibility'].map(x=><button key={x} className={agentFilter===x?'active':''} onClick={()=>setAgentFilter(x)}>{x}</button>)}</div>
    <div className="ei-agent-groups">
     {agentFilter==='Lead Quality'&&<><div className="ei-agent-group-label"><span>01</span><b>LEAD QUALITY — SIGNAL RETURN</b></div><div className="ei-agent-cards four">{agents.filter(a=>a[2]==='Lead Quality').map((a,i)=><article key={a[0]}><div className="ei-agent-card-top"><span>{String(i+1).padStart(2,'0')}</span><RadioTower/></div><h3>{a[0]}</h3><strong>{a[3]}</strong><p>{a[1]}</p><button onClick={openApp}>View agent <ArrowRight/></button></article>)}</div></>}
@@ -193,7 +193,7 @@ function Marketing({openHome,openApp,openLogin,openPricing,openDemo,openCompany,
   </section>
 
   <section className="ei-proof-section" id="proof">
-   <div className="ei-proof-head"><div><span>PROOF, NOT PROMISES</span><h2>One result for each leak we plug.</h2><p>Reference outcomes published by EasyInsights are shown only as external benchmarks, not as AceMarketing customer claims.</p></div><button onClick={openCaseStudies}>See all case studies <ArrowRight/></button></div>
+   <div className="ei-proof-head"><div><span>REFERENCE OUTCOMES</span><h2>See what stronger signals and connected journeys can unlock.</h2><p>These figures are external EasyInsights reference benchmarks and are not presented as AceMarketing customer results.</p></div><button onClick={openCaseStudies}>See all case studies <ArrowRight/></button></div>
    <div className="ei-proof-grid">
     <article><div className="ei-proof-label">LEAD QUALITY</div><div className="ei-proof-mark">LE</div><strong>−38%</strong><h3>cost per qualified lead</h3><p>Reference pattern: enrolment outcomes returned server-side and deduplicated across form, call and counsellor sources.</p><footer><span>Leverage Edu</span><small>Edtech</small><ArrowRight/></footer></article>
     <article><div className="ei-proof-label">CONVERSION</div><div className="ei-proof-mark">IVF</div><strong>+52%</strong><h3>lead-to-consultation conversion</h3><p>Reference pattern: every lead graded on arrival, routed with context and qualified quickly.</p><footer><span>India IVF</span><small>Healthcare</small><ArrowRight/></footer></article>
@@ -217,7 +217,7 @@ function Marketing({openHome,openApp,openLogin,openPricing,openDemo,openCompany,
   </section>
 
   <section className="ei-data-problem-banner">
-   <div><span>THE ROOT CAUSE IS OFTEN THE SIGNAL</span><h2>Your campaigns aren’t underperforming.<br/><em>Your data is.</em></h2><p>The visible symptoms — rising acquisition cost, weaker lead quality, conflicting reports and broken attribution — often start with fragmented first-party data and weak conversion feedback.</p></div>
+   <div><span>WHEN OPTIMIZATION LOSES THE BUSINESS CONTEXT</span><h2>Media decisions weaken when<br/><em>the signal chain breaks.</em></h2><p>Rising acquisition cost, lower-quality demand, and conflicting attribution often trace back to missing identity, delayed CRM outcomes, and disconnected offline events.</p></div>
    <div className="ei-data-visual"><div className="ei-data-orbit o1"/><div className="ei-data-orbit o2"/><div className="ei-data-core"><DatabaseZap/><b>Shared data truth</b><span>Ads · CRM · Calls · WhatsApp · Revenue</span></div></div>
   </section>
 
@@ -236,7 +236,7 @@ function Marketing({openHome,openApp,openLogin,openPricing,openDemo,openCompany,
   </section>
 
   <section className="ei-security-section">
-   <div className="ei-security-copy"><span>SECURITY & DATA OWNERSHIP</span><h2>Your data stays yours. Always.</h2><p>Enterprise security architecture and a business model designed around first-party data control, explicit consent and scoped activation.</p><div className="ei-security-actions"><button onClick={openApp}>Review security controls</button><small>Certification badges are shown as roadmap targets until independently verified.</small></div></div>
+   <div className="ei-security-copy"><span>SECURITY & DATA OWNERSHIP</span><h2>Keep control of the data that powers your growth.</h2><p>AceMarketing is designed around first-party ownership, explicit consent, scoped access, and auditable activation across connected systems.</p><div className="ei-security-actions"><button onClick={openApp}>Review security controls</button><small>Certification badges are shown as roadmap targets until independently verified.</small></div></div>
    <div className="ei-security-badges">
     <article><ShieldCheck/><b>ISO 27001</b><span>Control framework target</span></article>
     <article><ShieldCheck/><b>SHA-256</b><span>Identifier hashing design</span></article>
@@ -265,7 +265,7 @@ function Marketing({openHome,openApp,openLogin,openPricing,openDemo,openCompany,
   </section>
 
   <section className="ei-final-cta">
-   <div><span>IMPROVE LEAD QUALITY WITH ACEMARKETING</span><h2>Connect ad platforms, CRM, and conversion data to optimize for better leads.</h2></div>
+   <div><span>TURN CONNECTED DATA INTO BETTER DECISIONS</span><h2>Give every channel the business outcomes it needs to optimize intelligently.</h2></div>
    <button onClick={openDemo}>Book a demo <ArrowRight/></button>
   </section>
 
@@ -1192,33 +1192,56 @@ function Product({back}:{back:()=>void}){
  return <div className="product"><aside><Brand/><div className="workspace-wrap"><button className="workspace" onClick={()=>setWorkspaceOpen(!workspaceOpen)}><span>{workspaces.find(x=>x[0]===workspace)?.[2]||'AM'}</span><div><b>{workspace}</b><small>{workspaces.find(x=>x[0]===workspace)?.[1]||'Production'} workspace</small></div><ChevronDown/></button>{workspaceOpen&&<div className="workspace-menu">{workspaces.map(x=><button key={x[0]} onClick={()=>{setWorkspace(x[0]);setWorkspaceOpen(false)}} className={workspace===x[0]?'active':''}><span>{x[2]}</span><div><b>{x[0]}</b><small>{x[1]}</small></div>{workspace===x[0]&&<Check/>}</button>)}<button className="new-workspace"><Plus/>Create workspace</button></div>}</div><nav>{appTabs.map(([x,I])=><button key={x} className={tab===x?'active':''} onClick={()=>setTab(x)}><I/>{x}</button>)}</nav><div className="aside-footer"><button onClick={back}><ArrowRight/>Back to website</button><div className="profile-mini"><span>S</span><div><b>Sakshee</b><small>Workspace owner</small></div></div></div></aside>
  <main><header className="product-head"><div className="global-search"><Search/>Search journeys, leads, campaigns...</div><div><span className="sync">● Live sync healthy</span><button><Headphones/></button><button><Globe2/></button><span className="avatar-sm">S</span></div></header><div className="product-body">{view}</div></main></div>
 }
+const viewHash:Record<View,string>={
+ site:'#/',app:'#/workspace',login:'#/login',pricing:'#/pricing',demo:'#/demo',company:'#/company',resources:'#/resources','case-studies':'#/case-studies',privacy:'#/privacy',terms:'#/terms',security:'#/security',solutions:'#/solutions',industries:'#/industries','agents-public':'#/agents', 'integrations-public':'#/integrations'
+}
+const hashView=(hash:string):View=>{
+ const found=(Object.entries(viewHash) as [View,string][]).find(([,route])=>route===hash)
+ return found?.[0]||'site'
+}
+
 export default function AcePlatform(){
- const[view,setView]=useState<View>('site')
- const goHome=()=>{setView('site');setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),0)}
+ const[view,setView]=useState<View>(()=>hashView(typeof window!=='undefined'?window.location.hash:'#/'))
+ const navigate=(next:View)=>{
+  setView(next)
+  const route=viewHash[next]
+  if(typeof window!=='undefined'&&window.location.hash!==route) window.location.hash=route
+  if(typeof window!=='undefined') setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),0)
+ }
+ useEffect(()=>{
+  const onHash=()=>setView(hashView(window.location.hash))
+  const onAceView=(event:any)=>{const next=event?.detail as View;if(next&&viewHash[next])navigate(next)}
+  window.addEventListener('hashchange',onHash)
+  window.addEventListener('ace-view',onAceView as EventListener)
+  if(!window.location.hash) window.history.replaceState(null,'',viewHash.site)
+  return()=>{window.removeEventListener('hashchange',onHash);window.removeEventListener('ace-view',onAceView as EventListener)}
+ },[])
+ const goHome=()=>navigate('site')
  const nav={
   openHome:goHome,
-  openApp:()=>setView('app'),
-  openLogin:()=>setView('login'),
-  openPricing:()=>setView('pricing'),
-  openDemo:()=>setView('demo'),
-  openCompany:()=>setView('company'),
-  openResources:()=>setView('resources'),
-  openCaseStudies:()=>setView('case-studies'),
-  openSolutions:()=>setView('solutions'),
-  openIndustries:()=>setView('industries'),
-  openAgents:()=>setView('agents-public'),
-  openIntegrations:()=>setView('integrations-public')
+  openApp:()=>navigate('app'),
+  openLogin:()=>navigate('login'),
+  openPricing:()=>navigate('pricing'),
+  openDemo:()=>navigate('demo'),
+  openCompany:()=>navigate('company'),
+  openResources:()=>navigate('resources'),
+  openCaseStudies:()=>navigate('case-studies'),
+  openSolutions:()=>navigate('solutions'),
+  openIndustries:()=>navigate('industries'),
+  openAgents:()=>navigate('agents-public'),
+  openIntegrations:()=>navigate('integrations-public')
  }
+ const chrome=(child:any)=><PublicPageFrame {...nav}>{child}</PublicPageFrame>
  if(view==='login')return <Login back={goHome} openApp={nav.openApp}/>
- if(view==='pricing')return <Pricing back={goHome} openApp={nav.openApp}/>
- if(view==='demo')return <DemoPage back={goHome} openApp={nav.openApp}/>
- if(view==='company')return <CompanyPage back={goHome} openDemo={nav.openDemo}/>
- if(view==='resources')return <ResourcesPage back={goHome}/>
- if(view==='case-studies')return <CaseStudiesPage back={goHome} openDemo={nav.openDemo}/>
- if(view==='privacy')return <LegalPage kind="privacy" back={goHome}/>
- if(view==='terms')return <LegalPage kind="terms" back={goHome}/>
- if(view==='security')return <LegalPage kind="security" back={goHome}/>
- if(view==='solutions')return <SolutionsPage back={goHome} openDemo={nav.openDemo} openApp={nav.openApp}/>
+ if(view==='pricing')return chrome(<Pricing back={goHome} openApp={nav.openApp}/>)
+ if(view==='demo')return chrome(<DemoPage back={goHome} openApp={nav.openApp}/>)
+ if(view==='company')return chrome(<CompanyPage back={goHome} openDemo={nav.openDemo}/>)
+ if(view==='resources')return chrome(<ResourcesPage back={goHome}/>)
+ if(view==='case-studies')return chrome(<CaseStudiesPage back={goHome} openDemo={nav.openDemo}/>)
+ if(view==='privacy')return chrome(<LegalPage kind="privacy" back={goHome}/>)
+ if(view==='terms')return chrome(<LegalPage kind="terms" back={goHome}/>)
+ if(view==='security')return chrome(<LegalPage kind="security" back={goHome}/>)
+ if(view==='solutions')return chrome(<SolutionsPage back={goHome} openDemo={nav.openDemo} openApp={nav.openApp}/>)
  if(view==='industries')return <IndustriesPublicPage {...nav}/>
  if(view==='agents-public')return <AgentsPublicPage {...nav}/>
  if(view==='integrations-public')return <IntegrationsPublicPage {...nav}/>
