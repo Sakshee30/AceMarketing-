@@ -173,23 +173,34 @@ export const reconcileAttribution=async(workspaceId,limit=250)=>{
   return {available:true,processed:rows.length,matched,unmatched:rows.length-matched}
 }
 
-export const attributionStats=async workspaceId=>{
+export const attributionStats=async(workspaceId,{periodDays=null}={})=>{
   if(!pool) return {available:false}
+  const days=[7,30,90].includes(Number(periodDays))?Number(periodDays):null
   const [sessions,events,methods,recent]=await Promise.all([
     pool.query(`SELECT COUNT(*)::int total,
       COUNT(*) FILTER (WHERE gclid IS NOT NULL)::int gclid,
       COUNT(*) FILTER (WHERE fbclid IS NOT NULL)::int fbclid,
       COUNT(*) FILTER (WHERE gbraid IS NOT NULL OR wbraid IS NOT NULL)::int braid
-      FROM ace_click_sessions WHERE workspace_id=$1 AND expires_at>=now()`,[workspaceId]),
+      FROM ace_click_sessions
+      WHERE workspace_id=$1 AND expires_at>=now()
+        AND ($2::int IS NULL OR first_seen_at>=now()-($2*interval '1 day'))`,[workspaceId,days]),
     pool.query(`SELECT COUNT(*)::int total,
       COUNT(*) FILTER (WHERE status='matched')::int matched,
       COUNT(*) FILTER (WHERE status='unmatched')::int unmatched,
       COALESCE(SUM(value) FILTER (WHERE status='matched'),0)::numeric matched_value
-      FROM ace_assisted_events WHERE workspace_id=$1`,[workspaceId]),
+      FROM ace_assisted_events
+      WHERE workspace_id=$1
+        AND ($2::int IS NULL OR occurred_at>=now()-($2*interval '1 day'))`,[workspaceId,days]),
     pool.query(`SELECT COALESCE(match_method,'unmatched') method,COUNT(*)::int count
-      FROM ace_assisted_events WHERE workspace_id=$1 GROUP BY COALESCE(match_method,'unmatched') ORDER BY count DESC`,[workspaceId]),
+      FROM ace_assisted_events
+      WHERE workspace_id=$1
+        AND ($2::int IS NULL OR occurred_at>=now()-($2*interval '1 day'))
+      GROUP BY COALESCE(match_method,'unmatched') ORDER BY count DESC`,[workspaceId,days]),
     pool.query(`SELECT id,event_type,source,occurred_at,status,match_method,match_confidence,value,currency
-      FROM ace_assisted_events WHERE workspace_id=$1 ORDER BY occurred_at DESC LIMIT 20`,[workspaceId])
+      FROM ace_assisted_events
+      WHERE workspace_id=$1
+        AND ($2::int IS NULL OR occurred_at>=now()-($2*interval '1 day'))
+      ORDER BY occurred_at DESC LIMIT 20`,[workspaceId,days])
   ])
   const e=events.rows[0],s=sessions.rows[0]
   const rate=e.total?Number(((e.matched/e.total)*100).toFixed(2)):0
@@ -203,7 +214,8 @@ export const attributionStats=async workspaceId=>{
     matchRate:rate,
     matchedValue:Number(e.matched_value||0),
     methods:methods.rows,
-    recent:recent.rows
+    recent:recent.rows,
+    periodDays:days
   }
 }
 
