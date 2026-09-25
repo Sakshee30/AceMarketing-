@@ -364,3 +364,21 @@ test('meetings can be scheduled directly from the meetings workspace', async ({ 
   await expect(page.getByText('ci_meeting_lead', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Send reminder now' })).toBeVisible()
 })
+
+
+test('matchback rules persist without seeded performance claims', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  await openWorkspaceTab(page,'Matchback')
+  await expect(page.getByRole('heading', { name: 'Closure matchback & revenue reconciliation' })).toBeVisible()
+  await expect(page.getByText('₹84.0L', { exact: true })).toHaveCount(0)
+  await page.getByRole('button', { name: 'New matchback rule' }).click()
+  await page.getByLabel('Rule name').fill('CI Closed Won')
+  await page.getByLabel('Source').fill('ci_crm')
+  await page.getByLabel('Event type').fill('closed_won')
+  await page.getByLabel('Destination').fill('Google Ads')
+  await page.getByLabel('Identity method').fill('customer_id + gclid')
+  await page.getByRole('button', { name: 'Create matchback rule' }).click()
+  await expect(page.getByText('CI Closed Won', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Run reconciliation' })).toBeVisible()
+})
