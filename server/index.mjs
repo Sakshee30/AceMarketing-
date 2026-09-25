@@ -6,6 +6,8 @@ const PORT = Number(process.env.PORT || 3001)
 
 const integrations = ['Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads','GA4','Zoho CRM','Salesforce','HubSpot','LeadSquared','HighLevel','WhatsApp','WATI','Gupshup','MoEngage','CleverTap','Exotel','Knowlarity','Tata Tele','MyOperator','Shopify','WooCommerce','Magento','WordPress','Custom Backend']
 const agents = ['Meta Advanced CAPI','Google ECL / OCI','Call Tracking Events','Custom Integration','Lead Grading','CRM Enrichment','Voice Lead Qualification','Voice Scheduler','Meeting Reminder','Feedback Agent','Ask Ace']
+const trackedEvents = []
+
 const events = [
   {name:'Qualified Lead',source:'CRM',destinations:['Google Ads','Meta Ads'],latency:'real-time',status:'active'},
   {name:'Consultation Booked',source:'CRM',destinations:['Google Ads'],latency:'real-time',status:'active'},
@@ -54,6 +56,19 @@ const server = http.createServer(async (req,res)=>{
     if (req.method === 'GET' && url.pathname === '/api/workspace/overview') return send(res,200,{revenueAttributed:28400000,qualifiedLeads:7621,signalCoverage:94.8,activeAgents:7})
     if (req.method === 'GET' && url.pathname === '/api/integrations') return send(res,200,{items:integrations.map((name,i)=>({name,status:i<12?'connected':'available'}))})
     if (req.method === 'GET' && url.pathname === '/api/events') return send(res,200,{items:events})
+    if (req.method === 'GET' && url.pathname === '/api/funnel') return send(res,200,{stages:{leads:12842,qualified:7621,appointments:2314,consultations:1506,bookings:982},campaigns:[
+      {name:'MBA Search - Brand',channel:'Google Ads',leads:2841,qualified:1812,appointments:932,consultations:421,bookings:188},
+      {name:'Executive Program',channel:'Meta Ads',leads:1964,qualified:1048,appointments:641,consultations:288,bookings:119},
+      {name:'PGDM Retargeting',channel:'Meta Ads',leads:1510,qualified:903,appointments:527,consultations:210,bookings:96}
+    ]})
+    if (req.method === 'GET' && url.pathname === '/api/live-sync') return send(res,200,{status:'always_on',medianLatencySeconds:42,deliveryRate:99.82,eventsPerMinute:8412,recent:trackedEvents.slice(-25).reverse()})
+    if (req.method === 'POST' && url.pathname === '/api/track') {
+      const body = await readBody(req)
+      const event = {id:randomUUID(),receivedAt:new Date().toISOString(),...body}
+      trackedEvents.push(event)
+      if (trackedEvents.length > 5000) trackedEvents.splice(0,trackedEvents.length-5000)
+      return send(res,202,{accepted:true,eventId:event.id})
+    }
     if (req.method === 'GET' && url.pathname === '/api/journeys') return send(res,200,{items:[
       {lead:'Aarav Sharma',source:'Google Ads',stage:'Qualified',touchpoints:6,duration:'18m'},
       {lead:'Meera Patel',source:'Meta Ads',stage:'Consultation',touchpoints:8,duration:'4h'},
