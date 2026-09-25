@@ -902,3 +902,27 @@ New API endpoints:
 - `POST /api/audiences`
 
 The supplied brochure describes syncing offline lists, LTV, lifecycle and propensity segments, suppressing low-value users, activating high-value users and creating lookalike audiences. AceMarketing now provides an actual builder for those audience workflows rather than only showing predefined segments.
+
+
+## Parity pass: Custom Integration Builder
+
+This pass operationalizes the brochure's **Custom Integration** agent and the "no engineering/custom pipelines" connectivity promise into a guided builder.
+
+The Integrations workspace now includes:
+- exact brochure-aligned connector categories and additional ad destinations such as Bing/Microsoft Ads, X and Pinterest;
+- a Custom Integration Builder for proprietary or unsupported systems;
+- REST API, webhook, CSV/SFTP and database-read patterns;
+- Bearer token, API key, Basic Auth, OAuth 2.0 and signed-webhook configuration options;
+- inbound, outbound or bidirectional data direction;
+- identity, lifecycle-stage and revenue field mapping;
+- event-id deduplication, click-ID passthrough, timezone normalization, schema quarantine and audit-history safeguards;
+- pre-activation connection test;
+- sample-record validation;
+- create-and-enable sync workflow;
+- workspace list of connected custom adapters.
+
+New API endpoints:
+- `POST /api/custom-integrations/test`
+- `POST /api/custom-integrations`
+
+These endpoints are demo/local operational scaffolding. They do not store production credentials or perform real third-party OAuth until provider-specific adapters and secret storage are added.
