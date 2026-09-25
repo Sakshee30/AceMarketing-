@@ -154,6 +154,28 @@ const server = http.createServer(async (req,res)=>{
       {name:'Converted / enrolled',size:18204,mode:'suppress'},
       {name:'Website visitors · 180d',size:82416,mode:'retarget'}
     ]})
+    if (req.method === 'GET' && url.pathname === '/api/alerts') return send(res,200,{items:[
+      {id:'al_1',severity:'critical',title:'Audience sync stalled',status:'open'},
+      {id:'al_2',severity:'warning',title:'GCLID coverage below threshold',status:'open'},
+      {id:'al_3',severity:'warning',title:'CRM sync latency elevated',status:'open'}
+    ]})
+    if (req.method === 'POST' && url.pathname === '/api/alerts/resolve') {
+      const body=await readBody(req)
+      if(!body.id) return send(res,400,{error:'id required'})
+      return send(res,200,{id:body.id,status:'resolved',resolvedAt:new Date().toISOString()})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/webhooks/deliveries') return send(res,200,{items:[
+      {id:'evt_91',event:'lead.qualified',statusCode:200,latencyMs:412,status:'delivered'},
+      {id:'evt_90',event:'revenue.closed',statusCode:200,latencyMs:588,status:'delivered'},
+      {id:'evt_89',event:'sync.failed',statusCode:500,latencyMs:1900,status:'failed'},
+      {id:'evt_88',event:'audience.updated',statusCode:200,latencyMs:376,status:'delivered'}
+    ]})
+    if (req.method === 'POST' && url.pathname === '/api/webhooks/retry') {
+      const body=await readBody(req)
+      if(!body.id) return send(res,400,{error:'id required'})
+      return send(res,202,{id:body.id,status:'queued',retryId:randomUUID()})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/webhooks/secret/rotate') return send(res,201,{secret:'whsec_'+randomUUID().replaceAll('-',''),createdAt:new Date().toISOString()})
     if (req.method === 'GET' && url.pathname === '/api/monitoring') return send(res,200,{status:'healthy',eventsPerMinute:8412,failedEventRate:0.18,p95LatencySeconds:1.7})
     if (req.method === 'GET' && url.pathname === '/api/signal-console') return send(res,200,{google:[['Qualified Lead',8214,96.1],['Consultation',2314,94.7],['Enrolment',982,97.3]],meta:[['Lead',12842,94.8],['Qualified',7621,95.4],['Purchase',982,96.2]],whatsapp:[['Chat Started',6904,'Matched'],['Qualified',3086,'Synced'],['Booked',711,'Revenue linked']]})
     if (req.method === 'GET' && url.pathname === '/api/resources') return send(res,200,{items:['Custom Events','Server-Side Activation','Attribution','CRM Enrichment','Offline Conversion Tracking','Audience Operations']})
