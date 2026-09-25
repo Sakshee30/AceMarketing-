@@ -434,7 +434,7 @@ const server = http.createServer(async (req,res)=>{
         safe(()=>leadOpsStats(workspaceId),{available:false,total:0,aGrade:0,abQuality:0}),
         safe(()=>attributionStats(workspaceId),{available:false,matchedEvents:0,unmatchedEvents:0,assistedEvents:0,activeClickSessions:0}),
         safe(()=>audienceOpsStats(workspaceId),{available:false,audiences:{total:0,active:0,activatedIdentities:0,suppressedIdentities:0,errors:0},profiles:{total:0}}),
-        safe(()=>queueStats(),{available:false,queued:0,processing:0,retrying:0,deadLetter:0}),
+        safe(()=>queueStats(workspaceId),{backend:'disabled',pending:0,leased:0,retry:0,succeeded:0,deadLetter:0}),
         safe(()=>monitoringSnapshot(workspaceId),{}),
         safe(()=>listEventRules(workspaceId),[]),
         safe(()=>listAgentRuns(workspaceId),[]),
