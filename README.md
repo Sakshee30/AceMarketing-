@@ -3734,3 +3734,15 @@ The Models workspace now supports persisted customer-defined scoring models in a
 - `POST /api/models/run` scores real persisted profiles, stores rows scored, average score and score range, and updates the selected custom model's latest run state.
 - Custom models are clearly labelled as workspace-defined weighted scoring; AceMarketing does not claim predictive accuracy without customer outcome validation.
 - Validation history continues to use persisted model runs and lead population.
+
+
+### Destination-aware feed enhancement
+
+Feed & Payload Enhancement now manages explicit source-field → destination-field contracts instead of only registering attribute names.
+
+- `POST /api/feed/mappings` persists a mapping with source attribute, destination, target field and transform.
+- Mappings can be paused/enabled through `POST /api/feed/mappings/toggle`.
+- `POST /api/feed/preview` builds an enhanced payload preview from the latest persisted profile plus custom attribute samples.
+- The preview is destination-specific and shows the exact generated payload, mapping count and source profile boundary.
+- Delivery-history enrichment rates remain based on persisted outbound delivery payloads.
+- Feed previews do not claim provider acceptance; they validate only the mapping contract before live dispatch.
