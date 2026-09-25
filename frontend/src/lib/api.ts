@@ -73,6 +73,7 @@ export const api = {
   dataHub: () => request('/data-hub'),
   rebuildDataHub: () => request('/data-hub/rebuild', { method: 'POST', body: JSON.stringify({}) }),
   offlineAttribution: () => request('/offline-attribution'),
+  callEvents: () => request('/call-events'),
   matchback: () => request('/matchback'),
   reconcileMatchback: (rule: string) => request('/matchback/reconcile', { method: 'POST', body: JSON.stringify({ rule }) }),
   attributionIdentityStats: () => request('/attribution-identity/stats'),
