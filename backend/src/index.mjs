@@ -1547,7 +1547,22 @@ const server = http.createServer(async (req,res)=>{
       return send(req,res,202,{queued:true,issue:body.issue,replayId,status:'queued'})
     }
     if (req.method === 'GET' && url.pathname === '/api/funnel') {
-      const [profiles,meetings]=await Promise.all([listLeadProfiles(workspaceId,500),listPersistedMeetings(workspaceId)])
+      const [allProfiles,allMeetings]=await Promise.all([listLeadProfiles(workspaceId,500),listPersistedMeetings(workspaceId)])
+      const allowedPeriods=new Set([7,30,90])
+      const requestedDays=Number(url.searchParams.get('periodDays')||30)
+      const periodDays=allowedPeriods.has(requestedDays)?requestedDays:30
+      const cutoff=Date.now()-periodDays*24*60*60*1000
+      const requestedChannel=String(url.searchParams.get('channel')||'').trim()
+      const requestedDisposition=String(url.searchParams.get('disposition')||'').trim()
+      const inWindow=item=>{
+        const raw=item.updated_at||item.updatedAt||item.created_at||item.createdAt||item.starts_at||item.startsAt||null
+        if(!raw)return true
+        const time=Date.parse(raw)
+        return Number.isNaN(time)||time>=cutoff
+      }
+      const periodProfiles=allProfiles.filter(inWindow)
+      const channels=[...new Set(periodProfiles.map(lead=>String(lead.source||'First-party')))].sort((a,b)=>a.localeCompare(b))
+      const profiles=requestedChannel?periodProfiles.filter(lead=>String(lead.source||'First-party')===requestedChannel):periodProfiles
       const qualifiedStages=new Set(['qualified','consultation','opportunity','converted','enrolled','closed_won','customer'])
       const consultationStages=new Set(['consultation','opportunity','converted','enrolled','closed_won','customer'])
       const bookingStages=new Set(['converted','enrolled','closed_won','customer'])
@@ -1557,6 +1572,7 @@ const server = http.createServer(async (req,res)=>{
         profileByLead.set(leadKey(lead),lead)
         if(lead.name)profileByLead.set(String(lead.name),lead)
       }
+      const meetings=allMeetings.filter(inWindow).filter(meeting=>profileByLead.has(String(meeting.lead_ref||'')))
       const campaigns=new Map()
       const ensure=lead=>{
         const name=String(lead.campaign||lead.source||'Unattributed')
@@ -1576,6 +1592,14 @@ const server = http.createServer(async (req,res)=>{
         const lead=profileByLead.get(String(meeting.lead_ref||''))
         if(lead)ensure(lead).appointments++
       }
+      const dispositionKey={
+        Qualified:'qualified',
+        Appointments:'appointments',
+        Consultations:'consultations',
+        Bookings:'bookings'
+      }[requestedDisposition]||''
+      let campaignRows=[...campaigns.values()].sort((a,b)=>b.leads-a.leads)
+      if(dispositionKey)campaignRows=campaignRows.filter(row=>Number(row[dispositionKey]||0)>0)
       const stages={
         leads:profiles.length,
         qualified:profiles.filter(lead=>['A','B'].includes(String(lead.grade))||qualifiedStages.has(String(lead.crm_stage||'').toLowerCase())).length,
@@ -1583,7 +1607,18 @@ const server = http.createServer(async (req,res)=>{
         consultations:profiles.filter(lead=>consultationStages.has(String(lead.crm_stage||'').toLowerCase())).length,
         bookings:profiles.filter(lead=>bookingStages.has(String(lead.crm_stage||'').toLowerCase())).length
       }
-      return send(req,res,200,{available:true,stages,campaigns:[...campaigns.values()].sort((a,b)=>b.leads-a.leads),generatedAt:new Date().toISOString()})
+      return send(req,res,200,{
+        available:true,
+        stages,
+        campaigns:campaignRows,
+        filters:{
+          channel:requestedChannel||'All channels',
+          disposition:requestedDisposition||'All dispositions',
+          periodDays,
+          channels
+        },
+        generatedAt:new Date().toISOString()
+      })
     }
     if (req.method === 'GET' && url.pathname === '/api/data-hub') {
       const [state,leadStats,attr]=await Promise.all([getState(),leadOpsStats(workspaceId),attributionStats(workspaceId)])
