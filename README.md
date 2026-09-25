@@ -465,3 +465,26 @@ New API endpoints:
 - `POST /api/api-keys`
 
 This implements the product setup path required to make the brochure's one-click integrations, stitched journey, signal return and agent activation usable as one coherent workspace flow.
+
+
+## Parity pass: identity resolution, journey detail, deeper Enrich and custom agent builder
+
+This pass fills additional core product gaps around the brochure's "stitch the journey" and agent-customization model.
+
+- New **Identity** workspace:
+  - customer-level identity graph;
+  - customer ID, CRM ID, GCLID, FBCLID, hashed email/phone and device identifiers;
+  - deterministic matching rules;
+  - identity-confidence and merge-review surfaces.
+- **Journeys** now has a selectable journey-detail view with chronological cross-source events and identity keys.
+- **Attribution** now compares first-touch, last-touch, linear and full-path credit on the same closed-revenue journey.
+- **Enrich** now includes call-transcript and WhatsApp context so CRM enrichment reflects the brochure's point that sales should not qualify with only a name and phone number.
+- **Agents** now includes a Custom Agent Builder for trigger, action and approval-policy configuration.
+
+New API endpoints:
+- `GET /api/identity`
+- `POST /api/agents/custom`
+
+### CI correction
+
+The first GitHub Actions run failed before install because `actions/setup-node` was configured with npm caching but the repository does not contain a dependency lock file. The CI workflow has been corrected to remove the lockfile-dependent cache setting; it still runs install, type-check and production build on `main`.
