@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { URL } from 'node:url'
 import { createToken, verifyToken, verifyPassword, createRateLimiter, securityHeaders, resolveCorsOrigin } from './security.mjs'
 import { getState, mutateState } from './store.mjs'
+import { publicNavigation, publicIndustries, publicAgents, publicIntegrations } from './public-content.mjs'
 
 const PORT = Number(process.env.PORT || 3001)
 const IS_PROD = process.env.NODE_ENV === 'production'
@@ -56,7 +57,7 @@ const send = (req,res,status,data,extra={}) => {
   res.end(status===204?'':JSON.stringify(data))
 }
 
-const publicPaths=new Set(['/api/health','/api/ready','/api/auth/login','/api/demo-requests','/api/track','/api/public/industries','/api/public/agents','/api/public/integrations'])
+const publicPaths=new Set(['/api/health','/api/ready','/api/auth/login','/api/demo-requests','/api/track','/api/public/navigation','/api/public/industries','/api/public/agents','/api/public/integrations'])
 const server = http.createServer(async (req,res)=>{
   req.requestId=String(req.headers['x-request-id']||randomUUID())
   const ip=String(req.headers['x-forwarded-for']||req.socket.remoteAddress||'unknown').split(',')[0].trim()
@@ -74,35 +75,10 @@ const server = http.createServer(async (req,res)=>{
   try {
     if (req.method === 'GET' && url.pathname === '/api/health') return send(req,res,200,{ok:true,service:'ace-marketing-api',time:new Date().toISOString(),requestId:req.requestId})
     if (req.method === 'GET' && url.pathname === '/api/ready') { const state=await getState(); return send(req,res,200,{ok:true,persistence:true,records:{audiences:state.audiences.length,customIntegrations:state.customIntegrations.length},time:new Date().toISOString()}) }
-    if (req.method === 'GET' && url.pathname === '/api/public/industries') return send(req,res,200,{items:[
-      {name:'Edtech',summary:'Connect acquisition, counselling, calls, messaging and enrolment into one measurable learner journey.',outcomes:['Lead quality','Counsellor context','Enrolment attribution']},
-      {name:'Fintech',summary:'Bring approved acquisition and customer signals together with strict controls around identity and activation.',outcomes:['Qualified demand','Compliant activation','Revenue feedback']},
-      {name:'Healthcare',summary:'Measure patient acquisition and assisted journeys with privacy-aware first-party workflows.',outcomes:['Source visibility','Call attribution','Consent-aware measurement']},
-      {name:'Retail',summary:'Link paid media, ecommerce, CRM and offline purchase behavior into one customer path.',outcomes:['Audience quality','Repeat purchase','Omnichannel attribution']},
-      {name:'Home Improvement',summary:'Follow enquiries through calls, visits, quotations and booked projects without losing campaign context.',outcomes:['Lead routing','Project conversion','Offline matchback']},
-      {name:'Travel',summary:'Connect discovery, enquiry, call-center and booking activity across assisted and digital channels.',outcomes:['Booking attribution','Journey continuity','Audience suppression']},
-      {name:'Consumer Goods',summary:'Use first-party customer and purchase context to improve media efficiency and retention.',outcomes:['Revenue signals','LTV audiences','Repeat purchase']}
-    ]})
-    if (req.method === 'GET' && url.pathname === '/api/public/agents') return send(req,res,200,{items:[
-      {number:1,name:'Meta Advanced CAPI',category:'Lead Quality',summary:'Return verified business outcomes to Meta with server-side delivery and event deduplication.'},
-      {number:2,name:'Google ECL / OCI',category:'Lead Quality',summary:'Connect ad clicks with qualified and closed outcomes for Google Ads optimization.'},
-      {number:3,name:'Call Tracking Events',category:'Lead Quality',summary:'Map inbound calls to campaign and click context before sending conversion feedback.'},
-      {number:4,name:'Custom Integration',category:'Lead Quality',summary:'Create normalized pipelines for proprietary CRMs, ad platforms, or internal data systems.'},
-      {number:5,name:'Lead Grading',category:'Conversion',summary:'Score each lead from journey, CRM, and interaction evidence before routing.'},
-      {number:6,name:'CRM Enrichment',category:'Conversion',summary:'Attach acquisition and journey context to CRM records before the first sales interaction.'},
-      {number:7,name:'Voice Lead Qualification',category:'Conversion',summary:'Qualify inbound demand quickly and pass sales-ready prospects to the right team.'},
-      {number:8,name:'Voice Scheduler',category:'Conversion',summary:'Schedule meetings for qualified prospects and coordinate the booking workflow.'},
-      {number:9,name:'Meeting Reminder',category:'Conversion',summary:'Reduce no-shows with contextual reminders and recovery sequences.'},
-      {number:10,name:'Feedback Agent',category:'Conversion',summary:'Capture objections and post-interaction feedback for funnel improvement.'},
-      {number:11,name:'Ask Ace',category:'Visibility',summary:'Query journey and attribution evidence in natural language inside the workspace.'}
-    ]})
-    if (req.method === 'GET' && url.pathname === '/api/public/integrations') return send(req,res,200,{groups:[
-      {group:'Advertising & Analytics',items:['Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads / Bing Ads','GA4']},
-      {group:'CRM',items:['Zoho CRM','Salesforce','LeadSquared','Meritto','HubSpot','HighLevel','Microsoft Dynamics 365']},
-      {group:'Messaging & Marketing',items:['WhatsApp','WATI','Gupshup','AiSensy','Bitespeed','MoEngage','CleverTap']},
-      {group:'Calling',items:['Exotel','Knowlarity','Tata Tele','MyOperator']},
-      {group:'Web, App & Commerce',items:['WordPress','React App','WooCommerce','Magento','Custom Backend']}
-    ]})
+    if (req.method === 'GET' && url.pathname === '/api/public/navigation') return send(req,res,200,publicNavigation)
+    if (req.method === 'GET' && url.pathname === '/api/public/industries') return send(req,res,200,{items:publicIndustries})
+    if (req.method === 'GET' && url.pathname === '/api/public/agents') return send(req,res,200,{items:publicAgents})
+    if (req.method === 'GET' && url.pathname === '/api/public/integrations') return send(req,res,200,{groups:publicIntegrations})
     if (req.method === 'POST' && url.pathname === '/api/auth/login') {
       const body = await readBody(req)
       if (!body.email || !String(body.email).includes('@') || String(body.password || '').length < 6) return send(req,res,400,{error:'valid email and password length >= 6 required'})
