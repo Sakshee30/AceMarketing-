@@ -1891,12 +1891,77 @@ const server = http.createServer(async (req,res)=>{
           matchRate:Number(stats?.matchRate||0),
           matchedValue:Number(stats?.matchedValue||0)
         },
-        rules:[
-          {conversion:'Inbound Call',source:'Telephony',match:'first-party identity + session/click reconciliation',destination:['Google Ads','Meta Ads']},
-          {conversion:'WhatsApp Enquiry',source:'WhatsApp',match:'persisted click/customer identity + phone',destination:['Google Ads','Meta Ads']},
-          {conversion:'Partial Payment',source:'Custom Backend',match:'customer_id + order',destination:['Google Ads']}
+        rules:state.offlineAttributionRules||[],
+        templates:[
+          {conversion:'Inbound Call',source:'Telephony',match:'first-party identity + session/click reconciliation',identifier:'Phone / click ID',destination:['Google Ads','Meta Ads']},
+          {conversion:'WhatsApp Enquiry',source:'WhatsApp',match:'persisted click/customer identity + phone',identifier:'Phone / GCLID / FBCLID',destination:['Google Ads','Meta Ads']},
+          {conversion:'Partial Payment',source:'Custom Backend',match:'customer_id + order mapping',identifier:'Customer ID / order ID',destination:['Google Ads']},
+          {conversion:'Walk-in / Offline Sale',source:'CRM / POS',match:'hashed phone/email + click history',identifier:'Hashed contact / click ID',destination:['Google Ads','Meta Ads']}
         ]
       })
+    }
+    if (req.method === 'POST' && url.pathname === '/api/offline-attribution/rules') {
+      const body=await readBody(req)
+      const conversion=String(body.conversion||'').trim()
+      const source=String(body.source||'').trim()
+      const match=String(body.match||'').trim()
+      const identifier=String(body.identifier||'').trim()
+      const destination=Array.isArray(body.destination)?body.destination.map(String).filter(Boolean):[String(body.destination||'').trim()].filter(Boolean)
+      if(!conversion||!source||!match||!identifier||!destination.length) return send(req,res,400,{error:'conversion, source, match, identifier and destination are required'})
+      const now=new Date().toISOString()
+      const item={id:'off_'+randomUUID(),conversion:conversion.slice(0,160),source:source.slice(0,160),match:match.slice(0,300),identifier:identifier.slice(0,200),destination:destination.slice(0,5),status:'active',createdAt:now}
+      await mutateState(s=>{
+        s.offlineAttributionRules=s.offlineAttributionRules||[]
+        s.offlineAttributionRules.unshift(item)
+        s.offlineAttributionRules=s.offlineAttributionRules.slice(0,200)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'offline_attribution.rule_created',entityId:item.id,conversion:item.conversion,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,{item})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/offline-attribution/rules/toggle') {
+      const body=await readBody(req)
+      if(!body.id||typeof body.enabled!=='boolean') return send(req,res,400,{error:'id and enabled are required'})
+      let updated=null
+      await mutateState(s=>{
+        const item=(s.offlineAttributionRules||[]).find(x=>x.id===body.id)
+        if(item){item.status=body.enabled?'active':'paused';item.updatedAt=new Date().toISOString();updated={...item}}
+      })
+      return updated?send(req,res,200,{item:updated}):send(req,res,404,{error:'offline attribution rule not found'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/offline-attribution/test') {
+      const body=await readBody(req)
+      const state=await getState()
+      const rule=(state.offlineAttributionRules||[]).find(x=>x.id===body.ruleId)
+      if(!rule) return send(req,res,404,{error:'offline attribution rule not found'})
+      if(rule.status==='paused') return send(req,res,409,{error:'offline attribution rule is paused'})
+      const eventId='offtest_'+randomUUID()
+      const item=await recordAssistedEvent(workspaceId,{
+        event:body.event||rule.conversion.toLowerCase().replace(/[^a-z0-9]+/g,'_'),
+        eventType:body.eventType||rule.conversion.toLowerCase().replace(/[^a-z0-9]+/g,'_'),
+        eventId,
+        customerId:body.customerId||null,
+        email:body.email||null,
+        phone:body.phone||null,
+        gclid:body.gclid||null,
+        fbclid:body.fbclid||null,
+        source:rule.source,
+        occurredAt:new Date().toISOString(),
+        value:Number(body.value||0),
+        currency:String(body.currency||'INR'),
+        data:{offlineRuleId:rule.id,test:true}
+      })
+      if(!item) return send(req,res,503,{error:'attribution store unavailable'})
+      const now=new Date().toISOString()
+      await mutateState(s=>{
+        const saved=(s.offlineAttributionRules||[]).find(x=>x.id===rule.id)
+        if(saved){saved.lastTestAt=now;saved.lastTestStatus=item.status;saved.lastTestMethod=item.match_method||null}
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'offline_attribution.rule_tested',entityId:rule.id,eventId,status:item.status,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,{id:item.id,status:item.status,matchMethod:item.match_method,matchConfidence:item.match_confidence,matchedSessionId:item.matched_session_id})
     }
     if (req.method === 'POST' && url.pathname === '/api/track') {
       const body=await readBody(req)
