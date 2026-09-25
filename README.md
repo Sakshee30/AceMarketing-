@@ -3117,3 +3117,55 @@ A static scan of `frontend/src/AcePlatform.tsx` now returns zero `PageHead` acti
 ### Product identity note
 
 AceMarketing may reproduce comparable public workflows, information architecture and feature behavior, but proprietary EasyInsights source code, copyrighted copy/assets, logos, screenshots and private implementation details are not copied into this repository. External case-study metrics remain clearly labeled as reference benchmarks rather than AceMarketing customer results.
+
+
+## Navigation dropdown and dashboard visibility fix
+
+This pass fixes the two UI failures shown in the supplied screenshots.
+
+### Public navigation mega menus
+
+The **Industries**, **Agents**, and **Resources** navigation items now behave as actual dropdown triggers instead of immediately navigating away.
+
+Implemented behavior:
+
+- click toggles the matching mega menu;
+- hover opens the matching menu on desktop;
+- keyboard focus opens it;
+- `Escape` closes it;
+- clicking outside the header closes it;
+- `aria-haspopup` and `aria-expanded` are present;
+- selecting an item performs the final navigation;
+- dropdowns animate into view;
+- responsive layouts below 980px no longer forcibly hide the Agents / Resources mega menus.
+
+The previous responsive CSS contained:
+
+```css
+.agents-menu,.resources-menu{display:none}
+```
+
+inside the sub-980px breakpoint. That hard-disable has been removed and replaced with a responsive full-width mega-menu layout.
+
+### Workspace dashboard visibility
+
+The workspace sidebar previously contained more navigation items than a single viewport could display while the sidebar itself was fixed to `100vh`.
+
+Because the overflowing navigation was not given its own scroll region, it extended below the sidebar background and made the entire document scroll. At those lower scroll positions the dashboard main content had already ended, which created the blank white dashboard shown in the screenshot.
+
+The workspace now uses:
+
+- `height: 100vh` + `overflow: hidden` on the product shell;
+- an independently scrollable `.product-nav`;
+- a fixed-height `.product-sidebar`;
+- an independently scrollable `.product-main`;
+- sticky dashboard header inside the main workspace;
+- section labels inside the long sidebar for easier navigation;
+- persisted active dashboard tab;
+- **Overview** as the default first dashboard view.
+
+This keeps the selected feature content visible beside the sidebar instead of allowing the sidebar overflow to push the user into a blank document region.
+
+### Dashboard feature access
+
+All existing workspace modules remain available in the sidebar and clicking a module changes the active dashboard view in the visible main panel. The sidebar itself now scrolls independently so every module remains reachable without moving the main content off-screen.
