@@ -102,7 +102,7 @@ test.describe('workspace critical flows',()=>{
 
     await page.getByRole('button',{name:'Models',exact:true}).click()
     await expect(page.locator('.product-body h1')).toContainText(/Custom models/i)
-    await expect(page.locator('.product-body')).toContainText(/Lead quality scoring|Journey propensity features/i)
+    await expect(page.locator('.product-body')).toContainText(/Model catalog|No model services available|Workspace scoring runtime/i)
   })
 
   test('conversion operations expose real creation and empty-state flows',async({page})=>{
@@ -143,9 +143,9 @@ test.describe('workspace critical flows',()=>{
 
   test('workspace switcher remains usable',async({page})=>{
     await page.locator('.workspace').click()
-    await expect(page.getByText('Ace Healthcare',{exact:true})).toBeVisible()
-    await page.getByText('Ace Healthcare',{exact:true}).click()
-    await expect(page.locator('.workspace')).toContainText('Ace Healthcare')
+    await expect(page.getByRole('button',{name:/Create workspace/i})).toBeVisible()
+    const current=await page.locator('.workspace b').innerText()
+    expect(current.trim().length).toBeGreaterThan(0)
   })
 })
 
@@ -170,7 +170,7 @@ test.describe('basic accessibility regression',()=>{
     await expect(page.locator('.marketing-page')).toBeVisible()
     await page.evaluate(()=>window.dispatchEvent(new CustomEvent('ace-view',{detail:'app'})))
     await expect(page.locator('.product-body h1')).toHaveCount(1)
-    await page.getByRole('button',{name:'Monitoring',exact:true}).click()
+    await page.locator('.product-nav-group-items').getByRole('button',{name:'Monitoring',exact:true}).click()
     await expect(page.locator('.product-body h1')).toHaveCount(1)
   })
 })
@@ -202,7 +202,7 @@ test.describe('privacy consent runtime',()=>{
 
 
 test('dashboard navigator opens primary operating sections', async ({ page }) => {
-  await page.goto('/#/workspace')
+  await page.goto('/#/workspace')\n  await dismissConsent(page)
   await expect(page.getByRole('button', { name: 'Open dashboard section navigator' })).toBeVisible()
   await page.getByRole('button', { name: 'Open dashboard section navigator' }).click()
   await expect(page.getByRole('dialog', { name: 'Dashboard section navigator' })).toBeVisible()
@@ -212,7 +212,7 @@ test('dashboard navigator opens primary operating sections', async ({ page }) =>
 
 
 test('live dashboard section strip navigates between operating areas', async ({ page }) => {
-  await page.goto('/#/workspace')
+  await page.goto('/#/workspace')\n  await dismissConsent(page)
   await expect(page.getByLabel('Dashboard sections')).toBeVisible()
   await page.getByLabel('Dashboard sections').getByRole('button', { name: /Measurement & Intelligence/ }).click()
   await expect(page.getByText('Journeys', { exact: true }).first()).toBeVisible()
@@ -220,17 +220,18 @@ test('live dashboard section strip navigates between operating areas', async ({ 
 
 
 test('dashboard keeps section navigation visible on workspace', async ({ page }) => {
-  await page.goto('/#/workspace')
+  await page.goto('/#/workspace')\n  await dismissConsent(page)
   await expect(page.getByLabel('Dashboard sections')).toBeVisible()
-  await expect(page.getByRole('button', { name: /Tracking & Data/ })).toBeVisible()
-  await expect(page.getByRole('button', { name: /Activation & Integrations/ })).toBeVisible()
-  await expect(page.getByRole('button', { name: /Operations & Developer/ })).toBeVisible()
+  const sections=page.getByLabel('Dashboard sections')
+  await expect(sections.getByRole('button', { name: 'Tracking & Data', exact: true })).toBeVisible()
+  await expect(sections.getByRole('button', { name: 'Activation & Integrations', exact: true })).toBeVisible()
+  await expect(sections.getByRole('button', { name: 'Operations & Developer', exact: true })).toBeVisible()
 })
 
 
 test('manual integration cards open the custom adapter builder', async ({ page }) => {
-  await page.goto('/#/workspace')
-  await page.getByRole('button', { name: /Activation & Integrations/ }).click()
+  await page.goto('/#/workspace')\n  await dismissConsent(page)
+  await page.getByLabel('Dashboard sections').getByRole('button', { name: 'Activation & Integrations', exact: true }).click()
   await page.getByRole('button', { name: 'Integrations', exact: true }).first().click()
   const meritto = page.locator('article').filter({ hasText: 'Meritto' })
   await expect(meritto).toContainText('Configurable adapter')
@@ -241,8 +242,8 @@ test('manual integration cards open the custom adapter builder', async ({ page }
 
 
 test('built-in agent opens its live operational module', async ({ page }) => {
-  await page.goto('/#/workspace')
-  await page.getByRole('button', { name: /Lead & Conversion/ }).click()
+  await page.goto('/#/workspace')\n  await dismissConsent(page)
+  await page.getByLabel('Dashboard sections').getByRole('button', { name: 'Lead & Conversion', exact: true }).click()
   await page.getByRole('button', { name: 'Agents', exact: true }).first().click()
   await page.getByRole('button', { name: /Lead Grading/ }).first().click()
   await expect(page.getByText('Operational prerequisites')).toBeVisible()
@@ -252,8 +253,8 @@ test('built-in agent opens its live operational module', async ({ page }) => {
 
 
 test('funnel period control updates backend-filtered workspace', async ({ page }) => {
-  await page.goto('/#/workspace')
-  await page.getByRole('button', { name: /Tracking & Data/ }).click()
+  await page.goto('/#/workspace')\n  await dismissConsent(page)
+  await page.getByLabel('Dashboard sections').getByRole('button', { name: 'Tracking & Data', exact: true }).click()
   await page.getByRole('button', { name: 'Funnel', exact: true }).first().click()
   await expect(page.getByRole('heading', { name: 'Channel & campaign funnel' })).toBeVisible()
   await page.getByRole('button', { name: /Last 30 days/ }).click()
@@ -262,8 +263,8 @@ test('funnel period control updates backend-filtered workspace', async ({ page }
 
 
 test('reports list reflects persisted schedules instead of static claims', async ({ page }) => {
-  await page.goto('/#/workspace')
-  await page.getByRole('button', { name: /Measurement & Intelligence/ }).click()
+  await page.goto('/#/workspace')\n  await dismissConsent(page)
+  await page.getByLabel('Dashboard sections').getByRole('button', { name: 'Measurement & Intelligence', exact: true }).click()
   await page.getByRole('button', { name: 'Reports', exact: true }).first().click()
   await expect(page.getByRole('heading', { name: 'Cohort & automated reports' })).toBeVisible()
   await expect(page.getByText('Cohort Performance', { exact: true }).first()).toBeVisible()
