@@ -2,7 +2,7 @@ import http from 'node:http'
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { URL } from 'node:url'
 import { createToken, verifyToken, verifyPassword, createRateLimiter, securityHeaders, resolveCorsOrigin } from './security.mjs'
-import { getState, mutateState } from './store.mjs'
+import { closeStore, getState, mutateState, storageHealth, withWorkspace } from './store.mjs'
 import { connectorVaultReady, encryptSecret } from './vault.mjs'
 import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, publicChallenges, publicCaseStudies, publicResources } from './public-content.mjs'
 
@@ -85,7 +85,7 @@ const send = (req,res,status,data,extra={}) => {
     'Content-Type':'application/json; charset=utf-8',
     'Access-Control-Allow-Origin':origin,
     'Vary':'Origin',
-    'Access-Control-Allow-Headers':'Content-Type, Authorization, X-Request-ID',
+    'Access-Control-Allow-Headers':'Content-Type, Authorization, X-Request-ID, X-Workspace-ID',
     'Access-Control-Allow-Methods':'GET,POST,OPTIONS',
     'X-Request-ID':requestId,
     ...extra,
@@ -108,9 +108,17 @@ const server = http.createServer(async (req,res)=>{
     if(!user) return send(req,res,401,{error:'unauthorized'})
     req.user=user
   }
+  const workspaceId=String(req.headers['x-workspace-id']||process.env.DEFAULT_WORKSPACE_ID||'ws_default')
+  if(!/^[A-Za-z0-9_-]{1,64}$/.test(workspaceId)) return send(req,res,400,{error:'invalid workspace id'})
+  return withWorkspace(workspaceId,async()=>{
   try {
     if (req.method === 'GET' && url.pathname === '/api/health') return send(req,res,200,{ok:true,service:'ace-marketing-api',time:new Date().toISOString(),requestId:req.requestId})
-    if (req.method === 'GET' && url.pathname === '/api/ready') { const state=await getState(); return send(req,res,200,{ok:true,persistence:true,records:{audiences:state.audiences.length,customIntegrations:state.customIntegrations.length},time:new Date().toISOString()}) }
+    if (req.method === 'GET' && url.pathname === '/api/ready') {
+      const persistence=await storageHealth()
+      if(!persistence.ok) return send(req,res,503,{ok:false,persistence,time:new Date().toISOString()})
+      const state=await getState()
+      return send(req,res,200,{ok:true,persistence,records:{audiences:state.audiences.length,customIntegrations:state.customIntegrations.length},time:new Date().toISOString()})
+    }
     if (req.method === 'GET' && url.pathname === '/api/public/navigation') return send(req,res,200,publicNavigation)
     if (req.method === 'GET' && url.pathname === '/api/public/industries') return send(req,res,200,{items:publicIndustries})
     if (req.method === 'GET' && url.pathname === '/api/public/agents') return send(req,res,200,{items:publicAgents})
@@ -867,12 +875,13 @@ const server = http.createServer(async (req,res)=>{
   } catch (error) {
     return send(req,res,500,{error:error instanceof Error?error.message:'internal error'})
   }
+  })
 })
 
 server.keepAliveTimeout=65_000
 server.headersTimeout=66_000
 server.requestTimeout=30_000
 server.listen(PORT,()=>console.log(`AceMarketing API listening on http://localhost:${PORT}`))
-const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(err=>process.exit(err?1:0));setTimeout(()=>process.exit(1),10_000).unref()}
+const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await closeStore().catch(()=>{});process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
 process.on('SIGTERM',()=>shutdown('SIGTERM'))
 process.on('SIGINT',()=>shutdown('SIGINT'))
