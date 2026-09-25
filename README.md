@@ -1507,3 +1507,20 @@ Implemented:
 - **Operator** — operational execution for approved workflows, calls, meetings, approvals and delivery.
 
 The current bootstrap owner remains tied to `ADMIN_EMAIL` + `ADMIN_PASSWORD_HASH`. Additional members activate through the invitation flow.
+
+
+## Public resource-center parity pass
+
+The public Resources navigation now resolves to distinct product experiences instead of routing every resource item to one generic screen.
+
+Implemented:
+- dedicated resource tabs/routes for Guides, Use Cases, Blogs, Ebooks, Documentation, No Net Hash, ROAS Calculator and Voice Agent;
+- `GET /api/public/resource-center` public API for resource metadata and implementation-oriented content;
+- hash-based deep links such as `#/resources?tab=docs`, `#/resources?tab=hash` and `#/resources?tab=roas`;
+- browser-only SHA-256 hashing that does not transmit the raw identifier to the backend;
+- ROAS calculator with spend/revenue inputs;
+- structured documentation groups for setup, activation, measurement and operations;
+- implementation-style use cases for lead quality, call/WhatsApp attribution, CRM conversion sync and audience lifecycle activation;
+- voice-agent capability page covering qualification, routing, scheduling, reminders and feedback.
+
+This closes the public-navigation gap where EasyInsights exposes separate resource experiences while AceMarketing previously collapsed those links into one generic destination.
