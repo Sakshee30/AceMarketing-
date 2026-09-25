@@ -104,6 +104,7 @@ function Header({openApp,openLogin,openPricing,openDemo,openCompany,openResource
 }
 function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResources,openCaseStudies,openSolutions}:{openApp:()=>void,openLogin:()=>void,openPricing:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void,openCaseStudies:()=>void,openSolutions:()=>void}){
  const [agentFilter,setAgentFilter]=useState('All')
+ const [problemTab,setProblemTab]=useState<'Lead Quality'|'Conversion'|'Attribution'>('Lead Quality')
  const [cookieOpen,setCookieOpen]=useState(true)
  const [cookiePrefs,setCookiePrefs]=useState({analytics:false,advertising:false,functionality:false})
  const visibleAgents=agentFilter==='All'?agents:agents.filter(a=>a[2]===agentFilter)
@@ -155,15 +156,18 @@ function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResou
    </div>
   </section>
 
-  <section className="section white" id="problems">
-   <div className="section-title"><span className="kicker dark">THREE LEAKS THAT HURT PAID GROWTH</span><h2>One operating layer for signal quality, conversion and attribution.</h2></div>
-   <div className="problem-grid">
-    {[
-      ['01','Lead quality','Ad platforms learn from shallow form-fill events while qualified or closed outcomes sit elsewhere.','Return high-intent and revenue events server-side so bidding learns from business outcomes.'],
-      ['02','Conversion leakage','Forms, CRM, calls, chats and sales handoffs live in separate systems and lose time or context.','Deploy grading, enrichment, voice, scheduling and reminder agents at each handoff.'],
-      ['03','Visibility & attribution','Every tool reports its own slice, making the full customer path difficult to see and defend.','Stitch every touchpoint into a customer journey and measure contribution through revenue.']
-    ].map(x=><article className="problem-card" key={x[0]}><span>{x[0]}</span><h3>{x[1]}</h3><p>{x[2]}</p><div><Sparkles/><b>What AceMarketing does</b><small>{x[3]}</small></div></article>)}
+  <section className="ei-problems" id="problems">
+   <div className="ei-section-heading">
+    <span>THREE PROBLEMS EVERY PAID FUNNEL HAS.</span>
+    <h2>One platform that fixes all three.</h2>
    </div>
+   <div className="ei-problem-tabs">{(['Lead Quality','Conversion','Attribution'] as const).map(x=><button key={x} className={problemTab===x?'active':''} onClick={()=>setProblemTab(x)}>{x}</button>)}</div>
+   <div className="ei-problem-stage">
+    {problemTab==='Lead Quality'&&<><div className="ei-problem-no">01</div><div className="ei-problem-main"><span>LEAD QUALITY</span><h3>“Sales keeps telling me my leads are junk.”</h3><p><b>Why it happens:</b> Ad platforms optimize on form-fills when closed revenue never flows back. The algorithm learns to find submitters rather than buyers.</p></div><div className="ei-problem-solution"><span>WHAT ACEMARKETING DOES</span><p>Connect first-party outcomes and return qualified leads, enrolments, bookings and store sales server-side, with deduplication across sources.</p><span>WHAT YOU GET</span><h4>Better lead quality</h4><p>Optimization moves toward the people who actually progress and close.</p></div></>}
+    {problemTab==='Conversion'&&<><div className="ei-problem-no">02</div><div className="ei-problem-main"><span>CONVERSION</span><h3>“Conversion drops between steps, and I only find out later.”</h3><p><b>Why it happens:</b> Forms, CRM, call centers and offline teams operate in fragments. Every handoff loses context, time and leads.</p></div><div className="ei-problem-solution"><span>WHAT ACEMARKETING DOES</span><p>Grade and enrich on arrival, qualify quickly, route with full context, schedule, remind and match closures back to source.</p><span>WHAT YOU GET</span><h4>More conversion</h4><p>Each step moves faster, with context and accountability across every path.</p></div></>}
+    {problemTab==='Attribution'&&<><div className="ei-problem-no">03</div><div className="ei-problem-main"><span>VISIBILITY & ATTRIBUTION</span><h3>“I own the whole funnel, but I can only see pieces of it.”</h3><p><b>Why it happens:</b> Each tool reports only its own step. Multi-source, multi-path and online-offline journeys remain fragmented.</p></div><div className="ei-problem-solution"><span>WHAT ACEMARKETING DOES</span><p>Stitch every source, tool and offline step into one journey per customer with step monitoring and full-path revenue attribution.</p><span>WHAT YOU GET</span><h4>Visibility and accountability</h4><p>See every step and defend budget decisions with journey-level evidence.</p></div></>}
+   </div>
+   <div className="ei-problem-cta"><span>See all three fixed in one platform.</span><button onClick={openDemo}>Get a Demo</button></div>
   </section>
 
   <section className="split-system" id="platform">
@@ -175,13 +179,13 @@ function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResou
    <div className="formula">STITCHED JOURNEY <b>+</b> AGENTS AT EVERY STEP <b>=</b> A FUNNEL THAT LEARNS</div>
   </section>
 
-  <section className="section white">
-   <div className="section-title"><span className="kicker dark">CORE MODULES</span><h2>From click signal to revenue evidence.</h2></div>
-   <div className="core-grid">
-    <article><span>01</span><RadioTower/><h3>AdSync</h3><p>Server-side conversion activation, offline conversions, click-ID persistence, audience synchronization and continuous event delivery.</p><button onClick={openApp}>Open AdSync <ArrowRight/></button></article>
-    <article><span>02</span><DatabaseZap/><h3>Enrich</h3><p>Add source, campaign, behavior, conversation and intent context to every incoming CRM record so sales starts informed.</p><button onClick={openApp}>Open Enrich <ArrowRight/></button></article>
-    <article><span>03</span><PieChart/><h3>Klarity</h3><p>Analyze stitched journeys, channel contribution, stage conversion and revenue attribution instead of isolated platform reports.</p><button onClick={openApp}>Open attribution <ArrowRight/></button></article>
+  <section className="ei-system-overview" id="platform">
+   <div className="ei-section-heading centered"><span>TWO CAPABILITIES, ONE SYSTEM</span><h2>The stitched journey is what makes the agents effective.</h2><p>Every automation works with the full picture instead of isolated fragments.</p></div>
+   <div className="ei-capability-layout">
+    <article><div className="ei-cap-num">01</div><Network/><span>CAPABILITY 01</span><h3>Stitch the journey</h3><p>Every lead source — forms, website, app, calls, walk-ins — and every tool connected into one journey per customer, online and offline, from first touch to closed revenue.</p><ul><li>Identity stitching</li><li>Click-ID persistence</li><li>Online + offline events</li><li>Chronological journey view</li></ul></article>
+    <article><div className="ei-cap-num">02</div><Bot/><span>CAPABILITY 02</span><h3>Deploy agents that plug the leaks</h3><p>Choose specialized agents for qualification, routing, follow-up, closure match-back and signal return. Each agent acts with shared journey context.</p><ul><li>11 prebuilt agents</li><li>Custom agents</li><li>Human approval controls</li><li>Audit trail</li></ul></article>
    </div>
+   <div className="ei-equation"><b>stitched journey</b><span>+</span><b>agents at every step</b><span>=</span><strong>a funnel that learns</strong></div>
   </section>
 
   <section className="connectivity-band">
@@ -299,7 +303,15 @@ function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResou
   </section>
 
   <DemoSection openApp={openApp}/>
-  <footer className="marketing-footer"><Brand/><div className="footer-groups"><div><b>Platform</b><span>Data Activation</span><span>Data Enrichment</span><span>Attribution</span><span>Monitoring</span></div><div><b>Solutions</b><span>Lead Generation</span><span>Enterprise</span><span>Mid-Market</span><span>Server-to-Server</span></div><div><b>Resources</b><button onClick={openResources}>Guides & tools</button><button onClick={openCaseStudies}>Case studies</button><button onClick={openCompany}>Company</button><button onClick={openPricing}>Pricing</button></div><div><b>Get started</b><button onClick={openDemo}>Book demo</button><button onClick={openApp}>Open product</button><button onClick={openLogin}>Login</button></div></div><p>AceMarketing · first-party growth operating system.</p></footer>
+  <footer className="ei-footer">
+   <div className="ei-footer-top">
+    <div className="ei-footer-brand"><Brand/><p>First-party data, agents and journey intelligence for performance marketing teams.</p><button onClick={openDemo}>Book a demo</button></div>
+    <div><h4>Platform</h4><a href="#platform">Data Activation</a><a href="#platform">Data Enrichment</a><button onClick={openApp}>Product workspace</button></div>
+    <div><h4>Solution</h4><button onClick={openSolutions}>Lead Generation</button><button onClick={openSolutions}>Enterprise</button><button onClick={openSolutions}>Attribution Model</button><button onClick={openSolutions}>Alerts and Monitoring</button><button onClick={openSolutions}>Server to Server Integration</button></div>
+    <div><h4>Resources</h4><button onClick={openCompany}>About Us</button><button onClick={openResources}>Use Cases</button><button onClick={openResources}>Blogs & Guides</button><button onClick={openResources}>Documentation</button><button onClick={openDemo}>Contact Us</button></div>
+   </div>
+   <div className="ei-footer-bottom"><span>© 2026 AceMarketing. All rights reserved.</span><div><button onClick={()=>window.dispatchEvent(new CustomEvent('ace-view',{detail:'privacy'}))}>Privacy Policy</button><span>•</span><button onClick={()=>window.dispatchEvent(new CustomEvent('ace-view',{detail:'terms'}))}>Terms & Conditions</button><span>•</span><button onClick={()=>window.dispatchEvent(new CustomEvent('ace-view',{detail:'security'}))}>Security</button></div></div>
+  </footer>
   {cookieOpen&&<div className="cookie-banner"><div><b>Cookie preferences</b><p>Necessary storage is always on. Optional analytics, advertising and functionality categories can be enabled independently.</p><div className="cookie-toggles">{Object.entries(cookiePrefs).map(([k,v])=><label key={k}><input type="checkbox" checked={v} onChange={()=>setCookiePrefs({...cookiePrefs,[k]:!v})}/>{k}</label>)}</div></div><div className="cookie-actions"><button onClick={()=>{setCookiePrefs({analytics:false,advertising:false,functionality:false});setCookieOpen(false)}}>Necessary only</button><button onClick={()=>{setCookiePrefs({analytics:true,advertising:true,functionality:true});setCookieOpen(false)}}>Accept all</button><button className="primary-cookie" onClick={async()=>{await api.saveConsent(cookiePrefs).catch(()=>null);setCookieOpen(false)}}>Save preferences</button></div></div>}
  </div>
 }
