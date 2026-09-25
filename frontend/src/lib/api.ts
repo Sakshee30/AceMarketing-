@@ -133,6 +133,7 @@ export const api = {
   sourceNotes: () => request('/source-notes'),
   eventTemplates: () => request('/event-templates'),
   monitoringRules: () => request('/monitoring-rules'),
+  saveMonitoringRule: (payload: Record<string, unknown>) => request('/monitoring-rules', { method: 'POST', body: JSON.stringify(payload) }),
   saveConsent: (prefs: Record<string, boolean>) => request('/consent-preferences', { method: 'POST', body: JSON.stringify(prefs) }),
   me: () => request('/auth/me'),
   members: () => request('/members'),
