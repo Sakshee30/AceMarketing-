@@ -2006,3 +2006,35 @@ PRIVACY_RETENTION_DRY_RUN=true
 ```
 
 A value of `0` means no age-based purge policy is applied for that dataset. Production operators should set retention periods only after legal/security review for their jurisdiction and contracts.
+
+
+## Continuous audience refresh and activation pass
+
+Audience cadences are now executable worker schedules rather than display-only labels.
+
+Implemented:
+- `backend/migrations/013_audience_scheduler.sql`;
+- `backend/src/audience-scheduler.mjs`;
+- persisted per-audience cadence, maximum staleness, next/last run, membership hash, delta counts and error state;
+- PostgreSQL `FOR UPDATE SKIP LOCKED` leasing so multiple workers do not refresh the same due audience simultaneously;
+- scheduled re-materialization from current lead profiles;
+- deterministic membership hashing and added/removed identity counts;
+- provider sync is queued only when membership changes or the provider copy exceeds the configured staleness window;
+- automatic refreshes reuse the existing durable `audience_sync` queue/provider adapters rather than creating a parallel delivery path;
+- refresh history is persisted in `ace_audience_refresh_runs`;
+- the Audiences UI can switch each persisted audience between Manual, Real time, Every 5 min, Every 15 min, Hourly, Every 6 hours and Daily;
+- the UI surfaces the last membership delta.
+
+New APIs:
+- `GET /api/audience-schedules`
+- `POST /api/audience-schedules`
+
+Worker configuration:
+
+```text
+AUDIENCE_SCHEDULER_DB_POOL_MAX=5
+AUDIENCE_SCHEDULER_BATCH_SIZE=5
+AUDIENCE_SCHEDULER_POLL_MS=15000
+```
+
+“Real time” currently means a one-minute audience evaluation cadence. This avoids falsely claiming per-event provider updates while still keeping first-party activation continuously refreshed. Provider APIs and account-specific upload latency determine final delivery time.
