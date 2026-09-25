@@ -29,3 +29,6 @@ jobs:
           test -f backend/src/index.mjs
           test -f backend/src/security.mjs
           test -f backend/src/store.mjs
+          test -f backend/src/vault.mjs
+          test -f backend/scripts/migrate.mjs
+          test -f backend/migrations/001_workspace_state.sql
