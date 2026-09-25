@@ -103,6 +103,22 @@ const server = http.createServer(async (req,res)=>{
       {lead:'Meera Patel',source:'Meta Ads',stage:'Consultation',touchpoints:8,duration:'4h'},
       {lead:'Rohan Kumar',source:'WhatsApp',stage:'Enrolled',touchpoints:11,duration:'2d'}
     ]})
+    if (req.method === 'GET' && url.pathname === '/api/reports') return send(res,200,{items:[
+      {name:'Executive MBA Cohort',cadence:'weekly',channel:'email',status:'active'},
+      {name:'Paid Funnel Performance',cadence:'daily',channel:'email+slack',status:'active'},
+      {name:'Attribution Summary',cadence:'weekly',channel:'leadership',status:'active'},
+      {name:'Lead Quality by Campaign',cadence:'monthly',channel:'email',status:'draft'}
+    ],cohorts:[
+      {month:'Jan',leads:1240,qualifiedRate:38,consultationRate:22,enrolmentRate:8.4,cac:7940},
+      {month:'Feb',leads:1410,qualifiedRate:41,consultationRate:25,enrolmentRate:9.8,cac:7520},
+      {month:'Mar',leads:1622,qualifiedRate:45,consultationRate:28,enrolmentRate:11.1,cac:7080},
+      {month:'Apr',leads:1884,qualifiedRate:47,consultationRate:30,enrolmentRate:12.4,cac:6760}
+    ]})
+    if (req.method === 'POST' && url.pathname === '/api/reports/send-test') {
+      const body=await readBody(req)
+      if(!body.report) return send(res,400,{error:'report required'})
+      return send(res,200,{sent:true,report:body.report,delivery:'email',at:new Date().toISOString()})
+    }
     if (req.method === 'GET' && url.pathname === '/api/attribution') return send(res,200,{revenue:28400000,journeys:92418,averageTouches:5.4,channels:[['Google Ads',42],['Meta Ads',26],['WhatsApp',14],['Organic Search',11],['Direct / Other',7]]})
     if (req.method === 'GET' && url.pathname === '/api/agents') return send(res,200,{items:agents.map((name,i)=>({name,status:i<7?'active':'available'}))})
     if (req.method === 'GET' && url.pathname === '/api/behavior') return send(res,200,{events:[
