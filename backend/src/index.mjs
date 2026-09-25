@@ -1312,7 +1312,60 @@ const server = http.createServer(async (req,res)=>{
       {name:'POS / Billing',type:'offline_revenue',freshnessSeconds:451,records:5800,status:'healthy'}
     ]})
     if (req.method === 'POST' && url.pathname === '/api/data-hub/rebuild') return send(req,res,202,{jobId:randomUUID(),status:'queued',scope:'canonical_view',queuedAt:new Date().toISOString()})
-    if (req.method === 'GET' && url.pathname === '/api/live-sync') return send(req,res,200,{status:'always_on',medianLatencySeconds:42,deliveryRate:99.82,eventsPerMinute:8412,recent:trackedEvents.slice(-25).reverse()})
+    if (req.method === 'GET' && url.pathname === '/api/live-sync') {
+      const state=await getState()
+      const now=Date.now()
+      const recentTracked=trackedEvents.slice(-250)
+      const lastMinute=recentTracked.filter(x=>{
+        const t=Date.parse(x.receivedAt||x.occurredAt||x.timestamp||'')
+        return Number.isFinite(t)&&now-t<=60_000
+      })
+      const deliveries=(state.signalDeliveries||[]).slice(0,1000)
+      const delivered=deliveries.filter(x=>x.status==='delivered')
+      const successful=deliveries.filter(x=>['delivered','succeeded'].includes(String(x.status||'').toLowerCase())).length
+      const terminal=deliveries.filter(x=>['delivered','succeeded','dead_letter','failed'].includes(String(x.status||'').toLowerCase())).length
+      const latencies=delivered.map(x=>Number(x.latencyMs||x.providerResponse?.latencyMs||0)).filter(x=>Number.isFinite(x)&&x>=0).sort((a,b)=>a-b)
+      const medianLatencyMs=latencies.length?latencies[Math.floor(latencies.length/2)]:null
+      const byDestination={}
+      for(const item of deliveries){
+        const key=String(item.destination||'Unknown')
+        byDestination[key]=byDestination[key]||{destination:key,total:0,delivered:0,failed:0}
+        byDestination[key].total++
+        if(['delivered','succeeded'].includes(String(item.status||'').toLowerCase()))byDestination[key].delivered++
+        if(['dead_letter','failed'].includes(String(item.status||'').toLowerCase()))byDestination[key].failed++
+      }
+      const destinationThroughput=Object.values(byDestination).map(x=>({...x,deliveryRate:x.total?Number((x.delivered/x.total*100).toFixed(2)):0}))
+      const recent=[
+        ...recentTracked.slice(-50).map(x=>({
+          id:x.id||x.eventId||randomUUID(),
+          time:x.receivedAt||x.occurredAt||x.timestamp||null,
+          source:x.source||x.channel||'First-party',
+          event:x.event||x.eventType||x.name||'event',
+          destination:'Ingestion',
+          status:'accepted',
+          matchKey:x.customerId?'customer_id':x.deviceId||x.device_id?'device_id':x.gclid?'gclid':x.fbclid?'fbclid':x.visitorId?'visitor_id':'event_id'
+        })),
+        ...deliveries.slice(0,50).map(x=>({
+          id:x.id,
+          time:x.updatedAt||x.createdAt||null,
+          source:'Activation queue',
+          event:x.event||'signal',
+          destination:x.destination||'Unknown',
+          status:x.status||'queued',
+          matchKey:x.customerId?'customer_id':x.replayPayload?.gclid?'gclid':x.replayPayload?.emailSha256?'email_sha256':x.replayPayload?.phoneSha256?'phone_sha256':'event_id'
+        }))
+      ].sort((a,b)=>Date.parse(b.time||0)-Date.parse(a.time||0)).slice(0,50)
+      return send(req,res,200,{
+        available:true,
+        status:recentTracked.length||deliveries.length?'active':'idle',
+        medianLatencyMs,
+        deliveryRate:terminal?Number((successful/terminal*100).toFixed(2)):null,
+        eventsPerMinute:lastMinute.length,
+        recent,
+        destinations:destinationThroughput,
+        generatedAt:new Date().toISOString()
+      })
+    }
     if (req.method === 'GET' && url.pathname === '/api/matchback') {
       const live=await attributionStats(workspaceId)
       return send(req,res,200,{live,rules:[
