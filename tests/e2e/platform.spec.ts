@@ -382,3 +382,14 @@ test('matchback rules persist without seeded performance claims', async ({ page 
   await expect(page.getByText('CI Closed Won', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Run reconciliation' })).toBeVisible()
 })
+
+
+test('journey explorer renders stitched chronology', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  await openWorkspaceTab(page,'Journeys')
+  await expect(page.getByRole('heading', { name: 'Customer journey explorer' })).toBeVisible()
+  const detail=page.locator('.journey-detail')
+  await expect(detail.getByText('Stitched chronology')).toBeVisible()
+  await expect(detail.getByText(/Journey timeline source/)).toHaveCount(0)
+})
