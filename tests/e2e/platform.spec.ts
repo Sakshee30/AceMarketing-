@@ -2,7 +2,12 @@ import {expect,test} from '@playwright/test'
 
 const dismissConsent=async(page:any)=>{
   const dialog=page.getByRole('dialog',{name:'Privacy choices'})
-  if(await dialog.isVisible().catch(()=>false)) await page.getByRole('button',{name:'Essential only'}).click()
+  if(await dialog.isVisible().catch(()=>false)){
+    const button=dialog.getByRole('button',{name:'Essential only'})
+    await button.scrollIntoViewIfNeeded()
+    await button.click()
+    await expect(dialog).toHaveCount(0)
+  }
 }
 
 const openWorkspaceTab=async(page:any,name:string)=>{
@@ -191,7 +196,7 @@ test.describe('privacy consent runtime',()=>{
     await page.waitForTimeout(300)
     expect(tracked.some(x=>x.includes('"event":"page_view"'))).toBeFalsy()
 
-    await page.getByRole('button',{name:'Allow analytics'}).click()
+    await page.getByRole('dialog',{name:'Privacy choices'}).getByRole('button',{name:'Allow analytics'}).click()
     await expect(page.getByRole('dialog',{name:'Privacy choices'})).toHaveCount(0)
     await page.reload()
     await page.waitForTimeout(300)
@@ -200,7 +205,7 @@ test.describe('privacy consent runtime',()=>{
 
   test('essential-only choice keeps marketing click IDs out of storage',async({page})=>{
     await page.goto('/?gclid=test-gclid&fbclid=test-fbclid#/')
-    await page.getByRole('button',{name:'Essential only'}).click()
+    await page.getByRole('dialog',{name:'Privacy choices'}).getByRole('button',{name:'Essential only'}).click()
     const stored=await page.evaluate(()=>({gclid:localStorage.getItem('ace:gclid'),fbclid:localStorage.getItem('ace:fbclid')}))
     expect(stored).toEqual({gclid:null,fbclid:null})
   })
@@ -213,7 +218,7 @@ test('dashboard navigator opens primary operating sections', async ({ page }) =>
   await expect(page.getByRole('button', { name: 'Open dashboard section navigator' })).toBeVisible()
   await page.getByRole('button', { name: 'Open dashboard section navigator' }).click()
   await expect(page.getByRole('dialog', { name: 'Dashboard section navigator' })).toBeVisible()
-  await page.getByRole('button', { name: /Attribution/ }).click()
+  await page.getByRole('dialog', { name: 'Dashboard section navigator' }).getByRole('button', { name: 'Attribution', exact: true }).click()
   await expect(page.getByText('Attribution', { exact: false }).first()).toBeVisible()
 })
 
@@ -247,7 +252,7 @@ test('manual integration cards open the custom adapter builder', async ({ page }
   await expect(meritto).toContainText('Configurable adapter')
   await meritto.getByRole('button', { name: 'Configure' }).click()
   await expect(page.getByText('Custom Integration Builder')).toBeVisible()
-  await expect(page.getByDisplayValue('Meritto')).toBeVisible()
+  await expect(page.locator('input[value="Meritto"]')).toBeVisible()
 })
 
 
@@ -258,7 +263,7 @@ test('built-in agent opens its live operational module', async ({ page }) => {
   await openWorkspaceTab(page,'Agents')
   await page.getByRole('button', { name: /Lead Grading/ }).first().click()
   await expect(page.getByText('Operational prerequisites')).toBeVisible()
-  await page.getByRole('button', { name: /Open lead grading/ }).click()
+  await page.locator('.agent-config').getByRole('button', { name: /Open lead grading/ }).click()
   await expect(page.getByRole('heading', { name: 'Lead grading' })).toBeVisible()
 })
 
@@ -307,7 +312,7 @@ test('AdSync creates and operates a persisted conversion pipeline', async ({ pag
   await page.getByLabel('Output event').fill('qualified_lead_ci')
   await page.getByLabel('Destination').selectOption('Meta Ads')
   await page.getByRole('button', { name: 'Create pipeline' }).click()
-  await expect(page.getByText('CI Qualified Lead to Meta', { exact: true })).toBeVisible()
+  await expect(page.locator('.agent-selector').getByText('CI Qualified Lead to Meta', { exact: true }).first()).toBeVisible()
   await expect(page.getByRole('button', { name: /Send test source event/ })).toBeVisible()
 })
 
@@ -316,7 +321,7 @@ test('conversion adjustments stay empty until a real adjustment is created', asy
   await page.goto('/#/workspace')
   await dismissConsent(page)
   await openWorkspaceTab(page,'Adjustments')
-  await expect(page.getByRole('heading', { name: 'Conversion adjustments' })).toBeVisible()
+  await expect(page.locator('.product-body h1')).toHaveText('Conversion adjustments')
   await page.getByRole('button', { name: 'New adjustment' }).click()
   await page.getByLabel('Event').fill('ci_partial_payment')
   await page.getByLabel('Source').fill('ci_crm')
@@ -325,7 +330,7 @@ test('conversion adjustments stay empty until a real adjustment is created', asy
   await page.getByLabel('Adjusted value').fill('2500')
   await page.getByLabel('Reason').fill('CI verified final payment received')
   await page.getByRole('button', { name: 'Create adjustment' }).click()
-  await expect(page.getByText('Ci Partial Payment', { exact: true })).toBeVisible()
+  await expect(page.locator('.adjustment-list').getByText('Ci Partial Payment', { exact: true }).first()).toBeVisible()
   await expect(page.getByRole('button', { name: 'Preview payload' })).toBeVisible()
 })
 
@@ -341,9 +346,9 @@ test('custom routing rule persists and drives selected-rule test', async ({ page
   await page.getByLabel('Destination').fill('CI Enterprise Queue')
   await page.getByLabel('SLA seconds').fill('120')
   await page.getByRole('button', { name: 'Create routing rule' }).click()
-  await expect(page.getByText('CI Enterprise Lead', { exact: true })).toBeVisible()
+  await expect(page.locator('.routing-list').getByText('CI Enterprise Lead', { exact: true }).first()).toBeVisible()
   await page.getByRole('button', { name: 'Test selected rule' }).click()
-  await expect(page.getByText(/CI Enterprise Queue/)).toBeVisible()
+  await expect(page.locator('.delivery-notice').getByText(/CI Enterprise Queue/)).toBeVisible()
 })
 
 
@@ -352,7 +357,7 @@ test('meetings can be scheduled directly from the meetings workspace', async ({ 
   await dismissConsent(page)
   await openWorkspaceTab(page,'Meetings')
   await expect(page.getByRole('heading', { name: 'Scheduler & meeting reminders' })).toBeVisible()
-  await page.getByRole('button', { name: 'Schedule meeting' }).click()
+  await page.locator('.page-head').getByRole('button', { name: 'Schedule meeting' }).click()
   await page.getByLabel('Lead reference').fill('ci_meeting_lead')
   const dt=new Date(Date.now()+24*60*60*1000)
   const local=dt.toISOString().slice(0,16)
@@ -360,8 +365,8 @@ test('meetings can be scheduled directly from the meetings workspace', async ({ 
   await page.getByLabel('Owner').fill('CI Counsellor')
   await page.getByLabel('Attendee email').fill('ci-meeting@example.com')
   await page.getByLabel('Calendar sync').selectOption('no')
-  await page.getByRole('button', { name: 'Schedule meeting' }).click()
-  await expect(page.getByText('ci_meeting_lead', { exact: true })).toBeVisible()
+  await page.locator('.connector-card').getByRole('button', { name: 'Schedule meeting' }).click()
+  await expect(page.locator('.meeting-list').getByText('ci_meeting_lead', { exact: true }).first()).toBeVisible()
   await expect(page.getByRole('button', { name: 'Send reminder now' })).toBeVisible()
 })
 
@@ -379,7 +384,7 @@ test('matchback rules persist without seeded performance claims', async ({ page 
   await page.getByLabel('Destination').fill('Google Ads')
   await page.getByLabel('Identity method').fill('customer_id + gclid')
   await page.getByRole('button', { name: 'Create matchback rule' }).click()
-  await expect(page.getByText('CI Closed Won', { exact: true })).toBeVisible()
+  await expect(page.locator('.matchback-list').getByText('CI Closed Won', { exact: true }).first()).toBeVisible()
   await expect(page.getByRole('button', { name: 'Run reconciliation' })).toBeVisible()
 })
 
@@ -410,7 +415,7 @@ test('offline attribution rules persist and test through the attribution store',
   await page.getByLabel('Matching method').fill('customer_id + click history')
   await page.getByLabel('Identifier').fill('Customer ID / GCLID')
   await page.getByRole('button', { name: 'Create offline rule' }).click()
-  await expect(page.getByText('CI Offline Sale', { exact: true })).toBeVisible()
+  await expect(page.locator('.matchback-list').getByText('CI Offline Sale', { exact: true }).first()).toBeVisible()
   await page.getByLabel('Customer ID').fill('ci_offline_customer')
   await page.getByRole('button', { name: 'Send offline test event' }).click()
   await expect(page.getByText(/Test event recorded with status/)).toBeVisible()
@@ -426,7 +431,7 @@ test('site operations add a property and show evidence-aware installation test',
   await page.getByLabel('Domain').fill('ci-tracking.example.com')
   await page.getByLabel('Environment').selectOption('staging')
   await page.getByRole('button', { name: 'Save tracked site' }).click()
-  await expect(page.getByText('ci-tracking.example.com', { exact: true })).toBeVisible()
+  await expect(page.locator('.site-list').getByText('ci-tracking.example.com', { exact: true }).first()).toBeVisible()
   await page.getByRole('button', { name: 'Test installation' }).click()
   await expect(page.getByText('Pixel events observed', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: /Evidence verified|Retest installation/ })).toBeVisible()
@@ -445,5 +450,5 @@ test('POS import computes match coverage from transaction rows', async ({ page }
   await page.getByLabel('CSV transactions').fill('transaction_id,customer_id,email,phone,net_revenue,currency,occurred_at,gclid,fbclid\nCI-TXN-1,ci_pos_customer,,,12500,INR,2026-09-26T10:00:00Z,,')
   await page.getByRole('button', { name: 'Process transaction batch' }).click()
   await expect(page.getByText(/POS batch processed:/)).toBeVisible()
-  await expect(page.getByText('CI Store', { exact: true })).toBeVisible()
+  await expect(page.locator('.pos-list').getByText('CI Store', { exact: true }).first()).toBeVisible()
 })
