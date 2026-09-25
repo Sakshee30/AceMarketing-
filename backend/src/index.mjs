@@ -1166,31 +1166,80 @@ const server = http.createServer(async (req,res)=>{
       })
       return updated?send(req,res,200,{...updated,auditId:randomUUID()}):send(req,res,404,{error:'adjustment not found'})
     }
-    if (req.method === 'GET' && url.pathname === '/api/fingerprinting') return send(req,res,200,{continuityRate:96.4,ambiguousRate:1.3,scenarios:[
-      {name:'third_party_checkout',matchRate:96.4},
-      {name:'whatsapp_handoff',matchRate:92.8},
-      {name:'call_handoff',matchRate:91.6},
-      {name:'returning_device',matchRate:88.9}
-    ]})
+    if (req.method === 'GET' && url.pathname === '/api/fingerprinting') {
+      const [attr,profiles,state]=await Promise.all([attributionStats(workspaceId),listLeadProfiles(workspaceId,500),getState()])
+      const matched=Number(attr?.matchedEvents||0),unmatched=Number(attr?.unmatchedEvents||0),total=matched+unmatched
+      const deviceProfiles=profiles.filter(x=>x.device_id).length
+      const wa=(state.whatsappEvents||[]).filter(x=>x.kind==='message').length
+      const calls=(state.callEvents||[]).length
+      const scenarios=[
+        {name:'third_party_checkout',evidence:Number(attr?.activeClickSessions||0),matchRate:total?Number((matched/total*100).toFixed(1)):null},
+        {name:'whatsapp_handoff',evidence:wa,matchRate:wa&&total?Number((matched/total*100).toFixed(1)):null},
+        {name:'call_handoff',evidence:calls,matchRate:calls&&total?Number((matched/total*100).toFixed(1)):null},
+        {name:'returning_device',evidence:deviceProfiles,matchRate:deviceProfiles&&profiles.length?Number((deviceProfiles/profiles.length*100).toFixed(1)):null}
+      ]
+      return send(req,res,200,{available:true,continuityRate:total?Number((matched/total*100).toFixed(1)):null,ambiguousRate:total?Number((unmatched/total*100).toFixed(1)):null,scenarios,generatedAt:new Date().toISOString()})
+    }
     if (req.method === 'POST' && url.pathname === '/api/fingerprinting/test') {
       const body=await readBody(req)
       if(!body.scenario) return send(req,res,400,{error:'scenario required'})
-      return send(req,res,200,{scenario:body.scenario,status:'passed',deterministicMatch:true,testedAt:new Date().toISOString()})
+      const [attr,profiles,state]=await Promise.all([attributionStats(workspaceId),listLeadProfiles(workspaceId,500),getState()])
+      const key=String(body.scenario).toLowerCase()
+      const evidence=key.includes('whatsapp')?(state.whatsappEvents||[]).length:key.includes('call')?(state.callEvents||[]).length:key.includes('device')?profiles.filter(x=>x.device_id).length:Number(attr?.activeClickSessions||0)
+      const result={id:'fptest_'+randomUUID(),scenario:String(body.scenario),status:evidence>0?'evidence_available':'no_evidence',deterministicMatch:Number(attr?.matchedEvents||0)>0,evidenceCount:evidence,testedAt:new Date().toISOString()}
+      await mutateState(s=>{s.fingerprintTests=s.fingerprintTests||[];s.fingerprintTests.unshift(result);s.fingerprintTests=s.fingerprintTests.slice(0,200);s.audit=s.audit||[];s.audit.unshift({id:randomUUID(),action:'fingerprinting.test',entityId:result.id,scenario:result.scenario,status:result.status,at:result.testedAt});s.audit=s.audit.slice(0,1000)})
+      return send(req,res,200,result)
     }
     if (req.method === 'GET' && url.pathname === '/api/fingerprinting/matches') {
       const live=await attributionStats(workspaceId)
       return send(req,res,200,{items:(live?.recent||[]).filter(x=>x.status==='matched').slice(0,100),methods:live?.methods||[]})
     }
-    if (req.method === 'GET' && url.pathname === '/api/sites') return send(req,res,200,{items:[
-      {domain:'www.aceedtech.example',environment:'production',pixel:'active',server:'connected',coverage:97.4},
-      {domain:'apply.aceedtech.example',environment:'production',pixel:'active',server:'connected',coverage:95.8},
-      {domain:'checkout.aceedtech.example',environment:'production',pixel:'needs_review',server:'connected',coverage:88.6},
-      {domain:'staging.aceedtech.example',environment:'sandbox',pixel:'active',server:'sandbox',coverage:100}
-    ]})
+    if (req.method === 'GET' && url.pathname === '/api/sites') {
+      const state=await getState()
+      const settings=state.settings||{}
+      const domainMap=new Map()
+      const ensure=(domain,environment='production')=>{
+        if(!domain)return null
+        const clean=String(domain).replace(/^https?:\/\//,'').split('/')[0]
+        if(!clean)return null
+        const item=domainMap.get(clean)||{domain:clean,environment,events:0,lastEventAt:null}
+        domainMap.set(clean,item)
+        return item
+      }
+      ensure(settings.primaryDomain||state.launchpad?.primaryDomain||'')
+      for(const event of trackedEvents){
+        let domain=event.domain||event.host||''
+        if(!domain&&event.url){try{domain=new URL(String(event.url)).host}catch{}}
+        const item=ensure(domain,event.environment||'production')
+        if(item){item.events++;const time=event.receivedAt||event.occurredAt||event.timestamp;if(time&&(!item.lastEventAt||Date.parse(time)>Date.parse(item.lastEventAt)))item.lastEventAt=time}
+      }
+      for(const cfg of state.sites||[]){const item=ensure(cfg.domain,cfg.environment||'production');if(item)Object.assign(item,cfg)}
+      const totalTracked=Math.max(1,trackedEvents.length)
+      const items=[...domainMap.values()].map(x=>({
+        domain:x.domain,
+        environment:x.environment||'production',
+        pixel:x.events>0?'active':'needs_review',
+        server:'connected',
+        coverage:Number((x.events/totalTracked*100).toFixed(1)),
+        events:x.events,
+        lastEventAt:x.lastEventAt,
+        consent:'workspace policy'
+      }))
+      return send(req,res,200,{items,generatedAt:new Date().toISOString()})
+    }
     if (req.method === 'POST' && url.pathname === '/api/sites/test') {
       const body=await readBody(req)
       if(!body.domain) return send(req,res,400,{error:'domain required'})
-      return send(req,res,200,{domain:body.domain,pixel:true,server:true,consent:true,crossDomain:true,testedAt:new Date().toISOString()})
+      const domain=String(body.domain)
+      const matching=trackedEvents.filter(x=>{
+        const raw=String(x.domain||x.host||x.url||'')
+        return raw.includes(domain)
+      })
+      const state=await getState()
+      const consentReady=Boolean((state.consentPreferences||state.settings?.consentMode||state.settings?.primaryDomain))
+      const result={id:'sitetest_'+randomUUID(),domain,pixel:matching.length>0,server:true,consent:consentReady,crossDomain:matching.some(x=>x.customerId||x.visitorId||x.deviceId||x.device_id),eventsObserved:matching.length,testedAt:new Date().toISOString()}
+      await mutateState(s=>{s.siteTests=s.siteTests||[];s.siteTests.unshift(result);s.siteTests=s.siteTests.slice(0,200)})
+      return send(req,res,200,result)
     }
     if (req.method === 'GET' && url.pathname === '/api/sites/debug') {
       const domain=String(url.searchParams.get('domain')||'')
@@ -1200,17 +1249,32 @@ const server = http.createServer(async (req,res)=>{
       const items=[...source,...persisted].filter((x,index,arr)=>arr.findIndex(y=>String(y.id||y.eventId||'')===String(x.id||x.eventId||''))===index)
       return send(req,res,200,{domain,items:items.filter(x=>!domain||String(x.domain||x.host||x.url||'').includes(domain)).slice(0,100)})
     }
-    if (req.method === 'GET' && url.pathname === '/api/fraud') return send(req,res,200,{items:[
-      {key:'duplicate_lead_burst',severity:'high',affected:428},
-      {key:'bot_form_activity',severity:'high',affected:1214},
-      {key:'invalid_phone_pattern',severity:'medium',affected:309},
-      {key:'disposable_email_cluster',severity:'medium',affected:184},
-      {key:'click_spam_pattern',severity:'low',affected:2918}
-    ]})
+    if (req.method === 'GET' && url.pathname === '/api/fraud') {
+      const [profiles,state]=await Promise.all([listLeadProfiles(workspaceId,500),getState()])
+      const countDriver=key=>profiles.filter(x=>(x.score_drivers||[]).some(d=>d.key===key)).length
+      const duplicates=countDriver('duplicate')
+      const invalid=countDriver('invalid_contact')
+      const fraudHigh=profiles.filter(x=>(x.score_drivers||[]).some(d=>d.key==='fraud'&&Number(d.points)<=-30)).length
+      const lowQuality=profiles.filter(x=>x.grade==='D').length
+      const recent=trackedEvents.filter(x=>Date.now()-Date.parse(x.receivedAt||x.occurredAt||0)<5*60*1000)
+      const identityCounts=new Map()
+      for(const event of recent){const id=event.customerId||event.visitorId||event.deviceId||event.device_id||event.emailSha256||event.phoneSha256;if(id)identityCounts.set(id,(identityCounts.get(id)||0)+1)}
+      const burst=[...identityCounts.values()].filter(n=>n>=20).length
+      const items=[
+        {key:'duplicate_lead_burst',name:'Duplicate lead burst',severity:duplicates?'high':'info',affected:duplicates,source:'Lead profiles',description:'Profiles penalized by duplicate-identity scoring evidence.'},
+        {key:'bot_form_activity',name:'High-velocity identity activity',severity:burst?'high':'info',affected:burst,source:'First-party events',description:'Identities generating unusually high event volume in a five-minute window.'},
+        {key:'invalid_phone_pattern',name:'Invalid contact evidence',severity:invalid?'medium':'info',affected:invalid,source:'Lead profiles',description:'Profiles penalized by contact-validation evidence.'},
+        {key:'high_fraud_score',name:'High fraud-risk profiles',severity:fraudHigh?'high':'info',affected:fraudHigh,source:'Lead scoring',description:'Profiles with the strongest fraud-risk penalty.'},
+        {key:'low_quality_pool',name:'Low-quality lead pool',severity:lowQuality?'low':'info',affected:lowQuality,source:'Lead grades',description:'D-grade leads available for review or suppression policy.'}
+      ].filter(x=>x.affected>0)
+      return send(req,res,200,{items,blocked:state.fraudBlocks||[],reviews:(state.reviewQueue||[]).filter(x=>x.kind==='fraud'),generatedAt:new Date().toISOString()})
+    }
     if (req.method === 'POST' && url.pathname === '/api/fraud/block') {
       const body=await readBody(req)
       if(!body.pattern) return send(req,res,400,{error:'pattern required'})
-      return send(req,res,200,{pattern:body.pattern,status:'blocked_from_optimization',ruleId:randomUUID(),appliedAt:new Date().toISOString()})
+      const item={pattern:String(body.pattern),status:'blocked_from_optimization',ruleId:'fraud_'+randomUUID(),appliedAt:new Date().toISOString(),appliedBy:req.user?.email||req.user?.userId||null}
+      await mutateState(s=>{s.fraudBlocks=s.fraudBlocks||[];if(!s.fraudBlocks.some(x=>x.pattern===item.pattern))s.fraudBlocks.unshift(item);s.fraudBlocks=s.fraudBlocks.slice(0,500);s.audit=s.audit||[];s.audit.unshift({id:randomUUID(),action:'fraud.blocked',entityId:item.ruleId,pattern:item.pattern,at:item.appliedAt});s.audit=s.audit.slice(0,1000)})
+      return send(req,res,200,item)
     }
     if (req.method === 'POST' && url.pathname === '/api/fraud/review') {
       const body=await readBody(req)
@@ -1227,16 +1291,44 @@ const server = http.createServer(async (req,res)=>{
       })
       return send(req,res,202,item)
     }
-    if (req.method === 'GET' && url.pathname === '/api/deep-links') return send(req,res,200,{items:[
-      {name:'MBA Application',slug:'mba-apply',status:'active'},
-      {name:'Scholarship Offer',slug:'scholarship',status:'active'},
-      {name:'Consultation Booking',slug:'book',status:'active'},
-      {name:'Fee Details',slug:'fees',status:'draft'}
-    ]})
+    if (req.method === 'GET' && url.pathname === '/api/deep-links') {
+      const state=await getState()
+      const items=(state.deepLinks||[]).map(link=>{
+        const events=(state.deepLinkEvents||[]).filter(x=>x.slug===link.slug)
+        const clicks=events.filter(x=>x.kind==='click').length
+        const appOpens=events.filter(x=>x.kind==='app_open').length
+        const conversions=events.filter(x=>x.kind==='conversion').length
+        return {...link,clicks,appOpens,conversions,conversionRate:clicks?Number((conversions/clicks*100).toFixed(1)):0}
+      })
+      return send(req,res,200,{items,stats:{active:items.filter(x=>x.status==='active').length,draft:items.filter(x=>x.status!=='active').length,clicks:items.reduce((n,x)=>n+x.clicks,0),appOpens:items.reduce((n,x)=>n+x.appOpens,0),conversions:items.reduce((n,x)=>n+x.conversions,0)},generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/deep-links') {
+      const body=await readBody(req)
+      if(!body.name||!body.slug||!body.target||!body.fallback) return send(req,res,400,{error:'name, slug, target and fallback required'})
+      const slug=String(body.slug).trim().toLowerCase().replace(/[^a-z0-9-]+/g,'-').replace(/^-|-$/g,'')
+      if(!slug)return send(req,res,400,{error:'valid slug required'})
+      let created=null
+      await mutateState(s=>{
+        s.deepLinks=s.deepLinks||[]
+        if(s.deepLinks.some(x=>x.slug===slug))return
+        created={id:'dl_'+randomUUID(),name:String(body.name),slug,target:String(body.target),fallback:String(body.fallback),status:'draft',createdAt:new Date().toISOString()}
+        s.deepLinks.unshift(created)
+      })
+      return created?send(req,res,201,created):send(req,res,409,{error:'slug already exists'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/deep-links/event') {
+      const body=await readBody(req)
+      if(!body.slug||!['click','app_open','conversion'].includes(String(body.kind))) return send(req,res,400,{error:'slug and valid kind required'})
+      const event={id:'dle_'+randomUUID(),slug:String(body.slug),kind:String(body.kind),customerId:body.customerId||null,value:body.value??null,source:body.source||null,createdAt:new Date().toISOString()}
+      await mutateState(s=>{s.deepLinkEvents=s.deepLinkEvents||[];s.deepLinkEvents.unshift(event);s.deepLinkEvents=s.deepLinkEvents.slice(0,10000)})
+      return send(req,res,201,event)
+    }
     if (req.method === 'POST' && url.pathname === '/api/deep-links/activate') {
       const body=await readBody(req)
       if(!body.slug) return send(req,res,400,{error:'slug required'})
-      return send(req,res,200,{slug:body.slug,status:'active',activatedAt:new Date().toISOString()})
+      let updated=null
+      await mutateState(s=>{const item=(s.deepLinks||[]).find(x=>x.slug===String(body.slug));if(item){item.status='active';item.activatedAt=new Date().toISOString();updated={...item}}})
+      return updated?send(req,res,200,updated):send(req,res,404,{error:'deep link not found'})
     }
     if (req.method === 'GET' && url.pathname === '/api/diagnostics') {
       const [state,attr,jobs]=await Promise.all([getState(),attributionStats(workspaceId),queueStats(workspaceId)])
@@ -1486,16 +1578,30 @@ const server = http.createServer(async (req,res)=>{
       const result=await reconcileAttribution(workspaceId,body.limit||250)
       return send(req,res,200,{rule:body.rule,status:'reconciled',...result,auditId:randomUUID(),completedAt:new Date().toISOString()})
     }
-    if (req.method === 'GET' && url.pathname === '/api/pos-stores') return send(req,res,200,{locations:[
-      {name:'Delhi Flagship',id:'DL-01',transactions:2184,revenue:4860000,matchRate:96.2},
-      {name:'Noida Center',id:'NOI-02',transactions:1476,revenue:3180000,matchRate:94.7},
-      {name:'Mumbai Experience',id:'MUM-03',transactions:1128,revenue:2740000,matchRate:91.9},
-      {name:'Bengaluru Center',id:'BLR-04',transactions:986,revenue:2210000,matchRate:95.4}
-    ]})
+    if (req.method === 'GET' && url.pathname === '/api/pos-stores') {
+      const state=await getState()
+      const batches=state.posBatches||[]
+      const locations=new Map()
+      for(const batch of batches){
+        const key=String(batch.location)
+        const row=locations.get(key)||{name:batch.locationName||key,id:key,transactions:0,revenue:0,matched:0,imports:0,lastImportAt:null}
+        row.transactions+=Number(batch.records||0);row.revenue+=Number(batch.revenue||0);row.matched+=Number(batch.matched||0);row.imports++;row.lastImportAt=batch.createdAt
+        locations.set(key,row)
+      }
+      const items=[...locations.values()].map(x=>({...x,matchRate:x.transactions?Number((x.matched/x.transactions*100).toFixed(1)):0,status:x.transactions&&x.matched<x.transactions?'review':'healthy'}))
+      return send(req,res,200,{locations:items,totals:{transactions:items.reduce((n,x)=>n+x.transactions,0),revenue:items.reduce((n,x)=>n+x.revenue,0),matched:items.reduce((n,x)=>n+x.matched,0),imports:batches.length},recent:batches.slice(0,50),generatedAt:new Date().toISOString()})
+    }
     if (req.method === 'POST' && url.pathname === '/api/pos-stores/import') {
       const body=await readBody(req)
-      if(!body.location || !body.records) return send(req,res,400,{error:'location and records required'})
-      return send(req,res,202,{batchId:randomUUID(),location:body.location,records:body.records,status:'queued',queuedAt:new Date().toISOString()})
+      const records=Number(body.records)
+      if(!body.location || !Number.isFinite(records) || records<=0) return send(req,res,400,{error:'location and positive records required'})
+      const matched=Math.max(0,Math.min(records,Number(body.matched??0)))
+      const batch={batchId:'pos_'+randomUUID(),location:String(body.location),locationName:String(body.locationName||body.location),records,revenue:Number(body.revenue||0),matched,status:'processed',createdAt:new Date().toISOString()}
+      await mutateState(s=>{s.posBatches=s.posBatches||[];s.posBatches.unshift(batch);s.posBatches=s.posBatches.slice(0,2000);s.audit=s.audit||[];s.audit.unshift({id:randomUUID(),action:'pos.import_processed',entityId:batch.batchId,location:batch.location,records,at:batch.createdAt});s.audit=s.audit.slice(0,1000)})
+      if(body.customerId||body.email||body.phone||body.gclid||body.fbclid){
+        await recordAssistedEvent(workspaceId,{event:'pos.batch_imported',eventType:'pos.batch_imported',eventId:batch.batchId,customerId:body.customerId||null,email:body.email||null,phone:body.phone||null,gclid:body.gclid||null,fbclid:body.fbclid||null,source:'pos',occurredAt:batch.createdAt,value:Number(body.revenue||0),currency:body.currency||'INR',data:{location:batch.location,records}}).catch(()=>null)
+      }
+      return send(req,res,201,batch)
     }
     if (req.method === 'GET' && url.pathname === '/api/offline-attribution') {
       const [state,stats]=await Promise.all([getState(),attributionStats(workspaceId)])
@@ -1703,23 +1809,16 @@ const server = http.createServer(async (req,res)=>{
       try{return send(req,res,202,await queueReportNow(workspaceId,String(body.id)))}
       catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'report queue failed'})}
     }
-    if (req.method === 'GET' && url.pathname === '/api/reports') return send(req,res,200,{items:[
-      {name:'Executive MBA Cohort',cadence:'weekly',channel:'email',status:'active'},
-      {name:'Paid Funnel Performance',cadence:'daily',channel:'email+slack',status:'active'},
-      {name:'Attribution Summary',cadence:'weekly',channel:'leadership',status:'active'},
-      {name:'Lead Quality by Campaign',cadence:'monthly',channel:'email',status:'draft'}
-    ],cohorts:[
-      {month:'Jan',leads:1240,qualifiedRate:38,consultationRate:22,enrolmentRate:8.4,cac:7940},
-      {month:'Feb',leads:1410,qualifiedRate:41,consultationRate:25,enrolmentRate:9.8,cac:7520},
-      {month:'Mar',leads:1622,qualifiedRate:45,consultationRate:28,enrolmentRate:11.1,cac:7080},
-      {month:'Apr',leads:1884,qualifiedRate:47,consultationRate:30,enrolmentRate:12.4,cac:6760}
-    ]})
+    if (req.method === 'GET' && url.pathname === '/api/reports') {
+      const [analytics,schedules,deliveries]=await Promise.all([cohortAnalytics(workspaceId,{months:6}),listReportSchedules(workspaceId),listReportDeliveries(workspaceId,30)])
+      return send(req,res,200,{analytics,schedules,deliveries,configured:reportMailConfigured()})
+    }
     if (req.method === 'POST' && url.pathname === '/api/reports/send-test') {
       const body=await readBody(req)
       if(!body.report) return send(req,res,400,{error:'report required'})
       return send(req,res,200,{sent:true,report:body.report,delivery:'email',at:new Date().toISOString()})
     }
-    if (req.method === 'GET' && url.pathname === '/api/attribution') return send(req,res,200,{revenue:28400000,journeys:92418,averageTouches:5.4,channels:[['Google Ads',42],['Meta Ads',26],['WhatsApp',14],['Organic Search',11],['Direct / Other',7]]})
+    if (req.method === 'GET' && url.pathname === '/api/attribution') return send(req,res,200,await attributionStats(workspaceId))
     if (req.method === 'GET' && url.pathname === '/api/agents') {
       const state=await getState()
       const builtIn=agents.map((name,i)=>({id:'builtin_'+i,name,status:i<7?'active':'available',type:'built_in'}))
@@ -1767,21 +1866,40 @@ const server = http.createServer(async (req,res)=>{
       const mode=lead.grade==='D'?'Suppress':lead.grade==='C'?'Retarget':'Activate'
       return send(req,res,202,{lead:lead.name||lead.external_lead_id,grade:lead.grade,status:'ready_for_activation',mode,destinations:['crm','routing','ad_signals'],queuedAt:new Date().toISOString()})
     }
-    if (req.method === 'GET' && url.pathname === '/api/behavior') return send(req,res,200,{events:[
-      {name:'page_view',count:92418},
-      {name:'pricing_page_viewed',count:18204},
-      {name:'form_started',count:14066},
-      {name:'form_submitted',count:12842},
-      {name:'whatsapp_click',count:6904},
-      {name:'call_cta_click',count:4882}
-    ]})
-    if (req.method === 'GET' && url.pathname === '/api/feed') return send(req,res,200,{attributes:[
-      {key:'customer_tier',source:'customer',status:'mapped'},
-      {key:'order_type',source:'order',status:'mapped'},
-      {key:'product_category',source:'product',status:'mapped'},
-      {key:'lead_score',source:'model',status:'mapped'},
-      {key:'lifecycle_stage',source:'crm',status:'mapped'}
-    ]})
+    if (req.method === 'GET' && url.pathname === '/api/behavior') {
+      const counts=new Map()
+      let known=0,highIntent=0
+      for(const event of trackedEvents){
+        const name=String(event.event||event.eventType||event.name||'event')
+        counts.set(name,(counts.get(name)||0)+1)
+        if(event.customerId||event.email||event.phone||event.emailSha256||event.phoneSha256)known++
+        if(/pricing|checkout|book|consult|apply|purchase|revenue/i.test(name))highIntent++
+      }
+      const events=[...counts.entries()].map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count)
+      return send(req,res,200,{events,stats:{events:trackedEvents.length,knownIdentities:known,knownIdentityRate:trackedEvents.length?Number((known/trackedEvents.length*100).toFixed(1)):0,highIntentEvents:highIntent},recent:trackedEvents.slice(-50).reverse(),generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/feed') {
+      const [profiles,state]=await Promise.all([listLeadProfiles(workspaceId,200),getState()])
+      const attrs=new Map()
+      const add=(key,source,value)=>{if(!key)return;const entry=attrs.get(key)||{key,source,count:0,sample:null,status:'mapped'};entry.count++;if(entry.sample==null&&value!=null&&typeof value!=='object')entry.sample=String(value).slice(0,120);attrs.set(key,entry)}
+      for(const p of profiles){
+        add('lead_score','model',p.score);add('lead_grade','model',p.grade);add('lifecycle_stage','crm',p.crm_stage);add('device_platform','identity',p.device_platform);add('app_id','identity',p.app_id)
+        for(const [k,v] of Object.entries(p.attributes||{}))add(k,'profile',v)
+        for(const [k,v] of Object.entries(p.journey||{}))add(k,'journey',v)
+      }
+      for(const x of state.customFeedAttributes||[])attrs.set(x.key,{...x,status:'mapped'})
+      const deliveries=state.signalDeliveries||[]
+      const destinations=[...new Set(deliveries.map(x=>x.destination).filter(Boolean))].map(destination=>{const list=deliveries.filter(x=>x.destination===destination);const enriched=list.filter(x=>Object.keys(x.replayPayload?.data||{}).length>0).length;return {destination,total:list.length,enriched,enrichedRate:list.length?Number((enriched/list.length*100).toFixed(1)):0}})
+      return send(req,res,200,{attributes:[...attrs.values()],stats:{activeAttributes:attrs.size,profiles:profiles.length,deliveries:deliveries.length,quarantined:Number((state.quarantinedEvents||[]).length)},destinations})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/feed/attributes') {
+      const body=await readBody(req)
+      const key=String(body.key||'').trim()
+      if(!/^[A-Za-z][A-Za-z0-9_]{1,63}$/.test(key))return send(req,res,400,{error:'attribute key must be 2-64 alphanumeric/underscore characters'})
+      const item={key,source:String(body.source||'custom'),sample:body.sample==null?null:String(body.sample).slice(0,120),status:'mapped',createdAt:new Date().toISOString()}
+      await mutateState(s=>{s.customFeedAttributes=s.customFeedAttributes||[];const i=s.customFeedAttributes.findIndex(x=>x.key===key);if(i>=0)s.customFeedAttributes[i]=item;else s.customFeedAttributes.unshift(item);s.customFeedAttributes=s.customFeedAttributes.slice(0,500)})
+      return send(req,res,201,item)
+    }
     if (req.method === 'GET' && url.pathname === '/api/solutions') return send(req,res,200,{items:['Agency','Lead Generation','Enterprise','Mid Market Brand','Attribution Model','Alerts and Monitoring','Server to Server Integration']})
     if (req.method === 'POST' && url.pathname === '/api/audiences/preview') {
       const body=await readBody(req)
