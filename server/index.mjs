@@ -75,6 +75,18 @@ const server = http.createServer(async (req,res)=>{
       return send(res,200,{answer,insights})
     }
     if (req.method === 'GET' && url.pathname === '/api/events') return send(res,200,{items:events})
+    if (req.method === 'GET' && url.pathname === '/api/diagnostics') return send(res,200,{score:91,duplicateRate:1.7,clickIdCoverage:93.2,quarantined:42,issues:[
+      {key:'duplicate_conversions',severity:'critical',affected:1284},
+      {key:'missing_click_ids',severity:'warning',affectedPercent:6.8},
+      {key:'cross_domain_break',severity:'warning',domain:'checkout.example.com'},
+      {key:'late_crm_outcomes',severity:'warning',p95Minutes:18},
+      {key:'schema_mismatch',severity:'info',quarantined:42}
+    ]})
+    if (req.method === 'POST' && url.pathname === '/api/diagnostics/replay') {
+      const body=await readBody(req)
+      if(!body.issue) return send(res,400,{error:'issue required'})
+      return send(res,202,{queued:true,issue:body.issue,replayId:randomUUID(),status:'queued'})
+    }
     if (req.method === 'GET' && url.pathname === '/api/funnel') return send(res,200,{stages:{leads:12842,qualified:7621,appointments:2314,consultations:1506,bookings:982},campaigns:[
       {name:'MBA Search - Brand',channel:'Google Ads',leads:2841,qualified:1812,appointments:932,consultations:421,bookings:188},
       {name:'Executive Program',channel:'Meta Ads',leads:1964,qualified:1048,appointments:641,consultations:288,bookings:119},
