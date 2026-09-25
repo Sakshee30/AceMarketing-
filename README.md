@@ -1586,3 +1586,47 @@ New/updated APIs:
 - `GET /api/audiences`
 
 A production audience is first evaluated and materialized from first-party lead profiles. Actual upload to Google Customer Match, Meta Custom Audiences, LinkedIn Matched Audiences or another destination should only move from `ready_for_sync` to `active` after that provider-specific API confirms receipt.
+
+
+## Audience provider sync and CRM writeback pass
+
+Materialized first-party segments can now proceed through durable provider jobs instead of stopping at `ready_for_sync`.
+
+Implemented:
+- `backend/migrations/005_activation_receipts.sql` for provider state and activation/writeback receipts;
+- `backend/src/activation-adapters.mjs`;
+- one durable `audience_sync` job per Meta/Google destination;
+- provider state persisted on each audience, including external IDs, received-member counts, success/retry/failure state and last error;
+- Meta Custom Audience create/update using hashed email/phone membership;
+- Google Customer Match legacy job flow for eligible projects using User Lists + OfflineUserDataJob;
+- explicit Google Customer Match mode because new adopters are restricted from legacy Customer Match workflows after April 1, 2026 and should use the Data Manager API;
+- durable `crm_writeback` jobs for HubSpot, Zoho CRM and Salesforce;
+- CRM writeback uses OAuth credentials from the encrypted connector vault;
+- activation receipts are queryable through `GET /api/activation-runs`;
+- Audiences UI exposes `Sync now` only when a materialized audience is ready or needs retry;
+- Enrich UI exposes CRM writeback actions for the persisted lead profile.
+
+New endpoints:
+- `POST /api/audiences/sync`
+- `GET /api/activation-runs`
+- `POST /api/enrich/writeback`
+
+### Required provider configuration
+
+Meta Custom Audiences:
+
+```text
+META_AD_ACCOUNT_ID=<ad account id>
+```
+
+Google Customer Match:
+
+```text
+GOOGLE_CUSTOMER_MATCH_MODE=legacy
+GOOGLE_ADS_CUSTOMER_ID=<customer id>
+GOOGLE_ADS_DEVELOPER_TOKEN=<developer token>
+```
+
+Google restricts legacy Customer Match API access for projects that had not previously used the feature by April 1, 2026. Such deployments must use Google's Data Manager API rather than setting `GOOGLE_CUSTOMER_MATCH_MODE=legacy`.
+
+CRM writeback expects the destination record identifier to be available in the lead's governed attributes (for example `hubspotContactId`, `zohoLeadId`, or `salesforceLeadId`) or supplied explicitly by the caller.
