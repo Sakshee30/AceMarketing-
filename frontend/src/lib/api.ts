@@ -138,7 +138,7 @@ export const api = {
   matchback: () => request('/matchback'),
   reconcileMatchback: (rule: string) => request('/matchback/reconcile', { method: 'POST', body: JSON.stringify({ rule }) }),
   unmatchedMatchback: () => request('/matchback/unmatched'),
-  attributionIdentityStats: () => request('/attribution-identity/stats'),
+  attributionIdentityStats: (periodDays?: number) => request('/attribution-identity/stats'+(periodDays?'?periodDays='+encodeURIComponent(String(periodDays)):'')),
   recordAssistedEvent: (payload: Record<string, unknown>) => request('/assisted-events', { method: 'POST', body: JSON.stringify(payload) }),
   posStores: () => request('/pos-stores'),
   importPosBatch: (payload: Record<string, unknown>) => request('/pos-stores/import', { method: 'POST', body: JSON.stringify(payload) }),
