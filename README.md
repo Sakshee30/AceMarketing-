@@ -3684,3 +3684,16 @@ The Journey Explorer now renders a real cross-system chronology instead of a sum
 - The frontend shows source, campaign, stage, score/grade and a timestamped event timeline.
 - The previous placeholder notice about chronology being unavailable has been removed.
 - Timeline motion is subtle and honors `prefers-reduced-motion`.
+
+
+### Persisted offline attribution rules
+
+Offline Attribution is now self-contained instead of redirecting users to Event Rules.
+
+- Empty workspaces start with no persisted offline rules.
+- `POST /api/offline-attribution/rules` creates a source-to-identity-to-destination rule.
+- Rules can be paused/enabled through `POST /api/offline-attribution/rules/toggle`.
+- Suggested call, WhatsApp, partial-payment and walk-in templates are configuration examples only.
+- `POST /api/offline-attribution/test` records a real assisted event through the attribution store using customer ID, email, phone, GCLID and/or FBCLID evidence.
+- The selected rule stores last test time, match status and match method.
+- Call and WhatsApp counters remain sourced from verified webhook state; matched/unmatched totals remain sourced from the attribution store.
