@@ -11,6 +11,8 @@ const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
 
 export const api = {
   health: () => request<{ ok: boolean; service: string }>('/health'),
+  launchpad: () => request('/launchpad'),
+  saveLaunchpad: (payload: Record<string, unknown>) => request('/launchpad', { method: 'POST', body: JSON.stringify(payload) }),
   login: (email: string, password: string) =>
     request<{ token: string; user: { email: string; role: string } }>('/auth/login', {
       method: 'POST',
@@ -47,4 +49,7 @@ export const api = {
   eventTemplates: () => request('/event-templates'),
   monitoringRules: () => request('/monitoring-rules'),
   saveConsent: (prefs: Record<string, boolean>) => request('/consent-preferences', { method: 'POST', body: JSON.stringify(prefs) }),
+  settings: () => request('/settings'),
+  auditLog: () => request('/audit-log'),
+  createApiKey: () => request('/api-keys', { method: 'POST', body: JSON.stringify({ name: 'workspace' }) }),
 }
