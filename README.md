@@ -1945,3 +1945,29 @@ npm run e2e:mobile
 ```
 
 CI starts PostgreSQL and the API first, then Playwright starts the Vite frontend and exercises the application through the same `/api` proxy path used during development. Browser traces, screenshots and video are retained on failures locally; CI uses the Playwright line and HTML reporters.
+
+
+## Consent and privacy enforcement pass
+
+Privacy/governance is now enforced at runtime rather than represented only by workspace settings copy.
+
+Implemented:
+- `backend/migrations/011_consent.sql` and `backend/src/consent.mjs`;
+- persisted visitor/customer consent records and consent audit snapshots;
+- public `GET/POST /api/consent`;
+- default-deny analytics, marketing and personalization while essential functionality remains enabled;
+- GCLID/FBCLID are not persisted before marketing consent;
+- automatic page-view analytics do not run before analytics consent;
+- server-side `POST /api/track` independently verifies consent so browser controls cannot be bypassed;
+- signal delivery verifies marketing consent when a visitor/customer identity is present;
+- Settings → Governance shows real consent statistics and recent audit activity;
+- the public UI exposes Essential only, Analytics and Allow all privacy choices.
+
+Configuration:
+
+```text
+CONSENT_POLICY_VERSION=v1
+CONSENT_DB_POOL_MAX=10
+```
+
+This provides enforceable product privacy controls but is not a legal certification. GDPR, CPRA, HIPAA, India DPDP and other obligations still require deployment-specific notices, contracts, retention/deletion workflows, lawful-basis review and data-subject processes.
