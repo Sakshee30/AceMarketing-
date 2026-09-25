@@ -13,13 +13,15 @@
     "preview": "vite preview",
     "check": "tsc -b",
     "check:frontend": "tsc -b",
-    "check:backend": "node --check backend/src/index.mjs && node --check backend/src/security.mjs && node --check backend/src/store.mjs && node --check backend/src/public-content.mjs && node --check backend/src/vault.mjs",
-    "check:all": "npm run check:frontend && npm run check:backend"
+    "check:backend": "node --check backend/src/index.mjs && node --check backend/src/security.mjs && node --check backend/src/store.mjs && node --check backend/src/public-content.mjs && node --check backend/src/vault.mjs && node --check backend/scripts/migrate.mjs",
+    "check:all": "npm run check:frontend && npm run check:backend",
+    "migrate": "node backend/scripts/migrate.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "pg": "^8.16.3"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",
