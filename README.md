@@ -1734,3 +1734,40 @@ CUSTOM_INTEGRATION_ALLOW_HTTP=false
 ```
 
 Production should leave `CUSTOM_INTEGRATION_ALLOW_HTTP=false`. The HTTP override exists only for controlled local development.
+
+
+## Observability, alerts and usage metering pass
+
+The Operations surfaces now use persisted telemetry instead of static monitoring numbers.
+
+Implemented:
+- `backend/migrations/008_observability_usage.sql`;
+- `backend/src/observability.mjs`;
+- per-request workspace telemetry for path, method, status code and latency;
+- 15-minute and 24-hour API health summaries with 5xx error rate and p95 latency;
+- daily usage meters rolled up by workspace;
+- metered categories for API requests, tracked events, assisted events, signal dispatches, agent actions, audience syncs and custom integration tests;
+- persisted monitoring rules;
+- automatic incident creation and auto-resolution when thresholds recover;
+- rules for API error rate, p95 latency, dead-letter jobs and audience provider errors;
+- live Alert Center backed by persisted incidents;
+- alert resolution persists in PostgreSQL;
+- Monitoring UI now shows real telemetry, current-month usage and configured rules;
+- configurable API metric retention.
+
+New/expanded APIs:
+- `GET /api/monitoring`
+- `GET /api/alerts`
+- `POST /api/alerts/resolve`
+- `GET /api/monitoring-rules`
+- `POST /api/monitoring-rules`
+
+Configuration:
+
+```text
+OBSERVABILITY_DB_POOL_MAX=10
+MONITORING_EVAL_INTERVAL_MS=60000
+API_METRIC_RETENTION_DAYS=30
+```
+
+These usage counters are suitable as the internal source for usage-based packaging and billing calculations, but they do not yet charge a card or generate invoices. Payment-provider integration should consume finalized usage/entitlement records rather than inventing charges inside the telemetry layer.
