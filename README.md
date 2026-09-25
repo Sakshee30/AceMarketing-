@@ -138,28 +138,24 @@ Those capabilities are represented in the current AceMarketing product UI and AP
 
 ## Production work still required
 
-This repository now has the front-end product experience and API contract foundation, but the following are still required before calling it production-ready:
+The repository has progressed beyond the original API-contract phase: Postgres-backed persistence, RBAC/workspace boundaries, OAuth/token lifecycle, encrypted connector credentials, durable jobs, retries/DLQ, tracking ingestion, attribution storage, lead operations, audiences, agent operations, monitoring, privacy controls, billing foundations and real Meta/Google delivery adapters are now implemented.
 
-1. Persistent database and migrations
-2. Real user authentication and RBAC
-3. Workspace and tenant isolation
-4. OAuth for Google, Meta, LinkedIn, CRM and messaging connectors
-5. Secure credential vault / secret management
-6. Tracking SDK and server-side event ingestion
-7. Identity graph / deterministic stitching
-8. GCLID and FBCLID persistence
-9. Real Google ECL/OCI delivery
-10. Real Meta Conversions API delivery
-11. Retry queues, dead-letter handling and idempotency
-12. CRM ingestion and stage mapping
-13. WhatsApp and telephony ingestion
-14. Attribution computation engine
-15. Audience synchronization workers
-16. Agent runtime and approval workflow
-17. Audit logs and compliance controls
-18. Monitoring/alerting and operational dashboards
-19. Billing and usage metering
-20. Automated tests, CI/CD and production deployment
+The remaining production-launch work is primarily external-system verification and scale hardening:
+
+1. Validate Meta CAPI end-to-end with a real production Business/Dataset configuration and test-event/live-event separation.
+2. Validate Google ECL/OCI uploads against approved Google Ads developer-token/customer/conversion-action configuration.
+3. Finish provider-specific contract tests for Google, Meta, CRM, WhatsApp and telephony failure modes.
+4. Complete real inbound CRM synchronization and lifecycle-field mapping for every advertised CRM connector.
+5. Complete production WhatsApp Cloud API ingestion/action flows and webhook verification.
+6. Complete production telephony provider ingestion/action flows and signed callback verification.
+7. Expand identity stitching across high-volume multi-device / multi-channel edge cases.
+8. Run production-like load, queue saturation, retry-storm and database failover tests.
+9. Complete deployment-environment secrets, observability, backup/restore and disaster-recovery drills.
+10. Complete security review, dependency review, privacy/compliance evidence and external certification work where claimed.
+11. Complete end-to-end browser/mobile regression coverage for every clickable product action.
+12. Validate billing/webhook flows in the target production Stripe account and commercial plan configuration.
+
+The UI should not represent an external connector as production-verified until that connector has been exercised against the real provider account and credentials used for launch.
 
 ## Brand and IP note
 
@@ -2170,3 +2166,34 @@ Provider refresh tokens and access tokens remain encrypted by the connector vaul
 ## Ask Ace grounded analytics
 
 Ask Ace now answers from current workspace data instead of fixed demo values. It uses lead profiles, attribution statistics, connector state, audience state, activation runs, and monitoring context. Responses include confidence, evidence-source labels, and follow-up questions. When data is insufficient, the assistant reports the limitation instead of inventing metrics.
+
+
+## Production signal-delivery hardening pass
+
+This pass converts the Delivery Center from a mostly demonstrative surface into a safer durable activation workflow:
+
+- Manual signal dispatch now fails fast when the durable Postgres queue is unavailable instead of pretending that a delivery was queued.
+- Google activation validates that a click identifier or supported user identifier is present before a job is created.
+- Meta activation validates that a supported customer/browser/user identifier is present before a job is created.
+- Retry-safe payloads are persisted with click identifiers, conversion metadata and **hashed** email/phone values so a failed delivery can be reproduced without retaining raw email/phone solely for retry.
+- Manual retry now reuses the persisted delivery payload instead of re-queuing only the event name and destination.
+- Dead-letter replay now actually creates new durable queue jobs; previously the state could change to queued without scheduling provider work.
+- Meta delivery now accepts the persisted workspace/customer identity as external_id input when an explicit external ID was not separately supplied.
+- Worker completion records now persist the resolved provider plus receipt metadata when returned by the provider.
+- GET /api/signal-console now reflects persisted delivery/queue state rather than fixed demonstration counts.
+- Delivery Center no longer shows fabricated fallback delivery rows when the API is unavailable; it displays real empty/error states and reports retry/replay outcomes.
+- Test-signal dispatch now uses a synthetic external identifier rather than depending on a consented demo customer record.
+
+### Delivery retry contract
+
+A delivery record retains the provider-safe fields needed to replay the same business event:
+
+    event + destination + idempotency key
+    occurredAt + value + currency + orderId
+    GCLID / GBRAID / WBRAID / FBC / FBP when present
+    SHA-256 email / phone identifiers when present
+    provider routing configuration
+
+Raw email and phone values are converted to hashes for the replay record. Provider credentials remain in the encrypted connector vault and are never copied into delivery records.
+
+This closes two important reliability gaps found during the production-readiness review: incomplete manual retries and state-only DLQ replay.
