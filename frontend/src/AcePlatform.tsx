@@ -134,6 +134,17 @@ function Marketing({openHome,openApp,openLogin,openPricing,openDemo,openCompany,
  const [problemTab,setProblemTab]=useState<'Lead Quality'|'Conversion'|'Attribution'>('Lead Quality')
  const [cookieOpen,setCookieOpen]=useState(true)
  const [cookiePrefs,setCookiePrefs]=useState({analytics:false,advertising:false,functionality:false})
+ const fallbackChallenges=[
+  {key:'operations',label:'Business & operational impact',title:'Teams lose speed when every system tells a different story.',points:['Acquisition cost rises while lead quality becomes harder to explain','Marketing, sales, and leadership work from different numbers','Teams spend time repairing tracking instead of scaling campaigns','Budget decisions are made without reliable funnel evidence'],action:'Connect the operating truth'},
+  {key:'tracking',label:'Tracking & data quality',title:'Broken event chains make optimization noisy before anyone notices.',points:['Conversions fire inconsistently across destinations','Duplicate events distort optimization signals','Cross-domain and messaging paths break continuity','Reporting lacks one normalized event model'],action:'Repair signal quality'},
+  {key:'optimization',label:'Ad platform optimization',title:'Algorithms learn the wrong lesson when downstream quality never returns.',points:['Campaigns optimize toward shallow form fills','Lookalike seeds are polluted by low-quality demand','Converted and irrelevant users remain targetable','CAC rises while platforms cannot see real business value'],action:'Return stronger outcomes'},
+  {key:'measurement',label:'Attribution & measurement',title:'A fragmented journey turns every channel report into a partial answer.',points:['Web, app, calls, and offline activity stay disconnected','Post-lead outcomes disappear from media measurement','High-value cohorts remain hidden from channel reporting','Leadership cannot defend budget decisions with one evidence trail'],action:'Build full-path visibility'},
+  {key:'audience',label:'Audience & personalization',title:'Weak identity makes targeting broad, repetitive, and expensive.',points:['Segments are too shallow for useful lookalikes','Retargeting ignores actual journey behavior','Upsell and retention lack purchase and lifecycle context','Returning customers are difficult to recognize consistently'],action:'Activate better audiences'},
+  {key:'privacy',label:'Privacy, consent & compliance',title:'Growth systems need first-party controls that survive changing privacy rules.',points:['Third-party tracking keeps losing reach and reliability','Consent state is disconnected from activation destinations','Regional rules complicate uncontrolled audience use','Teams lack a durable first-party governance layer'],action:'Govern first-party activation'}
+ ]
+ const [challengeItems,setChallengeItems]=useState<any[]>(fallbackChallenges)
+ const [challengeIndex,setChallengeIndex]=useState(0)
+ useEffect(()=>{api.publicChallenges().then((r:any)=>r?.items?.length&&setChallengeItems(r.items)).catch(()=>null)},[])
  const visibleAgents=agentFilter==='All'?agents:agents.filter(a=>a[2]===agentFilter)
  return <div className="marketing-page">
   <div className="ei-promo-bar"><span>Better first-party signals help teams turn paid attention into <b>measurable business outcomes</b>.</span><button onClick={openDemo}>See how AceMarketing closes the loop <ArrowRight/></button></div>
@@ -230,17 +241,23 @@ function Marketing({openHome,openApp,openLogin,openPricing,openDemo,openCompany,
    <div className="ei-data-visual"><div className="ei-data-orbit o1"/><div className="ei-data-orbit o2"/><div className="ei-data-core"><DatabaseZap/><b>Shared data truth</b><span>Ads · CRM · Calls · WhatsApp · Revenue</span></div></div>
   </section>
 
-  <section className="diagnostics-section">
-   <div className="section-title"><span className="kicker dark">DIAGNOSE THE ROOT CAUSE</span><h2>Your campaigns may be showing symptoms of a data problem.</h2><p>The current EasyInsights public site groups its diagnostic story into six recurring failure areas. AceMarketing now mirrors that structure with original wording and product links.</p></div>
-   <div className="diagnostic-grid six">
-    {[
-      ['Business & operational impact',Activity,['Acquisition cost rises while lead quality becomes harder to explain','Marketing, sales and leadership report different numbers','Teams spend time repairing tracking instead of scaling campaigns','Budget decisions are made without trustworthy funnel evidence']],
-      ['Tracking & data quality',Network,['Conversions fire incorrectly across ad and analytics systems','Duplicate events distort optimization signals','Cross-domain, chatbot and messaging paths break continuity','Performance reporting lacks a shared source of truth']],
-      ['Ad platform optimization',Target,['Automated campaign systems learn from weak or junk conversion signals','Lookalike quality drops when seed audiences are noisy','Converted or irrelevant users remain in targetable pools','CAC rises while the optimization model cannot see downstream quality']],
-      ['Attribution & measurement',PieChart,['Web and app activity is not stitched into one journey','Offline and post-lead outcomes never make it back into measurement','High-value cohorts remain hidden from channel reports','Leadership loses confidence in platform-level attribution']],
-      ['Audience & personalization',UsersRound,['Segments are too shallow for useful lookalikes','Retargeting ignores the actual sequence of customer actions','Retention and upsell campaigns lack behavioral signals','Returning customers are difficult to recognize without first-party identity']],
-      ['Privacy, consent & compliance',ShieldCheck,['Third-party tracking becomes less dependable','Regional privacy rules limit uncontrolled audience-data use','Consent state is disconnected from activation destinations','There is no durable first-party control plane for compliant optimization']]
-    ].map(([t,I,items]:any)=><article key={t}><I/><h3>{t}</h3><ul>{items.map((x:string)=><li key={x}>{x}</li>)}</ul></article>)}
+  <section className="ei-friction-section">
+   <div className="ei-friction-intro">
+    <span>WHERE PERFORMANCE SYSTEMS BREAK</span>
+    <h2>The visible problem is often downstream from the real data failure.</h2>
+    <p>Explore six recurring failure patterns that appear when acquisition, identity, CRM outcomes, audiences, and consent are not operating from one shared model.</p>
+   </div>
+   <div className="ei-friction-shell">
+    <div className="ei-friction-nav">
+     {challengeItems.map((x:any,i:number)=><button key={x.key} className={challengeIndex===i?'active':''} onClick={()=>setChallengeIndex(i)}><span>{String(i+1).padStart(2,'0')}</span><b>{x.label}</b><ChevronRight/></button>)}
+    </div>
+    <article className="ei-friction-detail">
+     <div className="ei-friction-number">{String(challengeIndex+1).padStart(2,'0')}</div>
+     <span>{challengeItems[challengeIndex]?.label}</span>
+     <h3>{challengeItems[challengeIndex]?.title}</h3>
+     <ul>{(challengeItems[challengeIndex]?.points||[]).map((x:string)=><li key={x}><Check/>{x}</li>)}</ul>
+     <button onClick={openSolutions}>{challengeItems[challengeIndex]?.action||'Explore the solution'} <ArrowRight/></button>
+    </article>
    </div>
   </section>
 
@@ -255,39 +272,13 @@ function Marketing({openHome,openApp,openLogin,openPricing,openDemo,openCompany,
    </div>
   </section>
 
-  <section className="data-ownership-section">
-   <div className="data-ownership-copy"><span className="kicker">DATA OWNERSHIP</span><h2>Your data remains your operating asset.</h2><p>AceMarketing is designed around first-party collection, explicit consent state, configurable retention, scoped access and auditable activation. Advertising and analytics destinations receive only the event fields required by the configured workflow.</p><div className="ownership-points"><span><ShieldCheck/> Workspace-level RBAC</span><span><Check/> Consent-aware activation</span><span><Check/> Identifier hashing</span><span><Check/> Configurable retention</span><span><Check/> Audit history</span><span><Check/> Data deletion workflow</span></div></div>
-   <div className="privacy-console"><div className="privacy-console-head"><b>Privacy control plane</b><span className="healthy">Configured</span></div>{[['Consent state','Granted / denied / unknown'],['Retention window','180 days'],['PII hashing','SHA-256 design'],['Export destinations','Scoped per connector'],['Deletion SLA','Workflow-ready']].map(x=><div className="privacy-control-row" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b></div>)}</div>
-  </section>
-
-  <section className="security-targets">
-   <div className="section-title"><span className="kicker dark">SECURITY & COMPLIANCE PARITY TARGETS</span><h2>Enterprise controls are represented as implementation targets, not certifications.</h2><p>The brochure visually references ISO 27001, SHA-256 encryption, GDPR, HIPAA and India DPDP readiness. AceMarketing surfaces these as roadmap controls until independently implemented and verified.</p></div>
-   <div className="security-target-grid">
-    {[
-      ['ISO 27001','Control framework target','Roadmap'],
-      ['SHA-256','Identifier hashing','Implemented in design'],
-      ['GDPR','Consent / deletion / retention','Roadmap'],
-      ['HIPAA','Healthcare data safeguards','Roadmap'],
-      ['India DPDP','Consent + data-principal controls','Roadmap']
-    ].map(x=><article key={x[0]}><ShieldCheck/><div><b>{x[0]}</b><span>{x[1]}</span></div><em>{x[2]}</em></article>)}
-   </div>
-  </section>
-
   <section className="ei-final-cta">
    <div><span>TURN CONNECTED DATA INTO BETTER DECISIONS</span><h2>Give every channel the business outcomes it needs to optimize intelligently.</h2></div>
    <button onClick={openDemo}>Book a demo <ArrowRight/></button>
   </section>
 
   <DemoSection openApp={openApp}/>
-  <footer className="ei-footer">
-   <div className="ei-footer-top">
-    <div className="ei-footer-brand"><Brand/><p>First-party data, agents and journey intelligence for performance marketing teams.</p><button onClick={openDemo}>Book a demo</button></div>
-    <div><h4>Platform</h4><a href="#platform">Data Activation</a><a href="#platform">Data Enrichment</a><button onClick={openApp}>Product workspace</button></div>
-    <div><h4>Solution</h4><button onClick={openSolutions}>Lead Generation</button><button onClick={openSolutions}>Enterprise</button><button onClick={openSolutions}>Attribution Model</button><button onClick={openSolutions}>Alerts and Monitoring</button><button onClick={openSolutions}>Server to Server Integration</button></div>
-    <div><h4>Resources</h4><button onClick={openCompany}>About Us</button><button onClick={openResources}>Use Cases</button><button onClick={openResources}>Blogs & Guides</button><button onClick={openResources}>Documentation</button><button onClick={openDemo}>Contact Us</button></div>
-   </div>
-   <div className="ei-footer-bottom"><span>© 2026 AceMarketing. All rights reserved.</span><div><button onClick={()=>window.dispatchEvent(new CustomEvent('ace-view',{detail:'privacy'}))}>Privacy Policy</button><span>•</span><button onClick={()=>window.dispatchEvent(new CustomEvent('ace-view',{detail:'terms'}))}>Terms & Conditions</button><span>•</span><button onClick={()=>window.dispatchEvent(new CustomEvent('ace-view',{detail:'security'}))}>Security</button></div></div>
-  </footer>
+  <PublicFooter openHome={openHome} openApp={openApp} openDemo={openDemo} openCompany={openCompany} openResources={openResources} openSolutions={openSolutions} openIntegrations={openIntegrations}/>
   {cookieOpen&&<div className="cookie-banner"><div><b>Cookie preferences</b><p>Necessary storage is always on. Optional analytics, advertising and functionality categories can be enabled independently.</p><div className="cookie-toggles">{Object.entries(cookiePrefs).map(([k,v])=><label key={k}><input type="checkbox" checked={v} onChange={()=>setCookiePrefs({...cookiePrefs,[k]:!v})}/>{k}</label>)}</div></div><div className="cookie-actions"><button onClick={()=>{setCookiePrefs({analytics:false,advertising:false,functionality:false});setCookieOpen(false)}}>Necessary only</button><button onClick={()=>{setCookiePrefs({analytics:true,advertising:true,functionality:true});setCookieOpen(false)}}>Accept all</button><button className="primary-cookie" onClick={async()=>{await api.saveConsent(cookiePrefs).catch(()=>null);setCookieOpen(false)}}>Save preferences</button></div></div>}
  </div>
 }
