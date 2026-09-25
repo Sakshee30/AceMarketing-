@@ -3325,3 +3325,140 @@ Playwright coverage was updated to verify:
 - existing critical operating pages remain reachable.
 
 The dashboard-navigation tests are part of the existing `tests/e2e/platform.spec.ts` suite.
+
+
+## Dashboard truthfulness and conversion-workflow completion pass
+
+This continuation removes the remaining high-visibility demo state from core workspace configuration and conversion operations.
+
+### Launchpad
+
+Launchpad readiness is now computed from actual workspace evidence instead of local preset checkmarks.
+
+The backend evaluates:
+
+- workspace/settings configuration;
+- connected integrations;
+- persisted lead profiles;
+- first-party tracking activity;
+- event rules;
+- signal-delivery records;
+- audience state;
+- agent activity.
+
+The UI shows the live readiness percentage and lets the operator jump directly into the module that needs work.
+
+### Identity
+
+The Identity page no longer displays fixed profile totals, deterministic-match percentages, example people or fake identifier values.
+
+It now derives:
+
+- known profile count;
+- profiles containing multiple first-party identifiers;
+- observed customer/contact/device identifier coverage;
+- click-ID evidence;
+- recent persisted identity profiles;
+- deterministic/supporting match-rule definitions.
+
+### Models
+
+The Models endpoint no longer advertises fabricated AUC, precision or model-validation numbers.
+
+The current model catalog only shows scoring services implemented by the workspace runtime:
+
+- lead-quality scoring;
+- journey-propensity feature set.
+
+Running a model creates a persisted scoring snapshot with the actual profile population and current average score. Validation remains explicitly labeled as operational evidence rather than offline statistical validation.
+
+### Settings
+
+Notification preferences are now editable and persisted:
+
+- critical delivery failure notifications;
+- connector-token expiry notifications;
+- stale-audience notifications;
+- daily performance summary;
+- notification email;
+- Slack notification enablement.
+
+Agent approval boundaries are also persisted for:
+
+- signal return;
+- CRM enrichment;
+- qualification calls;
+- audience suppression;
+- custom integration writes.
+
+### Legacy workspace overview
+
+The legacy `GET /api/workspace/overview` endpoint no longer returns fixed revenue, lead, signal-coverage or active-agent values. It now derives its values from lead, attribution, agent-run and delivery state.
+
+### Routing
+
+Routing metrics now come from persisted routing decisions:
+
+- routed today;
+- retained decision history;
+- observed destinations;
+- matched rule names;
+- destination load.
+
+The rule catalog matches the implemented routing engine instead of a separate UI-only rule list.
+
+### Follow-ups
+
+The Follow-ups page no longer initializes fictional lead records or fixed recovery totals.
+
+It now:
+
+- starts from the persisted follow-up table;
+- calculates open/completed/overdue counts in the backend;
+- provides a real **Create follow-up** form;
+- persists manually created tasks;
+- completes persisted tasks;
+- opens matching journey context when available.
+
+### Feedback
+
+The Feedback page no longer seeds fictional responses or fixed satisfaction/objection totals.
+
+It now:
+
+- reads persisted feedback only;
+- calculates response count and average score;
+- calculates low-satisfaction count;
+- groups actual response themes;
+- provides a real **Record feedback** form.
+
+### Approvals
+
+The approval center no longer seeds fictional approval requests.
+
+It reads the persisted approval queue and reports:
+
+- pending;
+- approved;
+- rejected;
+- total retained requests.
+
+Approval and rejection actions continue to persist through the backend.
+
+### Regression coverage
+
+Playwright now covers:
+
+- live Launchpad;
+- live Identity;
+- implemented model catalog;
+- editable notifications;
+- editable approval boundaries;
+- follow-up creation entry point;
+- feedback recording entry point;
+- approval center;
+- live routing surface.
+
+The guiding dashboard rule remains:
+
+> Operational data must come from workspace evidence. If evidence does not exist, the UI shows an explicit empty/unavailable state rather than a fabricated success metric.
