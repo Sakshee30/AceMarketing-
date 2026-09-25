@@ -38,6 +38,7 @@ jobs:
           test -f backend/src/activation-adapters.mjs
           test -f backend/src/agent-orchestrator.mjs
           test -f backend/src/custom-integrations.mjs
+          test -f backend/src/observability.mjs
           test -f backend/scripts/migrate.mjs
           test -f backend/migrations/001_workspace_state.sql
           test -f backend/migrations/002_job_queue.sql
@@ -46,3 +47,4 @@ jobs:
           test -f backend/migrations/005_activation_receipts.sql
           test -f backend/migrations/006_agent_orchestration.sql
           test -f backend/migrations/007_custom_integrations.sql
+          test -f backend/migrations/008_observability_usage.sql
