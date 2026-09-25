@@ -97,6 +97,29 @@ const server = http.createServer(async (req,res)=>{
       if(!body.domain) return send(res,400,{error:'domain required'})
       return send(res,200,{domain:body.domain,pixel:true,server:true,consent:true,crossDomain:true,testedAt:new Date().toISOString()})
     }
+    if (req.method === 'GET' && url.pathname === '/api/fraud') return send(res,200,{items:[
+      {key:'duplicate_lead_burst',severity:'high',affected:428},
+      {key:'bot_form_activity',severity:'high',affected:1214},
+      {key:'invalid_phone_pattern',severity:'medium',affected:309},
+      {key:'disposable_email_cluster',severity:'medium',affected:184},
+      {key:'click_spam_pattern',severity:'low',affected:2918}
+    ]})
+    if (req.method === 'POST' && url.pathname === '/api/fraud/block') {
+      const body=await readBody(req)
+      if(!body.pattern) return send(res,400,{error:'pattern required'})
+      return send(res,200,{pattern:body.pattern,status:'blocked_from_optimization',ruleId:randomUUID(),appliedAt:new Date().toISOString()})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/deep-links') return send(res,200,{items:[
+      {name:'MBA Application',slug:'mba-apply',status:'active'},
+      {name:'Scholarship Offer',slug:'scholarship',status:'active'},
+      {name:'Consultation Booking',slug:'book',status:'active'},
+      {name:'Fee Details',slug:'fees',status:'draft'}
+    ]})
+    if (req.method === 'POST' && url.pathname === '/api/deep-links/activate') {
+      const body=await readBody(req)
+      if(!body.slug) return send(res,400,{error:'slug required'})
+      return send(res,200,{slug:body.slug,status:'active',activatedAt:new Date().toISOString()})
+    }
     if (req.method === 'GET' && url.pathname === '/api/diagnostics') return send(res,200,{score:91,duplicateRate:1.7,clickIdCoverage:93.2,quarantined:42,issues:[
       {key:'duplicate_conversions',severity:'critical',affected:1284},
       {key:'missing_click_ids',severity:'warning',affectedPercent:6.8},
