@@ -8,6 +8,7 @@ import { enqueueJob, queueStats } from './queue.mjs'
 import { attributionStats, captureClickSession, closeAttributionStore, recordAssistedEvent, reconcileAttribution } from './attribution-store.mjs'
 import { closeLeadOps, createActivationRun, createAudience as createLeadAudience, getAudienceBundle, getLeadProfile, leadOpsStats, listActivationRuns, listAudiences as listLeadAudiences, listLeadProfiles, materializeAudience, overrideLeadGrade as persistLeadGrade, previewAudience as previewLeadAudience, scoreLead, upsertLeadProfile, updateAudienceSyncState } from './lead-ops.mjs'
 import { closeAgentOrchestrator, completeFollowUp as persistCompleteFollowUp, createAgentRun, createFollowUp, createMeeting, listAgentRuns, listFeedback as listPersistedFeedback, listFollowUps as listPersistedFollowUps, listMeetings as listPersistedMeetings, listRoutingDecisions, recordFeedback, routeLead } from './agent-orchestrator.mjs'
+import { closeCustomIntegrations, createCustomIntegration as persistCustomIntegration, listCustomIntegrations, testCustomIntegration as runCustomIntegrationTest } from './custom-integrations.mjs'
 import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, publicChallenges, publicCaseStudies, publicResources, publicResourceCenter } from './public-content.mjs'
 
 const CONNECTOR_PROVIDERS={
@@ -343,16 +344,22 @@ const server = http.createServer(async (req,res)=>{
         }
       })})
     }
+    if (req.method === 'GET' && url.pathname === '/api/custom-integrations') return send(req,res,200,{items:await listCustomIntegrations(workspaceId)})
     if (req.method === 'POST' && url.pathname === '/api/custom-integrations/test') {
       const body=await readBody(req)
-      if(!body.name || !body.baseUrl) return send(req,res,400,{error:'name and baseUrl required'})
-      return send(req,res,200,{ok:true,statusCode:200,latencyMs:184,sampleRecords:25,schemaValid:true,authValid:true,testedAt:new Date().toISOString()})
+      if(!body.baseUrl&&!body.id) return send(req,res,400,{error:'baseUrl or id required'})
+      try{
+        const result=await runCustomIntegrationTest(workspaceId,body)
+        return send(req,res,result.ok?200:422,{...result,testedAt:new Date().toISOString()})
+      }catch(error){
+        return send(req,res,422,{ok:false,error:error instanceof Error?error.message:'connection test failed',testedAt:new Date().toISOString()})
+      }
     }
     if (req.method === 'POST' && url.pathname === '/api/custom-integrations') {
       const body=await readBody(req)
       if(!body.name || !body.baseUrl || !body.identity) return send(req,res,400,{error:'name, baseUrl and identity required'})
-      const item={id:'ci_'+randomUUID(),name:body.name,status:'connected',direction:body.direction||'Bidirectional',baseUrl:body.baseUrl,identity:body.identity,createdAt:new Date().toISOString()}
-      await mutateState(s=>{s.customIntegrations.unshift(item);s.audit.unshift({id:randomUUID(),action:'custom_integration.created',entityId:item.id,at:item.createdAt})})
+      const item=await persistCustomIntegration(workspaceId,body)
+      await mutateState(s=>{s.audit.unshift({id:randomUUID(),action:'custom_integration.created',entityId:item.id,at:new Date().toISOString()});s.audit=s.audit.slice(0,1000)})
       return send(req,res,201,item)
     }
     if (req.method === 'POST' && url.pathname === '/api/integrations/connect') {
@@ -1147,6 +1154,6 @@ server.keepAliveTimeout=65_000
 server.headersTimeout=66_000
 server.requestTimeout=30_000
 server.listen(PORT,()=>console.log(`AceMarketing API listening on http://localhost:${PORT}`))
-const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
+const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
 process.on('SIGTERM',()=>shutdown('SIGTERM'))
 process.on('SIGINT',()=>shutdown('SIGINT'))
