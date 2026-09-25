@@ -3659,3 +3659,16 @@ The Meetings workspace is now self-contained instead of depending on Calls or an
 - Users can still connect Google Calendar directly from the Meetings list header.
 - Existing reschedule and provider-backed reminder operations continue to work on the same persisted meeting record.
 - Attendee contact is collected during scheduling so manual reminder actions have a real destination.
+
+
+### Real-data closure matchback
+
+Closure Matchback no longer displays seeded revenue totals, invented outcome counts, or fabricated per-rule match percentages.
+
+- Empty workspaces start with zero persisted matchback rules.
+- `POST /api/matchback/rules` creates a real matchback configuration with source, event type, destination and identity method.
+- Rules can be paused/enabled through `POST /api/matchback/rules/toggle`.
+- Reconciliation requires a persisted active rule ID.
+- Each reconciliation stores last-run time, status, matched count and unmatched count on the selected rule and creates an audit record.
+- Workspace-level matched value, matched/unmatched outcomes and match rate remain sourced from the live attribution store.
+- Suggested templates are explicitly configuration examples only and carry no fake performance metrics.
