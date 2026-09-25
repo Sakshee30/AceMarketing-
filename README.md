@@ -3672,3 +3672,15 @@ Closure Matchback no longer displays seeded revenue totals, invented outcome cou
 - Each reconciliation stores last-run time, status, matched count and unmatched count on the selected rule and creates an audit record.
 - Workspace-level matched value, matched/unmatched outcomes and match rate remain sourced from the live attribution store.
 - Suggested templates are explicitly configuration examples only and carry no fake performance metrics.
+
+
+### Stitched customer journey chronology
+
+The Journey Explorer now renders a real cross-system chronology instead of a summary-only card.
+
+- `GET /api/journeys` assembles lead-linked activity from persisted lead profiles, first-party tracked events, routing decisions, follow-ups, meetings, reminders, feedback, call context, WhatsApp context and CRM stage updates.
+- Only records that can be linked to the selected lead are included.
+- Journey duration and touchpoint totals are derived from the assembled chronology.
+- The frontend shows source, campaign, stage, score/grade and a timestamped event timeline.
+- The previous placeholder notice about chronology being unavailable has been removed.
+- Timeline motion is subtle and honors `prefers-reduced-motion`.
