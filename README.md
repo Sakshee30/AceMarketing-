@@ -3024,3 +3024,96 @@ Operational boxes must now follow the same rule used elsewhere in the product:
 > no workspace evidence → show an empty/unavailable state, not a fabricated production metric.
 
 The UI may still contain marketing/reference examples where clearly labeled, but operational dashboards must be backed by current workspace state.
+
+
+## Operational parity pass: fingerprinting, fraud, deep links, POS, behavior, feed, lead context and agents
+
+This continuation removes another set of demo-backed workspace surfaces and wires the remaining page-header actions.
+
+### Fingerprinting / continuity
+
+- Continuity metrics now use persisted attribution matches/unmatched events.
+- WhatsApp, call and device continuity scenarios expose real evidence counts.
+- Continuity tests persist their result and report `evidence_available` or `no_evidence` instead of always returning a synthetic pass.
+- Match-log view continues to read persisted attribution records.
+
+### Sites
+
+- Site inventory is now derived from the configured primary domain plus domains observed in tracked first-party events.
+- Site installation tests report observed events, consent readiness and cross-domain identity evidence instead of always returning every check as true.
+- Event debugger remains grounded in actual tracked events.
+
+### Fraud / noise
+
+- Fraud patterns are now generated from persisted lead scoring evidence and recent first-party event velocity.
+- Block rules are persisted and audited.
+- Human-review requests remain persisted in the review queue.
+- Fixed affected-volume examples were removed from the operational API and UI.
+
+### Deep links
+
+- Deep-link definitions are persisted in workspace state.
+- Create, activate and event-recording APIs are available.
+- Click, app-open and conversion counts are calculated from persisted deep-link events.
+- The public `#/deep/<slug>` resolver now records a click and lets the user continue to the app destination or web fallback.
+- The Deep Links workspace no longer shows fixed click/app-open/conversion percentages.
+
+### POS / stores
+
+- POS import batches are persisted.
+- Location transaction, revenue, match and import totals are aggregated from those persisted batches.
+- The POS UI no longer displays fixed stores, revenue or match-rate examples.
+- A batch-import dialog now captures location, record count, matched records and revenue.
+- When usable identity/click evidence is supplied by an import, the backend can also record an assisted POS event.
+
+### Reports / attribution API
+
+- `GET /api/reports` now exposes the persisted cohort analytics and report schedule/delivery state.
+- `GET /api/attribution` now returns the real attribution store instead of fixed revenue/channel percentages.
+
+### Behavior
+
+- Website/app behavior counts are now aggregated from the actual `/api/track` stream.
+- Known-identity rate, high-intent event count and recent sequence use observed events.
+- Fixed session/event counts and the synthetic journey sequence were removed.
+
+### Feed / payload enhancement
+
+- Feed attributes are derived from persisted lead profile fields, journey fields and custom mappings.
+- Destination enrichment coverage is calculated from actual delivery payloads.
+- Custom feed attributes can be persisted from the UI.
+- Fixed enrichment percentages and fixed attribute counts were removed.
+
+### Lead enrichment and grading
+
+- Enrichment no longer fabricates a lead profile when the store is empty.
+- Call and WhatsApp context show persisted summaries only.
+- Lead Grading no longer seeds example people, scores, grade counts or score drivers.
+- Distribution is derived from current lead-ops statistics.
+
+### Agents
+
+- Built-in agent status is now based on current workspace prerequisites such as connected ad platforms, lead profiles, call activity and configured transport URLs.
+- Custom agents are persisted through `POST /api/agents/custom`.
+- Recent runs come from the persisted agent-run store.
+- The fixed “7 active” status and synthetic recent-run rows were removed.
+
+### Workspace header actions
+
+Every `PageHead` with an action now has a handler.
+
+Examples:
+
+- New Event opens the real event-rule builder.
+- Offline Attribution routes to event-rule creation.
+- Identity review routes to Fingerprinting.
+- Reports scrolls to the persisted report schedule form.
+- Routing opens recent persisted decisions.
+- Call / Feedback configuration routes to Agents.
+- Monitoring and Alerts route between live rules and incidents.
+
+A static scan of `frontend/src/AcePlatform.tsx` now returns zero `PageHead` actions without an `onAction` handler.
+
+### Product identity note
+
+AceMarketing may reproduce comparable public workflows, information architecture and feature behavior, but proprietary EasyInsights source code, copyrighted copy/assets, logos, screenshots and private implementation details are not copied into this repository. External case-study metrics remain clearly labeled as reference benchmarks rather than AceMarketing customer results.
