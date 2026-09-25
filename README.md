@@ -3514,3 +3514,19 @@ This improves navigation without deleting or flattening the existing feature hie
 ### Shared API reliability hardening
 
 The frontend API client now preserves backend validation/provider errors instead of collapsing every failure into a generic HTTP status. `AceApiError` carries the HTTP status, backend payload, and `X-Request-ID` when available, while network failures are identified separately. This improves every dashboard action that depends on the shared client, including integrations, event rules, audiences, calls, meetings, approvals, signal delivery, billing, privacy and settings.
+
+
+### Integration reliability and full-card actionability
+
+The Integrations workspace now treats every visible connector as an actionable path instead of presenting unsupported cards as if they were native OAuth integrations.
+
+- Native OAuth connectors use provider authorization and encrypted connector credentials.
+- Manual/non-native connectors open the Custom Integration Builder with the selected provider prefilled.
+- The backend connector catalog is aligned with the full dashboard catalog.
+- Connector token health is returned by `GET /api/integrations`.
+- OAuth credentials now expose expiry/refresh-required state to the frontend.
+- `POST /api/integrations/refresh` now has an implemented refresh-token flow instead of referencing an undefined helper.
+- Refresh writes updated encrypted credentials, connection expiry, status and an audit event.
+- The dashboard reports the actual built-in connector count rather than an unsupported marketing count.
+
+Native OAuth support currently exists for the providers explicitly configured in `CONNECTOR_PROVIDERS` (including Google Ads/GA4/Calendar, Meta/WhatsApp, LinkedIn, HubSpot, Salesforce and Zoho). Other displayed systems remain fully actionable through the configurable REST/webhook/SFTP/database adapter path until a dedicated native connector is implemented.
