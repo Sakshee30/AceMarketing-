@@ -2799,3 +2799,26 @@ npm run security:audit
 ```
 
 and CI now runs this immediately after dependency installation. High-severity production dependency advisories therefore fail the build instead of being silently ignored.
+
+
+## Reference outcome card interaction fix
+
+The four marketing outcome cards shown under **“See what stronger signals and connected journeys can unlock”** are now fully interactive.
+
+Fixed cards:
+
+- Leverage Edu
+- India IVF
+- Blue Tokai
+- Jaro Education
+
+Behavior now:
+
+- the whole card surface is clickable;
+- Enter/Space keyboard activation is supported;
+- each card deep-links to `#/case-studies?case=<name>`;
+- the case-study page opens the matching reference detail automatically;
+- hover/focus arrow motion and visible keyboard focus are included;
+- the public case-study API now includes matching detail records for all four cards so the deep link remains correct after backend content loads.
+
+These remain clearly labeled external EasyInsights reference benchmarks and are not represented as AceMarketing customer results.
