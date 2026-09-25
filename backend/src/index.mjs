@@ -16,6 +16,7 @@ import { closeConsentStore, consentAllows, consentStats, getConsent, listConsent
 import { closePrivacyOps, deleteSubject, exportSubject, listPrivacyRequests, purgeRetention, retentionPolicy } from './privacy-ops.mjs'
 import { closeAudienceScheduler, listAudienceRefreshRuns, listAudienceSchedules, saveAudienceSchedule } from './audience-scheduler.mjs'
 import { closeCohortAnalytics, cohortAnalytics } from './cohort-analytics.mjs'
+import { closeEventRules, createEventRule, evaluateEventRules, eventRuleStats, listEventRuleRuns, listEventRules, markEventRuleActivation, setEventRuleEnabled } from './event-rules.mjs'
 import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, publicChallenges, publicCaseStudies, publicResources, publicResourceCenter } from './public-content.mjs'
 
 const CONNECTOR_PROVIDERS={
@@ -586,7 +587,29 @@ const server = http.createServer(async (req,res)=>{
       if(q.includes('suppress')||q.includes('audience')) answer='Converted customers and low-intent leads are the strongest suppression candidates because they create avoidable retargeting spend.'
       return send(req,res,200,{answer,insights})
     }
-    if (req.method === 'GET' && url.pathname === '/api/events') return send(req,res,200,{items:events})
+    if (req.method === 'GET' && url.pathname === '/api/events') {
+      const [items,runs,stats]=await Promise.all([listEventRules(workspaceId),listEventRuleRuns(workspaceId,50),eventRuleStats(workspaceId)])
+      return send(req,res,200,{items,runs,stats,templates:[
+        {name:'Pricing-page Lead',sourceEvent:'form_submitted',condition:{field:'properties.pricingPageViews',operator:'gte',value:1},outputEvent:'pricing_page_lead'},
+        {name:'High-value Purchase',sourceEvent:'purchase',condition:{field:'value',operator:'gte',value:4000},outputEvent:'high_value_purchase'},
+        {name:'Prepaid Order',sourceEvent:'purchase',condition:{field:'properties.paymentType',operator:'equals',value:'prepaid'},outputEvent:'prepaid_order'},
+        {name:'Fulfilled Order',sourceEvent:'order_status',condition:{field:'properties.status',operator:'equals',value:'fulfilled'},outputEvent:'fulfilled_order'},
+        {name:'Returned Order',sourceEvent:'order_status',condition:{field:'properties.status',operator:'equals',value:'returned'},outputEvent:'returned_order'}
+      ]})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/events/rules') {
+      const body=await readBody(req)
+      try{
+        const item=await createEventRule(workspaceId,body,req.user?.email||req.user?.userId||null)
+        return send(req,res,201,{item})
+      }catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'invalid event rule'})}
+    }
+    if (req.method === 'POST' && url.pathname === '/api/events/rules/toggle') {
+      const body=await readBody(req)
+      if(!body.id||typeof body.enabled!=='boolean') return send(req,res,400,{error:'id and enabled boolean required'})
+      const item=await setEventRuleEnabled(workspaceId,String(body.id),body.enabled)
+      return item?send(req,res,200,{item}):send(req,res,404,{error:'event rule not found'})
+    }
     if (req.method === 'GET' && url.pathname === '/api/adjustments') return send(req,res,200,{items:[
       {id:'adj_501',event:'partial_payment',source:'crm_billing',destination:'google_ads',status:'pending'},
       {id:'adj_500',event:'returned_order',source:'commerce_backend',destination:'google_ads',status:'pending'},
@@ -722,7 +745,28 @@ const server = http.createServer(async (req,res)=>{
       if(body.assisted===true||['call','whatsapp','crm','pos','billing','offline'].includes(String(body.source||'').toLowerCase())){
         assisted=await recordAssistedEvent(workspaceId,{...body,eventId:body.eventId||event.id}).catch(()=>null)
       }
-      return send(req,res,202,{accepted:true,eventId:event.id,clickSessionId:clickSession?.id||null,assistedEventId:assisted?.id||null,match:assisted?{status:assisted.status,method:assisted.match_method,confidence:assisted.match_confidence}:null})
+      const derived=await evaluateEventRules(workspaceId,{...body,eventId:body.eventId||event.id},{sourceEventId:event.id}).catch(()=>[])
+      const derivedDeliveries=[]
+      if(derived.length){
+        const marketingConsent=await consentAllows(workspaceId,{subjectType:body.customerId?'customer':'visitor',subjectId:body.customerId||body.visitorId,category:'marketing'})
+        for(const match of derived){
+          let queued=0
+          if(marketingConsent.allowed){
+            for(const destination of match.destinations){
+              const deliveryId='sig_'+randomUUID()
+              const idempotencyKey=createHash('sha256').update('event-rule:'+match.runId+':'+destination).digest('hex')
+              const now=new Date().toISOString()
+              const item={id:deliveryId,event:match.outputEvent,destination,customerId:body.customerId?String(body.customerId):null,externalEventId:match.assistedEvent?.id||match.runId,status:'queued',attempts:0,idempotencyKey,createdAt:now,updatedAt:now,nextAttemptAt:now}
+              await mutateState(s=>{s.signalDeliveries=s.signalDeliveries||[];s.signalDeliveries.unshift(item);s.signalDeliveries=s.signalDeliveries.slice(0,10000);s.audit.unshift({id:randomUUID(),action:'event-rule.signal.queued',entityId:deliveryId,ruleId:match.ruleId,destination,event:match.outputEvent,at:now});s.audit=s.audit.slice(0,1000)})
+              const job=await enqueueJob({workspaceId,kind:'signal_delivery',idempotencyKey:'rule-signal:'+idempotencyKey,payload:{...item,visitorId:body.visitorId||null,email:body.email||null,phone:body.phone||null,gclid:body.gclid||null,fbclid:body.fbclid||null,value:match.assistedEvent?.value??body.value??null,currency:match.assistedEvent?.currency||body.currency||null}})
+              derivedDeliveries.push({ruleId:match.ruleId,outputEvent:match.outputEvent,destination,deliveryId,jobId:job?.id||null})
+              queued++
+            }
+          }
+          await markEventRuleActivation(workspaceId,match.runId,queued).catch(()=>{})
+        }
+      }
+      return send(req,res,202,{accepted:true,eventId:event.id,clickSessionId:clickSession?.id||null,assistedEventId:assisted?.id||null,derivedEvents:derived.map(x=>({runId:x.runId,ruleId:x.ruleId,outputEvent:x.outputEvent,assistedEventId:x.assistedEvent?.id||null,destinations:x.destinations})),derivedDeliveries,match:assisted?{status:assisted.status,method:assisted.match_method,confidence:assisted.match_confidence}:null})
     }
     if (req.method === 'POST' && url.pathname === '/api/assisted-events') {
       const body=await readBody(req)
@@ -1294,6 +1338,6 @@ server.keepAliveTimeout=65_000
 server.headersTimeout=66_000
 server.requestTimeout=30_000
 server.listen(PORT,()=>console.log(`AceMarketing API listening on http://localhost:${PORT}`))
-const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations(),closeObservability(),closeEntitlements(),closeBillingProvider(),closeConsentStore(),closePrivacyOps(),closeAudienceScheduler(),closeCohortAnalytics()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
+const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations(),closeObservability(),closeEntitlements(),closeBillingProvider(),closeConsentStore(),closePrivacyOps(),closeAudienceScheduler(),closeCohortAnalytics(),closeEventRules()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
 process.on('SIGTERM',()=>shutdown('SIGTERM'))
 process.on('SIGINT',()=>shutdown('SIGINT'))
