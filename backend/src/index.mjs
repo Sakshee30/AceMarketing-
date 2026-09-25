@@ -1820,9 +1820,24 @@ const server = http.createServer(async (req,res)=>{
     }
     if (req.method === 'GET' && url.pathname === '/api/attribution') return send(req,res,200,await attributionStats(workspaceId))
     if (req.method === 'GET' && url.pathname === '/api/agents') {
-      const state=await getState()
-      const builtIn=agents.map((name,i)=>({id:'builtin_'+i,name,status:i<7?'active':'available',type:'built_in'}))
-      return send(req,res,200,{items:[...builtIn,...(state.customAgents||[])]})
+      const [state,profiles,runs,customIntegrations]=await Promise.all([getState(),listLeadProfiles(workspaceId,1),listAgentRuns(workspaceId),listCustomIntegrations(workspaceId)])
+      const connected=new Set((state.connectorConnections||[]).filter(x=>String(x.status||'').toLowerCase()==='connected').map(x=>x.connector))
+      const hasProfiles=profiles.length>0
+      const builtIn=agents.map((name,i)=>{
+        let status='available'
+        if(name==='Meta Advanced CAPI'&&connected.has('Meta Ads'))status='configured'
+        else if(name==='Google ECL / OCI'&&connected.has('Google Ads'))status='configured'
+        else if(name==='Call Tracking Events'&&(state.callEvents||[]).length)status='configured'
+        else if(name==='Custom Integration'&&customIntegrations.length)status='configured'
+        else if((name==='Lead Grading'||name==='CRM Enrichment')&&hasProfiles)status='configured'
+        else if(name==='Voice Lead Qualification'&&(process.env.VOICE_QUALIFICATION_WEBHOOK_URL||process.env.VOICE_AGENT_WEBHOOK_URL))status='configured'
+        else if(name==='Voice Scheduler'&&(connected.has('Google Calendar')||(state.meetings||[]).length))status='configured'
+        else if(name==='Meeting Reminder'&&process.env.MEETING_REMINDER_WEBHOOK_URL)status='configured'
+        else if(name==='Feedback Agent'&&process.env.FEEDBACK_WEBHOOK_URL)status='configured'
+        else if(name==='Ask Ace')status='available'
+        return {id:'builtin_'+i,name,status,type:'built_in'}
+      })
+      return send(req,res,200,{items:[...builtIn,...(state.customAgents||[])],runs:runs.slice(0,50),configured:builtIn.filter(x=>x.status==='configured').length,custom:(state.customAgents||[]).length})
     }
     if (req.method === 'GET' && url.pathname === '/api/enrich') {
       const [items,stats,runs]=await Promise.all([listLeadProfiles(workspaceId,100),leadOpsStats(workspaceId),listActivationRuns(workspaceId,50)])
