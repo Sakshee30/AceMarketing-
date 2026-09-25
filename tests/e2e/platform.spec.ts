@@ -91,6 +91,31 @@ test.describe('workspace critical flows',()=>{
     }
   })
 
+  test('launchpad identity and models render backend-backed state',async({page})=>{
+    await page.getByRole('button',{name:'Launchpad',exact:true}).click()
+    await expect(page.locator('.product-body h1')).toContainText(/Launchpad/i)
+    await expect(page.locator('.launchpad-progress')).toContainText(/Workspace readiness/i)
+
+    await page.getByRole('button',{name:'Identity',exact:true}).click()
+    await expect(page.locator('.product-body h1')).toContainText(/Identity resolution/i)
+    await expect(page.locator('.product-body')).toContainText(/Known identities/i)
+
+    await page.getByRole('button',{name:'Models',exact:true}).click()
+    await expect(page.locator('.product-body h1')).toContainText(/Custom models/i)
+    await expect(page.locator('.product-body')).toContainText(/Lead quality scoring|Journey propensity features/i)
+  })
+
+  test('notification and approval settings are editable',async({page})=>{
+    await page.getByRole('button',{name:'Settings',exact:true}).click()
+    await page.getByRole('button',{name:'Notifications',exact:true}).click()
+    await expect(page.getByRole('heading',{name:'Notifications'})).toBeVisible()
+    await expect(page.getByRole('button',{name:/Save notifications/i})).toBeVisible()
+
+    await page.getByRole('button',{name:'Agent approvals',exact:true}).click()
+    await expect(page.getByRole('heading',{name:'Agent approval boundaries'})).toBeVisible()
+    await expect(page.getByRole('button',{name:/Save approval policy/i})).toBeVisible()
+  })
+
   test('billing usage settings render live entitlement surface',async({page})=>{
     await page.getByRole('button',{name:'Settings',exact:true}).click()
     await page.getByRole('button',{name:'Billing & usage',exact:true}).click()
