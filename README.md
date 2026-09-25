@@ -1882,3 +1882,37 @@ RESTORE_CONFIRM=YES npm run restore -- backups/<file>.dump
 ```
 
 The production release gate is therefore stricter than TypeScript compilation: migrations, a real PostgreSQL boot, runtime smoke tests and Docker image builds must also succeed.
+
+
+## Security and runtime load release-gate pass
+
+The CI release gate now validates several production security invariants and basic concurrent runtime behavior against a live PostgreSQL-backed API.
+
+Added:
+- `backend/scripts/security-smoke.mjs`;
+- `backend/scripts/load-smoke.mjs`;
+- `npm run security:smoke`;
+- `npm run load:smoke`.
+
+Security smoke checks:
+- malformed/traversal-style workspace IDs are rejected;
+- billing webhooks with invalid Stripe signatures are rejected;
+- custom integration tests cannot target localhost/private SSRF destinations;
+- normal tracking ingestion still succeeds after those controls are exercised.
+
+Load smoke:
+- sends configurable concurrent requests against the live health endpoint;
+- fails on any request error;
+- calculates average and p95 latency;
+- fails when p95 exceeds `LOAD_MAX_P95_MS`.
+
+Defaults:
+
+```text
+LOAD_REQUESTS=100
+LOAD_CONCURRENCY=20
+LOAD_MAX_P95_MS=2000
+SECURITY_TIMEOUT_MS=5000
+```
+
+This is a release smoke/load gate, not a replacement for dedicated soak testing at production traffic volumes. Large-scale capacity testing should run in a staging environment with production-like PostgreSQL, network, worker concurrency, provider mocks and observability.
