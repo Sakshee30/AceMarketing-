@@ -1,9 +1,21 @@
 import {connectorCredential} from './connector-auth.mjs'
 import {getAudienceBundle,getLeadProfile} from './lead-ops.mjs'
+import {consentAllows} from './consent.mjs'
 
 const credentialFor=async(workspaceId,connector)=>{
   const result=await connectorCredential(workspaceId,connector)
   return result.token
+}
+
+const eligibleAudienceMembers=async(workspaceId,bundle)=>{
+  const eligible=[]
+  for(const member of bundle.members){
+    const subjectType=member.profile_attributes?.consentSubjectType==='visitor'?'visitor':'customer'
+    const subjectId=member.profile_attributes?.consentSubjectId||member.external_lead_id
+    const consent=await consentAllows(workspaceId,{subjectType,subjectId,category:'marketing'}).catch(()=>({allowed:false}))
+    if(consent.allowed) eligible.push(member)
+  }
+  return eligible
 }
 
 const requestJson=async(url,options={})=>{
@@ -25,6 +37,8 @@ const metaAudience=async(workspaceId,audienceId)=>{
   const bundle=await getAudienceBundle(workspaceId,audienceId)
   if(!bundle) throw new Error('audience not found')
   if(!bundle.members.length) throw new Error('audience has no materialized members')
+  const members=await eligibleAudienceMembers(workspaceId,bundle)
+  if(!members.length) throw new Error('audience has no members with marketing consent')
   const token=await credentialFor(workspaceId,'Meta Ads')
   const accessToken=token.access_token
   const adAccount=String(process.env.META_AD_ACCOUNT_ID||'').replace(/^act_/,'')
@@ -47,15 +61,14 @@ const metaAudience=async(workspaceId,audienceId)=>{
     externalId=created.body?.id
     if(!externalId) throw new Error('Meta did not return a custom audience id')
   }
-  const data=[]
-  for(const member of bundle.members){
-    const row=[]
-    if(member.email_sha256) row.push(member.email_sha256)
-    if(member.phone_sha256) row.push(member.phone_sha256)
-    if(row.length) data.push(row)
-  }
-  if(!data.length) throw new Error('Meta audience requires hashed email or phone identifiers')
-  const schema=['EMAIL','PHONE']
+  const identityMode=String(bundle.audience.identity_mode||'auto').toLowerCase()
+  const hasContact=members.some(member=>member.email_sha256||member.phone_sha256)
+  const useDevice=identityMode==='device'||(identityMode==='auto'&&!hasContact)
+  const schema=useDevice?['MADID']:['EMAIL','PHONE']
+  const data=useDevice
+    ? members.filter(member=>member.device_id).map(member=>[member.device_id])
+    : members.filter(member=>member.email_sha256||member.phone_sha256).map(member=>[member.email_sha256||'',member.phone_sha256||''])
+  if(!data.length) throw new Error(useDevice?'Meta device audience requires first-party mobile advertising IDs':'Meta audience requires hashed email or phone identifiers')
   const chunks=[]
   for(let i=0;i<data.length;i+=10000) chunks.push(data.slice(i,i+10000))
   let received=0
@@ -86,15 +99,22 @@ const googleAudience=async(workspaceId,audienceId)=>{
   const bundle=await getAudienceBundle(workspaceId,audienceId)
   if(!bundle) throw new Error('audience not found')
   if(!bundle.members.length) throw new Error('audience has no materialized members')
+  const members=await eligibleAudienceMembers(workspaceId,bundle)
+  if(!members.length) throw new Error('audience has no members with marketing consent')
   const customerId=String(process.env.GOOGLE_ADS_CUSTOMER_ID||'').replace(/-/g,'')
   if(!customerId) throw new Error('GOOGLE_ADS_CUSTOMER_ID is required')
   const version=process.env.GOOGLE_ADS_API_VERSION||'v25'
   const headers=await googleHeaders(workspaceId)
+  const identityMode=String(bundle.audience.identity_mode||'auto').toLowerCase()
+  const hasContact=members.some(member=>member.email_sha256||member.phone_sha256)
+  const useDevice=identityMode==='device'||(identityMode==='auto'&&!hasContact)
+  const appId=members.find(member=>member.app_id)?.app_id||process.env.GOOGLE_CUSTOMER_MATCH_APP_ID||''
+  if(useDevice&&!appId) throw new Error('Google mobile-ID audience requires appId on the profile or GOOGLE_CUSTOMER_MATCH_APP_ID')
   let userList=bundle.audience.provider_state?.google?.externalId
   if(!userList){
     const created=await requestJson(`https://googleads.googleapis.com/${version}/customers/${customerId}/userLists:mutate`,{
       method:'POST',headers,
-      body:JSON.stringify({operations:[{create:{name:bundle.audience.name,description:'AceMarketing '+bundle.audience.id,membershipStatus:'OPEN',membershipLifeSpan:540,crmBasedUserList:{uploadKeyType:'CONTACT_INFO'}}}],partialFailure:false})
+      body:JSON.stringify({operations:[{create:{name:bundle.audience.name,description:'AceMarketing '+bundle.audience.id,membershipStatus:'OPEN',membershipLifeSpan:540,crmBasedUserList:useDevice?{uploadKeyType:'MOBILE_ADVERTISING_ID',appId}:{uploadKeyType:'CONTACT_INFO'}}}],partialFailure:false})
     })
     userList=created.body?.results?.[0]?.resourceName
     if(!userList) throw new Error('Google Ads did not return a user list resource name')
@@ -105,13 +125,17 @@ const googleAudience=async(workspaceId,audienceId)=>{
   })
   const job=createdJob.body?.resourceName
   if(!job) throw new Error('Google Ads did not return an offline user data job')
-  const operations=bundle.members.map(member=>{
+  const operations=members.map(member=>{
     const userIdentifiers=[]
-    if(member.email_sha256) userIdentifiers.push({hashedEmail:member.email_sha256})
-    if(member.phone_sha256) userIdentifiers.push({hashedPhoneNumber:member.phone_sha256})
+    if(useDevice){
+      if(member.device_id) userIdentifiers.push({mobileId:member.device_id})
+    }else{
+      if(member.email_sha256) userIdentifiers.push({hashedEmail:member.email_sha256})
+      if(member.phone_sha256) userIdentifiers.push({hashedPhoneNumber:member.phone_sha256})
+    }
     return {[bundle.audience.mode.toLowerCase()==='suppress'?'remove':'create']:{userIdentifiers}}
   }).filter(op=>Object.values(op)[0].userIdentifiers.length)
-  if(!operations.length) throw new Error('Google audience requires hashed email or phone identifiers')
+  if(!operations.length) throw new Error(useDevice?'Google audience requires mobile advertising IDs':'Google audience requires hashed email or phone identifiers')
   for(let i=0;i<operations.length;i+=10000){
     await requestJson(`https://googleads.googleapis.com/${version}/${job}:addOperations`,{
       method:'POST',headers,
