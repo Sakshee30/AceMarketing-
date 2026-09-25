@@ -27,6 +27,7 @@ export const saveLocalConsent=async(consent:Omit<AceConsent,'essential'>)=>{
   const visitorId=getVisitorId()
   try{await fetch('/api/consent',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subjectType:'visitor',subjectId:visitorId,...full,source:'web'})})}catch{}
   if(full.marketing)persistClickIds()
+  else{localStorage.removeItem('ace:gclid');localStorage.removeItem('ace:fbclid')}
   if(full.analytics)track({event:'consent_updated',eventCategory:'essential',properties:{analytics:full.analytics,marketing:full.marketing,personalization:full.personalization}})
   window.dispatchEvent(new CustomEvent('ace-consent-changed',{detail:full}))
   return full
