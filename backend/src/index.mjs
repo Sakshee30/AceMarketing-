@@ -1407,6 +1407,27 @@ const server = http.createServer(async (req,res)=>{
       }))
       return send(req,res,200,{items,generatedAt:new Date().toISOString()})
     }
+    if (req.method === 'POST' && url.pathname === '/api/sites') {
+      const body=await readBody(req)
+      const raw=String(body.domain||'').trim().toLowerCase()
+      const domain=raw.replace(/^https?:\/\//,'').split('/')[0]
+      if(!domain||!domain.includes('.')) return send(req,res,400,{error:'valid domain required'})
+      const environment=['production','staging','development'].includes(String(body.environment||'').toLowerCase())?String(body.environment).toLowerCase():'production'
+      const now=new Date().toISOString()
+      let item=null
+      await mutateState(s=>{
+        s.sites=s.sites||[]
+        const existing=s.sites.find(x=>String(x.domain).toLowerCase()===domain)
+        if(existing){existing.environment=environment;existing.updatedAt=now;item={...existing};return}
+        item={id:'site_'+randomUUID(),domain,environment,createdAt:now}
+        s.sites.unshift(item)
+        s.sites=s.sites.slice(0,200)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'site.created',entityId:item.id,domain,environment,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,item?.createdAt===now?201:200,{item})
+    }
     if (req.method === 'POST' && url.pathname === '/api/sites/test') {
       const body=await readBody(req)
       if(!body.domain) return send(req,res,400,{error:'domain required'})
