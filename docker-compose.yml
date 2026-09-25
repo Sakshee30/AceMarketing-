@@ -1,0 +1,84 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-acemarketing}
+      POSTGRES_USER: ${POSTGRES_USER:-ace}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U ${POSTGRES_USER:-ace} -d ${POSTGRES_DB:-acemarketing}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [ace_internal]
+
+  migrate:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.api
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ace}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-acemarketing}
+      DB_SSL: disable
+    command: ["node","backend/scripts/migrate.mjs"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [ace_internal]
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ace}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-acemarketing}
+      PORT: 3001
+      NODE_ENV: production
+      ALLOW_FILE_STORE_IN_PRODUCTION: "false"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks: [ace_internal]
+    expose: ["3001"]
+
+  worker:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ace}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-acemarketing}
+      NODE_ENV: production
+      ALLOW_FILE_STORE_IN_PRODUCTION: "false"
+    command: ["node","backend/src/worker.mjs"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks: [ace_internal]
+
+  web:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.frontend
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${ACE_HTTP_PORT:-8080}:80"
+    networks: [ace_internal]
+
+volumes:
+  postgres_data:
+
+networks:
+  ace_internal:
+    driver: bridge
