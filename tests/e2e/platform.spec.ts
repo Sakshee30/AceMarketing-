@@ -23,13 +23,15 @@ test.describe('public product surface',()=>{
     })
   }
 
-  test('public navigation reaches agents and integrations',async({page})=>{
+  test('public navigation reaches agents and integrations',async({page,isMobile})=>{
     await page.goto('/#/')
+    if(isMobile) await page.locator('.menu-toggle').click()
     await page.getByRole('button',{name:/agents/i}).first().click()
     await expect(page).toHaveURL(/#\/agents/)
     await expect(page.locator('body')).toContainText(/Lead Grading/i)
 
     await page.goto('/#/')
+    if(isMobile) await page.locator('.menu-toggle').click()
     await page.getByRole('button',{name:/integrations/i}).first().click()
     await expect(page).toHaveURL(/#\/integrations/)
     await expect(page.locator('body')).toContainText(/Google Ads/i)
@@ -38,8 +40,11 @@ test.describe('public product surface',()=>{
 
 test.describe('workspace critical flows',()=>{
   test.beforeEach(async({page})=>{
-    await page.goto('/#/workspace')
-    await expect(page.getByText('Launchpad',{exact:true}).first()).toBeVisible()
+    await page.goto('/#/')
+    await page.evaluate(()=>{window.location.hash='#/workspace'})
+    await expect(page).toHaveURL(/#\/workspace/)
+    await expect(page.locator('.product-body')).toBeVisible()
+    await expect(page.locator('.product-body h1')).toContainText(/Launchpad/i)
   })
 
   test('core operating tabs render',async({page})=>{
@@ -92,7 +97,8 @@ test.describe('basic accessibility regression',()=>{
   })
 
   test('workspace has a single visible primary heading per selected surface',async({page})=>{
-    await page.goto('/#/workspace')
+    await page.goto('/#/')
+    await page.evaluate(()=>{window.location.hash='#/workspace'})
     await expect(page.locator('.product-body h1')).toHaveCount(1)
     await page.getByRole('button',{name:'Monitoring',exact:true}).click()
     await expect(page.locator('.product-body h1')).toHaveCount(1)
