@@ -1,5 +1,5 @@
 import http from 'node:http'
-import { randomUUID } from 'node:crypto'
+import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { URL } from 'node:url'
 import { createToken, verifyToken, verifyPassword, createRateLimiter, securityHeaders, resolveCorsOrigin } from './security.mjs'
 import { getState, mutateState } from './store.mjs'
@@ -302,7 +302,11 @@ const server = http.createServer(async (req,res)=>{
       return send(req,res,200,{sent:true,report:body.report,delivery:'email',at:new Date().toISOString()})
     }
     if (req.method === 'GET' && url.pathname === '/api/attribution') return send(req,res,200,{revenue:28400000,journeys:92418,averageTouches:5.4,channels:[['Google Ads',42],['Meta Ads',26],['WhatsApp',14],['Organic Search',11],['Direct / Other',7]]})
-    if (req.method === 'GET' && url.pathname === '/api/agents') return send(req,res,200,{items:agents.map((name,i)=>({name,status:i<7?'active':'available'}))})
+    if (req.method === 'GET' && url.pathname === '/api/agents') {
+      const state=await getState()
+      const builtIn=agents.map((name,i)=>({id:'builtin_'+i,name,status:i<7?'active':'available',type:'built_in'}))
+      return send(req,res,200,{items:[...builtIn,...(state.customAgents||[])]})
+    }
     if (req.method === 'GET' && url.pathname === '/api/lead-grading') return send(req,res,200,{version:'v1.6',items:[
       {lead:'Aarav Sharma',score:94,grade:'A',source:'google_ads',stage:'qualified'},
       {lead:'Meera Patel',score:78,grade:'B',source:'meta_ads',stage:'connected'},
@@ -410,6 +414,187 @@ const server = http.createServer(async (req,res)=>{
       {name:'HIPAA',status:'roadmap'},
       {name:'India DPDP',status:'roadmap'}
     ]})
+    if (req.method === 'GET' && url.pathname === '/api/launchpad') {
+      const state=await getState()
+      return send(req,res,200,state.launchpad||{})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/launchpad') {
+      const body=await readBody(req)
+      const updatedAt=new Date().toISOString()
+      await mutateState(s=>{
+        s.launchpad={...(s.launchpad||{}),...body,updatedAt}
+        s.audit.unshift({id:randomUUID(),action:'launchpad.updated',entityId:'workspace',at:updatedAt})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,200,{saved:true,updatedAt})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/identity') {
+      return send(req,res,200,{
+        profiles:56582,
+        stitchedProfiles:52911,
+        deterministicMatchRate:93.5,
+        identifiers:['email_sha256','phone_sha256','gclid','fbclid','crm_contact_id'],
+        rules:[
+          {priority:1,key:'crm_contact_id',mode:'exact'},
+          {priority:2,key:'email_sha256',mode:'exact'},
+          {priority:3,key:'phone_sha256',mode:'exact'},
+          {priority:4,key:'click_id + session',mode:'deterministic'}
+        ]
+      })
+    }
+    if (req.method === 'GET' && url.pathname === '/api/models') {
+      const state=await getState()
+      return send(req,res,200,{items:[
+        {name:'Lead Propensity',version:'v1.6',status:'active',metric:'AUC',score:0.87},
+        {name:'Conversion Probability',version:'v1.3',status:'active',metric:'AUC',score:0.84},
+        {name:'Revenue Quality',version:'v1.1',status:'shadow',metric:'precision',score:0.79}
+      ],runs:(state.agentRuns||[]).filter(x=>x.kind==='model').slice(0,20)})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/models/run') {
+      const body=await readBody(req)
+      if(!body.name) return send(req,res,400,{error:'name required'})
+      const run={id:'modelrun_'+randomUUID(),kind:'model',name:String(body.name),status:'completed',rowsScored:56582,startedAt:new Date().toISOString(),completedAt:new Date().toISOString()}
+      await mutateState(s=>{
+        s.agentRuns=s.agentRuns||[]
+        s.agentRuns.unshift(run)
+        s.agentRuns=s.agentRuns.slice(0,500)
+        s.audit.unshift({id:randomUUID(),action:'model.run',entityId:run.id,at:run.completedAt})
+      })
+      return send(req,res,202,run)
+    }
+    if (req.method === 'GET' && url.pathname === '/api/routing') {
+      return send(req,res,200,{rules:[
+        {id:'rr_1',name:'High-intent education lead',when:'grade = A AND course IS NOT NULL',destination:'Senior counsellor pool',slaSeconds:60,status:'active'},
+        {id:'rr_2',name:'WhatsApp re-engagement',when:'source = whatsapp AND stage = connected',destination:'WhatsApp nurture',slaSeconds:180,status:'active'},
+        {id:'rr_3',name:'Low confidence review',when:'identity_confidence < 0.65',destination:'Manual review',slaSeconds:900,status:'active'}
+      ]})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/routing/test') {
+      const body=await readBody(req)
+      if(!body.rule) return send(req,res,400,{error:'rule required'})
+      return send(req,res,200,{rule:String(body.rule),matched:true,destination:'Senior counsellor pool',reason:'grade=A and required context present',evaluatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/follow-ups') {
+      const state=await getState()
+      return send(req,res,200,{items:state.followUps||[]})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/follow-ups/complete') {
+      const body=await readBody(req)
+      if(!body.id) return send(req,res,400,{error:'id required'})
+      let updated=null
+      await mutateState(s=>{
+        s.followUps=s.followUps||[]
+        const item=s.followUps.find(x=>x.id===body.id)
+        if(item){item.status='completed';item.completedAt=new Date().toISOString();updated={...item}}
+        s.audit.unshift({id:randomUUID(),action:'followup.completed',entityId:String(body.id),at:new Date().toISOString()})
+      })
+      return updated?send(req,res,200,updated):send(req,res,404,{error:'follow-up not found'})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/qualification-calls') {
+      const state=await getState()
+      return send(req,res,200,{items:state.qualificationCalls||[]})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/qualification-calls/retry') {
+      const body=await readBody(req)
+      if(!body.id) return send(req,res,400,{error:'id required'})
+      let updated=null
+      await mutateState(s=>{
+        s.qualificationCalls=s.qualificationCalls||[]
+        const item=s.qualificationCalls.find(x=>x.id===body.id)
+        if(item){item.status='queued';item.attempts=Number(item.attempts||0)+1;item.lastAttemptAt=new Date().toISOString();updated={...item}}
+        s.audit.unshift({id:randomUUID(),action:'qualification.retry_queued',entityId:String(body.id),at:new Date().toISOString()})
+      })
+      return updated?send(req,res,202,updated):send(req,res,404,{error:'qualification call not found'})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/meetings') {
+      const state=await getState()
+      return send(req,res,200,{items:state.meetings||[]})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/meetings/remind') {
+      const body=await readBody(req)
+      if(!body.id) return send(req,res,400,{error:'id required'})
+      let updated=null
+      await mutateState(s=>{
+        s.meetings=s.meetings||[]
+        const item=s.meetings.find(x=>x.id===body.id)
+        if(item){item.remindersSent=Number(item.remindersSent||0)+1;item.lastReminderAt=new Date().toISOString();updated={...item}}
+        s.audit.unshift({id:randomUUID(),action:'meeting.reminder_sent',entityId:String(body.id),at:new Date().toISOString()})
+      })
+      return updated?send(req,res,200,updated):send(req,res,404,{error:'meeting not found'})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/feedback') {
+      const state=await getState()
+      const items=state.feedback||[]
+      const average=items.length?Number((items.reduce((n,x)=>n+Number(x.score||0),0)/items.length).toFixed(2)):0
+      return send(req,res,200,{average,items})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/approvals') {
+      const state=await getState()
+      return send(req,res,200,{items:state.approvals||[]})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/approvals/decision') {
+      const body=await readBody(req)
+      if(!body.id || !['approved','rejected'].includes(body.decision)) return send(req,res,400,{error:'id and approved|rejected decision required'})
+      let updated=null
+      await mutateState(s=>{
+        s.approvals=s.approvals||[]
+        const item=s.approvals.find(x=>x.id===body.id)
+        if(item){
+          item.status=body.decision
+          item.decidedAt=new Date().toISOString()
+          updated={...item}
+          if(item.agentId){
+            const agent=(s.customAgents||[]).find(x=>x.id===item.agentId)
+            if(agent) agent.status=body.decision==='approved'?'active':'rejected'
+          }
+        }
+        s.audit.unshift({id:randomUUID(),action:'approval.'+body.decision,entityId:String(body.id),at:new Date().toISOString()})
+      })
+      return updated?send(req,res,200,updated):send(req,res,404,{error:'approval not found'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/agents/custom') {
+      const body=await readBody(req)
+      if(!body.name || !body.trigger || !body.action) return send(req,res,400,{error:'name, trigger and action required'})
+      const createdAt=new Date().toISOString()
+      const requiresApproval=body.requiresApproval!==false
+      const agent={id:'agent_'+randomUUID(),name:String(body.name),trigger:String(body.trigger),action:String(body.action),description:String(body.description||''),status:requiresApproval?'pending_approval':'active',type:'custom',createdAt}
+      await mutateState(s=>{
+        s.customAgents=s.customAgents||[]
+        s.customAgents.unshift(agent)
+        if(requiresApproval){
+          s.approvals=s.approvals||[]
+          s.approvals.unshift({id:'ap_'+randomUUID(),kind:'custom_agent_activation',title:'Activate custom agent: '+agent.name,status:'pending',risk:String(body.risk||'medium'),agentId:agent.id,createdAt})
+        }
+        s.audit.unshift({id:randomUUID(),action:'agent.custom_created',entityId:agent.id,at:createdAt})
+      })
+      return send(req,res,201,agent)
+    }
+    if (req.method === 'GET' && url.pathname === '/api/settings') {
+      const state=await getState()
+      return send(req,res,200,state.workspaceSettings||{})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/workspaces') {
+      const state=await getState()
+      return send(req,res,200,{items:state.workspaces||[]})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/audit-log') {
+      const state=await getState()
+      return send(req,res,200,{items:(state.audit||[]).slice(0,250)})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/api-keys') {
+      const body=await readBody(req)
+      const label=String(body.name||'workspace')
+      const secret='ace_'+randomBytes(24).toString('base64url')
+      const fingerprint=createHash('sha256').update(secret).digest('hex')
+      const createdAt=new Date().toISOString()
+      const record={id:'key_'+randomUUID(),name:label,prefix:secret.slice(0,12),fingerprint,status:'active',createdAt}
+      await mutateState(s=>{
+        s.apiKeys=s.apiKeys||[]
+        s.apiKeys.unshift(record)
+        s.audit.unshift({id:randomUUID(),action:'api_key.created',entityId:record.id,at:createdAt})
+      })
+      return send(req,res,201,{id:record.id,name:record.name,prefix:record.prefix,key:secret,createdAt,notice:'Store this key now; only its SHA-256 fingerprint is persisted.'})
+    }
     return send(req,res,404,{error:'not found'})
   } catch (error) {
     return send(req,res,500,{error:error instanceof Error?error.message:'internal error'})
