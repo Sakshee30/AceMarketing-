@@ -1749,7 +1749,9 @@ function Product({back}:{back:()=>void}){
   try{return {...Object.fromEntries(dashboardSections.map(s=>[s.id,true])),...JSON.parse(window.localStorage.getItem('ace_nav_sections')||'{}')}}catch{return Object.fromEntries(dashboardSections.map(s=>[s.id,true]))}
  })
  const [navFilter,setNavFilter]=useState('')
+ const [sectionSummary,setSectionSummary]=useState<any>(null)
  useEffect(()=>{api.workspaces().then((r:any)=>{if(r.items?.length){setWorkspaces(r.items);if(!r.items.some((x:any)=>x.name===workspace))setWorkspace(r.items[0].name)}}).catch(()=>null)},[])
+ useEffect(()=>{const load=()=>api.dashboardSummary().then((r:any)=>setSectionSummary(r)).catch(()=>null);load();const id=setInterval(load,30000);return()=>clearInterval(id)},[])
  useEffect(()=>{window.localStorage.setItem('ace_active_tab',tab)},[tab])
  useEffect(()=>{window.localStorage.setItem('ace_nav_sections',JSON.stringify(navOpen))},[navOpen])
  useEffect(()=>{const section=dashboardSections.find(s=>s.tabs.includes(tab as any));if(section&&!navOpen[section.id])setNavOpen(x=>({...x,[section.id]:true}))},[tab])
@@ -1787,7 +1789,17 @@ function Product({back}:{back:()=>void}){
   </div>
  })}
  </nav><div className="aside-footer"><button onClick={back}><ArrowRight/>Back to website</button><div className="profile-mini"><span>S</span><div><b>Sakshee</b><small>Workspace owner</small></div></div></div></aside>
- <main className="product-main"><header className="product-head"><div className="global-search operational-search"><Search/><input value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>e.key==='Enter'&&runSearch()} placeholder="Search journeys, leads, campaigns, settings..."/>{searchMatches.length>0&&<div className="global-search-results">{searchMatches.map(([name,I])=><button key={name} onClick={()=>runSearch(name)}><I/><span>{name}</span><ArrowRight/></button>)}</div>}</div><div><button className="sync sync-button" onClick={()=>setTab('Monitoring')}>● Monitoring</button><button aria-label="Support" onClick={()=>setTab('Settings')} title="Open workspace support/settings"><Headphones/></button><button aria-label="Region and language" onClick={()=>setRegionOpen(x=>!x)}><Globe2/></button><span className="avatar-sm">S</span>{regionOpen&&<div className="region-popover"><b>Workspace locale</b><span>Timezone · Asia/Kolkata</span><span>Currency · INR</span><button onClick={()=>{setRegionOpen(false);setTab('Settings')}}>Change in Settings</button></div>}</div></header><div className="product-body">{view}</div></main>
+ <main className="product-main"><header className="product-head"><div className="global-search operational-search"><Search/><input value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>e.key==='Enter'&&runSearch()} placeholder="Search journeys, leads, campaigns, settings..."/>{searchMatches.length>0&&<div className="global-search-results">{searchMatches.map(([name,I])=><button key={name} onClick={()=>runSearch(name)}><I/><span>{name}</span><ArrowRight/></button>)}</div>}</div><div><button className="sync sync-button" onClick={()=>setTab('Monitoring')}>● Monitoring</button><button aria-label="Support" onClick={()=>setTab('Settings')} title="Open workspace support/settings"><Headphones/></button><button aria-label="Region and language" onClick={()=>setRegionOpen(x=>!x)}><Globe2/></button><span className="avatar-sm">S</span>{regionOpen&&<div className="region-popover"><b>Workspace locale</b><span>Timezone · Asia/Kolkata</span><span>Currency · INR</span><button onClick={()=>{setRegionOpen(false);setTab('Settings')}}>Change in Settings</button></div>}</div></header>
+ <div className="product-section-strip" aria-label="Dashboard sections">
+  {dashboardSections.map((section:any)=>{
+   const Icon=section.icon
+   const active=section.tabs.includes(tab as any)
+   const area=(sectionSummary?.areas||[]).find((x:any)=>x.key===section.id||x.key===(section.id==='workspace'?'operations':section.id))
+   const target=section.id==='workspace'?'Overview':section.tabs[0]
+   return <button key={section.id} className={active?'active':''} onClick={()=>setTab(target as AppTab)}><span><Icon/></span><div><b>{section.label}</b><small>{area?.ready?'Ready':sectionSummary?'Needs setup':'Checking…'}</small></div><i className={area?.ready?'ready':'setup'}/></button>
+  })}
+ </div>
+ <div className="product-body">{view}</div></main>
  {createOpen&&<div className="connector-modal"><div className="connector-card"><div className="connector-modal-head"><div><Building2/><div><b>Create workspace</b><small>Create a persisted tenant workspace.</small></div></div><button onClick={()=>setCreateOpen(false)}><X/></button></div><div className="connector-step"><label>Workspace name<input value={workspaceDraft.name} onChange={e=>setWorkspaceDraft({...workspaceDraft,name:e.target.value})} placeholder="Ace Retail"/></label><label>Environment<select value={workspaceDraft.environment} onChange={e=>setWorkspaceDraft({...workspaceDraft,environment:e.target.value})}><option>Production</option><option>Sandbox</option></select></label><button disabled={workspaceBusy||!workspaceDraft.name.trim()} onClick={createWorkspace}>{workspaceBusy?'Creating…':'Create workspace'}</button></div></div></div>}
  </div>
 }
