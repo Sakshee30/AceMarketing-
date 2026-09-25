@@ -1699,3 +1699,38 @@ CONNECTOR_OAUTH_STATE_SECRET=<random secret of at least 32 characters>
 ```
 
 If `CONNECTOR_OAUTH_STATE_SECRET` is omitted, AceMarketing falls back to `JWT_SECRET`; a dedicated secret is recommended so connector state signing can be rotated independently.
+
+
+## Secure custom integration runtime pass
+
+The Custom Integration feature now performs real, guarded connection validation instead of returning a simulated success response.
+
+Implemented:
+- `backend/migrations/007_custom_integrations.sql`;
+- `backend/src/custom-integrations.mjs`;
+- persisted custom integration definitions and connection-test history;
+- encrypted Bearer/API-key/Basic credentials using the existing AES-256-GCM connector vault;
+- credentials are never returned by list APIs;
+- HTTPS-only outbound tests by default;
+- DNS resolution before every request;
+- blocking for localhost, loopback, RFC1918 private networks, link-local ranges, carrier-grade NAT and reserved/multicast ranges;
+- cross-origin redirects are blocked to avoid credential leakage and redirect-based SSRF bypass;
+- outbound tests have a configurable timeout;
+- health, HTTP status, latency, error and last-tested timestamp are persisted;
+- the frontend no longer replaces a failed connection test with a fake `200 OK`;
+- custom integrations are loaded from the backend and can be re-tested from the workspace UI.
+
+New/expanded APIs:
+- `GET /api/custom-integrations`
+- `POST /api/custom-integrations`
+- `POST /api/custom-integrations/test`
+
+Configuration:
+
+```text
+CUSTOM_INTEGRATION_TIMEOUT_MS=5000
+CUSTOM_INTEGRATION_DB_POOL_MAX=10
+CUSTOM_INTEGRATION_ALLOW_HTTP=false
+```
+
+Production should leave `CUSTOM_INTEGRATION_ALLOW_HTTP=false`. The HTTP override exists only for controlled local development.
