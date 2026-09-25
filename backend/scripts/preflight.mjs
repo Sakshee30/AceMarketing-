@@ -16,6 +16,12 @@ if(!process.env.MEETING_REMINDER_WEBHOOK_URL)agentTransportMissing.push('MEETING
 if(!process.env.FEEDBACK_WEBHOOK_URL)agentTransportMissing.push('FEEDBACK_WEBHOOK_URL')
 if(!process.env.AGENT_WEBHOOK_SECRET)agentTransportMissing.push('AGENT_WEBHOOK_SECRET')
 if(agentTransportMissing.length)weak.push('agent transports incomplete: '+agentTransportMissing.join(', '))
+const whatsappMissing=[]
+if(!process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN)whatsappMissing.push('WHATSAPP_WEBHOOK_VERIFY_TOKEN')
+if(!process.env.WHATSAPP_APP_SECRET&&!process.env.META_OAUTH_CLIENT_SECRET)whatsappMissing.push('WHATSAPP_APP_SECRET')
+if(!process.env.WHATSAPP_PHONE_NUMBER_ID)whatsappMissing.push('WHATSAPP_PHONE_NUMBER_ID')
+if(!process.env.WHATSAPP_WEBHOOK_WORKSPACE_ID&&!process.env.WHATSAPP_PHONE_WORKSPACE_MAP)whatsappMissing.push('WHATSAPP_WEBHOOK_WORKSPACE_ID or WHATSAPP_PHONE_WORKSPACE_MAP')
+if(whatsappMissing.length)weak.push('WhatsApp Cloud API incomplete: '+whatsappMissing.join(', '))
 if(missing.length||weak.length){
   console.error(JSON.stringify({ok:false,missing,issues:weak},null,2))
   process.exit(1)
