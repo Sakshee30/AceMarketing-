@@ -149,6 +149,17 @@ const server = http.createServer(async (req,res)=>{
       {name:'PGDM Retargeting',channel:'Meta Ads',leads:1510,qualified:903,appointments:527,consultations:210,bookings:96}
     ]})
     if (req.method === 'GET' && url.pathname === '/api/live-sync') return send(res,200,{status:'always_on',medianLatencySeconds:42,deliveryRate:99.82,eventsPerMinute:8412,recent:trackedEvents.slice(-25).reverse()})
+    if (req.method === 'GET' && url.pathname === '/api/pos-stores') return send(res,200,{locations:[
+      {name:'Delhi Flagship',id:'DL-01',transactions:2184,revenue:4860000,matchRate:96.2},
+      {name:'Noida Center',id:'NOI-02',transactions:1476,revenue:3180000,matchRate:94.7},
+      {name:'Mumbai Experience',id:'MUM-03',transactions:1128,revenue:2740000,matchRate:91.9},
+      {name:'Bengaluru Center',id:'BLR-04',transactions:986,revenue:2210000,matchRate:95.4}
+    ]})
+    if (req.method === 'POST' && url.pathname === '/api/pos-stores/import') {
+      const body=await readBody(req)
+      if(!body.location || !body.records) return send(res,400,{error:'location and records required'})
+      return send(res,202,{batchId:randomUUID(),location:body.location,records:body.records,status:'queued',queuedAt:new Date().toISOString()})
+    }
     if (req.method === 'GET' && url.pathname === '/api/offline-attribution') return send(res,200,{
       callAttribution:{matched:4218,matchRate:91.6,method:'timestamp_overlap'},
       whatsapp:{matched:6904,identifiers:['gclid','fbclid','phone']},
