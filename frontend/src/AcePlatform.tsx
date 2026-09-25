@@ -1109,7 +1109,7 @@ function Calls(){
   setBusy('schedule');setNotice('')
   try{
    const startsAt=new Date(scheduleAt).toISOString()
-   await api.createMeeting({leadRef:current.lead,startsAt,owner:'Unassigned',reminderPlan:['whatsapp']})
+   await api.createMeeting({leadRef:current.lead,startsAt,owner:'Unassigned',reminderPlan:['voice'],attendeePhone:current.from||'',syncCalendar:true})
    setNotice('Consultation created. It is now available in Meetings for reminder operations.')
    setScheduleAt('')
   }catch(e:any){setNotice(e?.message||'Meeting could not be created.')}
@@ -1135,7 +1135,7 @@ function Meetings(){
  const load=async()=>{
   try{
    const r:any=await api.meetings()
-   const mapped=(r.items||[]).map((x:any)=>({id:x.id,lead:x.lead_ref,time:new Date(x.starts_at).toLocaleString(),startsAt:x.starts_at,owner:x.owner,status:String(x.status||'confirmed').replace(/^./,(m:string)=>m.toUpperCase()),reminder:(x.reminder_plan||[]).join(' + ')||'Voice',risk:String(x.no_show_risk||'low').replace(/^./,(m:string)=>m.toUpperCase()),remindersSent:Number(x.reminders_sent||0),lastReminderAt:x.last_reminder_at,calendarId:x.external_calendar_id||''}))
+   const mapped=(r.items||[]).map((x:any)=>({id:x.id,lead:x.lead_ref,time:new Date(x.starts_at).toLocaleString(),startsAt:x.starts_at,owner:x.owner,status:String(x.status||'confirmed').replace(/^./,(m:string)=>m.toUpperCase()),reminder:(x.reminder_plan||[]).join(' + ')||'Voice',risk:String(x.no_show_risk||'low').replace(/^./,(m:string)=>m.toUpperCase()),remindersSent:Number(x.reminders_sent||0),lastReminderAt:x.last_reminder_at,calendarId:x.external_calendar_id||'',meetingLink:x.meeting_link||'',calendarHtmlLink:x.calendar_html_link||'',attendeeEmail:x.attendee_email||'',attendeePhone:x.attendee_phone||''}))
    setMeetings(mapped)
    setSelected(x=>x&&mapped.some((m:any)=>m.id===x)?x:(mapped[0]?.id||''))
   }catch(e:any){setNotice(e?.message||'Meetings could not be loaded.')}
@@ -1173,7 +1173,7 @@ function Meetings(){
  {notice&&<div className="delivery-notice ok"><CheckCircle2/><span>{notice}</span></div>}
  <div className="stats-grid"><Stat label="Upcoming meetings" value={String(upcoming)} sub="Persisted scheduled consultations" Icon={CalendarDays}/><Stat label="Calendar synced" value={String(withCalendar)} sub="Meetings with external event IDs" Icon={CheckCircle2}/><Stat label="No-show risk" value={String(highRisk)} sub="High / medium risk meetings" Icon={Activity}/><Stat label="Reminders sent" value={String(reminders)} sub="Persisted reminder executions" Icon={MessageCircle}/></div>
  <div className="meeting-layout"><div className="app-panel meeting-list"><div className="panel-head"><div><h3>Upcoming consultations</h3><p>Persisted calendar + reminder state</p></div><button onClick={load}>Refresh</button></div>{meetings.length?meetings.map(x=><button key={x.id} className={selected===x.id?'selected':''} onClick={()=>setSelected(x.id)}><CalendarDays/><div><b>{x.lead}</b><small>{x.time} · {x.owner}</small></div><span className={x.risk.toLowerCase()}>{x.risk} risk</span><ChevronRight/></button>):<div className="empty-delivery-state"><CalendarDays/><div><b>No meetings scheduled yet</b><small>Schedule one from Calls or connect Google Calendar and create a consultation.</small></div></div>}</div>
- {current?<div className="app-panel meeting-detail"><div className="panel-head"><div><h3>{current.lead}</h3><p>{current.time}</p></div><span className="status">{current.status}</span></div><div className="meeting-info-grid">{[['Owner',current.owner],['Reminder plan',current.reminder],['No-show risk',current.risk],['Calendar',current.calendarId?'Google Calendar synced':'Not synced'],['Reminders sent',String(current.remindersSent||0)],['Last reminder',current.lastReminderAt?new Date(current.lastReminderAt).toLocaleString():'—']].map(x=><div key={x[0]}><span>{x[0]}</span><b>{x[1]}</b></div>)}</div>
+ {current?<div className="app-panel meeting-detail"><div className="panel-head"><div><h3>{current.lead}</h3><p>{current.time}</p></div><span className="status">{current.status}</span></div><div className="meeting-info-grid">{[['Owner',current.owner],['Reminder plan',current.reminder],['No-show risk',current.risk],['Calendar',current.calendarId?'Google Calendar synced':'Not synced'],['Attendee',current.attendeeEmail||current.attendeePhone||'Not provided'],['Meeting link',current.meetingLink?'Available':'—'],['Reminders sent',String(current.remindersSent||0)],['Last reminder',current.lastReminderAt?new Date(current.lastReminderAt).toLocaleString():'—']].map(x=><div key={x[0]}><span>{x[0]}</span><b>{x[1]}</b></div>)}</div>
  <div className="meeting-reminder-flow">{[['T−24h','Primary reminder'],['T−3h','Follow-up reminder'],['T−30m','Final confirmation'],['T+15m','No-show recovery if needed']].map((x,i)=><div key={x[0]}><span>{i+1}</span><div><b>{x[0]}</b><small>{x[1]}</small></div></div>)}</div>
  <div className="call-schedule-box"><label>New meeting time<input type="datetime-local" value={newTime} onChange={e=>setNewTime(e.target.value)}/></label><button disabled={!newTime||busy==='reschedule'} onClick={reschedule}>{busy==='reschedule'?'Updating…':'Reschedule'}</button></div>
  <div className="approval-actions"><button className="approve" disabled={busy==='remind'} onClick={()=>remind(current.id)}><MessageCircle/>{busy==='remind'?'Queuing…':'Send reminder now'}</button></div></div>:<div className="app-panel meeting-detail"><div className="empty-delivery-state"><CalendarDays/><div><b>Select a meeting</b><small>Calendar and reminder operations appear here.</small></div></div></div>}</div></>
@@ -1238,7 +1238,7 @@ function Integrations(){
   ['WhatsApp & Marketing Platforms',['WhatsApp','Bitespeed','AiSensy','Gupshup','WATI','MoEngage','CleverTap']],
   ['Calling Platforms',['Exotel','Knowlarity','Tata Tele','MyOperator']],
   ['Website & App Platforms',['Shopify','WooCommerce','Magento','WordPress','React App','Custom Backend']],
-  ['Advertising & Analytics',['Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads / Bing Ads','X','Pinterest','GA4']]
+  ['Advertising & Analytics',['Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads / Bing Ads','X','Pinterest','GA4','Google Calendar']]
  ]
  const [connector,setConnector]=useState('')
  const [step,setStep]=useState(1)
