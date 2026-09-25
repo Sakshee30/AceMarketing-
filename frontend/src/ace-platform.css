@@ -455,3 +455,75 @@
 .agent-public-grid article{min-height:250px}
 @media(max-width:1050px){.agent-public-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:650px){.agent-public-grid{grid-template-columns:1fr}}
+
+/* 2026-09-25 screenshot precision pass */
+.marketing-page,.public-route-page,.public-detail-page{
+  --public-max:1380px;
+  --public-pad:74px;
+  font-family:'Inter',Arial,sans-serif;
+}
+@media(min-width:1221px){
+  .ei-header{padding-left:74px;padding-right:74px;grid-template-columns:250px minmax(650px,1fr) 330px}
+  .ei-nav{gap:47px}
+  .ei-nav-item{font-size:16px;line-height:1;font-weight:500}
+  .ei-mega-menu{font-size:14px}
+  .agents-menu{width:1082px!important;padding:38px 42px 44px!important}
+  .ei-agent-list{grid-template-columns:1fr 1fr;column-gap:52px}
+  .ei-agent-list>button{min-height:68px;padding:7px 8px;border-radius:10px}
+  .ei-agent-icon{width:47px;height:47px}
+  .ei-agent-list b{font-size:14px}
+  .ei-agent-list p{font-size:11px;max-width:360px}
+  .resources-menu{width:970px!important}
+}
+.ei-promo-bar{font-weight:500}
+.ei-hero-copy h1,.public-detail-hero h1,.pricing-hero h1,.standalone-hero h1{
+  font-family:'Inter',Arial,sans-serif;
+  font-weight:500;
+}
+.ei-hero-copy p,.public-detail-hero p,.pricing-hero p,.standalone-hero p{
+  font-family:'Inter',Arial,sans-serif;
+  font-weight:400;
+}
+
+/* footer mirrors the supplied EasyInsights spacing/scale while keeping AceMarketing content */
+.ei-footer{padding:72px 6.4% 22px;background:#0f0319}
+.ei-footer-top{
+  max-width:1362px;
+  grid-template-columns:1.55fr .72fr 1fr .92fr;
+  gap:76px;
+  min-height:182px;
+}
+.ei-footer-brand .ace-brand{font-size:28px}
+.ei-footer-brand p{font-size:13px;line-height:1.62;margin:25px 0 24px;max-width:330px}
+.ei-footer-demo{font-size:12px!important}
+.ei-footer-column h4{font-size:12px;margin-bottom:16px}
+.ei-footer-column button{font-size:12px!important;padding:5px 0!important;color:#aa99b8!important}
+.ei-footer-meta{
+  max-width:1362px;
+  margin:34px auto 0;
+  padding-top:22px;
+  border-top:1px solid rgba(255,255,255,.08);
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:70px;
+}
+.ei-footer-meta>div{display:grid;grid-template-columns:110px 1fr;gap:14px;align-items:start}
+.ei-footer-meta b{font-size:11px;color:#fff}
+.ei-footer-meta span{font-size:10px;line-height:1.5;color:#82728f}
+.ei-footer-legal{margin-top:22px;padding-top:16px}
+.ei-footer-legal>div{display:flex;align-items:center;gap:10px}
+.ei-footer-legal>div>span{color:#56465f}
+@media(max-width:900px){
+ .ei-footer-meta{grid-template-columns:1fr;gap:16px}
+ .ei-footer-meta>div{grid-template-columns:100px 1fr}
+}
+@media(max-width:560px){
+ .ei-footer-meta>div{grid-template-columns:1fr}
+}
+
+/* Pricing reference density */
+.pricing-agent-grid{gap:10px}
+.pricing-agent-grid article{border-radius:11px}
+.pricing-agent-grid article h3{font-weight:600}
+.pricing-agent-grid article p{line-height:1.48}
+.pricing-card,.pricing-agent-grid article,.pricing-summary{font-family:'Inter',Arial,sans-serif}
