@@ -1060,3 +1060,20 @@ Changes:
 - AceMarketing branding and original artwork remain unchanged.
 
 Current EasyInsights public navigation was rechecked before this pass and currently exposes Industries, Agents, Case Studies, Integrations, Pricing and Resources, with the 11-agent list and the listed resource categories.
+
+
+## Homepage parity pass: agents, proof, data diagnosis and security
+
+The public homepage now follows the current EasyInsights information flow more closely beyond the navbar, hero and problem tabs.
+
+Added/refined:
+- 11-agent section grouped into Lead Quality, Conversion and Visibility;
+- agent cards with reference impact metrics, descriptions and action links;
+- custom-agent callout;
+- "Proof, not promises" style case-study result grid using clearly labeled external/reference results;
+- campaign/data root-cause banner before diagnostics;
+- "Your data stays yours" style security/data-ownership section;
+- certification-style items remain explicitly presented as roadmap/control targets until independently verified;
+- responsive layouts for all new sections.
+
+The current EasyInsights public homepage was rechecked before this pass. The UI structure and content hierarchy were used as a reference, while AceMarketing retains its own branding, original visual assets and independent code.
