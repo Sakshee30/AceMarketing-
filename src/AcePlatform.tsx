@@ -10,7 +10,7 @@ import './ace-platform.css'
 import { api } from './lib/api'
 
 type View='site'|'app'|'login'|'pricing'|'demo'|'company'|'resources'|'case-studies'|'privacy'|'terms'|'security'|'solutions'
-type AppTab='Overview'|'AdSync'|'Funnel'|'Events'|'Live Sync'|'Offline Attribution'|'Journeys'|'Attribution'|'Enrich'|'Behavior'|'Feed'|'Agents'|'Integrations'|'Audiences'|'Monitoring'|'Settings'
+type AppTab='Overview'|'AdSync'|'Funnel'|'Events'|'Live Sync'|'Offline Attribution'|'Journeys'|'Attribution'|'Enrich'|'Behavior'|'Feed'|'Agents'|'Ask Ace'|'Integrations'|'Audiences'|'Monitoring'|'Settings'
 
 const agents=[
  ['Meta Advanced CAPI','Return qualified outcomes to Meta server-side with deduplication.','Lead Quality','+25–40% ROAS'],
@@ -390,7 +390,7 @@ function Login({back,openApp}:{back:()=>void,openApp:()=>void}){
 }
 
 const appTabs=[
- ['Overview',Gauge],['AdSync',RadioTower],['Funnel',BarChart3],['Events',Zap],['Live Sync',Activity],['Offline Attribution',PhoneCall],['Journeys',Network],['Attribution',PieChart],['Enrich',DatabaseZap],['Behavior',MousePointer2],['Feed',Layers3],['Agents',Bot],['Integrations',Cable],['Audiences',UsersRound],['Monitoring',Activity],['Settings',Settings2]
+ ['Overview',Gauge],['AdSync',RadioTower],['Funnel',BarChart3],['Events',Zap],['Live Sync',Activity],['Offline Attribution',PhoneCall],['Journeys',Network],['Attribution',PieChart],['Enrich',DatabaseZap],['Behavior',MousePointer2],['Feed',Layers3],['Agents',Bot],['Ask Ace',Sparkles],['Integrations',Cable],['Audiences',UsersRound],['Monitoring',Activity],['Settings',Settings2]
 ] as const
 function Stat({label,value,sub,Icon}:{label:string,value:string,sub:string,Icon:any}){return <article className="stat"><div><span>{label}</span><Icon/></div><strong>{value}</strong><small>{sub}</small></article>}
 function PageHead({crumb,title,sub,action}:{crumb:string,title:string,sub:string,action?:string}){return <div className="page-head"><div><span>{crumb}</span><h1>{title}</h1><p>{sub}</p></div>{action&&<button className="app-primary"><Sparkles/>{action}</button>}</div>}
@@ -526,8 +526,29 @@ function Feed(){
 }
 
 function Agents(){
- return <><PageHead crumb="Automation / Agents" title="Agent library" sub="Deploy specialist agents at each point where your funnel loses context or speed." action="Build custom agent"/><div className="agent-app-grid">{agents.map((a,i)=><article key={a[0]}><div><span className={i<7?'active-agent':''}>{i<7?'Active':'Available'}</span><Bot/></div><h3>{a[0]}</h3><p>{a[1]}</p><footer><small>{a[2]}</small><button>{i<7?'Manage':'Deploy'} <ChevronRight/></button></footer></article>)}</div></>
+ const [selected,setSelected]=useState(agents[0][0])
+ const current=agents.find(a=>a[0]===selected) || agents[0]
+ const [approval,setApproval]=useState('Human approval')
+ const [enabled,setEnabled]=useState(true)
+ return <><PageHead crumb="Automation / Agents" title="Agent operations" sub="Deploy and govern specialist agents using the same stitched customer context." action="Build custom agent"/>
+ <div className="agent-ops-layout"><div className="app-panel agent-selector"><div className="panel-head"><div><h3>Agent library</h3><p>11 prebuilt agents from signal return through conversion operations</p></div><span className="healthy">7 active</span></div>{agents.map((a,i)=><button key={a[0]} className={selected===a[0]?'selected':''} onClick={()=>setSelected(a[0])}><Bot/><div><b>{a[0]}</b><small>{a[2]} · {a[3]}</small></div><span className={i<7?'active-agent':''}>{i<7?'Active':'Available'}</span><ChevronRight/></button>)}</div>
+ <div className="app-panel agent-config"><div className="panel-head"><div><h3>{current[0]}</h3><p>{current[1]}</p></div><button onClick={()=>setEnabled(!enabled)}>{enabled?'Disable':'Enable'}</button></div>
+ <div className="agent-config-grid"><div><span>Status</span><b>{enabled?'Active':'Disabled'}</b></div><div><span>Category</span><b>{current[2]}</b></div><div><span>Reference target</span><b>{current[3]}</b></div><div><span>Approval mode</span><select value={approval} onChange={e=>setApproval(e.target.value)}><option>Human approval</option><option>Auto-run low risk</option><option>Fully autonomous</option></select></div></div>
+ <div className="agent-section"><h4>Trigger</h4><div className="agent-rule"><Zap/><div><b>When journey condition matches</b><p>Run after the configured CRM stage, behavioral condition or external event becomes true.</p></div><button>Edit trigger</button></div></div>
+ <div className="agent-section"><h4>Available context</h4><div className="context-chips">{['Acquisition source','Campaign','CRM stage','Behavior events','WhatsApp history','Call outcome','Revenue','Identity keys'].map(x=><span key={x}>{x}</span>)}</div></div>
+ <div className="agent-section"><h4>Recent runs</h4>{[['Lead #18421','Qualified lead → returned to Meta','12s ago','Completed'],['Lead #18420','CRM context enriched','1m ago','Completed'],['Lead #18419','Approval required before outreach','3m ago','Waiting']].map(x=><div className="agent-run" key={x[0]}><Activity/><div><b>{x[0]}</b><small>{x[1]}</small></div><span>{x[2]}</span><em className={x[3].toLowerCase()}>{x[3]}</em></div>)}</div></div></div></>
 }
+
+function AskAce(){
+ const starters=['Why did qualified leads drop this week?','Which campaigns generated the most enrolled revenue?','Where is the biggest funnel leak?','Which audience should we suppress?']
+ const [messages,setMessages]=useState<any[]>([{role:'assistant',text:'Ask me about journeys, attribution, lead quality, campaign performance or signal health.'}])
+ const [q,setQ]=useState('')
+ const ask=async(question?:string)=>{const text=question||q;if(!text.trim())return;setMessages(m=>[...m,{role:'user',text}]);setQ('');try{const r:any=await api.askAce(text);setMessages(m=>[...m,{role:'assistant',text:r.answer,insights:r.insights}])}catch{setMessages(m=>[...m,{role:'assistant',text:'The analysis API is unavailable. Start the local API with npm run api.'}])}}
+ return <><PageHead crumb="AI / Ask Ace" title="Journey & attribution assistant" sub="Ask natural-language questions over stitched funnel, attribution and signal-health data."/>
+ <div className="ask-ace-layout"><div className="app-panel ask-chat"><div className="ask-starters">{starters.map(x=><button key={x} onClick={()=>ask(x)}>{x}</button>)}</div><div className="ask-messages">{messages.map((m,i)=><div key={i} className={'ask-msg '+m.role}><span>{m.role==='assistant'?<Sparkles/>:'S'}</span><div><p>{m.text}</p>{m.insights&&<div className="ask-insights">{m.insights.map((x:any)=><article key={x.label}><span>{x.label}</span><b>{x.value}</b><small>{x.note}</small></article>)}</div>}</div></div>)}</div><div className="ask-input"><input value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==='Enter'&&ask()} placeholder="Ask about revenue, leads, campaigns or journeys..."/><button onClick={()=>ask()}><ArrowRight/></button></div></div>
+ <div className="app-panel ask-context"><div className="panel-head"><div><h3>Connected analysis context</h3><p>What Ask Ace can inspect</p></div></div>{[['Journey graph','92,418 stitched journeys'],['Attribution','₹2.84Cr measured revenue'],['CRM outcomes','12,842 recent leads'],['Signal health','94.8% destination match'],['Audience state','5 active segments'],['Agent activity','7 active agents']].map(x=><div className="ask-context-row" key={x[0]}><Check/><div><b>{x[0]}</b><small>{x[1]}</small></div></div>)}</div></div></>
+}
+
 function Integrations(){
  const groups=[
   ['CRM Platforms',['Zoho CRM','Salesforce','LeadSquared','HubSpot','HighLevel','Microsoft Dynamics 365','Custom CRM']],
@@ -536,9 +557,15 @@ function Integrations(){
   ['Website & App Platforms',['Shopify','WooCommerce','Magento','WordPress','React App','Custom Backend']],
   ['Advertising & Analytics',['Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads','GA4']]
  ]
+ const [connector,setConnector]=useState('')
+ const [step,setStep]=useState(1)
+ const [connected,setConnected]=useState<string[]>(['Zoho CRM','WhatsApp','Google Ads','GA4','Exotel'])
+ const start=(name:string)=>{setConnector(name);setStep(1)}
+ const finish=async()=>{await api.connectIntegration(connector).catch(()=>null);setConnected(c=>c.includes(connector)?c:[...c,connector]);setConnector('')}
  return <><PageHead crumb="Workspace / Integrations" title="Platform-agnostic connectivity" sub="Connect the systems you already use without rebuilding your stack." action="Request connector"/>
- <div className="integration-summary"><div><strong>100+</strong><span>available connector patterns</span></div><div><strong>1 click</strong><span>workspace connection flow</span></div><div><strong>24×7</strong><span>continuous synchronization</span></div><div><strong>Custom</strong><span>adapter support</span></div></div>
- <div className="integration-category-grid">{groups.map((g,gi)=><section className="integration-category" key={g[0] as string}><div className="integration-category-head"><div><span>{String(gi+1).padStart(2,'0')}</span><h3>{g[0]}</h3></div><small>{(g[1] as string[]).length} connectors shown</small></div><div className="integration-app-grid">{(g[1] as string[]).map((x,i)=><article key={x}><span className={'integration-logo c'+(i%6)}>{x.slice(0,2).toUpperCase()}</span><div><b>{x}</b><small>{(gi+i)%3===0?'Connected · syncing':'Connector available'}</small></div><span className={(gi+i)%3===0?'connected':'connect'}>{(gi+i)%3===0?'Connected':'Connect'}</span></article>)}</div></section>)}</div></>
+ <div className="integration-summary"><div><strong>100+</strong><span>available connector patterns</span></div><div><strong>{connected.length}</strong><span>connected in this workspace</span></div><div><strong>24×7</strong><span>continuous synchronization</span></div><div><strong>Custom</strong><span>adapter support</span></div></div>
+ <div className="integration-category-grid">{groups.map((g,gi)=><section className="integration-category" key={g[0] as string}><div className="integration-category-head"><div><span>{String(gi+1).padStart(2,'0')}</span><h3>{g[0]}</h3></div><small>{(g[1] as string[]).length} connectors shown</small></div><div className="integration-app-grid">{(g[1] as string[]).map((x,i)=><article key={x}><span className={'integration-logo c'+(i%6)}>{x.slice(0,2).toUpperCase()}</span><div><b>{x}</b><small>{connected.includes(x)?'Connected · syncing':'Connector available'}</small></div><button className={connected.includes(x)?'connected':'connect'} onClick={()=>!connected.includes(x)&&start(x)}>{connected.includes(x)?'Connected':'Connect'}</button></article>)}</div></section>)}</div>
+ {connector&&<div className="connector-modal"><div className="connector-card"><div className="connector-modal-head"><div><span className="integration-logo c0">{connector.slice(0,2).toUpperCase()}</span><div><b>Connect {connector}</b><small>Step {step} of 3</small></div></div><button onClick={()=>setConnector('')}><X/></button></div>{step===1&&<div className="connector-step"><h3>Authorize workspace access</h3><p>Grant only the scopes required to read events, sync outcomes and manage configured conversion destinations.</p><div className="scope-list">{['Read account metadata','Read campaign / lead records','Write configured conversion events','Read sync health'].map(x=><span key={x}><Check/>{x}</span>)}</div><button onClick={()=>setStep(2)}>Continue <ArrowRight/></button></div>}{step===2&&<div className="connector-step"><h3>Map business fields</h3><p>Choose the fields used for identity resolution and funnel stages.</p>{[['Primary identity','Email + phone'],['Click identifier','GCLID / FBCLID'],['Lifecycle stage','Lead status'],['Revenue field','Closed value']].map(x=><label key={x[0]}><span>{x[0]}</span><select defaultValue={x[1]}><option>{x[1]}</option><option>Custom field</option></select></label>)}<button onClick={()=>setStep(3)}>Continue <ArrowRight/></button></div>}{step===3&&<div className="connector-step"><h3>Enable synchronization</h3><p>Start continuous ingestion and delivery health checks for this connector.</p><div className="connector-ready"><Activity/><div><b>Ready to connect</b><small>Real API credentials can replace this demo connector flow in production.</small></div></div><button onClick={finish}>Connect {connector}</button></div>}</div></div>}</>
 }
 function Audiences(){
  return <><PageHead crumb="Activation / Audiences" title="Audience management" sub="Activate high-intent segments and suppress low-value or converted users." action="New audience"/><div className="app-panel"><div className="panel-head"><div><h3>Active segments</h3><p>Synced to connected destinations</p></div><button>Export</button></div>{[
@@ -573,7 +600,7 @@ function Settings(){
 }
 function Product({back}:{back:()=>void}){
  const [tab,setTab]=useState<AppTab>('Overview')
- const view=useMemo(()=>({Overview:<Overview/>,AdSync:<AdSync/>,Funnel:<Funnel/>,Events:<Events/>,"Live Sync":<LiveSync/>,"Offline Attribution":<OfflineAttribution/>,Journeys:<Journeys/>,Attribution:<Attribution/>,Enrich:<Enrich/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Integrations:<Integrations/>,Audiences:<Audiences/>,Monitoring:<Monitoring/>,Settings:<Settings/>}[tab]),[tab])
+ const view=useMemo(()=>({Overview:<Overview/>,AdSync:<AdSync/>,Funnel:<Funnel/>,Events:<Events/>,"Live Sync":<LiveSync/>,"Offline Attribution":<OfflineAttribution/>,Journeys:<Journeys/>,Attribution:<Attribution/>,Enrich:<Enrich/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,"Ask Ace":<AskAce/>,Integrations:<Integrations/>,Audiences:<Audiences/>,Monitoring:<Monitoring/>,Settings:<Settings/>}[tab]),[tab])
  return <div className="product"><aside><Brand/><div className="workspace"><span>AM</span><div><b>Ace EdTech</b><small>Production workspace</small></div><ChevronDown/></div><nav>{appTabs.map(([x,I])=><button key={x} className={tab===x?'active':''} onClick={()=>setTab(x)}><I/>{x}</button>)}</nav><div className="aside-footer"><button onClick={back}><ArrowRight/>Back to website</button><div className="profile-mini"><span>S</span><div><b>Sakshee</b><small>Workspace owner</small></div></div></div></aside>
  <main><header className="product-head"><div className="global-search"><Search/>Search journeys, leads, campaigns...</div><div><span className="sync">● Live sync healthy</span><button><Headphones/></button><button><Globe2/></button><span className="avatar-sm">S</span></div></header><div className="product-body">{view}</div></main></div>
 }
