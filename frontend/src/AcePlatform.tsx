@@ -1353,38 +1353,68 @@ function Integrations(){
  </div></div>}</>
 }
 function Audiences(){
- const seed=[
-  {name:'High intent leads',size:'3,106',destination:'Google Ads · Meta Ads',cadence:'Every 5 min',mode:'Activate'},
-  {name:'Converted / enrolled',size:'18,204',destination:'Google Ads · Meta Ads · LinkedIn',cadence:'Real time',mode:'Suppress'},
-  {name:'Website visitors · 180d',size:'82,416',destination:'Meta Ads',cadence:'Hourly',mode:'Retarget'},
-  {name:'WhatsApp leads',size:'11,284',destination:'Google Ads · Meta Ads',cadence:'Real time',mode:'Activate'},
-  {name:'Low intent leads',size:'24,901',destination:'Google Ads · Meta Ads',cadence:'Daily',mode:'Suppress'}
- ]
- const [segments,setSegments]=useState<any[]>(seed)
+ const [segments,setSegments]=useState<any[]>([])
+ const [stats,setStats]=useState<any>(null)
  const [builder,setBuilder]=useState(false)
- useEffect(()=>{api.audiences().then((r:any)=>{if(r.items?.length)setSegments(r.items.map((x:any)=>({...x,size:String(x.size??x.matchedSize??0),cadence:x.cadence||'Real time'})))}).catch(()=>null)},[])
  const [preview,setPreview]=useState<any>(null)
  const [saving,setSaving]=useState(false)
  const [syncing,setSyncing]=useState('')
  const [scheduling,setScheduling]=useState('')
- const previewAudience=async(e:any)=>{e.preventDefault();const f=new FormData(e.currentTarget);const payload={name:String(f.get('name')||''),condition:String(f.get('condition')||''),operator:String(f.get('operator')||''),value:String(f.get('value')||''),destination:String(f.get('destination')||''),mode:String(f.get('mode')||'Activate')};try{const r:any=await api.previewAudience(payload);setPreview({...payload,...r})}catch{setPreview({...payload,estimatedSize:3184,matchedPercent:5.6})}}
- const reloadAudiences=async()=>{const r:any=await api.audiences();if(r.items?.length)setSegments(r.items.map((x:any)=>({...x,size:String(x.size??0),cadence:x.cadence||'Manual'})))}
- const syncAudience=async(id:string)=>{setSyncing(id);try{await api.syncAudience(id);await reloadAudiences()}finally{setSyncing('')}}
- const setCadence=async(id:string,cadence:string)=>{setScheduling(id);try{await api.saveAudienceSchedule(id,cadence,cadence!=='Manual');await reloadAudiences()}finally{setScheduling('')}}
- const saveAudience=async()=>{if(!preview)return;setSaving(true);try{await api.createAudience(preview);const r:any=await api.audiences();if(r.items?.length)setSegments(r.items.map((x:any)=>({...x,size:String(x.size??0),cadence:x.cadence||'Real time'})))}catch{}setSaving(false);setBuilder(false);setPreview(null)}
- const exportAudiences=()=>{const rows=[['name','destination','size','cadence','mode','status'],...segments.map((x:any)=>[x.name,x.destination,x.size,x.cadence,x.mode,x.status||''])];const csv=rows.map(r=>r.map((v:any)=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ace-audiences.csv';a.click();URL.revokeObjectURL(a.href)}
- return <><PageHead crumb="Activation / Audiences" title="Audience management" sub="Activate high-intent segments and suppress low-value or converted users."/>
- <div className="stats-grid"><Stat label="Active audiences" value={String(segments.length)} sub="Across connected destinations" Icon={UsersRound}/><Stat label="Activated identities" value="96.4K" sub="Current matched audience pool" Icon={Target}/><Stat label="Suppressed identities" value="42.2K" sub="Waste-control rules" Icon={ShieldCheck}/><Stat label="Median sync latency" value="2m 14s" sub="Across active destinations" Icon={Activity}/></div>
- <div className="app-panel"><div className="panel-head"><div><h3>Active segments</h3><p>Materialized from persisted lead profiles; destination sync state is explicit</p></div><div className="panel-actions"><button onClick={exportAudiences}>Export</button><button className="app-primary" onClick={()=>setBuilder(true)}><Plus/>New audience</button></div></div>{segments.map((x:any)=><div className="audience-row" key={x.id||x.name}><UsersRound/><div><b>{x.name}</b><small>{x.destination}{x.lastSyncError?' · '+x.lastSyncError:''}{x.schedule?.last_added||x.schedule?.last_removed?` · Δ +${x.schedule?.last_added||0}/-${x.schedule?.last_removed||0}`:''}</small></div><strong>{x.size}</strong>{x.id?<select aria-label={'Cadence for '+x.name} disabled={scheduling===x.id} value={x.cadence||'Manual'} onChange={e=>setCadence(x.id,e.target.value)}><option>Manual</option><option>Real time</option><option>Every 5 min</option><option>Every 15 min</option><option>Hourly</option><option>Every 6 hours</option><option>Daily</option></select>:<span>{x.cadence}</span>}<em className={String(x.mode).toLowerCase()}>{x.mode}</em>{x.status&&<small>{String(x.status).replaceAll('_',' ')}</small>}{x.id&&['ready_for_sync','error','materialized'].includes(x.status)&&<button disabled={syncing===x.id} onClick={()=>syncAudience(x.id)}>{syncing===x.id?'Queueing…':'Sync now'}</button>}<ChevronRight/></div>)}</div>
- <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Lifecycle audiences</h3><p>Acquisition → nurture → decision → post-purchase</p></div></div>{[['Acquisition','New prospects','18,204'],['Nurture','Engaged / not qualified','8,441'],['Decision','Consultation / high intent','3,106'],['Post-purchase','Converted customers','18,204']].map(x=><div className="lifecycle-row" key={x[0]}><span>{x[0]}</span><div><b>{x[1]}</b><small>{x[2]} identities</small></div><ChevronRight/></div>)}</div>
- <div className="app-panel"><div className="panel-head"><div><h3>Waste-control exclusions</h3><p>Prevent repeat spend on irrelevant identities</p></div></div>{[['Converted customers','Customer ID + hashed PII','18,204'],['Device-ID exclusion','First-party device IDs','22,891'],['Duplicate / invalid leads','CRM disposition','4,118'],['Low-LTV customers','Value threshold','3,409']].map(x=><div className="exclusion-row" key={x[0]}><ShieldCheck/><div><b>{x[0]}</b><small>{x[1]}</small></div><strong>{x[2]}</strong><span>Suppressed</span></div>)}</div></div>
- <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Audience signals</h3><p>First-party attributes available to the builder</p></div></div><div className="context-chips">{['Lead grade','CRM stage','Journey depth','Pricing-page views','WhatsApp engagement','Call outcome','Meeting status','LTV tier','Conversion propensity','Fraud score','Last activity','Program interest'].map(x=><span key={x}>{x}</span>)}</div></div><div className="app-panel"><div className="panel-head"><div><h3>Destination policy</h3><p>How segments may be activated</p></div></div>{[['High-value prospect','Seed / optimize'],['Converted customer','Suppress acquisition'],['Low quality / invalid','Suppress optimization'],['High LTV customer','Lookalike seed'],['No recent engagement','Exclude / cool down']].map(x=><div className="mapping-rule" key={x[0]}><span>{x[0]}</span><ArrowRight/><b>{x[1]}</b></div>)}</div></div>
- {builder&&<div className="connector-modal"><form className="connector-card audience-builder" onSubmit={previewAudience}><div className="connector-modal-head"><div><UsersRound/><div><b>Audience Builder</b><small>Create a first-party segment from journey and CRM evidence</small></div></div><button type="button" onClick={()=>{setBuilder(false);setPreview(null)}}><X/></button></div>
- <label>Audience name<input name="name" required defaultValue="High-intent MBA prospects"/></label>
- <div className="audience-rule-grid"><label>Condition<select name="condition" defaultValue="Lead grade"><option>Lead grade</option><option>Conversion propensity</option><option>CRM stage</option><option>Pricing-page views</option><option>LTV tier</option><option>Last activity</option></select></label><label>Operator<select name="operator"><option>is</option><option>is greater than</option><option>is less than</option><option>contains</option></select></label><label>Value<input name="value" defaultValue="A"/></label></div>
- <label>Destination<select name="destination"><option>Google Ads · Meta Ads</option><option>Google Ads</option><option>Meta Ads</option><option>LinkedIn Ads</option></select></label>
+ const [notice,setNotice]=useState('')
+ const normalize=(r:any)=>{
+  setSegments((r.items||[]).map((x:any)=>({...x,size:String(x.size??x.matchedSize??0),cadence:x.cadence||'Manual'})))
+  setStats(r.stats||null)
+ }
+ const reloadAudiences=async()=>{const r:any=await api.audiences();normalize(r)}
+ useEffect(()=>{reloadAudiences().catch((e:any)=>setNotice(e?.message||'Audiences could not be loaded.'))},[])
+ const previewAudience=async(e:any)=>{
+  e.preventDefault();setNotice('')
+  const f=new FormData(e.currentTarget)
+  const payload={
+    name:String(f.get('name')||''),
+    condition:String(f.get('condition')||''),
+    operator:String(f.get('operator')||''),
+    value:String(f.get('value')||''),
+    destination:String(f.get('destination')||''),
+    mode:String(f.get('mode')||'Activate'),
+    identityMode:String(f.get('identityMode')||'auto')
+  }
+  try{const r:any=await api.previewAudience(payload);setPreview({...payload,...r})}
+  catch(e:any){setPreview(null);setNotice(e?.message||'Audience preview failed.')}
+ }
+ const syncAudience=async(id:string)=>{setSyncing(id);setNotice('');try{await api.syncAudience(id);setNotice('Audience sync queued.');await reloadAudiences()}catch(e:any){setNotice(e?.message||'Audience sync failed.')}finally{setSyncing('')}}
+ const setCadence=async(id:string,cadence:string)=>{setScheduling(id);setNotice('');try{await api.saveAudienceSchedule(id,cadence,cadence!=='Manual');await reloadAudiences()}catch(e:any){setNotice(e?.message||'Schedule could not be updated.')}finally{setScheduling('')}}
+ const saveAudience=async()=>{if(!preview)return;setSaving(true);setNotice('');try{await api.createAudience(preview);await reloadAudiences();setBuilder(false);setPreview(null);setNotice('Audience created and materialized.')}catch(e:any){setNotice(e?.message||'Audience could not be created.')}finally{setSaving(false)}}
+ const exportAudiences=()=>{const rows=[['name','destination','identity_mode','size','cadence','mode','status'],...segments.map((x:any)=>[x.name,x.destination,x.identityMode||'auto',x.size,x.cadence,x.mode,x.status||''])];const csv=rows.map(r=>r.map((v:any)=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ace-audiences.csv';a.click();URL.revokeObjectURL(a.href)}
+ const a=stats?.audiences||{}
+ const lifecycle=stats?.lifecycle||{}
+ const exclusions=stats?.exclusions||{}
+ const latency=a.medianSyncLatencySeconds==null?'—':a.medianSyncLatencySeconds<60?a.medianSyncLatencySeconds+'s':Math.round(a.medianSyncLatencySeconds/60)+'m'
+ const lifecycleRows=[
+  ['Acquisition','New / active prospects',lifecycle.acquisition||0],
+  ['Nurture','Lead / contacted / connected',lifecycle.nurture||0],
+  ['Decision','Qualified / consultation / opportunity',lifecycle.decision||0],
+  ['Post-purchase','Converted / enrolled / closed won',lifecycle.postPurchase||0]
+ ]
+ const exclusionRows=[
+  ['Converted customers','Customer ID + hashed PII',exclusions.converted||0],
+  ['Device-ID identities','First-party mobile advertising IDs',exclusions.deviceIds||0],
+  ['Low-quality leads','Lead grade C / D',exclusions.lowQuality||0]
+ ]
+ return <><PageHead crumb="Activation / Audiences" title="Audience management" sub="Activate high-intent first-party segments and suppress converted, low-quality or device-identified users."/>
+ {notice&&<div className="delivery-notice ok"><CheckCircle2/><span>{notice}</span></div>}
+ <div className="stats-grid"><Stat label="Audience records" value={stats?.available?String(a.total||0):'—'} sub={(a.active||0)+' provider-active'} Icon={UsersRound}/><Stat label="Activated identities" value={stats?.available?Number(a.activatedIdentities||0).toLocaleString('en-IN'):'—'} sub="Materialized non-suppression members" Icon={Target}/><Stat label="Suppressed identities" value={stats?.available?Number(a.suppressedIdentities||0).toLocaleString('en-IN'):'—'} sub="Materialized suppression members" Icon={ShieldCheck}/><Stat label="Observed sync latency" value={latency} sub="From persisted successful sync timestamps" Icon={Activity}/></div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Active segments</h3><p>Materialized from persisted lead/device profiles; provider sync state is explicit</p></div><div className="panel-actions"><button onClick={exportAudiences}>Export</button><button className="app-primary" onClick={()=>setBuilder(true)}><Plus/>New audience</button></div></div>{segments.length?segments.map((x:any)=><div className="audience-row" key={x.id||x.name}><UsersRound/><div><b>{x.name}</b><small>{x.destination} · {x.identityMode||'auto'} identity{x.lastSyncError?' · '+x.lastSyncError:''}{x.schedule?.last_added||x.schedule?.last_removed?` · Δ +${x.schedule?.last_added||0}/-${x.schedule?.last_removed||0}`:''}</small></div><strong>{x.size}</strong>{x.id?<select aria-label={'Cadence for '+x.name} disabled={scheduling===x.id} value={x.cadence||'Manual'} onChange={e=>setCadence(x.id,e.target.value)}><option>Manual</option><option>Real time</option><option>Every 5 min</option><option>Every 15 min</option><option>Hourly</option><option>Every 6 hours</option><option>Daily</option></select>:<span>{x.cadence}</span>}<em className={String(x.mode).toLowerCase()}>{x.mode}</em>{x.status&&<small>{String(x.status).replaceAll('_',' ')}</small>}{x.id&&['ready_for_sync','error','materialized'].includes(x.status)&&<button disabled={syncing===x.id} onClick={()=>syncAudience(x.id)}>{syncing===x.id?'Queueing…':'Sync now'}</button>}<ChevronRight/></div>):<div className="empty-delivery-state"><UsersRound/><div><b>No audiences yet</b><small>Create a first-party audience from persisted lead, journey or device identity.</small></div></div>}</div>
+ <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Lifecycle audiences</h3><p>Derived from persisted CRM/lead stages</p></div></div>{lifecycleRows.map(x=><div className="lifecycle-row" key={x[0]}><span>{x[0]}</span><div><b>{x[1]}</b><small>{Number(x[2]).toLocaleString('en-IN')} identities</small></div><ChevronRight/></div>)}</div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Waste-control identity pool</h3><p>Live candidates available for explicit suppression audiences</p></div></div>{exclusionRows.map(x=><div className="exclusion-row" key={x[0]}><ShieldCheck/><div><b>{x[0]}</b><small>{x[1]}</small></div><strong>{Number(x[2]).toLocaleString('en-IN')}</strong><span>Eligible pool</span></div>)}</div></div>
+ <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Audience signals</h3><p>First-party attributes available to the builder</p></div></div><div className="context-chips">{['Lead grade','CRM stage','Conversion propensity','Pricing-page views','LTV tier','Last activity','Device ID present','Device platform','App ID'].map(x=><span key={x}>{x}</span>)}</div></div><div className="app-panel"><div className="panel-head"><div><h3>Activation guardrails</h3><p>Provider sync checks consent again before data leaves AceMarketing</p></div></div>{[['Marketing consent','Required for every member'],['Device audience','Mobile advertising ID + app context'],['Converted customer','Suppress acquisition'],['Low quality / invalid','Suppress optimization'],['High-value prospect','Seed / optimize']].map(x=><div className="mapping-rule" key={x[0]}><span>{x[0]}</span><ArrowRight/><b>{x[1]}</b></div>)}</div></div>
+ {builder&&<div className="connector-modal"><form className="connector-card audience-builder" onSubmit={previewAudience}><div className="connector-modal-head"><div><UsersRound/><div><b>Audience Builder</b><small>Create a first-party segment from journey, CRM or device evidence</small></div></div><button type="button" onClick={()=>{setBuilder(false);setPreview(null)}}><X/></button></div>
+ <label>Audience name<input name="name" required defaultValue="High-intent prospects"/></label>
+ <div className="audience-rule-grid"><label>Condition<select name="condition" defaultValue="Lead grade"><option>Lead grade</option><option>Conversion propensity</option><option>CRM stage</option><option>Pricing-page views</option><option>LTV tier</option><option>Last activity</option><option>Device ID present</option><option>Device platform</option><option>App ID</option></select></label><label>Operator<select name="operator"><option>is</option><option>is greater than</option><option>is less than</option><option>contains</option></select></label><label>Value<input name="value" defaultValue="A"/></label></div>
+ <label>Identity key<select name="identityMode" defaultValue="auto"><option value="auto">Auto · contact first, device fallback</option><option value="contact">Contact info · hashed email / phone</option><option value="device">Mobile advertising ID</option></select></label>
+ <label>Destination<select name="destination"><option>Google Ads · Meta Ads</option><option>Google Ads</option><option>Meta Ads</option></select></label>
  <label>Mode<select name="mode"><option>Activate</option><option>Suppress</option><option>Retarget</option><option>Lookalike seed</option></select></label>
- {preview&&<div className="audience-preview"><div><span>Estimated audience</span><strong>{Number(preview.estimatedSize||3184).toLocaleString()}</strong></div><div><span>Workspace coverage</span><strong>{preview.matchedPercent||5.6}%</strong></div><p>{preview.condition} {preview.operator} {preview.value} → {preview.destination}</p></div>}
+ {preview&&<div className="audience-preview"><div><span>Estimated audience</span><strong>{Number(preview.estimatedSize||0).toLocaleString()}</strong></div><div><span>Workspace coverage</span><strong>{preview.matchedPercent||0}%</strong></div><p>{preview.condition} {preview.operator} {preview.value} → {preview.destination} · {preview.identityMode} identity</p></div>}
  <div className="audience-builder-actions"><button type="button" onClick={()=>{setBuilder(false);setPreview(null)}}>Cancel</button>{preview?<button type="button" className="app-primary" disabled={saving} onClick={saveAudience}>{saving?'Saving…':'Create & materialize audience'}</button>:<button type="submit" className="app-primary">Preview audience</button>}</div></form></div>}</>
 }
 function DeliveryCenter(){
