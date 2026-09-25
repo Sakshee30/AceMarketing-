@@ -30,7 +30,7 @@ const handle=async job=>{
   if(job.kind==='signal_delivery'){
     const signal={...(job.payload||{}),deliveryId:job.payload?.deliveryId}
     const result=await deliverSignal(job.workspace_id,signal)
-    await updateDelivery(job.workspace_id,signal.deliveryId,{status:'delivered',attempts:job.attempts,httpStatus:result.status,latencyMs:result.latencyMs,lastError:null,deliveredAt:new Date().toISOString()})
+    await updateDelivery(job.workspace_id,signal.deliveryId,{status:'delivered',attempts:job.attempts,provider:result.provider,httpStatus:result.status,latencyMs:result.latencyMs,lastError:null,deliveredAt:new Date().toISOString(),providerResponse:result.body?{eventsReceived:result.body.events_received??null,requestId:result.body.fbtrace_id||result.body.requestId||null}:null})
     return {provider:result.provider,httpStatus:result.status,latencyMs:result.latencyMs}
   }
   if(job.kind==='audience_sync'){
