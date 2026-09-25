@@ -688,3 +688,24 @@ New API endpoints:
 - `POST /api/sites/test`
 - `GET /api/models`
 - `POST /api/models/run`
+
+
+## Parity pass: conversion adjustment operations
+
+This pass turns the brochure's conversion-adjustment concept into a dedicated **Adjustments** workspace.
+
+The new module supports:
+- partial-payment value correction;
+- returned-order revenue reversal;
+- low-quality lead exclusion;
+- duplicate-lead deduplication;
+- qualified-lead signal upgrades;
+- identity-confidence safeguards;
+- event-ID and click-ID validation;
+- audit records and replay protection.
+
+New API endpoints:
+- `GET /api/adjustments`
+- `POST /api/adjustments/apply`
+
+The supplied brochure explicitly describes Google Ads conversion adjustments used to reclassify low-value events and provides partial-payment patterns. AceMarketing now has a concrete review/apply workflow rather than only mentioning adjustments inside the event manager.
