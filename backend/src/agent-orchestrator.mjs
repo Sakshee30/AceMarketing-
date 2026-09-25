@@ -112,9 +112,9 @@ export const createMeeting=async(workspaceId,input={})=>{
   if(Number.isNaN(starts.getTime()))throw new Error('invalid startsAt')
   const plan=Array.isArray(input.reminderPlan)?input.reminderPlan:['24h','3h','30m']
   const {rows}=await pool.query(
-    `INSERT INTO ace_meeting_records (id,workspace_id,lead_ref,starts_at,owner,status,reminder_plan,no_show_risk,external_calendar_id)
-     VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9) RETURNING *`,
-    [id,workspaceId,safe(input.leadRef||input.lead||'unknown'),starts.toISOString(),safe(input.owner||'Counsellor'),safe(input.status||'confirmed').toLowerCase(),JSON.stringify(plan),safe(input.risk||'low').toLowerCase(),safe(input.externalCalendarId||'')]
+    `INSERT INTO ace_meeting_records (id,workspace_id,lead_ref,starts_at,owner,status,reminder_plan,no_show_risk,external_calendar_id,attendee_email,attendee_phone,meeting_link,calendar_html_link)
+     VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10,$11,$12,$13) RETURNING *`,
+    [id,workspaceId,safe(input.leadRef||input.lead||'unknown'),starts.toISOString(),safe(input.owner||'Counsellor'),safe(input.status||'confirmed').toLowerCase(),JSON.stringify(plan),safe(input.risk||'low').toLowerCase(),safe(input.externalCalendarId||''),safe(input.attendeeEmail||''),safe(input.attendeePhone||''),safe(input.meetingLink||''),safe(input.calendarHtmlLink||'')]
   )
   return rows[0]
 }
@@ -131,13 +131,13 @@ export const getMeeting=async(workspaceId,id)=>{
   return rows[0]||null
 }
 
-export const rescheduleMeeting=async(workspaceId,id,{startsAt,externalCalendarId=null}={})=>{
+export const rescheduleMeeting=async(workspaceId,id,{startsAt,externalCalendarId=null,meetingLink=null,calendarHtmlLink=null}={})=>{
   if(!pool)return null
   const starts=new Date(startsAt)
   if(Number.isNaN(starts.getTime()))throw new Error('invalid startsAt')
   const {rows}=await pool.query(
-    `UPDATE ace_meeting_records SET starts_at=$3,external_calendar_id=COALESCE($4,external_calendar_id),status='confirmed',updated_at=now() WHERE workspace_id=$1 AND id=$2 RETURNING *`,
-    [workspaceId,id,starts.toISOString(),externalCalendarId]
+    `UPDATE ace_meeting_records SET starts_at=$3,external_calendar_id=COALESCE($4,external_calendar_id),meeting_link=COALESCE($5,meeting_link),calendar_html_link=COALESCE($6,calendar_html_link),status='confirmed',updated_at=now() WHERE workspace_id=$1 AND id=$2 RETURNING *`,
+    [workspaceId,id,starts.toISOString(),externalCalendarId,meetingLink,calendarHtmlLink]
   )
   return rows[0]||null
 }
