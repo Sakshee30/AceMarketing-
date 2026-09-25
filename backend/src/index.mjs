@@ -1303,15 +1303,82 @@ const server = http.createServer(async (req,res)=>{
       {name:'Executive Program',channel:'Meta Ads',leads:1964,qualified:1048,appointments:641,consultations:288,bookings:119},
       {name:'PGDM Retargeting',channel:'Meta Ads',leads:1510,qualified:903,appointments:527,consultations:210,bookings:96}
     ]})
-    if (req.method === 'GET' && url.pathname === '/api/data-hub') return send(req,res,200,{records:742000,knownIdentities:56582,schemaHealth:99.8,sources:[
-      {name:'Google Ads',type:'ad_platform',freshnessSeconds:38,records:248916,status:'healthy'},
-      {name:'Meta Ads',type:'ad_platform',freshnessSeconds:42,records:311400,status:'healthy'},
-      {name:'LeadSquared',type:'crm',freshnessSeconds:72,records:92400,status:'healthy'},
-      {name:'WhatsApp',type:'messaging',freshnessSeconds:19,records:66800,status:'healthy'},
-      {name:'Exotel',type:'calling',freshnessSeconds:124,records:18200,status:'review'},
-      {name:'POS / Billing',type:'offline_revenue',freshnessSeconds:451,records:5800,status:'healthy'}
-    ]})
-    if (req.method === 'POST' && url.pathname === '/api/data-hub/rebuild') return send(req,res,202,{jobId:randomUUID(),status:'queued',scope:'canonical_view',queuedAt:new Date().toISOString()})
+    if (req.method === 'GET' && url.pathname === '/api/data-hub') {
+      const [state,leadStats,attr]=await Promise.all([getState(),leadOpsStats(workspaceId),attributionStats(workspaceId)])
+      const now=Date.now()
+      const sourceMap=new Map()
+      const touch=(name,type,eventTime,count=1,status='healthy',fields=[])=>{
+        const key=String(name||'Unknown')
+        const current=sourceMap.get(key)||{name:key,type,records:0,lastEventAt:null,status,fields:new Set()}
+        current.records+=Number(count||0)
+        if(eventTime&&(!current.lastEventAt||Date.parse(eventTime)>Date.parse(current.lastEventAt)))current.lastEventAt=eventTime
+        if(status!=='healthy')current.status=status
+        for(const field of fields)current.fields.add(field)
+        sourceMap.set(key,current)
+      }
+      for(const event of trackedEvents){
+        const source=event.source||event.channel||event.utm_source||'First-party web/app'
+        touch(source,'first_party',event.receivedAt||event.occurredAt||event.timestamp,1,'healthy',Object.keys(event).filter(k=>!['id','receivedAt'].includes(k)).slice(0,12))
+      }
+      const waEvents=(state.whatsappEvents||[])
+      const waLatest=waEvents.map(x=>x.timestamp||x.receivedAt).filter(Boolean).sort().at(-1)||null
+      if(waEvents.length)touch('WhatsApp','messaging',waLatest,waEvents.length,'healthy',['phone','message','status','timestamp'])
+      const callEvents=(state.callEvents||[])
+      const callLatest=callEvents.map(x=>x.endedAt||x.startedAt||x.receivedAt).filter(Boolean).sort().at(-1)||null
+      if(callEvents.length)touch('Telephony','calling',callLatest,callEvents.length,'healthy',['phone','duration','status','campaign'])
+      if(leadStats?.available)touch('Lead profiles','crm_identity',new Date().toISOString(),Number(leadStats.total||0),'healthy',['customer_id','email_hash','phone_hash','stage','grade','device_id'])
+      if(attr?.available)touch('Attribution store','measurement',new Date().toISOString(),Number(attr.assistedEvents||0)+Number(attr.activeClickSessions||0),'healthy',['click_id','session','event','match_method','value'])
+      const deliveries=(state.signalDeliveries||[])
+      if(deliveries.length)touch('Activation deliveries','activation',deliveries[0]?.updatedAt||deliveries[0]?.createdAt||null,deliveries.length,deliveries.some(x=>['failed','dead_letter'].includes(String(x.status||'').toLowerCase()))?'review':'healthy',['event','destination','status','attempts'])
+      for(const health of state.connectorHealth||[]){
+        if(!sourceMap.has(health.name))touch(health.name,'connector',health.checkedAt||health.updatedAt||null,0,['healthy','connected','active'].includes(String(health.status||'').toLowerCase())?'healthy':'review',['connection_state'])
+      }
+      const sources=[...sourceMap.values()].map(x=>({
+        name:x.name,
+        type:x.type,
+        records:x.records,
+        lastEventAt:x.lastEventAt,
+        freshnessSeconds:x.lastEventAt?Math.max(0,Math.floor((now-Date.parse(x.lastEventAt))/1000)):null,
+        status:x.status,
+        fields:[...x.fields]
+      })).sort((a,b)=>b.records-a.records)
+      const records=sources.reduce((sum,x)=>sum+x.records,0)
+      const quarantined=Number((state.quarantinedEvents||[]).length)
+      const schemaHealth=records?Number((Math.max(0,records-quarantined)/records*100).toFixed(2)):100
+      const recent=[
+        ...trackedEvents.slice(-40).map(x=>({id:x.id||randomUUID(),time:x.receivedAt||x.occurredAt||x.timestamp,source:x.source||x.channel||x.utm_source||'First-party',kind:'event',operation:'append',status:'healthy'})),
+        ...waEvents.slice(0,20).map(x=>({id:'wa:'+x.id,time:x.timestamp||x.receivedAt,source:'WhatsApp',kind:x.kind||'message',operation:'append',status:x.error?'review':'healthy'})),
+        ...callEvents.slice(0,20).map(x=>({id:'call:'+x.id,time:x.endedAt||x.startedAt||x.receivedAt,source:'Telephony',kind:'call',operation:'append',status:'healthy'})),
+        ...deliveries.slice(0,20).map(x=>({id:'delivery:'+x.id,time:x.updatedAt||x.createdAt,source:x.destination||'Activation',kind:x.event||'signal',operation:'deliver',status:['failed','dead_letter'].includes(String(x.status||'').toLowerCase())?'review':'healthy'}))
+      ].filter(x=>x.time).sort((a,b)=>Date.parse(b.time)-Date.parse(a.time)).slice(0,50)
+      return send(req,res,200,{available:true,records,knownIdentities:Number(leadStats?.total||0),schemaHealth,quarantined,matchedEvents:Number(attr?.matchedEvents||0),sources,recent,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/data-hub/rebuild') {
+      const [state,leadStats,attr]=await Promise.all([getState(),leadOpsStats(workspaceId),attributionStats(workspaceId)])
+      const snapshot={
+        id:'dh_'+randomUUID(),
+        scope:'canonical_view',
+        status:'completed',
+        trackedEvents:trackedEvents.length,
+        leadProfiles:Number(leadStats?.total||0),
+        assistedEvents:Number(attr?.assistedEvents||0),
+        clickSessions:Number(attr?.activeClickSessions||0),
+        whatsappEvents:Number((state.whatsappEvents||[]).length),
+        callEvents:Number((state.callEvents||[]).length),
+        signalDeliveries:Number((state.signalDeliveries||[]).length),
+        quarantinedEvents:Number((state.quarantinedEvents||[]).length),
+        completedAt:new Date().toISOString()
+      }
+      await mutateState(s=>{
+        s.dataHubRebuilds=s.dataHubRebuilds||[]
+        s.dataHubRebuilds.unshift(snapshot)
+        s.dataHubRebuilds=s.dataHubRebuilds.slice(0,100)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'data_hub.canonical_snapshot_rebuilt',entityId:snapshot.id,at:snapshot.completedAt})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,200,snapshot)
+    }
     if (req.method === 'GET' && url.pathname === '/api/live-sync') {
       const state=await getState()
       const now=Date.now()
