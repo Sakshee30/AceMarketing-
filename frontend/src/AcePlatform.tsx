@@ -702,22 +702,29 @@ function AdSync(){
  {builder&&<div className="connector-modal"><form className="connector-card" onSubmit={createPipeline}><div className="connector-modal-head"><div><RadioTower/><div><b>New conversion pipeline</b><small>Create a persisted event rule for signal activation.</small></div></div><button type="button" onClick={()=>setBuilder(false)}><X/></button></div><label>Pipeline name<input name="name" required defaultValue="Qualified Lead to Google"/></label><label>Source event<input name="sourceEvent" required defaultValue="lead.qualified"/></label><label>Output event<input name="outputEvent" required defaultValue="qualified_lead"/></label><label>Destination<select name="destination"><option>Google Ads</option><option>Meta Ads</option></select></label><button disabled={busy}>{busy?'Creating…':'Create pipeline'}</button></form></div>}</>
 }
 function Funnel(){
- const [data,setData]=useState<any>({stages:{},campaigns:[]})
+ const [data,setData]=useState<any>({stages:{},campaigns:[],filters:{channels:[]}})
  const [channel,setChannel]=useState('All channels')
  const [disposition,setDisposition]=useState('All dispositions')
  const [period,setPeriod]=useState('Last 30 days')
- useEffect(()=>{api.funnel().then((r:any)=>setData(r)).catch(()=>null)},[])
- const accounts=['All channels',...Array.from(new Set((data.campaigns||[]).map((x:any)=>x.channel)))]
+ const [loading,setLoading]=useState(false)
  const dispositions=['All dispositions','Qualified','Appointments','Consultations','Bookings']
  const periods=['Last 7 days','Last 30 days','Last 90 days']
+ const periodDays=period==='Last 7 days'?7:period==='Last 90 days'?90:30
  const cycle=(items:string[],value:string)=>items[(Math.max(0,items.indexOf(value))+1)%items.length]
- const campaigns=(data.campaigns||[]).filter((x:any)=>channel==='All channels'||x.channel===channel)
- const exportCsv=()=>{const rows=[['campaign','channel','leads','qualified','appointments','consultations','bookings'],...campaigns.map((x:any)=>[x.name,x.channel,x.leads,x.qualified,x.appointments,x.consultations,x.bookings])];const csv=rows.map(r=>r.map((v:any)=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ace-funnel.csv';a.click();URL.revokeObjectURL(a.href)}
+ const load=async()=>{
+  setLoading(true)
+  try{const r:any=await api.funnel({channel,disposition,periodDays});setData(r)}
+  finally{setLoading(false)}
+ }
+ useEffect(()=>{load()},[channel,disposition,periodDays])
+ const accounts=['All channels',...(data.filters?.channels||[])]
+ const campaigns=data.campaigns||[]
+ const exportCsv=()=>{const rows=[['campaign','channel','leads','qualified','appointments','consultations','bookings','filter_channel','filter_disposition','period_days'],...campaigns.map((x:any)=>[x.name,x.channel,x.leads,x.qualified,x.appointments,x.consultations,x.bookings,channel,disposition,periodDays])];const csv=rows.map(r=>r.map((v:any)=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ace-funnel-'+periodDays+'d.csv';a.click();URL.revokeObjectURL(a.href)}
  const sdata=data.stages||{}
- return <><PageHead crumb="AdSync / Funnel Mapping" title="Channel & campaign funnel" sub="See lead progression by connected campaign." action="Export funnel" onAction={exportCsv}/>
- <div className="filters"><button onClick={()=>setChannel(cycle(accounts,channel))}>{channel} <ChevronDown/></button><button onClick={()=>setDisposition(cycle(dispositions,disposition))}>{disposition} <ChevronDown/></button><button onClick={()=>setPeriod(cycle(periods,period))}>{period} <ChevronDown/></button></div>
- <div className="stats-grid"><Stat label="All leads" value={String(Number(sdata.leads||0).toLocaleString())} sub="Backend funnel state" Icon={UsersRound}/><Stat label="Appointments" value={String(Number(sdata.appointments||0).toLocaleString())} sub="Current workspace" Icon={PhoneCall}/><Stat label="Consultations" value={String(Number(sdata.consultations||0).toLocaleString())} sub="Current workspace" Icon={MessageCircle}/><Stat label="Bookings" value={String(Number(sdata.bookings||0).toLocaleString())} sub="Current workspace" Icon={CircleDollarSign}/></div>
- <div className="app-panel"><div className="panel-head"><div><h3>Campaign breakdown</h3><p>{channel} · {disposition} · {period}</p></div><span className="healthy">{campaigns.length} campaigns</span></div><div className="funnel-table"><div className="funnel-tr funnel-th"><span>Campaign</span><span>Channel</span><span>Leads</span><span>Qualified</span><span>Appt.</span><span>Consult.</span><span>Bookings</span></div>{campaigns.map((r:any)=><div className="funnel-tr" key={r.name}><div><b>{r.name}</b><small>Backend campaign record</small></div><span>{r.channel}</span>{[r.leads,r.qualified,r.appointments,r.consultations,r.bookings].map((v,i)=><strong key={i}>{Number(v||0).toLocaleString()}</strong>)}</div>)}</div></div></>
+ return <><PageHead crumb="AdSync / Funnel Mapping" title="Channel & campaign funnel" sub="See lead progression by connected campaign using backend-applied channel, disposition and date filters." action={loading?'Refreshing…':'Export funnel'} onAction={()=>loading?undefined:exportCsv()}/>
+ <div className="filters"><button disabled={loading} onClick={()=>setChannel(cycle(accounts,channel))}>{channel} <ChevronDown/></button><button disabled={loading} onClick={()=>setDisposition(cycle(dispositions,disposition))}>{disposition} <ChevronDown/></button><button disabled={loading} onClick={()=>setPeriod(cycle(periods,period))}>{period} <ChevronDown/></button><button disabled={loading} onClick={load}>{loading?'Refreshing…':'Refresh'}</button></div>
+ <div className="stats-grid"><Stat label="All leads" value={String(Number(sdata.leads||0).toLocaleString())} sub={period+' · backend filtered'} Icon={UsersRound}/><Stat label="Appointments" value={String(Number(sdata.appointments||0).toLocaleString())} sub={channel} Icon={PhoneCall}/><Stat label="Consultations" value={String(Number(sdata.consultations||0).toLocaleString())} sub={disposition} Icon={MessageCircle}/><Stat label="Bookings" value={String(Number(sdata.bookings||0).toLocaleString())} sub={periodDays+' day window'} Icon={CircleDollarSign}/></div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Campaign breakdown</h3><p>{channel} · {disposition} · {period}</p></div><span className="healthy">{campaigns.length} campaigns</span></div><div className="funnel-table"><div className="funnel-tr funnel-th"><span>Campaign</span><span>Channel</span><span>Leads</span><span>Qualified</span><span>Appt.</span><span>Consult.</span><span>Bookings</span></div>{campaigns.length?campaigns.map((r:any)=><div className="funnel-tr" key={r.name}><div><b>{r.name}</b><small>Backend-filtered campaign record</small></div><span>{r.channel}</span>{[r.leads,r.qualified,r.appointments,r.consultations,r.bookings].map((v,i)=><strong key={i}>{Number(v||0).toLocaleString()}</strong>)}</div>):<div className="empty-delivery-state"><Filter/><div><b>No campaigns match these filters</b><small>Change channel, disposition or date window to inspect a broader funnel.</small></div></div>}</div></div></>
 }
 function Events(){
  const [data,setData]=useState<any>({items:[],runs:[],stats:{},templates:[]})
