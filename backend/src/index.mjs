@@ -1876,14 +1876,67 @@ const server = http.createServer(async (req,res)=>{
     }
     if (req.method === 'POST' && url.pathname === '/api/pos-stores/import') {
       const body=await readBody(req)
-      const records=Number(body.records)
-      if(!body.location || !Number.isFinite(records) || records<=0) return send(req,res,400,{error:'location and positive records required'})
-      const matched=Math.max(0,Math.min(records,Number(body.matched??0)))
-      const batch={batchId:'pos_'+randomUUID(),location:String(body.location),locationName:String(body.locationName||body.location),records,revenue:Number(body.revenue||0),matched,status:'processed',createdAt:new Date().toISOString()}
-      await mutateState(s=>{s.posBatches=s.posBatches||[];s.posBatches.unshift(batch);s.posBatches=s.posBatches.slice(0,2000);s.audit=s.audit||[];s.audit.unshift({id:randomUUID(),action:'pos.import_processed',entityId:batch.batchId,location:batch.location,records,at:batch.createdAt});s.audit=s.audit.slice(0,1000)})
-      if(body.customerId||body.email||body.phone||body.gclid||body.fbclid){
-        await recordAssistedEvent(workspaceId,{event:'pos.batch_imported',eventType:'pos.batch_imported',eventId:batch.batchId,customerId:body.customerId||null,email:body.email||null,phone:body.phone||null,gclid:body.gclid||null,fbclid:body.fbclid||null,source:'pos',occurredAt:batch.createdAt,value:Number(body.revenue||0),currency:body.currency||'INR',data:{location:batch.location,records}}).catch(()=>null)
+      const location=String(body.location||'').trim()
+      const rows=Array.isArray(body.transactions)?body.transactions.slice(0,500):[]
+      if(!location||!rows.length) return send(req,res,400,{error:'location and at least one transaction row are required'})
+      const createdAt=new Date().toISOString()
+      const normalized=[]
+      let matched=0
+      let revenue=0
+      for(let index=0;index<rows.length;index++){
+        const row=rows[index]||{}
+        const transactionId=String(row.transactionId||row.transaction_id||'').trim()||('row_'+(index+1))
+        const value=Math.max(0,Number(row.netRevenue??row.net_revenue??row.value??0)||0)
+        const occurredAt=row.occurredAt||row.occurred_at||createdAt
+        const currency=String(row.currency||body.currency||'INR').slice(0,12)
+        const event=await recordAssistedEvent(workspaceId,{
+          event:'store_sale',
+          eventType:'store_sale',
+          eventId:'pos_'+location+'_'+transactionId,
+          customerId:row.customerId||row.customer_id||null,
+          email:row.email||null,
+          phone:row.phone||null,
+          gclid:row.gclid||null,
+          fbclid:row.fbclid||null,
+          source:'pos',
+          occurredAt,
+          value,
+          currency,
+          data:{location,transactionId,batchImport:true}
+        }).catch(()=>null)
+        if(event?.status==='matched')matched++
+        revenue+=value
+        normalized.push({
+          transactionId,
+          status:event?.status||'unavailable',
+          matchMethod:event?.match_method||null,
+          value,
+          currency,
+          occurredAt
+        })
       }
+      const records=normalized.length
+      const batch={
+        batchId:'pos_'+randomUUID(),
+        location,
+        locationName:String(body.locationName||location),
+        records,
+        revenue:Number(revenue.toFixed(2)),
+        matched,
+        unmatched:records-matched,
+        matchRate:records?Number((matched/records*100).toFixed(1)):0,
+        status:'processed',
+        createdAt,
+        sample:normalized.slice(0,25)
+      }
+      await mutateState(s=>{
+        s.posBatches=s.posBatches||[]
+        s.posBatches.unshift(batch)
+        s.posBatches=s.posBatches.slice(0,2000)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'pos.import_processed',entityId:batch.batchId,location:batch.location,records,matched,revenue:batch.revenue,at:batch.createdAt})
+        s.audit=s.audit.slice(0,1000)
+      })
       return send(req,res,201,batch)
     }
     if (req.method === 'GET' && url.pathname === '/api/offline-attribution') {
