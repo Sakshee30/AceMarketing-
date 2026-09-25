@@ -586,18 +586,136 @@ const server = http.createServer(async (req,res)=>{
       return send(req,res,200,{connector,status:'disconnected'})
     }
     if (req.method === 'POST' && url.pathname === '/api/ask-ace') {
-      const body = await readBody(req)
-      const q = String(body.question || '').toLowerCase()
-      let answer='Qualified-lead quality is stable, but the largest measurable leak is between connected leads and consultations.'
-      let insights=[
-        {label:'Largest leak',value:'Connected → Consultation',note:'57% drop in the sample funnel'},
-        {label:'Strongest revenue source',value:'Google Ads',note:'42% measured contribution'},
-        {label:'Signal coverage',value:'94.8%',note:'Healthy destination matching'}
-      ]
-      if(q.includes('campaign')||q.includes('revenue')) answer='Google Ads currently contributes the largest share of measured revenue, led by the MBA Search campaign in the sample workspace.'
-      if(q.includes('qualified')||q.includes('lead')) answer='Qualified leads are 7,621 in the sample period. The biggest opportunity is improving progression from qualified/connected leads into consultation.'
-      if(q.includes('suppress')||q.includes('audience')) answer='Converted customers and low-intent leads are the strongest suppression candidates because they create avoidable retargeting spend.'
-      return send(req,res,200,{answer,insights})
+      const body=await readBody(req)
+      const question=String(body.question||'').trim()
+      if(!question) return send(req,res,400,{error:'question required'})
+      if(question.length>500) return send(req,res,400,{error:'question too long'})
+      const q=question.toLowerCase()
+      const [attribution,leadStats,leads,activationRuns,audiences,monitoring,state]=await Promise.all([
+        attributionStats(workspaceId).catch(()=>({available:false})),
+        leadOpsStats(workspaceId).catch(()=>({available:false})),
+        listLeadProfiles(workspaceId,500).catch(()=>[]),
+        listActivationRuns(workspaceId,200).catch(()=>[]),
+        listLeadAudiences(workspaceId).catch(()=>[]),
+        monitoringSnapshot(workspaceId).catch(()=>({})),
+        getState().catch(()=>({}))
+      ])
+      const pct=(part,total)=>total?Number(((Number(part||0)/Number(total))*100).toFixed(1)):0
+      const money=value=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(Number(value||0))
+      const sourceMap=new Map()
+      const campaignMap=new Map()
+      for(const lead of leads){
+        const source=String(lead.source||'Unknown')
+        const campaign=String(lead.campaign||'Unattributed')
+        const high=['A','B'].includes(String(lead.grade||''))
+        const score=Number(lead.score||0)
+        for(const [map,key] of [[sourceMap,source],[campaignMap,campaign]]){
+          const current=map.get(key)||{name:key,total:0,highQuality:0,scoreTotal:0}
+          current.total+=1
+          current.scoreTotal+=score
+          if(high) current.highQuality+=1
+          map.set(key,current)
+        }
+      }
+      const summarize=map=>[...map.values()].map(x=>({...x,qualityRate:pct(x.highQuality,x.total),averageScore:x.total?Number((x.scoreTotal/x.total).toFixed(1)):0})).sort((a,b)=>b.highQuality-a.highQuality)
+      const sources=summarize(sourceMap)
+      const campaigns=summarize(campaignMap)
+      const topSource=sources[0]||null
+      const topCampaign=campaigns[0]||null
+      const connectorConnections=(state.connectorConnections||[])
+      const connectorHealth=(state.connectorHealth||[])
+      const connectedConnectors=connectorConnections.filter(x=>x.status==='connected').length
+      const unhealthyConnectors=connectorHealth.filter(x=>!['healthy','connected','active'].includes(String(x.status||'').toLowerCase()))
+      const failedActivations=activationRuns.filter(x=>x.status==='failed').length
+      const completedActivations=activationRuns.filter(x=>x.status==='succeeded').length
+      const activationSuccess=pct(completedActivations,completedActivations+failedActivations)
+      const suppressAudiences=audiences.filter(x=>String(x.mode||'').toLowerCase()==='suppress')
+      const staleAudiences=audiences.filter(x=>x.status==='error'||x.last_sync_error)
+      const evidence=(label,value,note,source)=>({label,value:String(value),note,source})
+      let intent='workspace_summary'
+      let answer=''
+      let insights=[]
+      let confidence='medium'
+      let followUps=[]
+      if(q.includes('campaign')||q.includes('revenue')||q.includes('roas')||q.includes('channel')){
+        intent='campaign_performance'
+        const matchedValue=Number(attribution.matchedValue||0)
+        answer=topCampaign
+          ? topCampaign.name+' currently has the strongest observed lead-quality signal: '+topCampaign.highQuality+' A/B-grade leads from '+topCampaign.total+' profiled leads.'+(matchedValue>0?' Matched assisted-event value is '+money(matchedValue)+'.':'')
+          : matchedValue>0
+            ? 'The workspace has '+money(matchedValue)+' in matched assisted-event value, but there is not enough campaign-level lead data to name a strongest campaign confidently.'
+            : 'There is not enough connected campaign or matched-revenue data to answer this reliably yet.'
+        insights=[
+          evidence('Top campaign',topCampaign?.name||'Not enough data',topCampaign?topCampaign.qualityRate+'% A/B lead rate':'No campaign profile data','Lead profiles'),
+          evidence('Matched value',matchedValue?money(matchedValue):'No matched value',Number(attribution.matchedEvents||0)+' matched assisted events','Attribution store'),
+          evidence('Attribution match rate',attribution.available?Number(attribution.matchRate||0)+'%':'Unavailable',Number(attribution.unmatchedEvents||0)+' unmatched events','Attribution store')
+        ]
+        confidence=topCampaign||matchedValue?'high':'low'
+        followUps=['Which campaign has the weakest lead quality?','How much revenue is currently unmatched?','Which source should I scale based on lead quality?']
+      }else if(q.includes('qualified')||q.includes('lead quality')||q.includes('lead')||q.includes('junk')){
+        intent='lead_quality'
+        const high=Number(leadStats.abQuality||0),total=Number(leadStats.total||0),rate=pct(high,total)
+        answer=total
+          ? high+' of '+total+' active lead profiles are A/B grade ('+rate+'%). Average score is '+Number(leadStats.averageScore||0)+'.'+(topSource?' '+topSource.name+' currently contributes the most high-quality profiles.':'')
+          : 'No persisted lead profiles are available yet, so lead-quality conclusions would be speculative.'
+        insights=[
+          evidence('A/B-grade leads',high,rate+'% of active profiles','Lead operations'),
+          evidence('Average lead score',Number(leadStats.averageScore||0),'A grade: '+Number(leadStats.aGrade||0)+' · D grade: '+Number(leadStats.dGrade||0),'Lead operations'),
+          evidence('Strongest source',topSource?.name||'Not enough data',topSource?topSource.highQuality+' high-quality leads · '+topSource.qualityRate+'% quality rate':'No source profile data','Lead profiles')
+        ]
+        confidence=total?'high':'low'
+        followUps=['Which source is sending the most low-quality leads?','Which campaign has the highest A/B-grade rate?','What should we suppress to reduce wasted spend?']
+      }else if(q.includes('suppress')||q.includes('audience')||q.includes('retarget')){
+        intent='audience_suppression'
+        const lowQuality=Number(leadStats.dGrade||0)+Number(leadStats.cGrade||0)
+        const first=suppressAudiences[0]
+        answer=first
+          ? first.name+' is already configured as a suppression audience with '+Number(first.matched_size||0)+' matched identities.'+(lowQuality>0?' There are also '+lowQuality+' C/D-grade leads that may be candidates for tighter exclusion rules, subject to your policy.':'')
+          : lowQuality>0
+            ? 'There are '+lowQuality+' C/D-grade leads in the current profile set, but no persisted suppression audience is available to confirm they are excluded from paid media.'
+            : 'There is not enough audience or lead-grade data to recommend a suppression action confidently.'
+        insights=[
+          evidence('Suppression audiences',suppressAudiences.length,first?first.name:'None persisted','Audience store'),
+          evidence('C/D-grade leads',lowQuality,'Potential low-quality pool before policy checks','Lead operations'),
+          evidence('Audience sync issues',staleAudiences.length,staleAudiences.length?'Review provider sync state':'No audience sync errors observed','Audience store')
+        ]
+        confidence=first||lowQuality?'medium':'low'
+        followUps=['Which audience has a sync error?','How many low-quality users are still targetable?','Which high-intent audience is ready to activate?']
+      }else if(q.includes('integration')||q.includes('connector')||q.includes('sync')||q.includes('signal health')||q.includes('delivery')){
+        intent='signal_health'
+        answer=connectedConnectors+' of '+connectorConnections.length+' configured connectors are connected. '+(unhealthyConnectors.length?unhealthyConnectors.length+' connector-health records need review.':'No connector-health records are currently flagged.')+(failedActivations?' '+failedActivations+' recent activation runs failed.':'')
+        insights=[
+          evidence('Connected connectors',connectedConnectors,connectorConnections.length+' configured connection records','Workspace state'),
+          evidence('Connector health issues',unhealthyConnectors.length,unhealthyConnectors.length?'Review connector-health details':'No connector-health issues observed','Connector state'),
+          evidence('Activation success rate',activationSuccess+'%',failedActivations+' failed · '+activationRuns.filter(x=>['queued','processing','retrying'].includes(String(x.status))).length+' queued/retrying','Activation runs'),
+          evidence('API health',monitoring?.api?.errorRate!==undefined?Number(monitoring.api.errorRate)+'% error rate':'Available in monitoring','Latest operational snapshot','Observability')
+        ]
+        confidence=connectorConnections.length||activationRuns.length?'high':'medium'
+        followUps=['Which connector needs attention first?','How many activation runs are failing?','Are any audiences failing to sync?']
+      }else if(q.includes('attribution')||q.includes('match')||q.includes('unmatched')||q.includes('journey')){
+        intent='attribution_health'
+        answer=attribution.available
+          ? 'Attribution currently matches '+Number(attribution.matchedEvents||0)+' of '+Number(attribution.assistedEvents||0)+' assisted events ('+Number(attribution.matchRate||0)+'%). '+Number(attribution.unmatchedEvents||0)+' remain unmatched, with '+money(attribution.matchedValue||0)+' in matched value.'
+          : 'The attribution store is not available, so I cannot give a grounded journey-match answer.'
+        insights=[
+          evidence('Match rate',attribution.available?Number(attribution.matchRate||0)+'%':'Unavailable',Number(attribution.matchedEvents||0)+' matched events','Attribution store'),
+          evidence('Unmatched events',Number(attribution.unmatchedEvents||0),'Needs identity or source reconciliation','Attribution store'),
+          evidence('Matched value',money(attribution.matchedValue||0),Number(attribution.activeClickSessions||0)+' active click sessions','Attribution store')
+        ]
+        confidence=attribution.available?'high':'low'
+        followUps=['Why are events unmatched?','Which identity method is matching most events?','How much matched value comes from assisted conversions?']
+      }else{
+        const readiness=[attribution.available,leadStats.available,connectedConnectors>0,audiences.length>0,activationRuns.length>0].filter(Boolean).length
+        answer='I can currently ground answers across '+readiness+'/5 operational data areas: attribution, lead profiles, connectors, audiences, and activation runs. Ask about lead quality, campaigns/revenue, attribution, audience suppression, or signal health for a more specific analysis.'
+        insights=[
+          evidence('Lead profiles',Number(leadStats.total||0),'Average score '+Number(leadStats.averageScore||0),'Lead operations'),
+          evidence('Attribution match rate',attribution.available?Number(attribution.matchRate||0)+'%':'Unavailable',Number(attribution.unmatchedEvents||0)+' unmatched','Attribution store'),
+          evidence('Connected connectors',connectedConnectors,unhealthyConnectors.length+' health issue(s)','Workspace state')
+        ]
+        confidence=readiness>=3?'high':'medium'
+        followUps=['Which campaign is producing the best-quality leads?','Where is attribution breaking?','Which audience should we suppress?']
+      }
+      return send(req,res,200,{answer,insights,intent,confidence,followUps,generatedAt:new Date().toISOString(),grounded:true})
     }
     if (req.method === 'GET' && url.pathname === '/api/events') {
       const [items,runs,stats]=await Promise.all([listEventRules(workspaceId),listEventRuleRuns(workspaceId,50),eventRuleStats(workspaceId)])
