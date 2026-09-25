@@ -2822,3 +2822,86 @@ Behavior now:
 - the public case-study API now includes matching detail records for all four cards so the deep link remains correct after backend content loads.
 
 These remain clearly labeled external EasyInsights reference benchmarks and are not represented as AceMarketing customer results.
+
+
+## First-party device identity and audience suppression hardening
+
+EasyInsights publicly describes dynamic first-party audience activation, suppression, device-ID exclusion and real-time audience refresh as core use cases. AceMarketing now backs those surfaces with persisted first-party identity instead of fixed UI counts.
+
+### Device-aware first-party identity
+
+`POST /api/track` now accepts:
+
+```text
+deviceId / device_id
+devicePlatform / device_platform
+appId / app_id
+```
+
+When a tracked event contains customer/contact/device identity, AceMarketing now upserts that identity into the lead/audience profile store. This closes the previous gap where tracked events could appear in the event stream without becoming usable first-party audience identity.
+
+Tracked profile metadata also records the consent subject type and subject ID used during ingestion.
+
+Database migration:
+
+```text
+backend/migrations/017_device_audience_identity.sql
+```
+
+adds:
+
+- device ID;
+- device platform;
+- mobile application ID;
+- indexed workspace/device lookup;
+- audience identity mode: `contact`, `device`, or `auto`.
+
+### Audience builder identity modes
+
+Audience definitions can now choose:
+
+- **Auto** — hashed contact identity first; device identity fallback.
+- **Contact** — SHA-256 email / phone.
+- **Device** — first-party mobile advertising ID.
+
+New audience conditions include:
+
+- Device ID present
+- Device platform
+- App ID
+
+### Provider activation
+
+Meta audience delivery can now use a device-ID schema when the audience is device based.
+
+Google Customer Match device audiences use the mobile advertising ID upload-key type and require an application ID. A profile-level `appId` is used first; `GOOGLE_CUSTOMER_MATCH_APP_ID` can provide a deployment fallback.
+
+Contact and device modes are kept distinct so a provider audience is not silently populated with incompatible identifier types.
+
+### Consent enforcement
+
+Provider sync now re-checks **marketing consent for every materialized member** before any identity is sent to Meta or Google.
+
+An audience with no marketing-consented members fails explicitly instead of being reported as successfully synchronized.
+
+This is intentionally stricter than merely checking consent when the browser event was originally collected.
+
+### Live audience metrics
+
+The Audiences workspace no longer displays the previous fixed:
+
+- activated identity count;
+- suppressed identity count;
+- device-ID exclusion count;
+- lifecycle counts;
+- sync-latency value.
+
+These now come from persisted audience and lead-profile state.
+
+The waste-control panel is labeled **eligible pool** rather than pretending every candidate is already suppressed. Actual suppression occurs only after a persisted suppression audience is created and provider sync succeeds.
+
+### Production requirement
+
+Mobile advertising identifiers must be first-party data collected with the appropriate user permission and platform policy compliance. Google mobile-ID Customer Match additionally needs a valid app ID associated with the source application.
+
+CI now validates that migration 017 is present.
