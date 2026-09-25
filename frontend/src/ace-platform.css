@@ -619,3 +619,11 @@
 .wa-kind.status{background:rgba(59,130,246,.1)}
 .wa-kind.outbound{background:rgba(124,58,237,.1)}
 @media (max-width:900px){.whatsapp-ops-grid{grid-template-columns:1fr}}
+
+
+/* Live call tracking and scheduling */
+.call-schedule-box{display:flex;align-items:end;gap:12px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line,#e5e7eb)}
+.call-schedule-box label{display:flex;flex:1;flex-direction:column;gap:6px;font-size:12px;font-weight:700}
+.call-schedule-box input{width:100%;border:1px solid var(--line,#e5e7eb);border-radius:10px;padding:10px 12px;background:var(--panel,#fff);color:inherit;font:inherit}
+.call-schedule-box button{display:inline-flex;align-items:center;gap:8px}
+@media (max-width:720px){.call-schedule-box{align-items:stretch;flex-direction:column}}
