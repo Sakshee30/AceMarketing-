@@ -318,3 +318,25 @@ New API endpoints:
 - `GET /api/monitoring-rules`
 
 All case-study results are labeled/reference-framed so they are not represented as AceMarketing customer claims.
+
+
+## Public-site parity pass: diagnostics, privacy controls and resource utilities
+
+This pass adds current EasyInsights public-site structures that were not yet represented:
+
+- Expanded root-cause diagnostics from three to six groups:
+  - business & operations;
+  - tracking & data quality;
+  - ad-platform optimization;
+  - attribution & measurement;
+  - audience & personalization;
+  - privacy, consent & compliance.
+- Added a **data ownership / privacy control plane** section.
+- Added an interactive **cookie-preferences banner** with Necessary, Analytics, Advertising and Functionality categories.
+- Added **`POST /api/consent-preferences`**.
+- Added resource utilities inspired by public EasyInsights resource categories:
+  - interactive ROAS calculator;
+  - local SHA-256 PII hashing utility that runs entirely in the browser.
+- Added internal Privacy, Terms and Security page components for product/legal completion.
+
+The current EasyInsights site publicly presents these diagnostic groups, a data-ownership/security section, resource tools including a ROAS calculator and no-cloud hashing concept, and granular cookie categories. AceMarketing implements equivalent functionality and information architecture without copying EasyInsights branding, third-party artwork or proprietary source code.
