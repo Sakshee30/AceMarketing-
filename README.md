@@ -2386,3 +2386,99 @@ No autoplaying hero carousel was introduced. This keeps the experience user-cont
 - `frontend/src/ace-platform.css` — shared keyframes, hover interactions, hero motion, operational feedback motion, and reduced-motion behavior.
 
 The animation system uses CSS and the existing React application only; no new client-side animation dependency or recurring third-party cost was added.
+
+
+## Voice Scheduler + Google Calendar production pipeline
+
+EasyInsights publicly describes its Voice Scheduler as booking meetings and synchronizing them to team calendars in real time, while its Meeting Reminder agent follows scheduled leads before appointments. AceMarketing now backs that workflow with a real calendar integration instead of a static meeting screen.
+
+### Google Calendar OAuth
+
+A new `Google Calendar` connector is available through the existing workspace OAuth framework.
+
+Required Google OAuth scope:
+
+```text
+https://www.googleapis.com/auth/calendar.events
+```
+
+The connector uses the same PKCE, signed workspace state, encrypted credential vault, token refresh and reconnect handling already used by the other OAuth connectors.
+
+### Calendar-backed meeting creation
+
+`POST /api/meetings` now:
+
+1. validates the lead and meeting start time;
+2. obtains the workspace Google Calendar credential;
+3. creates the Calendar event through the Google Calendar API;
+4. optionally creates a Google Meet conference link;
+5. persists the external Calendar event ID;
+6. persists the Calendar event link / meeting link;
+7. stores attendee phone/email needed for downstream reminder execution;
+8. returns both the persisted meeting and provider response metadata.
+
+The default target calendar is `primary`; set `GOOGLE_CALENDAR_ID` to use another calendar.
+
+### Rescheduling
+
+`POST /api/meetings/reschedule` now updates both:
+
+- the Google Calendar event; and
+- the persisted AceMarketing meeting record.
+
+If the meeting did not yet have an external calendar ID, the endpoint can create the Calendar event during rescheduling.
+
+### Reminder execution context
+
+Meeting reminder jobs no longer contain only a meeting ID. The worker/provider receives:
+
+```text
+meetingId
+leadRef
+startsAt
+owner
+attendeePhone
+attendeeEmail
+meetingLink
+calendarHtmlLink
+```
+
+A manual reminder is rejected when the meeting has no usable attendee contact instead of pretending the reminder was sent.
+
+### Workspace UI
+
+The Meetings page now uses persisted data only:
+
+- no seeded/fake meetings;
+- no hard-coded booking/show-rate statistics;
+- real upcoming meeting count;
+- real Google Calendar synchronization count;
+- persisted reminder count;
+- real no-show-risk count;
+- working Google Calendar connect action;
+- working meeting reschedule control;
+- working provider-backed reminder action;
+- explicit empty/error states.
+
+The Calls page now forwards a tracked caller phone into meeting creation when that context exists, allowing reminder providers to receive a usable recipient.
+
+### Database migration
+
+`backend/migrations/016_meeting_calendar.sql` adds:
+
+- attendee email;
+- attendee phone;
+- Google Meet / meeting link;
+- Calendar HTML link;
+- indexed external Calendar event IDs.
+
+### Production verification
+
+Production preflight now requires Google OAuth client configuration and the shared OAuth callback URL because calendar scheduling is part of the production feature set.
+
+CI/backend validation includes:
+
+- `backend/src/calendar-provider.mjs`
+- `backend/migrations/016_meeting_calendar.sql`
+
+Real launch still requires the production Google Cloud project to have Google Calendar API enabled, the OAuth consent screen configured, the callback URL allow-listed and the target workspace account authorized.
