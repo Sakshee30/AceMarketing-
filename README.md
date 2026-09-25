@@ -1188,4 +1188,9 @@ npm run build
 
 The production frontend build is emitted to `dist/frontend`. CI verifies both application trees, type-checks the frontend, syntax-checks all backend modules, builds the production frontend, and asserts that the canonical frontend/backend files exist.
 
-The earlier root-level `src/` and `server/` files are retained temporarily for migration safety, but the active pipeline no longer depends on them.
+The migration safety copies have now been removed after the canonical frontend/backend pipeline passed CI. `frontend/` and `backend/` are the only application source trees.
+
+
+## Repository cleanup after migration
+
+After the canonical frontend/backend build passed CI, the duplicate root-level `src/`, `server/`, and root `index.html` migration copies were removed. This leaves one authoritative frontend tree and one authoritative backend tree, reducing drift risk and making local development, CI, deployment, and code ownership easier to reason about.
