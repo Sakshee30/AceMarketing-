@@ -599,7 +599,17 @@ function Login({back,openApp}:{back:()=>void,openApp:()=>void}){
 }
 const appTabs=[
  ['Launchpad',WandSparkles],['Overview',Gauge],['AdSync',RadioTower],['Funnel',BarChart3],['Events',Zap],['Adjustments',CircleDollarSign],['Diagnostics',ShieldCheck],['Fraud',ShieldCheck],['Deep Links',Network],['Sites',Globe2],['Fingerprinting',MousePointer2],['Live Sync',Activity],['Data Hub',DatabaseZap],['Offline Attribution',PhoneCall],['Matchback',CircleDollarSign],['POS & Stores',Building2],['Journeys',Network],['Identity',UsersRound],['Models',Target],['Attribution',PieChart],['Planner',CircleDollarSign],['Reports',BarChart3],['Enrich',DatabaseZap],['Lead Grading',Target],['Behavior',MousePointer2],['Feed',Layers3],['Agents',Bot],['Routing',Network],['Follow-ups',MessageCircle],['Calls',PhoneIncoming],['Meetings',CalendarDays],['Feedback',MessageSquareText],['Approvals',CheckCircle2],['Ask Ace',Sparkles],['Integrations',Cable],['Audiences',UsersRound],['Delivery',RadioTower],['Monitoring',Activity],['Alerts',Bell],['Developers',Code2],['Settings',Settings2]
+
 ] as const
+const dashboardSections=[
+ {id:'workspace',label:'Workspace',icon:Gauge,tabs:['Overview','Launchpad']},
+ {id:'tracking',label:'Tracking & Data',icon:DatabaseZap,tabs:['AdSync','Funnel','Events','Adjustments','Diagnostics','Fraud','Deep Links','Sites','Fingerprinting','Live Sync','Data Hub','Offline Attribution','Matchback','POS & Stores']},
+ {id:'measurement',label:'Measurement & Intelligence',icon:PieChart,tabs:['Journeys','Identity','Models','Attribution','Planner','Reports']},
+ {id:'conversion',label:'Lead & Conversion',icon:Target,tabs:['Enrich','Lead Grading','Behavior','Feed','Agents','Routing','Follow-ups','Calls','Meetings','Feedback','Approvals','Ask Ace']},
+ {id:'activation',label:'Activation & Integrations',icon:RadioTower,tabs:['Integrations','Audiences','Delivery']},
+ {id:'operations',label:'Operations & Developer',icon:Activity,tabs:['Monitoring','Alerts','Developers','Settings']}
+] as const
+const tabMeta=Object.fromEntries(appTabs.map(([name,Icon])=>[name,{Icon}])) as Record<string,{Icon:any}>
 function Stat({label,value,sub,Icon}:{label:string,value:string,sub:string,Icon:any}){return <article className="stat"><div><span>{label}</span><Icon/></div><strong>{value}</strong><small>{sub}</small></article>}
 function PageHead({crumb,title,sub,action,onAction}:{crumb:string,title:string,sub:string,action?:string,onAction?:()=>void}){return <div className="page-head"><div><span>{crumb}</span><h1>{title}</h1><p>{sub}</p></div>{action&&<button className="app-primary" onClick={onAction}><Sparkles/>{action}</button>}</div>}
 function FunnelPanel(){
@@ -639,13 +649,45 @@ function Launchpad(){
 }
 
 function Overview(){
+ const [summary,setSummary]=useState<any>(null)
  const [events,setEvents]=useState<any[]>([])
  const [expanded,setExpanded]=useState(false)
- useEffect(()=>{api.liveSync().then((r:any)=>setEvents(r.recent||[])).catch(()=>setEvents([]))},[])
- const shown=expanded?events:events.slice(0,4)
- return <><PageHead crumb="Workspace / Overview" title="Acquisition command center" sub="One live view across paid media, CRM, calls, WhatsApp and revenue."/>
- <div className="two-col"><FunnelPanel/><div className="app-panel"><div className="panel-head"><div><h3>Signal health</h3><p>Use Delivery and Monitoring for provider-level truth</p></div><span className="healthy">Operational</span></div><div className="source-conflict-note"><Activity/><div><b>Live operational data</b><p>Overview now avoids fixed destination-health percentages. Use the Delivery and Monitoring modules for persisted success, latency, retry and alert state.</p></div></div></div></div>
- <div className="app-panel"><div className="panel-head"><div><h3>Live customer events</h3><p>Recent first-party ingestion stream</p></div><button onClick={()=>setExpanded(x=>!x)}>{expanded?'Show recent':'View all'}</button></div>{shown.length?<table><thead><tr><th>Event</th><th>Source</th><th>Customer</th><th>Value</th><th>Time</th></tr></thead><tbody>{shown.map((x:any,i:number)=><tr key={x.id||x.eventId||i}><td>{x.event||x.name||x.eventType||'event'}</td><td>{x.source||'first-party'}</td><td>{x.customerId||x.visitorId||'—'}</td><td>{x.value!=null?String(x.value):'—'}</td><td>{x.createdAt||x.occurredAt||x.timestamp?new Date(x.createdAt||x.occurredAt||x.timestamp).toLocaleString():'—'}</td></tr>)}</tbody></table>:<div className="empty-delivery-state"><Activity/><div><b>No live events yet</b><small>Events appear after first-party ingestion begins.</small></div></div>}</div></>
+ const [loading,setLoading]=useState(true)
+ const navigate=(tab:string)=>window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:tab}))
+ const load=async()=>{
+  setLoading(true)
+  try{
+   const [s,l]:any=await Promise.all([api.dashboardSummary(),api.liveSync().catch(()=>({recent:[]}))])
+   setSummary(s);setEvents(l.recent||[])
+  }finally{setLoading(false)}
+ }
+ useEffect(()=>{load();const id=setInterval(load,30000);return()=>clearInterval(id)},[])
+ const t=summary?.totals||{}
+ const shown=expanded?events:events.slice(0,5)
+ const quick=[
+  ['Connect integrations','Integrations',Cable,'Connect CRM, ads, WhatsApp and calling'],
+  ['Create conversion event','Events',Zap,'Turn business outcomes into activation signals'],
+  ['Inspect customer journeys','Journeys',Network,'See stitched lead and revenue paths'],
+  ['Build audience','Audiences',UsersRound,'Activate or suppress first-party segments'],
+  ['Open delivery center','Delivery',RadioTower,'Inspect provider receipts, retry and DLQ'],
+  ['Ask Ace','Ask Ace',Sparkles,'Query journey, funnel and attribution evidence']
+ ]
+ return <><PageHead crumb="Workspace / Overview" title="Acquisition command center" sub="Navigate the full marketing data, conversion, activation and measurement stack from one live workspace." action={loading?'Refreshing…':'Refresh'} onAction={load}/>
+ <section className="dashboard-hero">
+  <div><span>WORKSPACE READINESS</span><strong>{summary?summary.readiness+'%':'—'}</strong><p>{summary?.readiness===100?'Core operating areas have workspace evidence.':'Connect data and activate the incomplete areas below.'}</p></div>
+  <div className="dashboard-hero-metrics">
+   <article><b>{Number(t.profiles||0).toLocaleString('en-IN')}</b><span>Known profiles</span></article>
+   <article><b>{t.deliveryRate==null?'—':t.deliveryRate+'%'}</b><span>Delivery success</span></article>
+   <article><b>{Number(t.connectedConnectors||0)}</b><span>Connected systems</span></article>
+   <article><b>{Number(t.matchedEvents||0).toLocaleString('en-IN')}</b><span>Matched attribution</span></article>
+  </div>
+ </section>
+ <div className="dashboard-area-grid">{(summary?.areas||[]).map((x:any)=>{const sec=dashboardSections.find(s=>s.tabs.includes(x.tab as any));const Icon=sec?.icon||Activity;return <button key={x.key} className={'dashboard-area-card '+(x.ready?'ready':'needs')} onClick={()=>navigate(x.tab)}><div><span><Icon/></span><em>{x.ready?'Ready':'Needs setup'}</em></div><h3>{x.title}</h3><strong>{Number(x.primary||0).toLocaleString('en-IN')}</strong><p>{x.detail}</p><footer>Open {x.tab}<ArrowRight/></footer></button>})}</div>
+ <div className="dashboard-quick-grid">{quick.map(([title,tab,Icon,desc]:any)=><button key={title} onClick={()=>navigate(tab)}><span><Icon/></span><div><b>{title}</b><small>{desc}</small></div><ArrowRight/></button>)}</div>
+ <div className="two-col dashboard-overview-grid"><FunnelPanel/><div className="app-panel"><div className="panel-head"><div><h3>Workspace health</h3><p>Current operational state from backend evidence</p></div><button onClick={()=>navigate('Monitoring')}>Monitoring</button></div>{[
+  ['Event rules',t.eventRules||0,'Events'],['Active audiences',t.activeAudiences||0,'Audiences'],['Agent runs',t.agentRuns||0,'Agents'],['Meetings',t.meetings||0,'Meetings'],['Failed deliveries',t.failedDeliveries||0,'Delivery'],['Dead-letter jobs',t.queueDeadLetter||0,'Delivery']
+ ].map(([label,value,tab]:any)=><button className="dashboard-health-row" key={label} onClick={()=>navigate(tab)}><span>{label}</span><b>{Number(value).toLocaleString('en-IN')}</b><ChevronRight/></button>)}</div></div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Recent workspace activity</h3><p>First-party events, activation deliveries and agent runs</p></div><div className="panel-actions"><button onClick={()=>setExpanded(x=>!x)}>{expanded?'Show less':'View more'}</button><button onClick={()=>navigate('Live Sync')}>Live Sync</button></div></div>{(summary?.recent||shown||[]).length?<div className="dashboard-activity-list">{(summary?.recent||shown).slice(0,expanded?12:6).map((x:any)=><button key={x.id} onClick={()=>navigate(x.tab||'Live Sync')}><span className={'activity-kind '+x.kind}>{x.kind==='delivery'?<RadioTower/>:x.kind==='agent'?<Bot/>:<Activity/>}</span><div><b>{x.title}</b><small>{x.meta}</small></div><time>{x.time?new Date(x.time).toLocaleString():'—'}</time><ChevronRight/></button>)}</div>:<div className="empty-delivery-state"><Activity/><div><b>No workspace activity yet</b><small>Connect a source or send a first-party event to populate this command center.</small></div></div>}</div></>
 }
 function AdSync(){
  const [builder,setBuilder]=useState(false)
@@ -1690,8 +1732,14 @@ function Product({back}:{back:()=>void}){
  const [workspaceBusy,setWorkspaceBusy]=useState(false)
  const [search,setSearch]=useState('')
  const [regionOpen,setRegionOpen]=useState(false)
+ const [navOpen,setNavOpen]=useState<Record<string,boolean>>(()=>{
+  try{return {...Object.fromEntries(dashboardSections.map(s=>[s.id,true])),...JSON.parse(window.localStorage.getItem('ace_nav_sections')||'{}')}}catch{return Object.fromEntries(dashboardSections.map(s=>[s.id,true]))}
+ })
+ const [navFilter,setNavFilter]=useState('')
  useEffect(()=>{api.workspaces().then((r:any)=>{if(r.items?.length){setWorkspaces(r.items);if(!r.items.some((x:any)=>x.name===workspace))setWorkspace(r.items[0].name)}}).catch(()=>null)},[])
  useEffect(()=>{window.localStorage.setItem('ace_active_tab',tab)},[tab])
+ useEffect(()=>{window.localStorage.setItem('ace_nav_sections',JSON.stringify(navOpen))},[navOpen])
+ useEffect(()=>{const section=dashboardSections.find(s=>s.tabs.includes(tab as any));if(section&&!navOpen[section.id])setNavOpen(x=>({...x,[section.id]:true}))},[tab])
  useEffect(()=>{const openTab=(event:any)=>{const next=event?.detail as AppTab;if(appTabs.some(([name])=>name===next))setTab(next)};window.addEventListener('ace-app-tab',openTab as EventListener);return()=>window.removeEventListener('ace-app-tab',openTab as EventListener)},[])
  const createWorkspace=async()=>{
   if(!workspaceDraft.name.trim())return
@@ -1714,12 +1762,19 @@ function Product({back}:{back:()=>void}){
  const currentWorkspace=workspaces.find(x=>x.name===workspace)||workspaces[0]
  const view=useMemo(()=>({Launchpad:<Launchpad/>,Overview:<Overview/>,AdSync:<AdSync/>,Funnel:<Funnel/>,Events:<Events/>,Adjustments:<Adjustments/>,Diagnostics:<Diagnostics/>,Fraud:<Fraud/>,"Deep Links":<DeepLinks/>,Sites:<Sites/>,Fingerprinting:<Fingerprinting/>,"Live Sync":<LiveSync/>,"Data Hub":<DataHub/>,"Offline Attribution":<OfflineAttribution/>,Matchback:<Matchback/>,"POS & Stores":<POSAndStores/>,Journeys:<Journeys/>,Identity:<Identity/>,Models:<Models/>,Attribution:<Attribution/>,Planner:<Planner/>,Reports:<Reports/>,Enrich:<Enrich/>,"Lead Grading":<LeadGrading/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Routing:<Routing/>,"Follow-ups":<FollowUps/>,Calls:<Calls/>,Meetings:<Meetings/>,Feedback:<Feedback/>,Approvals:<Approvals/>,"Ask Ace":<AskAce/>,Integrations:<Integrations/>,Audiences:<Audiences/>,Delivery:<DeliveryCenter/>,Monitoring:<Monitoring/>,Alerts:<Alerts/>,Developers:<Developers/>,Settings:<Settings/>}[tab]),[tab])
  return <div className="product"><aside className="product-sidebar"><Brand/><div className="workspace-wrap"><button className="workspace" onClick={()=>setWorkspaceOpen(!workspaceOpen)}><span>{currentWorkspace?.initials||'AM'}</span><div><b>{workspace}</b><small>{currentWorkspace?.environment||'Production'} workspace</small></div><ChevronDown/></button>{workspaceOpen&&<div className="workspace-menu">{workspaces.map((x:any)=><button key={x.id||x.name} onClick={()=>chooseWorkspace(x)} className={workspace===x.name?'active':''}><span>{x.initials||String(x.name).split(/\s+/).map((s:string)=>s[0]).join('').slice(0,3)}</span><div><b>{x.name}</b><small>{x.environment||'Production'}</small></div>{workspace===x.name&&<Check/>}</button>)}<button className="new-workspace" onClick={()=>{setWorkspaceOpen(false);setCreateOpen(true)}}><Plus/>Create workspace</button></div>}</div><nav className="product-nav">
- {appTabs.map(([x,I],index)=>{
-   const section=index===0?'Workspace':index===6?'Quality & tracking':index===16?'Measurement':index===22?'Conversion & automation':index===34?'Operations':null
-   return <Fragment key={x}>{section&&<span className="product-nav-section">{section}</span>}<button className={tab===x?'active':''} onClick={()=>setTab(x)} title={x}><I/>{x}</button></Fragment>
+ <div className="product-nav-filter"><Search/><input value={navFilter} onChange={e=>setNavFilter(e.target.value)} placeholder="Find feature..."/></div>
+ {dashboardSections.map(section=>{
+  const SectionIcon=section.icon
+  const matching=section.tabs.filter(name=>!navFilter.trim()||name.toLowerCase().includes(navFilter.trim().toLowerCase())||section.label.toLowerCase().includes(navFilter.trim().toLowerCase()))
+  if(navFilter.trim()&&!matching.length)return null
+  const opened=navFilter.trim()?true:navOpen[section.id]
+  return <div className="product-nav-group" key={section.id}>
+   <button className="product-nav-group-head" onClick={()=>setNavOpen(x=>({...x,[section.id]:!x[section.id]}))}><SectionIcon/><span>{section.label}</span><small>{matching.length}</small><ChevronDown className={opened?'open':''}/></button>
+   {opened&&<div className="product-nav-group-items">{matching.map(name=>{const meta=tabMeta[name];const I=meta?.Icon||Activity;return <button key={name} className={tab===name?'active':''} onClick={()=>setTab(name as AppTab)} title={name}><I/>{name}{tab===name&&<span className="nav-active-dot"/>}</button>})}</div>}
+  </div>
  })}
  </nav><div className="aside-footer"><button onClick={back}><ArrowRight/>Back to website</button><div className="profile-mini"><span>S</span><div><b>Sakshee</b><small>Workspace owner</small></div></div></div></aside>
- <main className="product-main"><header className="product-head"><div className="global-search operational-search"><Search/><input value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>e.key==='Enter'&&runSearch()} placeholder="Search journeys, leads, campaigns, settings..."/>{searchMatches.length>0&&<div className="global-search-results">{searchMatches.map(([name,I])=><button key={name} onClick={()=>runSearch(name)}><I/><span>{name}</span><ArrowRight/></button>)}</div>}</div><div><span className="sync">● Live sync healthy</span><button aria-label="Support" onClick={()=>setTab('Settings')} title="Open workspace support/settings"><Headphones/></button><button aria-label="Region and language" onClick={()=>setRegionOpen(x=>!x)}><Globe2/></button><span className="avatar-sm">S</span>{regionOpen&&<div className="region-popover"><b>Workspace locale</b><span>Timezone · Asia/Kolkata</span><span>Currency · INR</span><button onClick={()=>{setRegionOpen(false);setTab('Settings')}}>Change in Settings</button></div>}</div></header><div className="product-body">{view}</div></main>
+ <main className="product-main"><header className="product-head"><div className="global-search operational-search"><Search/><input value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>e.key==='Enter'&&runSearch()} placeholder="Search journeys, leads, campaigns, settings..."/>{searchMatches.length>0&&<div className="global-search-results">{searchMatches.map(([name,I])=><button key={name} onClick={()=>runSearch(name)}><I/><span>{name}</span><ArrowRight/></button>)}</div>}</div><div><button className="sync sync-button" onClick={()=>setTab('Monitoring')}>● Monitoring</button><button aria-label="Support" onClick={()=>setTab('Settings')} title="Open workspace support/settings"><Headphones/></button><button aria-label="Region and language" onClick={()=>setRegionOpen(x=>!x)}><Globe2/></button><span className="avatar-sm">S</span>{regionOpen&&<div className="region-popover"><b>Workspace locale</b><span>Timezone · Asia/Kolkata</span><span>Currency · INR</span><button onClick={()=>{setRegionOpen(false);setTab('Settings')}}>Change in Settings</button></div>}</div></header><div className="product-body">{view}</div></main>
  {createOpen&&<div className="connector-modal"><div className="connector-card"><div className="connector-modal-head"><div><Building2/><div><b>Create workspace</b><small>Create a persisted tenant workspace.</small></div></div><button onClick={()=>setCreateOpen(false)}><X/></button></div><div className="connector-step"><label>Workspace name<input value={workspaceDraft.name} onChange={e=>setWorkspaceDraft({...workspaceDraft,name:e.target.value})} placeholder="Ace Retail"/></label><label>Environment<select value={workspaceDraft.environment} onChange={e=>setWorkspaceDraft({...workspaceDraft,environment:e.target.value})}><option>Production</option><option>Sandbox</option></select></label><button disabled={workspaceBusy||!workspaceDraft.name.trim()} onClick={createWorkspace}>{workspaceBusy?'Creating…':'Create workspace'}</button></div></div></div>}
  </div>
 }
