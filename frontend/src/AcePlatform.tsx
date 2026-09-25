@@ -622,32 +622,33 @@ function FunnelPanel(){
 }
 
 function Launchpad(){
- const steps=[
-  ['Workspace','Name, timezone, currency and business model'],
-  ['Connect data','CRM, ad platforms, WhatsApp, calling and web/app sources'],
-  ['Map funnel','Define lead, qualified, appointment, consultation and revenue stages'],
-  ['Install tracking','Persist click IDs and send first-party website/app behavior'],
-  ['Test signal','Send a test event through identity matching and destination delivery'],
-  ['Activate agents','Choose which specialist agents may observe, recommend or act']
- ]
+ const [data,setData]=useState<any>({steps:[],readiness:0,evidence:{}})
  const [active,setActive]=useState(0)
- const [done,setDone]=useState([true,true,true,false,false,false])
- const complete=async()=>{const next=[...done];next[active]=true;setDone(next);await api.saveLaunchpad({step:active,status:'complete'}).catch(()=>null);if(active<steps.length-1)setActive(active+1)}
- const pct=Math.round((done.filter(Boolean).length/steps.length)*100)
- const runReadiness=()=>{const next=done.findIndex(x=>!x);setActive(next>=0?next:0)}
- return <><PageHead crumb="Workspace / Launchpad" title="Launchpad" sub="Configure the data, funnel, tracking and automation foundation before operating the workspace." action="Run readiness check" onAction={runReadiness}/>
- <div className="launchpad-progress"><div><span>Workspace readiness</span><strong>{pct}%</strong></div><div className="progress"><i style={{width:pct+'%'}}/></div><small>{done.filter(Boolean).length} of {steps.length} setup areas complete</small></div>
- <div className="launchpad-layout"><div className="app-panel launchpad-steps">{steps.map((s,i)=><button key={s[0]} className={active===i?'selected':''} onClick={()=>setActive(i)}><span className={done[i]?'done':''}>{done[i]?<Check/>:i+1}</span><div><b>{s[0]}</b><small>{s[1]}</small></div><ChevronRight/></button>)}</div>
- <div className="app-panel launchpad-detail"><div className="panel-head"><div><h3>{steps[active][0]}</h3><p>{steps[active][1]}</p></div><span className={done[active]?'healthy':'status'}>{done[active]?'Complete':'Needs attention'}</span></div>
- {active===0&&<div className="setup-form-grid">{[['Workspace name','Ace EdTech'],['Timezone','Asia/Kolkata'],['Currency','INR'],['Business model','Lead generation']].map(x=><label key={x[0]}><span>{x[0]}</span><input defaultValue={x[1]}/></label>)}</div>}
- {active===1&&<div className="setup-check-grid">{[['Google Ads',true],['Meta Ads',true],['CRM',true],['WhatsApp',true],['Calling',false],['Website/App',true]].map(x=><div key={String(x[0])}><Cable/><span>{x[0]}</span><b className={x[1]?'ok':'warn'}>{x[1]?'Connected':'Connect'}</b></div>)}</div>}
- {active===2&&<div className="stage-map">{['Lead','Qualified','Appointment','Consultation','Enrolled / Closed Won'].map((x,i)=><div key={x}><span>{i+1}</span><b>{x}</b>{i<4&&<ArrowRight/>}</div>)}</div>}
- {active===3&&<div className="tracking-install"><code>{'<script src="https://cdn.acemarketing.example/track.js" data-workspace="ace-edtech"></script>'}</code><div className="setup-check-grid"><div><MousePointer2/><span>GCLID persistence</span><b className="ok">Enabled</b></div><div><MousePointer2/><span>FBCLID persistence</span><b className="ok">Enabled</b></div><div><ShieldCheck/><span>Consent gate</span><b className="warn">Configure</b></div></div></div>}
- {active===4&&<div className="signal-test"><div className="test-flow">{['Browser event','Identity match','Normalize','Destination'].map((x,i)=><div key={x}><span>{i+1}</span><b>{x}</b>{i<3&&<ArrowRight/>}</div>)}</div><div className="test-result"><Activity/><div><b>Test event ready</b><small>Run a synthetic qualified-lead event to validate matching, deduplication and delivery.</small></div><button onClick={()=>api.track({event:'launchpad_test',source:'launchpad'})}>Send test</button></div></div>}
- {active===5&&<div className="agent-choice-grid">{agents.slice(0,6).map((a,i)=><label key={a[0]}><input type="checkbox" defaultChecked={i<3}/><Bot/><div><b>{a[0]}</b><small>{a[2]}</small></div></label>)}</div>}
- <div className="launchpad-actions"><button className="app-primary" onClick={complete}>{done[active]?'Save & continue':'Mark complete'} <ArrowRight/></button></div></div></div></>
+ const [busy,setBusy]=useState('')
+ const [notice,setNotice]=useState('')
+ const load=()=>api.launchpad().then((r:any)=>setData(r)).catch((e:any)=>setNotice(e?.message||'Launchpad could not be loaded.'))
+ useEffect(()=>{load()},[])
+ const steps=(data.steps||[]) as any[]
+ const current=steps[active]||steps[0]
+ const navigate=(tab:string)=>window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:tab}))
+ const runReadiness=()=>{const next=steps.findIndex((x:any)=>!x.ready);setActive(next>=0?next:0)}
+ const sendTest=async()=>{setBusy('test');setNotice('');try{const r:any=await api.track({event:'launchpad_test',source:'launchpad',visitorId:'launchpad_'+Date.now()});setNotice('Test event accepted: '+(r.eventId||'ok'));await load()}catch(e:any){setNotice(e?.message||'Test event failed.')}finally{setBusy('')}}
+ const evidence=data.evidence||{}
+ return <><PageHead crumb="Workspace / Launchpad" title="Launchpad" sub="Configure the data, funnel, tracking and automation foundation using live workspace evidence." action="Run readiness check" onAction={runReadiness}/>
+ {notice&&<div className="delivery-notice ok"><CheckCircle2/><span>{notice}</span></div>}
+ <div className="launchpad-progress"><div><span>Workspace readiness</span><strong>{Number(data.readiness||0)}%</strong></div><div className="progress"><i style={{width:Number(data.readiness||0)+'%'}}/></div><small>{steps.filter((x:any)=>x.ready).length} of {steps.length||6} operating areas ready</small></div>
+ <div className="launchpad-layout"><div className="app-panel launchpad-steps">{steps.length?steps.map((s:any,i:number)=><button key={s.key} className={active===i?'selected':''} onClick={()=>setActive(i)}><span className={s.ready?'done':''}>{s.ready?<Check/>:i+1}</span><div><b>{s.title}</b><small>{s.detail}</small></div><ChevronRight/></button>):<div className="empty-delivery-state"><WandSparkles/><div><b>Readiness evidence unavailable</b><small>Connect the backend and refresh the workspace.</small></div></div>}</div>
+ <div className="app-panel launchpad-detail">{current?<><div className="panel-head"><div><h3>{current.title}</h3><p>{current.detail}</p></div><span className={current.ready?'healthy':'status'}>{current.ready?'Ready':'Needs attention'}</span></div>
+ <div className="site-detail-grid">{[
+  ['Connected systems',evidence.connectedConnectors||0],
+  ['Tracked events',evidence.trackedEvents||0],
+  ['Known profiles',evidence.profiles||0],
+  ['Matched attribution',evidence.matchedEvents||0],
+  ['Audiences',evidence.audiences||0],
+  ['Signal deliveries',evidence.deliveries||0]
+ ].map(x=><div key={x[0]}><span>{x[0]}</span><b>{String(x[1])}</b></div>)}</div>
+ <div className="launchpad-actions"><button onClick={()=>navigate(current.tab)}>Open {current.tab}<ArrowRight/></button>{current.key==='signal'&&<button className="app-primary" disabled={busy==='test'} onClick={sendTest}>{busy==='test'?'Sending…':'Send test event'}<Zap/></button>}</div></>:<div className="empty-delivery-state"><WandSparkles/><div><b>No launchpad step selected</b></div></div>}</div></div></>
 }
-
 function Overview(){
  const [summary,setSummary]=useState<any>(null)
  const [events,setEvents]=useState<any[]>([])
@@ -985,32 +986,33 @@ function Journeys(){
  <div className="app-panel journey-detail">{current?<><div className="panel-head"><div><h3>{current[0]}</h3><p>{current[1]} · {current[2]}</p></div><span className="status">Journey record</span></div><div className="journey-detail-meta">{[['Lead',current[0]],['Source',current[1]],['Stage',current[2]],['Touchpoints',current[3]],['Duration',current[4]]].map(x=><div key={x[0]}><span>{x[0]}</span><b>{x[1]}</b></div>)}</div><div className="source-conflict-note"><Network/><div><b>Journey timeline source</b><p>This explorer now loads its lead list from the backend journey endpoint and filters locally. Detailed event chronology should come from persisted journey events as those records are available.</p></div></div></>:<div className="empty-delivery-state"><Network/><div><b>No journey selected</b></div></div>}</div></div></>
 }
 function Identity(){
- const identities=[['cust_18421','Aarav Sharma','4 identifiers','6 touchpoints','High confidence'],['cust_18420','Meera Patel','3 identifiers','8 touchpoints','High confidence'],['cust_18419','Rohan Kumar','5 identifiers','11 touchpoints','High confidence'],['cust_18418','Anika Roy','2 identifiers','4 touchpoints','Medium confidence']]
- const exportQueue=()=>{const csv=['customer_id,name,identifiers,touchpoints,confidence',...identities.map(x=>x.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(','))].join('\n');const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ace-identity-review.csv';a.click();URL.revokeObjectURL(a.href)}
+ const [data,setData]=useState<any>({recent:[],rules:[],identifiers:[],clickCoverage:{}})
+ useEffect(()=>{api.identity().then((r:any)=>setData(r)).catch(()=>setData({recent:[],rules:[],identifiers:[],clickCoverage:{}}))},[])
+ const recent=data.recent||[]
+ const exportQueue=()=>{const csv=['customer_id,name,identifiers,touchpoints,confidence',...recent.map((x:any)=>[x.id,x.name,x.identifierCount,x.touchpoints,x.confidence].map((v:any)=>'"'+String(v??'').replaceAll('"','""')+'"').join(','))].join('\n');const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ace-identity-review.csv';a.click();URL.revokeObjectURL(a.href)}
+ const sample=recent[0]
+ const clickTotal=Number(data.clickCoverage?.gclid||0)+Number(data.clickCoverage?.fbclid||0)+Number(data.clickCoverage?.braid||0)
  return <><PageHead crumb="Data / Identity" title="Identity resolution" sub="Unify click IDs, first-party identifiers, devices and CRM records into a customer-level graph." action="Review match rules" onAction={()=>window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:'Fingerprinting'}))}/>
- <div className="stats-grid"><Stat label="Known identities" value="56,582" sub="61.2% of tracked sessions" Icon={UsersRound}/><Stat label="Deterministic matches" value="91.6%" sub="Email, phone, customer ID" Icon={Target}/><Stat label="Click IDs attached" value="94.8%" sub="GCLID / FBCLID coverage" Icon={MousePointer2}/><Stat label="Merge conflicts" value="0.7%" sub="Queued for review" Icon={Activity}/></div>
- <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Identity graph</h3><p>Example stitched customer</p></div><span className="healthy">Resolved</span></div><div className="identity-graph"><div className="identity-core"><span>AS</span><b>Aarav Sharma</b><small>cust_18421</small></div>{[['GCLID','gclid•••9A7'],['FBCLID','fbclid•••22F'],['Email','sha256: 71b…'],['Phone','sha256: 9c4…'],['Device','dev_8f2…'],['CRM ID','LSQ-9184']].map((x,i)=><div className={'identity-node n'+i} key={x[0]}><span>{x[0]}</span><b>{x[1]}</b></div>)}</div></div>
- <div className="app-panel"><div className="panel-head"><div><h3>Match rules</h3><p>Deterministic first, review ambiguous merges</p></div></div>{[['CRM customer ID','Exact','100%'],['Hashed phone','Exact','99.1%'],['Hashed email','Exact','98.7%'],['GCLID / FBCLID','Session link','94.8%'],['Device ID','Supporting','88.4%']].map(x=><div className="identity-rule" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><strong>{x[2]}</strong></div>)}</div></div>
- <div className="app-panel"><div className="panel-head"><div><h3>Recent resolved identities</h3><p>Cross-source customer stitching</p></div><button onClick={exportQueue}>Export review queue</button></div>{identities.map(x=><div className="identity-row" key={x[0]}><UsersRound/><div><b>{x[1]}</b><small>{x[0]}</small></div><span>{x[2]}</span><span>{x[3]}</span><em>{x[4]}</em></div>)}</div></>
+ <div className="stats-grid"><Stat label="Known identities" value={data.available?Number(data.profiles||0).toLocaleString('en-IN'):'—'} sub="Persisted customer / lead profiles" Icon={UsersRound}/><Stat label="Stitched profiles" value={data.available?Number(data.stitchedProfiles||0).toLocaleString('en-IN'):'—'} sub="Two or more first-party identifiers" Icon={Target}/><Stat label="Deterministic coverage" value={data.deterministicMatchRate==null?'—':data.deterministicMatchRate+'%'} sub="Multi-key profile coverage" Icon={MousePointer2}/><Stat label="Click IDs attached" value={clickTotal?String(clickTotal):'—'} sub="GCLID / FBCLID / braid evidence" Icon={Activity}/></div>
+ <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Identity graph</h3><p>{sample?'Latest persisted profile':'No persisted profile yet'}</p></div><span className={sample?'healthy':'status'}>{sample?'Resolved profile':'Waiting for data'}</span></div>{sample?<div className="identity-graph"><div className="identity-core"><span>{String(sample.name||'?').split(' ').map((x:string)=>x[0]).join('').slice(0,2)}</span><b>{sample.name}</b><small>{sample.id}</small></div>{Object.entries(sample.identifiers||{}).filter(([,v])=>v).map(([key],i)=><div className={'identity-node n'+(i%6)} key={key}><span>{key}</span><b>Present</b></div>)}</div>:<div className="empty-delivery-state"><UsersRound/><div><b>No identity graph yet</b><small>Track or import a customer/contact/device identity to create the first profile.</small></div></div>}</div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Match rules</h3><p>Deterministic first, supporting keys second</p></div></div>{(data.rules||[]).map((x:any)=><div className="identity-rule" key={x.key}><span>{x.key}</span><b>{x.mode}</b><strong>Priority {x.priority}</strong></div>)}</div></div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Recent resolved identities</h3><p>{(data.identifiers||[]).length?(data.identifiers||[]).join(' · '):'No identifier types observed yet'}</p></div><button onClick={exportQueue} disabled={!recent.length}>Export review queue</button></div>{recent.length?recent.map((x:any)=><div className="identity-row" key={x.id}><UsersRound/><div><b>{x.name}</b><small>{x.id}</small></div><span>{x.identifierCount} identifiers</span><span>{x.touchpoints} touchpoints</span><em>{x.confidence}</em></div>):<div className="empty-delivery-state"><UsersRound/><div><b>No resolved identities yet</b></div></div>}</div></>
 }
-
 function Models(){
- const [selected,setSelected]=useState('Lead conversion propensity')
- const [runs,setRuns]=useState(0)
+ const [data,setData]=useState<any>({items:[],runs:[]})
+ const [selected,setSelected]=useState('')
+ const [busy,setBusy]=useState('')
  const [validation,setValidation]=useState<any>(null)
  const [validationOpen,setValidationOpen]=useState(false)
- const models=[
-  ['Lead conversion propensity','Prediction','Active','AUC 0.84','Predicts likelihood of qualified lead becoming enrolled / closed-won.'],
-  ['Customer LTV tier','Value','Active','MAPE 12.8%','Groups customers by predicted long-term value for bidding and audience strategy.'],
-  ['No-show risk','Conversion','Active','Precision 81%','Scores scheduled meetings for reminder and recovery priority.'],
-  ['Return / cancellation risk','Quality','Draft','F1 0.71','Flags post-purchase outcomes that should not be treated as high-quality conversion signals.']
- ]
- const current=models.find(x=>x[0]===selected)||models[0]
- const run=async()=>{await api.runModel(selected).catch(()=>null);setRuns(x=>x+1)}
- const viewValidation=async()=>{const r:any=await api.modelValidation(selected).catch(()=>null);setValidation(r);setValidationOpen(true)}
- return <><PageHead crumb="Data / Models" title="Custom models" sub="Turn stitched first-party data into lead-quality, value and lifecycle predictions tailored to the business."/>
- <div className="model-ops-layout"><div className="app-panel model-list"><div className="panel-head"><div><h3>Model catalog</h3><p>Workspace-specific prediction services</p></div></div>{models.map(x=><button key={x[0]} className={selected===x[0]?'selected':''} onClick={()=>setSelected(x[0])}><Target/><div><b>{x[0]}</b><small>{x[1]} · {x[3]}</small></div><span className={x[2].toLowerCase()}>{x[2]}</span><ChevronRight/></button>)}</div>
- <div className="app-panel model-detail"><div className="panel-head"><div><h3>{current[0]}</h3><p>{current[4]}</p></div><span className={current[2]==='Active'?'healthy':'status'}>{current[2]}</span></div><div className="model-metrics">{[['Primary metric',current[3]],['Serving','Workspace scoring runtime'],['Approval','Human-reviewed rules']].map(x=><div key={x[0]}><span>{x[0]}</span><b>{x[1]}</b></div>)}</div><div className="approval-actions"><button onClick={viewValidation}>View validation</button><button className="approve" onClick={run}><Target/>{runs?'Prediction refreshed':'Run sample prediction'}</button></div></div></div>
+ const load=()=>api.models().then((r:any)=>{setData(r);if(r.items?.length)setSelected((x:string)=>x&&r.items.some((m:any)=>m.name===x)?x:r.items[0].name)}).catch(()=>setData({items:[],runs:[]}))
+ useEffect(()=>{load()},[])
+ const current=(data.items||[]).find((x:any)=>x.name===selected)||data.items?.[0]
+ const run=async()=>{if(!current)return;setBusy('run');try{await api.runModel(current.name);await load()}finally{setBusy('')}}
+ const viewValidation=async()=>{if(!current)return;const r:any=await api.modelValidation(current.name).catch(()=>null);setValidation(r);setValidationOpen(true)}
+ return <><PageHead crumb="Data / Models" title="Custom models" sub="Use transparent workspace scoring services backed by persisted customer and journey evidence."/>
+ <div className="model-ops-layout"><div className="app-panel model-list"><div className="panel-head"><div><h3>Model catalog</h3><p>Only models implemented in the current workspace runtime are shown</p></div></div>{(data.items||[]).length?(data.items||[]).map((x:any)=><button key={x.name} className={selected===x.name?'selected':''} onClick={()=>setSelected(x.name)}><Target/><div><b>{x.name}</b><small>{x.type} · {x.version}</small></div><span className={String(x.status||'ready').toLowerCase()}>{x.status}</span><ChevronRight/></button>):<div className="empty-delivery-state"><Target/><div><b>No model services available</b></div></div>}</div>
+ <div className="app-panel model-detail">{current?<><div className="panel-head"><div><h3>{current.name}</h3><p>{current.description}</p></div><span className={current.status==='active'?'healthy':'status'}>{current.status}</span></div><div className="model-metrics">{[['Version',current.version],['Primary metric',current.metric],['Current value',current.value],['Serving','Workspace scoring runtime']].map(x=><div key={x[0]}><span>{x[0]}</span><b>{String(x[1]??'—')}</b></div>)}</div><div className="approval-actions"><button onClick={viewValidation}>View validation</button><button className="approve" disabled={busy==='run'} onClick={run}><Target/>{busy==='run'?'Running…':'Run scoring snapshot'}</button></div></>:<div className="empty-delivery-state"><Target/><div><b>No model selected</b></div></div>}</div></div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Recent model runs</h3><p>Persisted scoring snapshots</p></div></div>{(data.runs||[]).length?(data.runs||[]).slice(0,10).map((x:any)=><div className="developer-event-row" key={x.id}><b>{x.name}</b><span>{x.status} · {Number(x.rowsScored||0).toLocaleString('en-IN')} rows</span><strong>{x.completedAt?new Date(x.completedAt).toLocaleString():'—'}</strong></div>):<div className="empty-delivery-state"><Activity/><div><b>No model runs yet</b></div></div>}</div>
  {validationOpen&&<div className="connector-modal"><div className="connector-card"><div className="connector-modal-head"><div><Target/><div><b>Model validation evidence</b><small>{selected}</small></div></div><button onClick={()=>setValidationOpen(false)}><X/></button></div>{validation?<><div className="site-detail-grid">{[['Lead population',validation.leadPopulation??0],['Average lead score',validation.averageLeadScore??0],['Persisted model runs',validation.runs?.length||0],['Generated',validation.generatedAt?new Date(validation.generatedAt).toLocaleString():'—']].map(x=><div key={x[0]}><span>{x[0]}</span><b>{String(x[1])}</b></div>)}</div><div className="source-conflict-note"><ShieldCheck/><div><b>Validation boundary</b><p>{validation.notice}</p></div></div></>:<div className="empty-delivery-state"><Target/><div><b>No validation evidence available</b></div></div>}</div></div>}</>
 }
 function Attribution(){
@@ -1688,7 +1690,7 @@ function Settings(){
  const [settings,setSettings]=useState<any>({
   organization:'Ace EdTech',timezone:'Asia/Kolkata',currency:'INR',reportingWeek:'Monday',defaultAttribution:'Full path',environment:'Production',
   primaryDomain:'www.example.com',crossDomainTracking:'Enabled',gclidPersistenceDays:90,fbclidPersistenceDays:90
- })
+,notifyDeliveryFailures:true,notifyTokenExpiry:true,notifyAudienceStale:true,notifyDailySummary:true,notificationEmail:'',notificationSlack:false,approvalSignalReturn:'Auto-run',approvalCrmEnrichment:'Auto-run',approvalLeadQualification:'Human approval',approvalAudienceSuppression:'Human approval',approvalCustomIntegration:'Human approval' })
  const load=()=>api.settings().then((r:any)=>setSettings((x:any)=>({...x,...r}))).catch(()=>null)
  useEffect(()=>{load()},[])
  const save=async(keys?:string[])=>{
@@ -1710,8 +1712,19 @@ function Settings(){
   'Tracking':<div className="settings-detail"><h3>Tracking configuration</h3><p>Update first-party collection defaults without editing code.</p><div className="setup-form-grid"><label><span>Primary domain</span><input value={settings.primaryDomain||''} onChange={e=>setSettings({...settings,primaryDomain:e.target.value})}/></label><label><span>Cross-domain tracking</span><select value={settings.crossDomainTracking||'Enabled'} onChange={e=>setSettings({...settings,crossDomainTracking:e.target.value})}><option>Enabled</option><option>Disabled</option></select></label><label><span>GCLID persistence days</span><input type="number" min="1" max="365" value={settings.gclidPersistenceDays||90} onChange={e=>setSettings({...settings,gclidPersistenceDays:Number(e.target.value)})}/></label><label><span>FBCLID persistence days</span><input type="number" min="1" max="365" value={settings.fbclidPersistenceDays||90} onChange={e=>setSettings({...settings,fbclidPersistenceDays:Number(e.target.value)})}/></label></div><div className="setting-line"><span>Server event endpoint</span><b>/api/track</b><span className="healthy">Active</span></div><button className="app-primary" disabled={busy==='save'} onClick={()=>save(['primaryDomain','crossDomainTracking','gclidPersistenceDays','fbclidPersistenceDays'])}>{busy==='save'?'Saving…':'Save tracking settings'}</button></div>,
   'Governance':<GovernanceSettings/>,
   'API & webhooks':<div className="settings-detail"><h3>API keys & webhooks</h3><div className="api-key-box"><div><span>Workspace API key</span><code>{apiKey||'Hidden until created or rotated'}</code></div><button onClick={makeKey}>{apiKey?'Rotate key':'Create key'}</button></div><p>Outbound webhook subscriptions are managed in the Developer console, where endpoints and delivery history are persisted.</p></div>,
-  'Agent approvals':<div className="settings-detail"><h3>Agent approval boundaries</h3>{[['Signal return','Auto-run','Low risk'],['CRM enrichment','Auto-run','Low risk'],['Lead qualification call','Human approval','Customer contact'],['Audience suppression','Human approval','Spend impact'],['Custom integration write','Human approval','External mutation']].map(x=><div className="setting-line" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><em>{x[2]}</em></div>)}</div>,
-  'Notifications':<div className="settings-detail"><h3>Notifications</h3>{[['Critical delivery failures','Email + Slack','Enabled'],['Token expiry','Email','Enabled'],['Audience stale > 60m','Slack','Enabled'],['Daily performance summary','Email','Enabled']].map(x=><div className="setting-line" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><span className="healthy">{x[2]}</span></div>)}</div>,
+  'Agent approvals':<div className="settings-detail"><h3>Agent approval boundaries</h3><p>Persist the workspace policy that determines which automated actions require human approval.</p>{[
+    ['approvalSignalReturn','Signal return','Low risk'],
+    ['approvalCrmEnrichment','CRM enrichment','Low risk'],
+    ['approvalLeadQualification','Lead qualification call','Customer contact'],
+    ['approvalAudienceSuppression','Audience suppression','Spend impact'],
+    ['approvalCustomIntegration','Custom integration write','External mutation']
+  ].map(([key,label,risk])=><div className="setting-line" key={key}><span>{label}</span><select value={settings[key]||'Human approval'} onChange={e=>setSettings({...settings,[key]:e.target.value})}><option>Auto-run</option><option>Human approval</option><option>Disabled</option></select><em>{risk}</em></div>)}<button className="app-primary" disabled={busy==='save'} onClick={()=>save(['approvalSignalReturn','approvalCrmEnrichment','approvalLeadQualification','approvalAudienceSuppression','approvalCustomIntegration'])}>{busy==='save'?'Saving…':'Save approval policy'}</button></div>,
+  'Notifications':<div className="settings-detail"><h3>Notifications</h3><p>Choose which workspace events should generate operator notifications.</p><div className="setup-form-grid"><label><span>Notification email</span><input type="email" value={settings.notificationEmail||''} onChange={e=>setSettings({...settings,notificationEmail:e.target.value})} placeholder="ops@company.com"/></label><label><span>Slack notifications</span><select value={settings.notificationSlack?'Enabled':'Disabled'} onChange={e=>setSettings({...settings,notificationSlack:e.target.value==='Enabled'})}><option>Disabled</option><option>Enabled</option></select></label></div>{[
+    ['notifyDeliveryFailures','Critical delivery failures','Delivery / DLQ'],
+    ['notifyTokenExpiry','Connector token expiry','Integrations'],
+    ['notifyAudienceStale','Audience stale > 60m','Audiences'],
+    ['notifyDailySummary','Daily performance summary','Reporting']
+  ].map(([key,label,scope])=><div className="setting-line" key={key}><span>{label}</span><b>{scope}</b><label className="setting-toggle"><input type="checkbox" checked={Boolean(settings[key])} onChange={e=>setSettings({...settings,[key]:e.target.checked})}/><span>{settings[key]?'Enabled':'Disabled'}</span></label></div>)}<button className="app-primary" disabled={busy==='save'} onClick={()=>save(['notifyDeliveryFailures','notifyTokenExpiry','notifyAudienceStale','notifyDailySummary','notificationEmail','notificationSlack'])}>{busy==='save'?'Saving…':'Save notifications'}</button></div>,
   'Billing & usage':<BillingUsageSettings/>
  }
  return <><PageHead crumb="Workspace / Settings" title="Workspace settings" sub="Configure organization, access, tracking, governance, developer access and automation boundaries."/>
