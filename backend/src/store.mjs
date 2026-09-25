@@ -2,7 +2,7 @@ import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 
 const filePath=process.env.DATA_FILE || 'backend/data/ace-state.json'
-const initial={demoRequests:[],audiences:[],customIntegrations:[],audit:[]}
+const initial={demoRequests:[],quoteRequests:[],audiences:[],customIntegrations:[],audit:[]}
 let cache=null
 let writeChain=Promise.resolve()
 
