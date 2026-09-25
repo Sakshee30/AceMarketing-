@@ -427,6 +427,68 @@ const server = http.createServer(async (req,res)=>{
       if(!hasPermission(member.role,permission)) return send(req,res,403,{error:'forbidden',permission,role:member.role})
     }
     if (req.method === 'GET' && url.pathname === '/api/health') return send(req,res,200,{ok:true,service:'ace-marketing-api',time:new Date().toISOString(),requestId:req.requestId})
+    if (req.method === 'GET' && url.pathname === '/api/dashboard-summary') {
+      const state=await getState()
+      const safe=async(fn,fallback)=>{try{return await fn()}catch{return fallback}}
+      const [leadStats,attr,audienceStats,queue,monitoring,eventRules,agentRuns,meetings,followUps]=await Promise.all([
+        safe(()=>leadOpsStats(workspaceId),{available:false,total:0,aGrade:0,abQuality:0}),
+        safe(()=>attributionStats(workspaceId),{available:false,matchedEvents:0,unmatchedEvents:0,assistedEvents:0,activeClickSessions:0}),
+        safe(()=>audienceOpsStats(workspaceId),{available:false,audiences:{total:0,active:0,activatedIdentities:0,suppressedIdentities:0,errors:0},profiles:{total:0}}),
+        safe(()=>queueStats(),{available:false,queued:0,processing:0,retrying:0,deadLetter:0}),
+        safe(()=>monitoringSnapshot(workspaceId),{}),
+        safe(()=>listEventRules(workspaceId),[]),
+        safe(()=>listAgentRuns(workspaceId),[]),
+        safe(()=>listPersistedMeetings(workspaceId),[]),
+        safe(()=>listPersistedFollowUps(workspaceId),[])
+      ])
+      const connectors=state.connectorConnections||[]
+      const connectedConnectors=connectors.filter(x=>['connected','healthy','active'].includes(String(x.status||'').toLowerCase()))
+      const deliveries=state.signalDeliveries||[]
+      const failedDeliveries=deliveries.filter(x=>['failed','dead_letter'].includes(String(x.status||'').toLowerCase())).length
+      const delivered=deliveries.filter(x=>['delivered','succeeded'].includes(String(x.status||'').toLowerCase())).length
+      const terminal=deliveries.filter(x=>['delivered','succeeded','failed','dead_letter'].includes(String(x.status||'').toLowerCase())).length
+      const deliveryRate=terminal?Number((delivered/terminal*100).toFixed(1)):null
+      const trackedCount=trackedEvents.length
+      const profiles=Number(leadStats?.total||audienceStats?.profiles?.total||0)
+      const areas=[
+        {key:'data',title:'Data foundation',tab:'Data Hub',ready:trackedCount>0||profiles>0,primary:trackedCount+profiles,detail:trackedCount+' tracked events · '+profiles+' profiles'},
+        {key:'tracking',title:'Tracking & quality',tab:'Diagnostics',ready:eventRules.length>0||trackedCount>0,primary:eventRules.length,detail:eventRules.length+' event rules · '+Number((state.quarantinedEvents||[]).length)+' quarantined'},
+        {key:'measurement',title:'Measurement',tab:'Attribution',ready:Boolean(attr?.available&&Number(attr?.matchedEvents||0)>0),primary:Number(attr?.matchedEvents||0),detail:Number(attr?.matchedEvents||0)+' matched · '+Number(attr?.unmatchedEvents||0)+' unmatched'},
+        {key:'conversion',title:'Lead & conversion',tab:'Lead Grading',ready:profiles>0,primary:Number(leadStats?.abQuality||0),detail:Number(leadStats?.abQuality||0)+' A/B leads · '+meetings.length+' meetings'},
+        {key:'activation',title:'Activation',tab:'Audiences',ready:Number(audienceStats?.audiences?.total||0)>0||deliveries.length>0,primary:Number(audienceStats?.audiences?.total||0),detail:Number(audienceStats?.audiences?.total||0)+' audiences · '+deliveries.length+' deliveries'},
+        {key:'operations',title:'Operations',tab:'Monitoring',ready:connectedConnectors.length>0,primary:connectedConnectors.length,detail:connectedConnectors.length+' connected · '+failedDeliveries+' failed deliveries'}
+      ]
+      const readiness=Math.round(areas.filter(x=>x.ready).length/areas.length*100)
+      const recent=[
+        ...trackedEvents.slice(-8).map(x=>({id:x.id||randomUUID(),kind:'event',title:x.event||x.eventType||x.name||'Tracked event',meta:x.source||x.channel||'First-party',time:x.receivedAt||x.occurredAt||x.timestamp||null,tab:'Live Sync'})),
+        ...deliveries.slice(0,8).map(x=>({id:'delivery:'+x.id,kind:'delivery',title:(x.event||'Signal')+' → '+(x.destination||'destination'),meta:x.status||'queued',time:x.updatedAt||x.createdAt||null,tab:'Delivery'})),
+        ...agentRuns.slice(0,5).map(x=>({id:'agent:'+x.id,kind:'agent',title:x.agent_type||x.agentType||x.action_type||'Agent run',meta:x.status||'queued',time:x.created_at||x.createdAt||null,tab:'Agents'}))
+      ].filter(x=>x.time).sort((a,b)=>Date.parse(b.time)-Date.parse(a.time)).slice(0,12)
+      return send(req,res,200,{
+        generatedAt:new Date().toISOString(),
+        readiness,
+        areas,
+        totals:{
+          trackedEvents:trackedCount,
+          profiles,
+          connectedConnectors:connectedConnectors.length,
+          totalConnectors:connectors.length,
+          eventRules:eventRules.length,
+          audiences:Number(audienceStats?.audiences?.total||0),
+          activeAudiences:Number(audienceStats?.audiences?.active||0),
+          matchedEvents:Number(attr?.matchedEvents||0),
+          meetings:meetings.length,
+          followUps:followUps.length,
+          agentRuns:agentRuns.length,
+          deliveries:deliveries.length,
+          failedDeliveries,
+          deliveryRate,
+          queueDeadLetter:Number(queue?.deadLetter||queue?.dead_letter||0),
+          openAlerts:Number(monitoring?.openAlerts||monitoring?.alerts?.open||0)
+        },
+        recent
+      })
+    }
     if (req.method === 'GET' && url.pathname === '/api/ready') {
       const persistence=await storageHealth()
       if(!persistence.ok) return send(req,res,503,{ok:false,persistence,time:new Date().toISOString()})
