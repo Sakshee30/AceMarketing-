@@ -1249,3 +1249,23 @@
 @media(prefers-reduced-motion:reduce){
   .product-sidebar{transition:none!important}
 }
+
+
+/* Journey stitched chronology */
+.journey-chronology{margin-top:18px;border-top:1px solid #eee8f2;padding-top:16px}
+.journey-event{position:relative;display:grid;grid-template-columns:38px 1fr;gap:12px;padding:12px 4px 14px 0;animation:journeyRise .28s ease both}
+.journey-event:not(:last-child):after{content:"";position:absolute;left:18px;top:42px;bottom:-4px;width:1px;background:linear-gradient(#d9cbe3,#eee8f2)}
+.journey-event-icon{display:grid;place-items:center;width:36px;height:36px;border:1px solid #e5d9eb;border-radius:12px;background:#fff;box-shadow:0 5px 16px rgba(59,36,70,.07);z-index:1}
+.journey-event-icon svg{width:16px;height:16px}
+.journey-event>div{min-width:0}
+.journey-event b{display:block;font-size:13px;color:#2e2036}
+.journey-event small{display:block;margin-top:2px;color:#8b7a94;font-size:11px}
+.journey-event p{margin:5px 0 0;color:#5d4d66;font-size:12px;line-height:1.45}
+.journey-event em{display:inline-block;margin:6px 8px 0 0;padding:3px 7px;border-radius:999px;background:#f6f1f8;color:#6a5575;font-size:10px;font-style:normal}
+@keyframes journeyRise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:720px){
+ .journey-event{grid-template-columns:34px 1fr}
+ .journey-event-icon{width:32px;height:32px;border-radius:10px}
+ .journey-event:not(:last-child):after{left:16px;top:38px}
+}
+@media(prefers-reduced-motion:reduce){.journey-event{animation:none}}
