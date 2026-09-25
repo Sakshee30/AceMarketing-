@@ -1304,11 +1304,24 @@ function UsersRolesSettings(){
 
 function GovernanceSettings(){
  const [data,setData]=useState<any>(null)
- useEffect(()=>{api.consentStats().then((r:any)=>setData(r)).catch(()=>null)},[])
+ const [privacy,setPrivacy]=useState<any>(null)
+ const [selectorType,setSelectorType]=useState('visitor')
+ const [selector,setSelector]=useState('')
+ const [result,setResult]=useState<any>(null)
+ const [busy,setBusy]=useState('')
+ const refresh=()=>{api.consentStats().then((r:any)=>setData(r)).catch(()=>null);api.privacyRequests().then((r:any)=>setPrivacy(r)).catch(()=>null)}
+ useEffect(refresh,[])
+ const runExport=async()=>{if(!selector)return;setBusy('export');try{setResult(await api.privacyExport(selectorType,selector));refresh()}finally{setBusy('')}}
+ const runDelete=async()=>{if(!selector)return;setBusy('delete');try{setResult(await api.privacyDelete(selectorType,selector));refresh()}finally{setBusy('')}}
+ const runPurge=async()=>{setBusy('purge');try{setResult(await api.privacyRetentionPurge(true));refresh()}finally{setBusy('')}}
  const s=data?.stats||{}
  return <div className="settings-detail"><h3>Data governance & consent</h3><p>Consent decisions are enforced server-side before analytics tracking and marketing activation.</p>
  <div className="stats-grid compact"><Stat label="Consent records" value={String(s.total||0)} sub="Auditable subjects" Icon={ShieldCheck}/><Stat label="Analytics allowed" value={String(s.analytics||0)} sub="Measurement consent" Icon={Activity}/><Stat label="Marketing allowed" value={String(s.marketing||0)} sub="Activation consent" Icon={Target}/><Stat label="Revoked" value={String(s.revoked||0)} sub="Activation blocked" Icon={X}/></div>
  {['Essential storage','Analytics tracking','Marketing activation','Personalization'].map((x,i)=><div className="setting-line" key={x}><span>{x}</span><b>{i===0?'Always enabled':'Consent required'}</b><span className={i===0?'healthy':'status'}>{i===0?'Essential':'Default off'}</span></div>)}
+ <h4>Data subject operations</h4><div className="privacy-ops"><select value={selectorType} onChange={e=>setSelectorType(e.target.value)}><option value="visitor">Visitor ID</option><option value="customer">Customer ID</option><option value="email">Email</option><option value="phone">Phone</option><option value="lead">Lead ID</option></select><input value={selector} onChange={e=>setSelector(e.target.value)} placeholder="Subject identifier"/><button onClick={runExport} disabled={!!busy||!selector}>{busy==='export'?'Exporting…':'Export data'}</button><button onClick={runDelete} disabled={!!busy||!selector}>{busy==='delete'?'Deleting…':'Delete data'}</button><button onClick={runPurge} disabled={!!busy}>{busy==='purge'?'Checking…':'Preview retention purge'}</button></div>
+ {result&&<pre className="privacy-result">{JSON.stringify(result,null,2)}</pre>}
+ <h4>Retention policy</h4><div className="setting-line"><span>Click sessions</span><b>{privacy?.policy?.clickSessions?privacy.policy.clickSessions+' days':'Explicit policy not set'}</b><span className="status">Expired sessions still purged</span></div><div className="setting-line"><span>Assisted events</span><b>{privacy?.policy?.assistedEvents?privacy.policy.assistedEvents+' days':'Explicit policy not set'}</b><span className="status">Opt-in</span></div><div className="setting-line"><span>Lead profiles</span><b>{privacy?.policy?.leadProfiles?privacy.policy.leadProfiles+' days':'Explicit policy not set'}</b><span className="status">Opt-in</span></div><div className="setting-line"><span>Consent records</span><b>{privacy?.policy?.consentRecords?privacy.policy.consentRecords+' days':'Explicit policy not set'}</b><span className="status">Opt-in</span></div>
+ <h4>Recent privacy requests</h4>{(privacy?.items||[]).slice(0,8).map((x:any)=><div className="audit-row" key={x.id}><ShieldCheck/><div><b>{x.request_type}</b><small>{x.selector_type||'workspace'} · {x.status}</small></div><span>{new Date(x.created_at).toLocaleString()}</span></div>)}
  <h4>Recent consent audit</h4>{(data?.audit||[]).slice(0,8).map((x:any)=><div className="audit-row" key={x.id}><ShieldCheck/><div><b>{x.action}</b><small>{x.subject_type} · {x.subject_id}</small></div><span>{new Date(x.created_at).toLocaleString()}</span></div>)}
  </div>
 }
