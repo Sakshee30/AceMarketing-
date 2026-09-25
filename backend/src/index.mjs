@@ -2633,6 +2633,15 @@ const server = http.createServer(async (req,res)=>{
     }
     if (req.method === 'GET' && url.pathname === '/api/routing') {
       const recent=await listRoutingDecisions(workspaceId,200)
+      const state=await getState()
+      const defaults=[
+        {id:'rr_1',name:'High-intent education lead',when:'score >= 85',destination:'Senior counsellor pool',slaSeconds:60,status:'active',priority:'Priority',builtIn:true},
+        {id:'rr_2',name:'Financing requested',when:'financingInterest = true',destination:'Finance-trained counsellor',slaSeconds:300,status:'active',priority:'Priority',builtIn:true},
+        {id:'rr_3',name:'WhatsApp re-engagement',when:'source = whatsapp',destination:'WhatsApp nurture',slaSeconds:180,status:'active',priority:'Automated',builtIn:true},
+        {id:'rr_4',name:'Low confidence review',when:'identityConfidence < 0.65',destination:'Manual review',slaSeconds:900,status:'active',priority:'Review',builtIn:true},
+        {id:'rr_default',name:'Default routing',when:'fallback',destination:'General admissions queue',slaSeconds:600,status:'active',priority:'Fallback',builtIn:true}
+      ]
+      const rules=[...defaults,...(state.routingRules||[])]
       const today=new Date();today.setHours(0,0,0,0)
       const routedToday=recent.filter(x=>Date.parse(x.created_at||x.createdAt||0)>=today.getTime())
       const destinations={}
@@ -2640,13 +2649,6 @@ const server = http.createServer(async (req,res)=>{
         const key=String(row.destination||'Unknown')
         destinations[key]=(destinations[key]||0)+1
       }
-      const rules=[
-        {id:'rr_1',name:'High-intent education lead',when:'score >= 85',destination:'Senior counsellor pool',slaSeconds:60,status:'active',priority:'Priority'},
-        {id:'rr_2',name:'Financing requested',when:'financingInterest = true',destination:'Finance-trained counsellor',slaSeconds:300,status:'active',priority:'Priority'},
-        {id:'rr_3',name:'WhatsApp re-engagement',when:'source = whatsapp',destination:'WhatsApp nurture',slaSeconds:180,status:'active',priority:'Automated'},
-        {id:'rr_4',name:'Low confidence review',when:'identityConfidence < 0.65',destination:'Manual review',slaSeconds:900,status:'active',priority:'Review'},
-        {id:'rr_default',name:'Default routing',when:'fallback',destination:'General admissions queue',slaSeconds:600,status:'active',priority:'Fallback'}
-      ]
       return send(req,res,200,{
         rules,
         recent:recent.slice(0,50),
@@ -2659,9 +2661,33 @@ const server = http.createServer(async (req,res)=>{
         destinationLoad:Object.entries(destinations).map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count)
       })
     }
+    if (req.method === 'POST' && url.pathname === '/api/routing/rules') {
+      const body=await readBody(req)
+      if(!body.name||!body.when||!body.destination)return send(req,res,400,{error:'name, when and destination required'})
+      const item={id:'rr_'+randomUUID(),name:String(body.name).slice(0,160),when:String(body.when).slice(0,240),destination:String(body.destination).slice(0,160),slaSeconds:Math.max(0,Number(body.slaSeconds||600)),status:'active',priority:String(body.priority||'Custom').slice(0,40),builtIn:false,createdAt:new Date().toISOString()}
+      await mutateState(s=>{s.routingRules=s.routingRules||[];s.routingRules.unshift(item);s.routingRules=s.routingRules.slice(0,200);s.audit=s.audit||[];s.audit.unshift({id:randomUUID(),action:'routing.rule_created',entityId:item.id,name:item.name,at:item.createdAt});s.audit=s.audit.slice(0,1000)})
+      return send(req,res,201,{item})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/routing/rules/toggle') {
+      const body=await readBody(req)
+      if(!body.id||typeof body.enabled!=='boolean')return send(req,res,400,{error:'id and enabled required'})
+      let updated=null
+      await mutateState(s=>{const item=(s.routingRules||[]).find(x=>x.id===body.id);if(item){item.status=body.enabled?'active':'paused';item.updatedAt=new Date().toISOString();updated={...item}}})
+      return updated?send(req,res,200,{item:updated}):send(req,res,404,{error:'custom routing rule not found'})
+    }
     if (req.method === 'POST' && url.pathname === '/api/routing/test') {
       const body=await readBody(req)
-      const decision=await routeLead(workspaceId,{leadRef:body.leadRef||'test_lead',score:body.score??90,source:body.source||'web',financingInterest:body.financingInterest,identityConfidence:body.identityConfidence??0.95})
+      const state=await getState()
+      const custom=(state.routingRules||[]).find(x=>x.id===body.ruleId&&x.status!=='paused')
+      const fallback=[
+        {id:'rr_1',name:'High-intent education lead',when:'score >= 85',destination:'Senior counsellor pool',slaSeconds:60},
+        {id:'rr_2',name:'Financing requested',when:'financingInterest = true',destination:'Finance-trained counsellor',slaSeconds:300},
+        {id:'rr_3',name:'WhatsApp re-engagement',when:'source = whatsapp',destination:'WhatsApp nurture',slaSeconds:180},
+        {id:'rr_4',name:'Low confidence review',when:'identityConfidence < 0.65',destination:'Manual review',slaSeconds:900},
+        {id:'rr_default',name:'Default routing',when:'fallback',destination:'General admissions queue',slaSeconds:600}
+      ].find(x=>x.id===body.ruleId)
+      const selected=custom||fallback||null
+      const decision=await routeLead(workspaceId,{leadRef:body.leadRef||'test_lead',score:body.score??90,source:body.source||'web',financingInterest:body.financingInterest,identityConfidence:body.identityConfidence??0.95,...(selected?{routingRule:{...selected,reason:'manual test of '+selected.when}}:{})})
       return send(req,res,200,{rule:decision.rule_name,matched:true,destination:decision.destination,reason:decision.reason,slaSeconds:decision.sla_seconds,evaluatedAt:decision.created_at})
     }
     if (req.method === 'GET' && url.pathname === '/api/follow-ups') {
