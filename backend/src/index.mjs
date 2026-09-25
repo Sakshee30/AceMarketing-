@@ -1901,7 +1901,8 @@ const server = http.createServer(async (req,res)=>{
       return send(req,res,201,{id:item.id,status:item.status,matchMethod:item.match_method,matchConfidence:item.match_confidence,matchedSessionId:item.matched_session_id})
     }
     if (req.method === 'GET' && url.pathname === '/api/attribution-identity/stats') {
-      const stats=await attributionStats(workspaceId)
+      const periodDays=Number(url.searchParams.get('periodDays')||0)||null
+      const stats=await attributionStats(workspaceId,{periodDays})
       return send(req,res,200,stats)
     }
     if (req.method === 'GET' && url.pathname === '/api/journeys') {
