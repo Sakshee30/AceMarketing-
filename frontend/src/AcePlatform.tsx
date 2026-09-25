@@ -1,8 +1,9 @@
 // @ts-nocheck
 import {useEffect,useMemo,useState} from 'react'
+import {createPortal} from 'react-dom'
 import {
   Activity,ArrowRight,BarChart3,Bell,BookOpen,Bot,Building2,Cable,CalendarDays,Check,CheckCircle2,ChevronDown,ChevronRight,
-  CircleDollarSign,Code2,DatabaseZap,Gauge,Globe2,GraduationCap,HeartPulse,Home,Landmark,Layers3,Menu,MessageCircle,MessageSquareText,
+  CircleDollarSign,Code2,DatabaseZap,Gauge,Globe2,GraduationCap,Headphones,HeartPulse,Home,Landmark,Layers3,Menu,MessageCircle,MessageSquareText,
   MousePointer2,Network,PhoneCall,PhoneIncoming,PieChart,Plane,Plus,RadioTower,Search,Settings2,ShieldCheck,ShoppingCart,Store,
   Sparkles,Target,UsersRound,WandSparkles,X,Zap
 } from 'lucide-react'
@@ -46,8 +47,11 @@ const caseStudies=[
 function ConsentBanner(){
  const [visible,setVisible]=useState(()=>!getLocalConsent())
  const choose=async(analytics:boolean,marketing:boolean,personalization:boolean)=>{await saveLocalConsent({analytics,marketing,personalization});setVisible(false)}
- if(!visible)return <button className="consent-manage" onClick={()=>setVisible(true)} aria-label="Manage privacy choices"><ShieldCheck/> Privacy</button>
- return <div className="consent-overlay"><div className="consent-banner" role="dialog" aria-modal="true" aria-label="Privacy choices"><div className="consent-copy"><ShieldCheck/><div><b>Your privacy choices</b><p>Essential storage is always used for security and core functionality. Analytics, advertising signals and personalization stay off until you choose to enable them.</p></div></div><div className="consent-actions"><button onClick={()=>choose(false,false,false)}>Essential only</button><button onClick={()=>choose(true,false,false)}>Allow analytics</button><button className="primary" onClick={()=>choose(true,true,true)}>Allow all</button></div></div></div>
+ if(typeof document==='undefined')return null
+ const node=!visible
+  ?<button className="consent-manage" onClick={()=>setVisible(true)} aria-label="Manage privacy choices"><ShieldCheck/> Privacy</button>
+  :<div className="consent-overlay"><div className="consent-banner" role="dialog" aria-modal="true" aria-label="Privacy choices"><div className="consent-copy"><ShieldCheck/><div><b>Your privacy choices</b><p>Essential storage is always used for security and core functionality. Analytics, advertising signals and personalization stay off until you choose to enable them.</p></div></div><div className="consent-actions"><button onClick={()=>choose(false,false,false)}>Essential only</button><button onClick={()=>choose(true,false,false)}>Allow analytics</button><button className="primary" onClick={()=>choose(true,true,true)}>Allow all</button></div></div></div>
+ return createPortal(node,document.body)
 }
 
 function Brand({dark=false}:{dark?:boolean}){
