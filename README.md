@@ -951,3 +951,41 @@ New API endpoints:
 - `POST /api/data-hub/rebuild`
 
 This directly addresses the brochure's problem statement that teams often operate across multiple platforms without a shared truth, and its product architecture that stitches sources and tools into one journey before agents act on it.
+
+
+## Production hardening pass: authentication, persistence and API perimeter
+
+This pass starts converting AceMarketing from a UI-complete demo into a deployable application foundation.
+
+Implemented:
+- HMAC-SHA256 signed bearer sessions with expiry and constant-time signature validation;
+- scrypt-based production password verification using `ADMIN_PASSWORD_HASH`;
+- production startup validation for JWT secret, admin credentials and CORS allowlist;
+- environment-gated API authentication for workspace endpoints;
+- browser token persistence and automatic Authorization header injection;
+- CORS allowlist instead of unconditional wildcard CORS in production;
+- security headers including nosniff, frame denial, referrer policy and permissions policy;
+- per-IP request rate limiting with `Retry-After`;
+- request IDs returned through `X-Request-ID`;
+- `/api/ready` readiness endpoint;
+- request / keep-alive timeouts and graceful SIGTERM / SIGINT shutdown;
+- file-backed atomic persistence for demo requests, custom integrations, custom audiences and audit events;
+- CI syntax validation for all server modules.
+
+### Production environment
+
+Required in production:
+
+```bash
+NODE_ENV=production
+JWT_SECRET=<32+ random characters>
+ADMIN_EMAIL=<workspace owner email>
+ADMIN_PASSWORD_HASH=<salt:scrypt-hex>
+CORS_ALLOWED_ORIGINS=https://app.yourdomain.com,https://www.yourdomain.com
+AUTH_REQUIRED=true
+DATA_FILE=/var/lib/acemarketing/ace-state.json
+RATE_LIMIT_PER_MINUTE=240
+TOKEN_TTL_SECONDS=3600
+```
+
+The current file-backed state layer is durable for a single API instance and is intentionally isolated behind `server/store.mjs`. Before multi-instance scale, replace it with PostgreSQL/managed relational storage and a distributed rate limiter/queue. Real provider OAuth, secret-vault storage and outbound conversion delivery are still required before claiming full production parity with a live EasyInsights deployment.
