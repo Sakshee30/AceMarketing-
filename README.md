@@ -429,3 +429,39 @@ New API endpoints:
 - `POST /api/integrations/connect`
 
 These workflows are grounded in the supplied brochure's 11-agent model and one-click/platform-agnostic connectivity framing.
+
+
+## Parity pass: Launchpad onboarding and deep workspace settings
+
+This pass adds the missing configuration layer between sign-in and day-to-day workspace operations.
+
+### Launchpad
+The product now opens on a six-step Launchpad:
+1. Workspace profile
+2. Connect data
+3. Map funnel stages
+4. Install tracking
+5. Test signal delivery
+6. Activate agents
+
+Launchpad includes readiness progress, connector status, funnel-stage mapping, tracking installation guidance, synthetic signal testing and agent activation.
+
+### Workspace settings
+The previous settings card grid is now a working settings console with:
+- Workspace profile
+- Users & roles
+- Tracking configuration
+- Governance + audit history
+- API keys & outbound webhooks
+- Agent approval boundaries
+- Notifications
+- Billing & usage
+
+New API endpoints:
+- `GET /api/launchpad`
+- `POST /api/launchpad`
+- `GET /api/settings`
+- `GET /api/audit-log`
+- `POST /api/api-keys`
+
+This implements the product setup path required to make the brochure's one-click integrations, stitched journey, signal return and agent activation usable as one coherent workspace flow.
