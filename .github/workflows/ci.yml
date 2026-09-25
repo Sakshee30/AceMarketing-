@@ -54,6 +54,8 @@ jobs:
             sleep 1
           done
           npm run smoke
+          npm run security:smoke
+          npm run load:smoke
           kill "$(cat /tmp/ace-api.pid)"
       - name: Build production containers
         run: |
@@ -93,6 +95,8 @@ jobs:
           test -f backend/scripts/smoke.mjs
           test -f backend/scripts/backup.mjs
           test -f backend/scripts/restore.mjs
+          test -f backend/scripts/security-smoke.mjs
+          test -f backend/scripts/load-smoke.mjs
           test -f deploy/Dockerfile.api
           test -f deploy/Dockerfile.frontend
           test -f deploy/nginx.conf
