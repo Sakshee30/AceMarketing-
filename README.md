@@ -1771,3 +1771,42 @@ API_METRIC_RETENTION_DAYS=30
 ```
 
 These usage counters are suitable as the internal source for usage-based packaging and billing calculations, but they do not yet charge a card or generate invoices. Payment-provider integration should consume finalized usage/entitlement records rather than inventing charges inside the telemetry layer.
+
+
+## Subscription entitlements and quota enforcement pass
+
+Usage metering is now connected to workspace subscription state and enforceable entitlements.
+
+Implemented:
+- `backend/migrations/009_entitlements.sql`;
+- `backend/src/entitlements.mjs`;
+- persisted workspace subscription state with plan code, status, period boundaries and entitlement JSON;
+- configurable monthly limits for tracked events, assisted events, signal dispatches, agent actions, audience syncs and custom integration tests;
+- configurable resource limits for members and custom integrations;
+- quota reservations use a workspace subscription row lock so concurrent requests cannot freely overrun the same entitlement;
+- successful metered operations remain counted by the observability usage ledger;
+- failed reservations are released;
+- suspended/cancelled workspaces cannot consume metered write operations;
+- `429` responses include the metric and usage context when a quota is exhausted;
+- Settings → Billing & usage now loads real subscription and current-month usage data;
+- payment state is explicit: metering/entitlements can operate before a billing provider is configured.
+
+New APIs:
+- `GET /api/billing/usage`
+- `GET /api/billing/subscription`
+- `POST /api/billing/entitlements` (workspace owner only)
+
+Default limits are deployment configuration, not claimed EasyInsights price tiers:
+
+```text
+PLAN_LIMIT_TRACKED_EVENTS=1000000
+PLAN_LIMIT_ASSISTED_EVENTS=250000
+PLAN_LIMIT_SIGNAL_DISPATCHES=250000
+PLAN_LIMIT_AGENT_ACTIONS=50000
+PLAN_LIMIT_AUDIENCE_SYNCS=500
+PLAN_LIMIT_CUSTOM_INTEGRATION_TESTS=1000
+PLAN_LIMIT_MEMBERS=25
+PLAN_LIMIT_CUSTOM_INTEGRATIONS=25
+```
+
+Set any limit to `0` for unlimited usage. AceMarketing does not charge cards or create invoices until a real payment/billing provider is connected; the entitlement layer is deliberately provider-independent.
