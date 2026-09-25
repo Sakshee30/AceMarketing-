@@ -9,6 +9,26 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: acemarketing
+          POSTGRES_USER: ace
+          POSTGRES_PASSWORD: ace_ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ace -d acemarketing"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://ace:ace_ci_password@127.0.0.1:5432/acemarketing
+      DB_SSL: disable
+      NODE_ENV: test
+      AUTH_REQUIRED: "false"
+      DEFAULT_WORKSPACE_ID: ws_default
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,6 +42,23 @@ jobs:
         run: npm run check:all
       - name: Build production frontend
         run: npm run build
+      - name: Run database migrations
+        run: npm run migrate
+      - name: Boot API and run smoke tests
+        shell: bash
+        run: |
+          npm run dev:backend > /tmp/ace-api.log 2>&1 &
+          echo $! > /tmp/ace-api.pid
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:3001/api/health >/dev/null; then break; fi
+            sleep 1
+          done
+          npm run smoke
+          kill "$(cat /tmp/ace-api.pid)"
+      - name: Build production containers
+        run: |
+          docker build -f deploy/Dockerfile.api -t ace-api:ci .
+          docker build -f deploy/Dockerfile.frontend -t ace-web:ci .
       - name: Verify canonical project structure
         run: |
           test -f frontend/src/AcePlatform.tsx
@@ -52,3 +89,12 @@ jobs:
           test -f backend/migrations/008_observability_usage.sql
           test -f backend/migrations/009_entitlements.sql
           test -f backend/migrations/010_billing_provider.sql
+          test -f backend/scripts/preflight.mjs
+          test -f backend/scripts/smoke.mjs
+          test -f backend/scripts/backup.mjs
+          test -f backend/scripts/restore.mjs
+          test -f deploy/Dockerfile.api
+          test -f deploy/Dockerfile.frontend
+          test -f deploy/nginx.conf
+          test -f docker-compose.yml
+          test -f docs/PRODUCTION_RUNBOOK.md
