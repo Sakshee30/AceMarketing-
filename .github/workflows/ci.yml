@@ -18,7 +18,14 @@ jobs:
           node-version: 20
       - name: Install dependencies
         run: npm install
-      - name: Type and server syntax checks
+      - name: Validate frontend and backend
         run: npm run check:all
-      - name: Build
+      - name: Build production frontend
         run: npm run build
+      - name: Verify canonical project structure
+        run: |
+          test -f frontend/src/AcePlatform.tsx
+          test -f frontend/src/lib/api.ts
+          test -f backend/src/index.mjs
+          test -f backend/src/security.mjs
+          test -f backend/src/store.mjs
