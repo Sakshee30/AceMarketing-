@@ -33,7 +33,9 @@ test.describe('public product surface',()=>{
     await page.goto('/#/')
     await dismissConsent(page)
     if(isMobile) await page.locator('.menu-toggle').click()
-    await page.getByRole('button',{name:/agents/i}).first().click()
+    await page.getByRole('button',{name:/^agents/i}).first().click()
+    await expect(page.locator('.agents-menu')).toBeVisible()
+    await page.locator('.agents-menu').getByRole('button',{name:/Lead Grading agent/i}).click()
     await expect(page).toHaveURL(/#\/agents/)
     await expect(page.locator('body')).toContainText(/Lead Grading/i)
 
@@ -53,7 +55,22 @@ test.describe('workspace critical flows',()=>{
     await page.evaluate(()=>window.dispatchEvent(new CustomEvent('ace-view',{detail:'app'})))
     await expect(page).toHaveURL(/#\/workspace/)
     await expect(page.locator('.product-body')).toBeVisible()
-    await expect(page.locator('.product-body h1')).toContainText(/Launchpad/i)
+    await expect(page.locator('.product-body h1')).toContainText(/Acquisition command center/i)
+  })
+
+  test('dashboard sections collapse and remain navigable',async({page})=>{
+    const tracking=page.getByRole('button',{name:/Tracking & Data/i}).first()
+    await expect(tracking).toBeVisible()
+    await tracking.click()
+    await expect(page.getByRole('button',{name:'Diagnostics',exact:true})).toHaveCount(0)
+    await tracking.click()
+    await expect(page.getByRole('button',{name:'Diagnostics',exact:true})).toBeVisible()
+
+    const search=page.getByPlaceholder('Find feature...')
+    await search.fill('audience')
+    await expect(page.getByRole('button',{name:'Audiences',exact:true})).toBeVisible()
+    await page.getByRole('button',{name:'Audiences',exact:true}).click()
+    await expect(page.locator('.product-body h1')).toContainText(/Audience/i)
   })
 
   test('core operating tabs render',async({page})=>{
