@@ -3492,3 +3492,20 @@ The production workspace now includes a persistent **Dashboard Navigator** in ad
 ### EasyInsights capability parity direction
 
 AceMarketing continues to implement the same broad operating categories commonly required for first-party marketing data activation: stitched journeys, server-side signal return, attribution, audience activation, lead operations and funnel automation. Product copy, branding and implementation remain AceMarketing-owned rather than reproducing third-party proprietary assets verbatim.
+
+
+### Live dashboard section strip (2026-09-26)
+
+The workspace header now exposes the six primary operating sections as a persistent, backend-aware section strip: **Workspace**, **Tracking & Data**, **Measurement & Intelligence**, **Lead & Conversion**, **Activation & Integrations**, and **Operations & Developer**.
+
+Each section:
+
+- opens its primary workspace tab immediately;
+- reads readiness from the existing `/api/dashboard-summary` backend evidence;
+- shows **Ready**, **Needs setup**, or **Checking…** state rather than a decorative/static badge;
+- refreshes automatically every 30 seconds;
+- remains horizontally scrollable on small screens;
+- keeps the original grouped sidebar and floating Dashboard Navigator intact;
+- uses reduced-motion-safe transitions and entrance animation.
+
+This improves navigation without deleting or flattening the existing feature hierarchy.
