@@ -1630,3 +1630,46 @@ GOOGLE_ADS_DEVELOPER_TOKEN=<developer token>
 Google restricts legacy Customer Match API access for projects that had not previously used the feature by April 1, 2026. Such deployments must use Google's Data Manager API rather than setting `GOOGLE_CUSTOMER_MATCH_MODE=legacy`.
 
 CRM writeback expects the destination record identifier to be available in the lead's governed attributes (for example `hubspotContactId`, `zohoLeadId`, or `salesforceLeadId`) or supplied explicitly by the caller.
+
+
+## Durable agent orchestration pass
+
+The conversion-agent surfaces now have a PostgreSQL-backed execution model instead of relying only on sample records and direct state mutations.
+
+Implemented:
+- `backend/migrations/006_agent_orchestration.sql`;
+- `backend/src/agent-orchestrator.mjs`;
+- durable agent runs with queued/running/retrying/succeeded/failed state;
+- persisted routing decisions with destination, reason and SLA;
+- persisted follow-up tasks with due time, priority, channel and completion state;
+- persisted meetings and reminder history;
+- persisted feedback responses and aggregate score;
+- durable qualification-call, meeting-reminder and feedback-request jobs through the existing worker;
+- signed outbound agent webhook transport for telephony/voice/calendar providers;
+- retry/dead-letter state is reflected on agent runs rather than being hidden;
+- existing Routing, Follow-ups, Calls, Meetings and Feedback screens load persisted backend data when available.
+
+New/expanded APIs:
+- `GET /api/agent-runs`
+- `GET /api/routing`
+- `POST /api/routing/test`
+- `GET/POST /api/follow-ups`
+- `POST /api/follow-ups/complete`
+- `GET/POST /api/qualification-calls`
+- `POST /api/qualification-calls/retry`
+- `GET/POST /api/meetings`
+- `POST /api/meetings/remind`
+- `GET/POST /api/feedback`
+- `POST /api/feedback/request`
+
+### Agent transport configuration
+
+AceMarketing can hand off voice and reminder actions to an approved telephony/voice provider through signed server-to-server webhooks:
+
+```text
+VOICE_AGENT_WEBHOOK_URL=https://...
+MEETING_REMINDER_WEBHOOK_URL=https://...
+AGENT_WEBHOOK_SECRET=<random signing secret>
+```
+
+When no external transport URL is configured, jobs remain valid internal orchestration records and return an internal accepted receipt; the system does not falsely claim that a phone call was placed.
