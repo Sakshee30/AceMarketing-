@@ -123,7 +123,13 @@ export const api = {
   testSite: (domain: string) => request('/sites/test', { method: 'POST', body: JSON.stringify({ domain }) }),
   siteDebug: (domain: string) => request('/sites/debug?domain=' + encodeURIComponent(domain)),
   replayDiagnostic: (issue: string) => request('/diagnostics/replay', { method: 'POST', body: JSON.stringify({ issue }) }),
-  funnel: () => request('/funnel'),
+  funnel: (filters?: { channel?: string; disposition?: string; periodDays?: number }) => {
+    const params=new URLSearchParams()
+    if(filters?.channel&&filters.channel!=='All channels')params.set('channel',filters.channel)
+    if(filters?.disposition&&filters.disposition!=='All dispositions')params.set('disposition',filters.disposition)
+    if(filters?.periodDays)params.set('periodDays',String(filters.periodDays))
+    return request('/funnel'+(params.toString()?'?'+params.toString():''))
+  },
   liveSync: () => request('/live-sync'),
   dataHub: () => request('/data-hub'),
   rebuildDataHub: () => request('/data-hub/rebuild', { method: 'POST', body: JSON.stringify({}) }),
