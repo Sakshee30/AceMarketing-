@@ -6,6 +6,7 @@ import { closeStore, getState, mutateState, storageHealth, withWorkspace } from 
 import { connectorVaultReady, encryptSecret } from './vault.mjs'
 import { enqueueJob, queueStats } from './queue.mjs'
 import { attributionStats, captureClickSession, closeAttributionStore, recordAssistedEvent, reconcileAttribution } from './attribution-store.mjs'
+import { closeLeadOps, createAudience as createLeadAudience, leadOpsStats, listAudiences as listLeadAudiences, listLeadProfiles, materializeAudience, overrideLeadGrade as persistLeadGrade, previewAudience as previewLeadAudience, scoreLead, upsertLeadProfile } from './lead-ops.mjs'
 import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, publicChallenges, publicCaseStudies, publicResources, publicResourceCenter } from './public-content.mjs'
 
 const CONNECTOR_PROVIDERS={
@@ -658,22 +659,38 @@ const server = http.createServer(async (req,res)=>{
       const builtIn=agents.map((name,i)=>({id:'builtin_'+i,name,status:i<7?'active':'available',type:'built_in'}))
       return send(req,res,200,{items:[...builtIn,...(state.customAgents||[])]})
     }
-    if (req.method === 'GET' && url.pathname === '/api/lead-grading') return send(req,res,200,{version:'v1.6',items:[
-      {lead:'Aarav Sharma',score:94,grade:'A',source:'google_ads',stage:'qualified'},
-      {lead:'Meera Patel',score:78,grade:'B',source:'meta_ads',stage:'connected'},
-      {lead:'Rohan Kumar',score:88,grade:'A',source:'whatsapp',stage:'consultation'},
-      {lead:'Anika Roy',score:54,grade:'C',source:'organic',stage:'lead'},
-      {lead:'Kabir Singh',score:32,grade:'D',source:'linkedin_ads',stage:'lead'}
-    ]})
+    if (req.method === 'GET' && url.pathname === '/api/enrich') {
+      const [items,stats]=await Promise.all([listLeadProfiles(workspaceId,100),leadOpsStats(workspaceId)])
+      return send(req,res,200,{stats,items:items.map(x=>({id:x.id,leadId:x.external_lead_id,name:x.name,source:x.source,campaign:x.campaign,stage:x.crm_stage,intent:x.intent,score:x.score,grade:x.grade,drivers:x.score_drivers,attributes:x.attributes,journey:x.journey,callSummary:x.call_summary,whatsappSummary:x.whatsapp_summary,updatedAt:x.updated_at}))})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/enrich/upsert') {
+      const body=await readBody(req)
+      const item=await upsertLeadProfile(workspaceId,body)
+      if(!item) return send(req,res,503,{error:'lead operations store unavailable'})
+      return send(req,res,201,{id:item.id,leadId:item.external_lead_id,name:item.name,score:item.score,grade:item.grade,drivers:item.score_drivers,updatedAt:item.updated_at})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/lead-grading/score') {
+      const body=await readBody(req)
+      return send(req,res,200,scoreLead(body))
+    }
+    if (req.method === 'GET' && url.pathname === '/api/lead-grading') {
+      const [items,stats]=await Promise.all([listLeadProfiles(workspaceId,100),leadOpsStats(workspaceId)])
+      return send(req,res,200,{version:'v2.0',stats,items:items.map(x=>({id:x.id,lead:x.name||x.external_lead_id,leadId:x.external_lead_id,score:x.score,grade:x.grade,source:x.source,stage:x.crm_stage||'lead',reason:(x.score_drivers||[]).slice(0,3).map(d=>d.label).join(' · '),drivers:x.score_drivers,updatedAt:x.updated_at}))})
+    }
     if (req.method === 'POST' && url.pathname === '/api/lead-grading/override') {
       const body=await readBody(req)
       if(!body.lead || !['A','B','C','D'].includes(body.grade)) return send(req,res,400,{error:'lead and grade A-D required'})
-      return send(req,res,200,{lead:body.lead,grade:body.grade,overridden:true,auditId:randomUUID(),updatedAt:new Date().toISOString()})
+      const item=await persistLeadGrade(workspaceId,String(body.lead),String(body.grade))
+      return item?send(req,res,200,{lead:item.name||item.external_lead_id,grade:item.grade,score:item.score,overridden:true,auditId:randomUUID(),updatedAt:item.updated_at}):send(req,res,404,{error:'lead not found'})
     }
     if (req.method === 'POST' && url.pathname === '/api/lead-grading/activate') {
       const body=await readBody(req)
       if(!body.lead) return send(req,res,400,{error:'lead required'})
-      return send(req,res,202,{lead:body.lead,status:'queued_for_activation',destinations:['crm','routing','ad_signals'],queuedAt:new Date().toISOString()})
+      const profiles=await listLeadProfiles(workspaceId,500)
+      const lead=profiles.find(x=>x.external_lead_id===body.lead||x.name===body.lead)
+      if(!lead) return send(req,res,404,{error:'lead not found'})
+      const mode=lead.grade==='D'?'Suppress':lead.grade==='C'?'Retarget':'Activate'
+      return send(req,res,202,{lead:lead.name||lead.external_lead_id,grade:lead.grade,status:'ready_for_activation',mode,destinations:['crm','routing','ad_signals'],queuedAt:new Date().toISOString()})
     }
     if (req.method === 'GET' && url.pathname === '/api/behavior') return send(req,res,200,{events:[
       {name:'page_view',count:92418},
@@ -694,17 +711,27 @@ const server = http.createServer(async (req,res)=>{
     if (req.method === 'POST' && url.pathname === '/api/audiences/preview') {
       const body=await readBody(req)
       if(!body.name || !body.condition) return send(req,res,400,{error:'name and condition required'})
-      const seed=Math.max(1200,Math.min(18000,3200 + String(body.value||'').length*137))
-      return send(req,res,200,{estimatedSize:seed,matchedPercent:Number(((seed/56582)*100).toFixed(1)),freshness:'real_time'})
+      const preview=await previewLeadAudience(workspaceId,body)
+      return send(req,res,200,preview)
     }
     if (req.method === 'POST' && url.pathname === '/api/audiences') {
       const body=await readBody(req)
-      if(!body.name || !body.destination) return send(req,res,400,{error:'name and destination required'})
-      const item={id:'aud_'+randomUUID(),name:body.name,status:'syncing',destination:body.destination,mode:body.mode||'Activate',condition:body.condition||null,value:body.value||null,createdAt:new Date().toISOString()}
-      await mutateState(s=>{s.audiences.unshift(item);s.audit.unshift({id:randomUUID(),action:'audience.created',entityId:item.id,at:item.createdAt})})
-      return send(req,res,201,item)
+      if(!body.name || !body.destination || !body.condition) return send(req,res,400,{error:'name, destination and condition required'})
+      const item=await createLeadAudience(workspaceId,body)
+      if(!item) return send(req,res,503,{error:'audience store unavailable'})
+      await mutateState(s=>{s.audit.unshift({id:randomUUID(),action:'audience.materialized',entityId:item.id,at:new Date().toISOString()});s.audit=s.audit.slice(0,1000)})
+      return send(req,res,201,{id:item.id,name:item.name,status:item.status,destination:item.destination,mode:item.mode,size:item.matched_size,estimatedSize:item.estimated_size,createdAt:item.created_at})
     }
-    if (req.method === 'GET' && url.pathname === '/api/audiences') { const state=await getState(); return send(req,res,200,{items:[...state.audiences,{name:'High intent leads',size:3106,mode:'activate'},{name:'Converted / enrolled',size:18204,mode:'suppress'},{name:'Website visitors · 180d',size:82416,mode:'retarget'}]}) }
+    if (req.method === 'POST' && url.pathname === '/api/audiences/materialize') {
+      const body=await readBody(req)
+      if(!body.id) return send(req,res,400,{error:'id required'})
+      const result=await materializeAudience(workspaceId,String(body.id))
+      return result?send(req,res,200,result):send(req,res,404,{error:'audience not found'})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/audiences') {
+      const items=await listLeadAudiences(workspaceId)
+      return send(req,res,200,{items:items.map(x=>({id:x.id,name:x.name,size:x.matched_size,estimatedSize:x.estimated_size,mode:x.mode,destination:x.destination,status:x.status,cadence:'Real time',definition:x.definition,lastMaterializedAt:x.last_materialized_at}))})
+    }
     if (req.method === 'GET' && url.pathname === '/api/alerts') return send(req,res,200,{items:[
       {id:'al_1',severity:'critical',title:'Audience sync stalled',status:'open'},
       {id:'al_2',severity:'warning',title:'GCLID coverage below threshold',status:'open'},
@@ -1057,6 +1084,6 @@ server.keepAliveTimeout=65_000
 server.headersTimeout=66_000
 server.requestTimeout=30_000
 server.listen(PORT,()=>console.log(`AceMarketing API listening on http://localhost:${PORT}`))
-const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
+const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
 process.on('SIGTERM',()=>shutdown('SIGTERM'))
 process.on('SIGINT',()=>shutdown('SIGINT'))
