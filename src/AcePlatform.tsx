@@ -43,11 +43,14 @@ const caseStudies=[
 ]
 
 function Brand({dark=false}:{dark?:boolean}){
- return <div className={'ace-brand '+(dark?'dark':'')}><span className="ace-mark"><i/><i/><i/></span><b>AceMarketing</b>function Header({openApp,openLogin,openPricing,openDemo,openCompany,openResources,openCaseStudies,openSolutions}:{openApp:()=>void,openLogin:()=>void,openPricing:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void,openCaseStudies:()=>void,openSolutions:()=>void}){
+ return <div className={'ace-brand '+(dark?'dark':'')}><span className="ace-mark"><i/><i/><i/></span><b>AceMarketing</b></div>
+}
+
+function Header({openApp,openLogin,openPricing,openDemo,openCompany,openResources,openCaseStudies,openSolutions}:{openApp:()=>void,openLogin:()=>void,openPricing:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void,openCaseStudies:()=>void,openSolutions:()=>void}){
  const [open,setOpen]=useState(false)
  const [menu,setMenu]=useState<'industries'|'agents'|'resources'|null>(null)
  const closeMenu=()=>setMenu(null)
- const industryItems=[
+ const industryItems:any[]=[
   ['Edtech','Track and activate student data across channels to improve lead quality, personalize outreach, and increase enrollments.',GraduationCap],
   ['Fintech','Enable teams to activate data wherever it lives - while maintaining strict privacy, security, and regulatory compliance.',Landmark],
   ['Healthcare','Activate PHI and customer data securely to deliver compliant, data-driven patient engagement.',HeartPulse],
@@ -56,7 +59,7 @@ function Brand({dark=false}:{dark?:boolean}){
   ['Travel','Unify customer data to personalize every stage of the guest journey and enhance overall experience.',Plane],
   ['Consumer Goods','Activate first-party data to optimize campaigns, understand buyer behavior, and drive repeat purchases at scale.',ShoppingCart]
  ]
- const agentItems=[
+ const agentItems:any[]=[
   ['Call tracking events agent','Tracks every inbound call and connects it to campaign, keyword and creative.',PhoneCall],
   ['Meta Advanced CAPI agent','Sends server-side conversions to Meta with deduplication.',RadioTower],
   ['Google ECL / OCI agent','Connects ad clicks to qualified and closed outcomes.',Target],
@@ -69,7 +72,7 @@ function Brand({dark=false}:{dark?:boolean}){
   ['Call Based Feedback agent','Collects post-interaction feedback and objections.',MessageSquareText],
   ['Ask Ace – User Journey & Attribution','Answers journey, funnel and attribution questions in plain language.',Sparkles]
  ]
- const resourceItems=[
+ const resourceItems:any[]=[
   ['About Us','Know about our people, values and what we stand for',Building2,openCompany],
   ['Blogs','Latest trends and updates in marketing and data',Layers3,openResources],
   ['Ebooks','Long-form guides for data-driven growth teams',BookOpen,openResources],
@@ -94,27 +97,29 @@ function Brand({dark=false}:{dark?:boolean}){
    </div>
    <button className="menu-toggle ei-menu-toggle" onClick={()=>setOpen(!open)}>{open?<X/>:<Menu/>}</button>
   </div>
+
   {menu==='industries'&&<div className="ei-mega-menu industries-menu" onMouseEnter={()=>setMenu('industries')}>
-    <div className="ei-mega-label">INDUSTRIES</div>
-    <div className="ei-industry-columns">
-     <div>{industryItems.slice(0,4).map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();location.hash='industries'}} className="ei-industry-item"><span className="ei-industry-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>})}</div>
-     <div>{industryItems.slice(4).map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();location.hash='industries'}} className="ei-industry-item"><span className="ei-industry-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>})}</div>
-    </div>
-   </div>}
+   <div className="ei-mega-label">INDUSTRIES</div>
+   <div className="ei-industry-columns">
+    <div>{industryItems.slice(0,4).map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();location.hash='industries'}} className="ei-industry-item"><span className="ei-industry-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>})}</div>
+    <div>{industryItems.slice(4).map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();location.hash='industries'}} className="ei-industry-item"><span className="ei-industry-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>})}</div>
+   </div>
+  </div>}
+
   {menu==='agents'&&<div className="ei-mega-menu agents-menu" onMouseEnter={()=>setMenu('agents')}>
-    <div className="ei-mega-label">AGENTS</div>
-    <div className="ei-agent-list">{agentItems.map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();location.hash='agents'}}><span className="ei-agent-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div><ChevronRight/></button>})}</div>
-   </div>}
+   <div className="ei-mega-label">AGENTS</div>
+   <div className="ei-agent-list">{agentItems.map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();location.hash='agents'}}><span className="ei-agent-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div><ChevronRight/></button>})}</div>
+  </div>}
+
   {menu==='resources'&&<div className="ei-mega-menu resources-menu" onMouseEnter={()=>setMenu('resources')}>
-    <div className="ei-resources-layout">
-     <div><div className="ei-mega-label">GET INSPIRED</div><div className="ei-resource-links">{resourceItems.map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();x[3]()}}><span><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>})}</div></div>
-     <aside><div className="ei-mega-label">LATEST FROM BLOGS</div><button onClick={openResources} className="ei-blog-card"><span>DATA SIGNALS</span><b>Why campaigns struggle without strong first-party data signals</b><small>Read article <ArrowRight/></small></button><button onClick={openResources} className="ei-blog-card"><span>AI + MEDIA</span><b>How to use AI assistants with your ad platforms</b><small>Read article <ArrowRight/></small></button></aside>
-    </div>
-   </div>}
+   <div className="ei-resources-layout">
+    <div><div className="ei-mega-label">GET INSPIRED</div><div className="ei-resource-links">{resourceItems.map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();x[3]()}}><span><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>})}</div></div>
+    <aside><div className="ei-mega-label">LATEST FROM BLOGS</div><button onClick={openResources} className="ei-blog-card"><span>DATA SIGNALS</span><b>Why campaigns struggle without strong first-party data signals</b><small>Read article <ArrowRight/></small></button><button onClick={openResources} className="ei-blog-card"><span>AI + MEDIA</span><b>How to use AI assistants with your ad platforms</b><small>Read article <ArrowRight/></small></button></aside>
+   </div>
+  </div>}
  </header>
 }
-eader>
-}
+
 function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResources,openCaseStudies,openSolutions}:{openApp:()=>void,openLogin:()=>void,openPricing:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void,openCaseStudies:()=>void,openSolutions:()=>void}){
  const [agentFilter,setAgentFilter]=useState('All')
  const [problemTab,setProblemTab]=useState<'Lead Quality'|'Conversion'|'Attribution'>('Lead Quality')
