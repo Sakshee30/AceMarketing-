@@ -962,16 +962,50 @@ const server = http.createServer(async (req,res)=>{
       const item=await setEventRuleEnabled(workspaceId,String(body.id),body.enabled)
       return item?send(req,res,200,{item}):send(req,res,404,{error:'event rule not found'})
     }
-    if (req.method === 'GET' && url.pathname === '/api/adjustments') return send(req,res,200,{items:[
-      {id:'adj_501',event:'partial_payment',source:'crm_billing',destination:'google_ads',status:'pending'},
-      {id:'adj_500',event:'returned_order',source:'commerce_backend',destination:'google_ads',status:'pending'},
-      {id:'adj_499',event:'low_quality_lead',source:'crm',destination:'google_ads',status:'applied'},
-      {id:'adj_498',event:'duplicate_lead',source:'crm',destination:'meta_ads',status:'applied'}
-    ]})
+    if (req.method === 'GET' && url.pathname === '/api/adjustments') {
+      let state=await getState()
+      if(!(state.adjustments||[]).length){
+        const now=new Date().toISOString()
+        await mutateState(s=>{
+          s.adjustments=[
+            {id:'adj_501',event:'partial_payment',source:'crm_billing',destination:'google_ads',fromValue:15000,toValue:84000,currency:'INR',reason:'Final payment received',status:'pending',createdAt:now},
+            {id:'adj_500',event:'returned_order',source:'commerce_backend',destination:'google_ads',fromValue:7200,toValue:0,currency:'INR',reason:'Order returned / revenue reversed',status:'pending',createdAt:now},
+            {id:'adj_499',event:'low_quality_lead',source:'crm',destination:'google_ads',fromValue:'lead',toValue:'excluded',reason:'Lead disposition = junk / invalid',status:'applied',createdAt:now},
+            {id:'adj_498',event:'duplicate_lead',source:'crm',destination:'meta_ads',fromValue:'lead',toValue:'deduplicated',reason:'Existing customer identity match',status:'applied',createdAt:now}
+          ]
+        })
+        state=await getState()
+      }
+      return send(req,res,200,{items:(state.adjustments||[]).slice(0,500)})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/adjustments/preview') {
+      const body=await readBody(req)
+      if(!body.id) return send(req,res,400,{error:'id required'})
+      const state=await getState()
+      const item=(state.adjustments||[]).find(x=>x.id===body.id)
+      if(!item) return send(req,res,404,{error:'adjustment not found'})
+      const payload={
+        eventId:item.id,
+        event:item.event,
+        destination:item.destination,
+        adjustment:{from:item.fromValue??null,to:item.toValue??null,currency:item.currency||null,reason:item.reason||null},
+        idempotencyKey:createHash('sha256').update(workspaceId+':'+item.id).digest('hex')
+      }
+      return send(req,res,200,{item,payload,generatedAt:new Date().toISOString()})
+    }
     if (req.method === 'POST' && url.pathname === '/api/adjustments/apply') {
       const body=await readBody(req)
       if(!body.id) return send(req,res,400,{error:'id required'})
-      return send(req,res,200,{id:body.id,status:'applied',appliedAt:new Date().toISOString(),auditId:randomUUID()})
+      const now=new Date().toISOString()
+      let updated=null
+      await mutateState(s=>{
+        const item=(s.adjustments||[]).find(x=>x.id===body.id)
+        if(item){item.status='applied';item.appliedAt=now;item.updatedAt=now;updated={...item}}
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'adjustment.applied',entityId:String(body.id),at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return updated?send(req,res,200,{...updated,auditId:randomUUID()}):send(req,res,404,{error:'adjustment not found'})
     }
     if (req.method === 'GET' && url.pathname === '/api/fingerprinting') return send(req,res,200,{continuityRate:96.4,ambiguousRate:1.3,scenarios:[
       {name:'third_party_checkout',matchRate:96.4},
@@ -994,6 +1028,14 @@ const server = http.createServer(async (req,res)=>{
       const body=await readBody(req)
       if(!body.domain) return send(req,res,400,{error:'domain required'})
       return send(req,res,200,{domain:body.domain,pixel:true,server:true,consent:true,crossDomain:true,testedAt:new Date().toISOString()})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/sites/debug') {
+      const domain=String(url.searchParams.get('domain')||'')
+      const state=await getState()
+      const source=[...trackedEvents].slice(-200).reverse()
+      const persisted=(state.recentEvents||[]).slice(0,200)
+      const items=[...source,...persisted].filter((x,index,arr)=>arr.findIndex(y=>String(y.id||y.eventId||'')===String(x.id||x.eventId||''))===index)
+      return send(req,res,200,{domain,items:items.filter(x=>!domain||String(x.domain||x.host||x.url||'').includes(domain)).slice(0,100)})
     }
     if (req.method === 'GET' && url.pathname === '/api/fraud') return send(req,res,200,{items:[
       {key:'duplicate_lead_burst',severity:'high',affected:428},
@@ -1018,17 +1060,65 @@ const server = http.createServer(async (req,res)=>{
       if(!body.slug) return send(req,res,400,{error:'slug required'})
       return send(req,res,200,{slug:body.slug,status:'active',activatedAt:new Date().toISOString()})
     }
-    if (req.method === 'GET' && url.pathname === '/api/diagnostics') return send(req,res,200,{score:91,duplicateRate:1.7,clickIdCoverage:93.2,quarantined:42,issues:[
-      {key:'duplicate_conversions',severity:'critical',affected:1284},
-      {key:'missing_click_ids',severity:'warning',affectedPercent:6.8},
-      {key:'cross_domain_break',severity:'warning',domain:'checkout.example.com'},
-      {key:'late_crm_outcomes',severity:'warning',p95Minutes:18},
-      {key:'schema_mismatch',severity:'info',quarantined:42}
-    ]})
+    if (req.method === 'GET' && url.pathname === '/api/diagnostics') {
+      const [state,attr,jobs]=await Promise.all([getState(),attributionStats(workspaceId),queueStats(workspaceId)])
+      const deliveries=state.signalDeliveries||[]
+      const delivered=deliveries.filter(x=>x.status==='delivered').length
+      const failed=deliveries.filter(x=>x.status==='dead_letter').length
+      const duplicateCount=(state.audit||[]).filter(x=>String(x.action||'').includes('duplicate')).length
+      const clickTotal=Number(attr?.activeClickSessions||0)
+      const clickCovered=Number(attr?.clickIdCoverage?.gclid||0)+Number(attr?.clickIdCoverage?.fbclid||0)+Number(attr?.clickIdCoverage?.braid||0)
+      const clickIdCoverage=clickTotal?Number(Math.min(100,(clickCovered/clickTotal*100)).toFixed(2)):0
+      const connectorProblems=(state.connectorHealth||[]).filter(x=>String(x.status||'').toLowerCase()!=='healthy')
+      const quarantined=Number(state.quarantinedEvents?.length||0)
+      const deliveryRate=deliveries.length?delivered/deliveries.length:1
+      const score=Math.max(0,Math.min(100,Math.round(100-(failed*4)-(connectorProblems.length*3)-(quarantined>0?4:0)-(clickTotal&&clickIdCoverage<90?6:0))))
+      const issues=[]
+      if(duplicateCount) issues.push({key:'duplicate_conversions',severity:'warning',affected:duplicateCount})
+      if(clickTotal&&clickIdCoverage<95) issues.push({key:'missing_click_ids',severity:'warning',affectedPercent:Number((100-clickIdCoverage).toFixed(2))})
+      if(failed) issues.push({key:'delivery_failures',severity:failed>10?'critical':'warning',affected:failed})
+      for(const item of connectorProblems.slice(0,5)) issues.push({key:'connector_health',severity:'warning',connector:item.name,status:item.status})
+      if(quarantined) issues.push({key:'schema_mismatch',severity:'info',quarantined})
+      return send(req,res,200,{available:true,score,duplicateRate:deliveries.length?Number((duplicateCount/Math.max(1,deliveries.length)*100).toFixed(2)):0,clickIdCoverage,quarantined,deliveryRate:Number((deliveryRate*100).toFixed(2)),queue:jobs,issues,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/diagnostics/scan') {
+      const resultId='scan_'+randomUUID()
+      const startedAt=new Date().toISOString()
+      const [state,attr,jobs]=await Promise.all([getState(),attributionStats(workspaceId),queueStats(workspaceId)])
+      const result={
+        id:resultId,
+        startedAt,
+        completedAt:new Date().toISOString(),
+        signalDeliveries:(state.signalDeliveries||[]).length,
+        deadLetter:(state.signalDeliveries||[]).filter(x=>x.status==='dead_letter').length,
+        connectorIssues:(state.connectorHealth||[]).filter(x=>String(x.status||'').toLowerCase()!=='healthy').length,
+        unmatchedAttribution:Number(attr?.unmatchedEvents||0),
+        queue:jobs
+      }
+      await mutateState(s=>{
+        s.diagnosticScans=s.diagnosticScans||[]
+        s.diagnosticScans.unshift(result)
+        s.diagnosticScans=s.diagnosticScans.slice(0,100)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'diagnostics.scan_completed',entityId:resultId,at:result.completedAt})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,200,result)
+    }
     if (req.method === 'POST' && url.pathname === '/api/diagnostics/replay') {
       const body=await readBody(req)
       if(!body.issue) return send(req,res,400,{error:'issue required'})
-      return send(req,res,202,{queued:true,issue:body.issue,replayId:randomUUID(),status:'queued'})
+      const replayId='diag_'+randomUUID()
+      const now=new Date().toISOString()
+      await mutateState(s=>{
+        s.diagnosticReplays=s.diagnosticReplays||[]
+        s.diagnosticReplays.unshift({id:replayId,issue:String(body.issue),status:'queued',createdAt:now})
+        s.diagnosticReplays=s.diagnosticReplays.slice(0,250)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'diagnostics.replay_queued',entityId:replayId,issue:String(body.issue),at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,202,{queued:true,issue:body.issue,replayId,status:'queued'})
     }
     if (req.method === 'GET' && url.pathname === '/api/funnel') return send(req,res,200,{stages:{leads:12842,qualified:7621,appointments:2314,consultations:1506,bookings:982},campaigns:[
       {name:'MBA Search - Brand',channel:'Google Ads',leads:2841,qualified:1812,appointments:932,consultations:421,bookings:188},
@@ -1053,6 +1143,10 @@ const server = http.createServer(async (req,res)=>{
         {name:'consultation_sale_whatsapp',source:'crm_whatsapp',destination:'meta_google',matchedRevenue:2840000,closedOutcomes:314,matchRate:92.7},
         {name:'store_sale_offline',source:'pos_crm',destination:'google_meta',matchedRevenue:1980000,closedOutcomes:227,matchRate:94.1}
       ],unmatched:live.available?live.unmatchedEvents:4})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/matchback/unmatched') {
+      const live=await attributionStats(workspaceId)
+      return send(req,res,200,{items:(live?.recent||[]).filter(x=>x.status==='unmatched'),total:Number(live?.unmatchedEvents||0)})
     }
     if (req.method === 'POST' && url.pathname === '/api/matchback/reconcile') {
       const body=await readBody(req)
