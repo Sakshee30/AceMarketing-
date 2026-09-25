@@ -364,3 +364,39 @@ This pass adds additional elements from the current EasyInsights public site:
 New API endpoints:
 - `GET /api/ai-action`
 - `GET /api/source-notes`
+
+
+## Parity pass: solution categories, behavior tracking, feed enhancement and exclusion audiences
+
+This pass adds product areas currently highlighted across the EasyInsights public site and first-party-data use cases:
+
+- Dedicated **Solutions** page for:
+  - Agency;
+  - Lead Generation;
+  - Enterprise;
+  - Mid-Market Brand;
+  - Attribution Model;
+  - Alerts & Monitoring;
+  - Server-to-Server Integration.
+- New workspace **Behavior** module:
+  - first-party page/session events;
+  - pricing-page and form behavior;
+  - WhatsApp/call CTA behavior;
+  - journey sequence and intent enrichment.
+- New workspace **Feed** module:
+  - custom customer/product/event attributes;
+  - destination payload coverage;
+  - schema guardrails.
+- **Audience** module expanded with lifecycle audiences and waste-control exclusions, including device-ID style suppression.
+- New marketing section covering:
+  - website behavior;
+  - dynamic audience creation/suppression;
+  - device/identity exclusion;
+  - feed enhancement with custom attributes.
+
+New API endpoints:
+- `GET /api/behavior`
+- `GET /api/feed`
+- `GET /api/solutions`
+
+These additions are based on the current EasyInsights public descriptions of first-party data activation, website behavior, dynamic audience creation/suppression, device-ID exclusion patterns, feed enhancement and solution categories. AceMarketing implements comparable workflows with its own code and UI.
