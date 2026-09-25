@@ -3169,3 +3169,159 @@ This keeps the selected feature content visible beside the sidebar instead of al
 ### Dashboard feature access
 
 All existing workspace modules remain available in the sidebar and clicking a module changes the active dashboard view in the visible main panel. The sidebar itself now scrolls independently so every module remains reachable without moving the main content off-screen.
+
+
+## Dashboard architecture and navigation upgrade
+
+This pass turns the workspace into a structured operating console instead of a flat 41-item navigation list.
+
+### Six collapsible dashboard sections
+
+All 41 workspace modules are now grouped into:
+
+1. **Workspace**
+   - Overview
+   - Launchpad
+
+2. **Tracking & Data**
+   - AdSync
+   - Funnel
+   - Events
+   - Adjustments
+   - Diagnostics
+   - Fraud
+   - Deep Links
+   - Sites
+   - Fingerprinting
+   - Live Sync
+   - Data Hub
+   - Offline Attribution
+   - Matchback
+   - POS & Stores
+
+3. **Measurement & Intelligence**
+   - Journeys
+   - Identity
+   - Models
+   - Attribution
+   - Planner
+   - Reports
+
+4. **Lead & Conversion**
+   - Enrich
+   - Lead Grading
+   - Behavior
+   - Feed
+   - Agents
+   - Routing
+   - Follow-ups
+   - Calls
+   - Meetings
+   - Feedback
+   - Approvals
+   - Ask Ace
+
+5. **Activation & Integrations**
+   - Integrations
+   - Audiences
+   - Delivery
+
+6. **Operations & Developer**
+   - Monitoring
+   - Alerts
+   - Developers
+   - Settings
+
+Every module appears exactly once. A repository-level validation confirms 41 dashboard tabs and 41 grouped section entries with no missing or duplicated module.
+
+### Sidebar usability
+
+The sidebar now supports:
+
+- collapsible sections;
+- persistent open/closed section state;
+- automatic expansion of the active section;
+- feature search using **Find feature...**;
+- active-tab persistence;
+- active-module indicator;
+- independent sidebar scrolling;
+- compact mobile rendering.
+
+### Live dashboard command center
+
+A new authenticated backend endpoint:
+
+```text
+GET /api/dashboard-summary
+```
+
+aggregates workspace evidence from:
+
+- lead/profile state;
+- first-party tracked events;
+- attribution;
+- event rules;
+- audiences;
+- durable queue statistics;
+- signal delivery state;
+- integrations;
+- meetings;
+- follow-ups;
+- agent runs;
+- monitoring.
+
+The endpoint returns:
+
+- workspace readiness percentage;
+- readiness by operating area;
+- known profiles;
+- connected systems;
+- matched attribution events;
+- active audiences;
+- meetings and follow-ups;
+- agent runs;
+- delivery success/failures;
+- dead-letter count;
+- recent cross-module activity.
+
+### Overview redesign
+
+The Overview now acts as the main workspace operating page with:
+
+- workspace-readiness hero;
+- live KPI cards;
+- six operating-area readiness cards;
+- quick actions;
+- funnel summary;
+- operational health links;
+- recent event/delivery/agent activity;
+- direct navigation into the relevant module.
+
+No fixed provider-success percentages are introduced by the command center. Values come from the workspace summary API.
+
+### Dashboard visual system
+
+The workspace received a visual polish pass:
+
+- gradient sidebar shell;
+- grouped navigation;
+- soft active-module gradients;
+- readiness cards;
+- quick-action tiles;
+- activity-type indicators;
+- subtle hover/entrance motion;
+- reduced-motion accessibility support;
+- improved responsive layouts.
+
+### Regression coverage
+
+Playwright coverage was updated to verify:
+
+- public Agents mega menu opens before navigation;
+- workspace opens on the Overview command center;
+- dashboard sections collapse and expand;
+- feature search can locate a module;
+- a searched module remains navigable;
+- existing critical operating pages remain reachable.
+
+The dashboard-navigation tests are part of the existing `tests/e2e/platform.spec.ts` suite.
