@@ -29,6 +29,8 @@ export const api = {
     return result
   },
   logout: () => { if (typeof window !== 'undefined') window.localStorage.removeItem('ace_token') },
+  pricingRecommendation: (payload: Record<string, unknown>) => request<{ recommended: string[] }>('/pricing/recommend', { method: 'POST', body: JSON.stringify(payload) }),
+  submitQuote: (payload: Record<string, unknown>) => request<{ id: string; status: string }>('/pricing/quote', { method: 'POST', body: JSON.stringify(payload) }),
   submitDemo: (payload: DemoRequest) =>
     request<{ id: string; status: string }>('/demo-requests', {
       method: 'POST',
