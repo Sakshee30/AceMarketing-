@@ -44,12 +44,13 @@ const deliverMeta=async(workspaceId,signal)=>{
   else if(signal.email) userData.em=[sha(signal.email)]
   if(signal.phoneSha256) userData.ph=[signal.phoneSha256]
   else if(signal.phone) userData.ph=[sha(String(signal.phone).replace(/\D/g,''))]
-  if(signal.externalId) userData.external_id=[sha(signal.externalId)]
+  const externalIdentity=signal.externalId||signal.customerId
+  if(externalIdentity) userData.external_id=[sha(externalIdentity)]
   if(signal.fbc) userData.fbc=signal.fbc
   if(signal.fbp) userData.fbp=signal.fbp
   const event={
     event_name:metaEventName(signal.event),
-    event_time:Math.floor(new Date(signal.occurredAt||Date.now()).getTime()/1000),
+    event_time:Math.floor((Number.isNaN(new Date(signal.occurredAt||Date.now()).getTime())?Date.now():new Date(signal.occurredAt||Date.now()).getTime())/1000),
     event_id:String(signal.externalEventId||signal.idempotencyKey||signal.deliveryId||''),
     action_source:String(signal.actionSource||'website'),
     user_data:userData,
