@@ -62,6 +62,16 @@ const server = http.createServer(async (req,res)=>{
       {name:'PGDM Retargeting',channel:'Meta Ads',leads:1510,qualified:903,appointments:527,consultations:210,bookings:96}
     ]})
     if (req.method === 'GET' && url.pathname === '/api/live-sync') return send(res,200,{status:'always_on',medianLatencySeconds:42,deliveryRate:99.82,eventsPerMinute:8412,recent:trackedEvents.slice(-25).reverse()})
+    if (req.method === 'GET' && url.pathname === '/api/offline-attribution') return send(res,200,{
+      callAttribution:{matched:4218,matchRate:91.6,method:'timestamp_overlap'},
+      whatsapp:{matched:6904,identifiers:['gclid','fbclid','phone']},
+      revenueAdjustments:{count:1284,types:['partial_payment','full_payment','zero_value_adjustment']},
+      rules:[
+        {conversion:'Inbound Call',source:'Telephony',match:'active_session_overlap',destination:['Google Ads','Meta Ads']},
+        {conversion:'WhatsApp Enquiry',source:'WhatsApp',match:'persisted_click_id_plus_phone',destination:['Google Ads','Meta Ads']},
+        {conversion:'Partial Payment',source:'Custom Backend',match:'customer_id_plus_order',destination:['Google Ads']}
+      ]
+    })
     if (req.method === 'POST' && url.pathname === '/api/track') {
       const body = await readBody(req)
       const event = {id:randomUUID(),receivedAt:new Date().toISOString(),...body}
