@@ -3709,3 +3709,16 @@ Site & Pixel Operations is now self-contained and reports real installation evid
 - The backend test result explicitly reports browser-event evidence, server reachability, consent readiness, cross-domain identity evidence and observed event count.
 - The UI changes to **Evidence verified** only when browser events are actually observed; otherwise it offers **Retest installation**.
 - The event debugger continues to show only real tracked/persisted events and never injects synthetic activity.
+
+
+### Transaction-level POS attribution
+
+POS & Stores now calculates identity match rate from actual transaction rows instead of accepting a user-declared matched-record count.
+
+- POS imports accept transaction-level rows with transaction ID, revenue, timestamp and optional customer/contact/click identifiers.
+- Each row is recorded as a `store_sale` assisted event and reconciled by the attribution store.
+- Batch `matched`, `unmatched` and `matchRate` are computed from returned reconciliation state.
+- Offline revenue is summed from the imported transaction rows.
+- The manual **Matched records** field has been removed from the dashboard.
+- Import history now displays computed matched/unmatched outcomes per batch.
+- A downloadable CSV template documents the supported identity fields.
