@@ -803,20 +803,24 @@ function DataHub(){
 
 function OfflineAttribution(){
  const [live,setLive]=useState<any>(null)
- useEffect(()=>{api.attributionIdentityStats().then((r:any)=>setLive(r)).catch(()=>null)},[])
+ useEffect(()=>{api.offlineAttribution().then((r:any)=>setLive(r)).catch(()=>null)},[])
  const flows=[
-  ['Inbound Call','Tata Tele / Exotel','Timestamp overlap + active session','GCLID matched','Google Ads'],
-  ['WhatsApp Enquiry','WhatsApp API','Persisted click ID + phone association','GCLID / FBCLID','Google + Meta'],
+  ['Inbound Call','Telephony webhook','First-party identity + session/click reconciliation','Phone / click ID','Google + Meta'],
+  ['WhatsApp Enquiry','WhatsApp Cloud API','Persisted click/customer identity + phone','Phone / GCLID / FBCLID','Google + Meta'],
   ['Partial Payment','Custom Backend','Customer ID + order mapping','Revenue adjustment','Google Ads'],
-  ['Walk-in / Offline Sale','CRM','Hashed phone/email + click history','Identity match','Google + Meta']
+  ['Walk-in / Offline Sale','CRM / POS','Hashed phone/email + click history','Identity match','Google + Meta']
  ]
- return <><PageHead crumb="AdSync / Offline Attribution" title="Calls, WhatsApp & offline revenue" sub="Bridge the gap between digital acquisition and conversions that happen outside the browser." action="New offline rule"/>
- <div className="stats-grid"><Stat label="Active click sessions" value={live?.available?String(live.activeClickSessions||0):'4,218'} sub="First-party attribution window" Icon={PhoneCall}/><Stat label="Assisted events" value={live?.available?String(live.assistedEvents||0):'6,904'} sub="Calls / WhatsApp / CRM / POS" Icon={MessageCircle}/><Stat label="Offline match rate" value={live?.available?String(live.matchRate||0)+'%':'91.6%'} sub="Deterministic identifiers" Icon={Target}/><Stat label="Unmatched queue" value={live?.available?String(live.unmatchedEvents||0):'1,284'} sub="Held from signal return" Icon={CircleDollarSign}/></div>
- <div className="app-panel"><div className="panel-head"><div><h3>Offline attribution rules</h3><p>How non-web conversions are matched back to campaigns</p></div><span className="healthy">Active</span></div><div className="offline-table"><div className="offline-row offline-head"><span>Conversion</span><span>Source</span><span>Matching method</span><span>Identifier</span><span>Destination</span></div>{flows.map(r=><div className="offline-row" key={r[0]}><b>{r[0]}</b><span>{r[1]}</span><span>{r[2]}</span><span>{r[3]}</span><strong>{r[4]}</strong></div>)}</div></div>
- <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Call attribution example</h3><p>Session-time overlap matching</p></div></div><div className="match-flow"><div><span>1</span><b>Ad click</b><small>GCLID persisted at landing</small></div><ArrowRight/><div><span>2</span><b>Active session</b><small>Visitor browsing window retained</small></div><ArrowRight/><div><span>3</span><b>Inbound call</b><small>Telephony timestamp received</small></div><ArrowRight/><div><span>4</span><b>Match</b><small>Call mapped to session GCLID</small></div></div></div>
- <div className="app-panel"><div className="panel-head"><div><h3>WhatsApp + payment bridge</h3><p>High-consideration journey recovery</p></div></div><div className="freshness-card"><MessageCircle/><div><b>WhatsApp identity bridge</b><p>Persist the click identifier through chat initiation and associate it with the lead phone number.</p></div></div><div className="freshness-card"><CircleDollarSign/><div><b>Partial-payment adjustment</b><p>Classify partial payment outcomes into the conversion value that bidding should learn from.</p></div></div></div></div></>
+ const callEvents=Number(live?.callAttribution?.events||0)
+ const waMessages=Number(live?.whatsapp?.messages||0)
+ const matched=Number(live?.attribution?.matchedEvents||0)
+ const unmatched=Number(live?.attribution?.unmatchedEvents||0)
+ const matchRate=Number(live?.attribution?.matchRate||0)
+ return <><PageHead crumb="AdSync / Offline Attribution" title="Calls, WhatsApp & offline revenue" sub="Bridge digital acquisition with real call, WhatsApp and offline conversion events using persisted first-party identity." action="New offline rule"/>
+ <div className="stats-grid"><Stat label="Tracked calls" value={live?String(callEvents):'—'} sub="Signed telephony events" Icon={PhoneCall}/><Stat label="WhatsApp messages" value={live?String(waMessages):'—'} sub="Verified Cloud API inbound events" Icon={MessageCircle}/><Stat label="Matched offline events" value={live?.attribution?.available?String(matched):'—'} sub={live?.attribution?.available?matchRate+'% match rate':'Attribution store unavailable'} Icon={Target}/><Stat label="Unmatched queue" value={live?.attribution?.available?String(unmatched):'—'} sub="Held from signal return" Icon={CircleDollarSign}/></div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Offline attribution rules</h3><p>How non-web conversions are matched back to campaigns</p></div><span className="healthy">Live contracts</span></div><div className="offline-table"><div className="offline-row offline-head"><span>Conversion</span><span>Source</span><span>Matching method</span><span>Identifier</span><span>Destination</span></div>{flows.map(r=><div className="offline-row" key={r[0]}><b>{r[0]}</b><span>{r[1]}</span><span>{r[2]}</span><span>{r[3]}</span><strong>{r[4]}</strong></div>)}</div></div>
+ <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Live call tracking</h3><p>Signed provider events feed lead and attribution context</p></div><span className={callEvents?'healthy':'warning'}>{callEvents?callEvents+' events':'No events yet'}</span></div><div className="match-flow"><div><span>1</span><b>Ad / source touch</b><small>Click/session identity retained</small></div><ArrowRight/><div><span>2</span><b>Inbound call</b><small>Signed webhook received</small></div><ArrowRight/><div><span>3</span><b>Lead context</b><small>Call outcome enriches profile</small></div><ArrowRight/><div><span>4</span><b>Attribution</b><small>Assisted event reconciled</small></div></div></div>
+ <div className="app-panel"><div className="panel-head"><div><h3>WhatsApp identity bridge</h3><p>Cloud API events connected to the stitched journey</p></div><span className={waMessages?'healthy':'warning'}>{waMessages?waMessages+' messages':'No events yet'}</span></div><div className="freshness-card"><MessageCircle/><div><b>Verified inbound event</b><p>Meta signature verification, phone-number workspace routing, lead upsert and assisted attribution are handled before the event becomes workspace truth.</p></div></div><div className="freshness-card"><CircleDollarSign/><div><b>Revenue handoff</b><p>Downstream CRM or billing outcomes can reuse the same customer identity before Google/Meta signal return.</p></div></div></div></div></>
 }
-
 function Matchback(){
  const [selected,setSelected]=useState('Closed Won · MBA Search')
  const [reconciled,setReconciled]=useState<string[]>([])
@@ -1070,22 +1074,51 @@ function FollowUps(){
 }
 
 function Calls(){
- const [calls,setCalls]=useState<any[]>([
-  {id:'call_301',lead:'Aarav Sharma',source:'Google Ads',agent:'Voice Lead Qualification',status:'Qualified',duration:'3m 42s',intent:92,next:'Schedule consultation'},
-  {id:'call_300',lead:'Meera Patel',source:'Meta Ads',agent:'Voice Lead Qualification',status:'Follow-up',duration:'2m 18s',intent:71,next:'Send fee details'},
-  {id:'call_299',lead:'Rohan Kumar',source:'WhatsApp',agent:'Voice Lead Qualification',status:'Qualified',duration:'4m 09s',intent:89,next:'Schedule consultation'},
-  {id:'call_298',lead:'Anika Roy',source:'Organic',agent:'Voice Lead Qualification',status:'No answer',duration:'—',intent:54,next:'Retry after 2h'}
- ])
- const [selected,setSelected]=useState(calls[0].id)
- useEffect(()=>{api.qualificationCalls().then((r:any)=>{if(r.items?.length){const mapped=r.items.map((x:any)=>({id:x.id,lead:x.lead,source:x.source,agent:x.agent,status:String(x.status).replace('_',' '),duration:x.duration,intent:x.intent||0,next:x.next,attempts:x.attempts,lastError:x.lastError}));setCalls(mapped);setSelected(mapped[0].id)}}).catch(()=>null)},[])
- const current=calls.find(x=>x.id===selected)||calls[0]
- const retry=async(id:string)=>{const c=calls.find(x=>x.id===id);await api.retryQualificationCall(id).catch(()=>null);if(c)await api.createQualificationCall({lead:c.lead,source:c.source,intent:c.intent,trigger:'retry'}).catch(()=>null);setCalls(xs=>xs.map(x=>x.id===id?{...x,status:'queued',next:'Calling queue'}:x))}
- return <><PageHead crumb="Conversion / Calls" title="Voice lead qualification" sub="Qualify high-intent leads quickly, capture intent and push structured call context back into the CRM." action="Configure call agent"/>
- <div className="stats-grid"><Stat label="Calls today" value="428" sub="+11% vs yesterday" Icon={PhoneIncoming}/><Stat label="Connected" value="81%" sub="346 calls answered" Icon={PhoneCall}/><Stat label="Qualified" value="44%" sub="Of connected calls" Icon={Target}/><Stat label="Median speed-to-lead" value="42s" sub="From lead arrival" Icon={Activity}/></div>
- <div className="call-ops-layout"><div className="app-panel call-list"><div className="panel-head"><div><h3>Recent qualification calls</h3><p>Agent activity and lead outcomes</p></div><span className="healthy">Live</span></div>{calls.map(x=><button key={x.id} className={selected===x.id?'selected':''} onClick={()=>setSelected(x.id)}><PhoneIncoming/><div><b>{x.lead}</b><small>{x.source} · {x.duration}</small></div><span>{x.status}</span><ChevronRight/></button>)}</div>
- <div className="app-panel call-detail"><div className="panel-head"><div><h3>{current.lead}</h3><p>{current.agent}</p></div><span className="score">{current.intent} intent</span></div><div className="call-detail-grid">{[['Call ID',current.id],['Source',current.source],['Outcome',current.status],['Next action',current.next]].map(x=><div key={x[0]}><span>{x[0]}</span><b>{x[1]}</b></div>)}</div><div className="transcript"><p><b>Agent:</b> I am calling about your Executive MBA enquiry. Are you looking to join the upcoming intake?</p><p><b>Lead:</b> Yes. I need weekend classes and financing information before I decide.</p><p><b>Agent:</b> I can arrange a counsellor consultation and send the fee details now.</p></div><div className="context-chips"><span>Weekend preference</span><span>Financing interest</span><span>Upcoming intake</span><span>Consultation-ready</span></div><div className="approval-actions"><button onClick={()=>retry(current.id)}>Retry / follow up</button><button className="approve"><CalendarDays/>Schedule consultation</button></div></div></div></>
+ const [calls,setCalls]=useState<any[]>([])
+ const [tracked,setTracked]=useState<any[]>([])
+ const [selected,setSelected]=useState('')
+ const [scheduleAt,setScheduleAt]=useState('')
+ const [busy,setBusy]=useState('')
+ const [notice,setNotice]=useState('')
+ const load=async()=>{
+  const [runs,events]:any=await Promise.all([api.qualificationCalls().catch(()=>({items:[]})),api.callEvents().catch(()=>({items:[]}))])
+  const mapped=(runs.items||[]).map((x:any)=>({id:x.id,kind:'agent',lead:x.lead,source:x.source,agent:x.agent,status:String(x.status).replace('_',' '),duration:x.duration,intent:x.intent||0,next:x.next,attempts:x.attempts,lastError:x.lastError,createdAt:x.createdAt}))
+  const trackedRows=(events.items||[]).map((x:any)=>({id:x.id,kind:'tracked',lead:x.customerId||x.from||'Caller',source:x.source||x.provider||'Telephony',agent:'Call Tracking Events',status:String(x.status||'completed').replace('_',' '),duration:x.durationSeconds?x.durationSeconds+'s':'—',intent:0,next:x.disposition||'Attribution captured',provider:x.provider,startedAt:x.startedAt,from:x.from,to:x.to,campaign:x.campaign}))
+  setCalls(mapped);setTracked(trackedRows)
+  const first=mapped[0]?.id||trackedRows[0]?.id||''
+  setSelected(x=>x&&[...mapped,...trackedRows].some((r:any)=>r.id===x)?x:first)
+ }
+ useEffect(()=>{load()},[])
+ const rows=[...calls,...tracked]
+ const current=rows.find(x=>x.id===selected)||rows[0]
+ const retry=async(id:string)=>{
+  setBusy('retry:'+id);setNotice('')
+  try{await api.retryQualificationCall(id);setNotice('Qualification call re-queued through the durable agent worker.');await load()}
+  catch(e:any){setNotice(e?.message||'Call retry failed.')}
+  finally{setBusy('')}
+ }
+ const schedule=async()=>{
+  if(!current||!scheduleAt)return
+  setBusy('schedule');setNotice('')
+  try{
+   const startsAt=new Date(scheduleAt).toISOString()
+   await api.createMeeting({leadRef:current.lead,startsAt,owner:'Unassigned',reminderPlan:['whatsapp']})
+   setNotice('Consultation created. It is now available in Meetings for reminder operations.')
+   setScheduleAt('')
+  }catch(e:any){setNotice(e?.message||'Meeting could not be created.')}
+  finally{setBusy('')}
+ }
+ const connected=tracked.filter(x=>['answered','completed','connected','qualified'].includes(String(x.status).toLowerCase())).length
+ const qualified=calls.filter(x=>String(x.status).toLowerCase().includes('succeed')||String(x.status).toLowerCase().includes('qualified')).length
+ return <><PageHead crumb="Conversion / Calls" title="Voice qualification & call tracking" sub="Run qualification agents and ingest signed telephony events into lead context and offline attribution." action="Configure call agent"/>
+ {notice&&<div className="delivery-notice ok"><CheckCircle2/><span>{notice}</span></div>}
+ <div className="stats-grid"><Stat label="Qualification runs" value={String(calls.length)} sub="Persisted agent executions" Icon={PhoneIncoming}/><Stat label="Tracked call events" value={String(tracked.length)} sub="Signed telephony webhook events" Icon={PhoneCall}/><Stat label="Connected tracked calls" value={String(connected)} sub="Answered / completed outcomes" Icon={Activity}/><Stat label="Qualified runs" value={String(qualified)} sub="Successful qualification outcomes" Icon={Target}/></div>
+ <div className="call-ops-layout"><div className="app-panel call-list"><div className="panel-head"><div><h3>Recent call activity</h3><p>Agent runs plus provider call-tracking events</p></div><button onClick={load}>Refresh</button></div>{rows.length?rows.map(x=><button key={x.kind+':'+x.id} className={selected===x.id?'selected':''} onClick={()=>setSelected(x.id)}><PhoneIncoming/><div><b>{x.lead}</b><small>{x.source} · {x.duration}</small></div><span>{x.status}</span><ChevronRight/></button>):<div className="empty-delivery-state"><PhoneIncoming/><div><b>No calls recorded yet</b><small>Qualification runs and signed telephony events will appear here.</small></div></div>}</div>
+ {current?<div className="app-panel call-detail"><div className="panel-head"><div><h3>{current.lead}</h3><p>{current.agent}</p></div><span className="score">{current.kind==='agent'?current.intent+' intent':'Tracked call'}</span></div><div className="call-detail-grid">{[['Call ID',current.id],['Source',current.source],['Outcome',current.status],['Next action',current.next||'Review journey']].map(x=><div key={x[0]}><span>{x[0]}</span><b>{x[1]}</b></div>)}</div>
+ <div className="source-conflict-note"><PhoneCall/><div><b>{current.kind==='tracked'?'Provider event captured':'Qualification execution'}</b><p>{current.kind==='tracked'?('Provider: '+(current.provider||'telephony')+(current.campaign?' · Campaign: '+current.campaign:'')):(current.lastError?'Last error: '+current.lastError:'Execution state comes from the durable agent worker; no synthetic transcript is shown.')}</p></div></div>
+ <div className="call-schedule-box"><label>Consultation time<input type="datetime-local" value={scheduleAt} onChange={e=>setScheduleAt(e.target.value)}/></label><button className="approve" disabled={!scheduleAt||busy==='schedule'} onClick={schedule}><CalendarDays/>{busy==='schedule'?'Scheduling…':'Schedule consultation'}</button></div>
+ <div className="approval-actions">{current.kind==='agent'&&<button disabled={busy==='retry:'+current.id} onClick={()=>retry(current.id)}>{busy==='retry:'+current.id?'Queuing…':'Retry / follow up'}</button>}</div></div>:<div className="app-panel call-detail"><div className="empty-delivery-state"><PhoneCall/><div><b>Select a call</b><small>Live call detail will appear after an agent run or telephony event is recorded.</small></div></div></div>}</div></>
 }
-
 function Meetings(){
  const [meetings,setMeetings]=useState<any[]>([
   {id:'mtg_184',lead:'Aarav Sharma',time:'Today · 6:30 PM',owner:'Counsellor A',status:'Confirmed',reminder:'WhatsApp + SMS',risk:'Low'},
