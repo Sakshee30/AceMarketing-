@@ -923,13 +923,15 @@ const server = http.createServer(async (req,res)=>{
       return send(req,res,200,{items:integrations.map(name=>{
         const saved=connections.find(x=>x.connector===name)
         const provider=CONNECTOR_PROVIDERS[name]
+        const health=tokenHealth.find(x=>x.connector===name)||null
         return {
           name,
           status:saved?.status||(provider?'available':'manual'),
           provider:provider?.provider||'custom',
           authType:provider?.authType||'manual',
           configured:Boolean(provider?.clientId&&provider?.clientSecret&&CONNECTOR_REDIRECT_URI),
-          updatedAt:saved?.updatedAt||null
+          updatedAt:saved?.updatedAt||null,
+          tokenHealth:health
         }
       })})
     }
