@@ -26,6 +26,11 @@ const pool=databaseUrl ? new Pool({
 }) : null
 
 const initial={
+  members:[
+    {id:'usr_owner',email:process.env.ADMIN_EMAIL||'owner@example.com',name:'Workspace Owner',role:'owner',status:'active',createdAt:'2026-09-25T09:00:00.000Z'}
+  ],
+  sessions:[],
+  invitations:[],
   demoRequests:[],
   quoteRequests:[],
   audiences:[],
