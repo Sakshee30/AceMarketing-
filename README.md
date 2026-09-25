@@ -1374,3 +1374,17 @@ Required production secret:
 `CONNECTOR_ENCRYPTION_KEY` must be a high-entropy secret stored in your deployment secret manager, not committed to source control.
 
 Provider client IDs/secrets must likewise be injected through the deployment environment. The repository intentionally does not contain live third-party credentials.
+
+
+### Browser OAuth callback completion
+
+OAuth providers redirect to the backend using:
+`GET /api/integrations/oauth/callback?code=...&state=...`
+
+The backend validates the short-lived state, exchanges the authorization code, encrypts the returned provider token payload, updates connector lifecycle state, records an audit event, and redirects the browser to `CONNECTOR_OAUTH_SUCCESS_URL`.
+
+Recommended production configuration:
+- `CONNECTOR_OAUTH_REDIRECT_URI=https://api.yourdomain.com/api/integrations/oauth/callback`
+- `CONNECTOR_OAUTH_SUCCESS_URL=https://app.yourdomain.com/#/workspace`
+
+The POST callback remains available for controlled API/client integrations and automated testing.
