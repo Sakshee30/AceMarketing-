@@ -3530,3 +3530,24 @@ The Integrations workspace now treats every visible connector as an actionable p
 - The dashboard reports the actual built-in connector count rather than an unsupported marketing count.
 
 Native OAuth support currently exists for the providers explicitly configured in `CONNECTOR_PROVIDERS` (including Google Ads/GA4/Calendar, Meta/WhatsApp, LinkedIn, HubSpot, Salesforce and Zoho). Other displayed systems remain fully actionable through the configurable REST/webhook/SFTP/database adapter path until a dedicated native connector is implemented.
+
+
+### Built-in agent operational routing
+
+The 11 built-in agents are no longer status-only cards. The backend now returns category, description, prerequisites, operational action and destination tab for every built-in agent. The frontend renders those prerequisites and provides a direct action into the real operating module.
+
+Operational routing:
+
+- Meta Advanced CAPI → Delivery
+- Google ECL / OCI → AdSync
+- Call Tracking Events → Calls
+- Custom Integration → Integrations
+- Lead Grading → Lead Grading
+- CRM Enrichment → Enrich
+- Voice Lead Qualification → Calls
+- Voice Scheduler → Meetings
+- Meeting Reminder → Meetings
+- Feedback Agent → Feedback
+- Ask Ace → Ask Ace
+
+This keeps the agent library aligned with the public EasyInsights 11-agent structure while ensuring AceMarketing cards route to implemented AceMarketing workflows rather than static detail panels.
