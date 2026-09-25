@@ -400,3 +400,32 @@ New API endpoints:
 - `GET /api/solutions`
 
 These additions are based on the current EasyInsights public descriptions of first-party data activation, website behavior, dynamic audience creation/suppression, device-ID exclusion patterns, feed enhancement and solution categories. AceMarketing implements comparable workflows with its own code and UI.
+
+
+## Parity pass: operational agents, Ask Ace and integration connection workflow
+
+This pass converts several previously static surfaces into functional product workflows:
+
+- **Agent Operations** replaces the static agent-card grid with:
+  - 11-agent selector;
+  - active/available state;
+  - enable/disable control;
+  - human-approval / low-risk auto-run / autonomous modes;
+  - trigger configuration surface;
+  - shared journey context;
+  - recent agent-run history.
+- New **Ask Ace** workspace module:
+  - natural-language questions over funnel, revenue, attribution and audience context;
+  - starter questions;
+  - API-backed answers with structured insight cards.
+- **Integrations** now includes a working three-step connection wizard:
+  - authorize scopes;
+  - map identity, click-ID, lifecycle and revenue fields;
+  - enable sync;
+  - connected-state updates in the UI.
+
+New API endpoints:
+- `POST /api/ask-ace`
+- `POST /api/integrations/connect`
+
+These workflows are grounded in the supplied brochure's 11-agent model and one-click/platform-agnostic connectivity framing.
