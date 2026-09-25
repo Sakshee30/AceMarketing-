@@ -1089,3 +1089,21 @@ The marketing-header source was normalized after a malformed text replacement co
 - Resources mega menu.
 
 No public navigation features from the parity work were removed.
+
+
+## Public homepage order cleanup
+
+The public marketing page was simplified to match the current EasyInsights homepage sequence more closely.
+
+Changes:
+- hero now uses the same three-line headline rhythm as the current public EasyInsights homepage;
+- customer/reference strip sits directly below the hero;
+- removed the brochure-only "case for change" block from the public homepage;
+- removed the older duplicate Two Capabilities section;
+- removed internal/product-detail marketing blocks that interrupted the public sequence between Two Capabilities, Agents and Proof;
+- retained all those underlying capabilities inside the application workspace;
+- public flow is now: promo/header → hero → trust strip → three problems → two capabilities → 11 agents → proof → data diagnosis → AI in action → data ownership/security → final CTA → demo/footer;
+- Integrations navigation opens the product workspace rather than pointing to a removed public anchor;
+- added a final lead-quality CTA patterned on the current EasyInsights closing section.
+
+No core product functionality was deleted.
