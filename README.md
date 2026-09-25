@@ -778,3 +778,26 @@ New API endpoints:
 - `GET /api/fingerprinting`
 - `POST /api/fingerprinting/test`
 - `GET /api/planner`
+
+
+## Parity pass: POS, walk-in and store-sale attribution
+
+This pass adds a dedicated **POS & Stores** workspace for offline conversions that happen after digital acquisition.
+
+The module includes:
+- multiple store / offline-source connections;
+- location-level transaction and revenue visibility;
+- phone, email and customer-ID matching;
+- GCLID / FBCLID association where available;
+- API ingestion plus CSV fallback workflow;
+- walk-in consultation and completed-sale outcomes;
+- cancelled / refunded conversion adjustments;
+- duplicate receipt deduplication;
+- unmatched-transaction review;
+- verified offline conversion return to Google Ads and Meta.
+
+New API endpoints:
+- `GET /api/pos-stores`
+- `POST /api/pos-stores/import`
+
+EasyInsights' current first-party-data material lists POS systems as part of complex funnel conversion tracking, while its homepage describes returning closed outcomes such as store sales to advertising platforms. AceMarketing now has a dedicated operational surface for that offline revenue path.
