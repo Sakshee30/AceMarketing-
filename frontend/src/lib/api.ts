@@ -18,6 +18,7 @@ export const api = {
   publicIndustries: () => request('/public/industries'),
   publicAgents: () => request('/public/agents'),
   publicIntegrations: () => request('/public/integrations'),
+  publicChallenges: () => request('/public/challenges'),
   launchpad: () => request('/launchpad'),
   saveLaunchpad: (payload: Record<string, unknown>) => request('/launchpad', { method: 'POST', body: JSON.stringify(payload) }),
   login: async (email: string, password: string) => {
