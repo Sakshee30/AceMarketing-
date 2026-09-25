@@ -574,3 +574,36 @@ New API endpoints:
 - `POST /api/diagnostics/replay`
 
 The EasyInsights public site specifically calls out misfiring conversions, duplicate events, broken cross-domain/chatbot event flow, and lack of a single source of truth under "Tracking & Data Quality Issues." AceMarketing now provides an operational workspace for diagnosing those failure modes rather than only describing them on the marketing site.
+
+
+## Parity pass: Alert Center and developer / webhook operations
+
+This pass extends the real-time sync and custom integration capabilities into operational developer tooling.
+
+### Alert Center
+New **Alerts** workspace module includes:
+- active critical/warning/info queue;
+- alert detail and source;
+- acknowledge/resolve flow;
+- alert timeline;
+- routing metadata;
+- automated retry / runbook context.
+
+### Developer & webhook console
+New **Developers** workspace module includes:
+- server-to-server API quick-start example;
+- outbound webhook signing configuration;
+- HMAC-SHA256 signing model;
+- delivery logs with HTTP status and latency;
+- failed-delivery retry;
+- event catalog;
+- idempotency, retry, dead-letter and schema-versioning reliability rules.
+
+New API endpoints:
+- `GET /api/alerts`
+- `POST /api/alerts/resolve`
+- `GET /api/webhooks/deliveries`
+- `POST /api/webhooks/retry`
+- `POST /api/webhooks/secret/rotate`
+
+This expands the brochure/public-site real-time synchronization and custom-integration concepts into concrete operational surfaces. The public EasyInsights Company page describes Server-to-Server Integration as a custom data service, while the brochure describes live 24×7 transfer; AceMarketing now has workspace tooling around those patterns.
