@@ -310,3 +310,21 @@ test('AdSync creates and operates a persisted conversion pipeline', async ({ pag
   await expect(page.getByText('CI Qualified Lead to Meta', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: /Send test source event/ })).toBeVisible()
 })
+
+
+test('conversion adjustments stay empty until a real adjustment is created', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  await openWorkspaceTab(page,'Adjustments')
+  await expect(page.getByRole('heading', { name: 'Conversion adjustments' })).toBeVisible()
+  await page.getByRole('button', { name: 'New adjustment' }).click()
+  await page.getByLabel('Event').fill('ci_partial_payment')
+  await page.getByLabel('Source').fill('ci_crm')
+  await page.getByLabel('Destination').selectOption('google_ads')
+  await page.getByLabel('Original value').fill('1000')
+  await page.getByLabel('Adjusted value').fill('2500')
+  await page.getByLabel('Reason').fill('CI verified final payment received')
+  await page.getByRole('button', { name: 'Create adjustment' }).click()
+  await expect(page.getByText('Ci Partial Payment', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Preview payload' })).toBeVisible()
+})
