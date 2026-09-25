@@ -13,7 +13,7 @@
     "preview": "vite preview",
     "check": "tsc -b",
     "check:frontend": "tsc -b",
-    "check:backend": "node --check backend/src/index.mjs && node --check backend/src/security.mjs && node --check backend/src/store.mjs",
+    "check:backend": "node --check backend/src/index.mjs && node --check backend/src/security.mjs && node --check backend/src/store.mjs && node --check backend/src/public-content.mjs",
     "check:all": "npm run check:frontend && npm run check:backend"
   },
   "dependencies": {
