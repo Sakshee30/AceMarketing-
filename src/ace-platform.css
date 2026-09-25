@@ -196,3 +196,48 @@
 .ei-footer{background:#11051d;color:#c9bfd2;padding:68px max(34px,calc((100vw - 1380px)/2)) 26px}.ei-footer-top{display:grid;grid-template-columns:1.45fr .7fr 1fr .9fr;gap:52px;padding-bottom:48px;border-bottom:1px solid rgba(255,255,255,.12)}.ei-footer-brand .ace-brand{font-size:24px}.ei-footer-brand p{font-size:12px;line-height:1.65;color:#8f819a;max-width:300px;margin:18px 0}.ei-footer-brand>button{border:0;background:#6e32ee;color:#fff;border-radius:24px;padding:11px 18px;font-size:12px}.ei-footer h4{font-size:12px;color:#fff;margin:4px 0 15px}.ei-footer a,.ei-footer-top>div>button{display:block;color:#93879d;text-decoration:none;border:0;background:none;padding:6px 0;font-size:11px;text-align:left}.ei-footer a:hover,.ei-footer button:hover{color:#fff}.ei-footer-bottom{padding-top:22px;display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#786d81}.ei-footer-bottom>div{display:flex;gap:8px;align-items:center}.ei-footer-bottom button{border:0;background:none;color:#8e8397;font-size:10px;padding:0}
 @media(max-width:900px){.ei-problems,.ei-system-overview{padding:80px 28px}.ei-problem-stage{grid-template-columns:58px 1fr}.ei-problem-solution{grid-column:2}.ei-capability-layout{grid-template-columns:1fr}.ei-footer-top{grid-template-columns:1fr 1fr}.ei-footer-brand{grid-column:1/-1}}
 @media(max-width:600px){.ei-problems,.ei-system-overview{padding:64px 20px}.ei-problem-tabs{display:grid;grid-template-columns:1fr 1fr 1fr;width:100%}.ei-problem-tabs button{padding:10px 7px;font-size:11px}.ei-problem-stage{grid-template-columns:1fr;gap:16px}.ei-problem-no{font-size:38px}.ei-problem-solution{grid-column:auto}.ei-problem-cta{flex-direction:column}.ei-footer-top{grid-template-columns:1fr}.ei-footer-bottom{flex-direction:column;gap:12px;align-items:flex-start}}
+
+/* Precision navbar + mega-menu alignment pass from supplied 1724px reference */
+@media(min-width:1221px){
+  .ei-promo-bar{height:47px;font-size:14px;gap:57px;padding:0 28px}
+  .ei-header-shell{position:sticky;top:0;z-index:70}
+  .ei-header{height:66px;max-width:none;width:100%;padding:0 77px;grid-template-columns:212px 1fr 410px;column-gap:18px}
+  .ei-brand-button{height:66px;display:flex;align-items:center}
+  .ei-brand-button .ace-brand{font-size:22px;gap:10px}
+  .ei-brand-button .ace-mark{height:30px;gap:3px}
+  .ei-brand-button .ace-mark i{width:7px}
+  .ei-brand-button .ace-mark i:nth-child(1){height:11px}
+  .ei-brand-button .ace-mark i:nth-child(2){height:20px}
+  .ei-brand-button .ace-mark i:nth-child(3){height:29px}
+  .ei-nav{height:66px;gap:38px;justify-content:center}
+  .ei-nav-item{font-size:15.5px;letter-spacing:-.012em;height:66px}
+  .ei-nav-item svg{width:14px;height:14px;margin-left:1px;transition:transform .16s ease}
+  .ei-nav-item.active svg{transform:rotate(180deg)}
+  .ei-nav-item.active:after{height:3px;left:-14px;right:-14px;bottom:0;background:#8b54ff}
+  .ei-header-actions{gap:42px}
+  .ei-voice-pill{height:34px;min-width:190px;justify-content:center;padding:0 16px;border-radius:18px}
+  .ei-demo-pill{height:49px;min-width:175px;padding:0 27px;border-radius:27px;font-size:16px}
+  .ei-mega-menu{top:66px;width:858px;min-height:456px;padding:44px 45px 42px;border-radius:0 0 3px 3px}
+  .industries-menu{left:49%}
+  .ei-mega-label{font-size:11px;margin-bottom:19px}
+  .ei-industry-columns{grid-template-columns:1fr 1fr;gap:0 45px}
+  .ei-industry-columns>div:first-child{padding-right:41px}
+  .ei-industry-columns>div:last-child{padding-left:0}
+  .ei-industry-item{grid-template-columns:49px 1fr;gap:12px;padding:10px 0 11px;min-height:82px}
+  .ei-industry-icon{width:49px;height:49px;border-radius:11px}
+  .ei-industry-icon svg{width:25px;height:25px}
+  .ei-industry-item b{font-size:14px;line-height:1.2}
+  .ei-industry-item p{font-size:11px;line-height:1.38;margin-top:5px;max-width:295px}
+  .ei-hero-wrap{padding-top:25px}
+  .ei-hero-card{max-width:1664px;min-height:554px;border-radius:21px}
+  .ei-hero-copy{padding:61px 42px 61px 70px}
+  .ei-hero-copy h1{font-size:60px;line-height:1.12;letter-spacing:-.052em;max-width:690px}
+  .ei-hero-copy p{font-size:18px;line-height:1.6;max-width:700px;margin:30px 0 25px}
+  .ei-hero-cta{padding:13px 20px;font-size:14px}
+  .ei-hero-visual{min-height:554px}
+}
+@media(min-width:1500px){
+  .ei-nav{gap:44px}
+  .ei-header{grid-template-columns:224px 1fr 420px}
+  .ei-hero-copy h1{font-size:64px}
+}
