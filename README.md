@@ -340,3 +340,27 @@ This pass adds current EasyInsights public-site structures that were not yet rep
 - Added internal Privacy, Terms and Security page components for product/legal completion.
 
 The current EasyInsights site publicly presents these diagnostic groups, a data-ownership/security section, resource tools including a ROAS calculator and no-cloud hashing concept, and granular cookie categories. AceMarketing implements equivalent functionality and information architecture without copying EasyInsights branding, third-party artwork or proprietary source code.
+
+
+## Public-site parity pass: AI-in-action, fourth proof pattern, and source reconciliation
+
+This pass adds additional elements from the current EasyInsights public site:
+
+- Added the fourth public proof pattern:
+  - **Jaro Education: +41% enrolment rate** (shown as an external reference metric, not an AceMarketing claim).
+- Added an **AI in Action** section with original workflow visuals showing:
+  - Lead Grading;
+  - CRM Enrichment;
+  - Voice Lead Qualification;
+  - Voice Scheduler;
+  - Meeting Reminder;
+  - closure match-back and signal return.
+- Updated the Company principles to align more closely with the current EasyInsights About Us framing:
+  - try to solve hard data problems;
+  - product thinking rooted in performance-marketing reality;
+  - implementation should match the real customer funnel, not a demo template.
+- Added a visible **source-conflict note** for Shopify support because the current EasyInsights demo page says Shopify ecommerce is unsupported while the supplied brochure lists Shopify as an available integration. AceMarketing preserves the connector as planned and records the discrepancy instead of silently overriding either source.
+
+New API endpoints:
+- `GET /api/ai-action`
+- `GET /api/source-notes`
