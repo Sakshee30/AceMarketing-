@@ -152,7 +152,13 @@ if (IS_PROD && (!ADMIN_EMAIL || !ADMIN_PASSWORD_HASH)) throw new Error('ADMIN_EM
 if (IS_PROD && allowedOrigins.size===0) throw new Error('CORS_ALLOWED_ORIGINS is required in production')
 const limitRequest=createRateLimiter({windowMs:60_000,max:Number(process.env.RATE_LIMIT_PER_MINUTE||240)})
 
-const integrations = ['Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads','GA4','Google Calendar','Zoho CRM','Salesforce','HubSpot','LeadSquared','HighLevel','WhatsApp','WATI','Gupshup','MoEngage','CleverTap','Exotel','Knowlarity','Tata Tele','MyOperator','Shopify','WooCommerce','Magento','WordPress','Custom Backend']
+const integrations = [
+  'Zoho CRM','Salesforce','LeadSquared','Meritto','HubSpot','HighLevel','Microsoft Dynamics 365','Custom CRM',
+  'WhatsApp','Bitespeed','AiSensy','Gupshup','WATI','MoEngage','CleverTap',
+  'Exotel','Knowlarity','Tata Tele','MyOperator',
+  'Shopify','WooCommerce','Magento','WordPress','React App','Custom Backend',
+  'Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads / Bing Ads','X','Pinterest','GA4','Google Calendar'
+]
 const agents = ['Meta Advanced CAPI','Google ECL / OCI','Call Tracking Events','Custom Integration','Lead Grading','CRM Enrichment','Voice Lead Qualification','Voice Scheduler','Meeting Reminder','Feedback Agent','Ask Ace']
 const trackedEvents = []
 
