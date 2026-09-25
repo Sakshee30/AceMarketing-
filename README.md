@@ -859,3 +859,24 @@ New API endpoints:
 - `POST /api/matchback/reconcile`
 
 The brochure describes agents handling **closure match-back** and **signal return** after qualification, routing and follow-up. AceMarketing now has a concrete operational workspace for that final closed-loop step instead of representing it only indirectly through attribution and AdSync.
+
+
+## Parity pass: dedicated lead grading operations
+
+This pass operationalizes the **Lead Grading** agent from the supplied EasyInsights brochure as its own workspace instead of leaving it only as an agent-library card.
+
+The new **Lead Grading** module includes:
+- real-time lead score and A/B/C/D grade;
+- score-driver explanation;
+- acquisition, CRM, identity and model-version context;
+- grade distribution across the lead pool;
+- manual override with audit ID;
+- downstream grade actions for routing, CRM, nurture and ad-signal activation;
+- suppression of low-quality grades from optimization until reviewed.
+
+New API endpoints:
+- `GET /api/lead-grading`
+- `POST /api/lead-grading/override`
+- `POST /api/lead-grading/activate`
+
+The supplied brochure lists **Lead Grading** as one of the prebuilt agents alongside CRM Enrichment, Voice Lead Qualification, Scheduler, Reminder, Feedback and Ask EI. AceMarketing now has a dedicated operational surface for this agent as well.
