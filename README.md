@@ -1916,3 +1916,32 @@ SECURITY_TIMEOUT_MS=5000
 ```
 
 This is a release smoke/load gate, not a replacement for dedicated soak testing at production traffic volumes. Large-scale capacity testing should run in a staging environment with production-like PostgreSQL, network, worker concurrency, provider mocks and observability.
+
+
+## Browser E2E and accessibility regression pass
+
+The release gate now exercises AceMarketing through a real Chromium browser in desktop and mobile viewports.
+
+Implemented:
+- `playwright.config.ts`;
+- `tests/e2e/platform.spec.ts`;
+- Playwright Chromium installation in CI;
+- public-route coverage for home, agents, integrations, pricing, case studies, resources and security;
+- public-navigation interaction checks;
+- workspace navigation checks across journeys, attribution, lead grading, agents, integrations, audiences, monitoring and alerts;
+- Settings → Billing & usage rendering against the live PostgreSQL-backed API;
+- workspace-switcher behavior;
+- browser page-error detection;
+- basic accessible-name checks for visible buttons;
+- visible primary-heading regression checks;
+- desktop Chrome and Pixel-class mobile browser projects.
+
+Commands:
+
+```bash
+npm run e2e
+npm run e2e:desktop
+npm run e2e:mobile
+```
+
+CI starts PostgreSQL and the API first, then Playwright starts the Vite frontend and exercises the application through the same `/api` proxy path used during development. Browser traces, screenshots and video are retained on failures locally; CI uses the Playwright line and HTML reporters.
