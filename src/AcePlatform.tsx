@@ -1,5 +1,5 @@
 // @ts-nocheck
-import {useMemo,useState} from 'react'
+import {useEffect,useMemo,useState} from 'react'
 import {
   Activity,ArrowRight,BarChart3,Bell,BookOpen,Bot,Building2,Cable,CalendarDays,Check,CheckCircle2,ChevronDown,ChevronRight,
   CircleDollarSign,Code2,DatabaseZap,Gauge,Globe2,GraduationCap,HeartPulse,Home,Landmark,Layers3,Menu,MessageCircle,MessageSquareText,
@@ -9,7 +9,7 @@ import {
 import './ace-platform.css'
 import { api } from './lib/api'
 
-type View='site'|'app'|'login'|'pricing'|'demo'|'company'|'resources'|'case-studies'|'privacy'|'terms'|'security'|'solutions'
+type View='site'|'app'|'login'|'pricing'|'demo'|'company'|'resources'|'case-studies'|'privacy'|'terms'|'security'|'solutions'|'industries'|'agents-public'|'integrations-public'
 type AppTab='Launchpad'|'Overview'|'AdSync'|'Funnel'|'Events'|'Adjustments'|'Diagnostics'|'Fraud'|'Deep Links'|'Sites'|'Fingerprinting'|'Live Sync'|'Data Hub'|'Offline Attribution'|'Matchback'|'POS & Stores'|'Journeys'|'Identity'|'Models'|'Attribution'|'Planner'|'Reports'|'Enrich'|'Lead Grading'|'Behavior'|'Feed'|'Agents'|'Routing'|'Follow-ups'|'Calls'|'Meetings'|'Feedback'|'Approvals'|'Ask Ace'|'Integrations'|'Audiences'|'Monitoring'|'Alerts'|'Developers'|'Settings'
 
 const agents=[
@@ -46,7 +46,7 @@ function Brand({dark=false}:{dark?:boolean}){
  return <div className={'ace-brand '+(dark?'dark':'')}><span className="ace-mark"><i/><i/><i/></span><b>AceMarketing</b></div>
 }
 
-function Header({openApp,openLogin,openPricing,openDemo,openCompany,openResources,openCaseStudies,openSolutions}:{openApp:()=>void,openLogin:()=>void,openPricing:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void,openCaseStudies:()=>void,openSolutions:()=>void}){
+function Header({openHome,openApp,openLogin,openPricing,openDemo,openCompany,openResources,openCaseStudies,openSolutions,openIndustries,openAgents,openIntegrations}:{openHome:()=>void,openApp:()=>void,openLogin:()=>void,openPricing:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void,openCaseStudies:()=>void,openSolutions:()=>void,openIndustries:()=>void,openAgents:()=>void,openIntegrations:()=>void}){
  const [open,setOpen]=useState(false)
  const [menu,setMenu]=useState<'industries'|'agents'|'resources'|null>(null)
  const closeMenu=()=>setMenu(null)
@@ -82,14 +82,14 @@ function Header({openApp,openLogin,openPricing,openDemo,openCompany,openResource
  ]
  return <header className="ei-header-shell" onMouseLeave={closeMenu}>
   <div className="ei-header">
-   <button className="ei-brand-button" onClick={()=>window.scrollTo({top:0,behavior:'smooth'})}><Brand dark/></button>
+   <button className="ei-brand-button" onClick={openHome}><Brand dark/></button>
    <nav className={open?'ei-nav mobile-open':'ei-nav'}>
-    <button className={menu==='industries'?'ei-nav-item active':'ei-nav-item'} onMouseEnter={()=>setMenu('industries')} onClick={()=>setMenu(menu==='industries'?null:'industries')}>Industries <ChevronDown/></button>
-    <button className={menu==='agents'?'ei-nav-item active':'ei-nav-item'} onMouseEnter={()=>setMenu('agents')} onClick={()=>setMenu(menu==='agents'?null:'agents')}>Agents <ChevronDown/></button>
+    <button className={menu==='industries'?'ei-nav-item active':'ei-nav-item'} onMouseEnter={()=>setMenu('industries')} onClick={openIndustries}>Industries <ChevronDown/></button>
+    <button className={menu==='agents'?'ei-nav-item active':'ei-nav-item'} onMouseEnter={()=>setMenu('agents')} onClick={openAgents}>Agents <ChevronDown/></button>
     <button className="ei-nav-item" onClick={openCaseStudies}>Case Studies</button>
-    <button className="ei-nav-item" onClick={openApp}>Integrations</button>
+    <button className="ei-nav-item" onClick={openIntegrations}>Integrations</button>
     <button className="ei-nav-item" onClick={openPricing}>Pricing</button>
-    <button className={menu==='resources'?'ei-nav-item active':'ei-nav-item'} onMouseEnter={()=>setMenu('resources')} onClick={()=>setMenu(menu==='resources'?null:'resources')}>Resources <ChevronDown/></button>
+    <button className={menu==='resources'?'ei-nav-item active':'ei-nav-item'} onMouseEnter={()=>setMenu('resources')} onClick={openResources}>Resources <ChevronDown/></button>
    </nav>
    <div className="ei-header-actions">
     <button className="ei-voice-pill" onClick={openApp}><span className="voice-bars">••••</span><b>Voice Agent</b><small>NEW</small></button>
@@ -101,14 +101,14 @@ function Header({openApp,openLogin,openPricing,openDemo,openCompany,openResource
   {menu==='industries'&&<div className="ei-mega-menu industries-menu" onMouseEnter={()=>setMenu('industries')}>
    <div className="ei-mega-label">INDUSTRIES</div>
    <div className="ei-industry-columns">
-    <div>{industryItems.slice(0,4).map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();location.hash='industries'}} className="ei-industry-item"><span className="ei-industry-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>})}</div>
-    <div>{industryItems.slice(4).map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();location.hash='industries'}} className="ei-industry-item"><span className="ei-industry-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>})}</div>
+    <div>{industryItems.slice(0,4).map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();openIndustries()}} className="ei-industry-item"><span className="ei-industry-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>})}</div>
+    <div>{industryItems.slice(4).map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();openIndustries()}} className="ei-industry-item"><span className="ei-industry-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>})}</div>
    </div>
   </div>}
 
   {menu==='agents'&&<div className="ei-mega-menu agents-menu" onMouseEnter={()=>setMenu('agents')}>
    <div className="ei-mega-label">AGENTS</div>
-   <div className="ei-agent-list">{agentItems.map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();location.hash='agents'}}><span className="ei-agent-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div><ChevronRight/></button>})}</div>
+   <div className="ei-agent-list">{agentItems.map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();openAgents()}}><span className="ei-agent-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div><ChevronRight/></button>})}</div>
   </div>}
 
   {menu==='resources'&&<div className="ei-mega-menu resources-menu" onMouseEnter={()=>setMenu('resources')}>
@@ -120,7 +120,7 @@ function Header({openApp,openLogin,openPricing,openDemo,openCompany,openResource
  </header>
 }
 
-function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResources,openCaseStudies,openSolutions}:{openApp:()=>void,openLogin:()=>void,openPricing:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void,openCaseStudies:()=>void,openSolutions:()=>void}){
+function Marketing({openHome,openApp,openLogin,openPricing,openDemo,openCompany,openResources,openCaseStudies,openSolutions,openIndustries,openAgents,openIntegrations}:{openHome:()=>void,openApp:()=>void,openLogin:()=>void,openPricing:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void,openCaseStudies:()=>void,openSolutions:()=>void,openIndustries:()=>void,openAgents:()=>void,openIntegrations:()=>void}){
  const [agentFilter,setAgentFilter]=useState('All')
  const [problemTab,setProblemTab]=useState<'Lead Quality'|'Conversion'|'Attribution'>('Lead Quality')
  const [cookieOpen,setCookieOpen]=useState(true)
@@ -128,7 +128,7 @@ function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResou
  const visibleAgents=agentFilter==='All'?agents:agents.filter(a=>a[2]===agentFilter)
  return <div className="marketing-page">
   <div className="ei-promo-bar"><span>Performance marketers can drive up to <b>45% incremental revenue uplift</b> with better first-party signals.</span><a href="#impact">Can your brand achieve the same uplift? <ArrowRight/></a></div>
-  <Header openApp={openApp} openLogin={openLogin} openPricing={openPricing} openDemo={openDemo} openCompany={openCompany} openResources={openResources} openCaseStudies={openCaseStudies} openSolutions={openSolutions}/>
+  <Header openHome={openHome} openApp={openApp} openLogin={openLogin} openPricing={openPricing} openDemo={openDemo} openCompany={openCompany} openResources={openResources} openCaseStudies={openCaseStudies} openSolutions={openSolutions} openIndustries={openIndustries} openAgents={openAgents} openIntegrations={openIntegrations}/>
   <section className="ei-hero-wrap">
    <div className="ei-hero-card">
     <div className="ei-hero-copy">
@@ -281,6 +281,77 @@ function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResou
   </footer>
   {cookieOpen&&<div className="cookie-banner"><div><b>Cookie preferences</b><p>Necessary storage is always on. Optional analytics, advertising and functionality categories can be enabled independently.</p><div className="cookie-toggles">{Object.entries(cookiePrefs).map(([k,v])=><label key={k}><input type="checkbox" checked={v} onChange={()=>setCookiePrefs({...cookiePrefs,[k]:!v})}/>{k}</label>)}</div></div><div className="cookie-actions"><button onClick={()=>{setCookiePrefs({analytics:false,advertising:false,functionality:false});setCookieOpen(false)}}>Necessary only</button><button onClick={()=>{setCookiePrefs({analytics:true,advertising:true,functionality:true});setCookieOpen(false)}}>Accept all</button><button className="primary-cookie" onClick={async()=>{await api.saveConsent(cookiePrefs).catch(()=>null);setCookieOpen(false)}}>Save preferences</button></div></div>}
  </div>
+}
+
+
+function PublicFooter({openHome,openApp,openDemo,openCompany,openResources,openSolutions}:{openHome:()=>void,openApp:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void,openSolutions:()=>void}){
+ return <footer className="ei-footer">
+  <div className="ei-footer-top">
+   <div className="ei-footer-brand"><button className="public-footer-brand" onClick={openHome}><Brand/></button><p>First-party journey intelligence, activation, and conversion operations for performance teams.</p><button onClick={openDemo}>Book a demo</button></div>
+   <div><h4>Platform</h4><button onClick={openApp}>Activation workspace</button><button onClick={openApp}>Journey intelligence</button><button onClick={openApp}>Audience operations</button></div>
+   <div><h4>Solutions</h4><button onClick={openSolutions}>Lead generation</button><button onClick={openSolutions}>Attribution</button><button onClick={openSolutions}>Enterprise operations</button></div>
+   <div><h4>Resources</h4><button onClick={openCompany}>About AceMarketing</button><button onClick={openResources}>Guides & tools</button><button onClick={openResources}>Documentation</button></div>
+  </div>
+  <div className="ei-footer-bottom"><span>© 2026 AceMarketing. All rights reserved.</span><span>Original product copy and visual assets.</span></div>
+ </footer>
+}
+
+function PublicPageFrame({children,openHome,openApp,openLogin,openPricing,openDemo,openCompany,openResources,openCaseStudies,openSolutions,openIndustries,openAgents,openIntegrations}:{children:any,openHome:()=>void,openApp:()=>void,openLogin:()=>void,openPricing:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void,openCaseStudies:()=>void,openSolutions:()=>void,openIndustries:()=>void,openAgents:()=>void,openIntegrations:()=>void}){
+ return <div className="marketing-page public-route-page">
+  <div className="ei-promo-bar"><span>Cleaner first-party signals help growth teams optimize for business outcomes, not shallow clicks.</span><button onClick={openDemo}>See the operating model <ArrowRight/></button></div>
+  <Header openHome={openHome} openApp={openApp} openLogin={openLogin} openPricing={openPricing} openDemo={openDemo} openCompany={openCompany} openResources={openResources} openCaseStudies={openCaseStudies} openSolutions={openSolutions} openIndustries={openIndustries} openAgents={openAgents} openIntegrations={openIntegrations}/>
+  {children}
+  <PublicFooter openHome={openHome} openApp={openApp} openDemo={openDemo} openCompany={openCompany} openResources={openResources} openSolutions={openSolutions}/>
+ </div>
+}
+
+function IndustriesPublicPage(props:any){
+ const fallback=[
+  {name:'Edtech',summary:'Connect acquisition, counselling, calls, messaging and enrolment into one measurable learner journey.',outcomes:['Lead quality','Counsellor context','Enrolment attribution']},
+  {name:'Fintech',summary:'Bring approved acquisition and customer signals together with strict controls around identity and activation.',outcomes:['Qualified demand','Compliant activation','Revenue feedback']},
+  {name:'Healthcare',summary:'Measure patient acquisition and assisted journeys with privacy-aware first-party workflows.',outcomes:['Source visibility','Call attribution','Consent-aware measurement']},
+  {name:'Retail',summary:'Link paid media, ecommerce, CRM and offline purchase behavior into one customer path.',outcomes:['Audience quality','Repeat purchase','Omnichannel attribution']},
+  {name:'Home Improvement',summary:'Follow enquiries through calls, visits, quotations and booked projects without losing campaign context.',outcomes:['Lead routing','Project conversion','Offline matchback']},
+  {name:'Travel',summary:'Connect discovery, enquiry, call-center and booking activity across assisted and digital channels.',outcomes:['Booking attribution','Journey continuity','Audience suppression']},
+  {name:'Consumer Goods',summary:'Use first-party customer and purchase context to improve media efficiency and retention.',outcomes:['Revenue signals','LTV audiences','Repeat purchase']}
+ ]
+ const [items,setItems]=useState<any[]>(fallback)
+ useEffect(()=>{api.publicIndustries().then((r:any)=>r?.items&&setItems(r.items)).catch(()=>null)},[])
+ return <PublicPageFrame {...props}><main className="public-detail-page">
+  <section className="public-detail-hero"><span>INDUSTRIES</span><h1>One data operating layer for journeys that do not fit inside one platform.</h1><p>Different sectors have different handoffs, but the core challenge is the same: preserve context from acquisition through real business outcome.</p><button onClick={props.openDemo}>Map your funnel <ArrowRight/></button></section>
+  <section className="public-detail-grid industries-detail-grid">{items.map((x:any,i:number)=><article key={x.name}><span>{String(i+1).padStart(2,'0')}</span><h2>{x.name}</h2><p>{x.summary}</p><div>{(x.outcomes||[]).map((y:string)=><b key={y}><Check/>{y}</b>)}</div><button onClick={props.openDemo}>Explore this workflow <ArrowRight/></button></article>)}</section>
+  <section className="public-route-cta"><span>YOUR FUNNEL IS UNIQUE</span><h2>Keep the structure. Adapt the data model to the business.</h2><button onClick={props.openDemo}>Book a workflow review</button></section>
+ </main></PublicPageFrame>
+}
+
+function AgentsPublicPage(props:any){
+ const fallback=agents.map((a,i)=>({name:a[0],category:a[2],summary:a[1],number:i+1}))
+ const [items,setItems]=useState<any[]>(fallback)
+ const [filter,setFilter]=useState('All')
+ useEffect(()=>{api.publicAgents().then((r:any)=>r?.items&&setItems(r.items)).catch(()=>null)},[])
+ const shown=filter==='All'?items:items.filter((x:any)=>x.category===filter)
+ return <PublicPageFrame {...props}><main className="public-detail-page">
+  <section className="public-detail-hero"><span>AGENTS</span><h1>Put specialized automation at the points where revenue usually leaks.</h1><p>Each agent uses shared journey context, so qualification, routing, reminders, enrichment, and signal return can work from the same operating truth.</p><button onClick={props.openApp}>Open agent workspace <ArrowRight/></button></section>
+  <div className="public-filter-tabs">{['All','Lead Quality','Conversion','Visibility'].map(x=><button key={x} className={filter===x?'active':''} onClick={()=>setFilter(x)}>{x}</button>)}</div>
+  <section className="public-detail-grid agent-public-grid">{shown.map((x:any,i:number)=><article key={x.name}><span>{String(x.number||i+1).padStart(2,'0')}</span><small>{x.category}</small><h2>{x.name}</h2><p>{x.summary}</p><button onClick={props.openApp}>Configure agent <ArrowRight/></button></article>)}</section>
+ </main></PublicPageFrame>
+}
+
+function IntegrationsPublicPage(props:any){
+ const fallback=[
+  {group:'Advertising & Analytics',items:['Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads / Bing Ads','GA4']},
+  {group:'CRM',items:['Zoho CRM','Salesforce','LeadSquared','Meritto','HubSpot','HighLevel','Microsoft Dynamics 365']},
+  {group:'Messaging & Marketing',items:['WhatsApp','WATI','Gupshup','AiSensy','Bitespeed','MoEngage','CleverTap']},
+  {group:'Calling',items:['Exotel','Knowlarity','Tata Tele','MyOperator']},
+  {group:'Web, App & Commerce',items:['WordPress','React App','WooCommerce','Magento','Custom Backend']}
+ ]
+ const [groups,setGroups]=useState<any[]>(fallback)
+ useEffect(()=>{api.publicIntegrations().then((r:any)=>r?.groups&&setGroups(r.groups)).catch(()=>null)},[])
+ return <PublicPageFrame {...props}><main className="public-detail-page">
+  <section className="public-detail-hero"><span>INTEGRATIONS</span><h1>Connect the systems your teams already depend on.</h1><p>Use standard connectors for common platforms and custom adapters for proprietary systems, while keeping identity, lifecycle, and revenue fields normalized.</p><button onClick={props.openApp}>Open integration workspace <ArrowRight/></button></section>
+  <section className="integration-public-groups">{groups.map((g:any,i:number)=><article key={g.group}><div><span>{String(i+1).padStart(2,'0')}</span><h2>{g.group}</h2></div><div>{(g.items||[]).map((x:string)=><button key={x} onClick={props.openApp}><Cable/><span>{x}</span><ChevronRight/></button>)}</div></article>)}</section>
+  <section className="public-route-cta"><span>CUSTOM SYSTEM?</span><h2>Map your own API, webhook, file, or database interface.</h2><button onClick={props.openApp}>Build a custom integration</button></section>
+ </main></PublicPageFrame>
 }
 
 function DemoPage({back,openApp}:{back:()=>void,openApp:()=>void}){
@@ -1121,4 +1192,35 @@ function Product({back}:{back:()=>void}){
  return <div className="product"><aside><Brand/><div className="workspace-wrap"><button className="workspace" onClick={()=>setWorkspaceOpen(!workspaceOpen)}><span>{workspaces.find(x=>x[0]===workspace)?.[2]||'AM'}</span><div><b>{workspace}</b><small>{workspaces.find(x=>x[0]===workspace)?.[1]||'Production'} workspace</small></div><ChevronDown/></button>{workspaceOpen&&<div className="workspace-menu">{workspaces.map(x=><button key={x[0]} onClick={()=>{setWorkspace(x[0]);setWorkspaceOpen(false)}} className={workspace===x[0]?'active':''}><span>{x[2]}</span><div><b>{x[0]}</b><small>{x[1]}</small></div>{workspace===x[0]&&<Check/>}</button>)}<button className="new-workspace"><Plus/>Create workspace</button></div>}</div><nav>{appTabs.map(([x,I])=><button key={x} className={tab===x?'active':''} onClick={()=>setTab(x)}><I/>{x}</button>)}</nav><div className="aside-footer"><button onClick={back}><ArrowRight/>Back to website</button><div className="profile-mini"><span>S</span><div><b>Sakshee</b><small>Workspace owner</small></div></div></div></aside>
  <main><header className="product-head"><div className="global-search"><Search/>Search journeys, leads, campaigns...</div><div><span className="sync">● Live sync healthy</span><button><Headphones/></button><button><Globe2/></button><span className="avatar-sm">S</span></div></header><div className="product-body">{view}</div></main></div>
 }
-export default function AcePlatform(){const[view,setView]=useState<View>('site');if(view==='login')return <Login back={()=>setView('site')} openApp={()=>setView('app')}/>;if(view==='pricing')return <Pricing back={()=>setView('site')} openApp={()=>setView('app')}/>;if(view==='demo')return <DemoPage back={()=>setView('site')} openApp={()=>setView('app')}/>;if(view==='company')return <CompanyPage back={()=>setView('site')} openDemo={()=>setView('demo')}/>;if(view==='resources')return <ResourcesPage back={()=>setView('site')}/>;if(view==='case-studies')return <CaseStudiesPage back={()=>setView('site')} openDemo={()=>setView('demo')}/>;if(view==='privacy')return <LegalPage kind="privacy" back={()=>setView('site')}/>;if(view==='terms')return <LegalPage kind="terms" back={()=>setView('site')}/>;if(view==='security')return <LegalPage kind="security" back={()=>setView('site')}/>;if(view==='solutions')return <SolutionsPage back={()=>setView('site')} openDemo={()=>setView('demo')} openApp={()=>setView('app')}/>;return view==='site'?<Marketing openApp={()=>setView('app')} openLogin={()=>setView('login')} openPricing={()=>setView('pricing')} openDemo={()=>setView('demo')} openCompany={()=>setView('company')} openResources={()=>setView('resources')} openCaseStudies={()=>setView('case-studies')} openSolutions={()=>setView('solutions')}/>:<Product back={()=>setView('site')}/>}
+export default function AcePlatform(){
+ const[view,setView]=useState<View>('site')
+ const goHome=()=>{setView('site');setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),0)}
+ const nav={
+  openHome:goHome,
+  openApp:()=>setView('app'),
+  openLogin:()=>setView('login'),
+  openPricing:()=>setView('pricing'),
+  openDemo:()=>setView('demo'),
+  openCompany:()=>setView('company'),
+  openResources:()=>setView('resources'),
+  openCaseStudies:()=>setView('case-studies'),
+  openSolutions:()=>setView('solutions'),
+  openIndustries:()=>setView('industries'),
+  openAgents:()=>setView('agents-public'),
+  openIntegrations:()=>setView('integrations-public')
+ }
+ if(view==='login')return <Login back={goHome} openApp={nav.openApp}/>
+ if(view==='pricing')return <Pricing back={goHome} openApp={nav.openApp}/>
+ if(view==='demo')return <DemoPage back={goHome} openApp={nav.openApp}/>
+ if(view==='company')return <CompanyPage back={goHome} openDemo={nav.openDemo}/>
+ if(view==='resources')return <ResourcesPage back={goHome}/>
+ if(view==='case-studies')return <CaseStudiesPage back={goHome} openDemo={nav.openDemo}/>
+ if(view==='privacy')return <LegalPage kind="privacy" back={goHome}/>
+ if(view==='terms')return <LegalPage kind="terms" back={goHome}/>
+ if(view==='security')return <LegalPage kind="security" back={goHome}/>
+ if(view==='solutions')return <SolutionsPage back={goHome} openDemo={nav.openDemo} openApp={nav.openApp}/>
+ if(view==='industries')return <IndustriesPublicPage {...nav}/>
+ if(view==='agents-public')return <AgentsPublicPage {...nav}/>
+ if(view==='integrations-public')return <IntegrationsPublicPage {...nav}/>
+ return view==='site'?<Marketing {...nav}/>:<Product back={goHome}/>
+}
