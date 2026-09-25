@@ -2136,3 +2136,32 @@ SMTP_FROM=
 ```
 
 No email is reported as delivered unless the SMTP provider accepts it. Provider/account credentials remain deployment secrets and are intentionally not committed.
+
+
+## OAuth token lifecycle pass
+
+Connected OAuth integrations now refresh short-lived access tokens proactively instead of depending on manual reconnection after expiry.
+
+Implemented:
+- `backend/src/connector-auth.mjs`;
+- encrypted refresh-token reuse for Google Ads, GA4, HubSpot, Salesforce and Zoho CRM;
+- refresh starts before expiry using a configurable safety window;
+- rotated refresh tokens replace the prior encrypted token when the provider returns one;
+- provider access-token expiry and last refresh state are persisted with the connector;
+- refresh failures put the connector into an explicit attention state rather than silently using an expired access token;
+- activation and CRM writeback adapters obtain credentials through the refresh-aware credential service;
+- `POST /api/integrations/refresh` supports an operator-triggered refresh;
+- the Integrations UI exposes refresh state for connected providers;
+- HubSpot token exchange uses the current date-versioned OAuth endpoint;
+- Zoho supports deployment-specific Accounts datacenters through `ZOHO_ACCOUNTS_URL`.
+
+Configuration:
+
+```text
+OAUTH_REFRESH_SKEW_SECONDS=300
+HUBSPOT_OAUTH_TOKEN_URL=https://api.hubapi.com/oauth/2026-03/token
+SALESFORCE_OAUTH_TOKEN_URL=https://login.salesforce.com/services/oauth2/token
+ZOHO_ACCOUNTS_URL=https://accounts.zoho.com
+```
+
+Provider refresh tokens and access tokens remain encrypted by the connector vault. If a provider does not issue a refresh token, the workspace reports that reconnection is required instead of fabricating continuity.
