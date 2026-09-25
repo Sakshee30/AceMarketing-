@@ -1428,3 +1428,54 @@ ALLOW_FILE_STORE_IN_PRODUCTION=false
 ```
 
 The current schema deliberately preserves the existing application state contract inside a PostgreSQL JSONB row per workspace. This gives multi-instance durability, transactions and workspace separation without breaking the existing product modules. High-volume event, journey and delivery tables can now be normalized incrementally behind the same storage boundary.
+
+
+## Durable worker and provider delivery pass
+
+The outbound activation runtime now has a PostgreSQL-backed job worker instead of relying on manual retry state alone.
+
+Implemented:
+- `backend/migrations/002_job_queue.sql` with durable job state, leasing, retry, dead-letter and idempotency fields;
+- `backend/src/queue.mjs` with `FOR UPDATE SKIP LOCKED` worker leasing so multiple workers can process safely;
+- exponential retry backoff and dead-letter transition after the configured maximum attempts;
+- `backend/src/worker.mjs` background process started with `npm run worker`;
+- signal dispatch now creates a durable `signal_delivery` job after the persisted delivery record;
+- manual delivery retry also creates a new queued execution;
+- connector-health API includes queue statistics;
+- provider execution module for Meta Conversions API, Google Ads offline/enhanced conversion upload, and signed custom webhooks;
+- provider access tokens are read from the encrypted connector credential vault at execution time;
+- Meta customer identifiers are normalized/hashed when raw email/phone values are supplied;
+- Google conversion delivery supports GCLID/GBRAID/WBRAID and hashed user identifiers;
+- custom webhooks support HMAC-SHA256 signatures.
+
+### Worker deployment
+
+Run the API and worker as separate processes against the same PostgreSQL database:
+
+```bash
+npm run migrate
+npm run dev:backend
+npm run worker
+```
+
+Multiple worker replicas may run concurrently. PostgreSQL leases each job to one worker using `FOR UPDATE SKIP LOCKED`.
+
+### Provider configuration
+
+Meta:
+- `META_GRAPH_VERSION=v26.0`
+- `META_DATASET_ID=<dataset/pixel id>`
+
+Google Ads:
+- `GOOGLE_ADS_API_VERSION=v25`
+- `GOOGLE_ADS_DEVELOPER_TOKEN=<developer token>`
+- `GOOGLE_ADS_CUSTOMER_ID=<customer id>`
+- `GOOGLE_ADS_CONVERSION_ACTION=customers/.../conversionActions/...`
+
+Custom webhook:
+- `CUSTOM_WEBHOOK_URL=https://...`
+- `CUSTOM_WEBHOOK_SECRET=<secret>`
+
+The OAuth connector vault supplies provider access tokens. Live provider delivery still requires valid advertiser accounts, provider approvals, and production credentials.
+
+Google has restricted new adoption of legacy offline conversion upload flows since June 15, 2026; new deployments should confirm eligibility and plan migration to Google's Data Manager API where required.
