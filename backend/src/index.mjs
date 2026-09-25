@@ -2349,7 +2349,44 @@ const server = http.createServer(async (req,res)=>{
     ]})
     if (req.method === 'GET' && url.pathname === '/api/launchpad') {
       const state=await getState()
-      return send(req,res,200,state.launchpad||{})
+      const safe=async(fn,fallback)=>{try{return await fn()}catch{return fallback}}
+      const [leadStats,attr,audiences,queue,eventRules,agentRuns]=await Promise.all([
+        safe(()=>leadOpsStats(workspaceId),{available:false,total:0}),
+        safe(()=>attributionStats(workspaceId),{available:false,matchedEvents:0,activeClickSessions:0}),
+        safe(()=>audienceOpsStats(workspaceId),{available:false,audiences:{total:0}}),
+        safe(()=>queueStats(workspaceId),{backend:'disabled',pending:0,retry:0,deadLetter:0}),
+        safe(()=>listEventRules(workspaceId),[]),
+        safe(()=>listAgentRuns(workspaceId),[])
+      ])
+      const settings=state.workspaceSettings||{}
+      const connectors=state.connectorConnections||[]
+      const connected=connectors.filter(x=>['connected','healthy','active'].includes(String(x.status||'').toLowerCase()))
+      const tracked=trackedEvents.length
+      const deliveries=state.signalDeliveries||[]
+      const steps=[
+        {key:'workspace',title:'Workspace',ready:Boolean(settings.organization||settings.primaryDomain||state.launchpad?.workspaceConfigured),detail:settings.organization||'Workspace profile not completed',tab:'Settings'},
+        {key:'connect',title:'Connect data',ready:connected.length>0,detail:connected.length+' connected system(s)',tab:'Integrations'},
+        {key:'funnel',title:'Map funnel',ready:Number(leadStats?.total||0)>0||Boolean(state.launchpad?.funnelConfigured),detail:Number(leadStats?.total||0)+' lead profile(s)',tab:'Funnel'},
+        {key:'tracking',title:'Install tracking',ready:tracked>0||Boolean(settings.primaryDomain),detail:tracked+' tracked event(s)',tab:'Sites'},
+        {key:'signal',title:'Test signal',ready:deliveries.length>0||eventRules.length>0,detail:eventRules.length+' event rule(s) · '+deliveries.length+' delivery record(s)',tab:'Delivery'},
+        {key:'agents',title:'Activate agents',ready:agentRuns.length>0||Boolean((state.customAgents||[]).length),detail:agentRuns.length+' run(s) · '+(state.customAgents||[]).length+' custom agent(s)',tab:'Agents'}
+      ]
+      return send(req,res,200,{
+        ...(state.launchpad||{}),
+        readiness:Math.round(steps.filter(x=>x.ready).length/steps.length*100),
+        steps,
+        evidence:{
+          connectedConnectors:connected.length,
+          trackedEvents:tracked,
+          profiles:Number(leadStats?.total||0),
+          activeClickSessions:Number(attr?.activeClickSessions||0),
+          matchedEvents:Number(attr?.matchedEvents||0),
+          audiences:Number(audiences?.audiences?.total||0),
+          eventRules:eventRules.length,
+          deliveries:deliveries.length,
+          queue
+        }
+      })
     }
     if (req.method === 'POST' && url.pathname === '/api/launchpad') {
       const body=await readBody(req)
@@ -2362,36 +2399,73 @@ const server = http.createServer(async (req,res)=>{
       return send(req,res,200,{saved:true,updatedAt})
     }
     if (req.method === 'GET' && url.pathname === '/api/identity') {
+      const [profiles,attr]=await Promise.all([listLeadProfiles(workspaceId,500),attributionStats(workspaceId).catch(()=>({available:false}))])
+      const idCount=lead=>[lead.external_lead_id,lead.email_sha256,lead.phone_sha256,lead.device_id].filter(Boolean).length
+      const stitched=profiles.filter(lead=>idCount(lead)>=2)
+      const identifiers=[
+        profiles.some(x=>x.external_lead_id)?'customer_id':null,
+        profiles.some(x=>x.email_sha256)?'email_sha256':null,
+        profiles.some(x=>x.phone_sha256)?'phone_sha256':null,
+        profiles.some(x=>x.device_id)?'device_id':null,
+        Number(attr?.clickIdCoverage?.gclid||0)>0?'gclid':null,
+        Number(attr?.clickIdCoverage?.fbclid||0)>0?'fbclid':null,
+        Number(attr?.clickIdCoverage?.braid||0)>0?'gbraid/wbraid':null
+      ].filter(Boolean)
+      const recent=profiles.slice(0,50).map(lead=>({
+        id:lead.external_lead_id||lead.id,
+        name:lead.name||lead.external_lead_id||'Anonymous profile',
+        identifierCount:idCount(lead),
+        touchpoints:Math.max(0,Number(lead.journey?.journeyDepth||0))+Number(lead.journey?.pricingPageViews||0)+(lead.journey?.whatsappEngaged?1:0)+(lead.journey?.callOutcome?1:0)+(lead.journey?.meetingStatus?1:0),
+        confidence:idCount(lead)>=3?'High':idCount(lead)>=2?'Medium':'Single-key',
+        identifiers:{
+          customerId:Boolean(lead.external_lead_id),
+          email:Boolean(lead.email_sha256),
+          phone:Boolean(lead.phone_sha256),
+          device:Boolean(lead.device_id)
+        }
+      }))
+      const total=profiles.length
+      const deterministicRate=total?Number((stitched.length/total*100).toFixed(1)):null
       return send(req,res,200,{
-        profiles:56582,
-        stitchedProfiles:52911,
-        deterministicMatchRate:93.5,
-        identifiers:['email_sha256','phone_sha256','gclid','fbclid','crm_contact_id'],
+        available:true,
+        profiles:total,
+        stitchedProfiles:stitched.length,
+        deterministicMatchRate:deterministicRate,
+        clickCoverage:attr?.clickIdCoverage||{},
+        identifiers,
         rules:[
-          {priority:1,key:'crm_contact_id',mode:'exact'},
+          {priority:1,key:'customer_id',mode:'exact'},
           {priority:2,key:'email_sha256',mode:'exact'},
           {priority:3,key:'phone_sha256',mode:'exact'},
-          {priority:4,key:'click_id + session',mode:'deterministic'}
-        ]
+          {priority:4,key:'device_id',mode:'supporting'},
+          {priority:5,key:'click_id + session',mode:'deterministic'}
+        ],
+        recent
       })
     }
     if (req.method === 'GET' && url.pathname === '/api/models') {
       const state=await getState()
+      const stats=await leadOpsStats(workspaceId).catch(()=>({available:false,total:0,averageScore:0}))
+      const runs=(state.agentRuns||[]).filter(x=>x.kind==='model').slice(0,20)
       return send(req,res,200,{items:[
-        {name:'Lead Propensity',version:'v1.6',status:'active',metric:'AUC',score:0.87},
-        {name:'Conversion Probability',version:'v1.3',status:'active',metric:'AUC',score:0.84},
-        {name:'Revenue Quality',version:'v1.1',status:'shadow',metric:'precision',score:0.79}
-      ],runs:(state.agentRuns||[]).filter(x=>x.kind==='model').slice(0,20)})
+        {name:'Lead quality scoring',version:'v2.0',status:Number(stats?.total||0)>0?'active':'ready',type:'Scoring',metric:'Average lead score',value:Number(stats?.averageScore||0),description:'Explainable scoring over persisted CRM, journey and interaction evidence.'},
+        {name:'Journey propensity features',version:'workspace',status:Number(stats?.total||0)>0?'active':'ready',type:'Feature set',metric:'Profiles available',value:Number(stats?.total||0),description:'Uses persisted journey depth, pricing views, messaging, calls, meetings and CRM stage as model features.'}
+      ],runs})
     }
     if (req.method === 'POST' && url.pathname === '/api/models/run') {
       const body=await readBody(req)
       if(!body.name) return send(req,res,400,{error:'name required'})
-      const run={id:'modelrun_'+randomUUID(),kind:'model',name:String(body.name),status:'completed',rowsScored:56582,startedAt:new Date().toISOString(),completedAt:new Date().toISOString()}
+      const profiles=await listLeadProfiles(workspaceId,500)
+      const stats=await leadOpsStats(workspaceId).catch(()=>({averageScore:0}))
+      const startedAt=new Date().toISOString()
+      const run={id:'modelrun_'+randomUUID(),kind:'model',name:String(body.name),status:profiles.length?'completed':'no_data',rowsScored:profiles.length,averageScore:Number(stats?.averageScore||0),startedAt,completedAt:new Date().toISOString()}
       await mutateState(s=>{
         s.agentRuns=s.agentRuns||[]
         s.agentRuns.unshift(run)
         s.agentRuns=s.agentRuns.slice(0,500)
-        s.audit.unshift({id:randomUUID(),action:'model.run',entityId:run.id,at:run.completedAt})
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'model.run',entityId:run.id,rowsScored:run.rowsScored,status:run.status,at:run.completedAt})
+        s.audit=s.audit.slice(0,1000)
       })
       return send(req,res,202,run)
     }
@@ -2571,7 +2645,7 @@ const server = http.createServer(async (req,res)=>{
     }
     if (req.method === 'POST' && url.pathname === '/api/settings') {
       const body=await readBody(req)
-      const allowed=['organization','timezone','currency','reportingWeek','defaultAttribution','environment','primaryDomain','crossDomainTracking','gclidPersistenceDays','fbclidPersistenceDays']
+      const allowed=['organization','timezone','currency','reportingWeek','defaultAttribution','environment','primaryDomain','crossDomainTracking','gclidPersistenceDays','fbclidPersistenceDays','notifyDeliveryFailures','notifyTokenExpiry','notifyAudienceStale','notifyDailySummary','notificationEmail','notificationSlack','approvalSignalReturn','approvalCrmEnrichment','approvalLeadQualification','approvalAudienceSuppression','approvalCustomIntegration']
       const patch={}
       for(const key of allowed) if(body[key]!==undefined) patch[key]=body[key]
       if(!Object.keys(patch).length) return send(req,res,400,{error:'no supported settings provided'})
