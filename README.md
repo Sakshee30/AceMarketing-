@@ -3462,3 +3462,33 @@ Playwright now covers:
 The guiding dashboard rule remains:
 
 > Operational data must come from workspace evidence. If evidence does not exist, the UI shows an explicit empty/unavailable state rather than a fabricated success metric.
+
+
+## Dashboard navigation enhancement (2026-09-26)
+
+The production workspace now includes a persistent **Dashboard Navigator** in addition to the complete grouped sidebar. It gives operators one-click access to the highest-frequency operating areas without flattening or removing any existing feature.
+
+### Quick sections
+
+- **Command Center** — overall KPIs, operating health, revenue and signal summary.
+- **Data Hub** — unified customer, event, identity and revenue truth.
+- **Journeys** — stitched online/offline customer paths.
+- **Attribution** — campaign, channel and revenue credit analysis.
+- **Audiences** — first-party audience building, preview, scheduling and activation.
+- **Agents** — lead grading, qualification, routing, follow-up and automation.
+- **Integrations** — advertising, CRM, analytics, calling, messaging and commerce connections.
+- **Monitoring** — reliability, delivery health, usage and alert operations.
+- **Settings** — workspace, access, tracking, governance and developer controls.
+
+### UX behavior
+
+- Navigator only appears inside `#/workspace`.
+- It dispatches through the existing `ace-app-tab` event contract, so it does not bypass or duplicate current page state.
+- Compact mode preference is saved in local storage.
+- Mobile layout collapses to a single-column selector.
+- Motion respects `prefers-reduced-motion`.
+- Existing grouped sidebar remains the source of truth for the full feature catalogue.
+
+### EasyInsights capability parity direction
+
+AceMarketing continues to implement the same broad operating categories commonly required for first-party marketing data activation: stitched journeys, server-side signal return, attribution, audience activation, lead operations and funnel automation. Product copy, branding and implementation remain AceMarketing-owned rather than reproducing third-party proprietary assets verbatim.
