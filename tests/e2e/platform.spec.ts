@@ -238,3 +238,14 @@ test('manual integration cards open the custom adapter builder', async ({ page }
   await expect(page.getByText('Custom Integration Builder')).toBeVisible()
   await expect(page.getByDisplayValue('Meritto')).toBeVisible()
 })
+
+
+test('built-in agent opens its live operational module', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await page.getByRole('button', { name: /Lead & Conversion/ }).click()
+  await page.getByRole('button', { name: 'Agents', exact: true }).first().click()
+  await page.getByRole('button', { name: /Lead Grading/ }).first().click()
+  await expect(page.getByText('Operational prerequisites')).toBeVisible()
+  await page.getByRole('button', { name: /Open lead grading/ }).click()
+  await expect(page.getByRole('heading', { name: 'Lead grading' })).toBeVisible()
+})
