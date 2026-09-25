@@ -40,7 +40,7 @@ const CONNECTOR_PROVIDERS={
     scopes:['ads_management','ads_read','business_management']
   },
   'LinkedIn Ads':{provider:'linkedin',authType:'oauth2',clientId:process.env.LINKEDIN_OAUTH_CLIENT_ID||'',clientSecret:process.env.LINKEDIN_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://www.linkedin.com/oauth/v2/authorization',tokenUrl:'https://www.linkedin.com/oauth/v2/accessToken',scopes:['r_ads','rw_ads']},
-  'HubSpot':{provider:'hubspot',authType:'oauth2',clientId:process.env.HUBSPOT_OAUTH_CLIENT_ID||'',clientSecret:process.env.HUBSPOT_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://app.hubspot.com/oauth/authorize',tokenUrl:'https://api.hubapi.com/oauth/v1/token',scopes:['crm.objects.contacts.read','crm.objects.contacts.write']},
+  'HubSpot':{provider:'hubspot',authType:'oauth2',clientId:process.env.HUBSPOT_OAUTH_CLIENT_ID||'',clientSecret:process.env.HUBSPOT_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://app.hubspot.com/oauth/authorize',tokenUrl:'https://api.hubapi.com/oauth/2026-03/token',scopes:['crm.objects.contacts.read','crm.objects.contacts.write']},
   'Salesforce':{provider:'salesforce',authType:'oauth2',clientId:process.env.SALESFORCE_OAUTH_CLIENT_ID||'',clientSecret:process.env.SALESFORCE_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://login.salesforce.com/services/oauth2/authorize',tokenUrl:'https://login.salesforce.com/services/oauth2/token',scopes:['api','refresh_token']},
   'Zoho CRM':{provider:'zoho',authType:'oauth2',clientId:process.env.ZOHO_OAUTH_CLIENT_ID||'',clientSecret:process.env.ZOHO_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://accounts.zoho.com/oauth/v2/auth',tokenUrl:'https://accounts.zoho.com/oauth/v2/token',scopes:['ZohoCRM.modules.ALL','ZohoCRM.settings.ALL']},
   'GA4':{provider:'google',authType:'oauth2',clientId:process.env.GOOGLE_OAUTH_CLIENT_ID||'',clientSecret:process.env.GOOGLE_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://accounts.google.com/o/oauth2/v2/auth',tokenUrl:'https://oauth2.googleapis.com/token',scopes:['openid','email','https://www.googleapis.com/auth/analytics.readonly']},
@@ -402,6 +402,7 @@ const server = http.createServer(async (req,res)=>{
     if (req.method === 'GET' && url.pathname === '/api/workspace/overview') return send(req,res,200,{revenueAttributed:28400000,qualifiedLeads:7621,signalCoverage:94.8,activeAgents:7})
     if (req.method === 'GET' && url.pathname === '/api/integrations') {
       const state=await getState()
+      const tokenHealth=await connectorTokenHealth(workspaceId).catch(()=>[])
       const connections=state.connectorConnections||[]
       return send(req,res,200,{items:integrations.map(name=>{
         const saved=connections.find(x=>x.connector===name)
@@ -472,6 +473,7 @@ const server = http.createServer(async (req,res)=>{
       auth.searchParams.set('code_challenge_method','S256')
       if(provider.provider==='google') auth.searchParams.set('access_type','offline')
       if(provider.provider==='google') auth.searchParams.set('prompt','consent')
+      if(pending?.connector==='Zoho CRM'||connector==='Zoho CRM'){auth.searchParams.set('access_type','offline');auth.searchParams.set('prompt','consent')}
       return send(req,res,200,{connector,status:'authorization_required',authorizationUrl:auth.toString(),expiresAt})
     }
     if (req.method === 'GET' && url.pathname === '/api/integrations/oauth/callback') {
@@ -559,6 +561,15 @@ const server = http.createServer(async (req,res)=>{
         s.audit.unshift({id:randomUUID(),action:'connector.connected',entityId:pending.connector,provider:provider.provider,at:now})
       })
       return send(req,res,200,{connector:pending.connector,status:'connected',expiresAt})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/integrations/refresh') {
+      const body=await readBody(req)
+      const connector=String(body.connector||'')
+      if(!connector)return send(req,res,400,{error:'connector required'})
+      try{
+        const result=await refreshConnectorCredential(workspaceId,connector)
+        return send(req,res,200,{connector,status:'connected',refreshed:result.refreshed,expiresAt:result.expiresAt})
+      }catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'connector refresh failed',connector})}
     }
     if (req.method === 'POST' && url.pathname === '/api/integrations/disconnect') {
       const body=await readBody(req)
