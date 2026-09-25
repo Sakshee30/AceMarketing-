@@ -1479,3 +1479,31 @@ Custom webhook:
 The OAuth connector vault supplies provider access tokens. Live provider delivery still requires valid advertiser accounts, provider approvals, and production credentials.
 
 Google has restricted new adoption of legacy offline conversion upload flows since June 15, 2026; new deployments should confirm eligibility and plan migration to Google's Data Manager API where required.
+
+
+## Workspace RBAC, invitations and session revocation pass
+
+Authentication and workspace access are now governed by persisted membership state instead of issuing every login as a workspace owner.
+
+Implemented:
+- workspace-scoped member records with owner/admin/analyst/operator roles;
+- login resolves the member from the active workspace and issues a token containing user, workspace, role and session IDs;
+- active sessions are persisted and checked on every authenticated request;
+- logout revokes the active session;
+- changing a member role revokes that member's sessions so new permissions take effect immediately;
+- deactivating a member revokes all of their sessions;
+- request authorization maps API actions to explicit permissions;
+- workspace mismatch between JWT and `X-Workspace-ID` is rejected;
+- member invitation endpoint creates a one-time random token while storing only its SHA-256 hash;
+- invitation activation creates a password using scrypt with a unique salt;
+- Settings → Users & roles now loads real members, creates invitations, changes roles and deactivates users through the API;
+- the login UI no longer claims that any arbitrary six-character password is accepted in production.
+
+### Roles
+
+- **Owner** — full workspace control.
+- **Admin** — workspace/member management plus integration, agent, audience and developer writes.
+- **Analyst** — read/analysis/reporting access.
+- **Operator** — operational execution for approved workflows, calls, meetings, approvals and delivery.
+
+The current bootstrap owner remains tied to `ADMIN_EMAIL` + `ADMIN_PASSWORD_HASH`. Additional members activate through the invitation flow.
