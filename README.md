@@ -1524,3 +1524,34 @@ Implemented:
 - voice-agent capability page covering qualification, routing, scheduling, reminders and feedback.
 
 This closes the public-navigation gap where EasyInsights exposes separate resource experiences while AceMarketing previously collapsed those links into one generic destination.
+
+
+## Click identity persistence and assisted-conversion matchback pass
+
+The attribution layer now persists real acquisition evidence instead of keeping `/api/track` only in process memory.
+
+Implemented:
+- normalized PostgreSQL tables for click sessions and assisted/offline events;
+- persistence for GCLID, GBRAID, WBRAID, FBCLID and MSCLKID;
+- UTM, landing URL, referrer, visitor/customer identity and timestamp retention;
+- raw email/phone are normalized and SHA-256 hashed before attribution storage;
+- configurable click-ID retention window;
+- deterministic matching priority: customer ID → click IDs → hashed phone/email → visitor ID;
+- assisted-event ingestion for call, WhatsApp, CRM, POS, billing and other offline sources;
+- idempotency keys for assisted conversion records;
+- unmatched-event reconciliation;
+- live identity/match statistics exposed to Offline Attribution and Matchback UI;
+- `POST /api/assisted-events`;
+- `GET /api/attribution-identity/stats`;
+- `POST /api/track` now captures click sessions and can create assisted events;
+- Matchback reconciliation now processes normalized unmatched records rather than returning only a static success payload.
+
+### Attribution retention configuration
+
+```text
+CLICK_ID_RETENTION_DAYS=90
+CALL_MATCH_WINDOW_MINUTES=30
+ATTRIBUTION_DB_POOL_MAX=10
+```
+
+Only deterministic identifiers are automatically accepted as matches. Records without sufficient identity evidence stay unmatched and are held from downstream signal return until reconciliation.
