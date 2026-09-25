@@ -1107,3 +1107,28 @@ Changes:
 - added a final lead-quality CTA patterned on the current EasyInsights closing section.
 
 No core product functionality was deleted.
+
+
+## Routed public navigation + original-copy pass
+
+The public navigation now behaves as a real multi-page product website rather than a set of homepage-only anchors.
+
+Implemented:
+- clicking **Industries** opens a dedicated Industries page;
+- clicking **Agents** opens a dedicated 11-agent page;
+- clicking **Integrations** opens a dedicated Integrations page;
+- Case Studies, Pricing, Resources and existing public routes continue to open their dedicated views;
+- dropdown items use the same route targets rather than jumping to homepage anchors;
+- routed pages reuse the same promo bar, navbar, typography system and footer styling;
+- brand click returns to the homepage;
+- public pages fetch their catalog data from unauthenticated backend endpoints with local UI fallbacks;
+- production authentication still protects workspace/private APIs while the new public catalog routes remain intentionally public.
+
+New public API routes:
+- `GET /api/public/industries`
+- `GET /api/public/agents`
+- `GET /api/public/integrations`
+
+### Content policy for this implementation
+
+Visual structure, alignment, spacing, information architecture and interaction patterns are modeled closely on the current EasyInsights public site. AceMarketing does **not** reuse EasyInsights taglines, long-form marketing copy, logos, customer artwork or proprietary source code. Headlines, descriptions and CTAs on the new routed pages are original AceMarketing copy.
