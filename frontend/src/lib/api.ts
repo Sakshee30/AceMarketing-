@@ -83,6 +83,7 @@ export const api = {
   runModel: (name: string) => request('/models/run', { method: 'POST', body: JSON.stringify({ name }) }),
   attribution: () => request('/attribution'),
   reports: () => request('/reports'),
+  cohorts: (months=6) => request('/cohorts?months='+months),
   planner: () => request('/planner'),
   sendReportTest: (report: string) => request('/reports/send-test', { method: 'POST', body: JSON.stringify({ report }) }),
   agents: () => request('/agents'),
