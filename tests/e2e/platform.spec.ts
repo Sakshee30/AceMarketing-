@@ -328,3 +328,20 @@ test('conversion adjustments stay empty until a real adjustment is created', asy
   await expect(page.getByText('Ci Partial Payment', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Preview payload' })).toBeVisible()
 })
+
+
+test('custom routing rule persists and drives selected-rule test', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  await openWorkspaceTab(page,'Routing')
+  await expect(page.getByRole('heading', { name: 'Lead routing' })).toBeVisible()
+  await page.getByRole('button', { name: 'New routing rule' }).click()
+  await page.getByLabel('Rule name').fill('CI Enterprise Lead')
+  await page.getByLabel('Condition').fill('score >= 90')
+  await page.getByLabel('Destination').fill('CI Enterprise Queue')
+  await page.getByLabel('SLA seconds').fill('120')
+  await page.getByRole('button', { name: 'Create routing rule' }).click()
+  await expect(page.getByText('CI Enterprise Lead', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Test selected rule' }).click()
+  await expect(page.getByText(/CI Enterprise Queue/)).toBeVisible()
+})
