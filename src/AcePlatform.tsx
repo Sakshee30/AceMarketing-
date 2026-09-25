@@ -10,7 +10,7 @@ import './ace-platform.css'
 import { api } from './lib/api'
 
 type View='site'|'app'|'login'
-type AppTab='Overview'|'AdSync'|'Funnel'|'Events'|'Live Sync'|'Journeys'|'Attribution'|'Enrich'|'Agents'|'Integrations'|'Audiences'|'Monitoring'|'Settings'
+type AppTab='Overview'|'AdSync'|'Funnel'|'Events'|'Live Sync'|'Offline Attribution'|'Journeys'|'Attribution'|'Enrich'|'Agents'|'Integrations'|'Audiences'|'Monitoring'|'Settings'
 
 const agents=[
  ['Meta Advanced CAPI','Return qualified outcomes to Meta server-side with deduplication.','Signal return','25–40% ROAS'],
@@ -111,6 +111,16 @@ function Marketing({openApp,openLogin}:{openApp:()=>void,openLogin:()=>void}){
    </div>
   </section>
 
+  <section className="connectivity-band">
+   <div className="section-title"><span className="kicker dark">PLATFORM AGNOSTIC</span><h2>CRM, WhatsApp, calling, web and app systems in one data layer.</h2><p>The brochure groups connectivity across CRM platforms, WhatsApp/marketing platforms, calling platforms, and website/app platforms. AceMarketing now mirrors that information architecture.</p></div>
+   <div className="connectivity-columns">
+    <article><span>CRM</span><b>Zoho · Salesforce · LeadSquared · HubSpot · HighLevel · Dynamics</b></article>
+    <article><span>WHATSAPP & MARKETING</span><b>WhatsApp · WATI · Gupshup · MoEngage · CleverTap</b></article>
+    <article><span>CALLING</span><b>Exotel · Knowlarity · Tata Tele · MyOperator</b></article>
+    <article><span>WEB & APP</span><b>Shopify · WooCommerce · Magento · WordPress · React · Custom</b></article>
+   </div>
+  </section>
+
   <section className="agents-section" id="agents">
    <div className="section-title light"><span className="kicker">AGENTS</span><h2>11 specialized agents across the funnel.</h2><p>Activate only the agents your workflow needs, with shared context from the same stitched journey.</p></div>
    <div className="agent-showcase">{agents.map((a,i)=><article key={a[0]}><div><span>{String(i+1).padStart(2,'0')}</span><Bot/></div><h3>{a[0]}</h3><p>{a[1]}</p><footer><small>{a[2]}</small><b>{a[3]}</b></footer></article>)}</div>
@@ -174,7 +184,7 @@ function Login({back,openApp}:{back:()=>void,openApp:()=>void}){
 }
 
 const appTabs=[
- ['Overview',Gauge],['AdSync',RadioTower],['Funnel',BarChart3],['Events',Zap],['Live Sync',Activity],['Journeys',Network],['Attribution',PieChart],['Enrich',DatabaseZap],['Agents',Bot],['Integrations',Cable],['Audiences',UsersRound],['Monitoring',Activity],['Settings',Settings2]
+ ['Overview',Gauge],['AdSync',RadioTower],['Funnel',BarChart3],['Events',Zap],['Live Sync',Activity],['Offline Attribution',PhoneCall],['Journeys',Network],['Attribution',PieChart],['Enrich',DatabaseZap],['Agents',Bot],['Integrations',Cable],['Audiences',UsersRound],['Monitoring',Activity],['Settings',Settings2]
 ] as const
 function Stat({label,value,sub,Icon}:{label:string,value:string,sub:string,Icon:any}){return <article className="stat"><div><span>{label}</span><Icon/></div><strong>{value}</strong><small>{sub}</small></article>}
 function PageHead({crumb,title,sub,action}:{crumb:string,title:string,sub:string,action?:string}){return <div className="page-head"><div><span>{crumb}</span><h1>{title}</h1><p>{sub}</p></div>{action&&<button className="app-primary"><Sparkles/>{action}</button>}</div>}
@@ -248,6 +258,20 @@ function LiveSync(){
  <div className="app-panel"><div className="panel-head"><div><h3>Freshness policy</h3><p>No next-day batch dependency</p></div></div><div className="freshness-card"><Zap/><div><b>Real-time first</b><p>Critical intent and revenue outcomes are delivered immediately; retries use idempotent event IDs and backoff.</p></div></div><div className="freshness-card"><ShieldCheck/><div><b>Safe retries</b><p>Failed deliveries remain visible in monitoring until acknowledged or successfully replayed.</p></div></div></div></div></>
 }
 
+function OfflineAttribution(){
+ const flows=[
+  ['Inbound Call','Tata Tele / Exotel','Timestamp overlap + active session','GCLID matched','Google Ads'],
+  ['WhatsApp Enquiry','WhatsApp API','Persisted click ID + phone association','GCLID / FBCLID','Google + Meta'],
+  ['Partial Payment','Custom Backend','Customer ID + order mapping','Revenue adjustment','Google Ads'],
+  ['Walk-in / Offline Sale','CRM','Hashed phone/email + click history','Identity match','Google + Meta']
+ ]
+ return <><PageHead crumb="AdSync / Offline Attribution" title="Calls, WhatsApp & offline revenue" sub="Bridge the gap between digital acquisition and conversions that happen outside the browser." action="New offline rule"/>
+ <div className="stats-grid"><Stat label="Calls attributed" value="4,218" sub="Last 30 days" Icon={PhoneCall}/><Stat label="WhatsApp conversions" value="6,904" sub="Matched to paid media" Icon={MessageCircle}/><Stat label="Offline match rate" value="91.6%" sub="Across supported identifiers" Icon={Target}/><Stat label="Revenue adjustments" value="1,284" sub="Partial/full conversion updates" Icon={CircleDollarSign}/></div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Offline attribution rules</h3><p>How non-web conversions are matched back to campaigns</p></div><span className="healthy">Active</span></div><div className="offline-table"><div className="offline-row offline-head"><span>Conversion</span><span>Source</span><span>Matching method</span><span>Identifier</span><span>Destination</span></div>{flows.map(r=><div className="offline-row" key={r[0]}><b>{r[0]}</b><span>{r[1]}</span><span>{r[2]}</span><span>{r[3]}</span><strong>{r[4]}</strong></div>)}</div></div>
+ <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Call attribution example</h3><p>Session-time overlap matching</p></div></div><div className="match-flow"><div><span>1</span><b>Ad click</b><small>GCLID persisted at landing</small></div><ArrowRight/><div><span>2</span><b>Active session</b><small>Visitor browsing window retained</small></div><ArrowRight/><div><span>3</span><b>Inbound call</b><small>Telephony timestamp received</small></div><ArrowRight/><div><span>4</span><b>Match</b><small>Call mapped to session GCLID</small></div></div></div>
+ <div className="app-panel"><div className="panel-head"><div><h3>WhatsApp + payment bridge</h3><p>High-consideration journey recovery</p></div></div><div className="freshness-card"><MessageCircle/><div><b>WhatsApp identity bridge</b><p>Persist the click identifier through chat initiation and associate it with the lead phone number.</p></div></div><div className="freshness-card"><CircleDollarSign/><div><b>Partial-payment adjustment</b><p>Classify partial payment outcomes into the conversion value that bidding should learn from.</p></div></div></div></div></>
+}
+
 function Journeys(){
  return <><PageHead crumb="Measurement / Journeys" title="Customer journey explorer" sub="Inspect the complete chronology for every lead across connected systems." action="Find journey"/>
  <div className="filters"><button>All sources <ChevronDown/></button><button>All stages <ChevronDown/></button><button>Last 30 days <ChevronDown/></button><div><Search/> Search phone, email, click ID...</div></div>
@@ -271,7 +295,16 @@ function Agents(){
  return <><PageHead crumb="Automation / Agents" title="Agent library" sub="Deploy specialist agents at each point where your funnel loses context or speed." action="Build custom agent"/><div className="agent-app-grid">{agents.map((a,i)=><article key={a[0]}><div><span className={i<7?'active-agent':''}>{i<7?'Active':'Available'}</span><Bot/></div><h3>{a[0]}</h3><p>{a[1]}</p><footer><small>{a[2]}</small><button>{i<7?'Manage':'Deploy'} <ChevronRight/></button></footer></article>)}</div></>
 }
 function Integrations(){
- return <><PageHead crumb="Workspace / Integrations" title="Connected ecosystem" sub="Marketing, CRM, messaging, calling, commerce and analytics connectors." action="Request connector"/><div className="integration-app-grid">{integrations.map((x,i)=><article key={x}><span className={'integration-logo c'+(i%6)}>{x.slice(0,2).toUpperCase()}</span><div><b>{x}</b><small>{i<12?'Connected · syncing':'Connector available'}</small></div><span className={i<12?'connected':'connect'}>{i<12?'Connected':'Connect'}</span></article>)}</div></>
+ const groups=[
+  ['CRM Platforms',['Zoho CRM','Salesforce','LeadSquared','HubSpot','HighLevel','Microsoft Dynamics 365','Custom CRM']],
+  ['WhatsApp & Marketing Platforms',['WhatsApp','WATI','Gupshup','MoEngage','CleverTap','BitSpeed','Gallabox']],
+  ['Calling Platforms',['Exotel','Knowlarity','Tata Tele','MyOperator']],
+  ['Website & App Platforms',['Shopify','WooCommerce','Magento','WordPress','React App','Custom Backend']],
+  ['Advertising & Analytics',['Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads','GA4']]
+ ]
+ return <><PageHead crumb="Workspace / Integrations" title="Platform-agnostic connectivity" sub="Connect the systems you already use without rebuilding your stack." action="Request connector"/>
+ <div className="integration-summary"><div><strong>100+</strong><span>available connector patterns</span></div><div><strong>1 click</strong><span>workspace connection flow</span></div><div><strong>24×7</strong><span>continuous synchronization</span></div><div><strong>Custom</strong><span>adapter support</span></div></div>
+ <div className="integration-category-grid">{groups.map((g,gi)=><section className="integration-category" key={g[0] as string}><div className="integration-category-head"><div><span>{String(gi+1).padStart(2,'0')}</span><h3>{g[0]}</h3></div><small>{(g[1] as string[]).length} connectors shown</small></div><div className="integration-app-grid">{(g[1] as string[]).map((x,i)=><article key={x}><span className={'integration-logo c'+(i%6)}>{x.slice(0,2).toUpperCase()}</span><div><b>{x}</b><small>{(gi+i)%3===0?'Connected · syncing':'Connector available'}</small></div><span className={(gi+i)%3===0?'connected':'connect'}>{(gi+i)%3===0?'Connected':'Connect'}</span></article>)}</div></section>)}</div></>
 }
 function Audiences(){
  return <><PageHead crumb="Activation / Audiences" title="Audience management" sub="Activate high-intent segments and suppress low-value or converted users." action="New audience"/><div className="app-panel"><div className="panel-head"><div><h3>Active segments</h3><p>Synced to connected destinations</p></div><button>Export</button></div>{[
@@ -303,7 +336,7 @@ function Settings(){
 }
 function Product({back}:{back:()=>void}){
  const [tab,setTab]=useState<AppTab>('Overview')
- const view=useMemo(()=>({Overview:<Overview/>,AdSync:<AdSync/>,Funnel:<Funnel/>,Events:<Events/>,"Live Sync":<LiveSync/>,Journeys:<Journeys/>,Attribution:<Attribution/>,Enrich:<Enrich/>,Agents:<Agents/>,Integrations:<Integrations/>,Audiences:<Audiences/>,Monitoring:<Monitoring/>,Settings:<Settings/>}[tab]),[tab])
+ const view=useMemo(()=>({Overview:<Overview/>,AdSync:<AdSync/>,Funnel:<Funnel/>,Events:<Events/>,"Live Sync":<LiveSync/>,"Offline Attribution":<OfflineAttribution/>,Journeys:<Journeys/>,Attribution:<Attribution/>,Enrich:<Enrich/>,Agents:<Agents/>,Integrations:<Integrations/>,Audiences:<Audiences/>,Monitoring:<Monitoring/>,Settings:<Settings/>}[tab]),[tab])
  return <div className="product"><aside><Brand/><div className="workspace"><span>AM</span><div><b>Ace EdTech</b><small>Production workspace</small></div><ChevronDown/></div><nav>{appTabs.map(([x,I])=><button key={x} className={tab===x?'active':''} onClick={()=>setTab(x)}><I/>{x}</button>)}</nav><div className="aside-footer"><button onClick={back}><ArrowRight/>Back to website</button><div className="profile-mini"><span>S</span><div><b>Sakshee</b><small>Workspace owner</small></div></div></div></aside>
  <main><header className="product-head"><div className="global-search"><Search/>Search journeys, leads, campaigns...</div><div><span className="sync">● Live sync healthy</span><button><Headphones/></button><button><Globe2/></button><span className="avatar-sm">S</span></div></header><div className="product-body">{view}</div></main></div>
 }
