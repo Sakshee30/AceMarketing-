@@ -61,7 +61,13 @@ const routingRules=[
 
 export const routeLead=async(workspaceId,input={})=>{
   if(!pool)return null
-  const rule=routingRules.find(r=>r.test(input))||{name:'Default routing',destination:'General admissions queue',reason:'fallback routing',slaSeconds:600}
+  const forced=input.routingRule&&input.routingRule.name&&input.routingRule.destination?{
+    name:String(input.routingRule.name),
+    destination:String(input.routingRule.destination),
+    reason:String(input.routingRule.reason||input.routingRule.when||'configured routing rule'),
+    slaSeconds:Number(input.routingRule.slaSeconds||600)
+  }:null
+  const rule=forced||routingRules.find(r=>r.test(input))||{name:'Default routing',destination:'General admissions queue',reason:'fallback routing',slaSeconds:600}
   const id='route_'+randomUUID()
   const leadRef=safe(input.leadRef||input.leadId||input.customerId||input.name||'unknown')
   const {rows}=await pool.query(
