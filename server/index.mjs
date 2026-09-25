@@ -86,6 +86,17 @@ const server = http.createServer(async (req,res)=>{
       if(!body.id) return send(res,400,{error:'id required'})
       return send(res,200,{id:body.id,status:'applied',appliedAt:new Date().toISOString(),auditId:randomUUID()})
     }
+    if (req.method === 'GET' && url.pathname === '/api/fingerprinting') return send(res,200,{continuityRate:96.4,ambiguousRate:1.3,scenarios:[
+      {name:'third_party_checkout',matchRate:96.4},
+      {name:'whatsapp_handoff',matchRate:92.8},
+      {name:'call_handoff',matchRate:91.6},
+      {name:'returning_device',matchRate:88.9}
+    ]})
+    if (req.method === 'POST' && url.pathname === '/api/fingerprinting/test') {
+      const body=await readBody(req)
+      if(!body.scenario) return send(res,400,{error:'scenario required'})
+      return send(res,200,{scenario:body.scenario,status:'passed',deterministicMatch:true,testedAt:new Date().toISOString()})
+    }
     if (req.method === 'GET' && url.pathname === '/api/sites') return send(res,200,{items:[
       {domain:'www.aceedtech.example',environment:'production',pixel:'active',server:'connected',coverage:97.4},
       {domain:'apply.aceedtech.example',environment:'production',pixel:'active',server:'connected',coverage:95.8},
@@ -159,6 +170,13 @@ const server = http.createServer(async (req,res)=>{
       {lead:'Aarav Sharma',source:'Google Ads',stage:'Qualified',touchpoints:6,duration:'18m'},
       {lead:'Meera Patel',source:'Meta Ads',stage:'Consultation',touchpoints:8,duration:'4h'},
       {lead:'Rohan Kumar',source:'WhatsApp',stage:'Enrolled',touchpoints:11,duration:'2d'}
+    ]})
+    if (req.method === 'GET' && url.pathname === '/api/planner') return send(res,200,{budget:2500000,channels:[
+      {name:'Google Search',share:38,quality:91,cac:6760,action:'scale'},
+      {name:'Meta Prospecting',share:28,quality:74,cac:8120,action:'hold'},
+      {name:'WhatsApp Retargeting',share:18,quality:88,cac:7040,action:'scale'},
+      {name:'LinkedIn',share:10,quality:81,cac:10340,action:'optimize'},
+      {name:'Other',share:6,quality:62,cac:11980,action:'reduce'}
     ]})
     if (req.method === 'GET' && url.pathname === '/api/reports') return send(res,200,{items:[
       {name:'Executive MBA Cohort',cadence:'weekly',channel:'email',status:'active'},
