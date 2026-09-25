@@ -84,6 +84,8 @@ jobs:
           test -f backend/src/entitlements.mjs
           test -f backend/src/billing-provider.mjs
           test -f backend/src/consent.mjs
+          test -f backend/src/privacy-ops.mjs
+          test -f backend/scripts/privacy-retention.mjs
           test -f backend/scripts/migrate.mjs
           test -f backend/migrations/001_workspace_state.sql
           test -f backend/migrations/002_job_queue.sql
@@ -96,6 +98,7 @@ jobs:
           test -f backend/migrations/009_entitlements.sql
           test -f backend/migrations/010_billing_provider.sql
           test -f backend/migrations/011_consent.sql
+          test -f backend/migrations/012_privacy_ops.sql
           test -f backend/scripts/preflight.mjs
           test -f backend/scripts/smoke.mjs
           test -f backend/scripts/backup.mjs
