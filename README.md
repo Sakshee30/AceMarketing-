@@ -1660,15 +1660,20 @@ New/expanded APIs:
 
 ### Agent transport configuration
 
-AceMarketing can hand off voice and reminder actions to an approved telephony/voice provider through signed server-to-server webhooks:
+AceMarketing hands voice qualification, meeting reminders and feedback requests to approved providers through signed server-to-server webhooks:
 
 ```text
+VOICE_QUALIFICATION_WEBHOOK_URL=https://...
+# Legacy fallback still supported:
 VOICE_AGENT_WEBHOOK_URL=https://...
 MEETING_REMINDER_WEBHOOK_URL=https://...
+FEEDBACK_WEBHOOK_URL=https://...
 AGENT_WEBHOOK_SECRET=<random signing secret>
 ```
 
-When no external transport URL is configured, jobs remain valid internal orchestration records and return an internal accepted receipt; the system does not falsely claim that a phone call was placed.
+Production actions now fail explicitly when the relevant transport is not configured. They are not marked successful merely because an orchestration record was created. HTTP transport URLs are rejected in production; development-only simulation requires `AGENT_TRANSPORT_ALLOW_INTERNAL=true` and is unavailable when `NODE_ENV=production`.
+
+The production preflight check now verifies that all three agent transport routes plus the signing secret are present.
 
 
 ## Workspace-bound OAuth callback hardening pass
@@ -2197,3 +2202,18 @@ A delivery record retains the provider-safe fields needed to replay the same bus
 Raw email and phone values are converted to hashes for the replay record. Provider credentials remain in the encrypted connector vault and are never copied into delivery records.
 
 This closes two important reliability gaps found during the production-readiness review: incomplete manual retries and state-only DLQ replay.
+
+
+## Agent execution truthfulness hardening pass
+
+This pass removes another demo-only behavior from the production path:
+
+- Voice qualification, meeting reminders and feedback requests now resolve to separate provider webhook routes.
+- A missing provider route is treated as a failed action instead of returning a synthetic internal success receipt.
+- Production agent transports require HTTPS.
+- Signed webhook delivery remains protected by `X-Ace-Timestamp` and `X-Ace-Signature`.
+- Provider HTTP failures now retain structured status/body context for retry and operational diagnosis.
+- Development-only internal simulation is opt-in and cannot be enabled in production.
+- Production preflight fails when the voice, reminder, feedback or signing-secret configuration is incomplete.
+
+This means the corresponding workspace buttons can no longer report successful execution when no real communication provider is configured.
