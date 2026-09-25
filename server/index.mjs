@@ -55,6 +55,16 @@ const server = http.createServer(async (req,res)=>{
     }
     if (req.method === 'GET' && url.pathname === '/api/workspace/overview') return send(res,200,{revenueAttributed:28400000,qualifiedLeads:7621,signalCoverage:94.8,activeAgents:7})
     if (req.method === 'GET' && url.pathname === '/api/integrations') return send(res,200,{items:integrations.map((name,i)=>({name,status:i<12?'connected':'available'}))})
+    if (req.method === 'POST' && url.pathname === '/api/custom-integrations/test') {
+      const body=await readBody(req)
+      if(!body.name || !body.baseUrl) return send(res,400,{error:'name and baseUrl required'})
+      return send(res,200,{ok:true,statusCode:200,latencyMs:184,sampleRecords:25,schemaValid:true,authValid:true,testedAt:new Date().toISOString()})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/custom-integrations') {
+      const body=await readBody(req)
+      if(!body.name || !body.baseUrl || !body.identity) return send(res,400,{error:'name, baseUrl and identity required'})
+      return send(res,201,{id:'ci_'+randomUUID(),name:body.name,status:'connected',direction:body.direction||'Bidirectional',createdAt:new Date().toISOString()})
+    }
     if (req.method === 'POST' && url.pathname === '/api/integrations/connect') {
       const body = await readBody(req)
       if (!body.connector) return send(res,400,{error:'connector required'})
