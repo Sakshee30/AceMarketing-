@@ -566,10 +566,10 @@
 @media(max-width:900px){.case-study-selector{grid-template-columns:1fr 1fr;padding:0 28px}.case-study-focus{padding:28px}}
 @media(max-width:580px){.case-study-selector{grid-template-columns:1fr;padding:0 20px}.case-study-focus{padding:24px 20px}}
 
-.consent-banner{position:fixed;left:24px;right:24px;bottom:24px;z-index:9999;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:18px 20px;border:1px solid rgba(15,23,42,.12);border-radius:18px;background:#fff;box-shadow:0 20px 60px rgba(15,23,42,.18);color:#0f172a}
+.consent-banner{position:fixed;left:24px;right:24px;bottom:24px;z-index:2147483647;isolation:isolate;pointer-events:auto;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:18px 20px;border:1px solid rgba(15,23,42,.12);border-radius:18px;background:#fff;box-shadow:0 20px 60px rgba(15,23,42,.18);color:#0f172a}
 .consent-copy{display:flex;align-items:flex-start;gap:12px;max-width:780px}.consent-copy svg{flex:0 0 auto;margin-top:2px}.consent-copy b{display:block;margin-bottom:4px}.consent-copy p{margin:0;color:#475569;line-height:1.5}
 .consent-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}.consent-actions button{border:1px solid #cbd5e1;background:#fff;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}.consent-actions button.primary{background:#111827;color:#fff;border-color:#111827}
 @media(max-width:760px){.consent-banner{left:12px;right:12px;bottom:12px;align-items:stretch;flex-direction:column}.consent-actions{justify-content:stretch}.consent-actions button{flex:1 1 100%}}
 
-.consent-manage{position:fixed;right:18px;bottom:18px;z-index:9998;display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(15,23,42,.16);background:#fff;color:#0f172a;border-radius:999px;padding:9px 12px;font-weight:700;box-shadow:0 8px 28px rgba(15,23,42,.14);cursor:pointer}
+.consent-manage{position:fixed;right:18px;bottom:18px;z-index:2147483646;isolation:isolate;pointer-events:auto;display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(15,23,42,.16);background:#fff;color:#0f172a;border-radius:999px;padding:9px 12px;font-weight:700;box-shadow:0 8px 28px rgba(15,23,42,.14);cursor:pointer}
 .consent-manage svg{width:16px;height:16px}
