@@ -22,6 +22,10 @@ if(!process.env.WHATSAPP_APP_SECRET&&!process.env.META_OAUTH_CLIENT_SECRET)whats
 if(!process.env.WHATSAPP_PHONE_NUMBER_ID)whatsappMissing.push('WHATSAPP_PHONE_NUMBER_ID')
 if(!process.env.WHATSAPP_WEBHOOK_WORKSPACE_ID&&!process.env.WHATSAPP_PHONE_WORKSPACE_MAP)whatsappMissing.push('WHATSAPP_WEBHOOK_WORKSPACE_ID or WHATSAPP_PHONE_WORKSPACE_MAP')
 if(whatsappMissing.length)weak.push('WhatsApp Cloud API incomplete: '+whatsappMissing.join(', '))
+const callTrackingMissing=[]
+if(!process.env.CALL_WEBHOOK_SECRET)callTrackingMissing.push('CALL_WEBHOOK_SECRET')
+if(!process.env.CALL_WEBHOOK_WORKSPACE_ID&&!process.env.CALL_NUMBER_WORKSPACE_MAP)callTrackingMissing.push('CALL_WEBHOOK_WORKSPACE_ID or CALL_NUMBER_WORKSPACE_MAP')
+if(callTrackingMissing.length)weak.push('call tracking incomplete: '+callTrackingMissing.join(', '))
 if(missing.length||weak.length){
   console.error(JSON.stringify({ok:false,missing,issues:weak},null,2))
   process.exit(1)
