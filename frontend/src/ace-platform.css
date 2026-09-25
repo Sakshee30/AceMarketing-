@@ -527,3 +527,29 @@
 .pricing-agent-grid article h3{font-weight:600}
 .pricing-agent-grid article p{line-height:1.48}
 .pricing-card,.pricing-agent-grid article,.pricing-summary{font-family:'Inter',Arial,sans-serif}
+
+/* Backend-driven friction section aligned to current EasyInsights homepage rhythm */
+.ei-friction-section{padding:104px max(34px,calc((100vw - 1380px)/2));background:#fff}
+.ei-friction-intro{max-width:920px;margin-bottom:46px}
+.ei-friction-intro>span{font-size:10px;letter-spacing:.09em;font-weight:700;color:#776d80}
+.ei-friction-intro h2{font:500 clamp(40px,4.4vw,64px)/1.03 'Inter',Arial,sans-serif;letter-spacing:-.048em;color:#0d0912;margin:12px 0 16px}
+.ei-friction-intro p{font-size:15px;line-height:1.66;color:#766d7c;max-width:760px}
+.ei-friction-shell{display:grid;grid-template-columns:.72fr 1.28fr;gap:20px;align-items:stretch}
+.ei-friction-nav{border-top:1px solid #e9e5ec}
+.ei-friction-nav button{width:100%;border:0;border-bottom:1px solid #e9e5ec;background:#fff;display:grid;grid-template-columns:38px 1fr 16px;gap:10px;align-items:center;text-align:left;padding:18px 8px;color:#6e6576}
+.ei-friction-nav button.active{background:#faf8ff;color:#23182f}
+.ei-friction-nav button>span{font-size:10px;color:#8e8495}
+.ei-friction-nav button b{font-size:13px;font-weight:600}
+.ei-friction-nav svg{width:13px;color:#7b4aed}
+.ei-friction-detail{position:relative;background:#160724;color:#fff;border-radius:18px;padding:42px 46px;min-height:430px;overflow:hidden}
+.ei-friction-detail:after{content:"";position:absolute;width:320px;height:320px;border-radius:50%;right:-110px;bottom:-160px;border:1px solid rgba(179,132,255,.22)}
+.ei-friction-number{font:500 52px/1 'Inter';color:#8a57f7;margin-bottom:34px}
+.ei-friction-detail>span{font-size:10px;letter-spacing:.08em;color:#ab94ba;font-weight:700}
+.ei-friction-detail h3{font:500 clamp(28px,3vw,44px)/1.08 'Inter',Arial,sans-serif;letter-spacing:-.038em;max-width:760px;margin:10px 0 25px}
+.ei-friction-detail ul{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px;padding:0;margin:0 0 32px;list-style:none;max-width:840px}
+.ei-friction-detail li{display:grid;grid-template-columns:18px 1fr;gap:8px;font-size:12px;line-height:1.5;color:#c8b9d2}
+.ei-friction-detail li svg{width:14px;color:#b78aff;margin-top:1px}
+.ei-friction-detail>button{border:1px solid rgba(255,255,255,.24);background:rgba(255,255,255,.08);color:#fff;border-radius:24px;padding:11px 15px;display:flex;align-items:center;gap:7px;font-size:11px}
+.ei-friction-detail>button svg{width:12px}
+@media(max-width:900px){.ei-friction-section{padding:78px 28px}.ei-friction-shell{grid-template-columns:1fr}.ei-friction-detail ul{grid-template-columns:1fr}}
+@media(max-width:600px){.ei-friction-section{padding:62px 20px}.ei-friction-detail{padding:30px 24px;min-height:0}.ei-friction-nav button{padding:15px 6px}}
