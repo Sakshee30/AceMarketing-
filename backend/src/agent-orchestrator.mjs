@@ -125,6 +125,23 @@ export const listMeetings=async workspaceId=>{
   return rows
 }
 
+export const getMeeting=async(workspaceId,id)=>{
+  if(!pool)return null
+  const {rows}=await pool.query(`SELECT * FROM ace_meeting_records WHERE workspace_id=$1 AND id=$2 LIMIT 1`,[workspaceId,id])
+  return rows[0]||null
+}
+
+export const rescheduleMeeting=async(workspaceId,id,{startsAt,externalCalendarId=null}={})=>{
+  if(!pool)return null
+  const starts=new Date(startsAt)
+  if(Number.isNaN(starts.getTime()))throw new Error('invalid startsAt')
+  const {rows}=await pool.query(
+    `UPDATE ace_meeting_records SET starts_at=$3,external_calendar_id=COALESCE($4,external_calendar_id),status='confirmed',updated_at=now() WHERE workspace_id=$1 AND id=$2 RETURNING *`,
+    [workspaceId,id,starts.toISOString(),externalCalendarId]
+  )
+  return rows[0]||null
+}
+
 export const markMeetingReminder=async(workspaceId,id)=>{
   if(!pool)return null
   const {rows}=await pool.query(
