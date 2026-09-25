@@ -35,4 +35,5 @@ export const api = {
   monitoring: () => request('/monitoring'),
   signalConsole: () => request('/signal-console'),
   securityPosture: () => request('/security-posture'),
+  resources: () => request('/resources'),
 }
