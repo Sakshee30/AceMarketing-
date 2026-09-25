@@ -25,6 +25,20 @@ export const api = {
   publicResourceCenter: () => request('/public/resource-center'),
   launchpad: () => request('/launchpad'),
   saveLaunchpad: (payload: Record<string, unknown>) => request('/launchpad', { method: 'POST', body: JSON.stringify(payload) }),
+  googleLoginStart: () => request('/auth/google/start'),
+  googleLoginExchange: async (code: string, workspaceId: string) => {
+    const result = await request<{ token: string; user: { id?: string; email: string; role: string }; workspaceId?: string; expiresIn: number }>('/auth/google/exchange', {
+      method: 'POST',
+      body: JSON.stringify({ code, workspaceId })
+    })
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('ace_token', result.token)
+      if (result.workspaceId) window.localStorage.setItem('ace_workspace_id', result.workspaceId)
+    }
+    return result
+  },
+  forgotPassword: (email: string) => request('/auth/password/forgot', { method: 'POST', body: JSON.stringify({ email }) }),
+  resetPassword: (token: string, password: string) => request('/auth/password/reset', { method: 'POST', body: JSON.stringify({ token, password }) }),
   login: async (email: string, password: string) => {
     const result = await request<{ token: string; user: { id?: string; email: string; role: string }; workspaceId?: string; expiresIn: number }>('/auth/login', {
       method: 'POST',
