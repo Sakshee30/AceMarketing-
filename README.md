@@ -743,3 +743,38 @@ New API endpoints:
 - `POST /api/deep-links/activate`
 
 EasyInsights' current public Attribution Model navigation exposes **Fraud Detection** and **Deep Linking** alongside Customer Journey, Attribution, Audience, Events, Lead Grading and Lead Qualification. AceMarketing now includes operational UI for the two capabilities that were previously missing.
+
+
+## Parity pass: cross-domain fingerprinting continuity and strategic media planning
+
+This pass adds two source-supported capabilities that were still missing as dedicated product surfaces.
+
+### Cross-domain continuity / digital fingerprinting pattern
+New **Fingerprinting** workspace includes:
+- first-party journey continuity across website, application, checkout and confirmation pages;
+- assisted handoff continuity for WhatsApp and calls;
+- deterministic identifiers first, supporting click IDs and hashed first-party identifiers second;
+- approved-domain controls;
+- continuity testing;
+- ambiguous-match review;
+- referral/session inflation correction.
+
+EasyInsights' Della Resorts case study publicly describes its Pixel and "Digital Fingerprinting" as a way to track the user across the website, checkout and confirmation journey. AceMarketing implements an original, privacy-aware equivalent centered on first-party identity/session continuity rather than copying proprietary implementation details.
+
+### Strategic media planner
+New **Planner** workspace turns attribution, cohort, quality and LTV evidence into an advisory media-allocation scenario:
+- monthly budget scenario;
+- channel allocation percentages;
+- lead-quality score;
+- CAC context;
+- scale / hold / optimize / reduce recommendations;
+- projected downstream outcomes;
+- explainable decision log;
+- human approval remains required before spend changes.
+
+EasyInsights' Company page publicly describes Cohort Reports for strategic media planning. AceMarketing now connects cohort and attribution evidence to a dedicated planning surface.
+
+New API endpoints:
+- `GET /api/fingerprinting`
+- `POST /api/fingerprinting/test`
+- `GET /api/planner`
