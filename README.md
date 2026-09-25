@@ -1149,3 +1149,43 @@ Implemented:
 - key public headings and marketing text were rewritten so AceMarketing keeps original copy rather than reusing EasyInsights taglines.
 
 The design goal remains close visual parity in spacing, hierarchy, menu behavior, typography scale and layout while keeping AceMarketing branding, wording, artwork and code independent.
+
+
+## Canonical frontend/backend project structure
+
+AceMarketing now uses an explicit two-application layout while keeping the root repository as the orchestration layer:
+
+```text
+AceMarketing-/
+├─ frontend/
+│  ├─ index.html
+│  └─ src/
+│     ├─ AcePlatform.tsx
+│     ├─ ace-platform.css
+│     ├─ main.tsx
+│     └─ lib/
+│        ├─ api.ts
+│        └─ tracker.ts
+├─ backend/
+│  └─ src/
+│     ├─ index.mjs
+│     ├─ security.mjs
+│     └─ store.mjs
+├─ .github/workflows/ci.yml
+├─ package.json
+├─ tsconfig.app.json
+└─ vite.config.ts
+```
+
+The root scripts now treat `frontend/` and `backend/` as the canonical runtime paths:
+
+```bash
+npm run dev:frontend
+npm run dev:backend
+npm run check:all
+npm run build
+```
+
+The production frontend build is emitted to `dist/frontend`. CI verifies both application trees, type-checks the frontend, syntax-checks all backend modules, builds the production frontend, and asserts that the canonical frontend/backend files exist.
+
+The earlier root-level `src/` and `server/` files are retained temporarily for migration safety, but the active pipeline no longer depends on them.
