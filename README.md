@@ -192,3 +192,36 @@ track({
 ```
 
 Click identifiers are captured from the landing-page query string and persisted in browser storage for subsequent events. This is an implementation foundation; production use still requires consent handling, server-side identity storage, secure hashing, idempotency, queueing, retries, and real destination APIs.
+
+
+## Offline attribution and connectivity parity
+
+The current implementation now also covers the brochure's offline-conversion patterns:
+
+- **Call attribution** using telephony timestamps matched against active website sessions and persisted click identifiers.
+- **WhatsApp attribution** using persisted GCLID/FBCLID plus lead phone association.
+- **Partial-payment conversion adjustment** for high-consideration journeys.
+- **Platform-agnostic integration grouping** across CRM, WhatsApp/marketing, calling, website/app, advertising and analytics categories.
+- New workspace tab: **Offline Attribution**.
+- New endpoint: **`GET /api/offline-attribution`**.
+
+The integration UI is now grouped to match the supplied brochure's connectivity structure instead of presenting one flat connector list.
+
+### Current workspace navigation
+
+```text
+Overview
+AdSync
+Funnel
+Events
+Live Sync
+Offline Attribution
+Journeys
+Attribution
+Enrich
+Agents
+Integrations
+Audiences
+Monitoring
+Settings
+```
