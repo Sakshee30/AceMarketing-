@@ -33,7 +33,7 @@ if(ssrf.status!==422)throw new Error('localhost custom integration target was no
 const track=await call('/api/track',{
   method:'POST',
   headers:{'Content-Type':'application/json','X-Workspace-ID':'ws_default'},
-  body:JSON.stringify({event:'security.smoke',visitorId:'security-smoke-visitor',url:'https://example.test/security'})
+  body:JSON.stringify({event:'security.smoke',eventCategory:'essential',visitorId:'security-smoke-visitor',url:'https://example.test/security'})
 })
 if(track.status<200||track.status>=300)throw new Error('tracking ingestion failed during security smoke: '+track.status)
 
