@@ -249,3 +249,13 @@ test('built-in agent opens its live operational module', async ({ page }) => {
   await page.getByRole('button', { name: /Open lead grading/ }).click()
   await expect(page.getByRole('heading', { name: 'Lead grading' })).toBeVisible()
 })
+
+
+test('funnel period control updates backend-filtered workspace', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await page.getByRole('button', { name: /Tracking & Data/ }).click()
+  await page.getByRole('button', { name: 'Funnel', exact: true }).first().click()
+  await expect(page.getByRole('heading', { name: 'Channel & campaign funnel' })).toBeVisible()
+  await page.getByRole('button', { name: /Last 30 days/ }).click()
+  await expect(page.getByText('90 day window')).toBeVisible()
+})
