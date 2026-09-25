@@ -269,3 +269,13 @@ test('reports list reflects persisted schedules instead of static claims', async
   await expect(page.getByText('Cohort Performance', { exact: true }).first()).toBeVisible()
   await expect(page.getByText('Paid Funnel Performance', { exact: true })).toHaveCount(0)
 })
+
+
+test('attribution period selector requests a new backend window', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  await page.getByRole('button', { name: 'Attribution', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Full-path attribution' })).toBeVisible()
+  await page.getByRole('button', { name: 'Last 30 days', exact: true }).click()
+  await expect(page.getByText('90 day window', { exact: false })).toBeVisible()
+})
