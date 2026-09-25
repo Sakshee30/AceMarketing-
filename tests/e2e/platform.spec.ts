@@ -259,3 +259,13 @@ test('funnel period control updates backend-filtered workspace', async ({ page }
   await page.getByRole('button', { name: /Last 30 days/ }).click()
   await expect(page.getByText('90 day window')).toBeVisible()
 })
+
+
+test('reports list reflects persisted schedules instead of static claims', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await page.getByRole('button', { name: /Measurement & Intelligence/ }).click()
+  await page.getByRole('button', { name: 'Reports', exact: true }).first().click()
+  await expect(page.getByRole('heading', { name: 'Cohort & automated reports' })).toBeVisible()
+  await expect(page.getByText('Cohort Performance', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText('Paid Funnel Performance', { exact: true })).toHaveCount(0)
+})
