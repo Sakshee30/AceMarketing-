@@ -1318,6 +1318,7 @@ function Meetings(){
  const [busy,setBusy]=useState('')
  const [notice,setNotice]=useState('')
  const [newTime,setNewTime]=useState('')
+ const [builder,setBuilder]=useState(false)
  const load=async()=>{
   try{
    const r:any=await api.meetings()
@@ -1328,6 +1329,22 @@ function Meetings(){
  }
  useEffect(()=>{load()},[])
  const current=meetings.find(x=>x.id===selected)||meetings[0]
+ const create=async(e:any)=>{
+  e.preventDefault();const fd=new FormData(e.currentTarget);setBusy('create');setNotice('')
+  try{
+   const startsAt=new Date(String(fd.get('startsAt')||'')).toISOString()
+   const r:any=await api.createMeeting({
+    leadRef:String(fd.get('leadRef')||''),
+    startsAt,
+    owner:String(fd.get('owner')||'Counsellor'),
+    attendeeEmail:String(fd.get('attendeeEmail')||''),
+    attendeePhone:String(fd.get('attendeePhone')||''),
+    risk:String(fd.get('risk')||'low'),
+    syncCalendar:String(fd.get('syncCalendar')||'yes')==='yes'
+   })
+   setBuilder(false);setNotice(r?.calendar?.externalId?'Meeting scheduled and synced to Google Calendar.':'Meeting scheduled.');await load();if(r?.id)setSelected(r.id)
+  }catch(err:any){setNotice(err?.message||'Meeting could not be scheduled.')}finally{setBusy('')}
+ }
  const remind=async(id:string)=>{
   setBusy('remind');setNotice('')
   try{await api.sendMeetingReminder(id);setNotice('Reminder queued through the configured reminder provider.');await load()}
@@ -1355,14 +1372,16 @@ function Meetings(){
  const withCalendar=meetings.filter(x=>x.calendarId).length
  const reminders=meetings.reduce((n,x)=>n+Number(x.remindersSent||0),0)
  const highRisk=meetings.filter(x=>['high','medium'].includes(String(x.risk).toLowerCase())).length
- return <><PageHead crumb="Conversion / Meetings" title="Scheduler & meeting reminders" sub="Book qualified leads, synchronize Google Calendar in real time and reduce no-shows with provider-backed reminders." action={busy==='calendar'?'Connecting…':'Connect Google Calendar'} onAction={connectCalendar}/>
+ return <><PageHead crumb="Conversion / Meetings" title="Scheduler & meeting reminders" sub="Book qualified leads, synchronize Google Calendar in real time and reduce no-shows with provider-backed reminders." action="Schedule meeting" onAction={()=>setBuilder(true)}/>
  {notice&&<div className="delivery-notice ok"><CheckCircle2/><span>{notice}</span></div>}
  <div className="stats-grid"><Stat label="Upcoming meetings" value={String(upcoming)} sub="Persisted scheduled consultations" Icon={CalendarDays}/><Stat label="Calendar synced" value={String(withCalendar)} sub="Meetings with external event IDs" Icon={CheckCircle2}/><Stat label="No-show risk" value={String(highRisk)} sub="High / medium risk meetings" Icon={Activity}/><Stat label="Reminders sent" value={String(reminders)} sub="Persisted reminder executions" Icon={MessageCircle}/></div>
- <div className="meeting-layout"><div className="app-panel meeting-list"><div className="panel-head"><div><h3>Upcoming consultations</h3><p>Persisted calendar + reminder state</p></div><button onClick={load}>Refresh</button></div>{meetings.length?meetings.map(x=><button key={x.id} className={selected===x.id?'selected':''} onClick={()=>setSelected(x.id)}><CalendarDays/><div><b>{x.lead}</b><small>{x.time} · {x.owner}</small></div><span className={x.risk.toLowerCase()}>{x.risk} risk</span><ChevronRight/></button>):<div className="empty-delivery-state"><CalendarDays/><div><b>No meetings scheduled yet</b><small>Schedule one from Calls or connect Google Calendar and create a consultation.</small></div></div>}</div>
+ <div className="meeting-layout"><div className="app-panel meeting-list"><div className="panel-head"><div><h3>Upcoming consultations</h3><p>Persisted calendar + reminder state</p></div><div className="panel-actions"><button onClick={load}>Refresh</button><button onClick={connectCalendar} disabled={busy==='calendar'}>{busy==='calendar'?'Connecting…':'Connect Calendar'}</button></div></div>{meetings.length?meetings.map(x=><button key={x.id} className={selected===x.id?'selected':''} onClick={()=>setSelected(x.id)}><CalendarDays/><div><b>{x.lead}</b><small>{x.time} · {x.owner}</small></div><span className={x.risk.toLowerCase()}>{x.risk} risk</span><ChevronRight/></button>):<div className="empty-delivery-state"><CalendarDays/><div><b>No meetings scheduled yet</b><small>Schedule one from Calls or connect Google Calendar and create a consultation.</small></div></div>}</div>
  {current?<div className="app-panel meeting-detail"><div className="panel-head"><div><h3>{current.lead}</h3><p>{current.time}</p></div><span className="status">{current.status}</span></div><div className="meeting-info-grid">{[['Owner',current.owner],['Reminder plan',current.reminder],['No-show risk',current.risk],['Calendar',current.calendarId?'Google Calendar synced':'Not synced'],['Attendee',current.attendeeEmail||current.attendeePhone||'Not provided'],['Meeting link',current.meetingLink?'Available':'—'],['Reminders sent',String(current.remindersSent||0)],['Last reminder',current.lastReminderAt?new Date(current.lastReminderAt).toLocaleString():'—']].map(x=><div key={x[0]}><span>{x[0]}</span><b>{x[1]}</b></div>)}</div>
  <div className="meeting-reminder-flow">{[['T−24h','Primary reminder'],['T−3h','Follow-up reminder'],['T−30m','Final confirmation'],['T+15m','No-show recovery if needed']].map((x,i)=><div key={x[0]}><span>{i+1}</span><div><b>{x[0]}</b><small>{x[1]}</small></div></div>)}</div>
  <div className="call-schedule-box"><label>New meeting time<input type="datetime-local" value={newTime} onChange={e=>setNewTime(e.target.value)}/></label><button disabled={!newTime||busy==='reschedule'} onClick={reschedule}>{busy==='reschedule'?'Updating…':'Reschedule'}</button></div>
- <div className="approval-actions"><button className="approve" disabled={busy==='remind'} onClick={()=>remind(current.id)}><MessageCircle/>{busy==='remind'?'Queuing…':'Send reminder now'}</button></div></div>:<div className="app-panel meeting-detail"><div className="empty-delivery-state"><CalendarDays/><div><b>Select a meeting</b><small>Calendar and reminder operations appear here.</small></div></div></div>}</div></>
+ <div className="approval-actions"><button className="approve" disabled={busy==='remind'} onClick={()=>remind(current.id)}><MessageCircle/>{busy==='remind'?'Queuing…':'Send reminder now'}</button></div></div>:<div className="app-panel meeting-detail"><div className="empty-delivery-state"><CalendarDays/><div><b>Select a meeting</b><small>Calendar and reminder operations appear here.</small></div></div></div>}</div>
+ {builder&&<div className="connector-modal"><form className="connector-card" onSubmit={create}><div className="connector-modal-head"><div><CalendarDays/><div><b>Schedule meeting</b><small>Create a persisted consultation and optionally sync it to Google Calendar.</small></div></div><button type="button" onClick={()=>setBuilder(false)}><X/></button></div><label>Lead reference<input name="leadRef" required placeholder="lead_123 or customer email"/></label><label>Start time<input name="startsAt" type="datetime-local" required/></label><label>Owner<input name="owner" defaultValue="Counsellor"/></label><div className="two-col"><label>Attendee email<input name="attendeeEmail" type="email" placeholder="lead@example.com"/></label><label>Attendee phone<input name="attendeePhone" placeholder="+91..."/></label></div><div className="two-col"><label>No-show risk<select name="risk"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></label><label>Calendar sync<select name="syncCalendar"><option value="yes">Sync if connected</option><option value="no">Do not sync</option></select></label></div><button disabled={busy==='create'}>{busy==='create'?'Scheduling…':'Schedule meeting'}</button></form></div>}
+ </>
 }
 function Feedback(){
  const [filter,setFilter]=useState('All')
