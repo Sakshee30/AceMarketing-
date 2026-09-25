@@ -15,6 +15,7 @@ import { billingConfigured, billingEventHistory, closeBillingProvider, createChe
 import { closeConsentStore, consentAllows, consentStats, getConsent, listConsentAudit, saveConsent } from './consent.mjs'
 import { closePrivacyOps, deleteSubject, exportSubject, listPrivacyRequests, purgeRetention, retentionPolicy } from './privacy-ops.mjs'
 import { closeAudienceScheduler, listAudienceRefreshRuns, listAudienceSchedules, saveAudienceSchedule } from './audience-scheduler.mjs'
+import { closeCohortAnalytics, cohortAnalytics } from './cohort-analytics.mjs'
 import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, publicChallenges, publicCaseStudies, publicResources, publicResourceCenter } from './public-content.mjs'
 
 const CONNECTOR_PROVIDERS={
@@ -746,6 +747,10 @@ const server = http.createServer(async (req,res)=>{
       {name:'LinkedIn',share:10,quality:81,cac:10340,action:'optimize'},
       {name:'Other',share:6,quality:62,cac:11980,action:'reduce'}
     ]})
+    if (req.method === 'GET' && url.pathname === '/api/cohorts') {
+      const months=Number(url.searchParams.get('months')||6)
+      return send(req,res,200,await cohortAnalytics(workspaceId,{months}))
+    }
     if (req.method === 'GET' && url.pathname === '/api/reports') return send(req,res,200,{items:[
       {name:'Executive MBA Cohort',cadence:'weekly',channel:'email',status:'active'},
       {name:'Paid Funnel Performance',cadence:'daily',channel:'email+slack',status:'active'},
@@ -1289,6 +1294,6 @@ server.keepAliveTimeout=65_000
 server.headersTimeout=66_000
 server.requestTimeout=30_000
 server.listen(PORT,()=>console.log(`AceMarketing API listening on http://localhost:${PORT}`))
-const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations(),closeObservability(),closeEntitlements(),closeBillingProvider(),closeConsentStore(),closePrivacyOps(),closeAudienceScheduler()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
+const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations(),closeObservability(),closeEntitlements(),closeBillingProvider(),closeConsentStore(),closePrivacyOps(),closeAudienceScheduler(),closeCohortAnalytics()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
 process.on('SIGTERM',()=>shutdown('SIGTERM'))
 process.on('SIGINT',()=>shutdown('SIGINT'))
