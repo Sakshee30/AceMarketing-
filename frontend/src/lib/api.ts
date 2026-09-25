@@ -1,11 +1,12 @@
 export type DemoRequest = Record<string, FormDataEntryValue>
 
 const getToken = () => typeof window !== 'undefined' ? window.localStorage.getItem('ace_token') : null
+const getWorkspace = () => typeof window !== 'undefined' ? (window.localStorage.getItem('ace_workspace_id') || 'ws_default') : 'ws_default'
 
 const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
   const token=getToken()
   const response = await fetch(`/api${path}`, {
-    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(init?.headers || {}) },
+    headers: { 'Content-Type': 'application/json', 'X-Workspace-ID': getWorkspace(), ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(init?.headers || {}) },
     ...init,
   })
   if (!response.ok) throw new Error(`API request failed: ${response.status}`)
