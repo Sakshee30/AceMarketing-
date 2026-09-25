@@ -93,6 +93,7 @@ jobs:
           test -f backend/src/whatsapp-cloud.mjs
           test -f backend/src/call-events.mjs
           test -f backend/src/calendar-provider.mjs
+          test -f backend/src/auth-mailer.mjs
           test -f backend/migrations/016_meeting_calendar.sql
           test -f backend/scripts/privacy-retention.mjs
           test -f backend/scripts/migrate.mjs
