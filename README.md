@@ -1673,3 +1673,29 @@ AGENT_WEBHOOK_SECRET=<random signing secret>
 ```
 
 When no external transport URL is configured, jobs remain valid internal orchestration records and return an internal accepted receipt; the system does not falsely claim that a phone call was placed.
+
+
+## Workspace-bound OAuth callback hardening pass
+
+The browser OAuth callback is now safe for production multi-workspace deployments.
+
+Implemented:
+- the provider browser callback `GET /api/integrations/oauth/callback` is public only for the GET redirect path; the POST callback remains authenticated;
+- OAuth state is cryptographically signed with HMAC-SHA256 and contains the originating workspace ID plus a random nonce and issued-at timestamp;
+- the callback verifies the signature in constant time and rejects states older than 15 minutes;
+- the callback restores the original workspace from the signed state rather than trusting `X-Workspace-ID`;
+- pending OAuth state is stored as SHA-256 rather than storing the raw browser state token;
+- the persisted pending state is also bound to the originating workspace;
+- PKCE verifier/challenge remains in place;
+- consumed OAuth state is deleted after token exchange;
+- production validates that the OAuth state-signing secret is at least 32 characters.
+
+Recommended production configuration:
+
+```text
+CONNECTOR_OAUTH_REDIRECT_URI=https://api.example.com/api/integrations/oauth/callback
+CONNECTOR_OAUTH_SUCCESS_URL=https://app.example.com/#/workspace
+CONNECTOR_OAUTH_STATE_SECRET=<random secret of at least 32 characters>
+```
+
+If `CONNECTOR_OAUTH_STATE_SECRET` is omitted, AceMarketing falls back to `JWT_SECRET`; a dedicated secret is recommended so connector state signing can be rotated independently.
