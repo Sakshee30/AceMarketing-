@@ -836,3 +836,26 @@ New API endpoints:
 - `POST /api/follow-ups/complete`
 
 EasyInsights' public homepage says its conversion system grades and enriches leads on arrival, calls and qualifies them, and then routes them with full context; the brochure also lists routing and follow-up among the jobs handled by its agents. AceMarketing now provides dedicated operational workspaces for both.
+
+
+## Parity pass: closure matchback and revenue reconciliation
+
+This pass adds a dedicated **Matchback** workspace for the closure / revenue feedback loop described in the supplied brochure.
+
+The module includes:
+- CRM / Billing / POS revenue as the authoritative close event;
+- closed-won and enrolment matchback rules;
+- deterministic identity + click-ID reconciliation;
+- matched revenue and closed-outcome metrics;
+- unmatched revenue review queue;
+- refund / cancellation restatement;
+- duplicate-close deduplication;
+- late-arriving revenue rebuild;
+- audit history;
+- server-side return of verified close signals to ad platforms.
+
+New API endpoints:
+- `GET /api/matchback`
+- `POST /api/matchback/reconcile`
+
+The brochure describes agents handling **closure match-back** and **signal return** after qualification, routing and follow-up. AceMarketing now has a concrete operational workspace for that final closed-loop step instead of representing it only indirectly through attribution and AdSync.
