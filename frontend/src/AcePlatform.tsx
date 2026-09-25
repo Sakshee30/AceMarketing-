@@ -692,14 +692,49 @@ function Overview(){
 }
 function AdSync(){
  const [builder,setBuilder]=useState(false)
- const [busy,setBusy]=useState(false)
+ const [busy,setBusy]=useState('')
  const [notice,setNotice]=useState('')
- const createPipeline=async(e:any)=>{e.preventDefault();const fd=new FormData(e.currentTarget);setBusy(true);setNotice('');try{await api.createEventRule({name:String(fd.get('name')||''),sourceEvent:String(fd.get('sourceEvent')||''),outputEvent:String(fd.get('outputEvent')||''),conditions:[],destinations:[String(fd.get('destination')||'Google Ads')],valueMode:'copy',currency:'INR'});setNotice('Conversion pipeline rule created.');setBuilder(false)}catch(err:any){setNotice(err?.message||'Pipeline could not be created.')}finally{setBusy(false)}}
- return <><PageHead crumb="Module / AdSync" title="Server-side signal activation" sub="Send qualified and closed outcomes back to advertising platforms continuously."/>
+ const [data,setData]=useState<any>({items:[],runs:[],stats:{}})
+ const [deliveries,setDeliveries]=useState<any[]>([])
+ const [selected,setSelected]=useState('')
+ const load=async()=>{
+  try{
+   const [events,delivery]:any=await Promise.all([api.events(),api.signalDeliveries()])
+   const pipelines=(events.items||[]).filter((x:any)=>(x.destinations||[]).some((d:string)=>['Google Ads','Meta Ads'].includes(d)))
+   setData({...events,items:pipelines})
+   setDeliveries(delivery.items||[])
+   if(pipelines.length)setSelected((x:string)=>x&&pipelines.some((p:any)=>p.id===x)?x:pipelines[0].id)
+  }catch(err:any){setNotice(err?.message||'Signal pipelines could not be loaded.')}
+ }
+ useEffect(()=>{load()},[])
+ const current=(data.items||[]).find((x:any)=>x.id===selected)||data.items?.[0]
+ const createPipeline=async(e:any)=>{
+  e.preventDefault();const fd=new FormData(e.currentTarget);setBusy('create');setNotice('')
+  try{
+   await api.createEventRule({name:String(fd.get('name')||''),sourceEvent:String(fd.get('sourceEvent')||''),outputEvent:String(fd.get('outputEvent')||''),conditions:[],destinations:[String(fd.get('destination')||'Google Ads')],valueMode:'copy',currency:'INR'})
+   setNotice('Conversion pipeline rule created.');setBuilder(false);await load()
+  }catch(err:any){setNotice(err?.message||'Pipeline could not be created.')}finally{setBusy('')}
+ }
+ const toggle=async(x:any)=>{setBusy(x.id);setNotice('');try{await api.toggleEventRule(x.id,!x.enabled);setNotice((x.enabled?'Paused ':'Enabled ')+x.name+'.');await load()}catch(err:any){setNotice(err?.message||'Pipeline status could not be changed.')}finally{setBusy('')}}
+ const test=async()=>{
+  if(!current)return
+  setBusy('test');setNotice('')
+  try{
+   const r:any=await api.track({event:current.source_event,source:'adsync_pipeline_test',visitorId:'adsync_'+Date.now(),data:{pipelineId:current.id,test:true}})
+   setNotice('Test source event accepted: '+(r.eventId||'ok')+'. Check Delivery for derived provider signals.');await load()
+  }catch(err:any){setNotice(err?.message||'Pipeline test event failed.')}finally{setBusy('')}
+ }
+ const pipelineDeliveries=current?deliveries.filter((x:any)=>(current.destinations||[]).includes(x.destination)&&x.event===current.output_event):[]
+ const delivered=pipelineDeliveries.filter((x:any)=>x.status==='delivered').length
+ const failing=pipelineDeliveries.filter((x:any)=>['failed','dead_letter'].includes(String(x.status))).length
+ const openTab=(tab:string)=>window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:tab}))
+ return <><PageHead crumb="Module / AdSync" title="Server-side signal activation" sub="Create and operate persisted conversion pipelines that return qualified and closed outcomes to advertising platforms." action="Add pipeline" onAction={()=>setBuilder(true)}/>
  {notice&&<div className="delivery-notice ok"><CheckCircle2/><span>{notice}</span></div>}
- <div className="app-panel"><div className="panel-head"><div><h3>Conversion pipelines</h3><p>Create business-event rules that queue real provider deliveries.</p></div><button onClick={()=>setBuilder(true)}><Plus/>Add pipeline</button></div><FunnelPanel/></div>
- <div className="app-panel"><div className="panel-head"><div><h3>Operational signal truth</h3><p>Use Delivery for provider receipts, retry, DLQ and latency; use Events for business-rule definitions.</p></div><span className="healthy">Linked modules</span></div><div className="mapping-rule"><span>Business event</span><ArrowRight/><b>Event rule</b><ArrowRight/><b>Delivery queue</b><ArrowRight/><b>Google / Meta / webhook</b></div></div>
- {builder&&<div className="connector-modal"><form className="connector-card" onSubmit={createPipeline}><div className="connector-modal-head"><div><RadioTower/><div><b>New conversion pipeline</b><small>Create a persisted event rule for signal activation.</small></div></div><button type="button" onClick={()=>setBuilder(false)}><X/></button></div><label>Pipeline name<input name="name" required defaultValue="Qualified Lead to Google"/></label><label>Source event<input name="sourceEvent" required defaultValue="lead.qualified"/></label><label>Output event<input name="outputEvent" required defaultValue="qualified_lead"/></label><label>Destination<select name="destination"><option>Google Ads</option><option>Meta Ads</option></select></label><button disabled={busy}>{busy?'Creating…':'Create pipeline'}</button></form></div>}</>
+ <div className="stats-grid"><Stat label="Signal pipelines" value={String((data.items||[]).length)} sub="Google / Meta event rules" Icon={RadioTower}/><Stat label="Enabled" value={String((data.items||[]).filter((x:any)=>x.enabled).length)} sub="Currently evaluating source events" Icon={CheckCircle2}/><Stat label="Pipeline deliveries" value={String(deliveries.filter((x:any)=>(data.items||[]).some((p:any)=>(p.destinations||[]).includes(x.destination)&&p.output_event===x.event)).length)} sub="Persisted outbound signals" Icon={Activity}/><Stat label="Dead / failed" value={String(deliveries.filter((x:any)=>['failed','dead_letter'].includes(String(x.status))).length)} sub="Review in Delivery" Icon={ShieldCheck}/></div>
+ <div className="agent-ops-layout"><div className="app-panel agent-selector"><div className="panel-head"><div><h3>Conversion pipelines</h3><p>Persisted business event → ad-platform signal rules</p></div><button onClick={load}>Refresh</button></div>{(data.items||[]).length?(data.items||[]).map((x:any)=><button key={x.id} className={selected===x.id?'selected':''} onClick={()=>setSelected(x.id)}><RadioTower/><div><b>{x.name}</b><small>{x.source_event} → {x.output_event}</small></div><span className={x.enabled?'active-agent':''}>{x.enabled?'enabled':'paused'}</span><ChevronRight/></button>):<div className="empty-delivery-state"><RadioTower/><div><b>No Google/Meta signal pipeline yet</b><small>Create one to turn a business event into a durable outbound conversion signal.</small></div></div>}</div>
+ <div className="app-panel agent-config">{current?<><div className="panel-head"><div><h3>{current.name}</h3><p>{current.source_event} → {current.output_event}</p></div><span className={current.enabled?'healthy':'status'}>{current.enabled?'Enabled':'Paused'}</span></div><div className="agent-config-grid"><div><span>Source event</span><b>{current.source_event}</b></div><div><span>Output event</span><b>{current.output_event}</b></div><div><span>Destination</span><b>{(current.destinations||[]).join(', ')||'Measurement only'}</b></div><div><span>Rule runs</span><b>{String((data.runs||[]).filter((r:any)=>r.rule_id===current.id||r.ruleId===current.id).length)}</b></div></div><div className="site-detail-grid">{[['Persisted deliveries',pipelineDeliveries.length],['Delivered',delivered],['Failed / dead letter',failing],['Value mode',current.value_mode||'copy']].map(x=><div key={x[0]}><span>{x[0]}</span><b>{String(x[1])}</b></div>)}</div><div className="approval-actions"><button disabled={busy===current.id} onClick={()=>toggle(current)}>{busy===current.id?'Saving…':current.enabled?'Pause pipeline':'Enable pipeline'}</button><button disabled={busy==='test'||!current.enabled} onClick={test}><Zap/>{busy==='test'?'Sending…':'Send test source event'}</button><button className="approve" onClick={()=>openTab('Delivery')}><RadioTower/>Open delivery center</button></div></>:<div className="empty-delivery-state"><RadioTower/><div><b>Select or create a conversion pipeline</b></div></div>}</div></div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Signal operating path</h3><p>The same persisted rule and delivery infrastructure is used across AdSync, Events and Delivery.</p></div><div className="panel-actions"><button onClick={()=>openTab('Events')}>Open event rules</button><button onClick={()=>openTab('Delivery')}>Open delivery queue</button></div></div><div className="mapping-rule"><span>Business event</span><ArrowRight/><b>Event rule</b><ArrowRight/><b>Durable queue</b><ArrowRight/><b>Google / Meta</b><ArrowRight/><b>Receipt / retry / DLQ</b></div></div>
+ {builder&&<div className="connector-modal"><form className="connector-card" onSubmit={createPipeline}><div className="connector-modal-head"><div><RadioTower/><div><b>New conversion pipeline</b><small>Create a persisted event rule for signal activation.</small></div></div><button type="button" onClick={()=>setBuilder(false)}><X/></button></div><label>Pipeline name<input name="name" required defaultValue="Qualified Lead to Google"/></label><label>Source event<input name="sourceEvent" required defaultValue="lead.qualified"/></label><label>Output event<input name="outputEvent" required defaultValue="qualified_lead"/></label><label>Destination<select name="destination"><option>Google Ads</option><option>Meta Ads</option></select></label><button disabled={busy==='create'}>{busy==='create'?'Creating…':'Create pipeline'}</button></form></div>}</>
 }
 function Funnel(){
  const [data,setData]=useState<any>({stages:{},campaigns:[],filters:{channels:[]}})
