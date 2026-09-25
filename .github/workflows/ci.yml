@@ -91,6 +91,7 @@ jobs:
           test -f backend/src/event-rules.mjs
           test -f backend/src/report-scheduler.mjs
           test -f backend/src/whatsapp-cloud.mjs
+          test -f backend/src/call-events.mjs
           test -f backend/scripts/privacy-retention.mjs
           test -f backend/scripts/migrate.mjs
           test -f backend/migrations/001_workspace_state.sql
