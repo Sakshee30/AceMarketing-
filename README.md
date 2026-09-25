@@ -2280,3 +2280,70 @@ Marketing-purpose sends pass through the platform consent check. Transactional m
 - A provider credential or phone-number configuration failure is surfaced as an error instead of being represented as a successful send.
 
 The remaining WhatsApp work is account-specific launch verification: configure the real Meta app, approved phone number, templates, webhook subscription, business verification and live delivery tests for the target production account.
+
+
+## Call Tracking Events production pipeline
+
+The Call Tracking Events agent now has a signed ingestion contract instead of relying on fixed UI metrics.
+
+### Signed telephony webhook
+
+AceMarketing exposes:
+
+- `POST /api/webhooks/calls`
+- HMAC SHA-256 validation through `X-Ace-Timestamp` + `X-Ace-Signature`
+- five-minute replay protection
+- destination-number → workspace routing for multi-brand deployments
+- duplicate call-event protection by provider event/call ID
+- normalized provider fields for caller, destination, timing, status, campaign, click IDs, disposition and recording reference
+- lead-profile enrichment from real call outcomes
+- assisted attribution creation for each accepted call event
+- audit history for every accepted or duplicate provider callback
+
+Production settings:
+
+```text
+CALL_WEBHOOK_SECRET=<random signing secret>
+
+# Single workspace
+CALL_WEBHOOK_WORKSPACE_ID=ws_default
+
+# Or map tracked/virtual numbers to workspaces
+CALL_NUMBER_WORKSPACE_MAP={"911140001111":"ws_brand_a","911140002222":"ws_brand_b"}
+```
+
+A normalized provider payload can include:
+
+```json
+{
+  "eventId": "call_123",
+  "provider": "exotel",
+  "direction": "inbound",
+  "from": "919876543210",
+  "to": "911140001111",
+  "status": "completed",
+  "startedAt": "2026-09-25T10:00:00Z",
+  "endedAt": "2026-09-25T10:04:12Z",
+  "campaign": "Executive MBA Search",
+  "gclid": "optional-click-id",
+  "disposition": "qualified"
+}
+```
+
+### Workspace behavior
+
+The Calls workspace now combines:
+
+- durable Voice Lead Qualification agent runs;
+- signed tracked-call events;
+- real provider/outcome context;
+- explicit retry state for failed qualification runs;
+- a working consultation scheduler that creates persisted meeting records from a selected call.
+
+The previous fixed call totals, example transcript and synthetic call activity have been removed from this operational surface.
+
+### Offline attribution
+
+`GET /api/offline-attribution` now reads persisted call events, WhatsApp events and the real attribution store. It no longer returns the earlier fixed demonstration counters for call matches, WhatsApp matches or unmatched outcomes.
+
+Production preflight and CI checks include the call-tracking module. Provider-specific adapter mappings can normalize Exotel, Knowlarity, Tata Tele, MyOperator or custom telephony payloads into this signed canonical contract.
