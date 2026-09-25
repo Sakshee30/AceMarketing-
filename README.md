@@ -1025,3 +1025,23 @@ Implemented:
 - footer legal row and product CTA styling.
 
 AceMarketing keeps its own brand identity and original assets, while matching the public layout rhythm, information architecture, spacing, interaction patterns and typography hierarchy closely.
+
+
+## UI precision pass: screenshot-level navbar measurements
+
+A second public-header refinement pass was applied from the supplied desktop screenshot.
+
+Desktop measurements were tightened around the reference proportions:
+- 47px announcement bar;
+- 66px white navigation row;
+- 77px horizontal page inset at large desktop widths;
+- navigation spacing and text scale adjusted to the screenshot;
+- Voice Agent and Book a demo controls resized and repositioned;
+- active dropdown underline and chevron rotation refined;
+- Industries mega menu fixed to an ~858px desktop width and ~456px reference-height footprint;
+- two-column industry spacing and center divider refined;
+- sector-specific line icons added for Edtech, Fintech, Healthcare, Retail, Home Improvement, Travel and Consumer Goods;
+- industry description line-height and row height tuned to the supplied reference;
+- hero top offset, radius, typography and desktop proportions refined to align directly beneath the navigation.
+
+AceMarketing branding remains original while the layout measurements, hierarchy and interactions closely follow the provided reference.
