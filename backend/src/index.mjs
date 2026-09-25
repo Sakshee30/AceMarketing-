@@ -4,6 +4,7 @@ import { URL } from 'node:url'
 import { createToken, verifyToken, verifyPassword, createRateLimiter, securityHeaders, resolveCorsOrigin } from './security.mjs'
 import { closeStore, getState, mutateState, storageHealth, withWorkspace } from './store.mjs'
 import { connectorVaultReady, encryptSecret } from './vault.mjs'
+import { enqueueJob, queueStats } from './queue.mjs'
 import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, publicChallenges, publicCaseStudies, publicResources } from './public-content.mjs'
 
 const CONNECTOR_PROVIDERS={
@@ -596,7 +597,13 @@ const server = http.createServer(async (req,res)=>{
         s.audit.unshift({id:randomUUID(),action:'signal.queued',entityId:item.id,destination:item.destination,event:item.event,at:now})
         s.audit=s.audit.slice(0,1000)
       })
-      return send(req,res,202,{duplicate:false,item})
+      const job=await enqueueJob({
+        workspaceId,
+        kind:'signal_delivery',
+        idempotencyKey:'signal:'+idempotencyKey,
+        payload:{...body,deliveryId:item.id,event:item.event,destination:item.destination,idempotencyKey}
+      })
+      return send(req,res,202,{duplicate:false,item,job:job?{id:job.id,status:job.status}:null})
     }
     if (req.method === 'POST' && url.pathname === '/api/signal-deliveries/retry') {
       const body=await readBody(req)
@@ -616,7 +623,16 @@ const server = http.createServer(async (req,res)=>{
         s.audit.unshift({id:randomUUID(),action:'signal.retry_queued',entityId:String(body.id),at:now})
         s.audit=s.audit.slice(0,1000)
       })
-      return updated?send(req,res,202,updated):send(req,res,404,{error:'delivery not found'})
+      if(updated){
+        await enqueueJob({
+          workspaceId,
+          kind:'signal_delivery',
+          idempotencyKey:'retry:'+updated.id+':'+updated.attempts+':'+Date.now(),
+          payload:{deliveryId:updated.id,event:updated.event,destination:updated.destination,idempotencyKey:updated.idempotencyKey}
+        })
+        return send(req,res,202,updated)
+      }
+      return send(req,res,404,{error:'delivery not found'})
     }
     if (req.method === 'POST' && url.pathname === '/api/signal-deliveries/replay-dlq') {
       const now=new Date().toISOString()
@@ -638,7 +654,8 @@ const server = http.createServer(async (req,res)=>{
     }
     if (req.method === 'GET' && url.pathname === '/api/connector-health') {
       const state=await getState()
-      return send(req,res,200,{items:state.connectorHealth||[],checkedAt:new Date().toISOString()})
+      const jobs=await queueStats(workspaceId)
+      return send(req,res,200,{items:state.connectorHealth||[],jobs,checkedAt:new Date().toISOString()})
     }
     if (req.method === 'GET' && url.pathname === '/api/webhooks/deliveries') return send(req,res,200,{items:[
       {id:'evt_91',event:'lead.qualified',statusCode:200,latencyMs:412,status:'delivered'},
