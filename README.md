@@ -1850,3 +1850,35 @@ BILLING_PLAN_CATALOG_JSON={"usage":{"priceId":"price_...","entitlements":{"track
 ```
 
 The Checkout and Portal endpoints are owner-only. The webhook endpoint is unauthenticated by design but rejects requests unless the Stripe signature verifies against the raw request body and falls within the configured timestamp tolerance.
+
+
+## Production deployment, smoke testing and disaster recovery pass
+
+AceMarketing now ships with a reproducible production runtime rather than relying on local Node/Vite processes.
+
+Implemented:
+- `deploy/Dockerfile.api` for the API/worker runtime;
+- `deploy/Dockerfile.frontend` for an immutable frontend image;
+- `deploy/nginx.conf` for SPA delivery and `/api` reverse proxying;
+- `docker-compose.yml` with PostgreSQL, one-shot migrations, API, worker and web services;
+- health checks for PostgreSQL, API and frontend;
+- `.dockerignore` preventing secrets/local state from entering images;
+- `backend/scripts/preflight.mjs` for required production environment and secret checks;
+- `backend/scripts/smoke.mjs` for health/readiness/public-resource smoke validation plus optional authenticated monitoring validation;
+- `backend/scripts/backup.mjs` using `pg_dump` custom format;
+- guarded `backend/scripts/restore.mjs` using `pg_restore`;
+- `docs/PRODUCTION_RUNBOOK.md` covering deployment, rollback, backup/restore, incident triage and release gates;
+- CI now starts PostgreSQL, applies all migrations, boots the API, runs smoke tests and builds both production containers;
+- `.github/workflows/release.yml` builds and publishes API/web images to GHCR for tags or manual releases.
+
+Commands:
+
+```bash
+npm run preflight
+docker compose up -d --build
+npm run smoke
+npm run backup
+RESTORE_CONFIRM=YES npm run restore -- backups/<file>.dump
+```
+
+The production release gate is therefore stricter than TypeScript compilation: migrations, a real PostgreSQL boot, runtime smoke tests and Docker image builds must also succeed.
