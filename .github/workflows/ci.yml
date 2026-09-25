@@ -36,9 +36,11 @@ jobs:
           test -f backend/src/attribution-store.mjs
           test -f backend/src/lead-ops.mjs
           test -f backend/src/activation-adapters.mjs
+          test -f backend/src/agent-orchestrator.mjs
           test -f backend/scripts/migrate.mjs
           test -f backend/migrations/001_workspace_state.sql
           test -f backend/migrations/002_job_queue.sql
           test -f backend/migrations/003_attribution_identity.sql
           test -f backend/migrations/004_lead_ops.sql
           test -f backend/migrations/005_activation_receipts.sql
+          test -f backend/migrations/006_agent_orchestration.sql
