@@ -98,6 +98,7 @@ export const api = {
   audiences: () => request('/audiences'),
   previewAudience: (payload: Record<string, unknown>) => request('/audiences/preview', { method: 'POST', body: JSON.stringify(payload) }),
   createAudience: (payload: Record<string, unknown>) => request('/audiences', { method: 'POST', body: JSON.stringify(payload) }),
+  materializeAudience: (id: string) => request('/audiences/materialize', { method: 'POST', body: JSON.stringify({id}) }),
   behavior: () => request('/behavior'),
   feed: () => request('/feed'),
   solutions: () => request('/solutions'),
