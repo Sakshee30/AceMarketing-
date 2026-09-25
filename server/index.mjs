@@ -75,6 +75,17 @@ const server = http.createServer(async (req,res)=>{
       return send(res,200,{answer,insights})
     }
     if (req.method === 'GET' && url.pathname === '/api/events') return send(res,200,{items:events})
+    if (req.method === 'GET' && url.pathname === '/api/adjustments') return send(res,200,{items:[
+      {id:'adj_501',event:'partial_payment',source:'crm_billing',destination:'google_ads',status:'pending'},
+      {id:'adj_500',event:'returned_order',source:'commerce_backend',destination:'google_ads',status:'pending'},
+      {id:'adj_499',event:'low_quality_lead',source:'crm',destination:'google_ads',status:'applied'},
+      {id:'adj_498',event:'duplicate_lead',source:'crm',destination:'meta_ads',status:'applied'}
+    ]})
+    if (req.method === 'POST' && url.pathname === '/api/adjustments/apply') {
+      const body=await readBody(req)
+      if(!body.id) return send(res,400,{error:'id required'})
+      return send(res,200,{id:body.id,status:'applied',appliedAt:new Date().toISOString(),auditId:randomUUID()})
+    }
     if (req.method === 'GET' && url.pathname === '/api/sites') return send(res,200,{items:[
       {domain:'www.aceedtech.example',environment:'production',pixel:'active',server:'connected',coverage:97.4},
       {domain:'apply.aceedtech.example',environment:'production',pixel:'active',server:'connected',coverage:95.8},
