@@ -3,7 +3,7 @@ import {Fragment,useEffect,useMemo,useState} from 'react'
 import {createPortal} from 'react-dom'
 import {
   Activity,ArrowRight,BarChart3,Bell,BookOpen,Bot,Building2,Cable,CalendarDays,Check,CheckCircle2,ChevronDown,ChevronRight,
-  CircleDollarSign,Code2,DatabaseZap,Gauge,Globe2,GraduationCap,Headphones,HeartPulse,Home,Landmark,Layers3,Menu,MessageCircle,MessageSquareText,
+  CircleDollarSign,Code2,DatabaseZap,Filter,Gauge,Globe2,GraduationCap,Headphones,HeartPulse,Home,Landmark,Layers3,Menu,MessageCircle,MessageSquareText,
   MousePointer2,Network,PhoneCall,PhoneIncoming,PieChart,Plane,Plus,RadioTower,Search,Settings2,ShieldCheck,ShoppingCart,Store,
   Sparkles,Target,UsersRound,WandSparkles,X,Zap
 } from 'lucide-react'
