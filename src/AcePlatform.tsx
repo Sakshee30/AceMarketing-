@@ -7,6 +7,7 @@ import {
   Sparkles,Target,UsersRound,WandSparkles,X,Zap
 } from 'lucide-react'
 import './ace-platform.css'
+import { api } from './lib/api'
 
 type View='site'|'app'|'login'
 type AppTab='Overview'|'AdSync'|'Events'|'Journeys'|'Attribution'|'Enrich'|'Agents'|'Integrations'|'Audiences'|'Monitoring'|'Settings'
@@ -44,14 +45,14 @@ const caseStudies=[
 function Brand({dark=false}:{dark?:boolean}){
  return <div className={'ace-brand '+(dark?'dark':'')}><span className="ace-mark"><i/><i/><i/></span><b>AceMarketing</b></div>
 }
-function Header({openApp}:{openApp:()=>void}){
+function Header({openApp,openLogin}:{openApp:()=>void,openLogin:()=>void}){
  const [open,setOpen]=useState(false)
  return <header className="marketing-header"><Brand/><nav className={open?'mobile-open':''}>
   <a href="#platform">Platform</a><a href="#problems">Use cases</a><a href="#agents">Agents</a><a href="#integrations">Integrations</a><a href="#industries">Industries</a><a href="#proof">Proof</a>
   <button className="ghost-nav" onClick={openLogin}>Login</button><button className="ghost-nav" onClick={openApp}>Open product</button><a href="#demo" className="header-cta">Book a demo <ArrowRight size={15}/></a>
  </nav><button className="menu-toggle" onClick={()=>setOpen(!open)}>{open?<X/>:<Menu/>}</button></header>
 }
-function Marketing({openApp}:{openApp:()=>void}){
+function Marketing({openApp,openLogin}:{openApp:()=>void,openLogin:()=>void}){
  return <div className="marketing-page">
   <section className="hero-wrap">
    <Header openApp={openApp} openLogin={openLogin}/>
@@ -153,13 +154,15 @@ function Marketing({openApp}:{openApp:()=>void}){
 }
 
 function DemoSection({openApp}:{openApp:()=>void}){
- const [sent,setSent]=useState(false)
- return <section className="demo-cta" id="demo"><div className="demo-copy"><span className="kicker">SEE THE PRODUCT FLOW</span><h2>Operate the entire paid funnel from one workspace.</h2><p>Connect → observe → enrich → qualify → activate → attribute → learn.</p><button onClick={openApp}>Open interactive workspace <ArrowRight/></button></div><form className="demo-form" onSubmit={e=>{e.preventDefault();setSent(true)}}>{sent?<div className="demo-success"><Check/><h3>Demo request captured</h3><p>This frontend flow is ready to connect to your CRM or scheduling backend.</p></div>:<><h3>Book a product walkthrough</h3><label>Work email<input required type="email" placeholder="name@company.com"/></label><label>Company<input required placeholder="Company name"/></label><label>Monthly ad spend<select defaultValue=""><option value="" disabled>Select range</option><option>Under ₹5L</option><option>₹5L – ₹25L</option><option>₹25L – ₹1Cr</option><option>₹1Cr+</option></select></label><label>Primary challenge<select defaultValue=""><option value="" disabled>Select challenge</option><option>Lead quality</option><option>Conversion leakage</option><option>Attribution</option><option>Tracking/data quality</option></select></label><button type="submit">Request demo <ArrowRight/></button></>}</form></section>
+ const [sent,setSent]=useState(false); const [sending,setSending]=useState(false)
+ const submit=async(e:any)=>{e.preventDefault();setSending(true);const form=new FormData(e.currentTarget);await api.submitDemo(Object.fromEntries(form.entries())).catch(()=>null);setSending(false);setSent(true)}
+ return <section className="demo-cta" id="demo"><div className="demo-copy"><span className="kicker">SEE THE PRODUCT FLOW</span><h2>Operate the entire paid funnel from one workspace.</h2><p>Connect → observe → enrich → qualify → activate → attribute → learn.</p><button onClick={openApp}>Open interactive workspace <ArrowRight/></button></div><form className="demo-form" onSubmit={submit}>{sent?<div className="demo-success"><Check/><h3>Demo request captured</h3><p>This frontend flow is ready to connect to your CRM or scheduling backend.</p></div>:<><h3>Book a product walkthrough</h3><label>Work email<input name="email" required type="email" placeholder="name@company.com"/></label><label>Company<input name="company" required placeholder="Company name"/></label><label>Monthly ad spend<select name="monthlyAdSpend" defaultValue=""><option value="" disabled>Select range</option><option>Under ₹5L</option><option>₹5L – ₹25L</option><option>₹25L – ₹1Cr</option><option>₹1Cr+</option></select></label><label>Primary challenge<select name="primaryChallenge" defaultValue=""><option value="" disabled>Select challenge</option><option>Lead quality</option><option>Conversion leakage</option><option>Attribution</option><option>Tracking/data quality</option></select></label><button type="submit" disabled={sending}>{sending?'Sending…':'Request demo'} <ArrowRight/></button></>}</form></section>
 }
 
 function Login({back,openApp}:{back:()=>void,openApp:()=>void}){
- const [email,setEmail]=useState(''); const [password,setPassword]=useState(''); const [show,setShow]=useState(false)
- return <div className="login-page"><div className="login-brand"><Brand/><button onClick={back}>Back to website</button></div><div className="login-shell"><div className="login-story"><span className="kicker">ACE MARKETING PLATFORM</span><h1>One workspace for the complete acquisition journey.</h1><p>Connect paid media, CRM, calls, messaging and offline outcomes — then activate clean signals and measure revenue in one place.</p><div className="login-flow">{['Connect','Stitch','Enrich','Activate','Attribute'].map((x,i)=><div key={x}><span>{i+1}</span><b>{x}</b>{i<4&&<ArrowRight/>}</div>)}</div></div><form className="login-card" onSubmit={e=>{e.preventDefault();openApp()}}><Brand dark/><h2>Log in to your workspace</h2><p>Use your organization credentials.</p><button type="button" className="google-login">G <span>Continue with Google</span></button><div className="or"><i/>OR<i/></div><label>Email<input value={email} onChange={e=>setEmail(e.target.value)} required type="email" placeholder="you@company.com"/></label><label>Password<div className="password-field"><input value={password} onChange={e=>setPassword(e.target.value)} required type={show?'text':'password'} placeholder="••••••••"/><button type="button" onClick={()=>setShow(!show)}>{show?'Hide':'Show'}</button></div></label><div className="login-options"><label><input type="checkbox"/> Remember me</label><button type="button">Forgot password?</button></div><button className="login-submit">Log in <ArrowRight/></button><small>Demo mode: any valid email and password opens the interactive workspace.</small></form></div></div>
+ const [email,setEmail]=useState(''); const [password,setPassword]=useState(''); const [show,setShow]=useState(false); const [error,setError]=useState(''); const [loading,setLoading]=useState(false)
+ const submit=async(e:any)=>{e.preventDefault();setLoading(true);setError('');try{await api.login(email,password);openApp()}catch{setError('API unavailable or login failed. Start the local API with npm run api.')}finally{setLoading(false)}}
+ return <div className="login-page"><div className="login-brand"><Brand/><button onClick={back}>Back to website</button></div><div className="login-shell"><div className="login-story"><span className="kicker">ACE MARKETING PLATFORM</span><h1>One workspace for the complete acquisition journey.</h1><p>Connect paid media, CRM, calls, messaging and offline outcomes — then activate clean signals and measure revenue in one place.</p><div className="login-flow">{['Connect','Stitch','Enrich','Activate','Attribute'].map((x,i)=><div key={x}><span>{i+1}</span><b>{x}</b>{i<4&&<ArrowRight/>}</div>)}</div></div><form className="login-card" onSubmit={submit}><Brand dark/><h2>Log in to your workspace</h2><p>Use your organization credentials.</p><button type="button" className="google-login">G <span>Continue with Google</span></button><div className="or"><i/>OR<i/></div><label>Email<input value={email} onChange={e=>setEmail(e.target.value)} required type="email" placeholder="you@company.com"/></label><label>Password<div className="password-field"><input value={password} onChange={e=>setPassword(e.target.value)} required type={show?'text':'password'} placeholder="••••••••"/><button type="button" onClick={()=>setShow(!show)}>{show?'Hide':'Show'}</button></div></label><div className="login-options"><label><input type="checkbox"/> Remember me</label><button type="button">Forgot password?</button></div><button className="login-submit" disabled={loading}>{loading?'Signing in…':'Log in'} <ArrowRight/></button>{error&&<small style={{color:"#c44955"}}>{error}</small>}<small>Demo API accepts any valid email and a password of 6+ characters.</small></form></div></div>
 }
 
 const appTabs=[
