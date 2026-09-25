@@ -153,6 +153,7 @@ export const api = {
   journeys: () => request('/journeys'),
   identity: () => request('/identity'),
   models: () => request('/models'),
+  createModel: (payload: Record<string, unknown>) => request('/models', { method: 'POST', body: JSON.stringify(payload) }),
   modelValidation: (name: string) => request('/models/validation?name=' + encodeURIComponent(name)),
   runModel: (name: string) => request('/models/run', { method: 'POST', body: JSON.stringify({ name }) }),
   attribution: () => request('/attribution'),
