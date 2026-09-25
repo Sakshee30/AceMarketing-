@@ -1447,18 +1447,65 @@ const server = http.createServer(async (req,res)=>{
       const jobs=await queueStats(workspaceId)
       return send(req,res,200,{items:state.connectorHealth||[],jobs,checkedAt:new Date().toISOString()})
     }
-    if (req.method === 'GET' && url.pathname === '/api/webhooks/deliveries') return send(req,res,200,{items:[
-      {id:'evt_91',event:'lead.qualified',statusCode:200,latencyMs:412,status:'delivered'},
-      {id:'evt_90',event:'revenue.closed',statusCode:200,latencyMs:588,status:'delivered'},
-      {id:'evt_89',event:'sync.failed',statusCode:500,latencyMs:1900,status:'failed'},
-      {id:'evt_88',event:'audience.updated',statusCode:200,latencyMs:376,status:'delivered'}
-    ]})
+    if (req.method === 'GET' && url.pathname === '/api/webhooks/deliveries') {
+      const state=await getState()
+      return send(req,res,200,{items:(state.webhookDeliveries||[]).slice(0,250),endpoints:(state.webhookEndpoints||[]).slice(0,100)})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/webhooks/endpoints') {
+      const state=await getState()
+      return send(req,res,200,{items:(state.webhookEndpoints||[]).slice(0,100)})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/webhooks/endpoints') {
+      const body=await readBody(req)
+      const event=String(body.event||'').trim()
+      const target=String(body.url||'').trim()
+      if(!event||!target) return send(req,res,400,{error:'event and url required'})
+      let parsed
+      try{parsed=new URL(target)}catch{return send(req,res,400,{error:'valid webhook URL required'})}
+      if(parsed.protocol!=='https:'&&!(!IS_PROD&&parsed.protocol==='http:')) return send(req,res,400,{error:'webhook URL must use HTTPS'})
+      const now=new Date().toISOString()
+      const item={id:'wh_'+randomUUID(),event,url:parsed.toString(),status:'active',createdAt:now,updatedAt:now}
+      await mutateState(s=>{
+        s.webhookEndpoints=s.webhookEndpoints||[]
+        s.webhookEndpoints.unshift(item)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'webhook.endpoint_created',entityId:item.id,event:item.event,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,item)
+    }
     if (req.method === 'POST' && url.pathname === '/api/webhooks/retry') {
       const body=await readBody(req)
       if(!body.id) return send(req,res,400,{error:'id required'})
-      return send(req,res,202,{id:body.id,status:'queued',retryId:randomUUID()})
+      let item=null
+      const now=new Date().toISOString()
+      await mutateState(s=>{
+        const delivery=(s.webhookDeliveries||[]).find(x=>x.id===body.id)
+        if(delivery){
+          delivery.status='queued'
+          delivery.updatedAt=now
+          delivery.attempts=Number(delivery.attempts||0)+1
+          delivery.lastError=null
+          item={...delivery}
+        }
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'webhook.retry_queued',entityId:String(body.id),at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return item?send(req,res,202,item):send(req,res,404,{error:'webhook delivery not found'})
     }
-    if (req.method === 'POST' && url.pathname === '/api/webhooks/secret/rotate') return send(req,res,201,{secret:'whsec_'+randomUUID().replaceAll('-',''),createdAt:new Date().toISOString()})
+    if (req.method === 'POST' && url.pathname === '/api/webhooks/secret/rotate') {
+      const secret='whsec_'+randomUUID().replaceAll('-','')+randomBytes(8).toString('hex')
+      const fingerprint=createHash('sha256').update(secret).digest('hex')
+      const createdAt=new Date().toISOString()
+      await mutateState(s=>{
+        s.webhookSigningSecret={fingerprint,createdAt}
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'webhook.secret_rotated',entityId:fingerprint.slice(0,12),at:createdAt})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,{secret,createdAt,notice:'Store this secret now; only its SHA-256 fingerprint is persisted.'})
+    }
     if (req.method === 'GET' && url.pathname === '/api/consent/stats') return send(req,res,200,{stats:await consentStats(workspaceId),audit:await listConsentAudit(workspaceId,50)})
     if (req.method === 'GET' && url.pathname === '/api/privacy/requests') {
       if(!['owner','admin'].includes(req.user?.role||'')) return send(req,res,403,{error:'owner or admin role required'})
@@ -1800,9 +1847,43 @@ const server = http.createServer(async (req,res)=>{
       const state=await getState()
       return send(req,res,200,state.workspaceSettings||{})
     }
+    if (req.method === 'POST' && url.pathname === '/api/settings') {
+      const body=await readBody(req)
+      const allowed=['organization','timezone','currency','reportingWeek','defaultAttribution','environment','primaryDomain','crossDomainTracking','gclidPersistenceDays','fbclidPersistenceDays']
+      const patch={}
+      for(const key of allowed) if(body[key]!==undefined) patch[key]=body[key]
+      if(!Object.keys(patch).length) return send(req,res,400,{error:'no supported settings provided'})
+      const now=new Date().toISOString()
+      let saved={}
+      await mutateState(s=>{
+        s.workspaceSettings={...(s.workspaceSettings||{}),...patch,updatedAt:now}
+        saved={...s.workspaceSettings}
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'workspace.settings_updated',entityId:workspaceId,fields:Object.keys(patch),at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,200,saved)
+    }
     if (req.method === 'GET' && url.pathname === '/api/workspaces') {
       const state=await getState()
       return send(req,res,200,{items:state.workspaces||[]})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/workspaces') {
+      const body=await readBody(req)
+      const name=String(body.name||'').trim()
+      if(name.length<2) return send(req,res,400,{error:'workspace name required'})
+      const now=new Date().toISOString()
+      let item=null
+      await mutateState(s=>{
+        s.workspaces=s.workspaces||[]
+        if(s.workspaces.some(x=>String(x.name).toLowerCase()===name.toLowerCase())) return
+        item={id:'ws_'+randomUUID().replaceAll('-','').slice(0,12),name,environment:String(body.environment||'Production'),initials:String(body.initials||name.split(/\s+/).map(x=>x[0]).join('').slice(0,3)).toUpperCase(),createdAt:now}
+        s.workspaces.push(item)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'workspace.created',entityId:item.id,name:item.name,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return item?send(req,res,201,item):send(req,res,409,{error:'workspace name already exists'})
     }
     if (req.method === 'GET' && url.pathname === '/api/audit-log') {
       const state=await getState()
