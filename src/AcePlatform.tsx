@@ -1,16 +1,16 @@
 // @ts-nocheck
 import {useMemo,useState} from 'react'
 import {
-  Activity,ArrowRight,BarChart3,Bot,Building2,Cable,Check,ChevronDown,ChevronRight,
-  CircleDollarSign,DatabaseZap,Gauge,Globe2,Headphones,Layers3,Menu,MessageCircle,
-  MousePointer2,Network,PhoneCall,PieChart,RadioTower,Search,Settings2,ShieldCheck,
+  Activity,ArrowRight,BarChart3,Bell,Bot,Building2,Cable,CalendarDays,Check,CheckCircle2,ChevronDown,ChevronRight,
+  CircleDollarSign,Code2,DatabaseZap,Gauge,Globe2,Headphones,Layers3,Menu,MessageCircle,MessageSquareText,
+  MousePointer2,Network,PhoneCall,PhoneIncoming,PieChart,Plus,RadioTower,Search,Settings2,ShieldCheck,
   Sparkles,Target,UsersRound,WandSparkles,X,Zap
 } from 'lucide-react'
 import './ace-platform.css'
 import { api } from './lib/api'
 
 type View='site'|'app'|'login'|'pricing'|'demo'|'company'|'resources'|'case-studies'|'privacy'|'terms'|'security'|'solutions'
-type AppTab='Launchpad'|'Overview'|'AdSync'|'Funnel'|'Events'|'Diagnostics'|'Live Sync'|'Offline Attribution'|'Journeys'|'Identity'|'Attribution'|'Reports'|'Enrich'|'Behavior'|'Feed'|'Agents'|'Approvals'|'Ask Ace'|'Integrations'|'Audiences'|'Monitoring'|'Alerts'|'Developers'|'Settings'
+type AppTab='Launchpad'|'Overview'|'AdSync'|'Funnel'|'Events'|'Diagnostics'|'Live Sync'|'Offline Attribution'|'Journeys'|'Identity'|'Attribution'|'Reports'|'Enrich'|'Behavior'|'Feed'|'Agents'|'Calls'|'Meetings'|'Feedback'|'Approvals'|'Ask Ace'|'Integrations'|'Audiences'|'Monitoring'|'Alerts'|'Developers'|'Settings'
 
 const agents=[
  ['Meta Advanced CAPI','Return qualified outcomes to Meta server-side with deduplication.','Lead Quality','+25–40% ROAS'],
@@ -390,7 +390,7 @@ function Login({back,openApp}:{back:()=>void,openApp:()=>void}){
 }
 
 const appTabs=[
- ['Launchpad',WandSparkles],['Overview',Gauge],['AdSync',RadioTower],['Funnel',BarChart3],['Events',Zap],['Diagnostics',ShieldCheck],['Live Sync',Activity],['Offline Attribution',PhoneCall],['Journeys',Network],['Identity',UsersRound],['Attribution',PieChart],['Reports',BarChart3],['Enrich',DatabaseZap],['Behavior',MousePointer2],['Feed',Layers3],['Agents',Bot],['Approvals',CheckCircle2],['Ask Ace',Sparkles],['Integrations',Cable],['Audiences',UsersRound],['Monitoring',Activity],['Alerts',Bell],['Developers',Code2],['Settings',Settings2]
+ ['Launchpad',WandSparkles],['Overview',Gauge],['AdSync',RadioTower],['Funnel',BarChart3],['Events',Zap],['Diagnostics',ShieldCheck],['Live Sync',Activity],['Offline Attribution',PhoneCall],['Journeys',Network],['Identity',UsersRound],['Attribution',PieChart],['Reports',BarChart3],['Enrich',DatabaseZap],['Behavior',MousePointer2],['Feed',Layers3],['Agents',Bot],['Calls',PhoneIncoming],['Meetings',CalendarDays],['Feedback',MessageSquareText],['Approvals',CheckCircle2],['Ask Ace',Sparkles],['Integrations',Cable],['Audiences',UsersRound],['Monitoring',Activity],['Alerts',Bell],['Developers',Code2],['Settings',Settings2]
 ] as const
 function Stat({label,value,sub,Icon}:{label:string,value:string,sub:string,Icon:any}){return <article className="stat"><div><span>{label}</span><Icon/></div><strong>{value}</strong><small>{sub}</small></article>}
 function PageHead({crumb,title,sub,action}:{crumb:string,title:string,sub:string,action?:string}){return <div className="page-head"><div><span>{crumb}</span><h1>{title}</h1><p>{sub}</p></div>{action&&<button className="app-primary"><Sparkles/>{action}</button>}</div>}
@@ -633,6 +633,54 @@ function Agents(){
  {builder&&<div className="connector-modal"><form className="connector-card custom-agent-builder" onSubmit={createCustom}><div className="connector-modal-head"><div><Bot/><div><b>Custom Agent Builder</b><small>Define trigger, context and action</small></div></div><button type="button" onClick={()=>setBuilder(false)}><X/></button></div><label>Agent name<input name="name" required placeholder="e.g. High Intent Routing Agent"/></label><label>Trigger<select name="trigger"><option>Lead becomes qualified</option><option>Pricing page viewed twice</option><option>WhatsApp conversation starts</option><option>Revenue closes</option></select></label><label>Action<select name="action"><option>Route to sales queue</option><option>Write CRM context</option><option>Return conversion signal</option><option>Suppress audience</option></select></label><label>Approval<select name="approval"><option>Human approval</option><option>Auto-run low risk</option></select></label><button type="submit">Create agent</button></form></div>}</>
 }
 
+function Calls(){
+ const [calls,setCalls]=useState<any[]>([
+  {id:'call_301',lead:'Aarav Sharma',source:'Google Ads',agent:'Voice Lead Qualification',status:'Qualified',duration:'3m 42s',intent:92,next:'Schedule consultation'},
+  {id:'call_300',lead:'Meera Patel',source:'Meta Ads',agent:'Voice Lead Qualification',status:'Follow-up',duration:'2m 18s',intent:71,next:'Send fee details'},
+  {id:'call_299',lead:'Rohan Kumar',source:'WhatsApp',agent:'Voice Lead Qualification',status:'Qualified',duration:'4m 09s',intent:89,next:'Schedule consultation'},
+  {id:'call_298',lead:'Anika Roy',source:'Organic',agent:'Voice Lead Qualification',status:'No answer',duration:'—',intent:54,next:'Retry after 2h'}
+ ])
+ const [selected,setSelected]=useState(calls[0].id)
+ const current=calls.find(x=>x.id===selected)||calls[0]
+ const retry=async(id:string)=>{await api.retryQualificationCall(id).catch(()=>null);setCalls(xs=>xs.map(x=>x.id===id?{...x,status:'Retry queued',next:'Calling queue'}:x))}
+ return <><PageHead crumb="Conversion / Calls" title="Voice lead qualification" sub="Qualify high-intent leads quickly, capture intent and push structured call context back into the CRM." action="Configure call agent"/>
+ <div className="stats-grid"><Stat label="Calls today" value="428" sub="+11% vs yesterday" Icon={PhoneIncoming}/><Stat label="Connected" value="81%" sub="346 calls answered" Icon={PhoneCall}/><Stat label="Qualified" value="44%" sub="Of connected calls" Icon={Target}/><Stat label="Median speed-to-lead" value="42s" sub="From lead arrival" Icon={Activity}/></div>
+ <div className="call-ops-layout"><div className="app-panel call-list"><div className="panel-head"><div><h3>Recent qualification calls</h3><p>Agent activity and lead outcomes</p></div><span className="healthy">Live</span></div>{calls.map(x=><button key={x.id} className={selected===x.id?'selected':''} onClick={()=>setSelected(x.id)}><PhoneIncoming/><div><b>{x.lead}</b><small>{x.source} · {x.duration}</small></div><span>{x.status}</span><ChevronRight/></button>)}</div>
+ <div className="app-panel call-detail"><div className="panel-head"><div><h3>{current.lead}</h3><p>{current.agent}</p></div><span className="score">{current.intent} intent</span></div><div className="call-detail-grid">{[['Call ID',current.id],['Source',current.source],['Outcome',current.status],['Next action',current.next]].map(x=><div key={x[0]}><span>{x[0]}</span><b>{x[1]}</b></div>)}</div><div className="transcript"><p><b>Agent:</b> I am calling about your Executive MBA enquiry. Are you looking to join the upcoming intake?</p><p><b>Lead:</b> Yes. I need weekend classes and financing information before I decide.</p><p><b>Agent:</b> I can arrange a counsellor consultation and send the fee details now.</p></div><div className="context-chips"><span>Weekend preference</span><span>Financing interest</span><span>Upcoming intake</span><span>Consultation-ready</span></div><div className="approval-actions"><button onClick={()=>retry(current.id)}>Retry / follow up</button><button className="approve"><CalendarDays/>Schedule consultation</button></div></div></div></>
+}
+
+function Meetings(){
+ const [meetings,setMeetings]=useState<any[]>([
+  {id:'mtg_184',lead:'Aarav Sharma',time:'Today · 6:30 PM',owner:'Counsellor A',status:'Confirmed',reminder:'WhatsApp + SMS',risk:'Low'},
+  {id:'mtg_183',lead:'Rohan Kumar',time:'Tomorrow · 11:00 AM',owner:'Counsellor B',status:'Confirmed',reminder:'WhatsApp',risk:'Medium'},
+  {id:'mtg_182',lead:'Meera Patel',time:'Tomorrow · 4:00 PM',owner:'Counsellor A',status:'Pending',reminder:'WhatsApp + Email',risk:'High'},
+  {id:'mtg_181',lead:'Anika Roy',time:'Fri · 3:30 PM',owner:'Counsellor C',status:'Confirmed',reminder:'SMS',risk:'Medium'}
+ ])
+ const [selected,setSelected]=useState(meetings[0].id)
+ const current=meetings.find(x=>x.id===selected)||meetings[0]
+ const remind=async(id:string)=>{await api.sendMeetingReminder(id).catch(()=>null);setMeetings(xs=>xs.map(x=>x.id===id?{...x,reminder:'Sent now'}:x))}
+ return <><PageHead crumb="Conversion / Meetings" title="Scheduler & meeting reminders" sub="Book qualified leads, synchronize counsellor availability and reduce no-shows with automated reminders." action="Connect calendar"/>
+ <div className="stats-grid"><Stat label="Meetings booked" value="184" sub="Last 30 days" Icon={CalendarDays}/><Stat label="Show rate" value="78%" sub="+9 points after reminders" Icon={CheckCircle2}/><Stat label="No-show risk" value="23" sub="Currently high/medium risk" Icon={Activity}/><Stat label="Recovered leads" value="37" sub="Reminder-assisted" Icon={MessageCircle}/></div>
+ <div className="meeting-layout"><div className="app-panel meeting-list"><div className="panel-head"><div><h3>Upcoming consultations</h3><p>Calendar + reminder status</p></div></div>{meetings.map(x=><button key={x.id} className={selected===x.id?'selected':''} onClick={()=>setSelected(x.id)}><CalendarDays/><div><b>{x.lead}</b><small>{x.time} · {x.owner}</small></div><span className={x.risk.toLowerCase()}>{x.risk} risk</span><ChevronRight/></button>)}</div>
+ <div className="app-panel meeting-detail"><div className="panel-head"><div><h3>{current.lead}</h3><p>{current.time}</p></div><span className="status">{current.status}</span></div><div className="meeting-info-grid">{[['Owner',current.owner],['Reminder plan',current.reminder],['No-show risk',current.risk],['Calendar','Google Calendar']].map(x=><div key={x[0]}><span>{x[0]}</span><b>{x[1]}</b></div>)}</div><div className="meeting-reminder-flow">{[['T−24h','WhatsApp reminder'],['T−3h','SMS reminder'],['T−30m','Final confirmation'],['T+15m','No-show recovery if needed']].map((x,i)=><div key={x[0]}><span>{i+1}</span><div><b>{x[0]}</b><small>{x[1]}</small></div></div>)}</div><div className="approval-actions"><button>Reschedule</button><button className="approve" onClick={()=>remind(current.id)}><MessageCircle/>Send reminder now</button></div></div></div></>
+}
+
+function Feedback(){
+ const [filter,setFilter]=useState('All')
+ const items=[
+  {lead:'Aarav Sharma',score:5,channel:'Post-call',theme:'Clear counselling',quote:'The counsellor answered the financing questions clearly.'},
+  {lead:'Meera Patel',score:3,channel:'Post-meeting',theme:'Pricing objection',quote:'The program looks good, but I need more scholarship clarity.'},
+  {lead:'Rohan Kumar',score:4,channel:'WhatsApp',theme:'Fast response',quote:'Quick reply and easy scheduling.'},
+  {lead:'Anika Roy',score:2,channel:'Post-call',theme:'Slow follow-up',quote:'I had to wait for the second callback.'}
+ ]
+ const shown=filter==='All'?items:items.filter(x=>x.theme===filter)
+ return <><PageHead crumb="Conversion / Feedback" title="Feedback agent" sub="Collect post-interaction feedback, detect objections and route insights back into sales and marketing workflows." action="Configure feedback agent"/>
+ <div className="stats-grid"><Stat label="Responses" value="1,842" sub="Last 30 days" Icon={MessageSquareText}/><Stat label="Response rate" value="31%" sub="+7 points this month" Icon={Activity}/><Stat label="Avg satisfaction" value="4.2/5" sub="Across all channels" Icon={CheckCircle2}/><Stat label="Open objections" value="126" sub="Need sales / marketing review" Icon={Target}/></div>
+ <div className="feedback-toolbar">{['All','Clear counselling','Pricing objection','Fast response','Slow follow-up'].map(x=><button key={x} className={filter===x?'active':''} onClick={()=>setFilter(x)}>{x}</button>)}</div>
+ <div className="feedback-grid">{shown.map(x=><article key={x.lead+x.theme}><div className="feedback-head"><div><span className="lead-avatar">{x.lead.split(' ').map(s=>s[0]).join('')}</span><div><b>{x.lead}</b><small>{x.channel}</small></div></div><strong>{'★'.repeat(x.score)}{'☆'.repeat(5-x.score)}</strong></div><p>“{x.quote}”</p><footer><span>{x.theme}</span><button>Open journey <ChevronRight/></button></footer></article>)}</div>
+ <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Top objections</h3><p>Automatically grouped from feedback</p></div></div>{[['Pricing / scholarship',42],['Callback timing',27],['Program fit',21],['Financing information',18],['Counsellor handoff',18]].map(x=><div className="health-line" key={x[0]}><span>{x[0]}</span><div className="progress"><i style={{width:(x[1] as number)*2+'%'}}/></div><b>{x[1]}</b></div>)}</div><div className="app-panel"><div className="panel-head"><div><h3>Feedback routing</h3><p>Turn qualitative evidence into actions</p></div></div>{[['Pricing objection','Sales manager + campaign insight'],['Low satisfaction','Customer recovery queue'],['Program mismatch','CRM disposition update'],['Positive promoter','Testimonial request queue']].map(x=><div className="mapping-rule" key={x[0]}><span>{x[0]}</span><ArrowRight/><b>{x[1]}</b></div>)}</div></div></>
+}
+
 function Approvals(){
  const [items,setItems]=useState<any[]>([
   {id:'apr_1042',agent:'Voice Lead Qualification',subject:'Call 42 high-intent leads',risk:'Customer contact',impact:'High',age:'4 min',status:'pending',detail:'Agent proposes calling leads that visited pricing twice and requested fee information.'},
@@ -761,7 +809,7 @@ function Product({back}:{back:()=>void}){
  const [workspaceOpen,setWorkspaceOpen]=useState(false)
  const [workspace,setWorkspace]=useState('Ace EdTech')
  const workspaces=[['Ace EdTech','Production','AM'],['Ace Healthcare','Production','AH'],['Demo Sandbox','Sandbox','DS']]
- const view=useMemo(()=>({Launchpad:<Launchpad/>,Overview:<Overview/>,AdSync:<AdSync/>,Funnel:<Funnel/>,Events:<Events/>,Diagnostics:<Diagnostics/>,"Live Sync":<LiveSync/>,"Offline Attribution":<OfflineAttribution/>,Journeys:<Journeys/>,Identity:<Identity/>,Attribution:<Attribution/>,Reports:<Reports/>,Enrich:<Enrich/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Approvals:<Approvals/>,"Ask Ace":<AskAce/>,Integrations:<Integrations/>,Audiences:<Audiences/>,Monitoring:<Monitoring/>,Alerts:<Alerts/>,Developers:<Developers/>,Settings:<Settings/>}[tab]),[tab])
+ const view=useMemo(()=>({Launchpad:<Launchpad/>,Overview:<Overview/>,AdSync:<AdSync/>,Funnel:<Funnel/>,Events:<Events/>,Diagnostics:<Diagnostics/>,"Live Sync":<LiveSync/>,"Offline Attribution":<OfflineAttribution/>,Journeys:<Journeys/>,Identity:<Identity/>,Attribution:<Attribution/>,Reports:<Reports/>,Enrich:<Enrich/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Calls:<Calls/>,Meetings:<Meetings/>,Feedback:<Feedback/>,Approvals:<Approvals/>,"Ask Ace":<AskAce/>,Integrations:<Integrations/>,Audiences:<Audiences/>,Monitoring:<Monitoring/>,Alerts:<Alerts/>,Developers:<Developers/>,Settings:<Settings/>}[tab]),[tab])
  return <div className="product"><aside><Brand/><div className="workspace-wrap"><button className="workspace" onClick={()=>setWorkspaceOpen(!workspaceOpen)}><span>{workspaces.find(x=>x[0]===workspace)?.[2]||'AM'}</span><div><b>{workspace}</b><small>{workspaces.find(x=>x[0]===workspace)?.[1]||'Production'} workspace</small></div><ChevronDown/></button>{workspaceOpen&&<div className="workspace-menu">{workspaces.map(x=><button key={x[0]} onClick={()=>{setWorkspace(x[0]);setWorkspaceOpen(false)}} className={workspace===x[0]?'active':''}><span>{x[2]}</span><div><b>{x[0]}</b><small>{x[1]}</small></div>{workspace===x[0]&&<Check/>}</button>)}<button className="new-workspace"><Plus/>Create workspace</button></div>}</div><nav>{appTabs.map(([x,I])=><button key={x} className={tab===x?'active':''} onClick={()=>setTab(x)}><I/>{x}</button>)}</nav><div className="aside-footer"><button onClick={back}><ArrowRight/>Back to website</button><div className="profile-mini"><span>S</span><div><b>Sakshee</b><small>Workspace owner</small></div></div></div></aside>
  <main><header className="product-head"><div className="global-search"><Search/>Search journeys, leads, campaigns...</div><div><span className="sync">● Live sync healthy</span><button><Headphones/></button><button><Globe2/></button><span className="avatar-sm">S</span></div></header><div className="product-body">{view}</div></main></div>
 }
