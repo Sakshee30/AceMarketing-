@@ -1775,13 +1775,48 @@ const server = http.createServer(async (req,res)=>{
       })
     }
     if (req.method === 'GET' && url.pathname === '/api/matchback') {
-      const live=await attributionStats(workspaceId)
-      return send(req,res,200,{live,rules:[
-        {name:'closed_won_mba_search',source:'crm_billing',destination:'google_ads',matchedRevenue:8400000,closedOutcomes:982,matchRate:96.8},
-        {name:'enrolment_executive_program',source:'crm_billing',destination:'meta_ads',matchedRevenue:5160000,closedOutcomes:611,matchRate:95.9},
-        {name:'consultation_sale_whatsapp',source:'crm_whatsapp',destination:'meta_google',matchedRevenue:2840000,closedOutcomes:314,matchRate:92.7},
-        {name:'store_sale_offline',source:'pos_crm',destination:'google_meta',matchedRevenue:1980000,closedOutcomes:227,matchRate:94.1}
-      ],unmatched:live.available?live.unmatchedEvents:4})
+      const [live,state]=await Promise.all([attributionStats(workspaceId),getState()])
+      return send(req,res,200,{
+        live,
+        rules:state.matchbackRules||[],
+        unmatched:live.available?Number(live.unmatchedEvents||0):0,
+        templates:[
+          {name:'Closed-won revenue',source:'crm_billing',eventType:'closed_won',destination:'Google Ads',identityMethod:'customer_id + click ID'},
+          {name:'Enrolment conversion',source:'crm',eventType:'enrolment',destination:'Meta Ads',identityMethod:'customer_id + hashed contact'},
+          {name:'WhatsApp consultation sale',source:'crm_whatsapp',eventType:'closed_won',destination:'Google Ads + Meta Ads',identityMethod:'phone + click history'},
+          {name:'Offline store sale',source:'pos_crm',eventType:'store_sale',destination:'Google Ads + Meta Ads',identityMethod:'customer_id / hashed contact / click ID'}
+        ]
+      })
+    }
+    if (req.method === 'POST' && url.pathname === '/api/matchback/rules') {
+      const body=await readBody(req)
+      const name=String(body.name||'').trim()
+      const source=String(body.source||'').trim()
+      const eventType=String(body.eventType||'').trim()
+      const destination=String(body.destination||'').trim()
+      const identityMethod=String(body.identityMethod||'').trim()
+      if(!name||!source||!eventType||!destination||!identityMethod) return send(req,res,400,{error:'name, source, eventType, destination and identityMethod are required'})
+      const now=new Date().toISOString()
+      const item={id:'mb_'+randomUUID(),name:name.slice(0,160),source:source.slice(0,120),eventType:eventType.slice(0,120),destination:destination.slice(0,160),identityMethod:identityMethod.slice(0,240),status:'active',createdAt:now}
+      await mutateState(s=>{
+        s.matchbackRules=s.matchbackRules||[]
+        s.matchbackRules.unshift(item)
+        s.matchbackRules=s.matchbackRules.slice(0,200)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'matchback.rule_created',entityId:item.id,name:item.name,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,{item})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/matchback/rules/toggle') {
+      const body=await readBody(req)
+      if(!body.id||typeof body.enabled!=='boolean') return send(req,res,400,{error:'id and enabled are required'})
+      let updated=null
+      await mutateState(s=>{
+        const item=(s.matchbackRules||[]).find(x=>x.id===body.id)
+        if(item){item.status=body.enabled?'active':'paused';item.updatedAt=new Date().toISOString();updated={...item}}
+      })
+      return updated?send(req,res,200,{item:updated}):send(req,res,404,{error:'matchback rule not found'})
     }
     if (req.method === 'GET' && url.pathname === '/api/matchback/unmatched') {
       const live=await attributionStats(workspaceId)
@@ -1789,9 +1824,21 @@ const server = http.createServer(async (req,res)=>{
     }
     if (req.method === 'POST' && url.pathname === '/api/matchback/reconcile') {
       const body=await readBody(req)
-      if(!body.rule) return send(req,res,400,{error:'rule required'})
+      if(!body.ruleId) return send(req,res,400,{error:'ruleId required'})
+      const state=await getState()
+      const rule=(state.matchbackRules||[]).find(x=>x.id===body.ruleId)
+      if(!rule) return send(req,res,404,{error:'matchback rule not found'})
+      if(rule.status==='paused') return send(req,res,409,{error:'matchback rule is paused'})
       const result=await reconcileAttribution(workspaceId,body.limit||250)
-      return send(req,res,200,{rule:body.rule,status:'reconciled',...result,auditId:randomUUID(),completedAt:new Date().toISOString()})
+      const completedAt=new Date().toISOString()
+      await mutateState(s=>{
+        const item=(s.matchbackRules||[]).find(x=>x.id===body.ruleId)
+        if(item){item.lastRunAt=completedAt;item.lastRunStatus='reconciled';item.lastRunMatched=Number(result?.matched||0);item.lastRunUnmatched=Number(result?.unmatched||0)}
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'matchback.reconciled',entityId:body.ruleId,name:rule.name,matched:Number(result?.matched||0),unmatched:Number(result?.unmatched||0),at:completedAt})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,200,{ruleId:body.ruleId,rule:rule.name,status:'reconciled',...result,completedAt})
     }
     if (req.method === 'GET' && url.pathname === '/api/pos-stores') {
       const state=await getState()
