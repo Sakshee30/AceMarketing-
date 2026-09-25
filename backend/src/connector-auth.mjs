@@ -1,3 +1,4 @@
+import {randomUUID} from 'node:crypto'
 import {decryptSecret,encryptSecret} from './vault.mjs'
 import {getState,mutateState,withWorkspace} from './store.mjs'
 
@@ -87,7 +88,7 @@ const refreshRecord=async(workspaceId,record,force=false)=>{
       connection.lastRefreshError=null
     }
     s.audit=s.audit||[]
-    s.audit.unshift({id:'audit_'+crypto.randomUUID?.()||String(Date.now()),action:'connector.token_refreshed',entityId:record.connector,at:now})
+    s.audit.unshift({id:'audit_'+randomUUID(),action:'connector.token_refreshed',entityId:record.connector,at:now})
   }))
   return {token:merged,refreshed:true,expiresAt:nextExpiry}
 }
