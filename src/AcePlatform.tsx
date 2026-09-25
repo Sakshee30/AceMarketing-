@@ -9,21 +9,21 @@ import {
 import './ace-platform.css'
 import { api } from './lib/api'
 
-type View='site'|'app'|'login'
+type View='site'|'app'|'login'|'pricing'
 type AppTab='Overview'|'AdSync'|'Funnel'|'Events'|'Live Sync'|'Offline Attribution'|'Journeys'|'Attribution'|'Enrich'|'Agents'|'Integrations'|'Audiences'|'Monitoring'|'Settings'
 
 const agents=[
- ['Meta Advanced CAPI','Return qualified outcomes to Meta server-side with deduplication.','Signal return','25–40% ROAS'],
- ['Google ECL / OCI','Send enhanced and offline conversions back to Google Ads.','Signal return','Lower CPQL'],
- ['Call Tracking Events','Attribute inbound calls to campaign, ad and keyword context.','Signal return','More call attribution'],
- ['Custom Integration','Connect custom CRMs, ad platforms and internal data sources.','Data','Any stack'],
- ['Lead Grading','Score and prioritize leads from journey and CRM evidence.','Conversion','Higher close rate'],
- ['CRM Enrichment','Attach acquisition, behavior and interaction context to each record.','Conversion','Less research'],
- ['Voice Lead Qualification','Call inbound leads quickly and qualify intent conversationally.','Conversion','Faster speed-to-lead'],
- ['Voice Scheduler','Book meetings for qualified leads and synchronize calendars.','Conversion','More bookings'],
- ['Meeting Reminder','Re-engage scheduled leads before appointments to reduce drop-off.','Conversion','Pipeline recovery'],
- ['Feedback Agent','Collect post-interaction feedback and surface objections.','Conversion','More feedback'],
- ['Ask Ace','Ask journey, funnel and attribution questions in plain language.','Visibility','Instant analysis']
+ ['Meta Advanced CAPI','Return qualified outcomes to Meta server-side with deduplication.','Lead Quality','+25–40% ROAS'],
+ ['Google ECL / OCI','Send enhanced and offline conversions back to Google Ads.','Lead Quality','−30–50% CPQL'],
+ ['Call Tracking Events','Attribute inbound calls to campaign, keyword and creative context.','Lead Quality','+80% call attribution'],
+ ['Custom Integration','Connect custom CRMs, ad platforms and internal data sources.','Lead Quality','100% channel mix'],
+ ['Lead Grading','Score and prioritize leads from journey and CRM evidence.','Conversion','+40–60% conversion'],
+ ['CRM Enrichment','Attach acquisition, behavior and interaction context to each record.','Conversion','−70% research time'],
+ ['Voice Lead Qualification','Call inbound leads quickly and qualify intent conversationally.','Conversion','+90% speed-to-lead'],
+ ['Voice Scheduler','Book meetings for qualified leads and synchronize calendars.','Conversion','+45% bookings'],
+ ['Meeting Reminder','Re-engage scheduled leads before appointments to reduce drop-off.','Conversion','10–25% leads recovered'],
+ ['Feedback Agent','Collect post-interaction feedback and surface objections.','Conversion','5× more feedback'],
+ ['Ask Ace','Ask journey, funnel and attribution questions in plain language.','Visibility','+20–40% qualified leads']
 ]
 const integrations=['Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads','GA4','Zoho CRM','Salesforce','HubSpot','LeadSquared','HighLevel','WhatsApp','WATI','Gupshup','MoEngage','CleverTap','Exotel','Knowlarity','Tata Tele','MyOperator','Shopify','WooCommerce','Magento','WordPress','Custom Backend']
 const industries=[
@@ -45,17 +45,20 @@ const caseStudies=[
 function Brand({dark=false}:{dark?:boolean}){
  return <div className={'ace-brand '+(dark?'dark':'')}><span className="ace-mark"><i/><i/><i/></span><b>AceMarketing</b></div>
 }
-function Header({openApp,openLogin}:{openApp:()=>void,openLogin:()=>void}){
+function Header({openApp,openLogin,openPricing}:{openApp:()=>void,openLogin:()=>void,openPricing:()=>void}){
  const [open,setOpen]=useState(false)
  return <header className="marketing-header"><Brand/><nav className={open?'mobile-open':''}>
-  <a href="#platform">Platform</a><a href="#problems">Use cases</a><a href="#agents">Agents</a><a href="#integrations">Integrations</a><a href="#industries">Industries</a><a href="#proof">Proof</a>
+  <a href="#platform">Platform</a><a href="#problems">Use cases</a><a href="#agents">Agents</a><a href="#integrations">Integrations</a><a href="#industries">Industries</a><a href="#proof">Proof</a><button className="ghost-nav" onClick={openPricing}>Pricing</button>
   <button className="ghost-nav" onClick={openLogin}>Login</button><button className="ghost-nav" onClick={openApp}>Open product</button><a href="#demo" className="header-cta">Book a demo <ArrowRight size={15}/></a>
  </nav><button className="menu-toggle" onClick={()=>setOpen(!open)}>{open?<X/>:<Menu/>}</button></header>
 }
-function Marketing({openApp,openLogin}:{openApp:()=>void,openLogin:()=>void}){
+function Marketing({openApp,openLogin,openPricing}:{openApp:()=>void,openLogin:()=>void,openPricing:()=>void}){
+ const [agentFilter,setAgentFilter]=useState('All')
+ const visibleAgents=agentFilter==='All'?agents:agents.filter(a=>a[2]===agentFilter)
  return <div className="marketing-page">
+  <div className="reference-banner"><span>Public EasyInsights benchmark referenced for parity:</span><b>up to 45% incremental revenue uplift</b><a href="#impact">See impact model <ArrowRight/></a></div>
   <section className="hero-wrap">
-   <Header openApp={openApp} openLogin={openLogin}/>
+   <Header openApp={openApp} openLogin={openLogin} openPricing={openPricing}/>
    <div className="hero-grid">
     <div className="hero-copy">
      <span className="kicker">FIRST-PARTY PERFORMANCE MARKETING INFRASTRUCTURE</span>
@@ -123,7 +126,9 @@ function Marketing({openApp,openLogin}:{openApp:()=>void,openLogin:()=>void}){
 
   <section className="agents-section" id="agents">
    <div className="section-title light"><span className="kicker">AGENTS</span><h2>11 specialized agents across the funnel.</h2><p>Activate only the agents your workflow needs, with shared context from the same stitched journey.</p></div>
-   <div className="agent-showcase">{agents.map((a,i)=><article key={a[0]}><div><span>{String(i+1).padStart(2,'0')}</span><Bot/></div><h3>{a[0]}</h3><p>{a[1]}</p><footer><small>{a[2]}</small><b>{a[3]}</b></footer></article>)}</div>
+   <div className="agent-filters">{['All','Lead Quality','Conversion','Visibility'].map(x=><button key={x} className={agentFilter===x?'active':''} onClick={()=>setAgentFilter(x)}>{x}</button>)}</div>
+   <div className="agent-reference-note">Impact figures below mirror metrics published on the current EasyInsights public website and are shown as parity/reference targets, not AceMarketing performance claims.</div>
+   <div className="agent-showcase">{visibleAgents.map((a,i)=><article key={a[0]}><div><span>{String(i+1).padStart(2,'0')}</span><Bot/></div><h3>{a[0]}</h3><p>{a[1]}</p><footer><small>{a[2]}</small><b>{a[3]}</b></footer></article>)}</div>
   </section>
 
   <section className="section white" id="integrations">
@@ -136,7 +141,7 @@ function Marketing({openApp,openLogin}:{openApp:()=>void,openLogin:()=>void}){
    <div className="industry-grid">{industries.map((x,i)=><article key={x[0]}><span>{String(i+1).padStart(2,'0')}</span><Building2/><h3>{x[0]}</h3><p>{x[1]}</p><ArrowRight/></article>)}</div>
   </section>
 
-  <section className="impact-section">
+  <section className="impact-section" id="impact">
    <div className="section-title light"><span className="kicker">ADSYNC · EXPECTED IMPACT MODEL</span><h2>Five signal-quality improvements compound across the optimization loop.</h2><p>The brochure frames AdSync impact across synchronization, junk-lead control, identifier coverage, conversion-event design and audience suppression.</p></div>
    <div className="impact-grid">
     <article><span>01</span><div><b>Real-time data synchronization</b><div className="impact-bar"><i style={{width:'70%'}}/></div></div><strong>10%</strong></article><article><span>02</span><div><b>Control junk leads re-entering ad algorithms</b><div className="impact-bar"><i style={{width:'70%'}}/></div></div><strong>10%</strong></article><article><span>03</span><div><b>Better GCLID & FBCLID coverage</b><div className="impact-bar"><i style={{width:'35%'}}/></div></div><strong>5%</strong></article><article><span>04</span><div><b>Campaign-specific conversion events</b><div className="impact-bar"><i style={{width:'70%'}}/></div></div><strong>10%</strong></article><article><span>05</span><div><b>Real-time contextual audiences & suppression</b><div className="impact-bar"><i style={{width:'70%'}}/></div></div><strong>10%</strong></article>
@@ -155,6 +160,15 @@ function Marketing({openApp,openLogin}:{openApp:()=>void,openLogin:()=>void}){
    </div>
   </section>
 
+  <section className="public-proof-section">
+   <div className="section-title"><span className="kicker dark">PUBLIC PARITY REFERENCES</span><h2>Three proof patterns represented in the current EasyInsights site.</h2><p>These cards are clearly labeled reference results from the public site so AceMarketing does not present third-party outcomes as its own.</p></div>
+   <div className="public-proof-grid">
+    <article><span>LEAD QUALITY · LEVERAGE EDU</span><strong>−38%</strong><h3>cost per qualified lead</h3><p>Reference pattern: enrolment outcomes returned server-side to paid platforms, deduplicated across acquisition and counselor sources.</p></article>
+    <article><span>CONVERSION · INDIA IVF</span><strong>+52%</strong><h3>lead-to-consultation conversion</h3><p>Reference pattern: leads graded on arrival, enriched with context and qualified quickly across the funnel.</p></article>
+    <article><span>VISIBILITY · BLUE TOKAI</span><strong>31%</strong><h3>revenue re-attributed</h3><p>Reference pattern: web, app and offline touchpoints stitched into full-path attribution.</p></article>
+   </div>
+  </section>
+
   <section className="diagnostics-section">
    <div className="section-title"><span className="kicker dark">DIAGNOSE THE ROOT CAUSE</span><h2>Your campaigns can only learn from the data they receive.</h2><p>Use a single diagnostic layer to separate media problems from tracking, data-quality and operational funnel issues.</p></div>
    <div className="diagnostic-grid">
@@ -168,6 +182,38 @@ function Marketing({openApp,openLogin}:{openApp:()=>void,openLogin:()=>void}){
 
   <DemoSection openApp={openApp}/>
   <footer className="marketing-footer"><Brand/><p>AceMarketing · first-party growth operating system.</p></footer>
+ </div>
+}
+
+function Pricing({back,openApp}:{back:()=>void,openApp:()=>void}){
+ const [leads,setLeads]=useState(5000)
+ const [dataHomes,setDataHomes]=useState<string[]>(['CRM'])
+ const [challenges,setChallenges]=useState<string[]>(['Lead quality'])
+ const [channels,setChannels]=useState<string[]>(['Google Ads','Meta Ads'])
+ const recommended=agents.filter(a=>{
+  if(challenges.includes('Lead quality')&&a[2]==='Lead Quality')return true
+  if(challenges.includes('Conversion leakage')&&a[2]==='Conversion')return true
+  if(challenges.includes('Attribution')&&a[2]==='Visibility')return true
+  return false
+ })
+ const [selected,setSelected]=useState<string[]>([])
+ const activeSelected=selected.length?selected:recommended.map(a=>a[0])
+ const toggle=(list:string[],value:string,setter:(v:string[])=>void)=>setter(list.includes(value)?list.filter(x=>x!==value):[...list,value])
+ return <div className="pricing-page">
+  <div className="pricing-top"><Brand/><button onClick={back}>Back to website</button></div>
+  <section className="pricing-hero"><span className="kicker">PRICING</span><h1>Build the stack that works for your setup.</h1><p>Answer a few questions and AceMarketing recommends the agents that fit your funnel. Exact production pricing remains a sales quote because the public source does not expose stable numeric prices.</p></section>
+  <section className="pricing-builder">
+   <div className="pricing-step"><span>1</span><div><h2>Tell us about your setup</h2><p>Configure the environment used for agent recommendations.</p></div></div>
+   <div className="pricing-card">
+    <label>Monthly lead volume <strong>{leads.toLocaleString()}</strong><input type="range" min="200" max="100000" step="200" value={leads} onChange={e=>setLeads(Number(e.target.value))}/><small>200 <b>100,000+</b></small></label>
+    <div className="choice-block"><h3>Where does your data live?</h3><div>{['CRM','Website / App','WhatsApp','Calling','Data warehouse','Custom backend'].map(x=><button key={x} className={dataHomes.includes(x)?'active':''} onClick={()=>toggle(dataHomes,x,setDataHomes)}>{x}</button>)}</div></div>
+    <div className="choice-block"><h3>Select your current data challenges</h3><div>{['Lead quality','Conversion leakage','Attribution'].map(x=><button key={x} className={challenges.includes(x)?'active':''} onClick={()=>toggle(challenges,x,setChallenges)}>{x}</button>)}</div></div>
+    <div className="choice-block"><h3>Which channels do you run?</h3><div>{['Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads','Offline'].map(x=><button key={x} className={channels.includes(x)?'active':''} onClick={()=>toggle(channels,x,setChannels)}>{x}</button>)}</div></div>
+   </div>
+   <div className="pricing-step"><span>2</span><div><h2>Choose your agents</h2><p>Recommended agents are pre-selected from your stated challenges.</p></div></div>
+   <div className="pricing-agent-grid">{agents.map(a=>{const isOn=activeSelected.includes(a[0]);return <article className={isOn?'selected':''} key={a[0]}><div><span>{a[2]}</span>{recommended.some(r=>r[0]===a[0])&&<b>RECOMMENDED</b>}</div><h3>{a[0]}</h3><strong>{a[3]}</strong><p>{a[1]}</p><button onClick={()=>setSelected(isOn?activeSelected.filter(x=>x!==a[0]):[...activeSelected,a[0]])}>{isOn?'Remove':'Add agent'}</button></article>})}</div>
+   <aside className="pricing-summary"><div><span>Your stack</span><strong>{activeSelected.length} agents</strong></div><div><span>Monthly lead volume</span><strong>{leads.toLocaleString()}</strong></div><div><span>Channels</span><strong>{channels.length}</strong></div><div className="quote"><span>Estimated total</span><strong>Custom quote</strong><small>Pricing depends on selected agents, data volume, destinations and deployment requirements.</small></div><button onClick={openApp}>Open workspace <ArrowRight/></button><button className="outline" onClick={back}>Talk to sales</button></aside>
+  </section>
  </div>
 }
 
@@ -340,4 +386,4 @@ function Product({back}:{back:()=>void}){
  return <div className="product"><aside><Brand/><div className="workspace"><span>AM</span><div><b>Ace EdTech</b><small>Production workspace</small></div><ChevronDown/></div><nav>{appTabs.map(([x,I])=><button key={x} className={tab===x?'active':''} onClick={()=>setTab(x)}><I/>{x}</button>)}</nav><div className="aside-footer"><button onClick={back}><ArrowRight/>Back to website</button><div className="profile-mini"><span>S</span><div><b>Sakshee</b><small>Workspace owner</small></div></div></div></aside>
  <main><header className="product-head"><div className="global-search"><Search/>Search journeys, leads, campaigns...</div><div><span className="sync">● Live sync healthy</span><button><Headphones/></button><button><Globe2/></button><span className="avatar-sm">S</span></div></header><div className="product-body">{view}</div></main></div>
 }
-export default function AcePlatform(){const[view,setView]=useState<View>('site');if(view==='login')return <Login back={()=>setView('site')} openApp={()=>setView('app')}/>;return view==='site'?<Marketing openApp={()=>setView('app')} openLogin={()=>setView('login')}/>:<Product back={()=>setView('site')}/>}
+export default function AcePlatform(){const[view,setView]=useState<View>('site');if(view==='login')return <Login back={()=>setView('site')} openApp={()=>setView('app')}/>;if(view==='pricing')return <Pricing back={()=>setView('site')} openApp={()=>setView('app')}/>;return view==='site'?<Marketing openApp={()=>setView('app')} openLogin={()=>setView('login')} openPricing={()=>setView('pricing')}/>:<Product back={()=>setView('site')}/>}
