@@ -1,5 +1,5 @@
 import http from 'node:http'
-import { createHash, randomBytes, randomUUID } from 'node:crypto'
+import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto'
 import { URL } from 'node:url'
 import { createToken, verifyToken, verifyPassword, hashPassword, hasPermission, createRateLimiter, securityHeaders, resolveCorsOrigin } from './security.mjs'
 import { closeStore, getState, mutateState, storageHealth, withWorkspace } from './store.mjs'
@@ -38,7 +38,27 @@ const CONNECTOR_PROVIDERS={
 }
 const CONNECTOR_REDIRECT_URI=process.env.CONNECTOR_OAUTH_REDIRECT_URI||''
 const CONNECTOR_SUCCESS_URL=process.env.CONNECTOR_OAUTH_SUCCESS_URL||''
+const CONNECTOR_STATE_SECRET=process.env.CONNECTOR_OAUTH_STATE_SECRET||process.env.JWT_SECRET||'dev-only-change-me'
 const base64url=value=>Buffer.from(value).toString('base64url')
+const hashOAuthState=value=>createHash('sha256').update(String(value)).digest('hex')
+const createOAuthState=workspaceId=>{
+  const payload=Buffer.from(JSON.stringify({workspaceId,nonce:randomBytes(24).toString('base64url'),iat:Date.now()})).toString('base64url')
+  const signature=createHmac('sha256',CONNECTOR_STATE_SECRET).update(payload).digest('base64url')
+  return payload+'.'+signature
+}
+const parseOAuthState=value=>{
+  try{
+    const [payload,signature]=String(value||'').split('.')
+    if(!payload||!signature) return null
+    const expected=createHmac('sha256',CONNECTOR_STATE_SECRET).update(payload).digest()
+    const actual=Buffer.from(signature,'base64url')
+    if(actual.length!==expected.length||!timingSafeEqual(actual,expected)) return null
+    const decoded=JSON.parse(Buffer.from(payload,'base64url').toString('utf8'))
+    if(!decoded?.workspaceId||!/^[A-Za-z0-9_-]{1,64}$/.test(decoded.workspaceId)) return null
+    if(!Number.isFinite(decoded.iat)||Date.now()-decoded.iat>15*60*1000) return null
+    return decoded
+  }catch{return null}
+}
 const createPkce=()=>{
   const verifier=base64url(randomBytes(48))
   const challenge=createHash('sha256').update(verifier).digest('base64url')
@@ -53,6 +73,7 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || ''
 const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || ''
 const allowedOrigins = new Set((process.env.CORS_ALLOWED_ORIGINS || (IS_PROD ? '' : '*')).split(',').map(x=>x.trim()).filter(Boolean))
 if (IS_PROD && (!JWT_SECRET || JWT_SECRET.length < 32)) throw new Error('JWT_SECRET must be at least 32 characters in production')
+if (IS_PROD && CONNECTOR_STATE_SECRET.length < 32) throw new Error('CONNECTOR_OAUTH_STATE_SECRET must be at least 32 characters in production')
 if (IS_PROD && (!ADMIN_EMAIL || !ADMIN_PASSWORD_HASH)) throw new Error('ADMIN_EMAIL and ADMIN_PASSWORD_HASH are required in production')
 if (IS_PROD && allowedOrigins.size===0) throw new Error('CORS_ALLOWED_ORIGINS is required in production')
 const limitRequest=createRateLimiter({windowMs:60_000,max:Number(process.env.RATE_LIMIT_PER_MINUTE||240)})
@@ -119,6 +140,7 @@ const send = (req,res,status,data,extra={}) => {
 }
 
 const publicPaths=new Set(['/api/health','/api/ready','/api/auth/login','/api/invitations/activate','/api/demo-requests','/api/track','/api/pricing/recommend','/api/pricing/quote','/api/public/navigation','/api/public/industries','/api/public/agents','/api/public/integrations','/api/public/challenges','/api/public/case-studies','/api/public/resources','/api/public/resource-center'])
+const isPublicRequest=(method,path)=>publicPaths.has(path)||(method==='GET'&&path==='/api/integrations/oauth/callback')
 const server = http.createServer(async (req,res)=>{
   req.requestId=String(req.headers['x-request-id']||randomUUID())
   const ip=String(req.headers['x-forwarded-for']||req.socket.remoteAddress||'unknown').split(',')[0].trim()
@@ -127,10 +149,15 @@ const server = http.createServer(async (req,res)=>{
   const url = new URL(req.url, `http://localhost:${PORT}`)
   if (req.method === 'OPTIONS') return send(req,res,204,{})
   if (req.headers.origin && !resolveCorsOrigin(req.headers.origin,allowedOrigins)) return send(req,res,403,{error:'origin not allowed'})
-  const workspaceId=String(req.headers['x-workspace-id']||process.env.DEFAULT_WORKSPACE_ID||'ws_default')
+  let workspaceId=String(req.headers['x-workspace-id']||process.env.DEFAULT_WORKSPACE_ID||'ws_default')
+  if(req.method==='GET'&&url.pathname==='/api/integrations/oauth/callback'){
+    const signed=parseOAuthState(url.searchParams.get('state'))
+    if(!signed) return send(req,res,400,{error:'invalid or expired oauth state'})
+    workspaceId=signed.workspaceId
+  }
   if(!/^[A-Za-z0-9_-]{1,64}$/.test(workspaceId)) return send(req,res,400,{error:'invalid workspace id'})
   let authenticatedUser=null
-  if(AUTH_REQUIRED && url.pathname.startsWith('/api/') && !publicPaths.has(url.pathname)){
+  if(AUTH_REQUIRED && url.pathname.startsWith('/api/') && !isPublicRequest(req.method||'GET',url.pathname)){
     const token=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'')
     authenticatedUser=verifyToken(token,JWT_SECRET)
     if(!authenticatedUser) return send(req,res,401,{error:'unauthorized'})
@@ -344,14 +371,14 @@ const server = http.createServer(async (req,res)=>{
         })
         return send(req,res,409,{connector,status:'needs_configuration',required:['CONNECTOR_OAUTH_REDIRECT_URI',provider.provider.toUpperCase()+'_OAUTH_CLIENT_ID',provider.provider.toUpperCase()+'_OAUTH_CLIENT_SECRET']})
       }
-      const stateToken=randomBytes(32).toString('base64url')
+      const stateToken=createOAuthState(workspaceId)
       const pkce=createPkce()
       const createdAt=new Date().toISOString()
       const expiresAt=new Date(Date.now()+10*60*1000).toISOString()
       await mutateState(s=>{
         s.oauthStates=s.oauthStates||[]
         s.oauthStates=s.oauthStates.filter(x=>Date.parse(x.expiresAt)>Date.now())
-        s.oauthStates.unshift({state:stateToken,connector,provider:provider.provider,verifier:pkce.verifier,createdAt,expiresAt})
+        s.oauthStates.unshift({stateHash:hashOAuthState(stateToken),workspaceId,connector,provider:provider.provider,verifier:pkce.verifier,createdAt,expiresAt})
         s.audit.unshift({id:randomUUID(),action:'connector.oauth_started',entityId:connector,at:createdAt})
       })
       const auth=new URL(provider.authorizeUrl)
@@ -373,7 +400,7 @@ const server = http.createServer(async (req,res)=>{
       if(providerError) return send(req,res,400,{error:'provider authorization failed',providerError})
       if(!stateToken||!code) return send(req,res,400,{error:'state and code required'})
       const snapshot=await getState()
-      const pending=(snapshot.oauthStates||[]).find(x=>x.state===stateToken)
+      const pending=(snapshot.oauthStates||[]).find(x=>x.stateHash===hashOAuthState(stateToken)&&x.workspaceId===workspaceId)
       if(!pending || Date.parse(pending.expiresAt)<=Date.now()) return send(req,res,400,{error:'invalid or expired oauth state'})
       const provider=CONNECTOR_PROVIDERS[pending.connector]
       if(!provider) return send(req,res,400,{error:'unsupported connector provider'})
@@ -393,7 +420,7 @@ const server = http.createServer(async (req,res)=>{
       const now=new Date().toISOString()
       const expiresAt=tokenPayload.expires_in?new Date(Date.now()+Number(tokenPayload.expires_in)*1000).toISOString():null
       await mutateState(s=>{
-        s.oauthStates=(s.oauthStates||[]).filter(x=>x.state!==stateToken)
+        s.oauthStates=(s.oauthStates||[]).filter(x=>x.stateHash!==hashOAuthState(stateToken))
         s.connectorCredentials=s.connectorCredentials||[]
         const old=s.connectorCredentials.find(x=>x.connector===pending.connector)
         const credential={id:old?.id||'cred_'+randomUUID(),connector:pending.connector,provider:provider.provider,encrypted,expiresAt,updatedAt:now,createdAt:old?.createdAt||now}
@@ -419,7 +446,7 @@ const server = http.createServer(async (req,res)=>{
       const code=String(body.code||'')
       if(!stateToken||!code) return send(req,res,400,{error:'state and code required'})
       const snapshot=await getState()
-      const pending=(snapshot.oauthStates||[]).find(x=>x.state===stateToken)
+      const pending=(snapshot.oauthStates||[]).find(x=>x.stateHash===hashOAuthState(stateToken)&&x.workspaceId===workspaceId)
       if(!pending || Date.parse(pending.expiresAt)<=Date.now()) return send(req,res,400,{error:'invalid or expired oauth state'})
       const provider=CONNECTOR_PROVIDERS[pending.connector]
       if(!provider) return send(req,res,400,{error:'unsupported connector provider'})
@@ -439,7 +466,7 @@ const server = http.createServer(async (req,res)=>{
       const now=new Date().toISOString()
       const expiresAt=tokenPayload.expires_in?new Date(Date.now()+Number(tokenPayload.expires_in)*1000).toISOString():null
       await mutateState(s=>{
-        s.oauthStates=(s.oauthStates||[]).filter(x=>x.state!==stateToken)
+        s.oauthStates=(s.oauthStates||[]).filter(x=>x.stateHash!==hashOAuthState(stateToken))
         s.connectorCredentials=s.connectorCredentials||[]
         const old=s.connectorCredentials.find(x=>x.connector===pending.connector)
         const credential={id:old?.id||'cred_'+randomUUID(),connector:pending.connector,provider:provider.provider,encrypted,expiresAt,updatedAt:now,createdAt:old?.createdAt||now}
