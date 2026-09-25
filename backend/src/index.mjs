@@ -9,6 +9,7 @@ import { attributionStats, captureClickSession, closeAttributionStore, recordAss
 import { closeLeadOps, createActivationRun, createAudience as createLeadAudience, getAudienceBundle, getLeadProfile, leadOpsStats, listActivationRuns, listAudiences as listLeadAudiences, listLeadProfiles, materializeAudience, overrideLeadGrade as persistLeadGrade, previewAudience as previewLeadAudience, scoreLead, upsertLeadProfile, updateAudienceSyncState } from './lead-ops.mjs'
 import { closeAgentOrchestrator, completeFollowUp as persistCompleteFollowUp, createAgentRun, createFollowUp, createMeeting, listAgentRuns, listFeedback as listPersistedFeedback, listFollowUps as listPersistedFollowUps, listMeetings as listPersistedMeetings, listRoutingDecisions, recordFeedback, routeLead } from './agent-orchestrator.mjs'
 import { closeCustomIntegrations, createCustomIntegration as persistCustomIntegration, listCustomIntegrations, testCustomIntegration as runCustomIntegrationTest } from './custom-integrations.mjs'
+import { closeObservability, listAlerts as listLiveAlerts, listMonitoringRules as listLiveMonitoringRules, monitoringSnapshot, recordApiTelemetry, resolveAlert as resolveLiveAlert, saveMonitoringRule } from './observability.mjs'
 import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, publicChallenges, publicCaseStudies, publicResources, publicResourceCenter } from './public-content.mjs'
 
 const CONNECTOR_PROVIDERS={
@@ -143,6 +144,7 @@ const send = (req,res,status,data,extra={}) => {
 const publicPaths=new Set(['/api/health','/api/ready','/api/auth/login','/api/invitations/activate','/api/demo-requests','/api/track','/api/pricing/recommend','/api/pricing/quote','/api/public/navigation','/api/public/industries','/api/public/agents','/api/public/integrations','/api/public/challenges','/api/public/case-studies','/api/public/resources','/api/public/resource-center'])
 const isPublicRequest=(method,path)=>publicPaths.has(path)||(method==='GET'&&path==='/api/integrations/oauth/callback')
 const server = http.createServer(async (req,res)=>{
+  const requestStartedAt=Date.now()
   req.requestId=String(req.headers['x-request-id']||randomUUID())
   const ip=String(req.headers['x-forwarded-for']||req.socket.remoteAddress||'unknown').split(',')[0].trim()
   const rate=limitRequest(ip)
@@ -157,6 +159,9 @@ const server = http.createServer(async (req,res)=>{
     workspaceId=signed.workspaceId
   }
   if(!/^[A-Za-z0-9_-]{1,64}$/.test(workspaceId)) return send(req,res,400,{error:'invalid workspace id'})
+  res.once('finish',()=>{
+    recordApiTelemetry(workspaceId,{requestId:req.requestId,method:req.method||'GET',path:url.pathname,statusCode:res.statusCode,latencyMs:Date.now()-requestStartedAt}).catch(()=>{})
+  })
   let authenticatedUser=null
   if(AUTH_REQUIRED && url.pathname.startsWith('/api/') && !isPublicRequest(req.method||'GET',url.pathname)){
     const token=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'')
@@ -797,15 +802,12 @@ const server = http.createServer(async (req,res)=>{
       const items=await listLeadAudiences(workspaceId)
       return send(req,res,200,{items:items.map(x=>({id:x.id,name:x.name,size:x.matched_size,estimatedSize:x.estimated_size,mode:x.mode,destination:x.destination,status:x.status,cadence:'Real time',definition:x.definition,providerState:x.provider_state,lastSyncError:x.last_sync_error,lastSyncedAt:x.last_synced_at,lastMaterializedAt:x.last_materialized_at}))})
     }
-    if (req.method === 'GET' && url.pathname === '/api/alerts') return send(req,res,200,{items:[
-      {id:'al_1',severity:'critical',title:'Audience sync stalled',status:'open'},
-      {id:'al_2',severity:'warning',title:'GCLID coverage below threshold',status:'open'},
-      {id:'al_3',severity:'warning',title:'CRM sync latency elevated',status:'open'}
-    ]})
+    if (req.method === 'GET' && url.pathname === '/api/alerts') return send(req,res,200,{items:await listLiveAlerts(workspaceId)})
     if (req.method === 'POST' && url.pathname === '/api/alerts/resolve') {
       const body=await readBody(req)
       if(!body.id) return send(req,res,400,{error:'id required'})
-      return send(req,res,200,{id:body.id,status:'resolved',resolvedAt:new Date().toISOString()})
+      const item=await resolveLiveAlert(workspaceId,String(body.id))
+      return item?send(req,res,200,item):send(req,res,404,{error:'alert not found'})
     }
     if (req.method === 'GET' && url.pathname === '/api/signal-deliveries') {
       const state=await getState()
@@ -919,7 +921,7 @@ const server = http.createServer(async (req,res)=>{
       return send(req,res,202,{id:body.id,status:'queued',retryId:randomUUID()})
     }
     if (req.method === 'POST' && url.pathname === '/api/webhooks/secret/rotate') return send(req,res,201,{secret:'whsec_'+randomUUID().replaceAll('-',''),createdAt:new Date().toISOString()})
-    if (req.method === 'GET' && url.pathname === '/api/monitoring') return send(req,res,200,{status:'healthy',eventsPerMinute:8412,failedEventRate:0.18,p95LatencySeconds:1.7})
+    if (req.method === 'GET' && url.pathname === '/api/monitoring') return send(req,res,200,await monitoringSnapshot(workspaceId))
     if (req.method === 'GET' && url.pathname === '/api/signal-console') return send(req,res,200,{google:[['Qualified Lead',8214,96.1],['Consultation',2314,94.7],['Enrolment',982,97.3]],meta:[['Lead',12842,94.8],['Qualified',7621,95.4],['Purchase',982,96.2]],whatsapp:[['Chat Started',6904,'Matched'],['Qualified',3086,'Synced'],['Booked',711,'Revenue linked']]})
     if (req.method === 'GET' && url.pathname === '/api/resources') return send(req,res,200,{items:['Custom Events','Server-Side Activation','Attribution','CRM Enrichment','Offline Conversion Tracking','Audience Operations']})
     if (req.method === 'GET' && url.pathname === '/api/ai-action') return send(req,res,200,{steps:[
@@ -944,12 +946,12 @@ const server = http.createServer(async (req,res)=>{
       const body = await readBody(req)
       return send(req,res,200,{saved:true,preferences:{necessary:true,analytics:Boolean(body.analytics),advertising:Boolean(body.advertising),functionality:Boolean(body.functionality)}})
     }
-    if (req.method === 'GET' && url.pathname === '/api/monitoring-rules') return send(req,res,200,{items:[
-      {metric:'event_delivery_rate',operator:'lt',threshold:98,severity:'critical'},
-      {metric:'gclid_coverage',operator:'lt',threshold:85,severity:'warning'},
-      {metric:'crm_sync_latency_minutes',operator:'gt',threshold:5,severity:'warning'},
-      {metric:'audience_sync_age_minutes',operator:'gt',threshold:60,severity:'critical'}
-    ]})
+    if (req.method === 'GET' && url.pathname === '/api/monitoring-rules') return send(req,res,200,{items:await listLiveMonitoringRules(workspaceId)})
+    if (req.method === 'POST' && url.pathname === '/api/monitoring-rules') {
+      const body=await readBody(req)
+      try{return send(req,res,201,await saveMonitoringRule(workspaceId,body))}
+      catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'invalid monitoring rule'})}
+    }
     if (req.method === 'GET' && url.pathname === '/api/security-posture') return send(req,res,200,{controls:[
       {name:'ISO 27001',status:'roadmap'},
       {name:'SHA-256 hashing',status:'design_implemented'},
@@ -1154,6 +1156,6 @@ server.keepAliveTimeout=65_000
 server.headersTimeout=66_000
 server.requestTimeout=30_000
 server.listen(PORT,()=>console.log(`AceMarketing API listening on http://localhost:${PORT}`))
-const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
+const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations(),closeObservability()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
 process.on('SIGTERM',()=>shutdown('SIGTERM'))
 process.on('SIGINT',()=>shutdown('SIGINT'))
