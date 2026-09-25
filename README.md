@@ -2038,3 +2038,31 @@ AUDIENCE_SCHEDULER_POLL_MS=15000
 ```
 
 “Real time” currently means a one-minute audience evaluation cadence. This avoids falsely claiming per-event provider updates while still keeping first-party activation continuously refreshed. Provider APIs and account-specific upload latency determine final delivery time.
+
+
+## Live cohort analytics pass
+
+The cohort section in Reports is now calculated from persisted acquisition sessions and matched/offline conversion events instead of fixed example months and rates.
+
+Implemented:
+- `backend/src/cohort-analytics.mjs`;
+- `GET /api/cohorts?months=6`;
+- cohort assignment from first-seen click session month;
+- acquisition-source breakdown from persisted UTM source;
+- distinct acquired subjects, qualified subjects, consultation subjects and converted subjects;
+- attributed conversion revenue from matched assisted/offline events;
+- qualified, consultation and conversion rates;
+- revenue per acquired subject and revenue per converter;
+- configurable event contracts so deployments explicitly define which downstream event names represent each stage;
+- Reports now renders live cohort rows, source quality and stage definitions.
+
+Configuration:
+
+```text
+COHORT_DB_POOL_MAX=5
+COHORT_QUALIFIED_EVENTS=lead.qualified,qualified_lead,mql,sql
+COHORT_CONSULTATION_EVENTS=consultation,consultation_booked,appointment,meeting_booked
+COHORT_CONVERSION_EVENTS=purchase,enrolment,enrollment,booking,revenue.closed,closed_won,sale
+```
+
+This avoids inventing business-stage semantics. Production deployments should align these event names with the real CRM/funnel contract for each workspace.
