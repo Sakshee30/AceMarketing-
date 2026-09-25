@@ -2753,3 +2753,49 @@ Implemented in this pass:
 A static scan of `frontend/src/AcePlatform.tsx` was rerun after this pass. No remaining visible button without a handler was found. The only scanner matches were the public navigation buttons for Industries, Agents and Resources; each already has an `onClick` handler and was a false positive caused by the scanner matching nested JSX.
 
 This does **not** mean every external provider is live-verified. Provider-backed features still require the real production accounts, credentials, approvals and callback configuration described elsewhere in this README. It means the visible product controls no longer intentionally present no-op buttons.
+
+
+## Build and dependency hardening: TypeScript duplicate fix + Nodemailer 10
+
+This pass fixes two release blockers found during continued production hardening.
+
+### TypeScript duplicate API declaration
+
+`frontend/src/lib/api.ts` contained two `settings` properties in the exported API object. The duplicate declaration was removed so the client now exposes exactly one:
+
+```text
+settings()
+saveSettings(payload)
+```
+
+alongside the workspace APIs.
+
+### Nodemailer security upgrade
+
+`nodemailer` was upgraded from the unsupported 6.x line to:
+
+```text
+nodemailer 10.0.10
+```
+
+The project already uses Node.js 20 in CI and both production Docker build paths, which satisfies the Nodemailer 10 runtime requirement.
+
+The repository now declares:
+
+```json
+"engines": {
+  "node": ">=20"
+}
+```
+
+No `@types/nodemailer` package is installed, avoiding conflicting declarations because Nodemailer 10 includes its own TypeScript definitions.
+
+The existing mail code continues to use the supported ESM/default import, `createTransport(...)` and `sendMail(...)` APIs in the report scheduler and password-reset mailer.
+
+A production dependency audit command was added:
+
+```bash
+npm run security:audit
+```
+
+and CI now runs this immediately after dependency installation. High-severity production dependency advisories therefore fail the build instead of being silently ignored.
