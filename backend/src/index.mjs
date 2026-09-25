@@ -3,7 +3,42 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { URL } from 'node:url'
 import { createToken, verifyToken, verifyPassword, createRateLimiter, securityHeaders, resolveCorsOrigin } from './security.mjs'
 import { getState, mutateState } from './store.mjs'
+import { connectorVaultReady, encryptSecret } from './vault.mjs'
 import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, publicChallenges, publicCaseStudies, publicResources } from './public-content.mjs'
+
+const CONNECTOR_PROVIDERS={
+  'Google Ads':{
+    provider:'google',
+    authType:'oauth2',
+    clientId:process.env.GOOGLE_OAUTH_CLIENT_ID||'',
+    clientSecret:process.env.GOOGLE_OAUTH_CLIENT_SECRET||'',
+    authorizeUrl:'https://accounts.google.com/o/oauth2/v2/auth',
+    tokenUrl:'https://oauth2.googleapis.com/token',
+    scopes:['openid','email','https://www.googleapis.com/auth/adwords']
+  },
+  'Meta Ads':{
+    provider:'meta',
+    authType:'oauth2',
+    clientId:process.env.META_OAUTH_CLIENT_ID||'',
+    clientSecret:process.env.META_OAUTH_CLIENT_SECRET||'',
+    authorizeUrl:'https://www.facebook.com/v23.0/dialog/oauth',
+    tokenUrl:'https://graph.facebook.com/v23.0/oauth/access_token',
+    scopes:['ads_management','ads_read','business_management']
+  },
+  'LinkedIn Ads':{provider:'linkedin',authType:'oauth2',clientId:process.env.LINKEDIN_OAUTH_CLIENT_ID||'',clientSecret:process.env.LINKEDIN_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://www.linkedin.com/oauth/v2/authorization',tokenUrl:'https://www.linkedin.com/oauth/v2/accessToken',scopes:['r_ads','rw_ads']},
+  'HubSpot':{provider:'hubspot',authType:'oauth2',clientId:process.env.HUBSPOT_OAUTH_CLIENT_ID||'',clientSecret:process.env.HUBSPOT_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://app.hubspot.com/oauth/authorize',tokenUrl:'https://api.hubapi.com/oauth/v1/token',scopes:['crm.objects.contacts.read','crm.objects.contacts.write']},
+  'Salesforce':{provider:'salesforce',authType:'oauth2',clientId:process.env.SALESFORCE_OAUTH_CLIENT_ID||'',clientSecret:process.env.SALESFORCE_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://login.salesforce.com/services/oauth2/authorize',tokenUrl:'https://login.salesforce.com/services/oauth2/token',scopes:['api','refresh_token']},
+  'Zoho CRM':{provider:'zoho',authType:'oauth2',clientId:process.env.ZOHO_OAUTH_CLIENT_ID||'',clientSecret:process.env.ZOHO_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://accounts.zoho.com/oauth/v2/auth',tokenUrl:'https://accounts.zoho.com/oauth/v2/token',scopes:['ZohoCRM.modules.ALL','ZohoCRM.settings.ALL']},
+  'GA4':{provider:'google',authType:'oauth2',clientId:process.env.GOOGLE_OAUTH_CLIENT_ID||'',clientSecret:process.env.GOOGLE_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://accounts.google.com/o/oauth2/v2/auth',tokenUrl:'https://oauth2.googleapis.com/token',scopes:['openid','email','https://www.googleapis.com/auth/analytics.readonly']},
+  'WhatsApp':{provider:'meta',authType:'oauth2',clientId:process.env.META_OAUTH_CLIENT_ID||'',clientSecret:process.env.META_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://www.facebook.com/v23.0/dialog/oauth',tokenUrl:'https://graph.facebook.com/v23.0/oauth/access_token',scopes:['whatsapp_business_management','whatsapp_business_messaging']}
+}
+const CONNECTOR_REDIRECT_URI=process.env.CONNECTOR_OAUTH_REDIRECT_URI||''
+const base64url=value=>Buffer.from(value).toString('base64url')
+const createPkce=()=>{
+  const verifier=base64url(randomBytes(48))
+  const challenge=createHash('sha256').update(verifier).digest('base64url')
+  return {verifier,challenge}
+}
 
 const PORT = Number(process.env.PORT || 3001)
 const IS_PROD = process.env.NODE_ENV === 'production'
@@ -118,7 +153,22 @@ const server = http.createServer(async (req,res)=>{
       return send(req,res,201,item)
     }
     if (req.method === 'GET' && url.pathname === '/api/workspace/overview') return send(req,res,200,{revenueAttributed:28400000,qualifiedLeads:7621,signalCoverage:94.8,activeAgents:7})
-    if (req.method === 'GET' && url.pathname === '/api/integrations') return send(req,res,200,{items:integrations.map((name,i)=>({name,status:i<12?'connected':'available'}))})
+    if (req.method === 'GET' && url.pathname === '/api/integrations') {
+      const state=await getState()
+      const connections=state.connectorConnections||[]
+      return send(req,res,200,{items:integrations.map(name=>{
+        const saved=connections.find(x=>x.connector===name)
+        const provider=CONNECTOR_PROVIDERS[name]
+        return {
+          name,
+          status:saved?.status||(provider?'available':'manual'),
+          provider:provider?.provider||'custom',
+          authType:provider?.authType||'manual',
+          configured:Boolean(provider?.clientId&&provider?.clientSecret&&CONNECTOR_REDIRECT_URI),
+          updatedAt:saved?.updatedAt||null
+        }
+      })})
+    }
     if (req.method === 'POST' && url.pathname === '/api/custom-integrations/test') {
       const body=await readBody(req)
       if(!body.name || !body.baseUrl) return send(req,res,400,{error:'name and baseUrl required'})
@@ -132,9 +182,95 @@ const server = http.createServer(async (req,res)=>{
       return send(req,res,201,item)
     }
     if (req.method === 'POST' && url.pathname === '/api/integrations/connect') {
-      const body = await readBody(req)
-      if (!body.connector) return send(req,res,400,{error:'connector required'})
-      return send(req,res,200,{connector:body.connector,status:'connected',sync:'enabled'})
+      const body=await readBody(req)
+      const connector=String(body.connector||'')
+      if(!connector) return send(req,res,400,{error:'connector required'})
+      const provider=CONNECTOR_PROVIDERS[connector]
+      if(!provider) return send(req,res,200,{connector,status:'manual_configuration_required',authType:'manual'})
+      if(!CONNECTOR_REDIRECT_URI || !provider.clientId || !provider.clientSecret) {
+        const now=new Date().toISOString()
+        await mutateState(s=>{
+          s.connectorConnections=s.connectorConnections||[]
+          const existing=s.connectorConnections.find(x=>x.connector===connector)
+          const record={id:existing?.id||'conn_'+randomUUID(),connector,provider:provider.provider,status:'needs_configuration',authType:provider.authType,createdAt:existing?.createdAt||now,updatedAt:now}
+          if(existing) Object.assign(existing,record); else s.connectorConnections.unshift(record)
+        })
+        return send(req,res,409,{connector,status:'needs_configuration',required:['CONNECTOR_OAUTH_REDIRECT_URI',provider.provider.toUpperCase()+'_OAUTH_CLIENT_ID',provider.provider.toUpperCase()+'_OAUTH_CLIENT_SECRET']})
+      }
+      const stateToken=randomBytes(32).toString('base64url')
+      const pkce=createPkce()
+      const createdAt=new Date().toISOString()
+      const expiresAt=new Date(Date.now()+10*60*1000).toISOString()
+      await mutateState(s=>{
+        s.oauthStates=s.oauthStates||[]
+        s.oauthStates=s.oauthStates.filter(x=>Date.parse(x.expiresAt)>Date.now())
+        s.oauthStates.unshift({state:stateToken,connector,provider:provider.provider,verifier:pkce.verifier,createdAt,expiresAt})
+        s.audit.unshift({id:randomUUID(),action:'connector.oauth_started',entityId:connector,at:createdAt})
+      })
+      const auth=new URL(provider.authorizeUrl)
+      auth.searchParams.set('client_id',provider.clientId)
+      auth.searchParams.set('redirect_uri',CONNECTOR_REDIRECT_URI)
+      auth.searchParams.set('response_type','code')
+      auth.searchParams.set('state',stateToken)
+      auth.searchParams.set('scope',provider.scopes.join(' '))
+      auth.searchParams.set('code_challenge',pkce.challenge)
+      auth.searchParams.set('code_challenge_method','S256')
+      if(provider.provider==='google') auth.searchParams.set('access_type','offline')
+      if(provider.provider==='google') auth.searchParams.set('prompt','consent')
+      return send(req,res,200,{connector,status:'authorization_required',authorizationUrl:auth.toString(),expiresAt})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/integrations/oauth/callback') {
+      const body=await readBody(req)
+      const stateToken=String(body.state||'')
+      const code=String(body.code||'')
+      if(!stateToken||!code) return send(req,res,400,{error:'state and code required'})
+      const snapshot=await getState()
+      const pending=(snapshot.oauthStates||[]).find(x=>x.state===stateToken)
+      if(!pending || Date.parse(pending.expiresAt)<=Date.now()) return send(req,res,400,{error:'invalid or expired oauth state'})
+      const provider=CONNECTOR_PROVIDERS[pending.connector]
+      if(!provider) return send(req,res,400,{error:'unsupported connector provider'})
+      const tokenBody=new URLSearchParams({
+        client_id:provider.clientId,
+        client_secret:provider.clientSecret,
+        redirect_uri:CONNECTOR_REDIRECT_URI,
+        code,
+        grant_type:'authorization_code',
+        code_verifier:pending.verifier
+      })
+      const tokenResponse=await fetch(provider.tokenUrl,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:tokenBody})
+      const tokenPayload=await tokenResponse.json().catch(()=>({}))
+      if(!tokenResponse.ok) return send(req,res,502,{error:'oauth token exchange failed',provider:provider.provider,status:tokenResponse.status})
+      if(!connectorVaultReady()) return send(req,res,503,{error:'connector credential vault is not configured'})
+      const encrypted=encryptSecret(tokenPayload)
+      const now=new Date().toISOString()
+      const expiresAt=tokenPayload.expires_in?new Date(Date.now()+Number(tokenPayload.expires_in)*1000).toISOString():null
+      await mutateState(s=>{
+        s.oauthStates=(s.oauthStates||[]).filter(x=>x.state!==stateToken)
+        s.connectorCredentials=s.connectorCredentials||[]
+        const old=s.connectorCredentials.find(x=>x.connector===pending.connector)
+        const credential={id:old?.id||'cred_'+randomUUID(),connector:pending.connector,provider:provider.provider,encrypted,expiresAt,updatedAt:now,createdAt:old?.createdAt||now}
+        if(old) Object.assign(old,credential); else s.connectorCredentials.unshift(credential)
+        s.connectorConnections=s.connectorConnections||[]
+        const connection=s.connectorConnections.find(x=>x.connector===pending.connector)
+        const record={id:connection?.id||'conn_'+randomUUID(),connector:pending.connector,provider:provider.provider,status:'connected',authType:'oauth2',createdAt:connection?.createdAt||now,updatedAt:now,expiresAt}
+        if(connection) Object.assign(connection,record); else s.connectorConnections.unshift(record)
+        s.audit.unshift({id:randomUUID(),action:'connector.connected',entityId:pending.connector,provider:provider.provider,at:now})
+      })
+      return send(req,res,200,{connector:pending.connector,status:'connected',expiresAt})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/integrations/disconnect') {
+      const body=await readBody(req)
+      const connector=String(body.connector||'')
+      if(!connector) return send(req,res,400,{error:'connector required'})
+      const now=new Date().toISOString()
+      await mutateState(s=>{
+        s.connectorCredentials=(s.connectorCredentials||[]).filter(x=>x.connector!==connector)
+        s.connectorConnections=s.connectorConnections||[]
+        const connection=s.connectorConnections.find(x=>x.connector===connector)
+        if(connection){connection.status='disconnected';connection.updatedAt=now}
+        s.audit.unshift({id:randomUUID(),action:'connector.disconnected',entityId:connector,at:now})
+      })
+      return send(req,res,200,{connector,status:'disconnected'})
     }
     if (req.method === 'POST' && url.pathname === '/api/ask-ace') {
       const body = await readBody(req)
