@@ -251,6 +251,17 @@ const server = http.createServer(async (req,res)=>{
       {key:'lifecycle_stage',source:'crm',status:'mapped'}
     ]})
     if (req.method === 'GET' && url.pathname === '/api/solutions') return send(res,200,{items:['Agency','Lead Generation','Enterprise','Mid Market Brand','Attribution Model','Alerts and Monitoring','Server to Server Integration']})
+    if (req.method === 'POST' && url.pathname === '/api/audiences/preview') {
+      const body=await readBody(req)
+      if(!body.name || !body.condition) return send(res,400,{error:'name and condition required'})
+      const seed=Math.max(1200,Math.min(18000,3200 + String(body.value||'').length*137))
+      return send(res,200,{estimatedSize:seed,matchedPercent:Number(((seed/56582)*100).toFixed(1)),freshness:'real_time'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/audiences') {
+      const body=await readBody(req)
+      if(!body.name || !body.destination) return send(res,400,{error:'name and destination required'})
+      return send(res,201,{id:'aud_'+randomUUID(),name:body.name,status:'syncing',destination:body.destination,mode:body.mode||'Activate',createdAt:new Date().toISOString()})
+    }
     if (req.method === 'GET' && url.pathname === '/api/audiences') return send(res,200,{items:[
       {name:'High intent leads',size:3106,mode:'activate'},
       {name:'Converted / enrolled',size:18204,mode:'suppress'},
