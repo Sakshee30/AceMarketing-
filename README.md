@@ -2482,3 +2482,95 @@ CI/backend validation includes:
 - `backend/migrations/016_meeting_calendar.sql`
 
 Real launch still requires the production Google Cloud project to have Google Calendar API enabled, the OAuth consent screen configured, the callback URL allow-listed and the target workspace account authorized.
+
+
+## Functional-control hardening pass: developer console, settings and workspace operations
+
+This pass focuses specifically on the requirement that visible controls must perform real work instead of acting as decorative SaaS UI.
+
+### Developer console
+
+The developer surface now reads and writes persisted workspace state rather than fixed demonstration deliveries.
+
+Implemented:
+
+- persisted outbound webhook endpoints;
+- HTTPS validation for production webhook URLs;
+- persisted webhook delivery history;
+- retry state written back to delivery records;
+- webhook retry audit entries;
+- signing-secret rotation with one-time secret return;
+- only the SHA-256 signing-secret fingerprint is persisted;
+- working cURL / Node.js / Python quick-start tabs;
+- working clipboard copy;
+- working event-catalog → endpoint-builder flow;
+- real endpoint creation modal;
+- explicit empty states when no endpoint/delivery exists.
+
+New API surface:
+
+```text
+GET  /api/webhooks/endpoints
+POST /api/webhooks/endpoints
+GET  /api/webhooks/deliveries
+POST /api/webhooks/retry
+POST /api/webhooks/secret/rotate
+```
+
+### Workspace settings
+
+Workspace and tracking settings are now persisted through:
+
+```text
+GET  /api/settings
+POST /api/settings
+```
+
+Supported settings include:
+
+- organization;
+- timezone;
+- currency;
+- reporting week;
+- default attribution model;
+- environment;
+- primary domain;
+- cross-domain tracking;
+- GCLID persistence duration;
+- FBCLID persistence duration.
+
+The previous non-functional **Save workspace** and tracking **Edit** controls have been replaced by editable, persisted forms with success/error feedback.
+
+### Workspace creation and switching
+
+Workspace creation is now backed by:
+
+```text
+GET  /api/workspaces
+POST /api/workspaces
+```
+
+The sidebar **Create workspace** action now opens a real creation dialog, writes the workspace to backend state, switches to the new workspace and persists its workspace ID locally for API routing.
+
+### Global product search
+
+The product header search is now an actual input. It searches the workspace navigation surface and opens the selected module. The former decorative search placeholder has been removed.
+
+The header Support and Region/Language controls are also actionable:
+
+- Support routes the user into workspace Settings.
+- Region/Language shows the current workspace locale and provides a direct Settings action.
+
+### Utility controls
+
+Additional visible controls converted from decorative to functional:
+
+- Deep Links → **Copy test URL** copies a generated test link.
+- POS & Stores → **Download import template** downloads a CSV import template.
+- Identity → **Export review queue** downloads the current review list as CSV.
+
+### UI truthfulness
+
+The developer console no longer injects fake webhook delivery records when no real records exist. Empty delivery history is shown as an empty operational state.
+
+This continues the production-hardening rule used across signal delivery, WhatsApp, call tracking, calendar scheduling and Ask Ace: **missing data is represented as missing data, not replaced with invented production metrics.**
