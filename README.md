@@ -1010,3 +1010,18 @@ Implemented:
 - adjusted trust row spacing beneath the hero.
 
 The implementation follows the visual structure, spacing and interaction model from the supplied screenshots without copying EasyInsights trademarks, customer artwork or proprietary source code.
+
+
+## UI parity pass: tabbed problem section, system layout and footer
+
+The EasyInsights-style public marketing parity work now extends beyond the navbar and hero.
+
+Implemented:
+- tabbed Lead Quality / Conversion / Attribution section using the current EasyInsights public information architecture;
+- screenshot-aligned typography scale, borders, spacing and rounded solution panel;
+- two-capability section matching the "stitched journey + agents" structure;
+- responsive full-width layout refinements;
+- multi-column public footer with Platform, Solution and Resources groupings;
+- footer legal row and product CTA styling.
+
+AceMarketing keeps its own brand identity and original assets, while matching the public layout rhythm, information architecture, spacing, interaction patterns and typography hierarchy closely.
