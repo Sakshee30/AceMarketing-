@@ -387,9 +387,13 @@ test('matchback rules persist without seeded performance claims', async ({ page 
 test('journey explorer renders stitched chronology', async ({ page }) => {
   await page.goto('/#/workspace')
   await dismissConsent(page)
+  await page.request.post('/api/enrich/upsert',{data:{externalLeadId:'ci_journey_lead',name:'CI Journey Lead',source:'Google Ads',campaign:'CI Search',crmStage:'qualified',journeyDepth:2,lastActivity:new Date().toISOString()}})
+  await page.request.post('/api/follow-ups',{data:{leadRef:'ci_journey_lead',reason:'CI chronology follow-up',channel:'Email',priority:'medium',delayMinutes:30,owner:'CI Owner'}})
   await openWorkspaceTab(page,'Journeys')
   await expect(page.getByRole('heading', { name: 'Customer journey explorer' })).toBeVisible()
+  await expect(page.getByText('CI Journey Lead', { exact: true }).first()).toBeVisible()
   const detail=page.locator('.journey-detail')
   await expect(detail.getByText('Stitched chronology')).toBeVisible()
+  await expect(detail.getByText(/CI chronology follow-up/)).toBeVisible()
   await expect(detail.getByText(/Journey timeline source/)).toHaveCount(0)
 })
