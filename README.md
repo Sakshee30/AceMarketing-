@@ -3622,3 +3622,15 @@ AdSync is now an operational signal-pipeline control center rather than a funnel
 - The resulting outbound signals are inspected in the existing durable Delivery center, including receipts, retries and dead-letter state.
 - The page provides direct navigation to Event Rules and Delivery rather than duplicating their controls.
 - Creating a pipeline persists a real event rule and refreshes the operational list.
+
+
+### Conversion adjustments without demo seed data
+
+Conversion Adjustments now uses production-truthful state only.
+
+- Empty workspaces remain empty; the backend no longer seeds example adjustments automatically.
+- `POST /api/adjustments` creates a validated pending adjustment with event, source, destination, original value, adjusted value, currency and reason.
+- Adjustment creation records an audit event.
+- Existing preview/apply flows remain unchanged and operate on the newly persisted adjustment.
+- The UI exposes **New adjustment**, shows a truthful empty state, and selects the newly created adjustment after persistence.
+- Values accept either numeric corrections or bounded text outcomes such as `lead → excluded`.
