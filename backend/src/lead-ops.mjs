@@ -196,9 +196,85 @@ export const materializeAudience=async(workspaceId,audienceId)=>{
   return {audienceId,matchedSize:leads.rowCount,status:'ready_for_sync'}
 }
 
+export const getLeadProfile=async(workspaceId,leadRef)=>{
+  if(!pool)return null
+  const {rows}=await pool.query(
+    `SELECT * FROM ace_lead_profiles WHERE workspace_id=$1 AND (id=$2 OR external_lead_id=$2 OR name=$2) LIMIT 1`,
+    [workspaceId,String(leadRef)]
+  )
+  return rows[0]||null
+}
+
+export const getAudienceBundle=async(workspaceId,audienceId)=>{
+  if(!pool)return null
+  const {rows}=await pool.query(`SELECT * FROM ace_audiences WHERE workspace_id=$1 AND id=$2`,[workspaceId,audienceId])
+  const audience=rows[0]
+  if(!audience)return null
+  const members=await pool.query(
+    `SELECT m.identity_key,m.action,m.attributes,p.email_sha256,p.phone_sha256,p.external_lead_id
+     FROM ace_audience_members m
+     JOIN ace_lead_profiles p ON p.id=m.lead_profile_id
+     WHERE m.workspace_id=$1 AND m.audience_id=$2 ORDER BY m.created_at ASC`,
+    [workspaceId,audienceId]
+  )
+  return {audience,members:members.rows}
+}
+
+export const updateAudienceSyncState=async(workspaceId,audienceId,provider,patch={})=>{
+  if(!pool)return null
+  const current=await pool.query(`SELECT provider_state FROM ace_audiences WHERE workspace_id=$1 AND id=$2`,[workspaceId,audienceId])
+  if(!current.rowCount)return null
+  const state={...(current.rows[0].provider_state||{}),[provider]:{...(current.rows[0].provider_state?.[provider]||{}),...patch,updatedAt:new Date().toISOString()}}
+  const statuses=Object.values(state).map(x=>x?.status).filter(Boolean)
+  const overall=statuses.length&&statuses.every(x=>x==='succeeded')?'active':statuses.some(x=>x==='failed')?'error':'syncing'
+  const {rows}=await pool.query(
+    `UPDATE ace_audiences SET provider_state=$3::jsonb,status=$4,last_sync_error=$5,last_synced_at=CASE WHEN $4='active' THEN now() ELSE last_synced_at END,updated_at=now()
+     WHERE workspace_id=$1 AND id=$2 RETURNING *`,
+    [workspaceId,audienceId,JSON.stringify(state),overall,patch.error||null]
+  )
+  return rows[0]
+}
+
+export const createActivationRun=async(workspaceId,{kind,entityId,provider,requestSummary={}})=>{
+  if(!pool)return null
+  const id='act_'+randomUUID()
+  const {rows}=await pool.query(
+    `INSERT INTO ace_activation_runs (id,workspace_id,kind,entity_id,provider,status,request_summary)
+     VALUES ($1,$2,$3,$4,$5,'queued',$6::jsonb) RETURNING *`,
+    [id,workspaceId,kind,entityId,provider,JSON.stringify(requestSummary)]
+  )
+  return rows[0]
+}
+
+export const updateActivationRun=async(workspaceId,id,patch={})=>{
+  if(!pool)return null
+  const {rows}=await pool.query(
+    `UPDATE ace_activation_runs SET
+      status=COALESCE($3,status),
+      response_summary=CASE WHEN $4::jsonb='{}'::jsonb THEN response_summary ELSE $4::jsonb END,
+      external_id=COALESCE($5,external_id),
+      last_error=$6,
+      attempts=COALESCE($7,attempts),
+      completed_at=CASE WHEN $3 IN ('succeeded','failed') THEN now() ELSE completed_at END,
+      updated_at=now()
+     WHERE workspace_id=$1 AND id=$2 RETURNING *`,
+    [workspaceId,id,patch.status||null,JSON.stringify(patch.responseSummary||{}),patch.externalId||null,patch.error||null,patch.attempts??null]
+  )
+  return rows[0]||null
+}
+
+export const listActivationRuns=async(workspaceId,limit=100)=>{
+  if(!pool)return []
+  const {rows}=await pool.query(
+    `SELECT * FROM ace_activation_runs WHERE workspace_id=$1 ORDER BY created_at DESC LIMIT $2`,
+    [workspaceId,Math.max(1,Math.min(500,Number(limit)||100))]
+  )
+  return rows
+}
+
 export const listAudiences=async workspaceId=>{
   if(!pool)return []
-  const {rows}=await pool.query(`SELECT id,name,mode,destination,status,estimated_size,matched_size,last_materialized_at,definition,created_at,updated_at FROM ace_audiences WHERE workspace_id=$1 ORDER BY updated_at DESC`,[workspaceId])
+  const {rows}=await pool.query(`SELECT id,name,mode,destination,status,estimated_size,matched_size,last_materialized_at,definition,provider_state,last_sync_error,last_synced_at,created_at,updated_at FROM ace_audiences WHERE workspace_id=$1 ORDER BY updated_at DESC`,[workspaceId])
   return rows
 }
 
