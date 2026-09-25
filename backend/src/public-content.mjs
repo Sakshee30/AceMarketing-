@@ -186,3 +186,33 @@ export const publicResources = [
   {id:'offline-conversions',title:'Offline Conversion Tracking',summary:'Match calls, messaging and offline outcomes to first-party identity and media context.',sections:['Persist click IDs and first-party identifiers during acquisition.','Ingest offline outcomes from CRM, calling, messaging or POS systems.','Resolve identity and apply attribution rules before delivery.','Return verified conversion value to eligible destinations.']},
   {id:'audience-operations',title:'Audience Operations',summary:'Build activation and suppression segments from lifecycle, value and intent.',sections:['Combine lifecycle stage, lead grade, propensity, recency and value signals.','Preview expected audience size before activation.','Suppress converted or low-quality identities from acquisition campaigns.','Use high-value cohorts as optimization or lookalike seeds.']}
 ]
+
+
+export const publicResourceCenter = {
+  blogs:[
+    {id:'signal-quality',category:'Performance Marketing',title:'Why stronger first-party signals improve paid-media learning',summary:'A practical explanation of feeding qualified, booked and revenue outcomes back into acquisition systems.'},
+    {id:'crm-scale',category:'CRM Operations',title:'CRM fixes to make before scaling ad spend',summary:'Identity, stage mapping, response-time and outcome hygiene checks for performance teams.'},
+    {id:'agent-workflows',category:'AI Operations',title:'From chat assistants to workflow agents',summary:'How specialized agents can qualify, enrich, route, schedule and measure without losing human approval.'}
+  ],
+  ebooks:[
+    {id:'lead-gen-playbook',title:'The Connected Lead-Generation Playbook',summary:'A guide to linking ads, CRM, calls, messaging and closed revenue into one measurable operating model.',chapters:['Signal architecture','Identity and click persistence','CRM stage normalization','Offline outcome activation','Monitoring and governance']},
+    {id:'attribution-guide',title:'Full-Path Attribution for Assisted Funnels',summary:'Design deterministic evidence trails across digital, call-center, messaging and offline conversion paths.',chapters:['Journey stitching','Identity confidence','First/last/full path models','Revenue truth','Operational reporting']}
+  ],
+  documentation:[
+    {group:'Getting Started',items:['Workspace setup','Connect advertising platforms','Connect CRM and calling systems','Define canonical funnel stages']},
+    {group:'Activation',items:['Server-side events','Google conversion delivery','Meta conversion delivery','Audience activation and suppression']},
+    {group:'Measurement',items:['Journey stitching','Offline attribution','Campaign funnel mapping','Conversion adjustments']},
+    {group:'Operations',items:['Monitoring','Retries and dead letters','RBAC and approvals','API keys and webhooks']}
+  ],
+  useCases:[
+    {title:'Lead-quality optimization',workflow:['Capture click identifiers','Grade CRM outcomes','Return qualified/closed outcomes','Suppress low-quality cohorts']},
+    {title:'Call and WhatsApp attribution',workflow:['Persist first-party click context','Ingest assisted interaction','Resolve identity/timestamp','Return verified conversion']},
+    {title:'High-volume CRM conversion sync',workflow:['Normalize CRM stages','Deduplicate events','Fan out to ad accounts','Monitor delivery health']},
+    {title:'Audience lifecycle activation',workflow:['Combine lifecycle + value + intent','Preview segment','Activate high intent','Suppress converted/low value']}
+  ],
+  voiceAgent:{
+    title:'Voice conversion agents',
+    summary:'Operational voice workflows for qualification, scheduling, reminders and feedback with human approval boundaries.',
+    capabilities:['Immediate lead qualification','Structured intent capture','Sales-ready routing','Calendar scheduling','Meeting reminders','Feedback and objection capture']
+  }
+}
