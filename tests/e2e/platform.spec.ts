@@ -293,3 +293,20 @@ test('attribution period selector requests a new backend window', async ({ page 
   await page.getByRole('button', { name: 'Last 30 days', exact: true }).click()
   await expect(page.getByText('90 day window', { exact: false })).toBeVisible()
 })
+
+
+test('AdSync creates and operates a persisted conversion pipeline', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  await openWorkspaceTab(page,'AdSync')
+  await expect(page.getByRole('heading', { name: 'Server-side signal activation' })).toBeVisible()
+  await page.getByRole('button', { name: 'Add pipeline' }).click()
+  const modal=page.getByText('New conversion pipeline').locator('..').locator('..')
+  await page.getByLabel('Pipeline name').fill('CI Qualified Lead to Meta')
+  await page.getByLabel('Source event').fill('lead.qualified')
+  await page.getByLabel('Output event').fill('qualified_lead_ci')
+  await page.getByLabel('Destination').selectOption('Meta Ads')
+  await page.getByRole('button', { name: 'Create pipeline' }).click()
+  await expect(page.getByText('CI Qualified Lead to Meta', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Send test source event/ })).toBeVisible()
+})
