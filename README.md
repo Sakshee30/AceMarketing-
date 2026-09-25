@@ -164,3 +164,31 @@ This repository now has the front-end product experience and API contract founda
 ## Brand and IP note
 
 AceMarketing reproduces comparable product workflows, capabilities, navigation patterns and visual direction under its own identity. Third-party proprietary source code, logos, screenshots, customer marks and copyrighted assets are not bundled into this repository unless separately licensed or provided with permission.
+
+
+## Latest parity implementation
+
+This pass adds brochure-driven parity for AdSync operations:
+
+- **Channel / campaign funnel mapping** with stage-level counts from lead through booking.
+- **24×7 live sync view** for CRM, calling, WhatsApp and advertising-platform signal transfer.
+- **Brochure expected-impact section** covering the five AdSync improvement levers and the supplied 45% compounded-impact model.
+- **Browser tracking SDK foundation** that persists GCLID/FBCLID and sends page/event payloads to the local API without blocking UX.
+- **`POST /api/track`** ingestion endpoint.
+- **`GET /api/funnel`** and **`GET /api/live-sync`** API endpoints.
+
+### Tracking example
+
+```ts
+import { track } from './src/lib/tracker'
+
+track({
+  event: 'qualified_lead',
+  customerId: 'crm-123',
+  value: 0,
+  currency: 'INR',
+  properties: { stage: 'Qualified' }
+})
+```
+
+Click identifiers are captured from the landing-page query string and persisted in browser storage for subsequent events. This is an implementation foundation; production use still requires consent handling, server-side identity storage, secure hashing, idempotency, queueing, retries, and real destination APIs.
