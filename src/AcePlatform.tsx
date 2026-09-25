@@ -10,7 +10,7 @@ import './ace-platform.css'
 import { api } from './lib/api'
 
 type View='site'|'app'|'login'|'pricing'|'demo'|'company'|'resources'|'case-studies'|'privacy'|'terms'|'security'|'solutions'
-type AppTab='Overview'|'AdSync'|'Funnel'|'Events'|'Live Sync'|'Offline Attribution'|'Journeys'|'Attribution'|'Enrich'|'Behavior'|'Feed'|'Agents'|'Ask Ace'|'Integrations'|'Audiences'|'Monitoring'|'Settings'
+type AppTab='Launchpad'|'Overview'|'AdSync'|'Funnel'|'Events'|'Live Sync'|'Offline Attribution'|'Journeys'|'Attribution'|'Enrich'|'Behavior'|'Feed'|'Agents'|'Ask Ace'|'Integrations'|'Audiences'|'Monitoring'|'Settings'
 
 const agents=[
  ['Meta Advanced CAPI','Return qualified outcomes to Meta server-side with deduplication.','Lead Quality','+25–40% ROAS'],
@@ -390,11 +390,37 @@ function Login({back,openApp}:{back:()=>void,openApp:()=>void}){
 }
 
 const appTabs=[
- ['Overview',Gauge],['AdSync',RadioTower],['Funnel',BarChart3],['Events',Zap],['Live Sync',Activity],['Offline Attribution',PhoneCall],['Journeys',Network],['Attribution',PieChart],['Enrich',DatabaseZap],['Behavior',MousePointer2],['Feed',Layers3],['Agents',Bot],['Ask Ace',Sparkles],['Integrations',Cable],['Audiences',UsersRound],['Monitoring',Activity],['Settings',Settings2]
+ ['Launchpad',WandSparkles],['Overview',Gauge],['AdSync',RadioTower],['Funnel',BarChart3],['Events',Zap],['Live Sync',Activity],['Offline Attribution',PhoneCall],['Journeys',Network],['Attribution',PieChart],['Enrich',DatabaseZap],['Behavior',MousePointer2],['Feed',Layers3],['Agents',Bot],['Ask Ace',Sparkles],['Integrations',Cable],['Audiences',UsersRound],['Monitoring',Activity],['Settings',Settings2]
 ] as const
 function Stat({label,value,sub,Icon}:{label:string,value:string,sub:string,Icon:any}){return <article className="stat"><div><span>{label}</span><Icon/></div><strong>{value}</strong><small>{sub}</small></article>}
 function PageHead({crumb,title,sub,action}:{crumb:string,title:string,sub:string,action?:string}){return <div className="page-head"><div><span>{crumb}</span><h1>{title}</h1><p>{sub}</p></div>{action&&<button className="app-primary"><Sparkles/>{action}</button>}</div>}
 function FunnelPanel(){const steps=[['All Leads',12842,100],['Qualified',7621,59],['Connected',5410,42],['Consultation',2314,18],['Enrolled',982,8]];return <div className="app-panel"><div className="panel-head"><div><h3>Complete funnel</h3><p>All sources · last 30 days</p></div><button>Campaign view</button></div>{steps.map((x,i)=><div className="funnel-row" key={x[0]}><div><span>{x[0]}</span><b>{x[1].toLocaleString()}</b></div><div className="progress"><i style={{width:x[2]+'%'}}/></div>{i<steps.length-1&&<small>{Math.round((steps[i+1][1]/x[1])*100)}% progression</small>}</div>)}</div>}
+
+function Launchpad(){
+ const steps=[
+  ['Workspace','Name, timezone, currency and business model'],
+  ['Connect data','CRM, ad platforms, WhatsApp, calling and web/app sources'],
+  ['Map funnel','Define lead, qualified, appointment, consultation and revenue stages'],
+  ['Install tracking','Persist click IDs and send first-party website/app behavior'],
+  ['Test signal','Send a test event through identity matching and destination delivery'],
+  ['Activate agents','Choose which specialist agents may observe, recommend or act']
+ ]
+ const [active,setActive]=useState(0)
+ const [done,setDone]=useState([true,true,true,false,false,false])
+ const complete=async()=>{const next=[...done];next[active]=true;setDone(next);await api.saveLaunchpad({step:active,status:'complete'}).catch(()=>null);if(active<steps.length-1)setActive(active+1)}
+ const pct=Math.round((done.filter(Boolean).length/steps.length)*100)
+ return <><PageHead crumb="Workspace / Launchpad" title="Launchpad" sub="Configure the data, funnel, tracking and automation foundation before operating the workspace." action="Run readiness check"/>
+ <div className="launchpad-progress"><div><span>Workspace readiness</span><strong>{pct}%</strong></div><div className="progress"><i style={{width:pct+'%'}}/></div><small>{done.filter(Boolean).length} of {steps.length} setup areas complete</small></div>
+ <div className="launchpad-layout"><div className="app-panel launchpad-steps">{steps.map((s,i)=><button key={s[0]} className={active===i?'selected':''} onClick={()=>setActive(i)}><span className={done[i]?'done':''}>{done[i]?<Check/>:i+1}</span><div><b>{s[0]}</b><small>{s[1]}</small></div><ChevronRight/></button>)}</div>
+ <div className="app-panel launchpad-detail"><div className="panel-head"><div><h3>{steps[active][0]}</h3><p>{steps[active][1]}</p></div><span className={done[active]?'healthy':'status'}>{done[active]?'Complete':'Needs attention'}</span></div>
+ {active===0&&<div className="setup-form-grid">{[['Workspace name','Ace EdTech'],['Timezone','Asia/Kolkata'],['Currency','INR'],['Business model','Lead generation']].map(x=><label key={x[0]}><span>{x[0]}</span><input defaultValue={x[1]}/></label>)}</div>}
+ {active===1&&<div className="setup-check-grid">{[['Google Ads',true],['Meta Ads',true],['CRM',true],['WhatsApp',true],['Calling',false],['Website/App',true]].map(x=><div key={String(x[0])}><Cable/><span>{x[0]}</span><b className={x[1]?'ok':'warn'}>{x[1]?'Connected':'Connect'}</b></div>)}</div>}
+ {active===2&&<div className="stage-map">{['Lead','Qualified','Appointment','Consultation','Enrolled / Closed Won'].map((x,i)=><div key={x}><span>{i+1}</span><b>{x}</b>{i<4&&<ArrowRight/>}</div>)}</div>}
+ {active===3&&<div className="tracking-install"><code>{'<script src="https://cdn.acemarketing.example/track.js" data-workspace="ace-edtech"></script>'}</code><div className="setup-check-grid"><div><MousePointer2/><span>GCLID persistence</span><b className="ok">Enabled</b></div><div><MousePointer2/><span>FBCLID persistence</span><b className="ok">Enabled</b></div><div><ShieldCheck/><span>Consent gate</span><b className="warn">Configure</b></div></div></div>}
+ {active===4&&<div className="signal-test"><div className="test-flow">{['Browser event','Identity match','Normalize','Destination'].map((x,i)=><div key={x}><span>{i+1}</span><b>{x}</b>{i<3&&<ArrowRight/>}</div>)}</div><div className="test-result"><Activity/><div><b>Test event ready</b><small>Run a synthetic qualified-lead event to validate matching, deduplication and delivery.</small></div><button onClick={()=>api.track({event:'launchpad_test',source:'launchpad'})}>Send test</button></div></div>}
+ {active===5&&<div className="agent-choice-grid">{agents.slice(0,6).map((a,i)=><label key={a[0]}><input type="checkbox" defaultChecked={i<3}/><Bot/><div><b>{a[0]}</b><small>{a[2]}</small></div></label>)}</div>}
+ <div className="launchpad-actions"><button className="app-primary" onClick={complete}>{done[active]?'Save & continue':'Mark complete'} <ArrowRight/></button></div></div></div></>
+}
 
 function Overview(){
  return <><PageHead crumb="Workspace / Overview" title="Acquisition command center" sub="One live view across paid media, CRM, calls, WhatsApp and revenue." action="Ask Ace"/>
@@ -586,21 +612,26 @@ function Monitoring(){
  <div className="app-panel"><div className="panel-head"><div><h3>Automated monitoring rules</h3><p>Guardrails for signal loss and stale optimization inputs</p></div><button>+ Add rule</button></div><div className="monitor-rule-grid">{[['Event delivery rate','< 98% for 10 min','Critical'],['GCLID coverage','< 85%','Warning'],['CRM sync latency','> 5 min','Warning'],['Audience sync','No update for 60 min','Critical'],['CAPI token','Expires in < 24h','Info'],['Failed event queue','> 500 records','Critical']].map(x=><article key={x[0]}><Activity/><div><b>{x[0]}</b><small>{x[1]}</small></div><span className={String(x[2]).toLowerCase()}>{x[2]}</span></article>)}</div></div></>
 }
 function Settings(){
- return <><PageHead crumb="Workspace / Settings" title="Workspace settings" sub="Configure organization, access, tracking, data governance and automation boundaries."/>
- <div className="settings-grid">{[
- ['Workspace profile','Organization details, timezone, currency and reporting defaults.',Building2],
- ['Users & roles','Owner, admin, analyst and operator access with scoped permissions.',UsersRound],
- ['Tracking configuration','Domain tracking, click-ID persistence and event naming.',MousePointer2],
- ['Data governance','Consent, retention, deletion, hashing and audit policies.',ShieldCheck],
- ['API & webhooks','API keys, outbound webhooks and internal system integrations.',Cable],
- ['Agent approvals','Choose which agent actions require human approval.',Bot],
- ['Notifications','Operational, performance and failure alert routing.',MessageCircle],
- ['Billing & usage','Connector, event, workspace and agent usage visibility.',CircleDollarSign]
- ].map(([t,p,I]:any)=><article key={t}><I/><div><h3>{t}</h3><p>{p}</p></div><ChevronRight/></article>)}</div></>
+ const sections=['Workspace','Users & roles','Tracking','Governance','API & webhooks','Agent approvals','Notifications','Billing & usage']
+ const [section,setSection]=useState('Workspace')
+ const [apiKey,setApiKey]=useState('')
+ const makeKey=async()=>{try{const r:any=await api.createApiKey();setApiKey(r.key)}catch{setApiKey('ace_demo_key_local_only')}}
+ const content:any={
+  'Workspace':<div className="settings-detail"><h3>Workspace profile</h3><div className="setup-form-grid">{[['Organization','Ace EdTech'],['Timezone','Asia/Kolkata'],['Currency','INR'],['Reporting week','Monday'],['Default attribution','Full path'],['Environment','Production']].map(x=><label key={x[0]}><span>{x[0]}</span><input defaultValue={x[1]}/></label>)}</div><button className="app-primary">Save workspace</button></div>,
+  'Users & roles':<div className="settings-detail"><h3>Users & roles</h3>{[['Sakshee','Owner','Full access'],['Growth Lead','Admin','Manage campaigns + agents'],['Analyst','Analyst','Read + export'],['Operator','Operator','Run approved workflows']].map(x=><div className="member-row" key={x[0]}><span className="avatar-sm">{x[0][0]}</span><div><b>{x[0]}</b><small>{x[2]}</small></div><select defaultValue={x[1]}><option>Owner</option><option>Admin</option><option>Analyst</option><option>Operator</option></select></div>)}</div>,
+  'Tracking':<div className="settings-detail"><h3>Tracking configuration</h3>{[['Primary domain','www.example.com'],['Cross-domain tracking','Enabled'],['GCLID persistence','90 days'],['FBCLID persistence','90 days'],['Server event endpoint','/api/track']].map(x=><div className="setting-line" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><button>Edit</button></div>)}</div>,
+  'Governance':<div className="settings-detail"><h3>Data governance & audit</h3>{[['Consent enforcement','Required before optional activation'],['Retention','180 days'],['Deletion SLA','30 days'],['PII hashing','SHA-256 design'],['Audit logging','Enabled']].map(x=><div className="setting-line" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><button>Edit</button></div>)}<h4>Recent audit activity</h4>{[['Agent approval policy changed','Sakshee','2h ago'],['Google Ads connector refreshed','System','3h ago'],['Audience suppression updated','Growth Lead','Yesterday'],['API key created','Sakshee','2d ago']].map(x=><div className="audit-row" key={x[0]}><Activity/><div><b>{x[0]}</b><small>{x[1]}</small></div><span>{x[2]}</span></div>)}</div>,
+  'API & webhooks':<div className="settings-detail"><h3>API keys & webhooks</h3><div className="api-key-box"><div><span>Workspace API key</span><code>{apiKey||'••••••••••••••••••••'}</code></div><button onClick={makeKey}>{apiKey?'Rotate key':'Create key'}</button></div><h4>Outbound webhooks</h4>{[['lead.qualified','https://example.com/hooks/qualified'],['revenue.closed','https://example.com/hooks/revenue'],['sync.failed','https://example.com/hooks/ops']].map(x=><div className="setting-line" key={x[0]}><code>{x[0]}</code><b>{x[1]}</b><span className="healthy">Active</span></div>)}</div>,
+  'Agent approvals':<div className="settings-detail"><h3>Agent approval boundaries</h3>{[['Signal return','Auto-run','Low risk'],['CRM enrichment','Auto-run','Low risk'],['Lead qualification call','Human approval','Customer contact'],['Audience suppression','Human approval','Spend impact'],['Custom integration write','Human approval','External mutation']].map(x=><div className="setting-line" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><em>{x[2]}</em></div>)}</div>,
+  'Notifications':<div className="settings-detail"><h3>Notifications</h3>{[['Critical delivery failures','Email + Slack','Enabled'],['Token expiry','Email','Enabled'],['Audience stale > 60m','Slack','Enabled'],['Daily performance summary','Email','Enabled']].map(x=><div className="setting-line" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><span className="healthy">{x[2]}</span></div>)}</div>,
+  'Billing & usage':<div className="settings-detail"><h3>Usage & metering</h3><div className="stats-grid compact"><Stat label="Events this month" value="42.8M" sub="71% of plan" Icon={Zap}/><Stat label="Active connectors" value="12" sub="5 custom / premium" Icon={Cable}/><Stat label="Agent runs" value="184K" sub="+16% this month" Icon={Bot}/><Stat label="API calls" value="8.2M" sub="Within allowance" Icon={Activity}/></div></div>
+ }
+ return <><PageHead crumb="Workspace / Settings" title="Workspace settings" sub="Configure organization, access, tracking, governance, developer access and automation boundaries."/>
+ <div className="settings-shell"><aside className="settings-nav">{sections.map(x=><button key={x} className={section===x?'active':''} onClick={()=>setSection(x)}>{x}<ChevronRight/></button>)}</aside><div className="app-panel">{content[section]}</div></div></>
 }
 function Product({back}:{back:()=>void}){
- const [tab,setTab]=useState<AppTab>('Overview')
- const view=useMemo(()=>({Overview:<Overview/>,AdSync:<AdSync/>,Funnel:<Funnel/>,Events:<Events/>,"Live Sync":<LiveSync/>,"Offline Attribution":<OfflineAttribution/>,Journeys:<Journeys/>,Attribution:<Attribution/>,Enrich:<Enrich/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,"Ask Ace":<AskAce/>,Integrations:<Integrations/>,Audiences:<Audiences/>,Monitoring:<Monitoring/>,Settings:<Settings/>}[tab]),[tab])
+ const [tab,setTab]=useState<AppTab>('Launchpad')
+ const view=useMemo(()=>({Launchpad:<Launchpad/>,Overview:<Overview/>,AdSync:<AdSync/>,Funnel:<Funnel/>,Events:<Events/>,"Live Sync":<LiveSync/>,"Offline Attribution":<OfflineAttribution/>,Journeys:<Journeys/>,Attribution:<Attribution/>,Enrich:<Enrich/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,"Ask Ace":<AskAce/>,Integrations:<Integrations/>,Audiences:<Audiences/>,Monitoring:<Monitoring/>,Settings:<Settings/>}[tab]),[tab])
  return <div className="product"><aside><Brand/><div className="workspace"><span>AM</span><div><b>Ace EdTech</b><small>Production workspace</small></div><ChevronDown/></div><nav>{appTabs.map(([x,I])=><button key={x} className={tab===x?'active':''} onClick={()=>setTab(x)}><I/>{x}</button>)}</nav><div className="aside-footer"><button onClick={back}><ArrowRight/>Back to website</button><div className="profile-mini"><span>S</span><div><b>Sakshee</b><small>Workspace owner</small></div></div></div></aside>
  <main><header className="product-head"><div className="global-search"><Search/>Search journeys, leads, campaigns...</div><div><span className="sync">● Live sync healthy</span><button><Headphones/></button><button><Globe2/></button><span className="avatar-sm">S</span></div></header><div className="product-body">{view}</div></main></div>
 }
