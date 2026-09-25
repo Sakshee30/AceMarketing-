@@ -26,6 +26,7 @@ export const api = {
   events: () => request('/events'),
   funnel: () => request('/funnel'),
   liveSync: () => request('/live-sync'),
+  offlineAttribution: () => request('/offline-attribution'),
   track: (payload: Record<string, unknown>) => request('/track', { method: 'POST', body: JSON.stringify(payload) }),
   journeys: () => request('/journeys'),
   attribution: () => request('/attribution'),
