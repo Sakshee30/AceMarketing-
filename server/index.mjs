@@ -101,6 +101,10 @@ const server = http.createServer(async (req,res)=>{
       {name:'Berger Paints',sector:'Home Services',pattern:'CAPI + CTWA quality optimization'}
     ]})
     if (req.method === 'GET' && url.pathname === '/api/event-templates') return send(res,200,{items:['Pricing-page Lead','High-value Purchase','Prepaid Order','Fulfilled Order','Returned Order','Partial Payment']})
+    if (req.method === 'POST' && url.pathname === '/api/consent-preferences') {
+      const body = await readBody(req)
+      return send(res,200,{saved:true,preferences:{necessary:true,analytics:Boolean(body.analytics),advertising:Boolean(body.advertising),functionality:Boolean(body.functionality)}})
+    }
     if (req.method === 'GET' && url.pathname === '/api/monitoring-rules') return send(res,200,{items:[
       {metric:'event_delivery_rate',operator:'lt',threshold:98,severity:'critical'},
       {metric:'gclid_coverage',operator:'lt',threshold:85,severity:'warning'},
