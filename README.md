@@ -3722,3 +3722,15 @@ POS & Stores now calculates identity match rate from actual transaction rows ins
 - The manual **Matched records** field has been removed from the dashboard.
 - Import history now displays computed matched/unmatched outcomes per batch.
 - A downloadable CSV template documents the supported identity fields.
+
+
+### Workspace-defined custom scoring models
+
+The Models workspace now supports persisted customer-defined scoring models in addition to the built-in runtime scorers.
+
+- `POST /api/models` creates an explainable weighted scoring model.
+- Supported first-party features are lead score, journey depth, pricing-page views, WhatsApp engagement and meeting presence.
+- Feature weights are visible in the UI and bounded to avoid opaque/unbounded formulas.
+- `POST /api/models/run` scores real persisted profiles, stores rows scored, average score and score range, and updates the selected custom model's latest run state.
+- Custom models are clearly labelled as workspace-defined weighted scoring; AceMarketing does not claim predictive accuracy without customer outcome validation.
+- Validation history continues to use persisted model runs and lead population.
