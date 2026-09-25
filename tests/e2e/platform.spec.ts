@@ -209,3 +209,11 @@ test('dashboard navigator opens primary operating sections', async ({ page }) =>
   await page.getByRole('button', { name: /Attribution/ }).click()
   await expect(page.getByText('Attribution', { exact: false }).first()).toBeVisible()
 })
+
+
+test('live dashboard section strip navigates between operating areas', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await expect(page.getByLabel('Dashboard sections')).toBeVisible()
+  await page.getByLabel('Dashboard sections').getByRole('button', { name: /Measurement & Intelligence/ }).click()
+  await expect(page.getByText('Journeys', { exact: true }).first()).toBeVisible()
+})
