@@ -85,6 +85,25 @@ function Marketing({openApp,openLogin,openPricing}:{openApp:()=>void,openLogin:(
    {['Ads','CRM','WhatsApp','Calls','Web/App','Offline'].map(x=><b key={x}>{x}</b>)}
   </section>
 
+  <section className="case-change-section">
+   <div className="section-title"><span className="kicker dark">THE CASE FOR CHANGE</span><h2>Paid growth is only as good as the signals and context feeding it.</h2><p>The supplied brochure highlights six structural reasons lead-generation teams need a shared first-party operating layer rather than isolated platform optimization.</p></div>
+   <div className="case-change-grid">
+    {[
+      ['01','Algorithms need better signal','Automated bidding can only learn from the outcomes you send back; shallow form-fill events teach the wrong lesson.'],
+      ['02','CPM is no longer the main lever','Inventory efficiency alone cannot fix a funnel that loses quality and revenue context after the click.'],
+      ['03','Stacks are fragmented','Marketing teams often operate across multiple platforms with no common source of truth across the full customer journey.'],
+      ['04','Platform know-how is table stakes','Differentiation moves upstream to first-party data quality, signal design and measurement discipline.'],
+      ['05','Post-click leakage remains large','Even strong targeting cannot repair qualification, routing and follow-up failures after a lead enters the funnel.'],
+      ['06','Journeys are omnichannel','A customer can move from social to search to WhatsApp to calls before revenue, while each platform sees only its own slice.']
+    ].map(x=><article key={x[0]}><span>{x[0]}</span><h3>{x[1]}</h3><p>{x[2]}</p></article>)}
+   </div>
+   <div className="trusted-reference">
+    <span>REFERENCE BRANDS SHOWN IN THE SUPPLIED BROCHURE</span>
+    <div>{['ISB','Vedantu','Bhanzu','GrowthSchool','Leverage Edu','Jaro Education','Edureka','WebVeda','Testleaf'].map(x=><b key={x}>{x}</b>)}</div>
+    <small>Names are shown as brochure references only; no customer logo artwork is copied into AceMarketing.</small>
+   </div>
+  </section>
+
   <section className="section white" id="problems">
    <div className="section-title"><span className="kicker dark">THREE LEAKS THAT HURT PAID GROWTH</span><h2>One operating layer for signal quality, conversion and attribution.</h2></div>
    <div className="problem-grid">
@@ -180,6 +199,19 @@ function Marketing({openApp,openLogin,openPricing}:{openApp:()=>void,openLogin:(
 
   <section className="security-band"><ShieldCheck/><div><span className="kicker dark">DATA CONTROLS</span><h2>Enterprise-ready governance foundation.</h2><p>Consent-aware collection, hashed identifiers, role-based permissions, audit logging, configurable retention and monitored event delivery are part of the implementation plan.</p></div><div className="badges"><span>RBAC</span><span>Audit Logs</span><span>Encryption</span><span>Retention</span></div></section>
 
+  <section className="security-targets">
+   <div className="section-title"><span className="kicker dark">SECURITY & COMPLIANCE PARITY TARGETS</span><h2>Enterprise controls are represented as implementation targets, not certifications.</h2><p>The brochure visually references ISO 27001, SHA-256 encryption, GDPR, HIPAA and India DPDP readiness. AceMarketing surfaces these as roadmap controls until independently implemented and verified.</p></div>
+   <div className="security-target-grid">
+    {[
+      ['ISO 27001','Control framework target','Roadmap'],
+      ['SHA-256','Identifier hashing','Implemented in design'],
+      ['GDPR','Consent / deletion / retention','Roadmap'],
+      ['HIPAA','Healthcare data safeguards','Roadmap'],
+      ['India DPDP','Consent + data-principal controls','Roadmap']
+    ].map(x=><article key={x[0]}><ShieldCheck/><div><b>{x[0]}</b><span>{x[1]}</span></div><em>{x[2]}</em></article>)}
+   </div>
+  </section>
+
   <DemoSection openApp={openApp}/>
   <footer className="marketing-footer"><Brand/><p>AceMarketing · first-party growth operating system.</p></footer>
  </div>
@@ -251,7 +283,15 @@ function AdSync(){
  ['WhatsApp Started','WhatsApp → Google Ads','Offline Conversion Import','91.8%'],
  ['Call Connected','Calling → Meta Ads','Conversions API','93.2%']
  ].map(x=><div className="pipeline-row" key={x[0]}><span><Zap/></span><div><b>{x[0]}</b><small>{x[1]}</small></div><em>{x[2]}</em><i>Live</i><strong>{x[3]}</strong><ChevronRight/></div>)}</div>
- <div className="two-col"><FunnelPanel/><div className="app-panel"><div className="panel-head"><div><h3>Identifier coverage</h3><p>First-party identifiers and click IDs</p></div></div>{[['GCLID',97],['FBCLID',94],['Hashed email',88],['Hashed phone',91]].map(x=><div className="coverage" key={x[0]}><div><span>{x[0]}</span><b>{x[1]}%</b></div><div className="progress"><i style={{width:x[1]+'%'}}/></div></div>)}</div></div></>
+ <div className="app-panel"><div className="panel-head"><div><h3>Platform signal consoles</h3><p>Equivalent product surfaces for ad-platform and WhatsApp event visibility — synthetic UI, not copied screenshots.</p></div><span className="healthy">Live</span></div>
+   <div className="signal-console-grid">
+    <article><div><span className="integration-logo c0">GA</span><div><b>Google Ads conversions</b><small>Enhanced + offline conversion imports</small></div></div>{[['Qualified Lead','8,214','96.1%'],['Consultation','2,314','94.7%'],['Enrolment','982','97.3%']].map(r=><div className="console-row" key={r[0]}><span>{r[0]}</span><strong>{r[1]}</strong><i>{r[2]}</i></div>)}</article>
+    <article><div><span className="integration-logo c1">ME</span><div><b>Meta Conversions API</b><small>Server event coverage & deduplication</small></div></div>{[['Lead','12,842','94.8%'],['Qualified','7,621','95.4%'],['Purchase','982','96.2%']].map(r=><div className="console-row" key={r[0]}><span>{r[0]}</span><strong>{r[1]}</strong><i>{r[2]}</i></div>)}</article>
+    <article><div><span className="integration-logo c2">WA</span><div><b>WhatsApp events</b><small>Chat initiation and qualified outcomes</small></div></div>{[['Chat Started','6,904','Matched'],['Qualified','3,086','Synced'],['Booked','711','Revenue linked']].map(r=><div className="console-row" key={r[0]}><span>{r[0]}</span><strong>{r[1]}</strong><i>{r[2]}</i></div>)}</article>
+   </div>
+   <div className="conversion-adjustment-note"><Sparkles/><div><b>Conversion adjustment workflow</b><p>Low-value or partial outcomes can be reclassified so bidding learns from qualified and revenue-bearing events rather than treating every form fill equally.</p></div></div>
+  </div>
+  <div className="two-col"><FunnelPanel/><div className="app-panel"><div className="panel-head"><div><h3>Identifier coverage</h3><p>First-party identifiers and click IDs</p></div></div>{[['GCLID',97],['FBCLID',94],['Hashed email',88],['Hashed phone',91]].map(x=><div className="coverage" key={x[0]}><div><span>{x[0]}</span><b>{x[1]}%</b></div><div className="progress"><i style={{width:x[1]+'%'}}/></div></div>)}</div></div></>
 }
 function Funnel(){
  const [channel,setChannel]=useState('All channels')
