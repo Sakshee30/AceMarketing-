@@ -627,3 +627,71 @@
 .call-schedule-box input{width:100%;border:1px solid var(--line,#e5e7eb);border-radius:10px;padding:10px 12px;background:var(--panel,#fff);color:inherit;font:inherit}
 .call-schedule-box button{display:inline-flex;align-items:center;gap:8px}
 @media (max-width:720px){.call-schedule-box{align-items:stretch;flex-direction:column}}
+
+
+/* Premium motion system — subtle, purposeful, and reduced-motion safe */
+@keyframes aceFadeUp{from{opacity:0;transform:translate3d(0,18px,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+@keyframes aceFadeScale{from{opacity:0;transform:scale(.965)}to{opacity:1;transform:scale(1)}}
+@keyframes aceHeroSlide{from{opacity:0;transform:translate3d(18px,0,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+@keyframes aceFloat{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(0,-8px,0)}}
+@keyframes acePulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(144,255,231,.26)}50%{opacity:.72;box-shadow:0 0 0 8px rgba(144,255,231,0)}}
+@keyframes aceFlow{0%{background-position:0 50%}100%{background-position:200% 50%}}
+@keyframes aceArrowNudge{0%,100%{transform:translateX(0)}50%{transform:translateX(4px)}}
+@keyframes aceSoftGlow{0%,100%{opacity:.38;transform:scale(1)}50%{opacity:.65;transform:scale(1.08)}}
+
+.hero-slide-motion{position:absolute;inset:0;animation:aceHeroSlide .55s cubic-bezier(.22,.8,.25,1) both}
+.ei-hero-copy>*{animation:aceFadeUp .65s cubic-bezier(.22,.8,.25,1) both}
+.ei-hero-copy h1{animation-delay:.04s}
+.ei-hero-copy p{animation-delay:.12s}
+.ei-hero-copy .ei-hero-cta{animation-delay:.2s}
+.ei-hero-visual:before,.ei-hero-visual:after{content:"";position:absolute;border-radius:50%;pointer-events:none;filter:blur(2px);animation:aceSoftGlow 7s ease-in-out infinite}
+.ei-hero-visual:before{width:260px;height:260px;right:-70px;top:-60px;background:radial-gradient(circle,rgba(121,86,246,.38),rgba(121,86,246,0) 70%)}
+.ei-hero-visual:after{width:220px;height:220px;left:-50px;bottom:-70px;background:radial-gradient(circle,rgba(51,221,190,.23),rgba(51,221,190,0) 70%);animation-delay:-2.8s}
+.ei-visual-panel{animation:aceFloat 6s ease-in-out infinite}
+.ei-visual-top small{position:relative}
+.ei-visual-top small:before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:#90ffe7;margin-right:6px;vertical-align:middle;animation:acePulse 1.8s ease-out infinite}
+.ei-visual-row{animation:aceFadeUp .42s ease both}
+.ei-visual-row:nth-child(2){animation-delay:.04s}.ei-visual-row:nth-child(3){animation-delay:.10s}.ei-visual-row:nth-child(4){animation-delay:.16s}.ei-visual-row:nth-child(5){animation-delay:.22s}.ei-visual-row:nth-child(6){animation-delay:.28s}
+.ei-hero-next{transition:transform .22s ease,background-color .22s ease,border-color .22s ease}
+.ei-hero-next:hover{transform:translateY(-50%) scale(1.08);background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.75)}
+.ei-hero-next:hover svg{animation:aceArrowNudge .65s ease infinite}
+.ei-hero-dots{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:7px}
+.ei-hero-dots button{width:7px;height:7px;border-radius:999px;border:0;padding:0;background:rgba(255,255,255,.38);transition:width .25s ease,background-color .25s ease,transform .25s ease}
+.ei-hero-dots button:hover{transform:scale(1.25);background:rgba(255,255,255,.72)}
+.ei-hero-dots button.active{width:24px;background:#fff}
+
+.ei-promo-bar button svg,.ei-agents-head button svg,.ei-proof-head button svg,.ei-agent-cards article button svg,.public-detail-hero button svg,.resource-grid button svg{transition:transform .2s ease}
+.ei-promo-bar button:hover svg,.ei-agents-head button:hover svg,.ei-proof-head button:hover svg,.ei-agent-cards article button:hover svg,.public-detail-hero button:hover svg,.resource-grid button:hover svg{transform:translateX(4px)}
+
+.ei-capability-layout article,.ei-agent-cards article,.ei-proof-grid article,.ai-action-grid article,.public-detail-grid article,.resource-grid article,.case-study-detail-grid>article,.solution-detail-grid article,.integration-category,.app-panel,.stats-grid>*{transition:transform .28s cubic-bezier(.22,.8,.25,1),box-shadow .28s ease,border-color .28s ease}
+.ei-capability-layout article:hover,.ei-agent-cards article:hover,.ei-proof-grid article:hover,.ai-action-grid article:hover,.public-detail-grid article:hover,.resource-grid article:hover,.case-study-detail-grid>article:hover,.solution-detail-grid article:hover{transform:translateY(-5px);box-shadow:0 18px 46px rgba(47,27,72,.10)}
+.integration-category:hover,.app-panel:hover{box-shadow:0 12px 34px rgba(47,27,72,.07)}
+.stats-grid>*:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(47,27,72,.08)}
+
+.ei-problem-stage>*{animation:aceFadeUp .45s ease both}
+.ei-problem-stage>*:nth-child(2){animation-delay:.06s}.ei-problem-stage>*:nth-child(3){animation-delay:.12s}
+.ei-agent-groups{animation:aceFadeScale .4s ease both}
+.ei-proof-grid article,.ai-action-grid article{animation:aceFadeUp .55s ease both}
+.ei-proof-grid article:nth-child(2),.ai-action-grid article:nth-child(2){animation-delay:.06s}
+.ei-proof-grid article:nth-child(3),.ai-action-grid article:nth-child(3){animation-delay:.12s}
+.ei-proof-grid article:nth-child(4),.ai-action-grid article:nth-child(4){animation-delay:.18s}
+.ai-action-grid article:nth-child(5){animation-delay:.24s}
+.ai-action-grid article:nth-child(6){animation-delay:.30s}
+
+.progress>i,.health-line .progress>i,.monitor-row .progress>i{background-size:200% 100%;background-image:linear-gradient(90deg,currentColor 0%,rgba(255,255,255,.75) 48%,currentColor 100%);animation:aceFlow 2.4s linear infinite}
+.connected,.healthy,.status,.warning{transition:transform .18s ease,filter .18s ease}
+.connected:hover,.healthy:hover,.status:hover,.warning:hover{filter:brightness(1.04)}
+
+.marketing-page button,.public-route-page button,.standalone-page button,.pricing-page button,.app-shell button{transition:transform .18s ease,box-shadow .18s ease,filter .18s ease,background-color .18s ease,border-color .18s ease}
+.marketing-page button:active,.public-route-page button:active,.standalone-page button:active,.pricing-page button:active,.app-shell button:active{transform:scale(.975)}
+.ei-demo-pill:hover,.ei-hero-cta:hover,.app-primary:hover,.approve:hover,.login-submit:hover{box-shadow:0 10px 28px rgba(99,40,232,.24);filter:brightness(1.03)}
+
+.connector-modal{animation:aceFadeScale .2s ease both}
+.connector-card,.demo-booking-card,.login-card{animation:aceFadeUp .42s cubic-bezier(.22,.8,.25,1) both}
+.cookie-banner{animation:aceFadeUp .35s ease both}
+.delivery-notice{animation:aceFadeUp .3s ease both}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  .hero-slide-motion,.ei-visual-panel,.ei-hero-copy>*,.ei-visual-row,.ei-problem-stage>*,.ei-agent-groups,.ei-proof-grid article,.ai-action-grid article,.connector-modal,.connector-card,.demo-booking-card,.login-card,.cookie-banner,.delivery-notice{transform:none!important;opacity:1!important}
+}
