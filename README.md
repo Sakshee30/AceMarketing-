@@ -926,3 +926,28 @@ New API endpoints:
 - `POST /api/custom-integrations`
 
 These endpoints are demo/local operational scaffolding. They do not store production credentials or perform real third-party OAuth until provider-specific adapters and secret storage are added.
+
+
+## Parity pass: unified Data Hub and lineage
+
+This pass adds a dedicated **Data Hub** workspace to represent the "one shared truth" layer behind journey stitching, attribution, activation and agents.
+
+The module includes:
+- source registry across ad platforms, CRM, WhatsApp, calling and POS / billing;
+- source freshness and record volume;
+- canonical customer, acquisition, click-identity, lifecycle, interaction and revenue schemas;
+- data lineage from raw source → normalization → identity → journey → revenue truth → downstream consumers;
+- schema validation;
+- deterministic duplicate handling;
+- unknown-field quarantine;
+- late-arriving data reprocessing;
+- PII hashing before activation;
+- audit/source lineage;
+- recent synchronization history;
+- canonical-view rebuild workflow.
+
+New API endpoints:
+- `GET /api/data-hub`
+- `POST /api/data-hub/rebuild`
+
+This directly addresses the brochure's problem statement that teams often operate across multiple platforms without a shared truth, and its product architecture that stitches sources and tools into one journey before agents act on it.
