@@ -722,3 +722,10 @@
 .adjustment-preview{margin:14px 0;max-height:280px;overflow:auto}
 .event-debugger{max-width:760px}
 .debug-event-list{max-height:440px;overflow:auto}
+
+
+/* Clickable reference outcome cards */
+.ei-proof-grid article[role="button"]{cursor:pointer;outline:none}
+.ei-proof-grid article[role="button"]:focus-visible{box-shadow:0 0 0 3px rgba(109,50,236,.22),0 18px 46px rgba(47,27,72,.10);border-color:rgba(109,50,236,.45);transform:translateY(-4px)}
+.ei-proof-grid article[role="button"] footer svg{transition:transform .2s ease}
+.ei-proof-grid article[role="button"]:hover footer svg,.ei-proof-grid article[role="button"]:focus-visible footer svg{transform:translateX(5px)}
