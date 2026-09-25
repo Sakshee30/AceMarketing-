@@ -2685,3 +2685,71 @@ SMTP_PASS=...
 ```
 
 Production preflight now checks the Google-login redirect/success URLs, public application URL and SMTP requirements. Backend syntax and CI structure checks include `backend/src/auth-mailer.mjs`.
+
+
+## Functional-control completion pass
+
+This pass converts the remaining visible no-op buttons identified by the workspace scan into real actions.
+
+Implemented in this pass:
+
+- **Diagnostics**
+  - live score derived from delivery, queue, connector and attribution state;
+  - persisted full-scan records;
+  - persisted replay requests;
+  - configuration guidance dialog.
+- **Conversion Adjustments**
+  - persisted adjustment state;
+  - real payload preview;
+  - deterministic idempotency key;
+  - audited application state.
+- **Sites**
+  - real event-debugger endpoint and dialog;
+  - no synthetic events injected into an empty debugger.
+- **Matchback**
+  - real unmatched-attribution review from the attribution store.
+- **Fraud**
+  - human-review queue action is persisted and audited.
+- **Cross-domain continuity**
+  - match-log view reads persisted matched attribution events.
+- **Journeys**
+  - backend journey list;
+  - working source filter;
+  - working stage filter;
+  - working search;
+  - explicit empty state.
+- **Models**
+  - validation view backed by persisted model-run and lead-population evidence;
+  - explicit notice that this is operational evidence, not offline statistical validation.
+- **Overview**
+  - live customer event list reads the live-sync endpoint;
+  - View All toggles the real event list;
+  - fixed health percentages were removed from the operational summary.
+- **Funnel**
+  - campaign/funnel view switch;
+  - backend funnel data;
+  - channel/disposition/period controls;
+  - CSV export.
+- **AdSync**
+  - Add Pipeline opens a real event-rule builder and persists the rule.
+- **Attribution**
+  - summary is grounded in the persisted attribution store;
+  - period control is interactive.
+- **Planner**
+  - prior-month comparison toggle is functional and explicitly labeled advisory where historical data is not loaded.
+- **Feed**
+  - Schema Settings opens the active guardrail configuration.
+- **Agents**
+  - Edit Trigger now edits the selected trigger instead of acting as a decorative control.
+- **Routing**
+  - View Recent Matches reads persisted routing decisions.
+- **Follow-ups / Feedback**
+  - Open Journey loads the matching backend journey record when one exists.
+- **Audiences**
+  - Export produces a CSV of the current workspace audience state.
+
+### Visible-button scan
+
+A static scan of `frontend/src/AcePlatform.tsx` was rerun after this pass. No remaining visible button without a handler was found. The only scanner matches were the public navigation buttons for Industries, Agents and Resources; each already has an `onClick` handler and was a false positive caused by the scanner matching nested JSX.
+
+This does **not** mean every external provider is live-verified. Provider-backed features still require the real production accounts, credentials, approvals and callback configuration described elsewhere in this README. It means the visible product controls no longer intentionally present no-op buttons.
