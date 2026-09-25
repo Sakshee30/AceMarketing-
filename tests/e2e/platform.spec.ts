@@ -105,6 +105,23 @@ test.describe('workspace critical flows',()=>{
     await expect(page.locator('.product-body')).toContainText(/Lead quality scoring|Journey propensity features/i)
   })
 
+  test('conversion operations expose real creation and empty-state flows',async({page})=>{
+    await page.getByRole('button',{name:'Follow-ups',exact:true}).click()
+    await expect(page.locator('.product-body h1')).toContainText(/Follow-up operations/i)
+    await expect(page.getByRole('button',{name:/Create follow-up/i})).toBeVisible()
+
+    await page.getByRole('button',{name:'Feedback',exact:true}).click()
+    await expect(page.locator('.product-body h1')).toContainText(/Feedback agent/i)
+    await expect(page.getByRole('button',{name:/Record feedback/i})).toBeVisible()
+
+    await page.getByRole('button',{name:'Approvals',exact:true}).click()
+    await expect(page.locator('.product-body h1')).toContainText(/Human approval center/i)
+
+    await page.getByRole('button',{name:'Routing',exact:true}).click()
+    await expect(page.locator('.product-body h1')).toContainText(/Lead routing/i)
+    await expect(page.locator('.product-body')).toContainText(/Routed today|No routing load yet/i)
+  })
+
   test('notification and approval settings are editable',async({page})=>{
     await page.getByRole('button',{name:'Settings',exact:true}).click()
     await page.getByRole('button',{name:'Notifications',exact:true}).click()
