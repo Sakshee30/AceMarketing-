@@ -3556,3 +3556,17 @@ This keeps the agent library aligned with the public EasyInsights 11-agent struc
 ### CI interaction hardening — consent banner
 
 The consent surface is intentionally non-blocking: optional analytics/marketing remain disabled until the visitor chooses a preference, but the banner does not prevent public navigation or workspace interaction. The full-screen consent wrapper now uses `pointer-events: none` while the banner itself remains interactive, and the banner is exposed as an accessible region instead of a modal dialog. This fixes mobile Playwright failures where the consent overlay intercepted clicks on its own controls and unrelated dashboard/public navigation.
+
+
+### Backend-driven funnel controls
+
+The Funnel workspace filters are now operational instead of cosmetic.
+
+- Channel, disposition and date window are sent to `GET /api/funnel`.
+- Supported server-side date windows are 7, 30 and 90 days.
+- Lead/profile timestamps and meeting timestamps are filtered on the backend before aggregation.
+- Channel filtering is applied before funnel-stage totals and campaign aggregation.
+- Disposition filtering restricts campaign rows to campaigns with the selected downstream stage.
+- The backend returns available channel values for the active date window so the UI does not infer them from an already-filtered result.
+- Funnel statistics, campaign rows and CSV export now reflect the same active filter state.
+- CSV exports include filter metadata and the selected date-window suffix in the file name.
