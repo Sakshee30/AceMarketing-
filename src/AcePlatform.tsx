@@ -8,8 +8,8 @@ import {
 } from 'lucide-react'
 import './ace-platform.css'
 
-type View='site'|'app'
-type AppTab='Overview'|'AdSync'|'Journeys'|'Attribution'|'Enrich'|'Agents'|'Integrations'|'Audiences'|'Monitoring'|'Settings'
+type View='site'|'app'|'login'
+type AppTab='Overview'|'AdSync'|'Events'|'Journeys'|'Attribution'|'Enrich'|'Agents'|'Integrations'|'Audiences'|'Monitoring'|'Settings'
 
 const agents=[
  ['Meta Advanced CAPI','Return qualified outcomes to Meta server-side with deduplication.','Signal return','25–40% ROAS'],
@@ -48,13 +48,13 @@ function Header({openApp}:{openApp:()=>void}){
  const [open,setOpen]=useState(false)
  return <header className="marketing-header"><Brand/><nav className={open?'mobile-open':''}>
   <a href="#platform">Platform</a><a href="#problems">Use cases</a><a href="#agents">Agents</a><a href="#integrations">Integrations</a><a href="#industries">Industries</a><a href="#proof">Proof</a>
-  <button className="ghost-nav" onClick={openApp}>Open product</button><a href="#demo" className="header-cta">Book a demo <ArrowRight size={15}/></a>
+  <button className="ghost-nav" onClick={openLogin}>Login</button><button className="ghost-nav" onClick={openApp}>Open product</button><a href="#demo" className="header-cta">Book a demo <ArrowRight size={15}/></a>
  </nav><button className="menu-toggle" onClick={()=>setOpen(!open)}>{open?<X/>:<Menu/>}</button></header>
 }
 function Marketing({openApp}:{openApp:()=>void}){
  return <div className="marketing-page">
   <section className="hero-wrap">
-   <Header openApp={openApp}/>
+   <Header openApp={openApp} openLogin={openLogin}/>
    <div className="hero-grid">
     <div className="hero-copy">
      <span className="kicker">FIRST-PARTY PERFORMANCE MARKETING INFRASTRUCTURE</span>
@@ -128,17 +128,42 @@ function Marketing({openApp}:{openApp:()=>void}){
   <section className="proof-section" id="proof">
    <div className="section-title light"><span className="kicker">WORKFLOW PROOF</span><h2>Complex funnels become one measurable operating system.</h2></div>
    <div className="proof-cards">{caseStudies.map(x=><article key={x[0]}><span>{x[0]}</span><p>{x[1]}</p><strong>{x[2]}</strong><small>{x[3]}</small></article>)}</div>
+   <div className="case-study-grid">
+    <article><span>EDTECH · JARO EDUCATION</span><h3>High-volume lead management</h3><p>Unified CRM stage mapping and offline conversion pipelines across Google, Meta, Bing and LinkedIn.</p><div><b>14,000+</b><small>daily leads</small><b>250,000+</b><small>conversions imported daily</small><b>15+</b><small>ad accounts</small></div></article>
+    <article><span>HEALTHCARE · APOLLO AYURVAID</span><h3>Call + WhatsApp attribution</h3><p>Connected telephony timestamps and website sessions to restore offline call attribution and return conversion events to advertising platforms.</p><div><b>Calls</b><small>matched to source</small><b>WhatsApp</b><small>conversion events</small><b>Real time</b><small>signal return</small></div></article>
+    <article><span>HIGH-AOV · GEMPUNDIT</span><h3>WhatsApp + partial payment journey</h3><p>Persisted click identifiers from landing-page session into WhatsApp intent and custom partial-payment outcomes.</p><div><b>GCLID</b><small>persisted server-side</small><b>Partial</b><small>payments classified</small><b>Revenue</b><small>fed to bidding</small></div></article>
+    <article><span>HOME SERVICES · BERGER PAINTS</span><h3>Quality-first lead optimization</h3><p>Activated CRM data through server-side conversions and custom CTWA events so bidding optimized toward high-quality enquiries.</p><div><b>19%</b><small>CAC reduction</small><b>4×</b><small>quality-lead growth</small><b>24×7</b><small>monitoring</small></div></article>
+   </div>
+  </section>
+
+  <section className="diagnostics-section">
+   <div className="section-title"><span className="kicker dark">DIAGNOSE THE ROOT CAUSE</span><h2>Your campaigns can only learn from the data they receive.</h2><p>Use a single diagnostic layer to separate media problems from tracking, data-quality and operational funnel issues.</p></div>
+   <div className="diagnostic-grid">
+    <article><Activity/><h3>Business & operational impact</h3><ul><li>Rising acquisition cost with unclear lead quality</li><li>Different teams reporting different numbers</li><li>Slow handoffs between marketing and sales</li><li>Budget decisions without end-to-end evidence</li></ul></article>
+    <article><Network/><h3>Tracking & data quality</h3><ul><li>Broken or duplicated conversion events</li><li>Cross-domain and chatbot tracking gaps</li><li>Missing click identifiers on offline outcomes</li><li>No consistent source of truth for funnel stages</li></ul></article>
+    <article><Target/><h3>Ad optimization</h3><ul><li>Algorithms learning from low-value form fills</li><li>Qualified outcomes arriving too late</li><li>Converted users still being retargeted</li><li>Insufficient first-party conversion coverage</li></ul></article>
+   </div>
   </section>
 
   <section className="security-band"><ShieldCheck/><div><span className="kicker dark">DATA CONTROLS</span><h2>Enterprise-ready governance foundation.</h2><p>Consent-aware collection, hashed identifiers, role-based permissions, audit logging, configurable retention and monitored event delivery are part of the implementation plan.</p></div><div className="badges"><span>RBAC</span><span>Audit Logs</span><span>Encryption</span><span>Retention</span></div></section>
 
-  <section className="demo-cta" id="demo"><span className="kicker">SEE THE PRODUCT FLOW</span><h2>Operate the entire paid funnel from one workspace.</h2><p>Connect → observe → enrich → qualify → activate → attribute → learn.</p><button onClick={openApp}>Open interactive workspace <ArrowRight/></button></section>
+  <DemoSection openApp={openApp}/>
   <footer className="marketing-footer"><Brand/><p>AceMarketing · first-party growth operating system.</p></footer>
  </div>
 }
 
+function DemoSection({openApp}:{openApp:()=>void}){
+ const [sent,setSent]=useState(false)
+ return <section className="demo-cta" id="demo"><div className="demo-copy"><span className="kicker">SEE THE PRODUCT FLOW</span><h2>Operate the entire paid funnel from one workspace.</h2><p>Connect → observe → enrich → qualify → activate → attribute → learn.</p><button onClick={openApp}>Open interactive workspace <ArrowRight/></button></div><form className="demo-form" onSubmit={e=>{e.preventDefault();setSent(true)}}>{sent?<div className="demo-success"><Check/><h3>Demo request captured</h3><p>This frontend flow is ready to connect to your CRM or scheduling backend.</p></div>:<><h3>Book a product walkthrough</h3><label>Work email<input required type="email" placeholder="name@company.com"/></label><label>Company<input required placeholder="Company name"/></label><label>Monthly ad spend<select defaultValue=""><option value="" disabled>Select range</option><option>Under ₹5L</option><option>₹5L – ₹25L</option><option>₹25L – ₹1Cr</option><option>₹1Cr+</option></select></label><label>Primary challenge<select defaultValue=""><option value="" disabled>Select challenge</option><option>Lead quality</option><option>Conversion leakage</option><option>Attribution</option><option>Tracking/data quality</option></select></label><button type="submit">Request demo <ArrowRight/></button></>}</form></section>
+}
+
+function Login({back,openApp}:{back:()=>void,openApp:()=>void}){
+ const [email,setEmail]=useState(''); const [password,setPassword]=useState(''); const [show,setShow]=useState(false)
+ return <div className="login-page"><div className="login-brand"><Brand/><button onClick={back}>Back to website</button></div><div className="login-shell"><div className="login-story"><span className="kicker">ACE MARKETING PLATFORM</span><h1>One workspace for the complete acquisition journey.</h1><p>Connect paid media, CRM, calls, messaging and offline outcomes — then activate clean signals and measure revenue in one place.</p><div className="login-flow">{['Connect','Stitch','Enrich','Activate','Attribute'].map((x,i)=><div key={x}><span>{i+1}</span><b>{x}</b>{i<4&&<ArrowRight/>}</div>)}</div></div><form className="login-card" onSubmit={e=>{e.preventDefault();openApp()}}><Brand dark/><h2>Log in to your workspace</h2><p>Use your organization credentials.</p><button type="button" className="google-login">G <span>Continue with Google</span></button><div className="or"><i/>OR<i/></div><label>Email<input value={email} onChange={e=>setEmail(e.target.value)} required type="email" placeholder="you@company.com"/></label><label>Password<div className="password-field"><input value={password} onChange={e=>setPassword(e.target.value)} required type={show?'text':'password'} placeholder="••••••••"/><button type="button" onClick={()=>setShow(!show)}>{show?'Hide':'Show'}</button></div></label><div className="login-options"><label><input type="checkbox"/> Remember me</label><button type="button">Forgot password?</button></div><button className="login-submit">Log in <ArrowRight/></button><small>Demo mode: any valid email and password opens the interactive workspace.</small></form></div></div>
+}
+
 const appTabs=[
- ['Overview',Gauge],['AdSync',RadioTower],['Journeys',Network],['Attribution',PieChart],['Enrich',DatabaseZap],['Agents',Bot],['Integrations',Cable],['Audiences',UsersRound],['Monitoring',Activity],['Settings',Settings2]
+ ['Overview',Gauge],['AdSync',RadioTower],['Events',Zap],['Journeys',Network],['Attribution',PieChart],['Enrich',DatabaseZap],['Agents',Bot],['Integrations',Cable],['Audiences',UsersRound],['Monitoring',Activity],['Settings',Settings2]
 ] as const
 function Stat({label,value,sub,Icon}:{label:string,value:string,sub:string,Icon:any}){return <article className="stat"><div><span>{label}</span><Icon/></div><strong>{value}</strong><small>{sub}</small></article>}
 function PageHead({crumb,title,sub,action}:{crumb:string,title:string,sub:string,action?:string}){return <div className="page-head"><div><span>{crumb}</span><h1>{title}</h1><p>{sub}</p></div>{action&&<button className="app-primary"><Sparkles/>{action}</button>}</div>}
@@ -161,6 +186,21 @@ function AdSync(){
  ].map(x=><div className="pipeline-row" key={x[0]}><span><Zap/></span><div><b>{x[0]}</b><small>{x[1]}</small></div><em>{x[2]}</em><i>Live</i><strong>{x[3]}</strong><ChevronRight/></div>)}</div>
  <div className="two-col"><FunnelPanel/><div className="app-panel"><div className="panel-head"><div><h3>Identifier coverage</h3><p>First-party identifiers and click IDs</p></div></div>{[['GCLID',97],['FBCLID',94],['Hashed email',88],['Hashed phone',91]].map(x=><div className="coverage" key={x[0]}><div><span>{x[0]}</span><b>{x[1]}%</b></div><div className="progress"><i style={{width:x[1]+'%'}}/></div></div>)}</div></div></>
 }
+function Events(){
+ const [active,setActive]=useState('Qualified Lead')
+ const events=[
+  ['Qualified Lead','CRM','Google Ads + Meta Ads','Real time','Active'],
+  ['Consultation Booked','CRM','Google Ads','Real time','Active'],
+  ['WhatsApp Started','WhatsApp','Google Ads + Meta Ads','Real time','Active'],
+  ['Call Connected','Calling','Meta Ads','Real time','Active'],
+  ['Enrolment','CRM / Billing','Google Ads + Meta Ads + LinkedIn','Real time','Active'],
+  ['Low Quality Lead','CRM','Audience suppression','5 min','Active']
+ ]
+ return <><PageHead crumb="Activation / Events" title="Conversion event manager" sub="Define the business outcomes that should be captured, transformed and returned to downstream platforms." action="New event"/>
+ <div className="event-layout"><div className="app-panel event-list"><div className="panel-head"><div><h3>Configured events</h3><p>Business logic → destinations</p></div><span className="healthy">6 active</span></div>{events.map(x=><button className={active===x[0]?'selected':''} key={x[0]} onClick={()=>setActive(x[0])}><span><Zap/></span><div><b>{x[0]}</b><small>{x[1]} → {x[2]}</small></div><i>{x[4]}</i><ChevronRight/></button>)}</div>
+ <div className="app-panel event-editor"><div className="panel-head"><div><h3>{active}</h3><p>Transformation and delivery rules</p></div><button>Edit</button></div><div className="event-step"><span>1</span><div><b>Source condition</b><p>CRM stage changes to <strong>{active}</strong> and identity contains a valid first-party key.</p></div></div><div className="event-step"><span>2</span><div><b>Identity resolution</b><p>Resolve GCLID / FBCLID, hashed email, hashed phone and workspace customer ID.</p></div></div><div className="event-step"><span>3</span><div><b>Normalize & deduplicate</b><p>Apply event schema, revenue/value rules and deterministic event ID before delivery.</p></div></div><div className="event-step"><span>4</span><div><b>Activate</b><p>Send to configured ad-platform destinations and write delivery status to the audit stream.</p></div></div><div className="delivery-summary"><div><span>Median latency</span><b>42s</b></div><div><span>Match rate</span><b>94.8%</b></div><div><span>24h delivery</span><b>99.82%</b></div></div></div></div></>
+}
+
 function Journeys(){
  return <><PageHead crumb="Measurement / Journeys" title="Customer journey explorer" sub="Inspect the complete chronology for every lead across connected systems." action="Find journey"/>
  <div className="filters"><button>All sources <ChevronDown/></button><button>All stages <ChevronDown/></button><button>Last 30 days <ChevronDown/></button><div><Search/> Search phone, email, click ID...</div></div>
@@ -216,8 +256,8 @@ function Settings(){
 }
 function Product({back}:{back:()=>void}){
  const [tab,setTab]=useState<AppTab>('Overview')
- const view=useMemo(()=>({Overview:<Overview/>,AdSync:<AdSync/>,Journeys:<Journeys/>,Attribution:<Attribution/>,Enrich:<Enrich/>,Agents:<Agents/>,Integrations:<Integrations/>,Audiences:<Audiences/>,Monitoring:<Monitoring/>,Settings:<Settings/>}[tab]),[tab])
+ const view=useMemo(()=>({Overview:<Overview/>,AdSync:<AdSync/>,Events:<Events/>,Journeys:<Journeys/>,Attribution:<Attribution/>,Enrich:<Enrich/>,Agents:<Agents/>,Integrations:<Integrations/>,Audiences:<Audiences/>,Monitoring:<Monitoring/>,Settings:<Settings/>}[tab]),[tab])
  return <div className="product"><aside><Brand/><div className="workspace"><span>AM</span><div><b>Ace EdTech</b><small>Production workspace</small></div><ChevronDown/></div><nav>{appTabs.map(([x,I])=><button key={x} className={tab===x?'active':''} onClick={()=>setTab(x)}><I/>{x}</button>)}</nav><div className="aside-footer"><button onClick={back}><ArrowRight/>Back to website</button><div className="profile-mini"><span>S</span><div><b>Sakshee</b><small>Workspace owner</small></div></div></div></aside>
  <main><header className="product-head"><div className="global-search"><Search/>Search journeys, leads, campaigns...</div><div><span className="sync">● Live sync healthy</span><button><Headphones/></button><button><Globe2/></button><span className="avatar-sm">S</span></div></header><div className="product-body">{view}</div></main></div>
 }
-export default function AcePlatform(){const[view,setView]=useState<View>('site');return view==='site'?<Marketing openApp={()=>setView('app')}/>:<Product back={()=>setView('site')}/>}
+export default function AcePlatform(){const[view,setView]=useState<View>('site');if(view==='login')return <Login back={()=>setView('site')} openApp={()=>setView('app')}/>;return view==='site'?<Marketing openApp={()=>setView('app')} openLogin={()=>setView('login')}/>:<Product back={()=>setView('site')}/>}
