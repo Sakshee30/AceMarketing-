@@ -7,7 +7,7 @@ import { connectorVaultReady, encryptSecret } from './vault.mjs'
 import { enqueueJob, queueAvailable, queueStats } from './queue.mjs'
 import { attributionStats, captureClickSession, closeAttributionStore, recordAssistedEvent, reconcileAttribution } from './attribution-store.mjs'
 import { closeLeadOps, createActivationRun, createAudience as createLeadAudience, getAudienceBundle, getLeadProfile, leadOpsStats, listActivationRuns, listAudiences as listLeadAudiences, listLeadProfiles, materializeAudience, overrideLeadGrade as persistLeadGrade, previewAudience as previewLeadAudience, scoreLead, upsertLeadProfile, updateAudienceSyncState } from './lead-ops.mjs'
-import { closeAgentOrchestrator, completeFollowUp as persistCompleteFollowUp, createAgentRun, createFollowUp, createMeeting, listAgentRuns, listFeedback as listPersistedFeedback, listFollowUps as listPersistedFollowUps, listMeetings as listPersistedMeetings, listRoutingDecisions, recordFeedback, routeLead } from './agent-orchestrator.mjs'
+import { closeAgentOrchestrator, completeFollowUp as persistCompleteFollowUp, createAgentRun, createFollowUp, createMeeting, getMeeting, listAgentRuns, listFeedback as listPersistedFeedback, listFollowUps as listPersistedFollowUps, listMeetings as listPersistedMeetings, listRoutingDecisions, recordFeedback, rescheduleMeeting, routeLead } from './agent-orchestrator.mjs'
 import { closeCustomIntegrations, createCustomIntegration as persistCustomIntegration, listCustomIntegrations, testCustomIntegration as runCustomIntegrationTest } from './custom-integrations.mjs'
 import { closeObservability, listAlerts as listLiveAlerts, listMonitoringRules as listLiveMonitoringRules, monitoringSnapshot, recordApiTelemetry, resolveAlert as resolveLiveAlert, saveMonitoringRule } from './observability.mjs'
 import { assertCapacity, closeEntitlements, finalizeReservation, resourceCountAllowed, subscriptionSummary, updateWorkspaceEntitlements } from './entitlements.mjs'
@@ -21,6 +21,7 @@ import { closeEventRules, createEventRule, evaluateEventRules, eventRuleStats, l
 import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, publicChallenges, publicCaseStudies, publicResources, publicResourceCenter } from './public-content.mjs'
 import { parseWhatsAppWebhook, resolveWhatsAppWorkspace, sendWhatsAppMessage, verifyWhatsAppWebhookChallenge, verifyWhatsAppWebhookSignature } from './whatsapp-cloud.mjs'
 import { normalizeCallEvent, resolveCallWorkspace, verifyCallWebhook } from './call-events.mjs'
+import { createCalendarEvent, updateCalendarEvent } from './calendar-provider.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -46,6 +47,7 @@ const CONNECTOR_PROVIDERS={
   'Salesforce':{provider:'salesforce',authType:'oauth2',clientId:process.env.SALESFORCE_OAUTH_CLIENT_ID||'',clientSecret:process.env.SALESFORCE_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://login.salesforce.com/services/oauth2/authorize',tokenUrl:'https://login.salesforce.com/services/oauth2/token',scopes:['api','refresh_token']},
   'Zoho CRM':{provider:'zoho',authType:'oauth2',clientId:process.env.ZOHO_OAUTH_CLIENT_ID||'',clientSecret:process.env.ZOHO_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://accounts.zoho.com/oauth/v2/auth',tokenUrl:'https://accounts.zoho.com/oauth/v2/token',scopes:['ZohoCRM.modules.ALL','ZohoCRM.settings.ALL']},
   'GA4':{provider:'google',authType:'oauth2',clientId:process.env.GOOGLE_OAUTH_CLIENT_ID||'',clientSecret:process.env.GOOGLE_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://accounts.google.com/o/oauth2/v2/auth',tokenUrl:'https://oauth2.googleapis.com/token',scopes:['openid','email','https://www.googleapis.com/auth/analytics.readonly']},
+  'Google Calendar':{provider:'google',authType:'oauth2',clientId:process.env.GOOGLE_OAUTH_CLIENT_ID||'',clientSecret:process.env.GOOGLE_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://accounts.google.com/o/oauth2/v2/auth',tokenUrl:'https://oauth2.googleapis.com/token',scopes:['openid','email','https://www.googleapis.com/auth/calendar.events']},
   'WhatsApp':{provider:'meta',authType:'oauth2',clientId:process.env.META_OAUTH_CLIENT_ID||'',clientSecret:process.env.META_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://www.facebook.com/v23.0/dialog/oauth',tokenUrl:'https://graph.facebook.com/v23.0/oauth/access_token',scopes:['whatsapp_business_management','whatsapp_business_messaging']}
 }
 const CONNECTOR_REDIRECT_URI=process.env.CONNECTOR_OAUTH_REDIRECT_URI||''
@@ -90,7 +92,7 @@ if (IS_PROD && (!ADMIN_EMAIL || !ADMIN_PASSWORD_HASH)) throw new Error('ADMIN_EM
 if (IS_PROD && allowedOrigins.size===0) throw new Error('CORS_ALLOWED_ORIGINS is required in production')
 const limitRequest=createRateLimiter({windowMs:60_000,max:Number(process.env.RATE_LIMIT_PER_MINUTE||240)})
 
-const integrations = ['Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads','GA4','Zoho CRM','Salesforce','HubSpot','LeadSquared','HighLevel','WhatsApp','WATI','Gupshup','MoEngage','CleverTap','Exotel','Knowlarity','Tata Tele','MyOperator','Shopify','WooCommerce','Magento','WordPress','Custom Backend']
+const integrations = ['Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads','GA4','Google Calendar','Zoho CRM','Salesforce','HubSpot','LeadSquared','HighLevel','WhatsApp','WATI','Gupshup','MoEngage','CleverTap','Exotel','Knowlarity','Tata Tele','MyOperator','Shopify','WooCommerce','Magento','WordPress','Custom Backend']
 const agents = ['Meta Advanced CAPI','Google ECL / OCI','Call Tracking Events','Custom Integration','Lead Grading','CRM Enrichment','Voice Lead Qualification','Voice Scheduler','Meeting Reminder','Feedback Agent','Ask Ace']
 const trackedEvents = []
 
@@ -1677,8 +1679,36 @@ const server = http.createServer(async (req,res)=>{
     if (req.method === 'GET' && url.pathname === '/api/meetings') return send(req,res,200,{items:await listPersistedMeetings(workspaceId)})
     if (req.method === 'POST' && url.pathname === '/api/meetings') {
       const body=await readBody(req)
-      const item=await createMeeting(workspaceId,body)
-      return send(req,res,201,item)
+      if(!body.leadRef&&!body.lead) return send(req,res,400,{error:'leadRef or lead required'})
+      if(!body.startsAt) return send(req,res,400,{error:'startsAt required'})
+      try{
+        let calendar=null
+        if(body.syncCalendar!==false){
+          calendar=await createCalendarEvent(workspaceId,{
+            ...body,
+            title:body.title||('Consultation · '+String(body.leadRef||body.lead)),
+            attendees:body.attendees||[]
+          })
+        }
+        const item=await createMeeting(workspaceId,{...body,externalCalendarId:calendar?.externalId||body.externalCalendarId||''})
+        return send(req,res,201,{...item,calendar})
+      }catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'meeting creation failed'})}
+    }
+    if (req.method === 'POST' && url.pathname === '/api/meetings/reschedule') {
+      const body=await readBody(req)
+      if(!body.id||!body.startsAt) return send(req,res,400,{error:'id and startsAt required'})
+      const current=await getMeeting(workspaceId,String(body.id))
+      if(!current) return send(req,res,404,{error:'meeting not found'})
+      try{
+        let calendar=null
+        if(current.external_calendar_id){
+          calendar=await updateCalendarEvent(workspaceId,current.external_calendar_id,{...body,startsAt:body.startsAt})
+        }else if(body.syncCalendar!==false){
+          calendar=await createCalendarEvent(workspaceId,{...body,leadRef:current.lead_ref,startsAt:body.startsAt,title:'Consultation · '+current.lead_ref})
+        }
+        const item=await rescheduleMeeting(workspaceId,String(body.id),{startsAt:body.startsAt,externalCalendarId:calendar?.externalId||null})
+        return send(req,res,200,{...item,calendar})
+      }catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'meeting reschedule failed'})}
     }
     if (req.method === 'POST' && url.pathname === '/api/meetings/remind') {
       const body=await readBody(req)
