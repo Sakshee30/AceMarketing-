@@ -268,3 +268,20 @@ This pass implements additional brochure sections that were not yet represented 
 ### Why the compliance badges are labeled as targets
 
 The supplied brochure visually presents certification/compliance badges on its closing page. AceMarketing does not claim those certifications merely because the reference product shows them. The UI now represents them as parity targets so the product stays accurate while the actual controls, audits and certifications are built and verified.
+
+
+## Public website parity pass: demo, company and resources
+
+This pass expands AceMarketing beyond the landing page and workspace into the public-site information architecture currently visible on EasyInsights:
+
+- Dedicated **Book a Demo** page with:
+  - monthly digital marketing budget;
+  - burning pain point;
+  - company/work-email capture;
+  - local date/time scheduling UI ready for Calendly or another scheduling API.
+- Dedicated **Company** page with operating principles and a custom-services section.
+- Dedicated **Resources** page with implementation-guide surfaces for custom events, server-side activation, attribution, CRM enrichment, offline conversion tracking and audience operations.
+- Marketing header/footer navigation now links to Company, Resources, Pricing, Demo, Login and the product.
+- Added `GET /api/resources`.
+
+The public EasyInsights demo page currently emphasizes junk-lead reduction, lead quality, CRM/ad-platform connectivity, intuitive UI, setup speed and usage-based/flexible pricing. AceMarketing mirrors that page structure and workflow without copying third-party images, addresses, logos, or proprietary text verbatim.
