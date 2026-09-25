@@ -1,7 +1,7 @@
 import http from 'node:http'
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { URL } from 'node:url'
-import { createToken, verifyToken, verifyPassword, createRateLimiter, securityHeaders, resolveCorsOrigin } from './security.mjs'
+import { createToken, verifyToken, verifyPassword, hashPassword, hasPermission, createRateLimiter, securityHeaders, resolveCorsOrigin } from './security.mjs'
 import { closeStore, getState, mutateState, storageHealth, withWorkspace } from './store.mjs'
 import { connectorVaultReady, encryptSecret } from './vault.mjs'
 import { enqueueJob, queueStats } from './queue.mjs'
@@ -66,6 +66,26 @@ const events = [
   {name:'Enrolment',source:'CRM / Billing',destinations:['Google Ads','Meta Ads','LinkedIn Ads'],latency:'real-time',status:'active'},
 ]
 
+const permissionForRequest=(method,path)=>{
+  if(method==='GET'){
+    if(path.startsWith('/api/members')) return 'members.read'
+    if(path.startsWith('/api/reports')||path.startsWith('/api/attribution')||path.startsWith('/api/journeys')) return 'reports.read'
+    if(path.startsWith('/api/monitoring')||path.startsWith('/api/alerts')||path.startsWith('/api/connector-health')) return 'monitoring.read'
+    return 'workspace.read'
+  }
+  if(path.startsWith('/api/members')||path.startsWith('/api/invitations')) return 'members.write'
+  if(path.startsWith('/api/integrations')||path.startsWith('/api/custom-integrations')) return 'integrations.write'
+  if(path.startsWith('/api/agents')||path.startsWith('/api/models/run')) return 'agents.write'
+  if(path.startsWith('/api/audiences')) return 'audiences.write'
+  if(path.startsWith('/api/approvals')) return 'approvals.write'
+  if(path.startsWith('/api/follow-ups')) return 'followups.write'
+  if(path.startsWith('/api/qualification-calls')) return 'calls.write'
+  if(path.startsWith('/api/meetings')) return 'meetings.write'
+  if(path.startsWith('/api/signal-deliveries')) return 'delivery.write'
+  if(path.startsWith('/api/api-keys')||path.startsWith('/api/webhooks')) return 'developer.write'
+  return 'workspace.write'
+}
+
 const readBody = req => new Promise((resolve,reject)=>{
   let body=''
   req.on('data', chunk => {
@@ -94,7 +114,7 @@ const send = (req,res,status,data,extra={}) => {
   res.end(status===204?'':JSON.stringify(data))
 }
 
-const publicPaths=new Set(['/api/health','/api/ready','/api/auth/login','/api/demo-requests','/api/track','/api/pricing/recommend','/api/pricing/quote','/api/public/navigation','/api/public/industries','/api/public/agents','/api/public/integrations','/api/public/challenges','/api/public/case-studies','/api/public/resources'])
+const publicPaths=new Set(['/api/health','/api/ready','/api/auth/login','/api/invitations/activate','/api/demo-requests','/api/track','/api/pricing/recommend','/api/pricing/quote','/api/public/navigation','/api/public/industries','/api/public/agents','/api/public/integrations','/api/public/challenges','/api/public/case-studies','/api/public/resources'])
 const server = http.createServer(async (req,res)=>{
   req.requestId=String(req.headers['x-request-id']||randomUUID())
   const ip=String(req.headers['x-forwarded-for']||req.socket.remoteAddress||'unknown').split(',')[0].trim()
@@ -103,16 +123,28 @@ const server = http.createServer(async (req,res)=>{
   const url = new URL(req.url, `http://localhost:${PORT}`)
   if (req.method === 'OPTIONS') return send(req,res,204,{})
   if (req.headers.origin && !resolveCorsOrigin(req.headers.origin,allowedOrigins)) return send(req,res,403,{error:'origin not allowed'})
-  if(AUTH_REQUIRED && url.pathname.startsWith('/api/') && !publicPaths.has(url.pathname)){
-    const token=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'')
-    const user=verifyToken(token,JWT_SECRET)
-    if(!user) return send(req,res,401,{error:'unauthorized'})
-    req.user=user
-  }
   const workspaceId=String(req.headers['x-workspace-id']||process.env.DEFAULT_WORKSPACE_ID||'ws_default')
   if(!/^[A-Za-z0-9_-]{1,64}$/.test(workspaceId)) return send(req,res,400,{error:'invalid workspace id'})
+  let authenticatedUser=null
+  if(AUTH_REQUIRED && url.pathname.startsWith('/api/') && !publicPaths.has(url.pathname)){
+    const token=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'')
+    authenticatedUser=verifyToken(token,JWT_SECRET)
+    if(!authenticatedUser) return send(req,res,401,{error:'unauthorized'})
+    if(authenticatedUser.workspaceId!==workspaceId) return send(req,res,403,{error:'token workspace mismatch'})
+  }
   return withWorkspace(workspaceId,async()=>{
   try {
+    if(authenticatedUser){
+      const authState=await getState()
+      const session=(authState.sessions||[]).find(x=>x.jti===authenticatedUser.jti&&x.status==='active')
+      const member=(authState.members||[]).find(x=>x.id===authenticatedUser.userId&&x.status==='active')
+      if(!session||!member) return send(req,res,401,{error:'session revoked or member inactive'})
+      if(session.expiresAt&&Date.parse(session.expiresAt)<=Date.now()) return send(req,res,401,{error:'session expired'})
+      authenticatedUser={...authenticatedUser,role:member.role,email:member.email,userId:member.id}
+      req.user=authenticatedUser
+      const permission=permissionForRequest(req.method||'GET',url.pathname)
+      if(!hasPermission(member.role,permission)) return send(req,res,403,{error:'forbidden',permission,role:member.role})
+    }
     if (req.method === 'GET' && url.pathname === '/api/health') return send(req,res,200,{ok:true,service:'ace-marketing-api',time:new Date().toISOString(),requestId:req.requestId})
     if (req.method === 'GET' && url.pathname === '/api/ready') {
       const persistence=await storageHealth()
@@ -149,11 +181,111 @@ const server = http.createServer(async (req,res)=>{
       return send(req,res,201,item)
     }
     if (req.method === 'POST' && url.pathname === '/api/auth/login') {
-      const body = await readBody(req)
-      if (!body.email || !String(body.email).includes('@') || String(body.password || '').length < 6) return send(req,res,400,{error:'valid email and password length >= 6 required'})
-      if (IS_PROD && (String(body.email).toLowerCase()!==ADMIN_EMAIL.toLowerCase() || !verifyPassword(body.password,ADMIN_PASSWORD_HASH))) return send(req,res,401,{error:'invalid credentials'})
-      const token=createToken({email:body.email,role:'workspace_owner'},JWT_SECRET,Number(process.env.TOKEN_TTL_SECONDS||3600))
-      return send(req,res,200,{token,user:{email:body.email,role:'workspace_owner'},expiresIn:Number(process.env.TOKEN_TTL_SECONDS||3600)})
+      const body=await readBody(req)
+      const email=String(body.email||'').trim().toLowerCase()
+      const password=String(body.password||'')
+      if(!email.includes('@')||password.length<6) return send(req,res,400,{error:'valid email and password length >= 6 required'})
+      const state=await getState()
+      let member=(state.members||[]).find(x=>String(x.email).toLowerCase()===email&&x.status==='active')
+      let passwordOk=false
+      if(member?.passwordHash) passwordOk=verifyPassword(password,member.passwordHash)
+      else if(email===String(ADMIN_EMAIL).toLowerCase()) passwordOk=verifyPassword(password,ADMIN_PASSWORD_HASH)
+      else if(!IS_PROD && member) passwordOk=true
+      if(!member||!passwordOk) return send(req,res,401,{error:'invalid credentials'})
+      const ttl=Number(process.env.TOKEN_TTL_SECONDS||3600)
+      const jti=randomUUID()
+      const expiresAt=new Date(Date.now()+ttl*1000).toISOString()
+      const token=createToken({email:member.email,userId:member.id,workspaceId,role:member.role,jti},JWT_SECRET,ttl)
+      await mutateState(s=>{
+        s.sessions=s.sessions||[]
+        s.sessions.unshift({jti,userId:member.id,email:member.email,role:member.role,status:'active',createdAt:new Date().toISOString(),expiresAt})
+        s.sessions=s.sessions.filter(x=>!x.expiresAt||Date.parse(x.expiresAt)>Date.now()).slice(0,5000)
+        s.audit.unshift({id:randomUUID(),action:'auth.login',entityId:member.id,at:new Date().toISOString()})
+      })
+      return send(req,res,200,{token,user:{id:member.id,email:member.email,name:member.name,role:member.role},workspaceId,expiresIn:ttl})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/auth/logout') {
+      const jti=req.user?.jti
+      if(jti) await mutateState(s=>{
+        const session=(s.sessions||[]).find(x=>x.jti===jti)
+        if(session){session.status='revoked';session.revokedAt=new Date().toISOString()}
+        s.audit.unshift({id:randomUUID(),action:'auth.logout',entityId:req.user?.userId||'unknown',at:new Date().toISOString()})
+      })
+      return send(req,res,200,{ok:true})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/auth/me') {
+      return send(req,res,200,{user:{id:req.user.userId,email:req.user.email,role:req.user.role},workspaceId})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/members') {
+      const state=await getState()
+      return send(req,res,200,{items:(state.members||[]).map(({passwordHash,...member})=>member)})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/members/invite') {
+      const body=await readBody(req)
+      const email=String(body.email||'').trim().toLowerCase()
+      const role=String(body.role||'analyst')
+      if(!email.includes('@')) return send(req,res,400,{error:'valid email required'})
+      if(!['owner','admin','analyst','operator'].includes(role)) return send(req,res,400,{error:'invalid role'})
+      const state=await getState()
+      if((state.members||[]).some(x=>String(x.email).toLowerCase()===email&&x.status==='active')) return send(req,res,409,{error:'member already exists'})
+      const rawToken=randomBytes(24).toString('base64url')
+      const tokenHash=createHash('sha256').update(rawToken).digest('hex')
+      const invitation={id:'inv_'+randomUUID(),email,role,tokenHash,status:'pending',createdAt:new Date().toISOString(),expiresAt:new Date(Date.now()+7*24*60*60*1000).toISOString(),invitedBy:req.user.userId}
+      await mutateState(s=>{
+        s.invitations=s.invitations||[]
+        s.invitations.unshift(invitation)
+        s.audit.unshift({id:randomUUID(),action:'member.invited',entityId:invitation.id,email,role,at:invitation.createdAt})
+      })
+      return send(req,res,201,{id:invitation.id,email,role,status:'pending',expiresAt:invitation.expiresAt,inviteToken:rawToken,notice:'Send this invite token through your approved email provider; only its SHA-256 hash is stored.'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/members/role') {
+      const body=await readBody(req)
+      const memberId=String(body.memberId||'')
+      const role=String(body.role||'')
+      if(!memberId||!['owner','admin','analyst','operator'].includes(role)) return send(req,res,400,{error:'memberId and valid role required'})
+      if(memberId===req.user.userId&&req.user.role==='owner'&&role!=='owner') return send(req,res,409,{error:'owner cannot remove their own owner role'})
+      let updated=null
+      await mutateState(s=>{
+        const member=(s.members||[]).find(x=>x.id===memberId)
+        if(member){member.role=role;member.updatedAt=new Date().toISOString();updated={...member};delete updated.passwordHash}
+        s.sessions=(s.sessions||[]).map(x=>x.userId===memberId?{...x,status:'revoked',revokedAt:new Date().toISOString()}:x)
+        s.audit.unshift({id:randomUUID(),action:'member.role_changed',entityId:memberId,role,at:new Date().toISOString()})
+      })
+      return updated?send(req,res,200,updated):send(req,res,404,{error:'member not found'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/members/deactivate') {
+      const body=await readBody(req)
+      const memberId=String(body.memberId||'')
+      if(!memberId) return send(req,res,400,{error:'memberId required'})
+      if(memberId===req.user.userId) return send(req,res,409,{error:'cannot deactivate your own active session'})
+      let updated=null
+      await mutateState(s=>{
+        const member=(s.members||[]).find(x=>x.id===memberId)
+        if(member){member.status='inactive';member.updatedAt=new Date().toISOString();updated={...member};delete updated.passwordHash}
+        s.sessions=(s.sessions||[]).map(x=>x.userId===memberId?{...x,status:'revoked',revokedAt:new Date().toISOString()}:x)
+        s.audit.unshift({id:randomUUID(),action:'member.deactivated',entityId:memberId,at:new Date().toISOString()})
+      })
+      return updated?send(req,res,200,updated):send(req,res,404,{error:'member not found'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/invitations/activate') {
+      const body=await readBody(req)
+      const inviteToken=String(body.inviteToken||'')
+      const password=String(body.password||'')
+      const name=String(body.name||'').trim()
+      if(!inviteToken||password.length<8||!name) return send(req,res,400,{error:'inviteToken, name and password length >= 8 required'})
+      const tokenHash=createHash('sha256').update(inviteToken).digest('hex')
+      const state=await getState()
+      const invitation=(state.invitations||[]).find(x=>x.tokenHash===tokenHash&&x.status==='pending')
+      if(!invitation||Date.parse(invitation.expiresAt)<=Date.now()) return send(req,res,400,{error:'invalid or expired invitation'})
+      const member={id:'usr_'+randomUUID(),email:invitation.email,name,role:invitation.role,status:'active',passwordHash:hashPassword(password),createdAt:new Date().toISOString()}
+      await mutateState(s=>{
+        s.members=s.members||[]
+        s.members.push(member)
+        const inv=(s.invitations||[]).find(x=>x.id===invitation.id)
+        if(inv){inv.status='accepted';inv.acceptedAt=new Date().toISOString()}
+        s.audit.unshift({id:randomUUID(),action:'member.activated',entityId:member.id,email:member.email,role:member.role,at:member.createdAt})
+      })
+      return send(req,res,201,{user:{id:member.id,email:member.email,name:member.name,role:member.role},workspaceId})
     }
     if (req.method === 'POST' && url.pathname === '/api/demo-requests') {
       const body = await readBody(req)
