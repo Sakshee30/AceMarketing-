@@ -34,6 +34,8 @@ export const api = {
   identity: () => request('/identity'),
   attribution: () => request('/attribution'),
   agents: () => request('/agents'),
+  approvals: () => request('/approvals'),
+  decideApproval: (id: string, decision: 'approved' | 'rejected') => request('/approvals/decision', { method: 'POST', body: JSON.stringify({ id, decision }) }),
   createAgent: (payload: Record<string, unknown>) => request('/agents/custom', { method: 'POST', body: JSON.stringify(payload) }),
   audiences: () => request('/audiences'),
   behavior: () => request('/behavior'),
@@ -52,6 +54,7 @@ export const api = {
   monitoringRules: () => request('/monitoring-rules'),
   saveConsent: (prefs: Record<string, boolean>) => request('/consent-preferences', { method: 'POST', body: JSON.stringify(prefs) }),
   settings: () => request('/settings'),
+  workspaces: () => request('/workspaces'),
   auditLog: () => request('/audit-log'),
   createApiKey: () => request('/api-keys', { method: 'POST', body: JSON.stringify({ name: 'workspace' }) }),
 }
