@@ -217,3 +217,12 @@ test('live dashboard section strip navigates between operating areas', async ({ 
   await page.getByLabel('Dashboard sections').getByRole('button', { name: /Measurement & Intelligence/ }).click()
   await expect(page.getByText('Journeys', { exact: true }).first()).toBeVisible()
 })
+
+
+test('dashboard keeps section navigation visible on workspace', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await expect(page.getByLabel('Dashboard sections')).toBeVisible()
+  await expect(page.getByRole('button', { name: /Tracking & Data/ })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Activation & Integrations/ })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Operations & Developer/ })).toBeVisible()
+})
