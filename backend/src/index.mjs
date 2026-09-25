@@ -12,6 +12,7 @@ import { closeCustomIntegrations, createCustomIntegration as persistCustomIntegr
 import { closeObservability, listAlerts as listLiveAlerts, listMonitoringRules as listLiveMonitoringRules, monitoringSnapshot, recordApiTelemetry, resolveAlert as resolveLiveAlert, saveMonitoringRule } from './observability.mjs'
 import { assertCapacity, closeEntitlements, finalizeReservation, resourceCountAllowed, subscriptionSummary, updateWorkspaceEntitlements } from './entitlements.mjs'
 import { billingConfigured, billingEventHistory, closeBillingProvider, createCheckoutSession, createPortalSession, processStripeEvent, verifyStripeWebhook } from './billing-provider.mjs'
+import { closeConsentStore, consentAllows, consentStats, getConsent, listConsentAudit, saveConsent } from './consent.mjs'
 import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, publicChallenges, publicCaseStudies, publicResources, publicResourceCenter } from './public-content.mjs'
 
 const CONNECTOR_PROVIDERS={
@@ -156,7 +157,7 @@ const send = (req,res,status,data,extra={}) => {
 }
 
 const publicPaths=new Set(['/api/health','/api/ready','/api/auth/login','/api/invitations/activate','/api/demo-requests','/api/track','/api/pricing/recommend','/api/pricing/quote','/api/public/navigation','/api/public/industries','/api/public/agents','/api/public/integrations','/api/public/challenges','/api/public/case-studies','/api/public/resources','/api/public/resource-center'])
-const isPublicRequest=(method,path)=>publicPaths.has(path)||(method==='GET'&&path==='/api/integrations/oauth/callback')||(method==='POST'&&path==='/api/billing/webhook')
+const isPublicRequest=(method,path)=>publicPaths.has(path)||(method==='GET'&&path==='/api/integrations/oauth/callback')||(method==='POST'&&path==='/api/billing/webhook')||path==='/api/consent'
 const meteredMetricFor=(method,path)=>{
   if(method!=='POST') return null
   if(path==='/api/track') return 'tracked_events'
@@ -177,6 +178,23 @@ const server = http.createServer(async (req,res)=>{
   if (req.method === 'OPTIONS') return send(req,res,204,{})
   if (req.headers.origin && !resolveCorsOrigin(req.headers.origin,allowedOrigins)) return send(req,res,403,{error:'origin not allowed'})
   let workspaceId=String(req.headers['x-workspace-id']||process.env.DEFAULT_WORKSPACE_ID||'ws_default')
+  if(url.pathname==='/api/consent'){
+    if(req.method==='GET'){
+      const subjectType=url.searchParams.get('subjectType')==='customer'?'customer':'visitor'
+      const subjectId=String(url.searchParams.get('subjectId')||'')
+      if(!subjectId) return send(req,res,400,{error:'subjectId required'})
+      const record=await getConsent(workspaceId,subjectType,subjectId)
+      return send(req,res,200,{record:record||null,defaults:{essential:true,analytics:false,marketing:false,personalization:false},policyVersion:process.env.CONSENT_POLICY_VERSION||'v1'})
+    }
+    if(req.method==='POST'){
+      const body=await readBody(req)
+      try{
+        const forwarded=String(req.headers['x-forwarded-for']||'').split(',')[0].trim()
+        const record=await saveConsent(workspaceId,body,{ip:forwarded||req.socket.remoteAddress||'',userAgent:req.headers['user-agent']||''})
+        return send(req,res,200,{record})
+      }catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'invalid consent request'})}
+    }
+  }
   if(req.method==='POST'&&url.pathname==='/api/billing/webhook'){
     try{
       const raw=await readRawBody(req)
@@ -687,7 +705,10 @@ const server = http.createServer(async (req,res)=>{
     })
     if (req.method === 'POST' && url.pathname === '/api/track') {
       const body=await readBody(req)
-      const event={id:randomUUID(),receivedAt:new Date().toISOString(),...body}
+      const category=['essential','analytics','marketing','personalization'].includes(String(body.eventCategory))?String(body.eventCategory):'analytics'
+      const consent=await consentAllows(workspaceId,{subjectType:body.customerId?'customer':'visitor',subjectId:body.customerId||body.visitorId,category})
+      if(!consent.allowed) return send(req,res,403,{accepted:false,error:'consent required',reason:consent.reason,category})
+      const event={id:randomUUID(),receivedAt:new Date().toISOString(),consentCategory:category,...body}
       trackedEvents.push(event)
       if(trackedEvents.length>5000) trackedEvents.splice(0,trackedEvents.length-5000)
       let clickSession=null
@@ -869,6 +890,10 @@ const server = http.createServer(async (req,res)=>{
     if (req.method === 'POST' && url.pathname === '/api/signal-deliveries/dispatch') {
       const body=await readBody(req)
       if(!body.event || !body.destination) return send(req,res,400,{error:'event and destination required'})
+      if(body.customerId||body.visitorId){
+        const consent=await consentAllows(workspaceId,{subjectType:body.customerId?'customer':'visitor',subjectId:body.customerId||body.visitorId,category:'marketing'})
+        if(!consent.allowed) return send(req,res,403,{error:'marketing consent required',reason:consent.reason})
+      }
       const rawKey=String(body.idempotencyKey||JSON.stringify([body.event,body.destination,body.customerId||'',body.externalEventId||'',body.occurredAt||'']))
       const idempotencyKey=createHash('sha256').update(rawKey).digest('hex')
       const state=await getState()
@@ -967,6 +992,7 @@ const server = http.createServer(async (req,res)=>{
       return send(req,res,202,{id:body.id,status:'queued',retryId:randomUUID()})
     }
     if (req.method === 'POST' && url.pathname === '/api/webhooks/secret/rotate') return send(req,res,201,{secret:'whsec_'+randomUUID().replaceAll('-',''),createdAt:new Date().toISOString()})
+    if (req.method === 'GET' && url.pathname === '/api/consent/stats') return send(req,res,200,{stats:await consentStats(workspaceId),audit:await listConsentAudit(workspaceId,50)})
     if (req.method === 'GET' && url.pathname === '/api/monitoring') return send(req,res,200,await monitoringSnapshot(workspaceId))
     if (req.method === 'GET' && url.pathname === '/api/billing/usage') return send(req,res,200,await subscriptionSummary(workspaceId))
     if (req.method === 'GET' && url.pathname === '/api/billing/subscription') {
@@ -1227,6 +1253,6 @@ server.keepAliveTimeout=65_000
 server.headersTimeout=66_000
 server.requestTimeout=30_000
 server.listen(PORT,()=>console.log(`AceMarketing API listening on http://localhost:${PORT}`))
-const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations(),closeObservability(),closeEntitlements(),closeBillingProvider()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
+const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations(),closeObservability(),closeEntitlements(),closeBillingProvider(),closeConsentStore()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
 process.on('SIGTERM',()=>shutdown('SIGTERM'))
 process.on('SIGINT',()=>shutdown('SIGINT'))
