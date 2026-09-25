@@ -1209,3 +1209,19 @@ GET /api/public/navigation
 The frontend header requests this configuration and uses it for Industries, Agents and Resources menu copy, while keeping icons and route actions inside the frontend. Local fallback content remains in place so the navigation still renders if the public API is temporarily unavailable.
 
 This keeps the EasyInsights-inspired visual structure configurable from the backend while preserving original AceMarketing wording. Residual EasyInsights-like public phrases such as the exact "three problems" and "plug the leaks" wording were also rewritten in AceMarketing's own language.
+
+
+## Screenshot parity pass: global typography and footer
+
+This pass uses the latest supplied reference screenshots as the visual target.
+
+Changes:
+- corrected a runtime fallback-order bug in the backend-driven Agents/Resources mega-menu content;
+- refined desktop navbar height, spacing, menu font size, CTA sizing and mega-menu density;
+- expanded the Agents dropdown to the same two-column, compact-row visual rhythm shown in the reference;
+- standardized public typography on Inter/system sans with consistent weight, line-height and letter spacing;
+- rebuilt the footer proportions to match the supplied dark-footer reference more closely: wider four-column spacing, larger brand, smaller muted body text, compact headings/links, and a shallow legal row;
+- footer links and legal items are functional and route to the appropriate AceMarketing views;
+- public agent cards now use a tighter three-column desktop grid closer to the pricing/reference card density.
+
+AceMarketing keeps original copy and brand assets while using the supplied screenshots for layout, typography scale, spacing and interaction alignment.
