@@ -488,3 +488,33 @@ New API endpoints:
 ### CI correction
 
 The first GitHub Actions run failed before install because `actions/setup-node` was configured with npm caching but the repository does not contain a dependency lock file. The CI workflow has been corrected to remove the lockfile-dependent cache setting; it still runs install, type-check and production build on `main`.
+
+
+## Parity pass: human approval inbox and multi-workspace operations
+
+This pass strengthens the human-in-the-loop operating model and agency / multi-brand workflow.
+
+### Human approval inbox
+A new **Approvals** workspace module now provides:
+- pending agent-action queue;
+- risk category and impact level;
+- evidence available to the reviewer;
+- explicit approve / reject decisions;
+- decision state retained in the UI;
+- support for customer-contact, audience-suppression, CRM-write and ad-platform-write approvals.
+
+This connects the Agent Operations approval policies to an actual review workflow instead of leaving approval as a settings-only concept.
+
+### Multi-workspace switching
+The product sidebar now includes a functional workspace switcher with:
+- production and sandbox workspaces;
+- active-workspace state;
+- workspace environment labels;
+- create-workspace entry point.
+
+New API endpoints:
+- `GET /api/approvals`
+- `POST /api/approvals/decision`
+- `GET /api/workspaces`
+
+The latest CI run on `main` passed before this implementation pass. New commits will trigger CI again automatically.
