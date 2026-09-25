@@ -648,3 +648,43 @@ New API endpoints:
 The supplied EasyInsights brochure lists Voice Lead Qualification, Voice Scheduler, Meeting Reminder and Feedback as distinct agents. AceMarketing now provides dedicated operational surfaces for each of those workflows instead of leaving them as cards only.
 
 This pass also corrects missing icon imports used by prior workspace additions (Alerts, Developers, Approvals and workspace creation), reducing the risk of runtime reference errors.
+
+
+## Parity pass: site/pixel operations and custom models
+
+This pass adds two more EasyInsights-style capabilities that were still only implicit in the platform.
+
+### Site & pixel operations
+A new **Sites** workspace now includes:
+- tracked production and sandbox domains;
+- first-party pixel status;
+- server-side connection status;
+- event coverage;
+- consent enforcement;
+- GCLID / FBCLID persistence;
+- installation snippet;
+- event receipt checks;
+- cross-domain continuity map;
+- installation test workflow;
+- bot filtering, deduplication, schema quarantine and PII-hashing guardrails.
+
+EasyInsights' public first-party-data material describes simple pixel installation, server-side tracking and fresh event delivery into ad platforms. AceMarketing now has a dedicated operational surface for that collection layer.
+
+### Custom models
+A new **Models** workspace now includes:
+- lead conversion propensity;
+- customer LTV tier;
+- no-show risk;
+- return / cancellation risk;
+- top model signals;
+- sample real-time prediction;
+- activation destinations;
+- model-version, approval and drift-monitoring governance.
+
+EasyInsights' first-party activation use-case material also states that custom models can be built on first-party user data. AceMarketing now represents this as a governed workspace capability instead of leaving it as a service-only concept.
+
+New API endpoints:
+- `GET /api/sites`
+- `POST /api/sites/test`
+- `GET /api/models`
+- `POST /api/models/run`
