@@ -49,6 +49,7 @@ export const api = {
     }),
   overview: () => request('/workspace/overview'),
   integrations: () => request('/integrations'),
+  refreshIntegration: (connector:string) => request('/integrations/refresh',{method:'POST',body:JSON.stringify({connector})}),
   customIntegrations: () => request('/custom-integrations'),
   testCustomIntegration: (payload: Record<string, unknown>) => request('/custom-integrations/test', { method: 'POST', body: JSON.stringify(payload) }),
   createCustomIntegration: (payload: Record<string, unknown>) => request('/custom-integrations', { method: 'POST', body: JSON.stringify(payload) }),
