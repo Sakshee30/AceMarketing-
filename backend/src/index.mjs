@@ -11,6 +11,7 @@ import { closeAgentOrchestrator, completeFollowUp as persistCompleteFollowUp, cr
 import { closeCustomIntegrations, createCustomIntegration as persistCustomIntegration, listCustomIntegrations, testCustomIntegration as runCustomIntegrationTest } from './custom-integrations.mjs'
 import { closeObservability, listAlerts as listLiveAlerts, listMonitoringRules as listLiveMonitoringRules, monitoringSnapshot, recordApiTelemetry, resolveAlert as resolveLiveAlert, saveMonitoringRule } from './observability.mjs'
 import { assertCapacity, closeEntitlements, finalizeReservation, resourceCountAllowed, subscriptionSummary, updateWorkspaceEntitlements } from './entitlements.mjs'
+import { billingConfigured, billingEventHistory, closeBillingProvider, createCheckoutSession, createPortalSession, processStripeEvent, verifyStripeWebhook } from './billing-provider.mjs'
 import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, publicChallenges, publicCaseStudies, publicResources, publicResourceCenter } from './public-content.mjs'
 
 const CONNECTOR_PROVIDERS={
@@ -114,6 +115,18 @@ const permissionForRequest=(method,path)=>{
   return 'workspace.write'
 }
 
+const readRawBody = req => new Promise((resolve,reject)=>{
+  const chunks=[]
+  let size=0
+  req.on('data',chunk=>{
+    size+=chunk.length
+    if(size>1_000_000){reject(new Error('payload too large'));req.destroy();return}
+    chunks.push(chunk)
+  })
+  req.on('end',()=>resolve(Buffer.concat(chunks).toString('utf8')))
+  req.on('error',reject)
+})
+
 const readBody = req => new Promise((resolve,reject)=>{
   let body=''
   req.on('data', chunk => {
@@ -143,7 +156,7 @@ const send = (req,res,status,data,extra={}) => {
 }
 
 const publicPaths=new Set(['/api/health','/api/ready','/api/auth/login','/api/invitations/activate','/api/demo-requests','/api/track','/api/pricing/recommend','/api/pricing/quote','/api/public/navigation','/api/public/industries','/api/public/agents','/api/public/integrations','/api/public/challenges','/api/public/case-studies','/api/public/resources','/api/public/resource-center'])
-const isPublicRequest=(method,path)=>publicPaths.has(path)||(method==='GET'&&path==='/api/integrations/oauth/callback')
+const isPublicRequest=(method,path)=>publicPaths.has(path)||(method==='GET'&&path==='/api/integrations/oauth/callback')||(method==='POST'&&path==='/api/billing/webhook')
 const meteredMetricFor=(method,path)=>{
   if(method!=='POST') return null
   if(path==='/api/track') return 'tracked_events'
@@ -164,6 +177,16 @@ const server = http.createServer(async (req,res)=>{
   if (req.method === 'OPTIONS') return send(req,res,204,{})
   if (req.headers.origin && !resolveCorsOrigin(req.headers.origin,allowedOrigins)) return send(req,res,403,{error:'origin not allowed'})
   let workspaceId=String(req.headers['x-workspace-id']||process.env.DEFAULT_WORKSPACE_ID||'ws_default')
+  if(req.method==='POST'&&url.pathname==='/api/billing/webhook'){
+    try{
+      const raw=await readRawBody(req)
+      const event=verifyStripeWebhook(raw,req.headers['stripe-signature'])
+      const result=await processStripeEvent(event)
+      return send(req,res,200,{received:true,...result})
+    }catch(error){
+      return send(req,res,400,{error:error instanceof Error?error.message:'invalid billing webhook'})
+    }
+  }
   if(req.method==='GET'&&url.pathname==='/api/integrations/oauth/callback'){
     const signed=parseOAuthState(url.searchParams.get('state'))
     if(!signed) return send(req,res,400,{error:'invalid or expired oauth state'})
@@ -946,7 +969,22 @@ const server = http.createServer(async (req,res)=>{
     if (req.method === 'POST' && url.pathname === '/api/webhooks/secret/rotate') return send(req,res,201,{secret:'whsec_'+randomUUID().replaceAll('-',''),createdAt:new Date().toISOString()})
     if (req.method === 'GET' && url.pathname === '/api/monitoring') return send(req,res,200,await monitoringSnapshot(workspaceId))
     if (req.method === 'GET' && url.pathname === '/api/billing/usage') return send(req,res,200,await subscriptionSummary(workspaceId))
-    if (req.method === 'GET' && url.pathname === '/api/billing/subscription') return send(req,res,200,await subscriptionSummary(workspaceId))
+    if (req.method === 'GET' && url.pathname === '/api/billing/subscription') {
+      const summary=await subscriptionSummary(workspaceId)
+      return send(req,res,200,{...summary,providerConfigured:billingConfigured(),events:await billingEventHistory(workspaceId,20)})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/billing/checkout') {
+      if(req.user?.role!=='owner') return send(req,res,403,{error:'owner role required'})
+      const body=await readBody(req)
+      if(!body.planCode) return send(req,res,400,{error:'planCode required'})
+      try{return send(req,res,201,await createCheckoutSession(workspaceId,body))}
+      catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'checkout creation failed'})}
+    }
+    if (req.method === 'POST' && url.pathname === '/api/billing/portal') {
+      if(req.user?.role!=='owner') return send(req,res,403,{error:'owner role required'})
+      try{return send(req,res,201,await createPortalSession(workspaceId))}
+      catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'billing portal unavailable'})}
+    }
     if (req.method === 'POST' && url.pathname === '/api/billing/entitlements') {
       if(req.user?.role!=='owner') return send(req,res,403,{error:'owner role required'})
       const body=await readBody(req)
@@ -1189,6 +1227,6 @@ server.keepAliveTimeout=65_000
 server.headersTimeout=66_000
 server.requestTimeout=30_000
 server.listen(PORT,()=>console.log(`AceMarketing API listening on http://localhost:${PORT}`))
-const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations(),closeObservability(),closeEntitlements()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
+const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations(),closeObservability(),closeEntitlements(),closeBillingProvider()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
 process.on('SIGTERM',()=>shutdown('SIGTERM'))
 process.on('SIGINT',()=>shutdown('SIGINT'))
