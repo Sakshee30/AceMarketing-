@@ -558,7 +558,7 @@ const appTabs=[
  ['Launchpad',WandSparkles],['Overview',Gauge],['AdSync',RadioTower],['Funnel',BarChart3],['Events',Zap],['Adjustments',CircleDollarSign],['Diagnostics',ShieldCheck],['Fraud',ShieldCheck],['Deep Links',Network],['Sites',Globe2],['Fingerprinting',MousePointer2],['Live Sync',Activity],['Data Hub',DatabaseZap],['Offline Attribution',PhoneCall],['Matchback',CircleDollarSign],['POS & Stores',Building2],['Journeys',Network],['Identity',UsersRound],['Models',Target],['Attribution',PieChart],['Planner',CircleDollarSign],['Reports',BarChart3],['Enrich',DatabaseZap],['Lead Grading',Target],['Behavior',MousePointer2],['Feed',Layers3],['Agents',Bot],['Routing',Network],['Follow-ups',MessageCircle],['Calls',PhoneIncoming],['Meetings',CalendarDays],['Feedback',MessageSquareText],['Approvals',CheckCircle2],['Ask Ace',Sparkles],['Integrations',Cable],['Audiences',UsersRound],['Delivery',RadioTower],['Monitoring',Activity],['Alerts',Bell],['Developers',Code2],['Settings',Settings2]
 ] as const
 function Stat({label,value,sub,Icon}:{label:string,value:string,sub:string,Icon:any}){return <article className="stat"><div><span>{label}</span><Icon/></div><strong>{value}</strong><small>{sub}</small></article>}
-function PageHead({crumb,title,sub,action}:{crumb:string,title:string,sub:string,action?:string}){return <div className="page-head"><div><span>{crumb}</span><h1>{title}</h1><p>{sub}</p></div>{action&&<button className="app-primary"><Sparkles/>{action}</button>}</div>}
+function PageHead({crumb,title,sub,action,onAction}:{crumb:string,title:string,sub:string,action?:string,onAction?:()=>void}){return <div className="page-head"><div><span>{crumb}</span><h1>{title}</h1><p>{sub}</p></div>{action&&<button className="app-primary" onClick={onAction}><Sparkles/>{action}</button>}</div>}
 function FunnelPanel(){const steps=[['All Leads',12842,100],['Qualified',7621,59],['Connected',5410,42],['Consultation',2314,18],['Enrolled',982,8]];return <div className="app-panel"><div className="panel-head"><div><h3>Complete funnel</h3><p>All sources · last 30 days</p></div><button>Campaign view</button></div>{steps.map((x,i)=><div className="funnel-row" key={x[0]}><div><span>{x[0]}</span><b>{x[1].toLocaleString()}</b></div><div className="progress"><i style={{width:x[2]+'%'}}/></div>{i<steps.length-1&&<small>{Math.round((steps[i+1][1]/x[1])*100)}% progression</small>}</div>)}</div>}
 
 function Launchpad(){
@@ -1127,22 +1127,57 @@ function Calls(){
  <div className="approval-actions">{current.kind==='agent'&&<button disabled={busy==='retry:'+current.id} onClick={()=>retry(current.id)}>{busy==='retry:'+current.id?'Queuing…':'Retry / follow up'}</button>}</div></div>:<div className="app-panel call-detail"><div className="empty-delivery-state"><PhoneCall/><div><b>Select a call</b><small>Live call detail will appear after an agent run or telephony event is recorded.</small></div></div></div>}</div></>
 }
 function Meetings(){
- const [meetings,setMeetings]=useState<any[]>([
-  {id:'mtg_184',lead:'Aarav Sharma',time:'Today · 6:30 PM',owner:'Counsellor A',status:'Confirmed',reminder:'WhatsApp + SMS',risk:'Low'},
-  {id:'mtg_183',lead:'Rohan Kumar',time:'Tomorrow · 11:00 AM',owner:'Counsellor B',status:'Confirmed',reminder:'WhatsApp',risk:'Medium'},
-  {id:'mtg_182',lead:'Meera Patel',time:'Tomorrow · 4:00 PM',owner:'Counsellor A',status:'Pending',reminder:'WhatsApp + Email',risk:'High'},
-  {id:'mtg_181',lead:'Anika Roy',time:'Fri · 3:30 PM',owner:'Counsellor C',status:'Confirmed',reminder:'SMS',risk:'Medium'}
- ])
- const [selected,setSelected]=useState(meetings[0].id)
- useEffect(()=>{api.meetings().then((r:any)=>{if(r.items?.length){const mapped=r.items.map((x:any)=>({id:x.id,lead:x.lead_ref,time:new Date(x.starts_at).toLocaleString(),owner:x.owner,status:String(x.status||'confirmed').replace(/^./,(m:string)=>m.toUpperCase()),reminder:(x.reminder_plan||[]).join(' + ')||'Voice',risk:String(x.no_show_risk||'low').replace(/^./,(m:string)=>m.toUpperCase())}));setMeetings(mapped);setSelected(mapped[0].id)}}).catch(()=>null)},[])
+ const [meetings,setMeetings]=useState<any[]>([])
+ const [selected,setSelected]=useState('')
+ const [busy,setBusy]=useState('')
+ const [notice,setNotice]=useState('')
+ const [newTime,setNewTime]=useState('')
+ const load=async()=>{
+  try{
+   const r:any=await api.meetings()
+   const mapped=(r.items||[]).map((x:any)=>({id:x.id,lead:x.lead_ref,time:new Date(x.starts_at).toLocaleString(),startsAt:x.starts_at,owner:x.owner,status:String(x.status||'confirmed').replace(/^./,(m:string)=>m.toUpperCase()),reminder:(x.reminder_plan||[]).join(' + ')||'Voice',risk:String(x.no_show_risk||'low').replace(/^./,(m:string)=>m.toUpperCase()),remindersSent:Number(x.reminders_sent||0),lastReminderAt:x.last_reminder_at,calendarId:x.external_calendar_id||''}))
+   setMeetings(mapped)
+   setSelected(x=>x&&mapped.some((m:any)=>m.id===x)?x:(mapped[0]?.id||''))
+  }catch(e:any){setNotice(e?.message||'Meetings could not be loaded.')}
+ }
+ useEffect(()=>{load()},[])
  const current=meetings.find(x=>x.id===selected)||meetings[0]
- const remind=async(id:string)=>{await api.sendMeetingReminder(id).catch(()=>null);setMeetings(xs=>xs.map(x=>x.id===id?{...x,reminder:'Sent now'}:x))}
- return <><PageHead crumb="Conversion / Meetings" title="Scheduler & meeting reminders" sub="Book qualified leads, synchronize counsellor availability and reduce no-shows with automated reminders." action="Connect calendar"/>
- <div className="stats-grid"><Stat label="Meetings booked" value="184" sub="Last 30 days" Icon={CalendarDays}/><Stat label="Show rate" value="78%" sub="+9 points after reminders" Icon={CheckCircle2}/><Stat label="No-show risk" value="23" sub="Currently high/medium risk" Icon={Activity}/><Stat label="Recovered leads" value="37" sub="Reminder-assisted" Icon={MessageCircle}/></div>
- <div className="meeting-layout"><div className="app-panel meeting-list"><div className="panel-head"><div><h3>Upcoming consultations</h3><p>Calendar + reminder status</p></div></div>{meetings.map(x=><button key={x.id} className={selected===x.id?'selected':''} onClick={()=>setSelected(x.id)}><CalendarDays/><div><b>{x.lead}</b><small>{x.time} · {x.owner}</small></div><span className={x.risk.toLowerCase()}>{x.risk} risk</span><ChevronRight/></button>)}</div>
- <div className="app-panel meeting-detail"><div className="panel-head"><div><h3>{current.lead}</h3><p>{current.time}</p></div><span className="status">{current.status}</span></div><div className="meeting-info-grid">{[['Owner',current.owner],['Reminder plan',current.reminder],['No-show risk',current.risk],['Calendar','Google Calendar']].map(x=><div key={x[0]}><span>{x[0]}</span><b>{x[1]}</b></div>)}</div><div className="meeting-reminder-flow">{[['T−24h','WhatsApp reminder'],['T−3h','SMS reminder'],['T−30m','Final confirmation'],['T+15m','No-show recovery if needed']].map((x,i)=><div key={x[0]}><span>{i+1}</span><div><b>{x[0]}</b><small>{x[1]}</small></div></div>)}</div><div className="approval-actions"><button>Reschedule</button><button className="approve" onClick={()=>remind(current.id)}><MessageCircle/>Send reminder now</button></div></div></div></>
+ const remind=async(id:string)=>{
+  setBusy('remind');setNotice('')
+  try{await api.sendMeetingReminder(id);setNotice('Reminder queued through the configured reminder provider.');await load()}
+  catch(e:any){setNotice(e?.message||'Reminder could not be queued.')}
+  finally{setBusy('')}
+ }
+ const connectCalendar=async()=>{
+  setBusy('calendar');setNotice('')
+  try{
+   const r:any=await api.connectIntegration('Google Calendar')
+   if(r.status==='authorization_required'&&r.authorizationUrl){window.location.assign(r.authorizationUrl);return}
+   if(r.status==='connected')setNotice('Google Calendar is connected.')
+   else setNotice('Google Calendar OAuth credentials need to be configured on the backend.')
+  }catch(e:any){setNotice(e?.message||'Google Calendar connection could not be started.')}
+  finally{setBusy('')}
+ }
+ const reschedule=async()=>{
+  if(!current||!newTime)return
+  setBusy('reschedule');setNotice('')
+  try{await api.rescheduleMeeting(current.id,new Date(newTime).toISOString());setNotice('Meeting rescheduled and calendar attendees updated.');setNewTime('');await load()}
+  catch(e:any){setNotice(e?.message||'Meeting could not be rescheduled.')}
+  finally{setBusy('')}
+ }
+ const upcoming=meetings.filter(x=>Date.parse(x.startsAt)>=Date.now()).length
+ const withCalendar=meetings.filter(x=>x.calendarId).length
+ const reminders=meetings.reduce((n,x)=>n+Number(x.remindersSent||0),0)
+ const highRisk=meetings.filter(x=>['high','medium'].includes(String(x.risk).toLowerCase())).length
+ return <><PageHead crumb="Conversion / Meetings" title="Scheduler & meeting reminders" sub="Book qualified leads, synchronize Google Calendar in real time and reduce no-shows with provider-backed reminders." action={busy==='calendar'?'Connecting…':'Connect Google Calendar'} onAction={connectCalendar}/>
+ {notice&&<div className="delivery-notice ok"><CheckCircle2/><span>{notice}</span></div>}
+ <div className="stats-grid"><Stat label="Upcoming meetings" value={String(upcoming)} sub="Persisted scheduled consultations" Icon={CalendarDays}/><Stat label="Calendar synced" value={String(withCalendar)} sub="Meetings with external event IDs" Icon={CheckCircle2}/><Stat label="No-show risk" value={String(highRisk)} sub="High / medium risk meetings" Icon={Activity}/><Stat label="Reminders sent" value={String(reminders)} sub="Persisted reminder executions" Icon={MessageCircle}/></div>
+ <div className="meeting-layout"><div className="app-panel meeting-list"><div className="panel-head"><div><h3>Upcoming consultations</h3><p>Persisted calendar + reminder state</p></div><button onClick={load}>Refresh</button></div>{meetings.length?meetings.map(x=><button key={x.id} className={selected===x.id?'selected':''} onClick={()=>setSelected(x.id)}><CalendarDays/><div><b>{x.lead}</b><small>{x.time} · {x.owner}</small></div><span className={x.risk.toLowerCase()}>{x.risk} risk</span><ChevronRight/></button>):<div className="empty-delivery-state"><CalendarDays/><div><b>No meetings scheduled yet</b><small>Schedule one from Calls or connect Google Calendar and create a consultation.</small></div></div>}</div>
+ {current?<div className="app-panel meeting-detail"><div className="panel-head"><div><h3>{current.lead}</h3><p>{current.time}</p></div><span className="status">{current.status}</span></div><div className="meeting-info-grid">{[['Owner',current.owner],['Reminder plan',current.reminder],['No-show risk',current.risk],['Calendar',current.calendarId?'Google Calendar synced':'Not synced'],['Reminders sent',String(current.remindersSent||0)],['Last reminder',current.lastReminderAt?new Date(current.lastReminderAt).toLocaleString():'—']].map(x=><div key={x[0]}><span>{x[0]}</span><b>{x[1]}</b></div>)}</div>
+ <div className="meeting-reminder-flow">{[['T−24h','Primary reminder'],['T−3h','Follow-up reminder'],['T−30m','Final confirmation'],['T+15m','No-show recovery if needed']].map((x,i)=><div key={x[0]}><span>{i+1}</span><div><b>{x[0]}</b><small>{x[1]}</small></div></div>)}</div>
+ <div className="call-schedule-box"><label>New meeting time<input type="datetime-local" value={newTime} onChange={e=>setNewTime(e.target.value)}/></label><button disabled={!newTime||busy==='reschedule'} onClick={reschedule}>{busy==='reschedule'?'Updating…':'Reschedule'}</button></div>
+ <div className="approval-actions"><button className="approve" disabled={busy==='remind'} onClick={()=>remind(current.id)}><MessageCircle/>{busy==='remind'?'Queuing…':'Send reminder now'}</button></div></div>:<div className="app-panel meeting-detail"><div className="empty-delivery-state"><CalendarDays/><div><b>Select a meeting</b><small>Calendar and reminder operations appear here.</small></div></div></div>}</div></>
 }
-
 function Feedback(){
  const [filter,setFilter]=useState('All')
  const [items,setItems]=useState<any[]>([
