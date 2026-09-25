@@ -75,6 +75,17 @@ const server = http.createServer(async (req,res)=>{
       return send(res,200,{answer,insights})
     }
     if (req.method === 'GET' && url.pathname === '/api/events') return send(res,200,{items:events})
+    if (req.method === 'GET' && url.pathname === '/api/sites') return send(res,200,{items:[
+      {domain:'www.aceedtech.example',environment:'production',pixel:'active',server:'connected',coverage:97.4},
+      {domain:'apply.aceedtech.example',environment:'production',pixel:'active',server:'connected',coverage:95.8},
+      {domain:'checkout.aceedtech.example',environment:'production',pixel:'needs_review',server:'connected',coverage:88.6},
+      {domain:'staging.aceedtech.example',environment:'sandbox',pixel:'active',server:'sandbox',coverage:100}
+    ]})
+    if (req.method === 'POST' && url.pathname === '/api/sites/test') {
+      const body=await readBody(req)
+      if(!body.domain) return send(res,400,{error:'domain required'})
+      return send(res,200,{domain:body.domain,pixel:true,server:true,consent:true,crossDomain:true,testedAt:new Date().toISOString()})
+    }
     if (req.method === 'GET' && url.pathname === '/api/diagnostics') return send(res,200,{score:91,duplicateRate:1.7,clickIdCoverage:93.2,quarantined:42,issues:[
       {key:'duplicate_conversions',severity:'critical',affected:1284},
       {key:'missing_click_ids',severity:'warning',affectedPercent:6.8},
