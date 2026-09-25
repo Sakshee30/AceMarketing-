@@ -22,6 +22,7 @@ import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, p
 import { parseWhatsAppWebhook, resolveWhatsAppWorkspace, sendWhatsAppMessage, verifyWhatsAppWebhookChallenge, verifyWhatsAppWebhookSignature } from './whatsapp-cloud.mjs'
 import { normalizeCallEvent, resolveCallWorkspace, verifyCallWebhook } from './call-events.mjs'
 import { createCalendarEvent, updateCalendarEvent } from './calendar-provider.mjs'
+import { authMailConfigured, sendPasswordReset } from './auth-mailer.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -51,6 +52,9 @@ const CONNECTOR_PROVIDERS={
   'WhatsApp':{provider:'meta',authType:'oauth2',clientId:process.env.META_OAUTH_CLIENT_ID||'',clientSecret:process.env.META_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://www.facebook.com/v23.0/dialog/oauth',tokenUrl:'https://graph.facebook.com/v23.0/oauth/access_token',scopes:['whatsapp_business_management','whatsapp_business_messaging']}
 }
 const CONNECTOR_REDIRECT_URI=process.env.CONNECTOR_OAUTH_REDIRECT_URI||''
+const AUTH_GOOGLE_REDIRECT_URI=process.env.AUTH_GOOGLE_REDIRECT_URI||''
+const AUTH_GOOGLE_SUCCESS_URL=process.env.AUTH_GOOGLE_SUCCESS_URL||''
+const AUTH_PUBLIC_APP_URL=process.env.AUTH_PUBLIC_APP_URL||''
 const CONNECTOR_SUCCESS_URL=process.env.CONNECTOR_OAUTH_SUCCESS_URL||''
 const CONNECTOR_STATE_SECRET=process.env.CONNECTOR_OAUTH_STATE_SECRET||process.env.JWT_SECRET||'dev-only-change-me'
 const base64url=value=>Buffer.from(value).toString('base64url')
@@ -218,8 +222,8 @@ const send = (req,res,status,data,extra={}) => {
   res.end(status===204?'':JSON.stringify(data))
 }
 
-const publicPaths=new Set(['/api/health','/api/ready','/api/auth/login','/api/invitations/activate','/api/demo-requests','/api/track','/api/pricing/recommend','/api/pricing/quote','/api/public/navigation','/api/public/industries','/api/public/agents','/api/public/integrations','/api/public/challenges','/api/public/case-studies','/api/public/resources','/api/public/resource-center','/api/webhooks/whatsapp','/api/webhooks/calls'])
-const isPublicRequest=(method,path)=>publicPaths.has(path)||(method==='GET'&&path==='/api/integrations/oauth/callback')||(method==='POST'&&path==='/api/billing/webhook')||path==='/api/consent'
+const publicPaths=new Set(['/api/health','/api/ready','/api/auth/login','/api/auth/google/start','/api/auth/google/exchange','/api/auth/password/forgot','/api/auth/password/reset','/api/invitations/activate','/api/demo-requests','/api/track','/api/pricing/recommend','/api/pricing/quote','/api/public/navigation','/api/public/industries','/api/public/agents','/api/public/integrations','/api/public/challenges','/api/public/case-studies','/api/public/resources','/api/public/resource-center','/api/webhooks/whatsapp','/api/webhooks/calls'])
+const isPublicRequest=(method,path)=>publicPaths.has(path)||(method==='GET'&&path==='/api/integrations/oauth/callback')||(method==='GET'&&path==='/api/auth/google/callback')||(method==='POST'&&path==='/api/billing/webhook')||path==='/api/consent'
 const meteredMetricFor=(method,path)=>{
   if(method!=='POST') return null
   if(path==='/api/track') return 'tracked_events'
@@ -528,6 +532,161 @@ const server = http.createServer(async (req,res)=>{
         s.audit.unshift({id:randomUUID(),action:'auth.login',entityId:member.id,at:new Date().toISOString()})
       })
       return send(req,res,200,{token,user:{id:member.id,email:member.email,name:member.name,role:member.role},workspaceId,expiresIn:ttl})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/auth/google/start') {
+      if(!process.env.GOOGLE_OAUTH_CLIENT_ID||!process.env.GOOGLE_OAUTH_CLIENT_SECRET||!AUTH_GOOGLE_REDIRECT_URI) return send(req,res,503,{error:'Google login is not configured'})
+      const stateToken=createOAuthState(workspaceId)
+      const pkce=createPkce()
+      const now=new Date().toISOString()
+      const expiresAt=new Date(Date.now()+10*60*1000).toISOString()
+      await mutateState(s=>{
+        s.googleLoginStates=s.googleLoginStates||[]
+        s.googleLoginStates=s.googleLoginStates.filter(x=>Date.parse(x.expiresAt)>Date.now())
+        s.googleLoginStates.unshift({stateHash:hashOAuthState(stateToken),workspaceId,verifier:pkce.verifier,createdAt:now,expiresAt})
+      })
+      const auth=new URL('https://accounts.google.com/o/oauth2/v2/auth')
+      auth.searchParams.set('client_id',process.env.GOOGLE_OAUTH_CLIENT_ID)
+      auth.searchParams.set('redirect_uri',AUTH_GOOGLE_REDIRECT_URI)
+      auth.searchParams.set('response_type','code')
+      auth.searchParams.set('state',stateToken)
+      auth.searchParams.set('scope','openid email profile')
+      auth.searchParams.set('code_challenge',pkce.challenge)
+      auth.searchParams.set('code_challenge_method','S256')
+      auth.searchParams.set('prompt','select_account')
+      return send(req,res,200,{authorizationUrl:auth.toString(),expiresAt})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/auth/google/callback') {
+      const stateToken=String(url.searchParams.get('state')||'')
+      const code=String(url.searchParams.get('code')||'')
+      const providerError=String(url.searchParams.get('error')||'')
+      if(providerError) return send(req,res,400,{error:'Google authorization failed',providerError})
+      const parsed=parseOAuthState(stateToken)
+      if(!parsed||!code) return send(req,res,400,{error:'invalid Google login callback'})
+      workspaceId=parsed.workspaceId
+      return withWorkspace(workspaceId,async()=>{
+        const state=await getState()
+        const pending=(state.googleLoginStates||[]).find(x=>x.stateHash===hashOAuthState(stateToken)&&Date.parse(x.expiresAt)>Date.now())
+        if(!pending) return send(req,res,400,{error:'expired Google login state'})
+        const body=new URLSearchParams({
+          grant_type:'authorization_code',
+          code,
+          client_id:process.env.GOOGLE_OAUTH_CLIENT_ID||'',
+          client_secret:process.env.GOOGLE_OAUTH_CLIENT_SECRET||'',
+          redirect_uri:AUTH_GOOGLE_REDIRECT_URI,
+          code_verifier:pending.verifier
+        })
+        const tokenResponse=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body})
+        const tokenRaw=await tokenResponse.text()
+        let tokenBody={}
+        try{tokenBody=tokenRaw?JSON.parse(tokenRaw):{}}catch{}
+        if(!tokenResponse.ok||!tokenBody.access_token) return send(req,res,400,{error:'Google token exchange failed'})
+        const userResponse=await fetch('https://openidconnect.googleapis.com/v1/userinfo',{headers:{Authorization:'Bearer '+tokenBody.access_token}})
+        const user=await userResponse.json()
+        const email=String(user.email||'').trim().toLowerCase()
+        if(!email||user.email_verified===false) return send(req,res,403,{error:'verified Google email required'})
+        const member=(state.members||[]).find(x=>String(x.email).toLowerCase()===email&&x.status==='active')
+        if(!member){
+          if(AUTH_GOOGLE_SUCCESS_URL){
+            const target=new URL(AUTH_GOOGLE_SUCCESS_URL)
+            target.searchParams.set('auth_error','not_member')
+            target.hash='/login'
+            res.writeHead(302,{Location:target.toString()});res.end();return
+          }
+          return send(req,res,403,{error:'Google account is not an active workspace member'})
+        }
+        const rawCode=randomBytes(32).toString('base64url')
+        const codeHash=createHash('sha256').update(rawCode).digest('hex')
+        const expiresAt=new Date(Date.now()+2*60*1000).toISOString()
+        await mutateState(s=>{
+          s.googleLoginStates=(s.googleLoginStates||[]).filter(x=>x.stateHash!==pending.stateHash)
+          s.googleLoginExchanges=s.googleLoginExchanges||[]
+          s.googleLoginExchanges.unshift({codeHash,userId:member.id,email:member.email,role:member.role,name:member.name,workspaceId,expiresAt,used:false})
+          s.googleLoginExchanges=s.googleLoginExchanges.filter(x=>!x.used&&Date.parse(x.expiresAt)>Date.now()).slice(0,200)
+          s.audit=s.audit||[]
+          s.audit.unshift({id:randomUUID(),action:'auth.google_verified',entityId:member.id,at:new Date().toISOString()})
+          s.audit=s.audit.slice(0,1000)
+        })
+        if(!AUTH_GOOGLE_SUCCESS_URL) return send(req,res,200,{exchangeCode:rawCode,workspaceId})
+        const target=new URL(AUTH_GOOGLE_SUCCESS_URL)
+        target.searchParams.set('google_code',rawCode)
+        target.searchParams.set('google_workspace',workspaceId)
+        target.hash='/login'
+        res.writeHead(302,{Location:target.toString()});res.end()
+      })
+    }
+    if (req.method === 'POST' && url.pathname === '/api/auth/google/exchange') {
+      const body=await readBody(req)
+      const code=String(body.code||'')
+      const targetWorkspace=String(body.workspaceId||workspaceId)
+      if(!code||!/^[A-Za-z0-9_-]{1,64}$/.test(targetWorkspace)) return send(req,res,400,{error:'code and valid workspaceId required'})
+      workspaceId=targetWorkspace
+      return withWorkspace(workspaceId,async()=>{
+        const state=await getState()
+        const codeHash=createHash('sha256').update(code).digest('hex')
+        const exchange=(state.googleLoginExchanges||[]).find(x=>x.codeHash===codeHash&&!x.used&&Date.parse(x.expiresAt)>Date.now())
+        if(!exchange) return send(req,res,400,{error:'invalid or expired Google login code'})
+        const ttl=Number(process.env.TOKEN_TTL_SECONDS||3600)
+        const jti=randomUUID()
+        const expiresAt=new Date(Date.now()+ttl*1000).toISOString()
+        const token=createToken({email:exchange.email,userId:exchange.userId,workspaceId,role:exchange.role,jti},JWT_SECRET,ttl)
+        await mutateState(s=>{
+          const found=(s.googleLoginExchanges||[]).find(x=>x.codeHash===codeHash)
+          if(found){found.used=true;found.usedAt=new Date().toISOString()}
+          s.sessions=s.sessions||[]
+          s.sessions.unshift({jti,userId:exchange.userId,email:exchange.email,role:exchange.role,status:'active',createdAt:new Date().toISOString(),expiresAt})
+          s.sessions=s.sessions.filter(x=>!x.expiresAt||Date.parse(x.expiresAt)>Date.now()).slice(0,5000)
+          s.audit=s.audit||[]
+          s.audit.unshift({id:randomUUID(),action:'auth.google_login',entityId:exchange.userId,at:new Date().toISOString()})
+          s.audit=s.audit.slice(0,1000)
+        })
+        return send(req,res,200,{token,user:{id:exchange.userId,email:exchange.email,name:exchange.name,role:exchange.role},workspaceId,expiresIn:ttl})
+      })
+    }
+    if (req.method === 'POST' && url.pathname === '/api/auth/password/forgot') {
+      const body=await readBody(req)
+      const email=String(body.email||'').trim().toLowerCase()
+      if(!email.includes('@')) return send(req,res,202,{accepted:true})
+      const state=await getState()
+      const member=(state.members||[]).find(x=>String(x.email).toLowerCase()===email&&x.status==='active')
+      if(member){
+        const token=randomBytes(32).toString('base64url')
+        const tokenHash=createHash('sha256').update(token).digest('hex')
+        const now=new Date().toISOString()
+        const expiresAt=new Date(Date.now()+30*60*1000).toISOString()
+        await mutateState(s=>{
+          s.passwordResets=s.passwordResets||[]
+          s.passwordResets.unshift({tokenHash,userId:member.id,email:member.email,expiresAt,createdAt:now,used:false})
+          s.passwordResets=s.passwordResets.filter(x=>!x.used&&Date.parse(x.expiresAt)>Date.now()).slice(0,200)
+          s.audit=s.audit||[]
+          s.audit.unshift({id:randomUUID(),action:'auth.password_reset_requested',entityId:member.id,at:now})
+          s.audit=s.audit.slice(0,1000)
+        })
+        if(authMailConfigured()) await sendPasswordReset({email:member.email,token})
+        else if(!IS_PROD) return send(req,res,202,{accepted:true,developmentResetToken:token,expiresAt})
+      }
+      return send(req,res,202,{accepted:true})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/auth/password/reset') {
+      const body=await readBody(req)
+      const token=String(body.token||'')
+      const password=String(body.password||'')
+      if(!token||password.length<8) return send(req,res,400,{error:'valid token and password length >= 8 required'})
+      const tokenHash=createHash('sha256').update(token).digest('hex')
+      const state=await getState()
+      const reset=(state.passwordResets||[]).find(x=>x.tokenHash===tokenHash&&!x.used&&Date.parse(x.expiresAt)>Date.now())
+      if(!reset) return send(req,res,400,{error:'invalid or expired reset token'})
+      const now=new Date().toISOString()
+      await mutateState(s=>{
+        const member=(s.members||[]).find(x=>x.id===reset.userId)
+        if(member){member.passwordHash=hashPassword(password);member.updatedAt=now}
+        const found=(s.passwordResets||[]).find(x=>x.tokenHash===tokenHash)
+        if(found){found.used=true;found.usedAt=now}
+        s.sessions=(s.sessions||[]).map(x=>x.userId===reset.userId?{...x,status:'revoked',revokedAt:now}:x)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'auth.password_reset_completed',entityId:reset.userId,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,200,{ok:true})
     }
     if (req.method === 'POST' && url.pathname === '/api/auth/logout') {
       const jti=req.user?.jti
