@@ -40,6 +40,7 @@ jobs:
           test -f backend/src/custom-integrations.mjs
           test -f backend/src/observability.mjs
           test -f backend/src/entitlements.mjs
+          test -f backend/src/billing-provider.mjs
           test -f backend/scripts/migrate.mjs
           test -f backend/migrations/001_workspace_state.sql
           test -f backend/migrations/002_job_queue.sql
@@ -50,3 +51,4 @@ jobs:
           test -f backend/migrations/007_custom_integrations.sql
           test -f backend/migrations/008_observability_usage.sql
           test -f backend/migrations/009_entitlements.sql
+          test -f backend/migrations/010_billing_provider.sql
