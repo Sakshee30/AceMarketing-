@@ -5,6 +5,7 @@ import { createToken, verifyToken, verifyPassword, hashPassword, hasPermission, 
 import { closeStore, getState, mutateState, storageHealth, withWorkspace } from './store.mjs'
 import { connectorVaultReady, encryptSecret } from './vault.mjs'
 import { enqueueJob, queueStats } from './queue.mjs'
+import { attributionStats, captureClickSession, closeAttributionStore, recordAssistedEvent, reconcileAttribution } from './attribution-store.mjs'
 import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, publicChallenges, publicCaseStudies, publicResources, publicResourceCenter } from './public-content.mjs'
 
 const CONNECTOR_PROVIDERS={
@@ -561,16 +562,20 @@ const server = http.createServer(async (req,res)=>{
     ]})
     if (req.method === 'POST' && url.pathname === '/api/data-hub/rebuild') return send(req,res,202,{jobId:randomUUID(),status:'queued',scope:'canonical_view',queuedAt:new Date().toISOString()})
     if (req.method === 'GET' && url.pathname === '/api/live-sync') return send(req,res,200,{status:'always_on',medianLatencySeconds:42,deliveryRate:99.82,eventsPerMinute:8412,recent:trackedEvents.slice(-25).reverse()})
-    if (req.method === 'GET' && url.pathname === '/api/matchback') return send(req,res,200,{rules:[
-      {name:'closed_won_mba_search',source:'crm_billing',destination:'google_ads',matchedRevenue:8400000,closedOutcomes:982,matchRate:96.8},
-      {name:'enrolment_executive_program',source:'crm_billing',destination:'meta_ads',matchedRevenue:5160000,closedOutcomes:611,matchRate:95.9},
-      {name:'consultation_sale_whatsapp',source:'crm_whatsapp',destination:'meta_google',matchedRevenue:2840000,closedOutcomes:314,matchRate:92.7},
-      {name:'store_sale_offline',source:'pos_crm',destination:'google_meta',matchedRevenue:1980000,closedOutcomes:227,matchRate:94.1}
-    ],unmatched:4})
+    if (req.method === 'GET' && url.pathname === '/api/matchback') {
+      const live=await attributionStats(workspaceId)
+      return send(req,res,200,{live,rules:[
+        {name:'closed_won_mba_search',source:'crm_billing',destination:'google_ads',matchedRevenue:8400000,closedOutcomes:982,matchRate:96.8},
+        {name:'enrolment_executive_program',source:'crm_billing',destination:'meta_ads',matchedRevenue:5160000,closedOutcomes:611,matchRate:95.9},
+        {name:'consultation_sale_whatsapp',source:'crm_whatsapp',destination:'meta_google',matchedRevenue:2840000,closedOutcomes:314,matchRate:92.7},
+        {name:'store_sale_offline',source:'pos_crm',destination:'google_meta',matchedRevenue:1980000,closedOutcomes:227,matchRate:94.1}
+      ],unmatched:live.available?live.unmatchedEvents:4})
+    }
     if (req.method === 'POST' && url.pathname === '/api/matchback/reconcile') {
       const body=await readBody(req)
       if(!body.rule) return send(req,res,400,{error:'rule required'})
-      return send(req,res,200,{rule:body.rule,status:'reconciled',matched:982,unmatched:18,returnedSignals:947,auditId:randomUUID(),completedAt:new Date().toISOString()})
+      const result=await reconcileAttribution(workspaceId,body.limit||250)
+      return send(req,res,200,{rule:body.rule,status:'reconciled',...result,auditId:randomUUID(),completedAt:new Date().toISOString()})
     }
     if (req.method === 'GET' && url.pathname === '/api/pos-stores') return send(req,res,200,{locations:[
       {name:'Delhi Flagship',id:'DL-01',transactions:2184,revenue:4860000,matchRate:96.2},
@@ -594,11 +599,30 @@ const server = http.createServer(async (req,res)=>{
       ]
     })
     if (req.method === 'POST' && url.pathname === '/api/track') {
-      const body = await readBody(req)
-      const event = {id:randomUUID(),receivedAt:new Date().toISOString(),...body}
+      const body=await readBody(req)
+      const event={id:randomUUID(),receivedAt:new Date().toISOString(),...body}
       trackedEvents.push(event)
-      if (trackedEvents.length > 5000) trackedEvents.splice(0,trackedEvents.length-5000)
-      return send(req,res,202,{accepted:true,eventId:event.id})
+      if(trackedEvents.length>5000) trackedEvents.splice(0,trackedEvents.length-5000)
+      let clickSession=null
+      let assisted=null
+      if(body.gclid||body.gbraid||body.wbraid||body.fbclid||body.msclkid||body.utm_source||body.utm_campaign||body.visitorId){
+        clickSession=await captureClickSession(workspaceId,{...body,eventId:event.id,userAgent:req.headers['user-agent']}).catch(()=>null)
+      }
+      if(body.assisted===true||['call','whatsapp','crm','pos','billing','offline'].includes(String(body.source||'').toLowerCase())){
+        assisted=await recordAssistedEvent(workspaceId,{...body,eventId:body.eventId||event.id}).catch(()=>null)
+      }
+      return send(req,res,202,{accepted:true,eventId:event.id,clickSessionId:clickSession?.id||null,assistedEventId:assisted?.id||null,match:assisted?{status:assisted.status,method:assisted.match_method,confidence:assisted.match_confidence}:null})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/assisted-events') {
+      const body=await readBody(req)
+      if(!body.event&&!body.eventType) return send(req,res,400,{error:'event or eventType required'})
+      const item=await recordAssistedEvent(workspaceId,body)
+      if(!item) return send(req,res,503,{error:'attribution store unavailable'})
+      return send(req,res,201,{id:item.id,status:item.status,matchMethod:item.match_method,matchConfidence:item.match_confidence,matchedSessionId:item.matched_session_id})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/attribution-identity/stats') {
+      const stats=await attributionStats(workspaceId)
+      return send(req,res,200,stats)
     }
     if (req.method === 'GET' && url.pathname === '/api/journeys') return send(req,res,200,{items:[
       {lead:'Aarav Sharma',source:'Google Ads',stage:'Qualified',touchpoints:6,duration:'18m'},
@@ -1033,6 +1057,6 @@ server.keepAliveTimeout=65_000
 server.headersTimeout=66_000
 server.requestTimeout=30_000
 server.listen(PORT,()=>console.log(`AceMarketing API listening on http://localhost:${PORT}`))
-const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await closeStore().catch(()=>{});process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
+const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
 process.on('SIGTERM',()=>shutdown('SIGTERM'))
 process.on('SIGINT',()=>shutdown('SIGINT'))
