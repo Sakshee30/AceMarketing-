@@ -7,6 +7,16 @@ const initial={
   quoteRequests:[],
   audiences:[],
   customIntegrations:[],
+  signalDeliveries:[
+    {id:'sig_1001',event:'lead.qualified',destination:'Meta Ads',status:'delivered',attempts:1,httpStatus:200,latencyMs:418,idempotencyKey:'seed_meta_qualified_1001',createdAt:'2026-09-25T12:02:00.000Z',updatedAt:'2026-09-25T12:02:00.418Z'},
+    {id:'sig_1002',event:'revenue.closed',destination:'Google Ads',status:'retrying',attempts:2,httpStatus:429,latencyMs:912,idempotencyKey:'seed_google_revenue_1002',createdAt:'2026-09-25T12:04:00.000Z',updatedAt:'2026-09-25T12:06:00.000Z',nextAttemptAt:'2026-09-25T12:11:00.000Z',lastError:'rate_limited'},
+    {id:'sig_1003',event:'audience.updated',destination:'Custom Webhook',status:'dead_letter',attempts:5,httpStatus:500,latencyMs:1880,idempotencyKey:'seed_webhook_audience_1003',createdAt:'2026-09-25T11:42:00.000Z',updatedAt:'2026-09-25T12:08:00.000Z',lastError:'destination_5xx'}
+  ],
+  connectorHealth:[
+    {id:'meta_ads',name:'Meta Ads',status:'healthy',successRate:99.7,p95LatencyMs:684,lastSuccessAt:'2026-09-25T12:09:00.000Z'},
+    {id:'google_ads',name:'Google Ads',status:'degraded',successRate:98.2,p95LatencyMs:1240,lastSuccessAt:'2026-09-25T12:08:00.000Z',note:'Transient rate limiting observed'},
+    {id:'custom_webhook',name:'Custom Webhook',status:'attention',successRate:94.1,p95LatencyMs:1910,lastSuccessAt:'2026-09-25T11:58:00.000Z',note:'One endpoint returning 5xx'}
+  ],
   audit:[],
   customAgents:[],
   apiKeys:[],
