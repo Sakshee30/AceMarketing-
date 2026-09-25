@@ -10,7 +10,7 @@ import './ace-platform.css'
 import { api } from './lib/api'
 
 type View='site'|'app'|'login'|'pricing'|'demo'|'company'|'resources'|'case-studies'|'privacy'|'terms'|'security'|'solutions'
-type AppTab='Launchpad'|'Overview'|'AdSync'|'Funnel'|'Events'|'Diagnostics'|'Live Sync'|'Offline Attribution'|'Journeys'|'Identity'|'Attribution'|'Reports'|'Enrich'|'Behavior'|'Feed'|'Agents'|'Approvals'|'Ask Ace'|'Integrations'|'Audiences'|'Monitoring'|'Settings'
+type AppTab='Launchpad'|'Overview'|'AdSync'|'Funnel'|'Events'|'Diagnostics'|'Live Sync'|'Offline Attribution'|'Journeys'|'Identity'|'Attribution'|'Reports'|'Enrich'|'Behavior'|'Feed'|'Agents'|'Approvals'|'Ask Ace'|'Integrations'|'Audiences'|'Monitoring'|'Alerts'|'Developers'|'Settings'
 
 const agents=[
  ['Meta Advanced CAPI','Return qualified outcomes to Meta server-side with deduplication.','Lead Quality','+25–40% ROAS'],
@@ -390,7 +390,7 @@ function Login({back,openApp}:{back:()=>void,openApp:()=>void}){
 }
 
 const appTabs=[
- ['Launchpad',WandSparkles],['Overview',Gauge],['AdSync',RadioTower],['Funnel',BarChart3],['Events',Zap],['Diagnostics',ShieldCheck],['Live Sync',Activity],['Offline Attribution',PhoneCall],['Journeys',Network],['Identity',UsersRound],['Attribution',PieChart],['Reports',BarChart3],['Enrich',DatabaseZap],['Behavior',MousePointer2],['Feed',Layers3],['Agents',Bot],['Approvals',CheckCircle2],['Ask Ace',Sparkles],['Integrations',Cable],['Audiences',UsersRound],['Monitoring',Activity],['Settings',Settings2]
+ ['Launchpad',WandSparkles],['Overview',Gauge],['AdSync',RadioTower],['Funnel',BarChart3],['Events',Zap],['Diagnostics',ShieldCheck],['Live Sync',Activity],['Offline Attribution',PhoneCall],['Journeys',Network],['Identity',UsersRound],['Attribution',PieChart],['Reports',BarChart3],['Enrich',DatabaseZap],['Behavior',MousePointer2],['Feed',Layers3],['Agents',Bot],['Approvals',CheckCircle2],['Ask Ace',Sparkles],['Integrations',Cable],['Audiences',UsersRound],['Monitoring',Activity],['Alerts',Bell],['Developers',Code2],['Settings',Settings2]
 ] as const
 function Stat({label,value,sub,Icon}:{label:string,value:string,sub:string,Icon:any}){return <article className="stat"><div><span>{label}</span><Icon/></div><strong>{value}</strong><small>{sub}</small></article>}
 function PageHead({crumb,title,sub,action}:{crumb:string,title:string,sub:string,action?:string}){return <div className="page-head"><div><span>{crumb}</span><h1>{title}</h1><p>{sub}</p></div>{action&&<button className="app-primary"><Sparkles/>{action}</button>}</div>}
@@ -695,6 +695,49 @@ function Monitoring(){
  <div className="app-panel"><div className="panel-head"><div><h3>Recent alerts</h3><p>Operational events</p></div></div>{[['Resolved','WhatsApp API rate limit recovered','12 min ago'],['Resolved','Google Ads token refreshed','48 min ago'],['Info','Audience sync completed','1h ago'],['Info','Daily attribution rebuild complete','3h ago']].map(x=><div className="alert-row" key={x[1]}><span className={x[0].toLowerCase()}>{x[0]}</span><div><b>{x[1]}</b><small>{x[2]}</small></div></div>)}</div></div>
  <div className="app-panel"><div className="panel-head"><div><h3>Automated monitoring rules</h3><p>Guardrails for signal loss and stale optimization inputs</p></div><button>+ Add rule</button></div><div className="monitor-rule-grid">{[['Event delivery rate','< 98% for 10 min','Critical'],['GCLID coverage','< 85%','Warning'],['CRM sync latency','> 5 min','Warning'],['Audience sync','No update for 60 min','Critical'],['CAPI token','Expires in < 24h','Info'],['Failed event queue','> 500 records','Critical']].map(x=><article key={x[0]}><Activity/><div><b>{x[0]}</b><small>{x[1]}</small></div><span className={String(x[2]).toLowerCase()}>{x[2]}</span></article>)}</div></div></>
 }
+function Alerts(){
+ const [items,setItems]=useState<any[]>([
+  {id:'al_1',severity:'Critical',title:'Audience sync stalled',source:'Meta Ads',age:'6 min',status:'open',detail:'Converted-customer suppression has not refreshed for 68 minutes.'},
+  {id:'al_2',severity:'Warning',title:'GCLID coverage below threshold',source:'CRM outcomes',age:'21 min',status:'open',detail:'Offline outcome click-ID coverage dropped to 82.4%.'},
+  {id:'al_3',severity:'Warning',title:'CRM sync latency elevated',source:'LeadSquared',age:'34 min',status:'open',detail:'p95 stage-change latency is 7.8 minutes.'},
+  {id:'al_4',severity:'Info',title:'Google Ads token expires soon',source:'Google Ads',age:'1h',status:'open',detail:'OAuth token should be refreshed within 20 hours.'}
+ ])
+ const [selected,setSelected]=useState(items[0]?.id||'')
+ const current=items.find(x=>x.id===selected)||items[0]
+ const resolve=async(id:string)=>{await api.resolveAlert(id).catch(()=>null);setItems(xs=>xs.map(x=>x.id===id?{...x,status:'resolved'}:x))}
+ return <><PageHead crumb="Operations / Alerts" title="Alert Center" sub="Triage data, connector, delivery and audience issues from one operational queue." action="Create alert rule"/>
+ <div className="stats-grid"><Stat label="Open alerts" value={String(items.filter(x=>x.status==='open').length)} sub="1 critical · 2 warnings" Icon={Bell}/><Stat label="Median acknowledge" value="3m 12s" sub="Last 30 days" Icon={Activity}/><Stat label="Auto-resolved" value="84%" sub="Retries / refreshes" Icon={Check}/><Stat label="Escalations" value="2" sub="This week" Icon={MessageCircle}/></div>
+ <div className="alert-center-layout"><div className="app-panel alert-center-list"><div className="panel-head"><div><h3>Active alerts</h3><p>Operational events requiring review</p></div></div>{items.map(x=><button key={x.id} className={selected===x.id?'selected':''} onClick={()=>setSelected(x.id)}><Bell/><div><b>{x.title}</b><small>{x.source} · {x.age}</small></div><span className={x.severity.toLowerCase()}>{x.severity}</span><em className={x.status}>{x.status}</em></button>)}</div>
+ {current&&<div className="app-panel alert-center-detail"><div className="panel-head"><div><h3>{current.title}</h3><p>{current.source}</p></div><span className={'diag-severity '+current.severity.toLowerCase()}>{current.severity}</span></div><p className="alert-detail-copy">{current.detail}</p><div className="diagnostic-evidence">{[['Alert ID',current.id],['Detected',current.age+' ago'],['Routing','Email + Slack'],['Runbook','Automatic retry, then human review']].map(x=><article key={x[0]}><span>{x[0]}</span><b>{x[1]}</b></article>)}</div><div className="alert-timeline"><div><span>1</span><div><b>Threshold breached</b><small>{current.age} ago</small></div></div><div><span>2</span><div><b>Automated retry attempted</b><small>Retry policy executed</small></div></div><div><span>3</span><div><b>Human review requested</b><small>Alert routed to workspace owner</small></div></div></div>{current.status==='open'?<div className="approval-actions"><button>Open runbook</button><button className="approve" onClick={()=>resolve(current.id)}><Check/>Mark resolved</button></div>:<div className="approval-final approved"><Check/><b>Resolved</b></div>}</div>}</div></>
+}
+
+function Developers(){
+ const [secret,setSecret]=useState('whsec••••••••••••')
+ const [delivery,setDelivery]=useState<any[]>([
+  ['evt_91','lead.qualified','200','412ms','Delivered'],
+  ['evt_90','revenue.closed','200','588ms','Delivered'],
+  ['evt_89','sync.failed','500','1.9s','Failed'],
+  ['evt_88','audience.updated','200','376ms','Delivered']
+ ])
+ const rotate=async()=>{try{const r:any=await api.rotateWebhookSecret();setSecret(r.secret)}catch{setSecret('whsec_demo_rotated')}}
+ const retry=async(id:string)=>{await api.retryWebhook(id).catch(()=>null);setDelivery(xs=>xs.map(x=>x[0]===id?[x[0],x[1],'202','Queued','Retry queued']:x))}
+ return <><PageHead crumb="Platform / Developers" title="Developer & webhook console" sub="Integrate proprietary systems with API keys, webhooks and server-to-server event contracts." action="Open API reference"/>
+ <div className="stats-grid"><Stat label="API uptime" value="99.99%" sub="Demo operational surface" Icon={Activity}/><Stat label="Webhook delivery" value="99.61%" sub="Last 24 hours" Icon={RadioTower}/><Stat label="P95 latency" value="1.7s" sub="API ingestion" Icon={Gauge}/><Stat label="Active endpoints" value="3" sub="Outbound webhooks" Icon={Cable}/></div>
+ <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>API quick start</h3><p>Server-to-server event ingestion</p></div><span className="healthy">v1</span></div><div className="code-block"><code>{`POST /api/track
+Authorization: Bearer ace_workspace_key
+Content-Type: application/json
+
+{
+  "event": "lead.qualified",
+  "customerId": "cust_18421",
+  "gclid": "gclid_example",
+  "value": 0
+}`}</code></div><div className="sdk-tabs"><button>cURL</button><button>Node.js</button><button>Python</button></div></div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Webhook signing</h3><p>Verify outbound event authenticity</p></div></div><div className="api-key-box"><div><span>Signing secret</span><code>{secret}</code></div><button onClick={rotate}>Rotate secret</button></div><div className="setting-line"><span>Signature header</span><b>X-Ace-Signature</b><span className="healthy">HMAC-SHA256</span></div><div className="setting-line"><span>Timestamp header</span><b>X-Ace-Timestamp</b><span className="healthy">Required</span></div><div className="setting-line"><span>Replay tolerance</span><b>5 minutes</b><button>Edit</button></div></div></div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Webhook delivery log</h3><p>Inspect status, latency and retry state</p></div><button>+ Add endpoint</button></div><table><thead><tr><th>Delivery ID</th><th>Event</th><th>HTTP</th><th>Latency</th><th>Status</th><th></th></tr></thead><tbody>{delivery.map(x=><tr key={x[0]}><td><code>{x[0]}</code></td><td>{x[1]}</td><td>{x[2]}</td><td>{x[3]}</td><td><span className={x[4].toLowerCase().replace(' ','-')}>{x[4]}</span></td><td>{x[4]==='Failed'&&<button onClick={()=>retry(x[0])}>Retry</button>}</td></tr>)}</tbody></table></div>
+ <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Event catalog</h3><p>Stable contracts for connected systems</p></div></div>{[['lead.created','Lead entered CRM'],['lead.qualified','Qualified outcome'],['consultation.booked','Meeting scheduled'],['revenue.closed','Closed revenue'],['audience.updated','Activation segment changed'],['sync.failed','Connector delivery failure']].map(x=><div className="developer-event-row" key={x[0]}><code>{x[0]}</code><span>{x[1]}</span><ChevronRight/></div>)}</div><div className="app-panel"><div className="panel-head"><div><h3>Reliability contract</h3><p>Delivery guarantees in the implementation design</p></div></div>{[['Idempotency','event_id required'],['Retries','Exponential backoff'],['Dead-letter queue','After retry exhaustion'],['Observability','Delivery history + alerting'],['Versioning','Stable event schema versions']].map(x=><div className="setting-line" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><Check/></div>)}</div></div></>
+}
+
 function Settings(){
  const sections=['Workspace','Users & roles','Tracking','Governance','API & webhooks','Agent approvals','Notifications','Billing & usage']
  const [section,setSection]=useState('Workspace')
@@ -718,7 +761,7 @@ function Product({back}:{back:()=>void}){
  const [workspaceOpen,setWorkspaceOpen]=useState(false)
  const [workspace,setWorkspace]=useState('Ace EdTech')
  const workspaces=[['Ace EdTech','Production','AM'],['Ace Healthcare','Production','AH'],['Demo Sandbox','Sandbox','DS']]
- const view=useMemo(()=>({Launchpad:<Launchpad/>,Overview:<Overview/>,AdSync:<AdSync/>,Funnel:<Funnel/>,Events:<Events/>,Diagnostics:<Diagnostics/>,"Live Sync":<LiveSync/>,"Offline Attribution":<OfflineAttribution/>,Journeys:<Journeys/>,Identity:<Identity/>,Attribution:<Attribution/>,Reports:<Reports/>,Enrich:<Enrich/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Approvals:<Approvals/>,"Ask Ace":<AskAce/>,Integrations:<Integrations/>,Audiences:<Audiences/>,Monitoring:<Monitoring/>,Settings:<Settings/>}[tab]),[tab])
+ const view=useMemo(()=>({Launchpad:<Launchpad/>,Overview:<Overview/>,AdSync:<AdSync/>,Funnel:<Funnel/>,Events:<Events/>,Diagnostics:<Diagnostics/>,"Live Sync":<LiveSync/>,"Offline Attribution":<OfflineAttribution/>,Journeys:<Journeys/>,Identity:<Identity/>,Attribution:<Attribution/>,Reports:<Reports/>,Enrich:<Enrich/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Approvals:<Approvals/>,"Ask Ace":<AskAce/>,Integrations:<Integrations/>,Audiences:<Audiences/>,Monitoring:<Monitoring/>,Alerts:<Alerts/>,Developers:<Developers/>,Settings:<Settings/>}[tab]),[tab])
  return <div className="product"><aside><Brand/><div className="workspace-wrap"><button className="workspace" onClick={()=>setWorkspaceOpen(!workspaceOpen)}><span>{workspaces.find(x=>x[0]===workspace)?.[2]||'AM'}</span><div><b>{workspace}</b><small>{workspaces.find(x=>x[0]===workspace)?.[1]||'Production'} workspace</small></div><ChevronDown/></button>{workspaceOpen&&<div className="workspace-menu">{workspaces.map(x=><button key={x[0]} onClick={()=>{setWorkspace(x[0]);setWorkspaceOpen(false)}} className={workspace===x[0]?'active':''}><span>{x[2]}</span><div><b>{x[0]}</b><small>{x[1]}</small></div>{workspace===x[0]&&<Check/>}</button>)}<button className="new-workspace"><Plus/>Create workspace</button></div>}</div><nav>{appTabs.map(([x,I])=><button key={x} className={tab===x?'active':''} onClick={()=>setTab(x)}><I/>{x}</button>)}</nav><div className="aside-footer"><button onClick={back}><ArrowRight/>Back to website</button><div className="profile-mini"><span>S</span><div><b>Sakshee</b><small>Workspace owner</small></div></div></div></aside>
  <main><header className="product-head"><div className="global-search"><Search/>Search journeys, leads, campaigns...</div><div><span className="sync">● Live sync healthy</span><button><Headphones/></button><button><Globe2/></button><span className="avatar-sm">S</span></div></header><div className="product-body">{view}</div></main></div>
 }
