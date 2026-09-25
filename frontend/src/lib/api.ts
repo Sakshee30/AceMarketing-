@@ -123,6 +123,7 @@ export const api = {
   replaySignalDlq: () => request('/signal-deliveries/replay-dlq', { method: 'POST', body: JSON.stringify({}) }),
   connectorHealth: () => request('/connector-health'),
   monitoring: () => request('/monitoring'),
+  consentStats: () => request('/consent/stats'),
   billingUsage: () => request('/billing/usage'),
   subscription: () => request('/billing/subscription'),
   createBillingCheckout: (planCode: string) => request('/billing/checkout', { method: 'POST', body: JSON.stringify({planCode}) }),
