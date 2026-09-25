@@ -5,6 +5,12 @@ const dismissConsent=async(page:any)=>{
   if(await dialog.isVisible().catch(()=>false)) await page.getByRole('button',{name:'Essential only'}).click()
 }
 
+const openWorkspaceTab=async(page:any,name:string)=>{
+  const toggle=page.getByRole('button',{name:'Open workspace navigation'})
+  if(await toggle.isVisible().catch(()=>false)) await toggle.click()
+  await page.locator('.product-sidebar').getByRole('button',{name,exact:true}).click()
+}
+
 const criticalPublicRoutes=[
   ['#/',/AceMarketing/i],
   ['#/agents',/agents/i],
@@ -69,7 +75,7 @@ test.describe('workspace critical flows',()=>{
     const search=page.getByPlaceholder('Find feature...')
     await search.fill('audience')
     await expect(page.getByRole('button',{name:'Audiences',exact:true})).toBeVisible()
-    await page.getByRole('button',{name:'Audiences',exact:true}).click()
+    await openWorkspaceTab(page,'Audiences')
     await expect(page.locator('.product-body h1')).toContainText(/Audience/i)
   })
 
@@ -86,44 +92,44 @@ test.describe('workspace critical flows',()=>{
     ] as const
 
     for(const [tab,copy] of tabs){
-      await page.getByRole('button',{name:tab,exact:true}).click()
+      await openWorkspaceTab(page,tab)
       await expect(page.locator('.product-body')).toContainText(copy)
     }
   })
 
   test('launchpad identity and models render backend-backed state',async({page})=>{
-    await page.getByRole('button',{name:'Launchpad',exact:true}).click()
+    await openWorkspaceTab(page,'Launchpad')
     await expect(page.locator('.product-body h1')).toContainText(/Launchpad/i)
     await expect(page.locator('.launchpad-progress')).toContainText(/Workspace readiness/i)
 
-    await page.getByRole('button',{name:'Identity',exact:true}).click()
+    await openWorkspaceTab(page,'Identity')
     await expect(page.locator('.product-body h1')).toContainText(/Identity resolution/i)
     await expect(page.locator('.product-body')).toContainText(/Known identities/i)
 
-    await page.getByRole('button',{name:'Models',exact:true}).click()
+    await openWorkspaceTab(page,'Models')
     await expect(page.locator('.product-body h1')).toContainText(/Custom models/i)
     await expect(page.locator('.product-body')).toContainText(/Model catalog|No model services available|Workspace scoring runtime/i)
   })
 
   test('conversion operations expose real creation and empty-state flows',async({page})=>{
-    await page.getByRole('button',{name:'Follow-ups',exact:true}).click()
+    await openWorkspaceTab(page,'Follow-ups')
     await expect(page.locator('.product-body h1')).toContainText(/Follow-up operations/i)
     await expect(page.getByRole('button',{name:/Create follow-up/i})).toBeVisible()
 
-    await page.getByRole('button',{name:'Feedback',exact:true}).click()
+    await openWorkspaceTab(page,'Feedback')
     await expect(page.locator('.product-body h1')).toContainText(/Feedback agent/i)
     await expect(page.getByRole('button',{name:/Record feedback/i})).toBeVisible()
 
-    await page.getByRole('button',{name:'Approvals',exact:true}).click()
+    await openWorkspaceTab(page,'Approvals')
     await expect(page.locator('.product-body h1')).toContainText(/Human approval center/i)
 
-    await page.getByRole('button',{name:'Routing',exact:true}).click()
+    await openWorkspaceTab(page,'Routing')
     await expect(page.locator('.product-body h1')).toContainText(/Lead routing/i)
     await expect(page.locator('.product-body')).toContainText(/Routed today|No routing load yet/i)
   })
 
   test('notification and approval settings are editable',async({page})=>{
-    await page.getByRole('button',{name:'Settings',exact:true}).click()
+    await openWorkspaceTab(page,'Settings')
     await page.getByRole('button',{name:'Notifications',exact:true}).click()
     await expect(page.getByRole('heading',{name:'Notifications'})).toBeVisible()
     await expect(page.getByRole('button',{name:/Save notifications/i})).toBeVisible()
@@ -134,7 +140,7 @@ test.describe('workspace critical flows',()=>{
   })
 
   test('billing usage settings render live entitlement surface',async({page})=>{
-    await page.getByRole('button',{name:'Settings',exact:true}).click()
+    await openWorkspaceTab(page,'Settings')
     await page.getByRole('button',{name:'Billing & usage',exact:true}).click()
     await expect(page.getByRole('heading',{name:'Billing & usage'})).toBeVisible()
     await expect(page.locator('.settings-detail')).toContainText(/Tracked events/i)
@@ -170,7 +176,7 @@ test.describe('basic accessibility regression',()=>{
     await expect(page.locator('.marketing-page')).toBeVisible()
     await page.evaluate(()=>window.dispatchEvent(new CustomEvent('ace-view',{detail:'app'})))
     await expect(page.locator('.product-body h1')).toHaveCount(1)
-    await page.locator('.product-nav-group-items').getByRole('button',{name:'Monitoring',exact:true}).click()
+    await openWorkspaceTab(page,'Monitoring')
     await expect(page.locator('.product-body h1')).toHaveCount(1)
   })
 })
@@ -232,7 +238,7 @@ test('dashboard keeps section navigation visible on workspace', async ({ page })
 test('manual integration cards open the custom adapter builder', async ({ page }) => {
   await page.goto('/#/workspace')\n  await dismissConsent(page)
   await page.getByLabel('Dashboard sections').getByRole('button', { name: 'Activation & Integrations', exact: true }).click()
-  await page.getByRole('button', { name: 'Integrations', exact: true }).first().click()
+  await openWorkspaceTab(page,'Integrations')
   const meritto = page.locator('article').filter({ hasText: 'Meritto' })
   await expect(meritto).toContainText('Configurable adapter')
   await meritto.getByRole('button', { name: 'Configure' }).click()
@@ -244,7 +250,7 @@ test('manual integration cards open the custom adapter builder', async ({ page }
 test('built-in agent opens its live operational module', async ({ page }) => {
   await page.goto('/#/workspace')\n  await dismissConsent(page)
   await page.getByLabel('Dashboard sections').getByRole('button', { name: 'Lead & Conversion', exact: true }).click()
-  await page.getByRole('button', { name: 'Agents', exact: true }).first().click()
+  await openWorkspaceTab(page,'Agents')
   await page.getByRole('button', { name: /Lead Grading/ }).first().click()
   await expect(page.getByText('Operational prerequisites')).toBeVisible()
   await page.getByRole('button', { name: /Open lead grading/ }).click()
@@ -255,7 +261,7 @@ test('built-in agent opens its live operational module', async ({ page }) => {
 test('funnel period control updates backend-filtered workspace', async ({ page }) => {
   await page.goto('/#/workspace')\n  await dismissConsent(page)
   await page.getByLabel('Dashboard sections').getByRole('button', { name: 'Tracking & Data', exact: true }).click()
-  await page.getByRole('button', { name: 'Funnel', exact: true }).first().click()
+  await openWorkspaceTab(page,'Funnel')
   await expect(page.getByRole('heading', { name: 'Channel & campaign funnel' })).toBeVisible()
   await page.getByRole('button', { name: /Last 30 days/ }).click()
   await expect(page.getByText('90 day window')).toBeVisible()
@@ -265,7 +271,7 @@ test('funnel period control updates backend-filtered workspace', async ({ page }
 test('reports list reflects persisted schedules instead of static claims', async ({ page }) => {
   await page.goto('/#/workspace')\n  await dismissConsent(page)
   await page.getByLabel('Dashboard sections').getByRole('button', { name: 'Measurement & Intelligence', exact: true }).click()
-  await page.getByRole('button', { name: 'Reports', exact: true }).first().click()
+  await openWorkspaceTab(page,'Reports')
   await expect(page.getByRole('heading', { name: 'Cohort & automated reports' })).toBeVisible()
   await expect(page.getByText('Cohort Performance', { exact: true }).first()).toBeVisible()
   await expect(page.getByText('Paid Funnel Performance', { exact: true })).toHaveCount(0)
@@ -275,7 +281,7 @@ test('reports list reflects persisted schedules instead of static claims', async
 test('attribution period selector requests a new backend window', async ({ page }) => {
   await page.goto('/#/workspace')
   await dismissConsent(page)
-  await page.getByRole('button', { name: 'Attribution', exact: true }).click()
+  await openWorkspaceTab(page,'Attribution')
   await expect(page.getByRole('heading', { name: 'Full-path attribution' })).toBeVisible()
   await page.getByRole('button', { name: 'Last 30 days', exact: true }).click()
   await expect(page.getByText('90 day window', { exact: false })).toBeVisible()
