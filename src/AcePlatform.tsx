@@ -10,7 +10,7 @@ import './ace-platform.css'
 import { api } from './lib/api'
 
 type View='site'|'app'|'login'|'pricing'|'demo'|'company'|'resources'|'case-studies'|'privacy'|'terms'|'security'|'solutions'
-type AppTab='Launchpad'|'Overview'|'AdSync'|'Funnel'|'Events'|'Live Sync'|'Offline Attribution'|'Journeys'|'Identity'|'Attribution'|'Enrich'|'Behavior'|'Feed'|'Agents'|'Approvals'|'Ask Ace'|'Integrations'|'Audiences'|'Monitoring'|'Settings'
+type AppTab='Launchpad'|'Overview'|'AdSync'|'Funnel'|'Events'|'Live Sync'|'Offline Attribution'|'Journeys'|'Identity'|'Attribution'|'Reports'|'Enrich'|'Behavior'|'Feed'|'Agents'|'Approvals'|'Ask Ace'|'Integrations'|'Audiences'|'Monitoring'|'Settings'
 
 const agents=[
  ['Meta Advanced CAPI','Return qualified outcomes to Meta server-side with deduplication.','Lead Quality','+25–40% ROAS'],
@@ -25,7 +25,7 @@ const agents=[
  ['Feedback Agent','Collect post-interaction feedback and surface objections.','Conversion','5× more feedback'],
  ['Ask Ace','Ask journey, funnel and attribution questions in plain language.','Visibility','+20–40% qualified leads']
 ]
-const integrations=['Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads','GA4','Zoho CRM','Salesforce','HubSpot','LeadSquared','HighLevel','WhatsApp','WATI','Gupshup','MoEngage','CleverTap','Exotel','Knowlarity','Tata Tele','MyOperator','Shopify','WooCommerce','Magento','WordPress','Custom Backend']
+const integrations=['Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads','GA4','Zoho CRM','Salesforce','HubSpot','LeadSquared','Meritto','HighLevel','Microsoft Dynamics 365','WhatsApp','WATI','Gupshup','MoEngage','CleverTap','Bitespeed','AiSensy','Exotel','Knowlarity','Tata Tele','MyOperator','Shopify','WooCommerce','Magento','WordPress','Custom Backend']
 const industries=[
  ['EdTech','Track the student journey across ads, forms, calls, counsellors and enrolment.'],
  ['FinTech','Connect acquisition and downstream conversion while preserving strict data controls.'],
@@ -390,7 +390,7 @@ function Login({back,openApp}:{back:()=>void,openApp:()=>void}){
 }
 
 const appTabs=[
- ['Launchpad',WandSparkles],['Overview',Gauge],['AdSync',RadioTower],['Funnel',BarChart3],['Events',Zap],['Live Sync',Activity],['Offline Attribution',PhoneCall],['Journeys',Network],['Identity',UsersRound],['Attribution',PieChart],['Enrich',DatabaseZap],['Behavior',MousePointer2],['Feed',Layers3],['Agents',Bot],['Approvals',CheckCircle2],['Ask Ace',Sparkles],['Integrations',Cable],['Audiences',UsersRound],['Monitoring',Activity],['Settings',Settings2]
+ ['Launchpad',WandSparkles],['Overview',Gauge],['AdSync',RadioTower],['Funnel',BarChart3],['Events',Zap],['Live Sync',Activity],['Offline Attribution',PhoneCall],['Journeys',Network],['Identity',UsersRound],['Attribution',PieChart],['Reports',BarChart3],['Enrich',DatabaseZap],['Behavior',MousePointer2],['Feed',Layers3],['Agents',Bot],['Approvals',CheckCircle2],['Ask Ace',Sparkles],['Integrations',Cable],['Audiences',UsersRound],['Monitoring',Activity],['Settings',Settings2]
 ] as const
 function Stat({label,value,sub,Icon}:{label:string,value:string,sub:string,Icon:any}){return <article className="stat"><div><span>{label}</span><Icon/></div><strong>{value}</strong><small>{sub}</small></article>}
 function PageHead({crumb,title,sub,action}:{crumb:string,title:string,sub:string,action?:string}){return <div className="page-head"><div><span>{crumb}</span><h1>{title}</h1><p>{sub}</p></div>{action&&<button className="app-primary"><Sparkles/>{action}</button>}</div>}
@@ -547,6 +547,29 @@ function Attribution(){
  <div className="app-panel"><div className="panel-head"><div><h3>Attribution model comparison</h3><p>Same revenue, different credit rules</p></div><span className="status">Measured journey</span></div><div className="model-compare">{[['First touch','Google Ads','₹84,000'],['Last touch','Counsellor / CRM','₹84,000'],['Linear','5 touches','₹16,800 each'],['Full path','Measured contribution','Google 38% · WhatsApp 22% · Assisted 40%']].map(x=><article key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><small>{x[2]}</small></article>)}</div></div>
  <div className="app-panel"><div className="panel-head"><div><h3>Example revenue journey</h3><p>₹84,000 · five touches · two days</p></div><span className="status">Revenue matched</span></div><div className="touch-path">{['Google Search','Website','WhatsApp','Counsellor Call','Enrolment'].map((x,i)=><div key={x}><span>{i+1}</span><b>{x}</b>{i<4&&<ArrowRight/>}</div>)}</div></div></>
 }
+function Reports(){
+ const [selected,setSelected]=useState('Executive MBA Cohort')
+ const reports=[
+  ['Executive MBA Cohort','Weekly','Email','Active'],
+  ['Paid Funnel Performance','Daily','Email + Slack','Active'],
+  ['Attribution Summary','Monday 08:00','Leadership','Active'],
+  ['Lead Quality by Campaign','Monthly','Growth Team','Draft']
+ ]
+ const cohort=[
+  ['Jan','1,240','38%','22%','8.4%','₹7,940'],
+  ['Feb','1,410','41%','25%','9.8%','₹7,520'],
+  ['Mar','1,622','45%','28%','11.1%','₹7,080'],
+  ['Apr','1,884','47%','30%','12.4%','₹6,760']
+ ]
+ return <><PageHead crumb="Measurement / Reports" title="Cohort & automated reports" sub="Turn stitched journey and attribution data into recurring decision-ready reports." action="New report"/>
+ <div className="stats-grid"><Stat label="Scheduled reports" value="4" sub="3 active · 1 draft" Icon={BarChart3}/><Stat label="Recipients" value="18" sub="Across growth + leadership" Icon={UsersRound}/><Stat label="Last delivery" value="08:00" sub="Delivered successfully" Icon={Check}/><Stat label="Report failures" value="0" sub="Last 30 days" Icon={Activity}/></div>
+ <div className="reports-layout"><div className="app-panel report-list"><div className="panel-head"><div><h3>Scheduled reports</h3><p>Automated email and stakeholder reporting</p></div></div>{reports.map(r=><button key={r[0]} className={selected===r[0]?'selected':''} onClick={()=>setSelected(r[0])}><BarChart3/><div><b>{r[0]}</b><small>{r[1]} · {r[2]}</small></div><span className={r[3].toLowerCase()}>{r[3]}</span><ChevronRight/></button>)}</div>
+ <div className="app-panel report-preview"><div className="panel-head"><div><h3>{selected}</h3><p>Preview · stitched journey cohort analysis</p></div><button>Send test email</button></div><div className="report-summary-grid">{[['Cohort size','1,884'],['Qualified rate','47%'],['Consultation rate','30%'],['Enrolment rate','12.4%'],['CAC','₹6,760'],['Attributed revenue','₹1.27Cr']].map(x=><div key={x[0]}><span>{x[0]}</span><b>{x[1]}</b></div>)}</div><div className="report-insight"><Sparkles/><div><b>Automated insight</b><p>April's cohort has the strongest qualification and enrolment rates while CAC is 14.9% lower than January.</p></div></div></div></div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Cohort performance</h3><p>Acquisition month → downstream conversion and CAC</p></div><button>Export CSV</button></div><table><thead><tr><th>Cohort</th><th>Leads</th><th>Qualified</th><th>Consultation</th><th>Enrolment</th><th>CAC</th></tr></thead><tbody>{cohort.map(r=><tr key={r[0]}>{r.map((v,i)=><td key={i}>{v}</td>)}</tr>)}</tbody></table></div>
+ <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Media planning view</h3><p>Quality-adjusted channel recommendation</p></div></div>{[['Google Search','Scale','High close rate · stable CAC'],['Meta Prospecting','Hold','Volume strong · lead quality mixed'],['WhatsApp Retargeting','Scale','High consultation progression'],['LinkedIn','Optimize','High CPL · good downstream quality']].map(x=><div className="planning-row" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><small>{x[2]}</small></div>)}</div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Delivery configuration</h3><p>Automated report distribution</p></div></div>{[['Cadence','Weekly · Monday 08:00'],['Recipients','growth@company.com · leadership@company.com'],['Format','Email summary + CSV attachment'],['Lookback','Previous 7 days'],['Failure alert','Slack #growth-ops']].map(x=><div className="setting-line" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><button>Edit</button></div>)}</div></div></>
+}
+
 function Enrich(){
  return <><PageHead crumb="Module / Enrich" title="Lead context & grading" sub="Give sales the complete story the moment a lead enters the CRM." action="Configure enrichment"/>
  <div className="stats-grid"><Stat label="Leads enriched" value="12,842" sub="98.4% success" Icon={DatabaseZap}/><Stat label="High intent" value="3,106" sub="24.2% of leads" Icon={Target}/><Stat label="Avg response" value="1m 18s" sub="-34s this month" Icon={Activity}/><Stat label="Mapped fields" value="46" sub="CRM context fields" Icon={Layers3}/></div>
@@ -618,8 +641,8 @@ function AskAce(){
 
 function Integrations(){
  const groups=[
-  ['CRM Platforms',['Zoho CRM','Salesforce','LeadSquared','HubSpot','HighLevel','Microsoft Dynamics 365','Custom CRM']],
-  ['WhatsApp & Marketing Platforms',['WhatsApp','WATI','Gupshup','MoEngage','CleverTap','BitSpeed','Gallabox']],
+  ['CRM Platforms',['Zoho CRM','Salesforce','LeadSquared','Meritto','HubSpot','HighLevel','Microsoft Dynamics 365','Custom CRM']],
+  ['WhatsApp & Marketing Platforms',['WhatsApp','Bitespeed','AiSensy','Gupshup','WATI','MoEngage','CleverTap']],
   ['Calling Platforms',['Exotel','Knowlarity','Tata Tele','MyOperator']],
   ['Website & App Platforms',['Shopify','WooCommerce','Magento','WordPress','React App','Custom Backend']],
   ['Advertising & Analytics',['Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads','GA4']]
@@ -675,7 +698,7 @@ function Product({back}:{back:()=>void}){
  const [workspaceOpen,setWorkspaceOpen]=useState(false)
  const [workspace,setWorkspace]=useState('Ace EdTech')
  const workspaces=[['Ace EdTech','Production','AM'],['Ace Healthcare','Production','AH'],['Demo Sandbox','Sandbox','DS']]
- const view=useMemo(()=>({Launchpad:<Launchpad/>,Overview:<Overview/>,AdSync:<AdSync/>,Funnel:<Funnel/>,Events:<Events/>,"Live Sync":<LiveSync/>,"Offline Attribution":<OfflineAttribution/>,Journeys:<Journeys/>,Identity:<Identity/>,Attribution:<Attribution/>,Enrich:<Enrich/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Approvals:<Approvals/>,"Ask Ace":<AskAce/>,Integrations:<Integrations/>,Audiences:<Audiences/>,Monitoring:<Monitoring/>,Settings:<Settings/>}[tab]),[tab])
+ const view=useMemo(()=>({Launchpad:<Launchpad/>,Overview:<Overview/>,AdSync:<AdSync/>,Funnel:<Funnel/>,Events:<Events/>,"Live Sync":<LiveSync/>,"Offline Attribution":<OfflineAttribution/>,Journeys:<Journeys/>,Identity:<Identity/>,Attribution:<Attribution/>,Reports:<Reports/>,Enrich:<Enrich/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Approvals:<Approvals/>,"Ask Ace":<AskAce/>,Integrations:<Integrations/>,Audiences:<Audiences/>,Monitoring:<Monitoring/>,Settings:<Settings/>}[tab]),[tab])
  return <div className="product"><aside><Brand/><div className="workspace-wrap"><button className="workspace" onClick={()=>setWorkspaceOpen(!workspaceOpen)}><span>{workspaces.find(x=>x[0]===workspace)?.[2]||'AM'}</span><div><b>{workspace}</b><small>{workspaces.find(x=>x[0]===workspace)?.[1]||'Production'} workspace</small></div><ChevronDown/></button>{workspaceOpen&&<div className="workspace-menu">{workspaces.map(x=><button key={x[0]} onClick={()=>{setWorkspace(x[0]);setWorkspaceOpen(false)}} className={workspace===x[0]?'active':''}><span>{x[2]}</span><div><b>{x[0]}</b><small>{x[1]}</small></div>{workspace===x[0]&&<Check/>}</button>)}<button className="new-workspace"><Plus/>Create workspace</button></div>}</div><nav>{appTabs.map(([x,I])=><button key={x} className={tab===x?'active':''} onClick={()=>setTab(x)}><I/>{x}</button>)}</nav><div className="aside-footer"><button onClick={back}><ArrowRight/>Back to website</button><div className="profile-mini"><span>S</span><div><b>Sakshee</b><small>Workspace owner</small></div></div></div></aside>
  <main><header className="product-head"><div className="global-search"><Search/>Search journeys, leads, campaigns...</div><div><span className="sync">● Live sync healthy</span><button><Headphones/></button><button><Globe2/></button><span className="avatar-sm">S</span></div></header><div className="product-body">{view}</div></main></div>
 }
