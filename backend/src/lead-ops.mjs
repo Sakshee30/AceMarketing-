@@ -218,7 +218,7 @@ export const getAudienceBundle=async(workspaceId,audienceId)=>{
   const audience=rows[0]
   if(!audience)return null
   const members=await pool.query(
-    `SELECT m.identity_key,m.action,m.attributes,p.email_sha256,p.phone_sha256,p.device_id,p.device_platform,p.app_id,p.external_lead_id
+    `SELECT m.identity_key,m.action,m.attributes,p.email_sha256,p.phone_sha256,p.device_id,p.device_platform,p.app_id,p.external_lead_id,p.attributes AS profile_attributes
      FROM ace_audience_members m
      JOIN ace_lead_profiles p ON p.id=m.lead_profile_id
      WHERE m.workspace_id=$1 AND m.audience_id=$2 ORDER BY m.created_at ASC`,
