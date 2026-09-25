@@ -3608,3 +3608,17 @@ The product workspace now uses a real mobile navigation drawer instead of compre
 - The drawer respects reduced-motion preferences.
 - The floating Dashboard Navigator moves above the privacy banner when consent choices are visible so both controls remain usable.
 - Sidebar group, section-strip and header controls now have distinct accessible names to avoid ambiguous navigation targets.
+
+
+### AdSync signal pipeline operations
+
+AdSync is now an operational signal-pipeline control center rather than a funnel-only surface.
+
+- The page loads persisted event rules and keeps only rules targeting Google Ads or Meta Ads.
+- Pipeline cards show the persisted source event, normalized output event, destination and enabled/paused state.
+- The selected pipeline shows observed rule-run count and persisted delivery outcomes.
+- A pipeline can be paused or enabled through the existing event-rule backend.
+- **Send test source event** uses the first-party ingestion endpoint, so enabled rules are evaluated through the same production path used by real events.
+- The resulting outbound signals are inspected in the existing durable Delivery center, including receipts, retries and dead-letter state.
+- The page provides direct navigation to Event Rules and Delivery rather than duplicating their controls.
+- Creating a pipeline persists a real event rule and refreshes the operational list.
