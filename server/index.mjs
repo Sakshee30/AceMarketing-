@@ -218,6 +218,23 @@ const server = http.createServer(async (req,res)=>{
     }
     if (req.method === 'GET' && url.pathname === '/api/attribution') return send(res,200,{revenue:28400000,journeys:92418,averageTouches:5.4,channels:[['Google Ads',42],['Meta Ads',26],['WhatsApp',14],['Organic Search',11],['Direct / Other',7]]})
     if (req.method === 'GET' && url.pathname === '/api/agents') return send(res,200,{items:agents.map((name,i)=>({name,status:i<7?'active':'available'}))})
+    if (req.method === 'GET' && url.pathname === '/api/lead-grading') return send(res,200,{version:'v1.6',items:[
+      {lead:'Aarav Sharma',score:94,grade:'A',source:'google_ads',stage:'qualified'},
+      {lead:'Meera Patel',score:78,grade:'B',source:'meta_ads',stage:'connected'},
+      {lead:'Rohan Kumar',score:88,grade:'A',source:'whatsapp',stage:'consultation'},
+      {lead:'Anika Roy',score:54,grade:'C',source:'organic',stage:'lead'},
+      {lead:'Kabir Singh',score:32,grade:'D',source:'linkedin_ads',stage:'lead'}
+    ]})
+    if (req.method === 'POST' && url.pathname === '/api/lead-grading/override') {
+      const body=await readBody(req)
+      if(!body.lead || !['A','B','C','D'].includes(body.grade)) return send(res,400,{error:'lead and grade A-D required'})
+      return send(res,200,{lead:body.lead,grade:body.grade,overridden:true,auditId:randomUUID(),updatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/lead-grading/activate') {
+      const body=await readBody(req)
+      if(!body.lead) return send(res,400,{error:'lead required'})
+      return send(res,202,{lead:body.lead,status:'queued_for_activation',destinations:['crm','routing','ad_signals'],queuedAt:new Date().toISOString()})
+    }
     if (req.method === 'GET' && url.pathname === '/api/behavior') return send(res,200,{events:[
       {name:'page_view',count:92418},
       {name:'pricing_page_viewed',count:18204},
