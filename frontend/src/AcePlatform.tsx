@@ -1082,7 +1082,7 @@ function Feedback(){
   {lead:'Meera Patel',score:3,channel:'Post-meeting',theme:'Pricing objection',quote:'The program looks good, but I need more scholarship clarity.'},
   {lead:'Rohan Kumar',score:4,channel:'WhatsApp',theme:'Fast response',quote:'Quick reply and easy scheduling.'},
   {lead:'Anika Roy',score:2,channel:'Post-call',theme:'Slow follow-up',quote:'I had to wait for the second callback.'}
- ]
+ ])
  useEffect(()=>{api.feedback().then((r:any)=>{if(r.items?.length)setItems(r.items.map((x:any)=>({lead:x.lead_ref,score:x.score,channel:x.channel,theme:x.theme,quote:x.response}))) }).catch(()=>null)},[])
  const shown=filter==='All'?items:items.filter(x=>x.theme===filter)
  return <><PageHead crumb="Conversion / Feedback" title="Feedback agent" sub="Collect post-interaction feedback, detect objections and route insights back into sales and marketing workflows." action="Configure feedback agent"/>
