@@ -6,7 +6,7 @@ import { closeStore, getState, mutateState, storageHealth, withWorkspace } from 
 import { connectorVaultReady, encryptSecret } from './vault.mjs'
 import { enqueueJob, queueStats } from './queue.mjs'
 import { attributionStats, captureClickSession, closeAttributionStore, recordAssistedEvent, reconcileAttribution } from './attribution-store.mjs'
-import { closeLeadOps, createAudience as createLeadAudience, leadOpsStats, listAudiences as listLeadAudiences, listLeadProfiles, materializeAudience, overrideLeadGrade as persistLeadGrade, previewAudience as previewLeadAudience, scoreLead, upsertLeadProfile } from './lead-ops.mjs'
+import { closeLeadOps, createActivationRun, createAudience as createLeadAudience, getAudienceBundle, getLeadProfile, leadOpsStats, listActivationRuns, listAudiences as listLeadAudiences, listLeadProfiles, materializeAudience, overrideLeadGrade as persistLeadGrade, previewAudience as previewLeadAudience, scoreLead, upsertLeadProfile, updateAudienceSyncState } from './lead-ops.mjs'
 import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, publicChallenges, publicCaseStudies, publicResources, publicResourceCenter } from './public-content.mjs'
 
 const CONNECTOR_PROVIDERS={
@@ -660,14 +660,23 @@ const server = http.createServer(async (req,res)=>{
       return send(req,res,200,{items:[...builtIn,...(state.customAgents||[])]})
     }
     if (req.method === 'GET' && url.pathname === '/api/enrich') {
-      const [items,stats]=await Promise.all([listLeadProfiles(workspaceId,100),leadOpsStats(workspaceId)])
-      return send(req,res,200,{stats,items:items.map(x=>({id:x.id,leadId:x.external_lead_id,name:x.name,source:x.source,campaign:x.campaign,stage:x.crm_stage,intent:x.intent,score:x.score,grade:x.grade,drivers:x.score_drivers,attributes:x.attributes,journey:x.journey,callSummary:x.call_summary,whatsappSummary:x.whatsapp_summary,updatedAt:x.updated_at}))})
+      const [items,stats,runs]=await Promise.all([listLeadProfiles(workspaceId,100),leadOpsStats(workspaceId),listActivationRuns(workspaceId,50)])
+      return send(req,res,200,{stats,writebacks:runs.filter(x=>x.kind==='crm_writeback'),items:items.map(x=>({id:x.id,leadId:x.external_lead_id,name:x.name,source:x.source,campaign:x.campaign,stage:x.crm_stage,intent:x.intent,score:x.score,grade:x.grade,drivers:x.score_drivers,attributes:x.attributes,journey:x.journey,callSummary:x.call_summary,whatsappSummary:x.whatsapp_summary,updatedAt:x.updated_at}))})
     }
     if (req.method === 'POST' && url.pathname === '/api/enrich/upsert') {
       const body=await readBody(req)
       const item=await upsertLeadProfile(workspaceId,body)
       if(!item) return send(req,res,503,{error:'lead operations store unavailable'})
       return send(req,res,201,{id:item.id,leadId:item.external_lead_id,name:item.name,score:item.score,grade:item.grade,drivers:item.score_drivers,updatedAt:item.updated_at})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/enrich/writeback') {
+      const body=await readBody(req)
+      if(!body.lead || !body.provider) return send(req,res,400,{error:'lead and provider required'})
+      const lead=await getLeadProfile(workspaceId,String(body.lead))
+      if(!lead) return send(req,res,404,{error:'lead not found'})
+      const run=await createActivationRun(workspaceId,{kind:'crm_writeback',entityId:lead.id,provider:String(body.provider),requestSummary:{lead:lead.external_lead_id,grade:lead.grade,score:lead.score}})
+      const job=await enqueueJob({workspaceId,kind:'crm_writeback',idempotencyKey:'crm:'+run.id,payload:{leadRef:lead.id,provider:String(body.provider),fields:body.fields||{},activationRunId:run.id}})
+      return send(req,res,202,{runId:run.id,jobId:job?.id||null,status:'queued',provider:body.provider})
     }
     if (req.method === 'POST' && url.pathname === '/api/lead-grading/score') {
       const body=await readBody(req)
@@ -728,9 +737,30 @@ const server = http.createServer(async (req,res)=>{
       const result=await materializeAudience(workspaceId,String(body.id))
       return result?send(req,res,200,result):send(req,res,404,{error:'audience not found'})
     }
+    if (req.method === 'POST' && url.pathname === '/api/audiences/sync') {
+      const body=await readBody(req)
+      if(!body.id) return send(req,res,400,{error:'id required'})
+      const bundle=await getAudienceBundle(workspaceId,String(body.id))
+      if(!bundle) return send(req,res,404,{error:'audience not found'})
+      const configured=String(body.provider||bundle.audience.destination||'').split(/·|,/).map(x=>x.trim()).filter(Boolean)
+      const providers=configured.map(x=>x.toLowerCase().includes('meta')?'Meta Ads':x.toLowerCase().includes('google')?'Google Ads':null).filter(Boolean)
+      if(!providers.length) return send(req,res,400,{error:'audience destination must include Meta Ads or Google Ads'})
+      const queued=[]
+      for(const provider of [...new Set(providers)]){
+        const key=provider==='Meta Ads'?'meta':'google'
+        await updateAudienceSyncState(workspaceId,bundle.audience.id,key,{status:'queued',error:null})
+        const run=await createActivationRun(workspaceId,{kind:'audience_sync',entityId:bundle.audience.id,provider,requestSummary:{audience:bundle.audience.name,members:bundle.members.length,mode:bundle.audience.mode}})
+        const job=await enqueueJob({workspaceId,kind:'audience_sync',idempotencyKey:'audience:'+bundle.audience.id+':'+key+':'+Date.now(),payload:{audienceId:bundle.audience.id,provider,activationRunId:run.id}})
+        queued.push({provider,runId:run.id,jobId:job?.id||null})
+      }
+      return send(req,res,202,{id:bundle.audience.id,status:'syncing',queued})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/activation-runs') {
+      return send(req,res,200,{items:await listActivationRuns(workspaceId,100)})
+    }
     if (req.method === 'GET' && url.pathname === '/api/audiences') {
       const items=await listLeadAudiences(workspaceId)
-      return send(req,res,200,{items:items.map(x=>({id:x.id,name:x.name,size:x.matched_size,estimatedSize:x.estimated_size,mode:x.mode,destination:x.destination,status:x.status,cadence:'Real time',definition:x.definition,lastMaterializedAt:x.last_materialized_at}))})
+      return send(req,res,200,{items:items.map(x=>({id:x.id,name:x.name,size:x.matched_size,estimatedSize:x.estimated_size,mode:x.mode,destination:x.destination,status:x.status,cadence:'Real time',definition:x.definition,providerState:x.provider_state,lastSyncError:x.last_sync_error,lastSyncedAt:x.last_synced_at,lastMaterializedAt:x.last_materialized_at}))})
     }
     if (req.method === 'GET' && url.pathname === '/api/alerts') return send(req,res,200,{items:[
       {id:'al_1',severity:'critical',title:'Audience sync stalled',status:'open'},
