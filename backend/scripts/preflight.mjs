@@ -10,6 +10,12 @@ for(const key of ['JWT_SECRET','CONNECTOR_ENCRYPTION_KEY','CONNECTOR_OAUTH_STATE
 if(process.env.NODE_ENV!=='production')weak.push('NODE_ENV must be production')
 if(process.env.ALLOW_FILE_STORE_IN_PRODUCTION==='true')weak.push('ALLOW_FILE_STORE_IN_PRODUCTION should remain false')
 if((process.env.CUSTOM_INTEGRATION_ALLOW_HTTP||'false')==='true')weak.push('CUSTOM_INTEGRATION_ALLOW_HTTP should remain false')
+const agentTransportMissing=[]
+if(!process.env.VOICE_QUALIFICATION_WEBHOOK_URL&&!process.env.VOICE_AGENT_WEBHOOK_URL)agentTransportMissing.push('VOICE_QUALIFICATION_WEBHOOK_URL or VOICE_AGENT_WEBHOOK_URL')
+if(!process.env.MEETING_REMINDER_WEBHOOK_URL)agentTransportMissing.push('MEETING_REMINDER_WEBHOOK_URL')
+if(!process.env.FEEDBACK_WEBHOOK_URL)agentTransportMissing.push('FEEDBACK_WEBHOOK_URL')
+if(!process.env.AGENT_WEBHOOK_SECRET)agentTransportMissing.push('AGENT_WEBHOOK_SECRET')
+if(agentTransportMissing.length)weak.push('agent transports incomplete: '+agentTransportMissing.join(', '))
 if(missing.length||weak.length){
   console.error(JSON.stringify({ok:false,missing,issues:weak},null,2))
   process.exit(1)
