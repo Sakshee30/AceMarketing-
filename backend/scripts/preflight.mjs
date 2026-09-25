@@ -26,6 +26,11 @@ const callTrackingMissing=[]
 if(!process.env.CALL_WEBHOOK_SECRET)callTrackingMissing.push('CALL_WEBHOOK_SECRET')
 if(!process.env.CALL_WEBHOOK_WORKSPACE_ID&&!process.env.CALL_NUMBER_WORKSPACE_MAP)callTrackingMissing.push('CALL_WEBHOOK_WORKSPACE_ID or CALL_NUMBER_WORKSPACE_MAP')
 if(callTrackingMissing.length)weak.push('call tracking incomplete: '+callTrackingMissing.join(', '))
+const calendarMissing=[]
+if(!process.env.GOOGLE_OAUTH_CLIENT_ID)calendarMissing.push('GOOGLE_OAUTH_CLIENT_ID')
+if(!process.env.GOOGLE_OAUTH_CLIENT_SECRET)calendarMissing.push('GOOGLE_OAUTH_CLIENT_SECRET')
+if(!process.env.CONNECTOR_OAUTH_REDIRECT_URI)calendarMissing.push('CONNECTOR_OAUTH_REDIRECT_URI')
+if(calendarMissing.length)weak.push('Google Calendar scheduling incomplete: '+calendarMissing.join(', '))
 if(missing.length||weak.length){
   console.error(JSON.stringify({ok:false,missing,issues:weak},null,2))
   process.exit(1)
