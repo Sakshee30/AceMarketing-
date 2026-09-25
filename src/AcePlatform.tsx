@@ -10,7 +10,7 @@ import './ace-platform.css'
 import { api } from './lib/api'
 
 type View='site'|'app'|'login'
-type AppTab='Overview'|'AdSync'|'Events'|'Journeys'|'Attribution'|'Enrich'|'Agents'|'Integrations'|'Audiences'|'Monitoring'|'Settings'
+type AppTab='Overview'|'AdSync'|'Funnel'|'Events'|'Live Sync'|'Journeys'|'Attribution'|'Enrich'|'Agents'|'Integrations'|'Audiences'|'Monitoring'|'Settings'
 
 const agents=[
  ['Meta Advanced CAPI','Return qualified outcomes to Meta server-side with deduplication.','Signal return','25–40% ROAS'],
@@ -126,6 +126,14 @@ function Marketing({openApp,openLogin}:{openApp:()=>void,openLogin:()=>void}){
    <div className="industry-grid">{industries.map((x,i)=><article key={x[0]}><span>{String(i+1).padStart(2,'0')}</span><Building2/><h3>{x[0]}</h3><p>{x[1]}</p><ArrowRight/></article>)}</div>
   </section>
 
+  <section className="impact-section">
+   <div className="section-title light"><span className="kicker">ADSYNC · EXPECTED IMPACT MODEL</span><h2>Five signal-quality improvements compound across the optimization loop.</h2><p>The brochure frames AdSync impact across synchronization, junk-lead control, identifier coverage, conversion-event design and audience suppression.</p></div>
+   <div className="impact-grid">
+    <article><span>01</span><div><b>Real-time data synchronization</b><div className="impact-bar"><i style={{width:'70%'}}/></div></div><strong>10%</strong></article><article><span>02</span><div><b>Control junk leads re-entering ad algorithms</b><div className="impact-bar"><i style={{width:'70%'}}/></div></div><strong>10%</strong></article><article><span>03</span><div><b>Better GCLID & FBCLID coverage</b><div className="impact-bar"><i style={{width:'35%'}}/></div></div><strong>5%</strong></article><article><span>04</span><div><b>Campaign-specific conversion events</b><div className="impact-bar"><i style={{width:'70%'}}/></div></div><strong>10%</strong></article><article><span>05</span><div><b>Real-time contextual audiences & suppression</b><div className="impact-bar"><i style={{width:'70%'}}/></div></div><strong>10%</strong></article>
+   </div>
+   <div className="impact-total"><span>Total expected impact</span><strong>45%</strong><small>Compounded gain across signal quality, coverage and audience control (as presented in the supplied brochure).</small></div>
+  </section>
+
   <section className="proof-section" id="proof">
    <div className="section-title light"><span className="kicker">WORKFLOW PROOF</span><h2>Complex funnels become one measurable operating system.</h2></div>
    <div className="proof-cards">{caseStudies.map(x=><article key={x[0]}><span>{x[0]}</span><p>{x[1]}</p><strong>{x[2]}</strong><small>{x[3]}</small></article>)}</div>
@@ -166,7 +174,7 @@ function Login({back,openApp}:{back:()=>void,openApp:()=>void}){
 }
 
 const appTabs=[
- ['Overview',Gauge],['AdSync',RadioTower],['Events',Zap],['Journeys',Network],['Attribution',PieChart],['Enrich',DatabaseZap],['Agents',Bot],['Integrations',Cable],['Audiences',UsersRound],['Monitoring',Activity],['Settings',Settings2]
+ ['Overview',Gauge],['AdSync',RadioTower],['Funnel',BarChart3],['Events',Zap],['Live Sync',Activity],['Journeys',Network],['Attribution',PieChart],['Enrich',DatabaseZap],['Agents',Bot],['Integrations',Cable],['Audiences',UsersRound],['Monitoring',Activity],['Settings',Settings2]
 ] as const
 function Stat({label,value,sub,Icon}:{label:string,value:string,sub:string,Icon:any}){return <article className="stat"><div><span>{label}</span><Icon/></div><strong>{value}</strong><small>{sub}</small></article>}
 function PageHead({crumb,title,sub,action}:{crumb:string,title:string,sub:string,action?:string}){return <div className="page-head"><div><span>{crumb}</span><h1>{title}</h1><p>{sub}</p></div>{action&&<button className="app-primary"><Sparkles/>{action}</button>}</div>}
@@ -189,6 +197,25 @@ function AdSync(){
  ].map(x=><div className="pipeline-row" key={x[0]}><span><Zap/></span><div><b>{x[0]}</b><small>{x[1]}</small></div><em>{x[2]}</em><i>Live</i><strong>{x[3]}</strong><ChevronRight/></div>)}</div>
  <div className="two-col"><FunnelPanel/><div className="app-panel"><div className="panel-head"><div><h3>Identifier coverage</h3><p>First-party identifiers and click IDs</p></div></div>{[['GCLID',97],['FBCLID',94],['Hashed email',88],['Hashed phone',91]].map(x=><div className="coverage" key={x[0]}><div><span>{x[0]}</span><b>{x[1]}%</b></div><div className="progress"><i style={{width:x[1]+'%'}}/></div></div>)}</div></div></>
 }
+function Funnel(){
+ const [channel,setChannel]=useState('All channels')
+ const accounts=['All channels','Google Ads · Account 01','Meta Ads · Account 02','LinkedIn Ads · Account 03']
+ const campaigns=[
+  ['MBA Search - Brand','Google Ads',2841,1812,932,421,188],
+  ['Executive Program','Meta Ads',1964,1048,641,288,119],
+  ['PGDM Retargeting','Meta Ads',1510,903,527,210,96],
+  ['CMA Lead Gen','LinkedIn Ads',1088,642,311,142,61]
+ ]
+ return <><PageHead crumb="AdSync / Funnel Mapping" title="Channel & campaign funnel" sub="See every lead stage and disposition by account and campaign in one view." action="Export funnel"/>
+ <div className="filters"><button onClick={()=>setChannel(channel==='All channels'?accounts[1]:'All channels')}>{channel} <ChevronDown/></button><button>All dispositions <ChevronDown/></button><button>Last 30 days <ChevronDown/></button></div>
+ <div className="stats-grid"><Stat label="All leads" value="12,842" sub="Across connected channels" Icon={UsersRound}/><Stat label="Appointments" value="2,314" sub="18.0% of leads" Icon={PhoneCall}/><Stat label="Consultations" value="1,506" sub="65.1% show rate" Icon={MessageCircle}/><Stat label="Bookings" value="982" sub="₹2.84Cr attributed" Icon={CircleDollarSign}/></div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Campaign breakdown</h3><p>Lead → qualified → appointment → consultation → booking</p></div><span className="healthy">Live</span></div>
+ <div className="funnel-table"><div className="funnel-tr funnel-th"><span>Campaign</span><span>Channel</span><span>Leads</span><span>Qualified</span><span>Appt.</span><span>Consult.</span><span>Bookings</span></div>
+ {campaigns.map(r=><div className="funnel-tr" key={r[0]}><div><b>{r[0]}</b><small>Synced continuously</small></div><span>{r[1]}</span>{r.slice(2).map((v,i)=><strong key={i}>{Number(v).toLocaleString()}</strong>)}</div>)}</div></div>
+ <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Disposition distribution</h3><p>Where the funnel narrows</p></div></div>{[['Positive / Qualified',59],['Not reachable',16],['Not interested',11],['Duplicate / invalid',8],['Follow-up',6]].map(x=><div className="coverage" key={x[0]}><div><span>{x[0]}</span><b>{x[1]}%</b></div><div className="progress"><i style={{width:x[1]+'%'}}/></div></div>)}</div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Signal return rules</h3><p>Stage outcomes sent to ad platforms</p></div></div>{[['Qualified','Optimize'],['Appointment','Optimize'],['Booking','Primary conversion'],['Low quality','Suppress'],['Duplicate','Exclude']].map(x=><div className="mapping-rule" key={x[0]}><span>{x[0]}</span><ArrowRight/><b>{x[1]}</b></div>)}</div></div></>
+}
+
 function Events(){
  const [active,setActive]=useState('Qualified Lead')
  const events=[
@@ -202,6 +229,23 @@ function Events(){
  return <><PageHead crumb="Activation / Events" title="Conversion event manager" sub="Define the business outcomes that should be captured, transformed and returned to downstream platforms." action="New event"/>
  <div className="event-layout"><div className="app-panel event-list"><div className="panel-head"><div><h3>Configured events</h3><p>Business logic → destinations</p></div><span className="healthy">6 active</span></div>{events.map(x=><button className={active===x[0]?'selected':''} key={x[0]} onClick={()=>setActive(x[0])}><span><Zap/></span><div><b>{x[0]}</b><small>{x[1]} → {x[2]}</small></div><i>{x[4]}</i><ChevronRight/></button>)}</div>
  <div className="app-panel event-editor"><div className="panel-head"><div><h3>{active}</h3><p>Transformation and delivery rules</p></div><button>Edit</button></div><div className="event-step"><span>1</span><div><b>Source condition</b><p>CRM stage changes to <strong>{active}</strong> and identity contains a valid first-party key.</p></div></div><div className="event-step"><span>2</span><div><b>Identity resolution</b><p>Resolve GCLID / FBCLID, hashed email, hashed phone and workspace customer ID.</p></div></div><div className="event-step"><span>3</span><div><b>Normalize & deduplicate</b><p>Apply event schema, revenue/value rules and deterministic event ID before delivery.</p></div></div><div className="event-step"><span>4</span><div><b>Activate</b><p>Send to configured ad-platform destinations and write delivery status to the audit stream.</p></div></div><div className="delivery-summary"><div><span>Median latency</span><b>42s</b></div><div><span>Match rate</span><b>94.8%</b></div><div><span>24h delivery</span><b>99.82%</b></div></div></div></div></>
+}
+
+function LiveSync(){
+ const rows=[
+  ['16:24:18','Zoho CRM','Qualified Lead','Google Ads','Delivered','gclid'],
+  ['16:24:12','WhatsApp','Conversation Started','Meta Ads','Delivered','fbclid'],
+  ['16:24:05','Exotel','Call Connected','Google Ads','Matched','phone+time'],
+  ['16:23:58','LeadSquared','Consultation Booked','Meta Ads','Delivered','email+phone'],
+  ['16:23:44','Website','High Intent Visit','Audience Engine','Processed','cookie+gclid'],
+  ['16:23:31','Billing','Enrolment','Google + Meta','Delivered','customer_id']
+ ]
+ return <><PageHead crumb="AdSync / Live Sync" title="24×7 event transfer" sub="Continuous movement of CRM, calling, chat and revenue signals to every configured destination." action="Create alert"/>
+ <div className="stats-grid"><Stat label="Sync status" value="Always on" sub="24×7 continuous transfer" Icon={Activity}/><Stat label="Median latency" value="42s" sub="Intent stays fresh" Icon={Zap}/><Stat label="Events / min" value="8,412" sub="Current throughput" Icon={BarChart3}/><Stat label="Delivery rate" value="99.82%" sub="Last 24 hours" Icon={Target}/></div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Recent activity</h3><p>Live event movement across connected systems</p></div><span className="healthy">● Streaming</span></div>
+ <table><thead><tr><th>Time</th><th>Source</th><th>Event</th><th>Destination</th><th>Status</th><th>Match key</th></tr></thead><tbody>{rows.map(r=><tr key={r[0]+r[2]}>{r.map((v,i)=><td key={i}>{i===4?<span className="status">{v}</span>:v}</td>)}</tr>)}</tbody></table></div>
+ <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Destination throughput</h3><p>Events successfully transferred</p></div></div>{[['Google Ads',99.9],['Meta Ads',99.8],['LinkedIn Ads',99.6],['Audience Engine',100]].map(x=><div className="health-line" key={x[0]}><span>{x[0]}</span><div className="progress"><i style={{width:x[1]+'%'}}/></div><b>{x[1]}%</b></div>)}</div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Freshness policy</h3><p>No next-day batch dependency</p></div></div><div className="freshness-card"><Zap/><div><b>Real-time first</b><p>Critical intent and revenue outcomes are delivered immediately; retries use idempotent event IDs and backoff.</p></div></div><div className="freshness-card"><ShieldCheck/><div><b>Safe retries</b><p>Failed deliveries remain visible in monitoring until acknowledged or successfully replayed.</p></div></div></div></div></>
 }
 
 function Journeys(){
@@ -259,7 +303,7 @@ function Settings(){
 }
 function Product({back}:{back:()=>void}){
  const [tab,setTab]=useState<AppTab>('Overview')
- const view=useMemo(()=>({Overview:<Overview/>,AdSync:<AdSync/>,Events:<Events/>,Journeys:<Journeys/>,Attribution:<Attribution/>,Enrich:<Enrich/>,Agents:<Agents/>,Integrations:<Integrations/>,Audiences:<Audiences/>,Monitoring:<Monitoring/>,Settings:<Settings/>}[tab]),[tab])
+ const view=useMemo(()=>({Overview:<Overview/>,AdSync:<AdSync/>,Funnel:<Funnel/>,Events:<Events/>,"Live Sync":<LiveSync/>,Journeys:<Journeys/>,Attribution:<Attribution/>,Enrich:<Enrich/>,Agents:<Agents/>,Integrations:<Integrations/>,Audiences:<Audiences/>,Monitoring:<Monitoring/>,Settings:<Settings/>}[tab]),[tab])
  return <div className="product"><aside><Brand/><div className="workspace"><span>AM</span><div><b>Ace EdTech</b><small>Production workspace</small></div><ChevronDown/></div><nav>{appTabs.map(([x,I])=><button key={x} className={tab===x?'active':''} onClick={()=>setTab(x)}><I/>{x}</button>)}</nav><div className="aside-footer"><button onClick={back}><ArrowRight/>Back to website</button><div className="profile-mini"><span>S</span><div><b>Sakshee</b><small>Workspace owner</small></div></div></div></aside>
  <main><header className="product-head"><div className="global-search"><Search/>Search journeys, leads, campaigns...</div><div><span className="sync">● Live sync healthy</span><button><Headphones/></button><button><Globe2/></button><span className="avatar-sm">S</span></div></header><div className="product-body">{view}</div></main></div>
 }
