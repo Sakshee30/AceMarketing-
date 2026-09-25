@@ -6,7 +6,7 @@ import { closeStore, getState, mutateState, storageHealth, withWorkspace } from 
 import { connectorVaultReady, encryptSecret } from './vault.mjs'
 import { enqueueJob, queueAvailable, queueStats } from './queue.mjs'
 import { attributionStats, captureClickSession, closeAttributionStore, recordAssistedEvent, reconcileAttribution } from './attribution-store.mjs'
-import { closeLeadOps, createActivationRun, createAudience as createLeadAudience, getAudienceBundle, getLeadProfile, leadOpsStats, listActivationRuns, listAudiences as listLeadAudiences, listLeadProfiles, materializeAudience, overrideLeadGrade as persistLeadGrade, previewAudience as previewLeadAudience, scoreLead, upsertLeadProfile, updateAudienceSyncState } from './lead-ops.mjs'
+import { audienceOpsStats, closeLeadOps, createActivationRun, createAudience as createLeadAudience, getAudienceBundle, getLeadProfile, leadOpsStats, listActivationRuns, listAudiences as listLeadAudiences, listLeadProfiles, materializeAudience, overrideLeadGrade as persistLeadGrade, previewAudience as previewLeadAudience, scoreLead, upsertLeadProfile, updateAudienceSyncState } from './lead-ops.mjs'
 import { closeAgentOrchestrator, completeFollowUp as persistCompleteFollowUp, createAgentRun, createFollowUp, createMeeting, getMeeting, listAgentRuns, listFeedback as listPersistedFeedback, listFollowUps as listPersistedFollowUps, listMeetings as listPersistedMeetings, listRoutingDecisions, recordFeedback, rescheduleMeeting, routeLead } from './agent-orchestrator.mjs'
 import { closeCustomIntegrations, createCustomIntegration as persistCustomIntegration, listCustomIntegrations, testCustomIntegration as runCustomIntegrationTest } from './custom-integrations.mjs'
 import { closeObservability, listAlerts as listLiveAlerts, listMonitoringRules as listLiveMonitoringRules, monitoringSnapshot, recordApiTelemetry, resolveAlert as resolveLiveAlert, saveMonitoringRule } from './observability.mjs'
@@ -1379,14 +1379,40 @@ const server = http.createServer(async (req,res)=>{
     if (req.method === 'POST' && url.pathname === '/api/track') {
       const body=await readBody(req)
       const category=['essential','analytics','marketing','personalization'].includes(String(body.eventCategory))?String(body.eventCategory):'analytics'
-      const consent=await consentAllows(workspaceId,{subjectType:body.customerId?'customer':'visitor',subjectId:body.customerId||body.visitorId,category})
+      const trackingSubjectId=body.customerId||body.visitorId||body.deviceId||body.device_id
+      if(!trackingSubjectId) return send(req,res,400,{accepted:false,error:'customerId, visitorId, or deviceId required'})
+      const consent=await consentAllows(workspaceId,{subjectType:body.customerId?'customer':'visitor',subjectId:trackingSubjectId,category})
       if(!consent.allowed) return send(req,res,403,{accepted:false,error:'consent required',reason:consent.reason,category})
       const event={id:randomUUID(),receivedAt:new Date().toISOString(),consentCategory:category,...body}
       trackedEvents.push(event)
       if(trackedEvents.length>5000) trackedEvents.splice(0,trackedEvents.length-5000)
+      let leadProfile=null
+      if(body.customerId||body.email||body.phone||body.emailSha256||body.email_sha256||body.phoneSha256||body.phone_sha256||body.deviceId||body.device_id){
+        leadProfile=await upsertLeadProfile(workspaceId,{
+          externalLeadId:body.customerId||body.leadId||body.visitorId||body.deviceId||body.device_id,
+          customerId:body.customerId,
+          leadId:body.leadId,
+          email:body.email,
+          phone:body.phone,
+          emailSha256:body.emailSha256||body.email_sha256,
+          phoneSha256:body.phoneSha256||body.phone_sha256,
+          deviceId:body.deviceId||body.device_id,
+          devicePlatform:body.devicePlatform||body.device_platform,
+          appId:body.appId||body.app_id,
+          source:body.source||body.utm_source||'first_party',
+          campaign:body.campaign||body.utm_campaign||null,
+          crmStage:body.crmStage||body.stage||null,
+          journeyDepth:body.journeyDepth||body.pagesViewed||0,
+          pricingPageViews:body.pricingPageViews||0,
+          conversionPropensity:body.conversionPropensity||0,
+          ltvTier:body.ltvTier||null,
+          lastActivity:body.occurredAt||event.receivedAt,
+          attributes:{channel:body.channel||null,event:body.event||body.name||null,platform:body.platform||null}
+        }).catch(()=>null)
+      }
       let clickSession=null
       let assisted=null
-      if(body.gclid||body.gbraid||body.wbraid||body.fbclid||body.msclkid||body.utm_source||body.utm_campaign||body.visitorId){
+      if(body.gclid||body.gbraid||body.wbraid||body.fbclid||body.msclkid||body.utm_source||body.utm_campaign||body.visitorId||body.deviceId||body.device_id){
         clickSession=await captureClickSession(workspaceId,{...body,eventId:event.id,userAgent:req.headers['user-agent']}).catch(()=>null)
       }
       if(body.assisted===true||['call','whatsapp','crm','pos','billing','offline'].includes(String(body.source||'').toLowerCase())){
@@ -1395,7 +1421,7 @@ const server = http.createServer(async (req,res)=>{
       const derived=await evaluateEventRules(workspaceId,{...body,eventId:body.eventId||event.id},{sourceEventId:event.id}).catch(()=>[])
       const derivedDeliveries=[]
       if(derived.length){
-        const marketingConsent=await consentAllows(workspaceId,{subjectType:body.customerId?'customer':'visitor',subjectId:body.customerId||body.visitorId,category:'marketing'})
+        const marketingConsent=await consentAllows(workspaceId,{subjectType:body.customerId?'customer':'visitor',subjectId:trackingSubjectId,category:'marketing'})
         for(const match of derived){
           let queued=0
           if(marketingConsent.allowed){
@@ -1414,7 +1440,7 @@ const server = http.createServer(async (req,res)=>{
           await markEventRuleActivation(workspaceId,match.runId,queued).catch(()=>{})
         }
       }
-      return send(req,res,202,{accepted:true,eventId:event.id,clickSessionId:clickSession?.id||null,assistedEventId:assisted?.id||null,derivedEvents:derived.map(x=>({runId:x.runId,ruleId:x.ruleId,outputEvent:x.outputEvent,assistedEventId:x.assistedEvent?.id||null,destinations:x.destinations})),derivedDeliveries,match:assisted?{status:assisted.status,method:assisted.match_method,confidence:assisted.match_confidence}:null})
+      return send(req,res,202,{accepted:true,eventId:event.id,leadProfileId:leadProfile?.id||null,clickSessionId:clickSession?.id||null,assistedEventId:assisted?.id||null,derivedEvents:derived.map(x=>({runId:x.runId,ruleId:x.ruleId,outputEvent:x.outputEvent,assistedEventId:x.assistedEvent?.id||null,destinations:x.destinations})),derivedDeliveries,match:assisted?{status:assisted.status,method:assisted.match_method,confidence:assisted.match_confidence}:null})
     }
     if (req.method === 'POST' && url.pathname === '/api/assisted-events') {
       const body=await readBody(req)
@@ -1588,9 +1614,9 @@ const server = http.createServer(async (req,res)=>{
       return send(req,res,200,{items:await listActivationRuns(workspaceId,100)})
     }
     if (req.method === 'GET' && url.pathname === '/api/audiences') {
-      const [items,schedules]=await Promise.all([listLeadAudiences(workspaceId),listAudienceSchedules(workspaceId)])
+      const [items,schedules,stats]=await Promise.all([listLeadAudiences(workspaceId),listAudienceSchedules(workspaceId),audienceOpsStats(workspaceId)])
       const scheduleById=Object.fromEntries(schedules.map(x=>[x.audience_id,x]))
-      return send(req,res,200,{items:items.map(x=>{const s=scheduleById[x.id];return {id:x.id,name:x.name,size:x.matched_size,estimatedSize:x.estimated_size,mode:x.mode,destination:x.destination,status:x.status,cadence:s?.cadenceLabel||'Manual',schedule:s||null,definition:x.definition,providerState:x.provider_state,lastSyncError:x.last_sync_error,lastSyncedAt:x.last_synced_at,lastMaterializedAt:x.last_materialized_at}})})
+      return send(req,res,200,{items:items.map(x=>{const s=scheduleById[x.id];return {id:x.id,name:x.name,size:x.matched_size,estimatedSize:x.estimated_size,mode:x.mode,destination:x.destination,identityMode:x.identity_mode,status:x.status,cadence:s?.cadenceLabel||'Manual',schedule:s||null,definition:x.definition,providerState:x.provider_state,lastSyncError:x.last_sync_error,lastSyncedAt:x.last_synced_at,lastMaterializedAt:x.last_materialized_at}}),stats})
     }
     if (req.method === 'GET' && url.pathname === '/api/alerts') return send(req,res,200,{items:await listLiveAlerts(workspaceId)})
     if (req.method === 'POST' && url.pathname === '/api/alerts/resolve') {
