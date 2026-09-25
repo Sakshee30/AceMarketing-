@@ -1090,3 +1090,101 @@
 .setting-toggle span{font-size:8px;color:#746b7a}
 .settings-detail select{min-height:34px}
 .launchpad-detail .site-detail-grid{margin:14px 0}
+
+
+/* Dashboard live section strip */
+.product-section-strip{
+ position:sticky;
+ top:0;
+ z-index:28;
+ display:grid;
+ grid-template-columns:repeat(6,minmax(0,1fr));
+ gap:8px;
+ padding:10px 18px;
+ border-bottom:1px solid rgba(18,35,28,.08);
+ background:rgba(248,251,249,.94);
+ backdrop-filter:blur(18px);
+}
+.product-section-strip>button{
+ min-width:0;
+ border:1px solid transparent;
+ border-radius:14px;
+ background:transparent;
+ padding:9px 10px;
+ display:grid;
+ grid-template-columns:30px 1fr 8px;
+ align-items:center;
+ gap:9px;
+ text-align:left;
+ cursor:pointer;
+ color:#1d2d25;
+ transition:transform .18s ease,background .18s ease,border-color .18s ease,box-shadow .18s ease;
+}
+.product-section-strip>button:hover{
+ transform:translateY(-1px);
+ background:#fff;
+ border-color:rgba(23,137,80,.12);
+ box-shadow:0 8px 22px rgba(25,44,35,.07);
+}
+.product-section-strip>button.active{
+ background:#edf8f2;
+ border-color:rgba(23,137,80,.2);
+ box-shadow:inset 0 0 0 1px rgba(23,137,80,.04);
+}
+.product-section-strip>button>span{
+ width:30px;
+ height:30px;
+ display:grid;
+ place-items:center;
+ border-radius:10px;
+ background:#fff;
+ color:#168950;
+ box-shadow:0 4px 12px rgba(25,44,35,.06);
+}
+.product-section-strip>button.active>span{background:#168950;color:#fff}
+.product-section-strip svg{width:15px;height:15px}
+.product-section-strip>button>div{min-width:0;display:grid;gap:1px}
+.product-section-strip b{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.product-section-strip small{font-size:9px;color:#7a8981}
+.product-section-strip i{
+ width:7px;
+ height:7px;
+ border-radius:999px;
+ background:#d39a2c;
+ box-shadow:0 0 0 3px rgba(211,154,44,.12);
+}
+.product-section-strip i.ready{
+ background:#26a864;
+ box-shadow:0 0 0 3px rgba(38,168,100,.12);
+}
+.dashboard-area-card,.dashboard-quick-grid>button,.stat,.app-panel{
+ animation:aceDashboardRise .34s ease both;
+}
+.dashboard-area-card:nth-child(2),.dashboard-quick-grid>button:nth-child(2){animation-delay:.03s}
+.dashboard-area-card:nth-child(3),.dashboard-quick-grid>button:nth-child(3){animation-delay:.06s}
+.dashboard-area-card:nth-child(4),.dashboard-quick-grid>button:nth-child(4){animation-delay:.09s}
+.dashboard-area-card:nth-child(5),.dashboard-quick-grid>button:nth-child(5){animation-delay:.12s}
+.dashboard-area-card:nth-child(6),.dashboard-quick-grid>button:nth-child(6){animation-delay:.15s}
+@keyframes aceDashboardRise{
+ from{opacity:0;transform:translateY(8px)}
+ to{opacity:1;transform:none}
+}
+@media(max-width:1180px){
+ .product-section-strip{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:760px){
+ .product-section-strip{
+  display:flex;
+  overflow-x:auto;
+  padding:8px 10px;
+  scrollbar-width:none;
+ }
+ .product-section-strip::-webkit-scrollbar{display:none}
+ .product-section-strip>button{min-width:170px}
+}
+@media(prefers-reduced-motion:reduce){
+ .product-section-strip>button,.dashboard-area-card,.dashboard-quick-grid>button,.stat,.app-panel{
+  animation:none!important;
+  transition:none!important;
+ }
+}
