@@ -9,7 +9,7 @@ import {
 import './ace-platform.css'
 import { api } from './lib/api'
 
-type View='site'|'app'|'login'|'pricing'
+type View='site'|'app'|'login'|'pricing'|'demo'|'company'|'resources'
 type AppTab='Overview'|'AdSync'|'Funnel'|'Events'|'Live Sync'|'Offline Attribution'|'Journeys'|'Attribution'|'Enrich'|'Agents'|'Integrations'|'Audiences'|'Monitoring'|'Settings'
 
 const agents=[
@@ -45,20 +45,20 @@ const caseStudies=[
 function Brand({dark=false}:{dark?:boolean}){
  return <div className={'ace-brand '+(dark?'dark':'')}><span className="ace-mark"><i/><i/><i/></span><b>AceMarketing</b></div>
 }
-function Header({openApp,openLogin,openPricing}:{openApp:()=>void,openLogin:()=>void,openPricing:()=>void}){
+function Header({openApp,openLogin,openPricing,openDemo,openCompany,openResources}:{openApp:()=>void,openLogin:()=>void,openPricing:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void}){
  const [open,setOpen]=useState(false)
  return <header className="marketing-header"><Brand/><nav className={open?'mobile-open':''}>
-  <a href="#platform">Platform</a><a href="#problems">Use cases</a><a href="#agents">Agents</a><a href="#integrations">Integrations</a><a href="#industries">Industries</a><a href="#proof">Proof</a><button className="ghost-nav" onClick={openPricing}>Pricing</button>
-  <button className="ghost-nav" onClick={openLogin}>Login</button><button className="ghost-nav" onClick={openApp}>Open product</button><a href="#demo" className="header-cta">Book a demo <ArrowRight size={15}/></a>
+  <a href="#platform">Platform</a><a href="#problems">Use cases</a><a href="#agents">Agents</a><a href="#integrations">Integrations</a><a href="#industries">Industries</a><button className="ghost-nav" onClick={openResources}>Resources</button><button className="ghost-nav" onClick={openCompany}>Company</button><button className="ghost-nav" onClick={openPricing}>Pricing</button>
+  <button className="ghost-nav" onClick={openLogin}>Login</button><button className="ghost-nav" onClick={openApp}>Open product</button><button onClick={openDemo} className="header-cta">Book a demo <ArrowRight size={15}/></button>
  </nav><button className="menu-toggle" onClick={()=>setOpen(!open)}>{open?<X/>:<Menu/>}</button></header>
 }
-function Marketing({openApp,openLogin,openPricing}:{openApp:()=>void,openLogin:()=>void,openPricing:()=>void}){
+function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResources}:{openApp:()=>void,openLogin:()=>void,openPricing:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void}){
  const [agentFilter,setAgentFilter]=useState('All')
  const visibleAgents=agentFilter==='All'?agents:agents.filter(a=>a[2]===agentFilter)
  return <div className="marketing-page">
   <div className="reference-banner"><span>Public EasyInsights benchmark referenced for parity:</span><b>up to 45% incremental revenue uplift</b><a href="#impact">See impact model <ArrowRight/></a></div>
   <section className="hero-wrap">
-   <Header openApp={openApp} openLogin={openLogin} openPricing={openPricing}/>
+   <Header openApp={openApp} openLogin={openLogin} openPricing={openPricing} openDemo={openDemo} openCompany={openCompany} openResources={openResources}/>
    <div className="hero-grid">
     <div className="hero-copy">
      <span className="kicker">FIRST-PARTY PERFORMANCE MARKETING INFRASTRUCTURE</span>
@@ -213,8 +213,32 @@ function Marketing({openApp,openLogin,openPricing}:{openApp:()=>void,openLogin:(
   </section>
 
   <DemoSection openApp={openApp}/>
-  <footer className="marketing-footer"><Brand/><p>AceMarketing · first-party growth operating system.</p></footer>
+  <footer className="marketing-footer"><Brand/><p>AceMarketing · first-party growth operating system.</p><div><button onClick={openResources}>Resources</button><button onClick={openCompany}>Company</button><button onClick={openPricing}>Pricing</button><button onClick={openDemo}>Book demo</button></div></footer>
  </div>
+}
+
+function DemoPage({back,openApp}:{back:()=>void,openApp:()=>void}){
+ const [step,setStep]=useState(1); const [slot,setSlot]=useState('')
+ const submit=async(e:any)=>{e.preventDefault();const payload=Object.fromEntries(new FormData(e.currentTarget).entries());await api.submitDemo(payload).catch(()=>null);setStep(2)}
+ return <div className="standalone-page demo-page">
+  <div className="standalone-top"><Brand/><button onClick={back}>Back to website</button></div>
+  <section className="standalone-hero demo-hero"><div><span className="kicker">BOOK A DEMO</span><h1>Stop wasting ad spend on junk leads.</h1><p>See how a stitched customer journey, cleaner conversion signals and funnel agents can improve lead quality, conversion and attribution.</p><div className="demo-benefits">{[['01','Cleaner data','Connect ad platforms, CRM, calls and messaging into one journey.'],['02','Quality over volume','Optimize campaigns for qualified and closed outcomes, not raw form fills.'],['03','Fast setup path','Use connector and agent patterns instead of rebuilding your whole martech stack.']].map(x=><article key={x[0]}><span>{x[0]}</span><h3>{x[1]}</h3><p>{x[2]}</p></article>)}</div></div>
+  <div className="demo-booking-card">{step===1?<form onSubmit={submit}><h2>Tell us about your funnel</h2><label>Work email<input name="email" required type="email" placeholder="name@company.com"/></label><label>Company<input name="company" required placeholder="Company name"/></label><label>Monthly digital marketing budget<select name="budget" required defaultValue=""><option value="" disabled>Select budget</option><option>Under ₹5L</option><option>₹5L – ₹25L</option><option>₹25L – ₹1Cr</option><option>₹1Cr – ₹5Cr</option><option>₹5Cr+</option></select></label><label>Burning pain point<select name="painPoint" required defaultValue=""><option value="" disabled>Select pain point</option><option>Junk / low-quality leads</option><option>Conversion leakage</option><option>Offline attribution</option><option>CRM context</option><option>Cross-platform reporting</option></select></label><button type="submit">Continue to scheduling <ArrowRight/></button></form>:<div className="calendar-step"><h2>Select a date & time</h2><p>Calendar UI is implemented locally and ready to replace with Calendly or your scheduler API.</p><div className="calendar-days">{['Mon 28','Tue 29','Wed 30','Thu 01','Fri 02'].map(x=><button key={x} className={slot.startsWith(x)?'active':''} onClick={()=>setSlot(x+' · 11:00 AM')}>{x}</button>)}</div><div className="calendar-slots">{['10:00 AM','11:00 AM','2:00 PM','3:30 PM','5:00 PM'].map(x=><button key={x} className={slot.endsWith(x)?'active':''} onClick={()=>setSlot((slot.split(' · ')[0]||'Tue 29')+' · '+x)}>{x}</button>)}</div>{slot&&<div className="slot-confirm"><Check/><div><b>{slot}</b><span>45-minute product walkthrough</span></div><button onClick={openApp}>Confirm & open product</button></div>}</div>}</div></section>
+  <section className="demo-proof-band"><article><Sparkles/><h3>Simple & intuitive</h3><p>Designed to shorten the time from disconnected data to actionable funnel insight.</p></article><article><Cable/><h3>Connect existing tools</h3><p>Keep the CRM, calling, messaging and advertising systems your teams already use.</p></article><article><BarChart3/><h3>Usage-aware deployment</h3><p>Architecture supports usage metering and scalable packaging without inventing fixed public prices.</p></article></section>
+ </div>
+}
+
+function CompanyPage({back,openDemo}:{back:()=>void,openDemo:()=>void}){
+ return <div className="standalone-page company-page"><div className="standalone-top"><Brand/><button onClick={back}>Back to website</button></div>
+  <section className="standalone-hero company-hero"><span className="kicker">COMPANY</span><h1>Built around the reality of complex performance marketing funnels.</h1><p>AceMarketing is being developed as a SaaS operating layer for teams that need attribution, signal activation, funnel automation and first-party data workflows without rebuilding every system in-house.</p><button onClick={openDemo}>Talk to the product team <ArrowRight/></button></section>
+  <section className="company-values"><div className="section-title"><span className="kicker dark">OPERATING PRINCIPLES</span><h2>Implementation is not a template.</h2></div><div>{[['If data can solve it, map it','Unusual CRMs, custom stages and offline paths should be modeled explicitly instead of forced into a generic demo funnel.'],['Built from marketing problems','The product is organized around lead quality, conversion, attribution and operational handoffs rather than generic BI dashboards.'],['Work with the existing stack','Connect what teams already use and add specialized adapters where standard connectors are not enough.']].map((x,i)=><article key={x[0]}><span>0{i+1}</span><h3>{x[0]}</h3><p>{x[1]}</p></article>)}</div></section>
+  <section className="custom-services"><div><span className="kicker">CUSTOM SERVICES</span><h2>Extend the platform when the standard path is not enough.</h2><p>Architecture accommodates attribution modeling, server-to-server integrations, cohort-style reporting, automated reports and custom data-engineering workflows.</p></div><div className="service-grid">{['Server-to-server integration','Attribution modeling','Cohort / media planning reports','Automated reports','Custom event design','Bespoke connector pipelines'].map(x=><article key={x}><Check/><b>{x}</b></article>)}</div></section>
+ </div>
+}
+
+function ResourcesPage({back}:{back:()=>void}){
+ const docs=[['Custom Events','Define business-specific conversion events such as qualified lead, pricing-page lead, high-value purchase and attribution events.'],['Server-Side Activation','Patterns for CAPI, enhanced conversions and offline conversion delivery.'],['Attribution','Understand first-touch, last-touch and stitched full-path journeys across channels.'],['CRM Enrichment','Map acquisition source, behavior and interaction context into CRM records.'],['Offline Conversion Tracking','Match calls, WhatsApp and offline outcomes to click identifiers and first-party identities.'],['Audience Operations','Build activation and suppression segments from lifecycle stage, LTV and intent.']]
+ return <div className="standalone-page resources-page"><div className="standalone-top"><Brand/><button onClick={back}>Back to website</button></div><section className="standalone-hero resources-hero"><span className="kicker">RESOURCES</span><h1>Implementation guides for the operating system behind paid growth.</h1><p>Documentation-style surfaces are included so the product can eventually support onboarding, implementation and self-service operations.</p></section><section className="resource-grid">{docs.map((x,i)=><article key={x[0]}><span>{String(i+1).padStart(2,'0')}</span><h3>{x[0]}</h3><p>{x[1]}</p><button>Read guide <ArrowRight/></button></article>)}</section></div>
 }
 
 function Pricing({back,openApp}:{back:()=>void,openApp:()=>void}){
@@ -426,4 +450,4 @@ function Product({back}:{back:()=>void}){
  return <div className="product"><aside><Brand/><div className="workspace"><span>AM</span><div><b>Ace EdTech</b><small>Production workspace</small></div><ChevronDown/></div><nav>{appTabs.map(([x,I])=><button key={x} className={tab===x?'active':''} onClick={()=>setTab(x)}><I/>{x}</button>)}</nav><div className="aside-footer"><button onClick={back}><ArrowRight/>Back to website</button><div className="profile-mini"><span>S</span><div><b>Sakshee</b><small>Workspace owner</small></div></div></div></aside>
  <main><header className="product-head"><div className="global-search"><Search/>Search journeys, leads, campaigns...</div><div><span className="sync">● Live sync healthy</span><button><Headphones/></button><button><Globe2/></button><span className="avatar-sm">S</span></div></header><div className="product-body">{view}</div></main></div>
 }
-export default function AcePlatform(){const[view,setView]=useState<View>('site');if(view==='login')return <Login back={()=>setView('site')} openApp={()=>setView('app')}/>;if(view==='pricing')return <Pricing back={()=>setView('site')} openApp={()=>setView('app')}/>;return view==='site'?<Marketing openApp={()=>setView('app')} openLogin={()=>setView('login')} openPricing={()=>setView('pricing')}/>:<Product back={()=>setView('site')}/>}
+export default function AcePlatform(){const[view,setView]=useState<View>('site');if(view==='login')return <Login back={()=>setView('site')} openApp={()=>setView('app')}/>;if(view==='pricing')return <Pricing back={()=>setView('site')} openApp={()=>setView('app')}/>;if(view==='demo')return <DemoPage back={()=>setView('site')} openApp={()=>setView('app')}/>;if(view==='company')return <CompanyPage back={()=>setView('site')} openDemo={()=>setView('demo')}/>;if(view==='resources')return <ResourcesPage back={()=>setView('site')}/>;return view==='site'?<Marketing openApp={()=>setView('app')} openLogin={()=>setView('login')} openPricing={()=>setView('pricing')} openDemo={()=>setView('demo')} openCompany={()=>setView('company')} openResources={()=>setView('resources')}/>:<Product back={()=>setView('site')}/>}
