@@ -3647,3 +3647,15 @@ Lead Routing is now an operational workspace rule system instead of a read-only 
 - **Test selected rule** now passes the selected rule to the routing engine and persists the resulting routing decision.
 - Routing decisions continue to populate destination load, routed-today metrics and recent routing history.
 - Existing default routing behavior remains available when no configured rule is forced.
+
+
+### Self-service meeting scheduling
+
+The Meetings workspace is now self-contained instead of depending on Calls or another module to create the first meeting.
+
+- **Schedule meeting** creates a persisted consultation through the existing `POST /api/meetings` backend.
+- Users can provide lead reference, start time, owner, attendee email/phone and no-show risk.
+- Calendar sync can be requested per meeting; when Google Calendar is connected, the backend creates the external calendar event and stores the returned event/meeting links.
+- Users can still connect Google Calendar directly from the Meetings list header.
+- Existing reschedule and provider-backed reminder operations continue to work on the same persisted meeting record.
+- Attendee contact is collected during scheduling so manual reminder actions have a real destination.
