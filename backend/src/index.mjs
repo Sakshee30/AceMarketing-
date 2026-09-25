@@ -160,6 +160,19 @@ const integrations = [
   'Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads / Bing Ads','X','Pinterest','GA4','Google Calendar'
 ]
 const agents = ['Meta Advanced CAPI','Google ECL / OCI','Call Tracking Events','Custom Integration','Lead Grading','CRM Enrichment','Voice Lead Qualification','Voice Scheduler','Meeting Reminder','Feedback Agent','Ask Ace']
+const agentCatalog={
+  'Meta Advanced CAPI':{category:'Lead Quality · Signal Return',description:'Send deduplicated server-side business outcomes to Meta Ads.',operationTab:'Delivery',action:'Operate Meta signal delivery',prerequisites:['Meta Ads connection','First-party identity','Business event']},
+  'Google ECL / OCI':{category:'Lead Quality · Signal Return',description:'Return enhanced and offline conversion outcomes to Google Ads.',operationTab:'AdSync',action:'Operate Google conversion signals',prerequisites:['Google Ads connection','GCLID/GBRAID/WBRAID or hashed identity','Conversion action']},
+  'Call Tracking Events':{category:'Lead Quality · Signal Return',description:'Capture signed telephony events and attribute calls to acquisition context.',operationTab:'Calls',action:'Open call operations',prerequisites:['Call webhook provider','Customer or click identity']},
+  'Custom Integration':{category:'Lead Quality · Signal Return',description:'Build tested adapters for proprietary CRM, backend, webhook or data systems.',operationTab:'Integrations',action:'Configure integrations',prerequisites:['Endpoint or source system','Authentication method','Field mapping']},
+  'Lead Grading':{category:'Conversion · Handoff',description:'Score and prioritize persisted leads from CRM, journey and behavioral evidence.',operationTab:'Lead Grading',action:'Open lead grading',prerequisites:['Lead profiles','Journey or CRM evidence']},
+  'CRM Enrichment':{category:'Conversion · Handoff',description:'Give sales acquisition, journey, behavior, call and messaging context before outreach.',operationTab:'Enrich',action:'Open enrichment',prerequisites:['Lead profile','CRM connection for writeback']},
+  'Voice Lead Qualification':{category:'Conversion · Handoff',description:'Queue provider-backed qualification calls and preserve execution state.',operationTab:'Calls',action:'Open qualification calls',prerequisites:['Voice qualification provider','Lead phone','Approval policy']},
+  'Voice Scheduler':{category:'Conversion · Handoff',description:'Create consultations from qualified leads and synchronize calendar context.',operationTab:'Meetings',action:'Open scheduling',prerequisites:['Qualified lead','Calendar or meeting provider']},
+  'Meeting Reminder':{category:'Conversion · Handoff',description:'Send provider-backed reminders and persist reminder execution state.',operationTab:'Meetings',action:'Open reminders',prerequisites:['Scheduled meeting','Reminder provider']},
+  'Feedback Agent':{category:'Conversion · Handoff',description:'Collect post-interaction feedback and surface objection themes.',operationTab:'Feedback',action:'Open feedback operations',prerequisites:['Customer interaction','Feedback provider or manual record']},
+  'Ask Ace':{category:'Visibility & Attribution',description:'Query stitched journey, attribution, lead quality, audience and signal evidence in natural language.',operationTab:'Ask Ace',action:'Ask workspace questions',prerequisites:['Workspace evidence']}
+}
 const trackedEvents = []
 
 const sha256Normalized=value=>createHash('sha256').update(String(value||'').trim().toLowerCase()).digest('hex')
@@ -1978,7 +1991,8 @@ const server = http.createServer(async (req,res)=>{
         else if(name==='Meeting Reminder'&&process.env.MEETING_REMINDER_WEBHOOK_URL)status='configured'
         else if(name==='Feedback Agent'&&process.env.FEEDBACK_WEBHOOK_URL)status='configured'
         else if(name==='Ask Ace')status='available'
-        return {id:'builtin_'+i,name,status,type:'built_in'}
+        const meta=agentCatalog[name]||{}
+        return {id:'builtin_'+i,name,status,type:'built_in',...meta}
       })
       return send(req,res,200,{items:[...builtIn,...(state.customAgents||[])],runs:runs.slice(0,50),configured:builtIn.filter(x=>x.status==='configured').length,custom:(state.customAgents||[]).length})
     }
