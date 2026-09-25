@@ -225,3 +225,28 @@ Audiences
 Monitoring
 Settings
 ```
+
+
+## Current public-site parity pass
+
+This pass was aligned against the current EasyInsights public homepage and pricing flow (checked September 2026), while preserving AceMarketing branding.
+
+Implemented:
+- Top benchmark/reference banner matching the public site's current 45% uplift positioning, clearly labeled as an external parity reference.
+- Agent impact labels updated to mirror the metrics currently published on the EasyInsights public site.
+- Agent category filters: **Lead Quality**, **Conversion**, and **Visibility**.
+- Public proof-reference cards for Leverage Edu, India IVF and Blue Tokai, clearly labeled so the outcomes are not represented as AceMarketing customer results.
+- Dedicated **Pricing / Stack Builder** page:
+  - monthly lead-volume selector;
+  - data-location selection;
+  - data-challenge selection;
+  - advertising-channel selection;
+  - recommended-agent selection;
+  - selected stack summary;
+  - custom-quote state instead of invented prices.
+
+The public pricing source exposes the configurator structure but not stable numeric agent prices in the crawled HTML, so AceMarketing intentionally shows **Custom quote** rather than fabricating pricing values.
+
+### IP / claims handling
+
+UI structure, information architecture and workflows are being reproduced for functional parity. EasyInsights trademarks, copyrighted screenshots, proprietary source code and customer logos are not copied into the repository. Third-party performance figures are labeled as public reference metrics rather than AceMarketing performance claims.
