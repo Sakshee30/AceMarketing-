@@ -86,6 +86,7 @@ jobs:
           test -f backend/src/consent.mjs
           test -f backend/src/privacy-ops.mjs
           test -f backend/src/audience-scheduler.mjs
+          test -f backend/src/cohort-analytics.mjs
           test -f backend/scripts/privacy-retention.mjs
           test -f backend/scripts/migrate.mjs
           test -f backend/migrations/001_workspace_state.sql
