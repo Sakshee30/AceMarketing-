@@ -2066,3 +2066,35 @@ COHORT_CONVERSION_EVENTS=purchase,enrolment,enrollment,booking,revenue.closed,cl
 ```
 
 This avoids inventing business-stage semantics. Production deployments should align these event names with the real CRM/funnel contract for each workspace.
+
+
+## Business event rule engine pass
+
+The Conversion Event Manager is now backed by persisted business rules instead of static event examples.
+
+Implemented:
+- `backend/migrations/014_event_rules.sql`;
+- `backend/src/event-rules.mjs`;
+- safe whitelisted condition operators: equals, not_equals, gt, gte, lt, lte, contains, exists and in;
+- no arbitrary JavaScript/`eval` execution in rule conditions;
+- persisted source event → condition → derived event → destination contracts;
+- derived business events are written through the existing assisted-event / attribution store;
+- rule-run idempotency and audit history in `ace_event_rule_runs`;
+- optional Google Ads / Meta Ads activation reuses the existing durable signal queue, retries, DLQ and provider adapters;
+- marketing destinations are queued only when marketing consent is present;
+- real rule statistics and recent matches in Activation → Events;
+- creation, pause and enable controls in the workspace UI;
+- templates for pricing-page lead, high-value purchase, prepaid order, fulfilled order and returned order patterns.
+
+New APIs:
+- `GET /api/events`
+- `POST /api/events/rules`
+- `POST /api/events/rules/toggle`
+
+Configuration:
+
+```text
+EVENT_RULE_DB_POOL_MAX=5
+```
+
+The engine intentionally supports a constrained rules language. More complex transformations should be implemented through versioned custom integrations rather than executing untrusted expressions inside the ingestion process.
