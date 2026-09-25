@@ -3551,3 +3551,8 @@ Operational routing:
 - Ask Ace → Ask Ace
 
 This keeps the agent library aligned with the public EasyInsights 11-agent structure while ensuring AceMarketing cards route to implemented AceMarketing workflows rather than static detail panels.
+
+
+### CI interaction hardening — consent banner
+
+The consent surface is intentionally non-blocking: optional analytics/marketing remain disabled until the visitor chooses a preference, but the banner does not prevent public navigation or workspace interaction. The full-screen consent wrapper now uses `pointer-events: none` while the banner itself remains interactive, and the banner is exposed as an accessible region instead of a modal dialog. This fixes mobile Playwright failures where the consent overlay intercepted clicks on its own controls and unrelated dashboard/public navigation.
