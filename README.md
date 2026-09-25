@@ -1971,3 +1971,38 @@ CONSENT_DB_POOL_MAX=10
 ```
 
 This provides enforceable product privacy controls but is not a legal certification. GDPR, CPRA, HIPAA, India DPDP and other obligations still require deployment-specific notices, contracts, retention/deletion workflows, lawful-basis review and data-subject processes.
+
+
+## Data-subject export, erasure and retention pass
+
+AceMarketing now has authenticated privacy operations in addition to consent capture/enforcement.
+
+Implemented:
+- `backend/migrations/012_privacy_ops.sql`;
+- `backend/src/privacy-ops.mjs`;
+- owner/admin-only export by visitor ID, customer ID, email, phone, or external lead ID;
+- owner/admin-only erasure across click sessions, assisted/offline events, lead profiles, audience memberships and consent records;
+- privacy request receipts store only a hashed selector rather than the raw lookup value;
+- Settings → Governance exposes export/delete tooling, request receipts and retention policy state;
+- `backend/scripts/privacy-retention.mjs` for cron/scheduled retention enforcement;
+- expired click sessions can be purged independently of optional dataset retention windows;
+- retention windows default to disabled (`0`) rather than inventing jurisdiction-specific legal periods;
+- dry-run retention preview is available before destructive purging.
+
+New APIs:
+- `GET /api/privacy/requests`
+- `POST /api/privacy/export`
+- `POST /api/privacy/delete`
+- `POST /api/privacy/retention/purge`
+
+Retention configuration:
+
+```text
+PRIVACY_RETENTION_CLICK_DAYS=0
+PRIVACY_RETENTION_ASSISTED_DAYS=0
+PRIVACY_RETENTION_LEAD_DAYS=0
+PRIVACY_RETENTION_CONSENT_DAYS=0
+PRIVACY_RETENTION_DRY_RUN=true
+```
+
+A value of `0` means no age-based purge policy is applied for that dataset. Production operators should set retention periods only after legal/security review for their jurisdiction and contracts.
