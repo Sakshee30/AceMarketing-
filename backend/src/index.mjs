@@ -16,6 +16,7 @@ import { closeConsentStore, consentAllows, consentStats, getConsent, listConsent
 import { closePrivacyOps, deleteSubject, exportSubject, listPrivacyRequests, purgeRetention, retentionPolicy } from './privacy-ops.mjs'
 import { closeAudienceScheduler, listAudienceRefreshRuns, listAudienceSchedules, saveAudienceSchedule } from './audience-scheduler.mjs'
 import { closeCohortAnalytics, cohortAnalytics } from './cohort-analytics.mjs'
+import { closeReportScheduler, listReportDeliveries, listReportSchedules, queueReportNow, reportMailConfigured, saveReportSchedule } from './report-scheduler.mjs'
 import { closeEventRules, createEventRule, evaluateEventRules, eventRuleStats, listEventRuleRuns, listEventRules, markEventRuleActivation, setEventRuleEnabled } from './event-rules.mjs'
 import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, publicChallenges, publicCaseStudies, publicResources, publicResourceCenter } from './public-content.mjs'
 
@@ -794,6 +795,18 @@ const server = http.createServer(async (req,res)=>{
     if (req.method === 'GET' && url.pathname === '/api/cohorts') {
       const months=Number(url.searchParams.get('months')||6)
       return send(req,res,200,await cohortAnalytics(workspaceId,{months}))
+    }
+    if (req.method === 'GET' && url.pathname === '/api/report-schedules') return send(req,res,200,{configured:reportMailConfigured(),items:await listReportSchedules(workspaceId),deliveries:await listReportDeliveries(workspaceId,30)})
+    if (req.method === 'POST' && url.pathname === '/api/report-schedules') {
+      const body=await readBody(req)
+      try{return send(req,res,200,await saveReportSchedule(workspaceId,body,req.user?.email||req.user?.userId||null))}
+      catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'invalid report schedule'})}
+    }
+    if (req.method === 'POST' && url.pathname === '/api/report-schedules/run-now') {
+      const body=await readBody(req)
+      if(!body.id)return send(req,res,400,{error:'id required'})
+      try{return send(req,res,202,await queueReportNow(workspaceId,String(body.id)))}
+      catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'report queue failed'})}
     }
     if (req.method === 'GET' && url.pathname === '/api/reports') return send(req,res,200,{items:[
       {name:'Executive MBA Cohort',cadence:'weekly',channel:'email',status:'active'},
