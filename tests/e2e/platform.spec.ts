@@ -98,3 +98,28 @@ test.describe('basic accessibility regression',()=>{
     await expect(page.locator('.product-body h1')).toHaveCount(1)
   })
 })
+
+
+test.describe('privacy consent runtime',()=>{
+  test('optional tracking remains off until consent is granted',async({page})=>{
+    const tracked:string[]=[]
+    page.on('request',request=>{if(request.url().includes('/api/track'))tracked.push(request.postData()||'')})
+    await page.goto('/#/')
+    await expect(page.getByRole('dialog',{name:'Privacy choices'})).toBeVisible()
+    await page.waitForTimeout(300)
+    expect(tracked.some(x=>x.includes('"event":"page_view"'))).toBeFalsy()
+
+    await page.getByRole('button',{name:'Allow analytics'}).click()
+    await expect(page.getByRole('dialog',{name:'Privacy choices'})).toHaveCount(0)
+    await page.reload()
+    await page.waitForTimeout(300)
+    expect(tracked.some(x=>x.includes('"event":"page_view"'))).toBeTruthy()
+  })
+
+  test('essential-only choice keeps marketing click IDs out of storage',async({page})=>{
+    await page.goto('/?gclid=test-gclid&fbclid=test-fbclid#/')
+    await page.getByRole('button',{name:'Essential only'}).click()
+    const stored=await page.evaluate(()=>({gclid:localStorage.getItem('ace:gclid'),fbclid:localStorage.getItem('ace:fbclid')}))
+    expect(stored).toEqual({gclid:null,fbclid:null})
+  })
+})
