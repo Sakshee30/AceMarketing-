@@ -10,6 +10,7 @@ import { closeLeadOps, createActivationRun, createAudience as createLeadAudience
 import { closeAgentOrchestrator, completeFollowUp as persistCompleteFollowUp, createAgentRun, createFollowUp, createMeeting, listAgentRuns, listFeedback as listPersistedFeedback, listFollowUps as listPersistedFollowUps, listMeetings as listPersistedMeetings, listRoutingDecisions, recordFeedback, routeLead } from './agent-orchestrator.mjs'
 import { closeCustomIntegrations, createCustomIntegration as persistCustomIntegration, listCustomIntegrations, testCustomIntegration as runCustomIntegrationTest } from './custom-integrations.mjs'
 import { closeObservability, listAlerts as listLiveAlerts, listMonitoringRules as listLiveMonitoringRules, monitoringSnapshot, recordApiTelemetry, resolveAlert as resolveLiveAlert, saveMonitoringRule } from './observability.mjs'
+import { assertCapacity, closeEntitlements, finalizeReservation, resourceCountAllowed, subscriptionSummary, updateWorkspaceEntitlements } from './entitlements.mjs'
 import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, publicChallenges, publicCaseStudies, publicResources, publicResourceCenter } from './public-content.mjs'
 
 const CONNECTOR_PROVIDERS={
@@ -143,6 +144,16 @@ const send = (req,res,status,data,extra={}) => {
 
 const publicPaths=new Set(['/api/health','/api/ready','/api/auth/login','/api/invitations/activate','/api/demo-requests','/api/track','/api/pricing/recommend','/api/pricing/quote','/api/public/navigation','/api/public/industries','/api/public/agents','/api/public/integrations','/api/public/challenges','/api/public/case-studies','/api/public/resources','/api/public/resource-center'])
 const isPublicRequest=(method,path)=>publicPaths.has(path)||(method==='GET'&&path==='/api/integrations/oauth/callback')
+const meteredMetricFor=(method,path)=>{
+  if(method!=='POST') return null
+  if(path==='/api/track') return 'tracked_events'
+  if(path==='/api/assisted-events') return 'assisted_events'
+  if(path==='/api/signal-deliveries/dispatch') return 'signal_dispatches'
+  if(path==='/api/audiences/sync') return 'audience_syncs'
+  if(path==='/api/custom-integrations/test') return 'custom_integration_tests'
+  if(path==='/api/qualification-calls'||path==='/api/qualification-calls/retry'||path==='/api/meetings/remind'||path==='/api/feedback/request') return 'agent_actions'
+  return null
+}
 const server = http.createServer(async (req,res)=>{
   const requestStartedAt=Date.now()
   req.requestId=String(req.headers['x-request-id']||randomUUID())
@@ -162,6 +173,14 @@ const server = http.createServer(async (req,res)=>{
   res.once('finish',()=>{
     recordApiTelemetry(workspaceId,{requestId:req.requestId,method:req.method||'GET',path:url.pathname,statusCode:res.statusCode,latencyMs:Date.now()-requestStartedAt}).catch(()=>{})
   })
+  let usageReservationId=null
+  const meteredMetric=meteredMetricFor(req.method||'GET',url.pathname)
+  if(meteredMetric){
+    const capacity=await assertCapacity(workspaceId,meteredMetric,1,req.requestId).catch(()=>({allowed:true,reservationId:null}))
+    if(!capacity.allowed) return send(req,res,429,{error:'usage quota exceeded',metric:meteredMetric,usage:capacity})
+    usageReservationId=capacity.reservationId||null
+    res.once('finish',()=>finalizeReservation(usageReservationId,res.statusCode<400).catch(()=>{}))
+  }
   let authenticatedUser=null
   if(AUTH_REQUIRED && url.pathname.startsWith('/api/') && !isPublicRequest(req.method||'GET',url.pathname)){
     const token=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'')
@@ -259,6 +278,8 @@ const server = http.createServer(async (req,res)=>{
       return send(req,res,200,{items:(state.members||[]).map(({passwordHash,...member})=>member)})
     }
     if (req.method === 'POST' && url.pathname === '/api/members/invite') {
+      const memberCapacity=await resourceCountAllowed(workspaceId,'members')
+      if(!memberCapacity.allowed) return send(req,res,429,{error:'member limit reached',usage:memberCapacity})
       const body=await readBody(req)
       const email=String(body.email||'').trim().toLowerCase()
       const role=String(body.role||'analyst')
@@ -361,6 +382,8 @@ const server = http.createServer(async (req,res)=>{
       }
     }
     if (req.method === 'POST' && url.pathname === '/api/custom-integrations') {
+      const integrationCapacity=await resourceCountAllowed(workspaceId,'custom_integrations')
+      if(!integrationCapacity.allowed) return send(req,res,429,{error:'custom integration limit reached',usage:integrationCapacity})
       const body=await readBody(req)
       if(!body.name || !body.baseUrl || !body.identity) return send(req,res,400,{error:'name, baseUrl and identity required'})
       const item=await persistCustomIntegration(workspaceId,body)
@@ -922,6 +945,16 @@ const server = http.createServer(async (req,res)=>{
     }
     if (req.method === 'POST' && url.pathname === '/api/webhooks/secret/rotate') return send(req,res,201,{secret:'whsec_'+randomUUID().replaceAll('-',''),createdAt:new Date().toISOString()})
     if (req.method === 'GET' && url.pathname === '/api/monitoring') return send(req,res,200,await monitoringSnapshot(workspaceId))
+    if (req.method === 'GET' && url.pathname === '/api/billing/usage') return send(req,res,200,await subscriptionSummary(workspaceId))
+    if (req.method === 'GET' && url.pathname === '/api/billing/subscription') return send(req,res,200,await subscriptionSummary(workspaceId))
+    if (req.method === 'POST' && url.pathname === '/api/billing/entitlements') {
+      if(req.user?.role!=='owner') return send(req,res,403,{error:'owner role required'})
+      const body=await readBody(req)
+      try{
+        await updateWorkspaceEntitlements(workspaceId,body)
+        return send(req,res,200,await subscriptionSummary(workspaceId))
+      }catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'invalid entitlements'})}
+    }
     if (req.method === 'GET' && url.pathname === '/api/signal-console') return send(req,res,200,{google:[['Qualified Lead',8214,96.1],['Consultation',2314,94.7],['Enrolment',982,97.3]],meta:[['Lead',12842,94.8],['Qualified',7621,95.4],['Purchase',982,96.2]],whatsapp:[['Chat Started',6904,'Matched'],['Qualified',3086,'Synced'],['Booked',711,'Revenue linked']]})
     if (req.method === 'GET' && url.pathname === '/api/resources') return send(req,res,200,{items:['Custom Events','Server-Side Activation','Attribution','CRM Enrichment','Offline Conversion Tracking','Audience Operations']})
     if (req.method === 'GET' && url.pathname === '/api/ai-action') return send(req,res,200,{steps:[
@@ -1156,6 +1189,6 @@ server.keepAliveTimeout=65_000
 server.headersTimeout=66_000
 server.requestTimeout=30_000
 server.listen(PORT,()=>console.log(`AceMarketing API listening on http://localhost:${PORT}`))
-const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations(),closeObservability()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
+const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations(),closeObservability(),closeEntitlements()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
 process.on('SIGTERM',()=>shutdown('SIGTERM'))
 process.on('SIGINT',()=>shutdown('SIGINT'))
