@@ -473,7 +473,7 @@ const server = http.createServer(async (req,res)=>{
       auth.searchParams.set('code_challenge_method','S256')
       if(provider.provider==='google') auth.searchParams.set('access_type','offline')
       if(provider.provider==='google') auth.searchParams.set('prompt','consent')
-      if(pending?.connector==='Zoho CRM'||connector==='Zoho CRM'){auth.searchParams.set('access_type','offline');auth.searchParams.set('prompt','consent')}
+      if(connector==='Zoho CRM'){auth.searchParams.set('access_type','offline');auth.searchParams.set('prompt','consent')}
       return send(req,res,200,{connector,status:'authorization_required',authorizationUrl:auth.toString(),expiresAt})
     }
     if (req.method === 'GET' && url.pathname === '/api/integrations/oauth/callback') {
