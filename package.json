@@ -5,13 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:frontend": "vite",
+    "dev:backend": "node backend/src/index.mjs",
+    "api": "node backend/src/index.mjs",
     "build": "tsc -b && vite build",
+    "build:frontend": "tsc -b && vite build",
     "preview": "vite preview",
-    "api": "node server/index.mjs",
-    "dev:web": "vite",
     "check": "tsc -b",
-    "check:server": "node --check server/index.mjs && node --check server/security.mjs && node --check server/store.mjs",
-    "check:all": "npm run check && npm run check:server"
+    "check:frontend": "tsc -b",
+    "check:backend": "node --check backend/src/index.mjs && node --check backend/src/security.mjs && node --check backend/src/store.mjs",
+    "check:all": "npm run check:frontend && npm run check:backend"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
