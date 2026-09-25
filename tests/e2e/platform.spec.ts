@@ -345,3 +345,22 @@ test('custom routing rule persists and drives selected-rule test', async ({ page
   await page.getByRole('button', { name: 'Test selected rule' }).click()
   await expect(page.getByText(/CI Enterprise Queue/)).toBeVisible()
 })
+
+
+test('meetings can be scheduled directly from the meetings workspace', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  await openWorkspaceTab(page,'Meetings')
+  await expect(page.getByRole('heading', { name: 'Scheduler & meeting reminders' })).toBeVisible()
+  await page.getByRole('button', { name: 'Schedule meeting' }).click()
+  await page.getByLabel('Lead reference').fill('ci_meeting_lead')
+  const dt=new Date(Date.now()+24*60*60*1000)
+  const local=dt.toISOString().slice(0,16)
+  await page.getByLabel('Start time').fill(local)
+  await page.getByLabel('Owner').fill('CI Counsellor')
+  await page.getByLabel('Attendee email').fill('ci-meeting@example.com')
+  await page.getByLabel('Calendar sync').selectOption('no')
+  await page.getByRole('button', { name: 'Schedule meeting' }).click()
+  await expect(page.getByText('ci_meeting_lead', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Send reminder now' })).toBeVisible()
+})
