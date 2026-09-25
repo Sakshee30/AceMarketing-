@@ -146,6 +146,7 @@ function Marketing({openHome,openApp,openLogin,openPricing,openDemo,openCompany,
  const [problemTab,setProblemTab]=useState<'Lead Quality'|'Conversion'|'Attribution'>('Lead Quality')
  const [cookieOpen,setCookieOpen]=useState(true)
  const [cookiePrefs,setCookiePrefs]=useState({analytics:false,advertising:false,functionality:false})
+ const openProofCase=(name:string)=>{window.location.hash='#/case-studies?case='+encodeURIComponent(name)}
  const [heroSlide,setHeroSlide]=useState(0)
  const heroSlides=[
   {eyebrow:'Connect every touchpoint',title:'Website forms, calls & WhatsApp messages.',rows:[['Google Ads','Click captured'],['Website','High-intent pages'],['WhatsApp','Conversation started'],['CRM','Qualified lead'],['Revenue','Closed outcome']]},
@@ -234,10 +235,10 @@ function Marketing({openHome,openApp,openLogin,openPricing,openDemo,openCompany,
   <section className="ei-proof-section" id="proof">
    <div className="ei-proof-head"><div><span>REFERENCE OUTCOMES</span><h2>See what stronger signals and connected journeys can unlock.</h2><p>These figures are external EasyInsights reference benchmarks and are not presented as AceMarketing customer results.</p></div><button onClick={openCaseStudies}>See all case studies <ArrowRight/></button></div>
    <div className="ei-proof-grid">
-    <article><div className="ei-proof-label">LEAD QUALITY</div><div className="ei-proof-mark">LE</div><strong>−38%</strong><h3>cost per qualified lead</h3><p>Reference pattern: enrolment outcomes returned server-side and deduplicated across form, call and counsellor sources.</p><footer><span>Leverage Edu</span><small>Edtech</small><ArrowRight/></footer></article>
-    <article><div className="ei-proof-label">CONVERSION</div><div className="ei-proof-mark">IVF</div><strong>+52%</strong><h3>lead-to-consultation conversion</h3><p>Reference pattern: every lead graded on arrival, routed with context and qualified quickly.</p><footer><span>India IVF</span><small>Healthcare</small><ArrowRight/></footer></article>
-    <article><div className="ei-proof-label">VISIBILITY & ATTRIBUTION</div><div className="ei-proof-mark">BT</div><strong>31%</strong><h3>revenue re-attributed</h3><p>Reference pattern: web, app and offline interactions stitched into full-path attribution.</p><footer><span>Blue Tokai</span><small>Consumer goods</small><ArrowRight/></footer></article>
-    <article><div className="ei-proof-label">CONVERSION</div><div className="ei-proof-mark">JE</div><strong>+41%</strong><h3>enrolment rate</h3><p>Reference pattern: counsellor calls and follow-ups tracked with full journey context.</p><footer><span>Jaro Education</span><small>Edtech</small><ArrowRight/></footer></article>
+    <article role="button" tabIndex={0} aria-label="Open Leverage Edu reference case study" onClick={()=>openProofCase('Leverage Edu')} onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&openProofCase('Leverage Edu')}><div className="ei-proof-label">LEAD QUALITY</div><div className="ei-proof-mark">LE</div><strong>−38%</strong><h3>cost per qualified lead</h3><p>Reference pattern: enrolment outcomes returned server-side and deduplicated across form, call and counsellor sources.</p><footer><span>Leverage Edu</span><small>Edtech</small><ArrowRight/></footer></article>
+    <article role="button" tabIndex={0} aria-label="Open India IVF reference case study" onClick={()=>openProofCase('India IVF')} onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&openProofCase('India IVF')}><div className="ei-proof-label">CONVERSION</div><div className="ei-proof-mark">IVF</div><strong>+52%</strong><h3>lead-to-consultation conversion</h3><p>Reference pattern: every lead graded on arrival, routed with context and qualified quickly.</p><footer><span>India IVF</span><small>Healthcare</small><ArrowRight/></footer></article>
+    <article role="button" tabIndex={0} aria-label="Open Blue Tokai reference case study" onClick={()=>openProofCase('Blue Tokai')} onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&openProofCase('Blue Tokai')}><div className="ei-proof-label">VISIBILITY & ATTRIBUTION</div><div className="ei-proof-mark">BT</div><strong>31%</strong><h3>revenue re-attributed</h3><p>Reference pattern: web, app and offline interactions stitched into full-path attribution.</p><footer><span>Blue Tokai</span><small>Consumer goods</small><ArrowRight/></footer></article>
+    <article role="button" tabIndex={0} aria-label="Open Jaro Education reference case study" onClick={()=>openProofCase('Jaro Education')} onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&openProofCase('Jaro Education')}><div className="ei-proof-label">CONVERSION</div><div className="ei-proof-mark">JE</div><strong>+41%</strong><h3>enrolment rate</h3><p>Reference pattern: counsellor calls and follow-ups tracked with full journey context.</p><footer><span>Jaro Education</span><small>Edtech</small><ArrowRight/></footer></article>
    </div>
   </section>
 
@@ -441,14 +442,19 @@ function SolutionsPage({back,openDemo,openApp}:{back:()=>void,openDemo:()=>void,
 
 function CaseStudiesPage({back,openDemo}:{back:()=>void,openDemo:()=>void}){
  const fallback=[
+  {sector:'Education',name:'Leverage Edu',title:'Quality-first enrolment signal activation',challenge:['Lead volume alone did not represent enrolment quality','Form, call and counsellor outcomes needed deduplication','Paid media needed downstream outcome feedback'],solution:['Stitch form, call and counsellor identity','Return verified enrolment outcomes server-side','Use qualified outcomes rather than raw leads for optimization'],metrics:[['Reference benchmark','−38% cost per qualified lead'],['Pattern','Server-side enrolment outcomes'],['Focus','Lead quality']]},
+  {sector:'Healthcare',name:'India IVF',title:'Faster qualification and consultation conversion',challenge:['Lead response and qualification timing affected consultation conversion','Sales teams needed context at first contact','Campaign optimization needed qualified downstream outcomes'],solution:['Grade every lead on arrival','Route with stitched acquisition and behavior context','Qualify quickly and return consultation outcomes'],metrics:[['Reference benchmark','+52% lead-to-consultation conversion'],['Pattern','Lead grading + fast routing'],['Focus','Consultation conversion']]},
+  {sector:'Consumer goods',name:'Blue Tokai',title:'Full-path visibility across web, app and offline',challenge:['Revenue contribution was obscured by disconnected touchpoints','Offline outcomes were separated from digital acquisition','Last-click reporting missed assisted influence'],solution:['Stitch web, app and offline interactions','Resolve identities across touchpoints','Measure contribution through full-path attribution'],metrics:[['Reference benchmark','31% revenue re-attributed'],['Pattern','Cross-channel journey stitching'],['Focus','Visibility & attribution']]},
   {sector:'Healthcare',name:'Apollo Ayurvaid',title:'Assisted-call and messaging attribution',challenge:['Inbound calls were disconnected from campaign context','Messaging enquiries were missing from conversion reporting','Telephony outcomes could not improve paid-media optimization'],solution:['Ingest telephony events through API','Match calls to recent first-party sessions and click identifiers','Return verified assisted-conversion outcomes server-side'],metrics:[['Match pattern','Session + identity'],['Channels','Search + social'],['Outcome','Assisted signal restored']]},
-  {sector:'Education',name:'Jaro Education',title:'High-volume lead and conversion operations',challenge:['Large daily lead volume across many ad accounts','Complex CRM stage mappings','Fragmented conversion imports at scale'],solution:['Normalize CRM stages into a canonical event model','Centralize conversion delivery across accounts','Use real-time qualified and closed-stage signals'],metrics:[['Scale','High-volume daily leads'],['Coverage','Multi-account'],['Focus','Stage-based activation']]},
+  {sector:'Education',name:'Jaro Education',title:'High-volume lead and conversion operations',challenge:['Large daily lead volume across many ad accounts','Complex CRM stage mappings','Fragmented conversion imports at scale'],solution:['Normalize CRM stages into a canonical event model','Centralize conversion delivery across accounts','Use real-time qualified and closed-stage signals'],metrics:[['Reference benchmark','+41% enrolment rate'],['Coverage','Multi-account'],['Focus','Stage-based activation']]},
   {sector:'High-consideration commerce',name:'GemPundit',title:'Messaging journey and partial-payment measurement',challenge:['Long consideration cycle spans web and messaging','Partial payments hide eventual value','Click identity is easily lost after the landing session'],solution:['Persist first-party click identity','Bridge web and messaging identities','Record partial-payment and adjusted-value outcomes'],metrics:[['Bridge','Web → messaging'],['Signal','Partial payment'],['Optimization','Value-aware bidding']]},
   {sector:'Home services',name:'Berger Paints',title:'Quality-first assisted acquisition',challenge:['Assisted lead generation spans messaging and offline follow-up','Campaign quality cannot be judged by lead count alone','Operations need continuous signal monitoring'],solution:['Activate server-side conversion feedback','Return qualified CRM and offline outcomes','Create business-specific assisted-conversion events'],metrics:[['Goal','Lower acquisition waste'],['Signal','Quality outcomes'],['Ops','Continuous monitoring']]}
  ]
+ const requestedCase=()=>decodeURIComponent(new URLSearchParams((window.location.hash.split('?')[1]||'')).get('case')||'')
  const [studies,setStudies]=useState<any[]>(fallback)
- const [active,setActive]=useState(0)
- useEffect(()=>{api.publicCaseStudies().then((r:any)=>r?.items?.length&&setStudies(r.items)).catch(()=>null)},[])
+ const [active,setActive]=useState(()=>Math.max(0,fallback.findIndex(x=>x.name===requestedCase())))
+ useEffect(()=>{api.publicCaseStudies().then((r:any)=>{if(r?.items?.length)setStudies(r.items)}).catch(()=>null)},[])
+ useEffect(()=>{const wanted=requestedCase();if(!wanted)return;const idx=studies.findIndex((x:any)=>x.name===wanted);if(idx>=0)setActive(idx)},[studies])
  const current=studies[active]||studies[0]
  return <div className="standalone-page case-study-page">
   <div className="standalone-top"><Brand/><button onClick={back}>Back to website</button></div>
@@ -1662,6 +1668,7 @@ const viewHash:Record<View,string>={
 }
 const hashView=(hash:string):View=>{
  if(hash.startsWith('#/resources')) return 'resources'
+ if(hash.startsWith('#/case-studies')) return 'case-studies'
  const found=(Object.entries(viewHash) as [View,string][]).find(([,route])=>route===hash)
  return found?.[0]||'site'
 }
