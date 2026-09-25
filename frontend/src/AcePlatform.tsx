@@ -483,18 +483,32 @@ function Pricing({back,openApp,openDemo}:{back:()=>void,openApp:()=>void,openDem
  const [dataHomes,setDataHomes]=useState<string[]>(['CRM'])
  const [challenges,setChallenges]=useState<string[]>(['Lead quality'])
  const [channels,setChannels]=useState<string[]>(['Google Ads','Meta Ads'])
- const recommended=agents.filter(a=>{
+ const localRecommended=agents.filter(a=>{
   if(challenges.includes('Lead quality')&&a[2]==='Lead Quality')return true
   if(challenges.includes('Conversion leakage')&&a[2]==='Conversion')return true
   if(challenges.includes('Attribution')&&a[2]==='Visibility')return true
   return false
  })
+ const [recommendedNames,setRecommendedNames]=useState<string[]>(localRecommended.map(a=>a[0]))
+ const recommended=agents.filter(a=>recommendedNames.includes(a[0]))
  const [selected,setSelected]=useState<string[]>([])
+ const [quoteState,setQuoteState]=useState<'idle'|'sending'|'saved'|'error'>('idle')
  const activeSelected=selected.length?selected:recommended.map(a=>a[0])
  const toggle=(list:string[],value:string,setter:(v:string[])=>void)=>setter(list.includes(value)?list.filter(x=>x!==value):[...list,value])
+ useEffect(()=>{
+  const t=setTimeout(()=>api.pricingRecommendation({challenges,channels,dataHomes,leads}).then(r=>setRecommendedNames(r.recommended)).catch(()=>setRecommendedNames(localRecommended.map(a=>a[0]))),180)
+  return()=>clearTimeout(t)
+ },[challenges.join('|'),channels.join('|'),dataHomes.join('|'),leads])
+ const requestQuote=async()=>{
+  setQuoteState('sending')
+  try{
+   await api.submitQuote({leads,dataHomes,challenges,channels,agents:activeSelected})
+   setQuoteState('saved')
+  }catch{setQuoteState('error')}
+ }
  return <div className="pricing-page">
   <div className="pricing-top"><Brand/><button onClick={back}>Back to website</button></div>
-  <section className="pricing-hero"><span className="kicker">PRICING</span><h1>Build the stack that works for your setup.</h1><p>Answer a few questions and AceMarketing recommends the agents that fit your funnel. Exact production pricing remains a sales quote because the public source does not expose stable numeric prices.</p></section>
+  <section className="pricing-hero"><span className="kicker">PRICING</span><h1>Build a stack around the way your funnel actually works.</h1><p>Choose your data sources, growth challenges and channels. AceMarketing uses the backend recommendation service to assemble a practical starting configuration, then captures the setup for a sales quote.</p></section>
   <section className="pricing-builder">
    <div className="pricing-step"><span>1</span><div><h2>Tell us about your setup</h2><p>Configure the environment used for agent recommendations.</p></div></div>
    <div className="pricing-card">
@@ -503,9 +517,9 @@ function Pricing({back,openApp,openDemo}:{back:()=>void,openApp:()=>void,openDem
     <div className="choice-block"><h3>Select your current data challenges</h3><div>{['Lead quality','Conversion leakage','Attribution'].map(x=><button key={x} className={challenges.includes(x)?'active':''} onClick={()=>toggle(challenges,x,setChallenges)}>{x}</button>)}</div></div>
     <div className="choice-block"><h3>Which channels do you run?</h3><div>{['Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads','Offline'].map(x=><button key={x} className={channels.includes(x)?'active':''} onClick={()=>toggle(channels,x,setChannels)}>{x}</button>)}</div></div>
    </div>
-   <div className="pricing-step"><span>2</span><div><h2>Choose your agents</h2><p>Recommended agents are pre-selected from your stated challenges.</p></div></div>
+   <div className="pricing-step"><span>2</span><div><h2>Choose your agents</h2><p>Recommended agents are refreshed by the backend from your selected challenges.</p></div></div>
    <div className="pricing-agent-grid">{agents.map(a=>{const isOn=activeSelected.includes(a[0]);return <article className={isOn?'selected':''} key={a[0]}><div><span>{a[2]}</span>{recommended.some(r=>r[0]===a[0])&&<b>RECOMMENDED</b>}</div><h3>{a[0]}</h3><strong>{a[3]}</strong><p>{a[1]}</p><button onClick={()=>setSelected(isOn?activeSelected.filter(x=>x!==a[0]):[...activeSelected,a[0]])}>{isOn?'Remove':'Add agent'}</button></article>})}</div>
-   <aside className="pricing-summary"><div><span>Your stack</span><strong>{activeSelected.length} agents</strong></div><div><span>Monthly lead volume</span><strong>{leads.toLocaleString()}</strong></div><div><span>Channels</span><strong>{channels.length}</strong></div><div className="quote"><span>Estimated total</span><strong>Custom quote</strong><small>Pricing depends on selected agents, data volume, destinations and deployment requirements.</small></div><button onClick={openApp}>Open workspace <ArrowRight/></button><button className="outline" onClick={openDemo}>Talk to sales</button></aside>
+   <aside className="pricing-summary"><div><span>Your stack</span><strong>{activeSelected.length} agents</strong></div><div><span>Monthly lead volume</span><strong>{leads.toLocaleString()}</strong></div><div><span>Channels</span><strong>{channels.length}</strong></div><div className="quote"><span>Estimated total</span><strong>Custom quote</strong><small>Pricing depends on selected agents, data volume, destinations and deployment requirements.</small></div><button onClick={openApp}>Open workspace <ArrowRight/></button><button className="outline" onClick={requestQuote} disabled={quoteState==='sending'}>{quoteState==='sending'?'Saving configuration…':quoteState==='saved'?'Configuration saved':'Request quote'}</button>{quoteState==='saved'&&<small className="pricing-saved">Your configuration was captured by the backend. Continue to the demo form to share contact details.</small>}{quoteState==='error'&&<small className="pricing-error">Could not save the configuration. Try again or open the demo form.</small>}<button className="pricing-sales-link" onClick={openDemo}>Talk to sales</button></aside>
   </section>
  </div>
 }
