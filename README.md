@@ -3509,3 +3509,8 @@ Each section:
 - uses reduced-motion-safe transitions and entrance animation.
 
 This improves navigation without deleting or flattening the existing feature hierarchy.
+
+
+### Shared API reliability hardening
+
+The frontend API client now preserves backend validation/provider errors instead of collapsing every failure into a generic HTTP status. `AceApiError` carries the HTTP status, backend payload, and `X-Request-ID` when available, while network failures are identified separately. This improves every dashboard action that depends on the shared client, including integrations, event rules, audiences, calls, meetings, approvals, signal delivery, billing, privacy and settings.
