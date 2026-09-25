@@ -63,7 +63,18 @@ function Header({openHome,openApp,openLogin,openPricing,openDemo,openCompany,ope
  const [menu,setMenu]=useState<'industries'|'agents'|'resources'|null>(null)
  const [navCopy,setNavCopy]=useState<any>(null)
  const closeMenu=()=>setMenu(null)
+ const toggleMenu=(next:'industries'|'agents'|'resources')=>setMenu(current=>current===next?null:next)
  useEffect(()=>{api.publicNavigation().then((r:any)=>setNavCopy(r)).catch(()=>null)},[])
+ useEffect(()=>{
+  const onKey=(event:KeyboardEvent)=>{if(event.key==='Escape')closeMenu()}
+  const onClick=(event:MouseEvent)=>{
+   const target=event.target as HTMLElement
+   if(!target.closest('.ei-header-shell'))closeMenu()
+  }
+  document.addEventListener('keydown',onKey)
+  document.addEventListener('mousedown',onClick)
+  return()=>{document.removeEventListener('keydown',onKey);document.removeEventListener('mousedown',onClick)}
+ },[])
  const industryItems:any[]=[
   ['Edtech','Track and activate student data across channels to improve lead quality, personalize outreach, and increase enrollments.',GraduationCap],
   ['Fintech','Enable teams to activate data wherever it lives - while maintaining strict privacy, security, and regulatory compliance.',Landmark],
@@ -105,12 +116,12 @@ function Header({openHome,openApp,openLogin,openPricing,openDemo,openCompany,ope
   <div className="ei-header">
    <button className="ei-brand-button" onClick={openHome}><Brand dark/></button>
    <nav className={open?'ei-nav mobile-open':'ei-nav'}>
-    <button className={menu==='industries'?'ei-nav-item active':'ei-nav-item'} onMouseEnter={()=>setMenu('industries')} onClick={openIndustries}>Industries <ChevronDown/></button>
-    <button className={menu==='agents'?'ei-nav-item active':'ei-nav-item'} onMouseEnter={()=>setMenu('agents')} onClick={openAgents}>Agents <ChevronDown/></button>
+    <button type="button" aria-haspopup="menu" aria-expanded={menu==='industries'} className={menu==='industries'?'ei-nav-item active':'ei-nav-item'} onMouseEnter={()=>setMenu('industries')} onFocus={()=>setMenu('industries')} onClick={()=>toggleMenu('industries')}>Industries <ChevronDown/></button>
+    <button type="button" aria-haspopup="menu" aria-expanded={menu==='agents'} className={menu==='agents'?'ei-nav-item active':'ei-nav-item'} onMouseEnter={()=>setMenu('agents')} onFocus={()=>setMenu('agents')} onClick={()=>toggleMenu('agents')}>Agents <ChevronDown/></button>
     <button className="ei-nav-item" onClick={openCaseStudies}>Case Studies</button>
     <button className="ei-nav-item" onClick={openIntegrations}>Integrations</button>
     <button className="ei-nav-item" onClick={openPricing}>Pricing</button>
-    <button className={menu==='resources'?'ei-nav-item active':'ei-nav-item'} onMouseEnter={()=>setMenu('resources')} onClick={openResources}>Resources <ChevronDown/></button>
+    <button type="button" aria-haspopup="menu" aria-expanded={menu==='resources'} className={menu==='resources'?'ei-nav-item active':'ei-nav-item'} onMouseEnter={()=>setMenu('resources')} onFocus={()=>setMenu('resources')} onClick={()=>toggleMenu('resources')}>Resources <ChevronDown/></button>
    </nav>
    <div className="ei-header-actions">
     <button className="ei-voice-pill" onClick={openApp}><span className="voice-bars">••••</span><b>Voice Agent</b><small>NEW</small></button>
@@ -119,22 +130,22 @@ function Header({openHome,openApp,openLogin,openPricing,openDemo,openCompany,ope
    <button className="menu-toggle ei-menu-toggle" onClick={()=>setOpen(!open)}>{open?<X/>:<Menu/>}</button>
   </div>
 
-  {menu==='industries'&&<div className="ei-mega-menu industries-menu" onMouseEnter={()=>setMenu('industries')}>
+  {menu==='industries'&&<div className="ei-mega-menu industries-menu" role="menu" onMouseEnter={()=>setMenu('industries')}>
    <div className="ei-mega-label">INDUSTRIES</div>
    <div className="ei-industry-columns">
-    <div>{industryDisplay.slice(0,4).map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();openIndustries()}} className="ei-industry-item"><span className="ei-industry-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>})}</div>
+    <div>{industryDisplay.slice(0,4).map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();window.location.hash='#/industries?industry='+encodeURIComponent(x[0])}} className="ei-industry-item" role="menuitem"><span className="ei-industry-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>})}</div>
     <div>{industryDisplay.slice(4).map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();openIndustries()}} className="ei-industry-item"><span className="ei-industry-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>})}</div>
    </div>
   </div>}
 
-  {menu==='agents'&&<div className="ei-mega-menu agents-menu" onMouseEnter={()=>setMenu('agents')}>
+  {menu==='agents'&&<div className="ei-mega-menu agents-menu" role="menu" onMouseEnter={()=>setMenu('agents')}>
    <div className="ei-mega-label">AGENTS</div>
-   <div className="ei-agent-list">{agentItems.map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();openAgents()}}><span className="ei-agent-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div><ChevronRight/></button>})}</div>
+   <div className="ei-agent-list">{agentItems.map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();window.location.hash='#/agents?agent='+encodeURIComponent(x[0])}} role="menuitem"><span className="ei-agent-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div><ChevronRight/></button>})}</div>
   </div>}
 
-  {menu==='resources'&&<div className="ei-mega-menu resources-menu" onMouseEnter={()=>setMenu('resources')}>
+  {menu==='resources'&&<div className="ei-mega-menu resources-menu" role="menu" onMouseEnter={()=>setMenu('resources')}>
    <div className="ei-resources-layout">
-    <div><div className="ei-mega-label">GET INSPIRED</div><div className="ei-resource-links">{resourceItems.map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();x[3]()}}><span><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>})}</div></div>
+    <div><div className="ei-mega-label">GET INSPIRED</div><div className="ei-resource-links">{resourceItems.map((x:any)=>{const Icon=x[2];return <button key={x[0]} role="menuitem" onClick={()=>{closeMenu();x[3]()}}><span><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>})}</div></div>
     <aside><div className="ei-mega-label">LATEST FROM BLOGS</div><button onClick={openResources} className="ei-blog-card"><span>DATA SIGNALS</span><b>Why campaigns struggle without strong first-party data signals</b><small>Read article <ArrowRight/></small></button><button onClick={openResources} className="ei-blog-card"><span>AI + MEDIA</span><b>How to use AI assistants with your ad platforms</b><small>Read article <ArrowRight/></small></button></aside>
    </div>
   </div>}
@@ -1666,7 +1677,7 @@ function Settings(){
  <div className="settings-shell"><aside className="settings-nav">{sections.map(x=><button key={x} className={section===x?'active':''} onClick={()=>setSection(x)}>{x}<ChevronRight/></button>)}</aside><div className="app-panel">{content[section]}</div></div></>
 }
 function Product({back}:{back:()=>void}){
- const [tab,setTab]=useState<AppTab>('Launchpad')
+ const [tab,setTab]=useState<AppTab>(()=>{const saved=window.localStorage.getItem('ace_active_tab') as AppTab|null;return saved&&appTabs.some(([name])=>name===saved)?saved:'Overview'})
  const [workspaceOpen,setWorkspaceOpen]=useState(false)
  const [workspace,setWorkspace]=useState('Ace EdTech')
  const [workspaces,setWorkspaces]=useState<any[]>([
@@ -1680,6 +1691,7 @@ function Product({back}:{back:()=>void}){
  const [search,setSearch]=useState('')
  const [regionOpen,setRegionOpen]=useState(false)
  useEffect(()=>{api.workspaces().then((r:any)=>{if(r.items?.length){setWorkspaces(r.items);if(!r.items.some((x:any)=>x.name===workspace))setWorkspace(r.items[0].name)}}).catch(()=>null)},[])
+ useEffect(()=>{window.localStorage.setItem('ace_active_tab',tab)},[tab])
  useEffect(()=>{const openTab=(event:any)=>{const next=event?.detail as AppTab;if(appTabs.some(([name])=>name===next))setTab(next)};window.addEventListener('ace-app-tab',openTab as EventListener);return()=>window.removeEventListener('ace-app-tab',openTab as EventListener)},[])
  const createWorkspace=async()=>{
   if(!workspaceDraft.name.trim())return
@@ -1701,8 +1713,13 @@ function Product({back}:{back:()=>void}){
  const runSearch=(name?:string)=>{const target=(name||searchMatches[0]?.[0]) as AppTab|undefined;if(target){setTab(target);setSearch('')}}
  const currentWorkspace=workspaces.find(x=>x.name===workspace)||workspaces[0]
  const view=useMemo(()=>({Launchpad:<Launchpad/>,Overview:<Overview/>,AdSync:<AdSync/>,Funnel:<Funnel/>,Events:<Events/>,Adjustments:<Adjustments/>,Diagnostics:<Diagnostics/>,Fraud:<Fraud/>,"Deep Links":<DeepLinks/>,Sites:<Sites/>,Fingerprinting:<Fingerprinting/>,"Live Sync":<LiveSync/>,"Data Hub":<DataHub/>,"Offline Attribution":<OfflineAttribution/>,Matchback:<Matchback/>,"POS & Stores":<POSAndStores/>,Journeys:<Journeys/>,Identity:<Identity/>,Models:<Models/>,Attribution:<Attribution/>,Planner:<Planner/>,Reports:<Reports/>,Enrich:<Enrich/>,"Lead Grading":<LeadGrading/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Routing:<Routing/>,"Follow-ups":<FollowUps/>,Calls:<Calls/>,Meetings:<Meetings/>,Feedback:<Feedback/>,Approvals:<Approvals/>,"Ask Ace":<AskAce/>,Integrations:<Integrations/>,Audiences:<Audiences/>,Delivery:<DeliveryCenter/>,Monitoring:<Monitoring/>,Alerts:<Alerts/>,Developers:<Developers/>,Settings:<Settings/>}[tab]),[tab])
- return <div className="product"><aside><Brand/><div className="workspace-wrap"><button className="workspace" onClick={()=>setWorkspaceOpen(!workspaceOpen)}><span>{currentWorkspace?.initials||'AM'}</span><div><b>{workspace}</b><small>{currentWorkspace?.environment||'Production'} workspace</small></div><ChevronDown/></button>{workspaceOpen&&<div className="workspace-menu">{workspaces.map((x:any)=><button key={x.id||x.name} onClick={()=>chooseWorkspace(x)} className={workspace===x.name?'active':''}><span>{x.initials||String(x.name).split(/\s+/).map((s:string)=>s[0]).join('').slice(0,3)}</span><div><b>{x.name}</b><small>{x.environment||'Production'}</small></div>{workspace===x.name&&<Check/>}</button>)}<button className="new-workspace" onClick={()=>{setWorkspaceOpen(false);setCreateOpen(true)}}><Plus/>Create workspace</button></div>}</div><nav>{appTabs.map(([x,I])=><button key={x} className={tab===x?'active':''} onClick={()=>setTab(x)}><I/>{x}</button>)}</nav><div className="aside-footer"><button onClick={back}><ArrowRight/>Back to website</button><div className="profile-mini"><span>S</span><div><b>Sakshee</b><small>Workspace owner</small></div></div></div></aside>
- <main><header className="product-head"><div className="global-search operational-search"><Search/><input value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>e.key==='Enter'&&runSearch()} placeholder="Search journeys, leads, campaigns, settings..."/>{searchMatches.length>0&&<div className="global-search-results">{searchMatches.map(([name,I])=><button key={name} onClick={()=>runSearch(name)}><I/><span>{name}</span><ArrowRight/></button>)}</div>}</div><div><span className="sync">● Live sync healthy</span><button aria-label="Support" onClick={()=>setTab('Settings')} title="Open workspace support/settings"><Headphones/></button><button aria-label="Region and language" onClick={()=>setRegionOpen(x=>!x)}><Globe2/></button><span className="avatar-sm">S</span>{regionOpen&&<div className="region-popover"><b>Workspace locale</b><span>Timezone · Asia/Kolkata</span><span>Currency · INR</span><button onClick={()=>{setRegionOpen(false);setTab('Settings')}}>Change in Settings</button></div>}</div></header><div className="product-body">{view}</div></main>
+ return <div className="product"><aside className="product-sidebar"><Brand/><div className="workspace-wrap"><button className="workspace" onClick={()=>setWorkspaceOpen(!workspaceOpen)}><span>{currentWorkspace?.initials||'AM'}</span><div><b>{workspace}</b><small>{currentWorkspace?.environment||'Production'} workspace</small></div><ChevronDown/></button>{workspaceOpen&&<div className="workspace-menu">{workspaces.map((x:any)=><button key={x.id||x.name} onClick={()=>chooseWorkspace(x)} className={workspace===x.name?'active':''}><span>{x.initials||String(x.name).split(/\s+/).map((s:string)=>s[0]).join('').slice(0,3)}</span><div><b>{x.name}</b><small>{x.environment||'Production'}</small></div>{workspace===x.name&&<Check/>}</button>)}<button className="new-workspace" onClick={()=>{setWorkspaceOpen(false);setCreateOpen(true)}}><Plus/>Create workspace</button></div>}</div><nav className="product-nav">
+ {appTabs.map(([x,I],index)=>{
+   const section=index===0?'Workspace':index===6?'Quality & tracking':index===16?'Measurement':index===22?'Conversion & automation':index===34?'Operations':null
+   return <Fragment key={x}>{section&&<span className="product-nav-section">{section}</span>}<button className={tab===x?'active':''} onClick={()=>setTab(x)} title={x}><I/>{x}</button></Fragment>
+ })}
+ </nav><div className="aside-footer"><button onClick={back}><ArrowRight/>Back to website</button><div className="profile-mini"><span>S</span><div><b>Sakshee</b><small>Workspace owner</small></div></div></div></aside>
+ <main className="product-main"><header className="product-head"><div className="global-search operational-search"><Search/><input value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>e.key==='Enter'&&runSearch()} placeholder="Search journeys, leads, campaigns, settings..."/>{searchMatches.length>0&&<div className="global-search-results">{searchMatches.map(([name,I])=><button key={name} onClick={()=>runSearch(name)}><I/><span>{name}</span><ArrowRight/></button>)}</div>}</div><div><span className="sync">● Live sync healthy</span><button aria-label="Support" onClick={()=>setTab('Settings')} title="Open workspace support/settings"><Headphones/></button><button aria-label="Region and language" onClick={()=>setRegionOpen(x=>!x)}><Globe2/></button><span className="avatar-sm">S</span>{regionOpen&&<div className="region-popover"><b>Workspace locale</b><span>Timezone · Asia/Kolkata</span><span>Currency · INR</span><button onClick={()=>{setRegionOpen(false);setTab('Settings')}}>Change in Settings</button></div>}</div></header><div className="product-body">{view}</div></main>
  {createOpen&&<div className="connector-modal"><div className="connector-card"><div className="connector-modal-head"><div><Building2/><div><b>Create workspace</b><small>Create a persisted tenant workspace.</small></div></div><button onClick={()=>setCreateOpen(false)}><X/></button></div><div className="connector-step"><label>Workspace name<input value={workspaceDraft.name} onChange={e=>setWorkspaceDraft({...workspaceDraft,name:e.target.value})} placeholder="Ace Retail"/></label><label>Environment<select value={workspaceDraft.environment} onChange={e=>setWorkspaceDraft({...workspaceDraft,environment:e.target.value})}><option>Production</option><option>Sandbox</option></select></label><button disabled={workspaceBusy||!workspaceDraft.name.trim()} onClick={createWorkspace}>{workspaceBusy?'Creating…':'Create workspace'}</button></div></div></div>}
  </div>
 }
