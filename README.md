@@ -1555,3 +1555,34 @@ ATTRIBUTION_DB_POOL_MAX=10
 ```
 
 Only deterministic identifiers are automatically accepted as matches. Records without sufficient identity evidence stay unmatched and are held from downstream signal return until reconciliation.
+
+
+## CRM enrichment, lead grading and audience materialization pass
+
+The conversion layer now persists the lead context used by Enrich, Lead Grading and Audience Builder instead of relying only on synthetic UI records.
+
+Implemented:
+- `backend/migrations/004_lead_ops.sql` for lead profiles, audience definitions and materialized audience members;
+- `backend/src/lead-ops.mjs` for deterministic, explainable lead scoring and lifecycle segmentation;
+- persisted lead enrichment fields for acquisition source, campaign, CRM stage, journey signals, call/WhatsApp summaries and arbitrary governed attributes;
+- SHA-256 email/phone identity keys for matching without storing raw values in lead-profile tables;
+- explainable score drivers and penalties for pricing intent, journey depth, WhatsApp/call engagement, meeting progression, CRM stage, propensity, invalid contacts, duplicates and fraud risk;
+- persistent manual grade overrides;
+- real audience preview queries against workspace lead profiles;
+- audience materialization into stable hashed identity memberships;
+- explicit `ready_for_sync` status so the UI does not falsely claim a provider upload has occurred before a destination adapter confirms it;
+- Enrich, Lead Grading and Audiences UI now load persisted backend data when available.
+
+New/updated APIs:
+- `GET /api/enrich`
+- `POST /api/enrich/upsert`
+- `POST /api/lead-grading/score`
+- `GET /api/lead-grading`
+- `POST /api/lead-grading/override`
+- `POST /api/lead-grading/activate`
+- `POST /api/audiences/preview`
+- `POST /api/audiences`
+- `POST /api/audiences/materialize`
+- `GET /api/audiences`
+
+A production audience is first evaluated and materialized from first-party lead profiles. Actual upload to Google Customer Match, Meta Custom Audiences, LinkedIn Matched Audiences or another destination should only move from `ready_for_sync` to `active` after that provider-specific API confirms receipt.
