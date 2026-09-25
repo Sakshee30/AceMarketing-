@@ -1388,3 +1388,43 @@ Recommended production configuration:
 - `CONNECTOR_OAUTH_SUCCESS_URL=https://app.yourdomain.com/#/workspace`
 
 The POST callback remains available for controlled API/client integrations and automated testing.
+
+
+## PostgreSQL persistence and workspace isolation pass
+
+The runtime persistence boundary now supports PostgreSQL for production while preserving file-backed local development.
+
+Implemented:
+- `pg` production dependency and connection pooling;
+- migration runner: `npm run migrate`;
+- migration `backend/migrations/001_workspace_state.sql`;
+- transactional PostgreSQL mutations using `SELECT ... FOR UPDATE`;
+- per-workspace state rows keyed by validated `workspace_id`;
+- request-scoped workspace isolation through `X-Workspace-ID`;
+- AsyncLocalStorage context so existing feature code keeps using `getState/mutateState` without cross-request workspace leakage;
+- frontend automatically sends the active workspace header;
+- `/api/ready` now verifies persistence health and reports the active backend;
+- graceful shutdown closes the PostgreSQL pool;
+- production startup refuses file-only persistence unless `ALLOW_FILE_STORE_IN_PRODUCTION=true` is explicitly set;
+- file persistence remains available for local development and stores non-default workspaces in separate files.
+
+### Production database setup
+
+```bash
+export DATABASE_URL=postgresql://user:password@host:5432/acemarketing
+npm install
+npm run migrate
+npm run dev:backend
+```
+
+Recommended production values:
+
+```text
+DATABASE_URL=<managed PostgreSQL connection string>
+DB_SSL=require
+DB_POOL_MAX=20
+DEFAULT_WORKSPACE_ID=ws_default
+ALLOW_FILE_STORE_IN_PRODUCTION=false
+```
+
+The current schema deliberately preserves the existing application state contract inside a PostgreSQL JSONB row per workspace. This gives multi-instance durability, transactions and workspace separation without breaking the existing product modules. High-volume event, journey and delivery tables can now be normalized incrementally behind the same storage boundary.
