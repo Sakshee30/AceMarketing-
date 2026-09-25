@@ -13,6 +13,7 @@ import { closeObservability, listAlerts as listLiveAlerts, listMonitoringRules a
 import { assertCapacity, closeEntitlements, finalizeReservation, resourceCountAllowed, subscriptionSummary, updateWorkspaceEntitlements } from './entitlements.mjs'
 import { billingConfigured, billingEventHistory, closeBillingProvider, createCheckoutSession, createPortalSession, processStripeEvent, verifyStripeWebhook } from './billing-provider.mjs'
 import { closeConsentStore, consentAllows, consentStats, getConsent, listConsentAudit, saveConsent } from './consent.mjs'
+import { closePrivacyOps, deleteSubject, exportSubject, listPrivacyRequests, purgeRetention, retentionPolicy } from './privacy-ops.mjs'
 import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, publicChallenges, publicCaseStudies, publicResources, publicResourceCenter } from './public-content.mjs'
 
 const CONNECTOR_PROVIDERS={
@@ -993,6 +994,28 @@ const server = http.createServer(async (req,res)=>{
     }
     if (req.method === 'POST' && url.pathname === '/api/webhooks/secret/rotate') return send(req,res,201,{secret:'whsec_'+randomUUID().replaceAll('-',''),createdAt:new Date().toISOString()})
     if (req.method === 'GET' && url.pathname === '/api/consent/stats') return send(req,res,200,{stats:await consentStats(workspaceId),audit:await listConsentAudit(workspaceId,50)})
+    if (req.method === 'GET' && url.pathname === '/api/privacy/requests') {
+      if(!['owner','admin'].includes(req.user?.role||'')) return send(req,res,403,{error:'owner or admin role required'})
+      return send(req,res,200,{policy:retentionPolicy(),items:await listPrivacyRequests(workspaceId,100)})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/privacy/export') {
+      if(!['owner','admin'].includes(req.user?.role||'')) return send(req,res,403,{error:'owner or admin role required'})
+      const body=await readBody(req)
+      try{return send(req,res,200,await exportSubject(workspaceId,body,req.user?.email||req.user?.userId||null))}
+      catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'privacy export failed'})}
+    }
+    if (req.method === 'POST' && url.pathname === '/api/privacy/delete') {
+      if(!['owner','admin'].includes(req.user?.role||'')) return send(req,res,403,{error:'owner or admin role required'})
+      const body=await readBody(req)
+      try{return send(req,res,200,await deleteSubject(workspaceId,body,req.user?.email||req.user?.userId||null))}
+      catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'privacy deletion failed'})}
+    }
+    if (req.method === 'POST' && url.pathname === '/api/privacy/retention/purge') {
+      if(!['owner','admin'].includes(req.user?.role||'')) return send(req,res,403,{error:'owner or admin role required'})
+      const body=await readBody(req)
+      try{return send(req,res,200,await purgeRetention(workspaceId,{dryRun:body.dryRun!==false,requestedBy:req.user?.email||req.user?.userId||null}))}
+      catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'retention purge failed'})}
+    }
     if (req.method === 'GET' && url.pathname === '/api/monitoring') return send(req,res,200,await monitoringSnapshot(workspaceId))
     if (req.method === 'GET' && url.pathname === '/api/billing/usage') return send(req,res,200,await subscriptionSummary(workspaceId))
     if (req.method === 'GET' && url.pathname === '/api/billing/subscription') {
@@ -1253,6 +1276,6 @@ server.keepAliveTimeout=65_000
 server.headersTimeout=66_000
 server.requestTimeout=30_000
 server.listen(PORT,()=>console.log(`AceMarketing API listening on http://localhost:${PORT}`))
-const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations(),closeObservability(),closeEntitlements(),closeBillingProvider(),closeConsentStore()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
+const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations(),closeObservability(),closeEntitlements(),closeBillingProvider(),closeConsentStore(),closePrivacyOps()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
 process.on('SIGTERM',()=>shutdown('SIGTERM'))
 process.on('SIGINT',()=>shutdown('SIGINT'))
