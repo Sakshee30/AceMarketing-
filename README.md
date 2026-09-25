@@ -1271,3 +1271,28 @@ Implemented:
 - replaced the older homepage-only footer with the same shared backend-driven footer used by all public routes.
 
 This reduces visual duplication, improves public-page consistency, and moves another major homepage section under backend configuration.
+
+
+## Functional public Case Studies + Resources pass
+
+This pass converts two more public sections from static marketing content into backend-driven, interactive experiences.
+
+New public backend endpoints:
+- `GET /api/public/case-studies`
+- `GET /api/public/resources`
+
+Case Studies:
+- backend-owned implementation-pattern catalog;
+- selectable case-study cards;
+- active challenge / implementation / metrics detail panel;
+- demo CTA remains routed and functional;
+- external brands are explicitly presented as reference patterns, not AceMarketing customers.
+
+Resources:
+- backend-owned guide catalog;
+- every “Read guide” button now opens a functional implementation guide;
+- guide content is loaded from the backend with frontend fallbacks;
+- ROAS calculator remains interactive;
+- local SHA-256 utility remains browser-only and does not submit the source identifier to the backend.
+
+This directly addresses the requirement that visible public boxes and actions should perform a meaningful workflow instead of acting as decorative UI.
