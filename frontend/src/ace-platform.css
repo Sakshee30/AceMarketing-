@@ -587,3 +587,15 @@
 .ask-followups button{border:1px solid #dbe4f0;background:#fff;border-radius:999px;padding:7px 10px;font-size:11px;color:#334155;cursor:pointer}
 .ask-followups button:hover{border-color:#94a3b8;background:#f8fafc}
 .ask-followups button:disabled,.ask-starters button:disabled,.ask-input button:disabled{opacity:.55;cursor:not-allowed}
+
+
+/* Delivery center operational feedback */
+.delivery-notice{display:flex;align-items:center;gap:10px;margin:0 0 16px;padding:12px 14px;border:1px solid var(--line,#e5e7eb);border-radius:12px;background:var(--panel,#fff);font-size:13px}
+.delivery-notice svg{width:18px;height:18px;flex:0 0 auto}
+.delivery-notice.ok{border-color:rgba(22,163,74,.25)}
+.delivery-notice.error{border-color:rgba(220,38,38,.25)}
+.empty-delivery-state{display:flex;align-items:center;gap:12px;min-height:88px;padding:18px;color:var(--muted,#667085)}
+.empty-delivery-state svg{width:22px;height:22px;flex:0 0 auto}
+.empty-delivery-state div{display:flex;flex-direction:column;gap:4px}
+.empty-delivery-state b{color:var(--text,#101828)}
+.empty-delivery-state small{line-height:1.45}
