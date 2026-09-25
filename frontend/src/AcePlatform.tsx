@@ -1031,6 +1031,7 @@ function FollowUps(){
   {id:'fu_698',lead:'Anika Roy',reason:'Brochure viewed twice, no reply',channel:'WhatsApp',due:'In 1h',priority:'Medium',status:'Open'}
  ])
  const [selected,setSelected]=useState(items[0].id)
+ useEffect(()=>{api.followUps().then((r:any)=>{if(r.items?.length){const mapped=r.items.map((x:any)=>({id:x.id,lead:x.lead_ref,reason:x.reason,channel:x.channel,due:x.due_at?new Date(x.due_at).toLocaleString():'Now',priority:String(x.priority||'medium').replace(/^./,(m:string)=>m.toUpperCase()),status:x.status==='completed'?'Completed':'Open'}));setItems(mapped);setSelected(mapped[0].id)}}).catch(()=>null)},[])
  const current=items.find(x=>x.id===selected)||items[0]
  const complete=async(id:string)=>{await api.completeFollowUp(id).catch(()=>null);setItems(xs=>xs.map(x=>x.id===id?{...x,status:'Completed'}:x))}
  return <><PageHead crumb="Conversion / Follow-ups" title="Follow-up operations" sub="Keep qualified leads from going cold by turning stalled journey states into prioritized next actions." action="Create follow-up policy"/>
@@ -1048,8 +1049,9 @@ function Calls(){
   {id:'call_298',lead:'Anika Roy',source:'Organic',agent:'Voice Lead Qualification',status:'No answer',duration:'—',intent:54,next:'Retry after 2h'}
  ])
  const [selected,setSelected]=useState(calls[0].id)
+ useEffect(()=>{api.qualificationCalls().then((r:any)=>{if(r.items?.length){const mapped=r.items.map((x:any)=>({id:x.id,lead:x.lead,source:x.source,agent:x.agent,status:String(x.status).replace('_',' '),duration:x.duration,intent:x.intent||0,next:x.next,attempts:x.attempts,lastError:x.lastError}));setCalls(mapped);setSelected(mapped[0].id)}}).catch(()=>null)},[])
  const current=calls.find(x=>x.id===selected)||calls[0]
- const retry=async(id:string)=>{await api.retryQualificationCall(id).catch(()=>null);setCalls(xs=>xs.map(x=>x.id===id?{...x,status:'Retry queued',next:'Calling queue'}:x))}
+ const retry=async(id:string)=>{const c=calls.find(x=>x.id===id);await api.retryQualificationCall(id).catch(()=>null);if(c)await api.createQualificationCall({lead:c.lead,source:c.source,intent:c.intent,trigger:'retry'}).catch(()=>null);setCalls(xs=>xs.map(x=>x.id===id?{...x,status:'queued',next:'Calling queue'}:x))}
  return <><PageHead crumb="Conversion / Calls" title="Voice lead qualification" sub="Qualify high-intent leads quickly, capture intent and push structured call context back into the CRM." action="Configure call agent"/>
  <div className="stats-grid"><Stat label="Calls today" value="428" sub="+11% vs yesterday" Icon={PhoneIncoming}/><Stat label="Connected" value="81%" sub="346 calls answered" Icon={PhoneCall}/><Stat label="Qualified" value="44%" sub="Of connected calls" Icon={Target}/><Stat label="Median speed-to-lead" value="42s" sub="From lead arrival" Icon={Activity}/></div>
  <div className="call-ops-layout"><div className="app-panel call-list"><div className="panel-head"><div><h3>Recent qualification calls</h3><p>Agent activity and lead outcomes</p></div><span className="healthy">Live</span></div>{calls.map(x=><button key={x.id} className={selected===x.id?'selected':''} onClick={()=>setSelected(x.id)}><PhoneIncoming/><div><b>{x.lead}</b><small>{x.source} · {x.duration}</small></div><span>{x.status}</span><ChevronRight/></button>)}</div>
@@ -1064,6 +1066,7 @@ function Meetings(){
   {id:'mtg_181',lead:'Anika Roy',time:'Fri · 3:30 PM',owner:'Counsellor C',status:'Confirmed',reminder:'SMS',risk:'Medium'}
  ])
  const [selected,setSelected]=useState(meetings[0].id)
+ useEffect(()=>{api.meetings().then((r:any)=>{if(r.items?.length){const mapped=r.items.map((x:any)=>({id:x.id,lead:x.lead_ref,time:new Date(x.starts_at).toLocaleString(),owner:x.owner,status:String(x.status||'confirmed').replace(/^./,(m:string)=>m.toUpperCase()),reminder:(x.reminder_plan||[]).join(' + ')||'Voice',risk:String(x.no_show_risk||'low').replace(/^./,(m:string)=>m.toUpperCase())}));setMeetings(mapped);setSelected(mapped[0].id)}}).catch(()=>null)},[])
  const current=meetings.find(x=>x.id===selected)||meetings[0]
  const remind=async(id:string)=>{await api.sendMeetingReminder(id).catch(()=>null);setMeetings(xs=>xs.map(x=>x.id===id?{...x,reminder:'Sent now'}:x))}
  return <><PageHead crumb="Conversion / Meetings" title="Scheduler & meeting reminders" sub="Book qualified leads, synchronize counsellor availability and reduce no-shows with automated reminders." action="Connect calendar"/>
@@ -1074,12 +1077,13 @@ function Meetings(){
 
 function Feedback(){
  const [filter,setFilter]=useState('All')
- const items=[
+ const [items,setItems]=useState<any[]>([
   {lead:'Aarav Sharma',score:5,channel:'Post-call',theme:'Clear counselling',quote:'The counsellor answered the financing questions clearly.'},
   {lead:'Meera Patel',score:3,channel:'Post-meeting',theme:'Pricing objection',quote:'The program looks good, but I need more scholarship clarity.'},
   {lead:'Rohan Kumar',score:4,channel:'WhatsApp',theme:'Fast response',quote:'Quick reply and easy scheduling.'},
   {lead:'Anika Roy',score:2,channel:'Post-call',theme:'Slow follow-up',quote:'I had to wait for the second callback.'}
  ]
+ useEffect(()=>{api.feedback().then((r:any)=>{if(r.items?.length)setItems(r.items.map((x:any)=>({lead:x.lead_ref,score:x.score,channel:x.channel,theme:x.theme,quote:x.response}))) }).catch(()=>null)},[])
  const shown=filter==='All'?items:items.filter(x=>x.theme===filter)
  return <><PageHead crumb="Conversion / Feedback" title="Feedback agent" sub="Collect post-interaction feedback, detect objections and route insights back into sales and marketing workflows." action="Configure feedback agent"/>
  <div className="stats-grid"><Stat label="Responses" value="1,842" sub="Last 30 days" Icon={MessageSquareText}/><Stat label="Response rate" value="31%" sub="+7 points this month" Icon={Activity}/><Stat label="Avg satisfaction" value="4.2/5" sub="Across all channels" Icon={CheckCircle2}/><Stat label="Open objections" value="126" sub="Need sales / marketing review" Icon={Target}/></div>
