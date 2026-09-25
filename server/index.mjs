@@ -92,6 +92,14 @@ const server = http.createServer(async (req,res)=>{
       {name:'Website visitors · 180d',size:82416,mode:'retarget'}
     ]})
     if (req.method === 'GET' && url.pathname === '/api/monitoring') return send(res,200,{status:'healthy',eventsPerMinute:8412,failedEventRate:0.18,p95LatencySeconds:1.7})
+    if (req.method === 'GET' && url.pathname === '/api/signal-console') return send(res,200,{google:[['Qualified Lead',8214,96.1],['Consultation',2314,94.7],['Enrolment',982,97.3]],meta:[['Lead',12842,94.8],['Qualified',7621,95.4],['Purchase',982,96.2]],whatsapp:[['Chat Started',6904,'Matched'],['Qualified',3086,'Synced'],['Booked',711,'Revenue linked']]})
+    if (req.method === 'GET' && url.pathname === '/api/security-posture') return send(res,200,{controls:[
+      {name:'ISO 27001',status:'roadmap'},
+      {name:'SHA-256 hashing',status:'design_implemented'},
+      {name:'GDPR',status:'roadmap'},
+      {name:'HIPAA',status:'roadmap'},
+      {name:'India DPDP',status:'roadmap'}
+    ]})
     return send(res,404,{error:'not found'})
   } catch (error) {
     return send(res,500,{error:error instanceof Error?error.message:'internal error'})
