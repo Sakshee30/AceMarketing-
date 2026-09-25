@@ -250,3 +250,21 @@ The public pricing source exposes the configurator structure but not stable nume
 ### IP / claims handling
 
 UI structure, information architecture and workflows are being reproduced for functional parity. EasyInsights trademarks, copyrighted screenshots, proprietary source code and customer logos are not copied into the repository. Third-party performance figures are labeled as public reference metrics rather than AceMarketing performance claims.
+
+
+## Brochure parity pass: case-for-change, signal consoles, security targets
+
+This pass implements additional brochure sections that were not yet represented in the product:
+
+- **Case for Change** section with six lead-generation market/funnel problems from the supplied proposal, paraphrased into AceMarketing language.
+- **Trusted EdTech reference strip** using text-only brand names from the brochure; no third-party logo artwork is copied.
+- **AdSync platform signal consoles** for Google Ads, Meta CAPI and WhatsApp event visibility using original/synthetic UI rather than copied screenshots.
+- **Conversion adjustment explanation** showing how low-value or partial events can be reclassified before being used for optimization.
+- **Security & compliance parity targets** for ISO 27001, SHA-256, GDPR, HIPAA and India DPDP. These are explicitly labeled roadmap/implementation targets unless independently verified.
+- New API endpoints:
+  - `GET /api/signal-console`
+  - `GET /api/security-posture`
+
+### Why the compliance badges are labeled as targets
+
+The supplied brochure visually presents certification/compliance badges on its closing page. AceMarketing does not claim those certifications merely because the reference product shows them. The UI now represents them as parity targets so the product stays accurate while the actual controls, audits and certifications are built and verified.
