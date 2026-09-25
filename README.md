@@ -1328,3 +1328,24 @@ Operational behavior added:
 - seeded operational records make the connected UI surfaces usable immediately in a fresh environment.
 
 This pass resolves the previously observed 20-path frontend/backend contract gap without creating an implementation branch.
+
+
+## Signal delivery reliability pass
+
+The activation layer now has a persisted operational delivery queue instead of relying only on monitoring copy.
+
+Implemented:
+- new workspace **Delivery** screen between Audiences and Monitoring;
+- `GET /api/signal-deliveries` for delivery history and queue summary;
+- `POST /api/signal-deliveries/dispatch` with SHA-256 idempotency keys;
+- duplicate dispatch protection that returns the existing delivery rather than creating another external write;
+- `POST /api/signal-deliveries/retry` for targeted retry queuing;
+- `POST /api/signal-deliveries/replay-dlq` for dead-letter replay;
+- `GET /api/connector-health` for destination reliability and latency state;
+- persisted seeded delivery records and connector-health state;
+- audit entries for dispatch, retry and dead-letter replay operations;
+- delivery-center UI for Meta Ads, Google Ads and custom-webhook style destinations.
+
+This closes an important production-readiness gap between the existing AdSync/Monitoring UI and the backend: failed outbound signals now have explicit persisted lifecycle state, idempotency, retry controls and dead-letter visibility.
+
+Provider credentials and vendor-specific OAuth/API payload delivery are still environment-dependent and must be configured before live external writes are enabled.
