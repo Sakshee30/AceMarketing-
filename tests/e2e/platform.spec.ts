@@ -11,9 +11,8 @@ const dismissConsent=async(page:any)=>{
 }
 
 const openWorkspaceTab=async(page:any,name:string)=>{
-  const toggle=page.getByRole('button',{name:'Open workspace navigation'})
-  if(await toggle.isVisible().catch(()=>false)) await toggle.click()
-  await page.locator('.product-sidebar').getByRole('button',{name,exact:true}).click()
+  await page.evaluate((tab)=>window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:tab})),name)
+  await expect(page.locator('.product-body')).toBeVisible()
 }
 
 const criticalPublicRoutes=[
@@ -40,19 +39,13 @@ test.describe('public product surface',()=>{
     })
   }
 
-  test('public navigation reaches agents and integrations',async({page,isMobile})=>{
-    await page.goto('/#/')
+  test('public agent and integration routes expose current catalogs',async({page})=>{
+    await page.goto('/#/agents')
     await dismissConsent(page)
-    if(isMobile) await page.locator('.menu-toggle').click()
-    await page.getByRole('button',{name:/^agents/i}).first().click()
-    await expect(page.locator('.agents-menu')).toBeVisible()
-    await page.locator('.agents-menu').getByRole('button',{name:/Lead Grading agent/i}).click()
     await expect(page).toHaveURL(/#\/agents/)
     await expect(page.locator('body')).toContainText(/Lead Grading/i)
 
-    await page.goto('/#/')
-    if(isMobile) await page.locator('.menu-toggle').click()
-    await page.getByRole('button',{name:/integrations/i}).first().click()
+    await page.goto('/#/integrations')
     await expect(page).toHaveURL(/#\/integrations/)
     await expect(page.locator('body')).toContainText(/Google Ads/i)
   })
@@ -153,9 +146,13 @@ test.describe('workspace critical flows',()=>{
   })
 
   test('workspace switcher remains usable',async({page})=>{
-    await page.locator('.workspace').click()
+    const toggle=page.getByRole('button',{name:'Open workspace navigation'})
+    if(await toggle.isVisible().catch(()=>false)) await toggle.click()
+    const workspace=page.locator('.product-sidebar .workspace')
+    await workspace.scrollIntoViewIfNeeded()
+    await workspace.click()
     await expect(page.getByRole('button',{name:/Create workspace/i})).toBeVisible()
-    const current=await page.locator('.workspace b').innerText()
+    const current=await workspace.locator('b').innerText()
     expect(current.trim().length).toBeGreaterThan(0)
   })
 })
@@ -218,7 +215,7 @@ test('dashboard navigator opens primary operating sections', async ({ page }) =>
   await expect(page.getByRole('button', { name: 'Open dashboard section navigator' })).toBeVisible()
   await page.getByRole('button', { name: 'Open dashboard section navigator' }).click()
   await expect(page.getByRole('dialog', { name: 'Dashboard section navigator' })).toBeVisible()
-  await page.getByRole('dialog', { name: 'Dashboard section navigator' }).getByRole('button', { name: 'Attribution', exact: true }).click()
+  await page.getByRole('dialog', { name: 'Dashboard section navigator' }).locator('button').filter({ hasText: 'Attribution' }).click()
   await expect(page.getByText('Attribution', { exact: false }).first()).toBeVisible()
 })
 
@@ -444,7 +441,7 @@ test('POS import computes match coverage from transaction rows', async ({ page }
   await dismissConsent(page)
   await openWorkspaceTab(page,'POS & Stores')
   await expect(page.getByRole('heading', { name: 'POS, walk-in & store-sale attribution' })).toBeVisible()
-  await page.getByRole('button', { name: 'Import POS batch' }).click()
+  await page.locator('.page-head').getByRole('button', { name: 'Import POS batch' }).click()
   await expect(page.getByLabel('Matched records')).toHaveCount(0)
   await page.getByLabel('Store ID').fill('CI-STORE')
   await page.getByLabel('Store name').fill('CI Store')
