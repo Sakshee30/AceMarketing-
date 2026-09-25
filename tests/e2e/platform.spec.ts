@@ -41,7 +41,8 @@ test.describe('public product surface',()=>{
 test.describe('workspace critical flows',()=>{
   test.beforeEach(async({page})=>{
     await page.goto('/#/')
-    await page.evaluate(()=>{window.location.hash='#/workspace'})
+    await expect(page.locator('.marketing-page')).toBeVisible()
+    await page.evaluate(()=>window.dispatchEvent(new CustomEvent('ace-view',{detail:'app'})))
     await expect(page).toHaveURL(/#\/workspace/)
     await expect(page.locator('.product-body')).toBeVisible()
     await expect(page.locator('.product-body h1')).toContainText(/Launchpad/i)
@@ -98,7 +99,8 @@ test.describe('basic accessibility regression',()=>{
 
   test('workspace has a single visible primary heading per selected surface',async({page})=>{
     await page.goto('/#/')
-    await page.evaluate(()=>{window.location.hash='#/workspace'})
+    await expect(page.locator('.marketing-page')).toBeVisible()
+    await page.evaluate(()=>window.dispatchEvent(new CustomEvent('ace-view',{detail:'app'})))
     await expect(page.locator('.product-body h1')).toHaveCount(1)
     await page.getByRole('button',{name:'Monitoring',exact:true}).click()
     await expect(page.locator('.product-body h1')).toHaveCount(1)
