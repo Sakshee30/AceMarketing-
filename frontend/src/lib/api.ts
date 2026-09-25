@@ -188,7 +188,6 @@ export const api = {
   settings: () => request('/settings'),
   workspaces: () => request('/workspaces'),
   createWorkspace: (payload: Record<string, unknown>) => request('/workspaces', { method: 'POST', body: JSON.stringify(payload) }),
-  settings: () => request('/settings'),
   saveSettings: (payload: Record<string, unknown>) => request('/settings', { method: 'POST', body: JSON.stringify(payload) }),
   webhookDeliveries: () => request('/webhooks/deliveries'),
   webhookEndpoints: () => request('/webhooks/endpoints'),
