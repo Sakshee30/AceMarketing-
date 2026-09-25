@@ -78,6 +78,7 @@ jobs:
           test -f backend/src/attribution-store.mjs
           test -f backend/src/lead-ops.mjs
           test -f backend/src/activation-adapters.mjs
+          test -f backend/src/connector-auth.mjs
           test -f backend/src/agent-orchestrator.mjs
           test -f backend/src/custom-integrations.mjs
           test -f backend/src/observability.mjs
