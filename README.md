@@ -1077,3 +1077,15 @@ Added/refined:
 - responsive layouts for all new sections.
 
 The current EasyInsights public homepage was rechecked before this pass. The UI structure and content hierarchy were used as a reference, while AceMarketing retains its own branding, original visual assets and independent code.
+
+
+## Build repair after navigation parity work
+
+The marketing-header source was normalized after a malformed text replacement corrupted the Brand/Header boundary. The repair restores valid JSX around:
+- `Brand`;
+- `Header`;
+- Industries mega menu;
+- Agents mega menu;
+- Resources mega menu.
+
+No public navigation features from the parity work were removed.
