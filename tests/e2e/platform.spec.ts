@@ -226,3 +226,15 @@ test('dashboard keeps section navigation visible on workspace', async ({ page })
   await expect(page.getByRole('button', { name: /Activation & Integrations/ })).toBeVisible()
   await expect(page.getByRole('button', { name: /Operations & Developer/ })).toBeVisible()
 })
+
+
+test('manual integration cards open the custom adapter builder', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await page.getByRole('button', { name: /Activation & Integrations/ }).click()
+  await page.getByRole('button', { name: 'Integrations', exact: true }).first().click()
+  const meritto = page.locator('article').filter({ hasText: 'Meritto' })
+  await expect(meritto).toContainText('Configurable adapter')
+  await meritto.getByRole('button', { name: 'Configure' }).click()
+  await expect(page.getByText('Custom Integration Builder')).toBeVisible()
+  await expect(page.getByDisplayValue('Meritto')).toBeVisible()
+})
