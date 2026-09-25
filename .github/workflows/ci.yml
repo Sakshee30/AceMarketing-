@@ -33,6 +33,8 @@ jobs:
           test -f backend/src/queue.mjs
           test -f backend/src/providers.mjs
           test -f backend/src/worker.mjs
+          test -f backend/src/attribution-store.mjs
           test -f backend/scripts/migrate.mjs
           test -f backend/migrations/001_workspace_state.sql
           test -f backend/migrations/002_job_queue.sql
+          test -f backend/migrations/003_attribution_identity.sql
