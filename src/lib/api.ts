@@ -39,4 +39,5 @@ export const api = {
   caseStudies: () => request('/case-studies'),
   eventTemplates: () => request('/event-templates'),
   monitoringRules: () => request('/monitoring-rules'),
+  saveConsent: (prefs: Record<string, boolean>) => request('/consent-preferences', { method: 'POST', body: JSON.stringify(prefs) }),
 }
