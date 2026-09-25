@@ -552,3 +552,25 @@ New API endpoints:
 - `POST /api/reports/send-test`
 
 EasyInsights' current Company page publicly describes Cohort Reports for strategic media planning and Automated Email Reports as custom/data services. AceMarketing now represents equivalent product workflows directly in the workspace.
+
+
+## Parity pass: tracking and data-quality diagnostics
+
+This pass adds a dedicated **Diagnostics** workspace for the tracking/data-quality problems emphasized on EasyInsights' current public site.
+
+The module now covers:
+- duplicate conversions;
+- missing GCLID / FBCLID coverage;
+- cross-domain continuity breaks;
+- late CRM outcomes;
+- schema mismatches and quarantined events;
+- Event Match Quality / identifier coverage;
+- validate → deduplicate → match → send → confirm delivery health;
+- root-cause recommendations;
+- replay queue for corrected events.
+
+New API endpoints:
+- `GET /api/diagnostics`
+- `POST /api/diagnostics/replay`
+
+The EasyInsights public site specifically calls out misfiring conversions, duplicate events, broken cross-domain/chatbot event flow, and lack of a single source of truth under "Tracking & Data Quality Issues." AceMarketing now provides an operational workspace for diagnosing those failure modes rather than only describing them on the marketing site.
