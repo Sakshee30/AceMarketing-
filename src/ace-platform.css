@@ -314,3 +314,15 @@
 .public-footer-brand{border:0;background:none;padding:0}
 @media(max-width:900px){.public-detail-hero{padding:72px 28px 54px}.public-detail-grid{padding:0 28px 72px}.public-detail-grid{grid-template-columns:1fr}.public-filter-tabs{padding:0 28px;overflow:auto}.integration-public-groups{padding:0 28px 72px}.integration-public-groups>article{grid-template-columns:1fr}.public-route-cta{margin:0 28px 72px;grid-template-columns:1fr}}
 @media(max-width:600px){.public-detail-hero{padding:58px 20px 44px}.public-detail-hero h1{font-size:44px}.public-detail-grid,.integration-public-groups{padding-left:20px;padding-right:20px}.public-filter-tabs{padding:0 20px}.integration-public-groups>article>div:last-child{grid-template-columns:1fr}.public-route-cta{margin-left:20px;margin-right:20px;padding:30px 24px}}
+
+/* One header/footer system across every public route */
+.public-route-page .standalone-top,
+.public-route-page .pricing-top{display:none}
+.public-route-page .standalone-page,
+.public-route-page .pricing-page{min-height:0;background:#fff}
+.public-route-page .standalone-hero{padding-top:86px}
+.public-route-page .pricing-hero{padding-top:86px}
+.public-route-page .standalone-page+.ei-footer,
+.public-route-page .pricing-page+.ei-footer{margin-top:0}
+.ei-promo-bar button{border:0;background:none;color:#fff;text-decoration:underline;text-underline-offset:2px;display:flex;align-items:center;gap:7px;font:inherit}
+.ei-promo-bar button svg{width:14px}
