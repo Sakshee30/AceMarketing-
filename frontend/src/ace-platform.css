@@ -712,3 +712,13 @@
 .region-popover span{font-size:11px;color:var(--muted,#667085)}
 .region-popover button{margin-top:4px;border:1px solid var(--line,#e5e7eb);background:#fff;border-radius:8px;padding:7px 9px;font-size:11px}
 .product-head>div:last-child{position:relative}
+
+
+/* Operational authentication feedback */
+.login-error{display:block;color:#b42318;line-height:1.45}
+.login-notice{display:block;color:#067647;line-height:1.45}
+.login-secondary-action{width:100%;border:1px solid var(--line,#e5e7eb);background:#fff;border-radius:10px;padding:10px 12px}
+.google-login:disabled,.login-submit:disabled,.login-secondary-action:disabled{opacity:.6;cursor:not-allowed}
+.adjustment-preview{margin:14px 0;max-height:280px;overflow:auto}
+.event-debugger{max-width:760px}
+.debug-event-list{max-height:440px;overflow:auto}
