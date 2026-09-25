@@ -518,3 +518,37 @@ New API endpoints:
 - `GET /api/workspaces`
 
 The latest CI run on `main` passed before this implementation pass. New commits will trigger CI again automatically.
+
+
+## Parity pass: cohort reporting and automated email reports
+
+This pass adds reporting capabilities supported by EasyInsights' current public Company page and attribution positioning.
+
+### Reports workspace
+A new **Reports** module now includes:
+- scheduled reports;
+- automated email / stakeholder delivery;
+- cohort performance analysis;
+- quality-adjusted media-planning recommendations;
+- report preview and summary metrics;
+- CSV export surface;
+- delivery cadence, recipient, lookback and failure-alert configuration.
+
+The first report templates are:
+- Executive MBA Cohort;
+- Paid Funnel Performance;
+- Attribution Summary;
+- Lead Quality by Campaign.
+
+### Connector catalog cleanup
+Integration labels were aligned to the supplied brochure where the previous implementation had drifted:
+- added **Meritto** to CRM platforms;
+- corrected **Bitespeed**;
+- added **AiSensy**;
+- removed the non-brochure Gallabox placeholder from that catalog section.
+
+New API endpoints:
+- `GET /api/reports`
+- `POST /api/reports/send-test`
+
+EasyInsights' current Company page publicly describes Cohort Reports for strategic media planning and Automated Email Reports as custom/data services. AceMarketing now represents equivalent product workflows directly in the workspace.
