@@ -599,3 +599,23 @@
 .empty-delivery-state div{display:flex;flex-direction:column;gap:4px}
 .empty-delivery-state b{color:var(--text,#101828)}
 .empty-delivery-state small{line-height:1.45}
+
+
+/* WhatsApp Cloud API operational connector */
+.whatsapp-ops{margin-top:16px}
+.whatsapp-ops-grid{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:18px}
+.whatsapp-send-box{display:flex;flex-direction:column;gap:12px}
+.whatsapp-send-box label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700}
+.whatsapp-send-box input,.whatsapp-send-box textarea{width:100%;border:1px solid var(--line,#e5e7eb);border-radius:10px;padding:10px 12px;background:var(--panel,#fff);color:inherit;font:inherit}
+.whatsapp-send-box textarea{resize:vertical;min-height:96px}
+.whatsapp-notice{display:block;line-height:1.45;color:var(--muted,#667085);word-break:break-word}
+.whatsapp-event-list{min-width:0}
+.whatsapp-event-list .panel-head{margin-bottom:8px}
+.whatsapp-event-row{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line,#eef0f3)}
+.whatsapp-event-row:last-child{border-bottom:0}
+.whatsapp-event-row div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.whatsapp-event-row small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted,#667085)}
+.wa-kind{display:inline-flex;align-items:center;justify-content:center;min-width:68px;padding:4px 8px;border-radius:999px;background:rgba(16,185,129,.1);font-size:11px;font-weight:700;text-transform:capitalize}
+.wa-kind.status{background:rgba(59,130,246,.1)}
+.wa-kind.outbound{background:rgba(124,58,237,.1)}
+@media (max-width:900px){.whatsapp-ops-grid{grid-template-columns:1fr}}
