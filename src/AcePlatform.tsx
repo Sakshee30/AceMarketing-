@@ -1,7 +1,7 @@
 // @ts-nocheck
 import {useMemo,useState} from 'react'
 import {
-  Activity,ArrowRight,BarChart3,Bell,Bot,Building2,Cable,CalendarDays,Check,CheckCircle2,ChevronDown,ChevronRight,
+  Activity,ArrowRight,BarChart3,Bell,BookOpen,Bot,Building2,Cable,CalendarDays,Check,CheckCircle2,ChevronDown,ChevronRight,
   CircleDollarSign,Code2,DatabaseZap,Gauge,Globe2,GraduationCap,HeartPulse,Home,Landmark,Layers3,Menu,MessageCircle,MessageSquareText,
   MousePointer2,Network,PhoneCall,PhoneIncoming,PieChart,Plane,Plus,RadioTower,Search,Settings2,ShieldCheck,ShoppingCart,Store,
   Sparkles,Target,UsersRound,WandSparkles,X,Zap
@@ -43,9 +43,7 @@ const caseStudies=[
 ]
 
 function Brand({dark=false}:{dark?:boolean}){
- return <div className={'ace-brand '+(dark?'dark':'')}><span className="ace-mark"><i/><i/><i/></span><b>AceMarketing</b></div>
-}
-function Header({openApp,openLogin,openPricing,openDemo,openCompany,openResources,openCaseStudies,openSolutions}:{openApp:()=>void,openLogin:()=>void,openPricing:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void,openCaseStudies:()=>void,openSolutions:()=>void}){
+ return <div className={'ace-brand '+(dark?'dark':'')}><span className="ace-mark"><i/><i/><i/></span><b>AceMarketing</b>function Header({openApp,openLogin,openPricing,openDemo,openCompany,openResources,openCaseStudies,openSolutions}:{openApp:()=>void,openLogin:()=>void,openPricing:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void,openCaseStudies:()=>void,openSolutions:()=>void}){
  const [open,setOpen]=useState(false)
  const [menu,setMenu]=useState<'industries'|'agents'|'resources'|null>(null)
  const closeMenu=()=>setMenu(null)
@@ -59,9 +57,25 @@ function Header({openApp,openLogin,openPricing,openDemo,openCompany,openResource
   ['Consumer Goods','Activate first-party data to optimize campaigns, understand buyer behavior, and drive repeat purchases at scale.',ShoppingCart]
  ]
  const agentItems=[
-  ['Lead Quality','Meta Advanced CAPI','Google ECL / OCI','Call Tracking Events','Lead Grading'],
-  ['Conversion','CRM Enrichment','Voice Lead Qualification','Voice Scheduler','Meeting Reminder','Feedback Agent'],
-  ['Visibility','Ask Ace','Journey Intelligence','Attribution Diagnostics']
+  ['Call tracking events agent','Tracks every inbound call and connects it to campaign, keyword and creative.',PhoneCall],
+  ['Meta Advanced CAPI agent','Sends server-side conversions to Meta with deduplication.',RadioTower],
+  ['Google ECL / OCI agent','Connects ad clicks to qualified and closed outcomes.',Target],
+  ['Custom Integration agent','Builds conversion pipelines for custom systems and sources.',Cable],
+  ['Lead Grading agent','Scores and prioritizes high-intent leads for sales.',BarChart3],
+  ['CRM Enrichment agent','Adds acquisition and journey context before the first sales call.',DatabaseZap],
+  ['Voice Lead Qualification agent','Calls inbound leads, qualifies intent and routes sales-ready prospects.',PhoneIncoming],
+  ['Voice Scheduler agent','Books meetings for qualified leads and syncs calendars.',CalendarDays],
+  ['Call Based Meeting Reminder agent','Re-engages scheduled leads before meetings.',Bell],
+  ['Call Based Feedback agent','Collects post-interaction feedback and objections.',MessageSquareText],
+  ['Ask Ace – User Journey & Attribution','Answers journey, funnel and attribution questions in plain language.',Sparkles]
+ ]
+ const resourceItems=[
+  ['About Us','Know about our people, values and what we stand for',Building2,openCompany],
+  ['Blogs','Latest trends and updates in marketing and data',Layers3,openResources],
+  ['Ebooks','Long-form guides for data-driven growth teams',BookOpen,openResources],
+  ['No Net Hash','Hash first-party identifiers before activation',ShieldCheck,openResources],
+  ['ROAS Calculator','Model advertising return and efficiency',CircleDollarSign,openResources],
+  ['Documentation','Implementation and product documentation',Code2,openResources]
  ]
  return <header className="ei-header-shell" onMouseLeave={closeMenu}>
   <div className="ei-header">
@@ -89,18 +103,17 @@ function Header({openApp,openLogin,openPricing,openDemo,openCompany,openResource
    </div>}
   {menu==='agents'&&<div className="ei-mega-menu agents-menu" onMouseEnter={()=>setMenu('agents')}>
     <div className="ei-mega-label">AGENTS</div>
-    <div className="ei-agent-columns">{agentItems.map(group=><div key={group[0]}><h4>{group[0]}</h4>{group.slice(1).map(name=><button key={name} onClick={()=>{closeMenu();location.hash='agents'}}><Bot/><span>{name}</span><ChevronRight/></button>)}</div>)}</div>
+    <div className="ei-agent-list">{agentItems.map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();location.hash='agents'}}><span className="ei-agent-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div><ChevronRight/></button>})}</div>
    </div>}
   {menu==='resources'&&<div className="ei-mega-menu resources-menu" onMouseEnter={()=>setMenu('resources')}>
-    <div className="ei-mega-label">RESOURCES</div>
-    <div className="ei-resource-grid">
-     <button onClick={openResources}><Layers3/><div><b>Resource Center</b><p>Guides, implementation notes and product education.</p></div></button>
-     <button onClick={openCompany}><Building2/><div><b>Company</b><p>Product principles, architecture and platform direction.</p></div></button>
-     <button onClick={openSolutions}><Sparkles/><div><b>Solutions</b><p>Explore use cases by growth and measurement problem.</p></div></button>
-     <button onClick={openLogin}><UsersRound/><div><b>Customer Login</b><p>Open your existing AceMarketing workspace.</p></div></button>
+    <div className="ei-resources-layout">
+     <div><div className="ei-mega-label">GET INSPIRED</div><div className="ei-resource-links">{resourceItems.map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();x[3]()}}><span><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>})}</div></div>
+     <aside><div className="ei-mega-label">LATEST FROM BLOGS</div><button onClick={openResources} className="ei-blog-card"><span>DATA SIGNALS</span><b>Why campaigns struggle without strong first-party data signals</b><small>Read article <ArrowRight/></small></button><button onClick={openResources} className="ei-blog-card"><span>AI + MEDIA</span><b>How to use AI assistants with your ad platforms</b><small>Read article <ArrowRight/></small></button></aside>
     </div>
    </div>}
  </header>
+}
+eader>
 }
 function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResources,openCaseStudies,openSolutions}:{openApp:()=>void,openLogin:()=>void,openPricing:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void,openCaseStudies:()=>void,openSolutions:()=>void}){
  const [agentFilter,setAgentFilter]=useState('All')
