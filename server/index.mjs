@@ -149,6 +149,17 @@ const server = http.createServer(async (req,res)=>{
       {name:'PGDM Retargeting',channel:'Meta Ads',leads:1510,qualified:903,appointments:527,consultations:210,bookings:96}
     ]})
     if (req.method === 'GET' && url.pathname === '/api/live-sync') return send(res,200,{status:'always_on',medianLatencySeconds:42,deliveryRate:99.82,eventsPerMinute:8412,recent:trackedEvents.slice(-25).reverse()})
+    if (req.method === 'GET' && url.pathname === '/api/matchback') return send(res,200,{rules:[
+      {name:'closed_won_mba_search',source:'crm_billing',destination:'google_ads',matchedRevenue:8400000,closedOutcomes:982,matchRate:96.8},
+      {name:'enrolment_executive_program',source:'crm_billing',destination:'meta_ads',matchedRevenue:5160000,closedOutcomes:611,matchRate:95.9},
+      {name:'consultation_sale_whatsapp',source:'crm_whatsapp',destination:'meta_google',matchedRevenue:2840000,closedOutcomes:314,matchRate:92.7},
+      {name:'store_sale_offline',source:'pos_crm',destination:'google_meta',matchedRevenue:1980000,closedOutcomes:227,matchRate:94.1}
+    ],unmatched:4})
+    if (req.method === 'POST' && url.pathname === '/api/matchback/reconcile') {
+      const body=await readBody(req)
+      if(!body.rule) return send(res,400,{error:'rule required'})
+      return send(res,200,{rule:body.rule,status:'reconciled',matched:982,unmatched:18,returnedSignals:947,auditId:randomUUID(),completedAt:new Date().toISOString()})
+    }
     if (req.method === 'GET' && url.pathname === '/api/pos-stores') return send(res,200,{locations:[
       {name:'Delhi Flagship',id:'DL-01',transactions:2184,revenue:4860000,matchRate:96.2},
       {name:'Noida Center',id:'NOI-02',transactions:1476,revenue:3180000,matchRate:94.7},
