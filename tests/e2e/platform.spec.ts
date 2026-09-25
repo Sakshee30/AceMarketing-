@@ -415,3 +415,19 @@ test('offline attribution rules persist and test through the attribution store',
   await page.getByRole('button', { name: 'Send offline test event' }).click()
   await expect(page.getByText(/Test event recorded with status/)).toBeVisible()
 })
+
+
+test('site operations add a property and show evidence-aware installation test', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  await openWorkspaceTab(page,'Sites')
+  await expect(page.getByRole('heading', { name: 'Site & pixel operations' })).toBeVisible()
+  await page.getByRole('button', { name: 'Add site' }).click()
+  await page.getByLabel('Domain').fill('ci-tracking.example.com')
+  await page.getByLabel('Environment').selectOption('staging')
+  await page.getByRole('button', { name: 'Save tracked site' }).click()
+  await expect(page.getByText('ci-tracking.example.com', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Test installation' }).click()
+  await expect(page.getByText('Pixel events observed', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Evidence verified|Retest installation/ })).toBeVisible()
+})
