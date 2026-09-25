@@ -86,6 +86,22 @@ const server = http.createServer(async (req,res)=>{
     ]})
     if (req.method === 'GET' && url.pathname === '/api/attribution') return send(res,200,{revenue:28400000,journeys:92418,averageTouches:5.4,channels:[['Google Ads',42],['Meta Ads',26],['WhatsApp',14],['Organic Search',11],['Direct / Other',7]]})
     if (req.method === 'GET' && url.pathname === '/api/agents') return send(res,200,{items:agents.map((name,i)=>({name,status:i<7?'active':'available'}))})
+    if (req.method === 'GET' && url.pathname === '/api/behavior') return send(res,200,{events:[
+      {name:'page_view',count:92418},
+      {name:'pricing_page_viewed',count:18204},
+      {name:'form_started',count:14066},
+      {name:'form_submitted',count:12842},
+      {name:'whatsapp_click',count:6904},
+      {name:'call_cta_click',count:4882}
+    ]})
+    if (req.method === 'GET' && url.pathname === '/api/feed') return send(res,200,{attributes:[
+      {key:'customer_tier',source:'customer',status:'mapped'},
+      {key:'order_type',source:'order',status:'mapped'},
+      {key:'product_category',source:'product',status:'mapped'},
+      {key:'lead_score',source:'model',status:'mapped'},
+      {key:'lifecycle_stage',source:'crm',status:'mapped'}
+    ]})
+    if (req.method === 'GET' && url.pathname === '/api/solutions') return send(res,200,{items:['Agency','Lead Generation','Enterprise','Mid Market Brand','Attribution Model','Alerts and Monitoring','Server to Server Integration']})
     if (req.method === 'GET' && url.pathname === '/api/audiences') return send(res,200,{items:[
       {name:'High intent leads',size:3106,mode:'activate'},
       {name:'Converted / enrolled',size:18204,mode:'suppress'},
