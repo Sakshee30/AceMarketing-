@@ -801,3 +801,38 @@ New API endpoints:
 - `POST /api/pos-stores/import`
 
 EasyInsights' current first-party-data material lists POS systems as part of complex funnel conversion tracking, while its homepage describes returning closed outcomes such as store sales to advertising platforms. AceMarketing now has a dedicated operational surface for that offline revenue path.
+
+
+## Parity pass: full-context lead routing and follow-up recovery
+
+This pass operationalizes two conversion workflows described by EasyInsights' current public homepage and supplied brochure: routing with full context, and follow-up at handoff points.
+
+### Lead Routing
+New **Routing** workspace includes:
+- rule-based routing using intent, program, CRM state and journey evidence;
+- specialist queues such as senior counsellor and financing-trained counsellor;
+- route-time SLA;
+- fallback queue;
+- existing-owner preservation;
+- queue-load visibility;
+- rule testing.
+
+### Follow-up Operations
+New **Follow-ups** workspace includes:
+- prioritized stalled-lead queue;
+- qualified-without-booking trigger;
+- no-show recovery;
+- pricing-objection follow-up;
+- high-intent revisit trigger;
+- call-no-answer retry;
+- stale CRM-stage trigger;
+- recommended WhatsApp / voice sequence;
+- completion and recovery-outcome tracking.
+
+New API endpoints:
+- `GET /api/routing`
+- `POST /api/routing/test`
+- `GET /api/follow-ups`
+- `POST /api/follow-ups/complete`
+
+EasyInsights' public homepage says its conversion system grades and enriches leads on arrival, calls and qualifies them, and then routes them with full context; the brochure also lists routing and follow-up among the jobs handled by its agents. AceMarketing now provides dedicated operational workspaces for both.
