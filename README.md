@@ -607,3 +607,44 @@ New API endpoints:
 - `POST /api/webhooks/secret/rotate`
 
 This expands the brochure/public-site real-time synchronization and custom-integration concepts into concrete operational surfaces. The public EasyInsights Company page describes Server-to-Server Integration as a custom data service, while the brochure describes live 24×7 transfer; AceMarketing now has workspace tooling around those patterns.
+
+
+## Parity pass: voice qualification, scheduling, reminders and feedback operations
+
+This pass operationalizes four brochure-listed conversion agents that were previously represented only in the generic agent library:
+
+- **Voice Lead Qualification**
+  - live qualification call queue;
+  - intent score;
+  - transcript context;
+  - structured next action;
+  - retry / follow-up queue.
+- **Voice Scheduler**
+  - upcoming consultation list;
+  - owner/calendar context;
+  - scheduling state.
+- **Meeting Reminder**
+  - T−24h, T−3h, T−30m and no-show recovery workflow;
+  - no-show risk;
+  - manual reminder trigger.
+- **Feedback Agent**
+  - post-call / post-meeting / WhatsApp feedback;
+  - satisfaction score;
+  - objection themes;
+  - routing into sales, recovery and campaign insight workflows.
+
+New workspace tabs:
+- `Calls`
+- `Meetings`
+- `Feedback`
+
+New API endpoints:
+- `GET /api/qualification-calls`
+- `POST /api/qualification-calls/retry`
+- `GET /api/meetings`
+- `POST /api/meetings/remind`
+- `GET /api/feedback`
+
+The supplied EasyInsights brochure lists Voice Lead Qualification, Voice Scheduler, Meeting Reminder and Feedback as distinct agents. AceMarketing now provides dedicated operational surfaces for each of those workflows instead of leaving them as cards only.
+
+This pass also corrects missing icon imports used by prior workspace additions (Alerts, Developers, Approvals and workspace creation), reducing the risk of runtime reference errors.
