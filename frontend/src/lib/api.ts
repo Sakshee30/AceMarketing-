@@ -3,14 +3,47 @@ export type DemoRequest = Record<string, FormDataEntryValue>
 const getToken = () => typeof window !== 'undefined' ? window.localStorage.getItem('ace_token') : null
 const getWorkspace = () => typeof window !== 'undefined' ? (window.localStorage.getItem('ace_workspace_id') || 'ws_default') : 'ws_default'
 
+export class AceApiError extends Error {
+  status:number
+  requestId:string
+  details:any
+  constructor(message:string,status:number,requestId:string,details:any){
+    super(message)
+    this.name='AceApiError'
+    this.status=status
+    this.requestId=requestId
+    this.details=details
+  }
+}
+
 const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
   const token=getToken()
-  const response = await fetch(`/api${path}`, {
-    headers: { 'Content-Type': 'application/json', 'X-Workspace-ID': getWorkspace(), ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(init?.headers || {}) },
-    ...init,
-  })
-  if (!response.ok) throw new Error(`API request failed: ${response.status}`)
-  return response.json()
+  let response:Response
+  try{
+    response = await fetch(`/api${path}`, {
+      headers: { 'Content-Type': 'application/json', 'X-Workspace-ID': getWorkspace(), ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(init?.headers || {}) },
+      ...init,
+    })
+  }catch(error){
+    const message=error instanceof Error?error.message:'Network request failed'
+    throw new AceApiError(message,0,'',{cause:'network',path})
+  }
+
+  const requestId=response.headers.get('x-request-id')||''
+  if(response.status===204) return undefined as T
+
+  const raw=await response.text()
+  let payload:any=null
+  if(raw){
+    try{payload=JSON.parse(raw)}catch{payload={message:raw}}
+  }
+
+  if(!response.ok){
+    const message=payload?.error||payload?.message||`API request failed: ${response.status}`
+    throw new AceApiError(message,response.status,requestId,payload)
+  }
+
+  return payload as T
 }
 
 export const api = {
