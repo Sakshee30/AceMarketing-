@@ -1,5 +1,10 @@
 import {expect,test} from '@playwright/test'
 
+const dismissConsent=async(page:any)=>{
+  const dialog=page.getByRole('dialog',{name:'Privacy choices'})
+  if(await dialog.isVisible().catch(()=>false)) await page.getByRole('button',{name:'Essential only'}).click()
+}
+
 const criticalPublicRoutes=[
   ['#/',/AceMarketing/i],
   ['#/agents',/agents/i],
@@ -16,6 +21,7 @@ test.describe('public product surface',()=>{
       const pageErrors:string[]=[]
       page.on('pageerror',error=>pageErrors.push(error.message))
       await page.goto('/'+route)
+      await dismissConsent(page)
       await expect(page.locator('body')).toBeVisible()
       await expect(page.locator('body')).toContainText(heading)
       await expect(page.locator('header, main, .public-page, .marketing-page').first()).toBeVisible()
@@ -25,6 +31,7 @@ test.describe('public product surface',()=>{
 
   test('public navigation reaches agents and integrations',async({page,isMobile})=>{
     await page.goto('/#/')
+    await dismissConsent(page)
     if(isMobile) await page.locator('.menu-toggle').click()
     await page.getByRole('button',{name:/agents/i}).first().click()
     await expect(page).toHaveURL(/#\/agents/)
@@ -41,6 +48,7 @@ test.describe('public product surface',()=>{
 test.describe('workspace critical flows',()=>{
   test.beforeEach(async({page})=>{
     await page.goto('/#/')
+    await dismissConsent(page)
     await expect(page.locator('.marketing-page')).toBeVisible()
     await page.evaluate(()=>window.dispatchEvent(new CustomEvent('ace-view',{detail:'app'})))
     await expect(page).toHaveURL(/#\/workspace/)
@@ -85,6 +93,7 @@ test.describe('workspace critical flows',()=>{
 test.describe('basic accessibility regression',()=>{
   test('interactive controls have accessible names',async({page})=>{
     await page.goto('/#/')
+    await dismissConsent(page)
     const buttons=page.getByRole('button')
     const count=await buttons.count()
     expect(count).toBeGreaterThan(0)
