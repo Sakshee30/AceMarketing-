@@ -1294,6 +1294,25 @@ function UsersRolesSettings(){
  </div>
 }
 
+function BillingUsageSettings(){
+ const [data,setData]=useState<any>(null)
+ useEffect(()=>{api.billingUsage().then((r:any)=>setData(r)).catch(()=>null)},[])
+ const rows=[
+  ['Tracked events','tracked_events',Zap],
+  ['Assisted events','assisted_events',DatabaseZap],
+  ['Signal dispatches','signal_dispatches',RadioTower],
+  ['Agent actions','agent_actions',Bot],
+  ['Audience syncs','audience_syncs',UsersRound],
+  ['Custom integration tests','custom_integration_tests',Cable]
+ ]
+ return <div className="settings-detail"><h3>Billing & usage</h3><p>Usage is measured from successful workspace operations. Limits are enforced before expensive actions are accepted.</p>
+ <div className="billing-plan-summary"><div><span>Plan</span><b>{data?.planCode||'usage'}</b></div><div><span>Status</span><b>{data?.status||'loading'}</b></div><div><span>Current period</span><b>{data?.periodStart&&data?.periodEnd?new Date(data.periodStart).toLocaleDateString()+' – '+new Date(data.periodEnd).toLocaleDateString():'—'}</b></div><div><span>Payments</span><b>{data?.paymentConfigured?'Provider connected':'Not configured'}</b></div></div>
+ <div className="stats-grid compact">{rows.map(([label,key,Icon]:any)=>{const x=data?.usage?.[key];return <Stat key={key} label={label} value={x?Number(x.used||0).toLocaleString('en-IN'):'—'} sub={x?(x.limit===0?'Unlimited':String(x.percent||0)+'% of '+Number(x.limit||0).toLocaleString('en-IN')):'Loading usage'} Icon={Icon}/>})}</div>
+ <h4>Entitlement details</h4>{rows.map(([label,key]:any)=>{const x=data?.usage?.[key];const pct=Math.max(0,Math.min(100,Number(x?.percent||0)));return <div className="setting-line" key={key}><span>{label}</span><b>{x?.limit===0?'Unlimited':Number(x?.limit||0).toLocaleString('en-IN')}</b><div className="progress"><i style={{width:pct+'%'}}/></div><em>{x?Number(x.remaining||0).toLocaleString('en-IN')+' remaining':'—'}</em></div>})}
+ <div className="source-conflict-note"><ShieldCheck/><div><b>Billing boundary</b><p>AceMarketing now meters and enforces usage, but does not charge a card or generate invoices until a real billing provider is configured. EasyInsights publicly describes its pricing as usage-based, flexible and scalable; AceMarketing keeps pricing configurable rather than inventing unsupported public tiers.</p></div></div>
+ </div>
+}
+
 function Settings(){
  const sections=['Workspace','Users & roles','Tracking','Governance','API & webhooks','Agent approvals','Notifications','Billing & usage']
  const [section,setSection]=useState('Workspace')
@@ -1307,7 +1326,7 @@ function Settings(){
   'API & webhooks':<div className="settings-detail"><h3>API keys & webhooks</h3><div className="api-key-box"><div><span>Workspace API key</span><code>{apiKey||'••••••••••••••••••••'}</code></div><button onClick={makeKey}>{apiKey?'Rotate key':'Create key'}</button></div><h4>Outbound webhooks</h4>{[['lead.qualified','https://example.com/hooks/qualified'],['revenue.closed','https://example.com/hooks/revenue'],['sync.failed','https://example.com/hooks/ops']].map(x=><div className="setting-line" key={x[0]}><code>{x[0]}</code><b>{x[1]}</b><span className="healthy">Active</span></div>)}</div>,
   'Agent approvals':<div className="settings-detail"><h3>Agent approval boundaries</h3>{[['Signal return','Auto-run','Low risk'],['CRM enrichment','Auto-run','Low risk'],['Lead qualification call','Human approval','Customer contact'],['Audience suppression','Human approval','Spend impact'],['Custom integration write','Human approval','External mutation']].map(x=><div className="setting-line" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><em>{x[2]}</em></div>)}</div>,
   'Notifications':<div className="settings-detail"><h3>Notifications</h3>{[['Critical delivery failures','Email + Slack','Enabled'],['Token expiry','Email','Enabled'],['Audience stale > 60m','Slack','Enabled'],['Daily performance summary','Email','Enabled']].map(x=><div className="setting-line" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><span className="healthy">{x[2]}</span></div>)}</div>,
-  'Billing & usage':<div className="settings-detail"><h3>Usage & metering</h3><div className="stats-grid compact"><Stat label="Events this month" value="42.8M" sub="71% of plan" Icon={Zap}/><Stat label="Active connectors" value="12" sub="5 custom / premium" Icon={Cable}/><Stat label="Agent runs" value="184K" sub="+16% this month" Icon={Bot}/><Stat label="API calls" value="8.2M" sub="Within allowance" Icon={Activity}/></div></div>
+  'Billing & usage':<BillingUsageSettings/>
  }
  return <><PageHead crumb="Workspace / Settings" title="Workspace settings" sub="Configure organization, access, tracking, governance, developer access and automation boundaries."/>
  <div className="settings-shell"><aside className="settings-nav">{sections.map(x=><button key={x} className={section===x?'active':''} onClick={()=>setSection(x)}>{x}<ChevronRight/></button>)}</aside><div className="app-panel">{content[section]}</div></div></>
