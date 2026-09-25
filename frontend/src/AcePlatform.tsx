@@ -1794,7 +1794,7 @@ function Product({back}:{back:()=>void}){
   {dashboardSections.map((section:any)=>{
    const Icon=section.icon
    const active=section.tabs.includes(tab as any)
-   const area=(sectionSummary?.areas||[]).find((x:any)=>x.key===section.id||x.key===(section.id==='workspace'?'operations':section.id))
+   const area=(sectionSummary?.areas||[]).find((x:any)=>x.key===(section.id==='workspace'?'data':section.id))
    const target=section.id==='workspace'?'Overview':section.tabs[0]
    return <button key={section.id} className={active?'active':''} onClick={()=>setTab(target as AppTab)}><span><Icon/></span><div><b>{section.label}</b><small>{area?.ready?'Ready':sectionSummary?'Needs setup':'Checking…'}</small></div><i className={area?.ready?'ready':'setup'}/></button>
   })}
