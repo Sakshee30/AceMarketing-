@@ -67,6 +67,7 @@ const events = [
 ]
 
 const permissionForRequest=(method,path)=>{
+  if(path==='/api/auth/logout'||path==='/api/auth/me') return 'workspace.read'
   if(method==='GET'){
     if(path.startsWith('/api/members')) return 'members.read'
     if(path.startsWith('/api/reports')||path.startsWith('/api/attribution')||path.startsWith('/api/journeys')) return 'reports.read'
@@ -189,7 +190,7 @@ const server = http.createServer(async (req,res)=>{
       let member=(state.members||[]).find(x=>String(x.email).toLowerCase()===email&&x.status==='active')
       let passwordOk=false
       if(member?.passwordHash) passwordOk=verifyPassword(password,member.passwordHash)
-      else if(email===String(ADMIN_EMAIL).toLowerCase()) passwordOk=verifyPassword(password,ADMIN_PASSWORD_HASH)
+      else if(email===String(ADMIN_EMAIL).toLowerCase() && ADMIN_PASSWORD_HASH && ADMIN_PASSWORD_HASH!=='salt:scrypt-hex') passwordOk=verifyPassword(password,ADMIN_PASSWORD_HASH)
       else if(!IS_PROD && member) passwordOk=true
       if(!member||!passwordOk) return send(req,res,401,{error:'invalid credentials'})
       const ttl=Number(process.env.TOKEN_TTL_SECONDS||3600)
