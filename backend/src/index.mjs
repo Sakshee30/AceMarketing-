@@ -14,6 +14,7 @@ import { assertCapacity, closeEntitlements, finalizeReservation, resourceCountAl
 import { billingConfigured, billingEventHistory, closeBillingProvider, createCheckoutSession, createPortalSession, processStripeEvent, verifyStripeWebhook } from './billing-provider.mjs'
 import { closeConsentStore, consentAllows, consentStats, getConsent, listConsentAudit, saveConsent } from './consent.mjs'
 import { closePrivacyOps, deleteSubject, exportSubject, listPrivacyRequests, purgeRetention, retentionPolicy } from './privacy-ops.mjs'
+import { closeAudienceScheduler, listAudienceRefreshRuns, listAudienceSchedules, saveAudienceSchedule } from './audience-scheduler.mjs'
 import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, publicChallenges, publicCaseStudies, publicResources, publicResourceCenter } from './public-content.mjs'
 
 const CONNECTOR_PROVIDERS={
@@ -863,12 +864,24 @@ const server = http.createServer(async (req,res)=>{
       }
       return send(req,res,202,{id:bundle.audience.id,status:'syncing',queued})
     }
+    if (req.method === 'GET' && url.pathname === '/api/audience-schedules') {
+      return send(req,res,200,{items:await listAudienceSchedules(workspaceId),runs:await listAudienceRefreshRuns(workspaceId,null,50)})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/audience-schedules') {
+      const body=await readBody(req)
+      if(!body.id) return send(req,res,400,{error:'id required'})
+      try{
+        const item=await saveAudienceSchedule(workspaceId,String(body.id),body)
+        return item?send(req,res,200,item):send(req,res,404,{error:'audience not found'})
+      }catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'invalid audience schedule'})}
+    }
     if (req.method === 'GET' && url.pathname === '/api/activation-runs') {
       return send(req,res,200,{items:await listActivationRuns(workspaceId,100)})
     }
     if (req.method === 'GET' && url.pathname === '/api/audiences') {
-      const items=await listLeadAudiences(workspaceId)
-      return send(req,res,200,{items:items.map(x=>({id:x.id,name:x.name,size:x.matched_size,estimatedSize:x.estimated_size,mode:x.mode,destination:x.destination,status:x.status,cadence:'Real time',definition:x.definition,providerState:x.provider_state,lastSyncError:x.last_sync_error,lastSyncedAt:x.last_synced_at,lastMaterializedAt:x.last_materialized_at}))})
+      const [items,schedules]=await Promise.all([listLeadAudiences(workspaceId),listAudienceSchedules(workspaceId)])
+      const scheduleById=Object.fromEntries(schedules.map(x=>[x.audience_id,x]))
+      return send(req,res,200,{items:items.map(x=>{const s=scheduleById[x.id];return {id:x.id,name:x.name,size:x.matched_size,estimatedSize:x.estimated_size,mode:x.mode,destination:x.destination,status:x.status,cadence:s?.cadenceLabel||'Manual',schedule:s||null,definition:x.definition,providerState:x.provider_state,lastSyncError:x.last_sync_error,lastSyncedAt:x.last_synced_at,lastMaterializedAt:x.last_materialized_at}})})
     }
     if (req.method === 'GET' && url.pathname === '/api/alerts') return send(req,res,200,{items:await listLiveAlerts(workspaceId)})
     if (req.method === 'POST' && url.pathname === '/api/alerts/resolve') {
@@ -1276,6 +1289,6 @@ server.keepAliveTimeout=65_000
 server.headersTimeout=66_000
 server.requestTimeout=30_000
 server.listen(PORT,()=>console.log(`AceMarketing API listening on http://localhost:${PORT}`))
-const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations(),closeObservability(),closeEntitlements(),closeBillingProvider(),closeConsentStore(),closePrivacyOps()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
+const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations(),closeObservability(),closeEntitlements(),closeBillingProvider(),closeConsentStore(),closePrivacyOps(),closeAudienceScheduler()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
 process.on('SIGTERM',()=>shutdown('SIGTERM'))
 process.on('SIGINT',()=>shutdown('SIGINT'))
