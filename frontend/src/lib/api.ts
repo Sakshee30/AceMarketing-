@@ -105,6 +105,7 @@ export const api = {
   createEventRule: (payload: Record<string, unknown>) => request('/events/rules',{method:'POST',body:JSON.stringify(payload)}),
   toggleEventRule: (id:string,enabled:boolean) => request('/events/rules/toggle',{method:'POST',body:JSON.stringify({id,enabled})}),
   adjustments: () => request('/adjustments'),
+  createAdjustment: (payload: Record<string, unknown>) => request('/adjustments', { method: 'POST', body: JSON.stringify(payload) }),
   applyAdjustment: (id: string) => request('/adjustments/apply', { method: 'POST', body: JSON.stringify({ id }) }),
   previewAdjustment: (id: string) => request('/adjustments/preview', { method: 'POST', body: JSON.stringify({ id }) }),
   diagnostics: () => request('/diagnostics'),
