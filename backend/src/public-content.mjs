@@ -37,6 +37,29 @@ export const publicNavigation = {
     { name:'ROAS Calculator', summary:'Model advertising return and media efficiency.', target:'resources' },
     { name:'Documentation', summary:'Product architecture and implementation guidance.', target:'resources' },
   ],
+  footer: {
+    platform: [
+      { label:'Data activation', target:'workspace' },
+      { label:'Data enrichment', target:'workspace' }
+    ],
+    solutions: [
+      { label:'Lead generation', target:'solutions' },
+      { label:'Enterprise', target:'solutions' },
+      { label:'Mid-market teams', target:'solutions' },
+      { label:'Attribution', target:'solutions' },
+      { label:'Alerts & monitoring', target:'workspace' },
+      { label:'Server-to-server integration', target:'integrations' }
+    ],
+    resources: [
+      { label:'About AceMarketing', target:'company' },
+      { label:'Use cases', target:'resources' },
+      { label:'Blogs', target:'resources' },
+      { label:'Ebooks', target:'resources' },
+      { label:'Hash utility', target:'resources' },
+      { label:'Documentation', target:'resources' },
+      { label:'Contact', target:'demo' }
+    ]
+  }
 }
 
 export const publicIndustries = [
