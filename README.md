@@ -3697,3 +3697,15 @@ Offline Attribution is now self-contained instead of redirecting users to Event 
 - `POST /api/offline-attribution/test` records a real assisted event through the attribution store using customer ID, email, phone, GCLID and/or FBCLID evidence.
 - The selected rule stores last test time, match status and match method.
 - Call and WhatsApp counters remain sourced from verified webhook state; matched/unmatched totals remain sourced from the attribution store.
+
+
+### Self-service site and pixel operations
+
+Site & Pixel Operations is now self-contained and reports real installation evidence.
+
+- `POST /api/sites` persists a tracked domain and environment.
+- Empty workspaces can add their first property directly from the Sites workspace.
+- Installation testing no longer assumes success after the request returns.
+- The backend test result explicitly reports browser-event evidence, server reachability, consent readiness, cross-domain identity evidence and observed event count.
+- The UI changes to **Evidence verified** only when browser events are actually observed; otherwise it offers **Retest installation**.
+- The event debugger continues to show only real tracked/persisted events and never injects synthetic activity.
