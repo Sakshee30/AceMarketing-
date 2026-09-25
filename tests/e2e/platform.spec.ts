@@ -431,3 +431,19 @@ test('site operations add a property and show evidence-aware installation test',
   await expect(page.getByText('Pixel events observed', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: /Evidence verified|Retest installation/ })).toBeVisible()
 })
+
+
+test('POS import computes match coverage from transaction rows', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  await openWorkspaceTab(page,'POS & Stores')
+  await expect(page.getByRole('heading', { name: 'POS, walk-in & store-sale attribution' })).toBeVisible()
+  await page.getByRole('button', { name: 'Import POS batch' }).click()
+  await expect(page.getByLabel('Matched records')).toHaveCount(0)
+  await page.getByLabel('Store ID').fill('CI-STORE')
+  await page.getByLabel('Store name').fill('CI Store')
+  await page.getByLabel('CSV transactions').fill('transaction_id,customer_id,email,phone,net_revenue,currency,occurred_at,gclid,fbclid\nCI-TXN-1,ci_pos_customer,,,12500,INR,2026-09-26T10:00:00Z,,')
+  await page.getByRole('button', { name: 'Process transaction batch' }).click()
+  await expect(page.getByText(/POS batch processed:/)).toBeVisible()
+  await expect(page.getByText('CI Store', { exact: true })).toBeVisible()
+})
