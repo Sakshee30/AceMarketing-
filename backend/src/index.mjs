@@ -4,7 +4,7 @@ import { URL } from 'node:url'
 import { createToken, verifyToken, verifyPassword, hashPassword, hasPermission, createRateLimiter, securityHeaders, resolveCorsOrigin } from './security.mjs'
 import { closeStore, getState, mutateState, storageHealth, withWorkspace } from './store.mjs'
 import { connectorVaultReady, encryptSecret } from './vault.mjs'
-import { enqueueJob, queueStats } from './queue.mjs'
+import { enqueueJob, queueAvailable, queueStats } from './queue.mjs'
 import { attributionStats, captureClickSession, closeAttributionStore, recordAssistedEvent, reconcileAttribution } from './attribution-store.mjs'
 import { closeLeadOps, createActivationRun, createAudience as createLeadAudience, getAudienceBundle, getLeadProfile, leadOpsStats, listActivationRuns, listAudiences as listLeadAudiences, listLeadProfiles, materializeAudience, overrideLeadGrade as persistLeadGrade, previewAudience as previewLeadAudience, scoreLead, upsertLeadProfile, updateAudienceSyncState } from './lead-ops.mjs'
 import { closeAgentOrchestrator, completeFollowUp as persistCompleteFollowUp, createAgentRun, createFollowUp, createMeeting, listAgentRuns, listFeedback as listPersistedFeedback, listFollowUps as listPersistedFollowUps, listMeetings as listPersistedMeetings, listRoutingDecisions, recordFeedback, routeLead } from './agent-orchestrator.mjs'
@@ -91,6 +91,59 @@ const limitRequest=createRateLimiter({windowMs:60_000,max:Number(process.env.RAT
 const integrations = ['Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads','GA4','Zoho CRM','Salesforce','HubSpot','LeadSquared','HighLevel','WhatsApp','WATI','Gupshup','MoEngage','CleverTap','Exotel','Knowlarity','Tata Tele','MyOperator','Shopify','WooCommerce','Magento','WordPress','Custom Backend']
 const agents = ['Meta Advanced CAPI','Google ECL / OCI','Call Tracking Events','Custom Integration','Lead Grading','CRM Enrichment','Voice Lead Qualification','Voice Scheduler','Meeting Reminder','Feedback Agent','Ask Ace']
 const trackedEvents = []
+
+const sha256Normalized=value=>createHash('sha256').update(String(value||'').trim().toLowerCase()).digest('hex')
+const sha256Phone=value=>createHash('sha256').update(String(value||'').replace(/\D/g,'')).digest('hex')
+const buildSignalReplayPayload=(body,item={})=>{
+  const payload={
+    deliveryId:item.id||body.deliveryId||null,
+    event:String(item.event||body.event||''),
+    destination:String(item.destination||body.destination||''),
+    idempotencyKey:item.idempotencyKey||body.idempotencyKey||null,
+    customerId:item.customerId||body.customerId||null,
+    externalEventId:item.externalEventId||body.externalEventId||null,
+    occurredAt:body.occurredAt||null,
+    value:body.value??null,
+    currency:body.currency||null,
+    orderId:body.orderId||null,
+    gclid:body.gclid||null,
+    gbraid:body.gbraid||null,
+    wbraid:body.wbraid||null,
+    fbc:body.fbc||null,
+    fbp:body.fbp||null,
+    emailSha256:body.emailSha256||body.email_sha256||(body.email?sha256Normalized(body.email):null),
+    phoneSha256:body.phoneSha256||body.phone_sha256||(body.phone?sha256Phone(body.phone):null),
+    actionSource:body.actionSource||null,
+    eventSourceUrl:body.eventSourceUrl||null,
+    metaDatasetId:body.metaDatasetId||null,
+    googleCustomerId:body.googleCustomerId||null,
+    googleConversionAction:body.googleConversionAction||null,
+    adUserDataConsent:body.adUserDataConsent!==false,
+    webhookUrl:body.webhookUrl||null,
+    data:body.data&&typeof body.data==='object'?body.data:{}
+  }
+  return Object.fromEntries(Object.entries(payload).filter(([,value])=>value!==null&&value!==undefined&&value!==''))
+}
+const validateSignalDispatch=body=>{
+  const destination=String(body.destination||'').toLowerCase()
+  if(!body.event||!destination) return 'event and destination required'
+  if(!destination.includes('meta')&&!destination.includes('google')&&!destination.includes('webhook')) return 'unsupported delivery destination'
+  if(destination.includes('google')){
+    const hasIdentity=Boolean(body.gclid||body.gbraid||body.wbraid||body.email||body.emailSha256||body.email_sha256||body.phone||body.phoneSha256||body.phone_sha256)
+    if(!hasIdentity) return 'Google delivery requires gclid, gbraid, wbraid, or a user identifier'
+  }
+  if(destination.includes('meta')){
+    const hasIdentity=Boolean(body.email||body.emailSha256||body.email_sha256||body.phone||body.phoneSha256||body.phone_sha256||body.externalId||body.customerId||body.fbc||body.fbp)
+    if(!hasIdentity) return 'Meta delivery requires a customer identifier, click/browser identifier, email, or phone'
+  }
+  if(destination.includes('webhook')&&body.webhookUrl){
+    try{
+      const target=new URL(String(body.webhookUrl))
+      if(target.protocol!=='https:'&&!(!IS_PROD&&target.protocol==='http:')) return 'webhookUrl must use HTTPS'
+    }catch{return 'webhookUrl is invalid'}
+  }
+  return null
+}
 
 const events = [
   {name:'Qualified Lead',source:'CRM',destinations:['Google Ads','Meta Ads'],latency:'real-time',status:'active'},
@@ -887,8 +940,9 @@ const server = http.createServer(async (req,res)=>{
               const idempotencyKey=createHash('sha256').update('event-rule:'+match.runId+':'+destination).digest('hex')
               const now=new Date().toISOString()
               const item={id:deliveryId,event:match.outputEvent,destination,customerId:body.customerId?String(body.customerId):null,externalEventId:match.assistedEvent?.id||match.runId,status:'queued',attempts:0,idempotencyKey,createdAt:now,updatedAt:now,nextAttemptAt:now}
+              item.replayPayload=buildSignalReplayPayload({...body,event:match.outputEvent,destination,value:match.assistedEvent?.value??body.value??null,currency:match.assistedEvent?.currency||body.currency||null},{...item,idempotencyKey})
               await mutateState(s=>{s.signalDeliveries=s.signalDeliveries||[];s.signalDeliveries.unshift(item);s.signalDeliveries=s.signalDeliveries.slice(0,10000);s.audit.unshift({id:randomUUID(),action:'event-rule.signal.queued',entityId:deliveryId,ruleId:match.ruleId,destination,event:match.outputEvent,at:now});s.audit=s.audit.slice(0,1000)})
-              const job=await enqueueJob({workspaceId,kind:'signal_delivery',idempotencyKey:'rule-signal:'+idempotencyKey,payload:{...item,visitorId:body.visitorId||null,email:body.email||null,phone:body.phone||null,gclid:body.gclid||null,fbclid:body.fbclid||null,value:match.assistedEvent?.value??body.value??null,currency:match.assistedEvent?.currency||body.currency||null}})
+              const job=await enqueueJob({workspaceId,kind:'signal_delivery',idempotencyKey:'rule-signal:'+idempotencyKey,payload:item.replayPayload})
               derivedDeliveries.push({ruleId:match.ruleId,outputEvent:match.outputEvent,destination,deliveryId,jobId:job?.id||null})
               queued++
             }
@@ -1094,7 +1148,9 @@ const server = http.createServer(async (req,res)=>{
     }
     if (req.method === 'POST' && url.pathname === '/api/signal-deliveries/dispatch') {
       const body=await readBody(req)
-      if(!body.event || !body.destination) return send(req,res,400,{error:'event and destination required'})
+      const validationError=validateSignalDispatch(body)
+      if(validationError) return send(req,res,400,{error:validationError})
+      if(!queueAvailable()) return send(req,res,503,{error:'signal delivery queue unavailable',required:'DATABASE_URL'})
       if(body.customerId||body.visitorId){
         const consent=await consentAllows(workspaceId,{subjectType:body.customerId?'customer':'visitor',subjectId:body.customerId||body.visitorId,category:'marketing'})
         if(!consent.allowed) return send(req,res,403,{error:'marketing consent required',reason:consent.reason})
@@ -1118,6 +1174,7 @@ const server = http.createServer(async (req,res)=>{
         updatedAt:now,
         nextAttemptAt:now
       }
+      item.replayPayload=buildSignalReplayPayload(body,{...item,idempotencyKey})
       await mutateState(s=>{
         s.signalDeliveries=s.signalDeliveries||[]
         s.signalDeliveries.unshift(item)
@@ -1129,20 +1186,20 @@ const server = http.createServer(async (req,res)=>{
         workspaceId,
         kind:'signal_delivery',
         idempotencyKey:'signal:'+idempotencyKey,
-        payload:{...body,deliveryId:item.id,event:item.event,destination:item.destination,idempotencyKey}
+        payload:item.replayPayload
       })
       return send(req,res,202,{duplicate:false,item,job:job?{id:job.id,status:job.status}:null})
     }
     if (req.method === 'POST' && url.pathname === '/api/signal-deliveries/retry') {
       const body=await readBody(req)
       if(!body.id) return send(req,res,400,{error:'id required'})
+      if(!queueAvailable()) return send(req,res,503,{error:'signal delivery queue unavailable',required:'DATABASE_URL'})
       let updated=null
       const now=new Date().toISOString()
       await mutateState(s=>{
         const item=(s.signalDeliveries||[]).find(x=>x.id===body.id)
         if(item){
           item.status='queued'
-          item.attempts=Number(item.attempts||0)+1
           item.nextAttemptAt=now
           item.updatedAt=now
           item.lastError=null
@@ -1152,19 +1209,21 @@ const server = http.createServer(async (req,res)=>{
         s.audit=s.audit.slice(0,1000)
       })
       if(updated){
+        const replayPayload=updated.replayPayload||buildSignalReplayPayload(updated,updated)
         await enqueueJob({
           workspaceId,
           kind:'signal_delivery',
-          idempotencyKey:'retry:'+updated.id+':'+updated.attempts+':'+Date.now(),
-          payload:{deliveryId:updated.id,event:updated.event,destination:updated.destination,idempotencyKey:updated.idempotencyKey}
+          idempotencyKey:'retry:'+updated.id+':'+Date.now(),
+          payload:{...replayPayload,deliveryId:updated.id,event:updated.event,destination:updated.destination,idempotencyKey:updated.idempotencyKey}
         })
         return send(req,res,202,updated)
       }
       return send(req,res,404,{error:'delivery not found'})
     }
     if (req.method === 'POST' && url.pathname === '/api/signal-deliveries/replay-dlq') {
+      if(!queueAvailable()) return send(req,res,503,{error:'signal delivery queue unavailable',required:'DATABASE_URL'})
       const now=new Date().toISOString()
-      let replayed=0
+      const replayItems=[]
       await mutateState(s=>{
         for(const item of (s.signalDeliveries||[])){
           if(item.status==='dead_letter'){
@@ -1172,13 +1231,24 @@ const server = http.createServer(async (req,res)=>{
             item.nextAttemptAt=now
             item.updatedAt=now
             item.lastError=null
-            replayed+=1
+            replayItems.push({...item})
           }
         }
-        s.audit.unshift({id:randomUUID(),action:'signal.dlq_replayed',count:replayed,at:now})
+        s.audit.unshift({id:randomUUID(),action:'signal.dlq_replayed',count:replayItems.length,at:now})
         s.audit=s.audit.slice(0,1000)
       })
-      return send(req,res,202,{replayed,queuedAt:now})
+      const jobs=[]
+      for(const item of replayItems){
+        const replayPayload=item.replayPayload||buildSignalReplayPayload(item,item)
+        const job=await enqueueJob({
+          workspaceId,
+          kind:'signal_delivery',
+          idempotencyKey:'dlq-replay:'+item.id+':'+Date.now(),
+          payload:{...replayPayload,deliveryId:item.id,event:item.event,destination:item.destination,idempotencyKey:item.idempotencyKey}
+        })
+        jobs.push(job?.id||null)
+      }
+      return send(req,res,202,{replayed:replayItems.length,jobs:jobs.filter(Boolean),queuedAt:now})
     }
     if (req.method === 'GET' && url.pathname === '/api/connector-health') {
       const state=await getState()
@@ -1246,7 +1316,47 @@ const server = http.createServer(async (req,res)=>{
         return send(req,res,200,await subscriptionSummary(workspaceId))
       }catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'invalid entitlements'})}
     }
-    if (req.method === 'GET' && url.pathname === '/api/signal-console') return send(req,res,200,{google:[['Qualified Lead',8214,96.1],['Consultation',2314,94.7],['Enrolment',982,97.3]],meta:[['Lead',12842,94.8],['Qualified',7621,95.4],['Purchase',982,96.2]],whatsapp:[['Chat Started',6904,'Matched'],['Qualified',3086,'Synced'],['Booked',711,'Revenue linked']]})
+    if (req.method === 'GET' && url.pathname === '/api/signal-console') {
+      const [state,jobs]=await Promise.all([getState(),queueStats(workspaceId)])
+      const deliveries=(state.signalDeliveries||[]).slice()
+      const aggregate=provider=>{
+        const selected=deliveries.filter(x=>String(x.destination||'').toLowerCase().includes(provider))
+        const grouped=new Map()
+        for(const item of selected){
+          const key=String(item.event||'Unknown')
+          const row=grouped.get(key)||{event:key,total:0,delivered:0,retrying:0,deadLetter:0,latencyMs:[]}
+          row.total+=1
+          if(item.status==='delivered') row.delivered+=1
+          if(item.status==='queued'||item.status==='retrying') row.retrying+=1
+          if(item.status==='dead_letter') row.deadLetter+=1
+          if(Number.isFinite(Number(item.latencyMs))) row.latencyMs.push(Number(item.latencyMs))
+          grouped.set(key,row)
+        }
+        return [...grouped.values()].map(row=>({
+          event:row.event,
+          total:row.total,
+          delivered:row.delivered,
+          retrying:row.retrying,
+          deadLetter:row.deadLetter,
+          deliveryRate:row.total?Number((row.delivered/row.total*100).toFixed(2)):0,
+          averageLatencyMs:row.latencyMs.length?Math.round(row.latencyMs.reduce((a,b)=>a+b,0)/row.latencyMs.length):null
+        })).sort((a,b)=>b.total-a.total)
+      }
+      return send(req,res,200,{
+        generatedAt:new Date().toISOString(),
+        queue:jobs,
+        summary:{
+          total:deliveries.length,
+          delivered:deliveries.filter(x=>x.status==='delivered').length,
+          retrying:deliveries.filter(x=>x.status==='queued'||x.status==='retrying').length,
+          deadLetter:deliveries.filter(x=>x.status==='dead_letter').length
+        },
+        google:aggregate('google'),
+        meta:aggregate('meta'),
+        webhook:aggregate('webhook'),
+        recent:deliveries.sort((a,b)=>String(b.updatedAt||b.createdAt).localeCompare(String(a.updatedAt||a.createdAt))).slice(0,25)
+      })
+    }
     if (req.method === 'GET' && url.pathname === '/api/resources') return send(req,res,200,{items:['Custom Events','Server-Side Activation','Attribution','CRM Enrichment','Offline Conversion Tracking','Audience Operations']})
     if (req.method === 'GET' && url.pathname === '/api/ai-action') return send(req,res,200,{steps:[
       {step:1,agent:'Lead Grading',action:'score_intent'},
