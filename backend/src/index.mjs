@@ -1407,7 +1407,7 @@ const server = http.createServer(async (req,res)=>{
           conversionPropensity:body.conversionPropensity||0,
           ltvTier:body.ltvTier||null,
           lastActivity:body.occurredAt||event.receivedAt,
-          attributes:{channel:body.channel||null,event:body.event||body.name||null,platform:body.platform||null}
+          attributes:{channel:body.channel||null,event:body.event||body.name||null,platform:body.platform||null,consentSubjectType:body.customerId?'customer':'visitor',consentSubjectId:trackingSubjectId}
         }).catch(()=>null)
       }
       let clickSession=null
