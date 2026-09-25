@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import './ace-platform.css'
 import { api } from './lib/api'
+import {getLocalConsent,saveLocalConsent} from './lib/tracker'
 
 type View='site'|'app'|'login'|'pricing'|'demo'|'company'|'resources'|'case-studies'|'privacy'|'terms'|'security'|'solutions'|'industries'|'agents-public'|'integrations-public'
 type AppTab='Launchpad'|'Overview'|'AdSync'|'Funnel'|'Events'|'Adjustments'|'Diagnostics'|'Fraud'|'Deep Links'|'Sites'|'Fingerprinting'|'Live Sync'|'Data Hub'|'Offline Attribution'|'Matchback'|'POS & Stores'|'Journeys'|'Identity'|'Models'|'Attribution'|'Planner'|'Reports'|'Enrich'|'Lead Grading'|'Behavior'|'Feed'|'Agents'|'Routing'|'Follow-ups'|'Calls'|'Meetings'|'Feedback'|'Approvals'|'Ask Ace'|'Integrations'|'Audiences'|'Delivery'|'Monitoring'|'Alerts'|'Developers'|'Settings'
@@ -41,6 +42,13 @@ const caseStudies=[
  ['High AOV Commerce','Persisted ad click identifiers into WhatsApp and partial-payment journeys.','Full path','click-to-revenue'],
  ['Home Services','Used CRM outcomes and custom events to improve audience quality and suppress junk leads.','Real time','audience activation']
 ]
+
+function ConsentBanner(){
+ const [visible,setVisible]=useState(()=>!getLocalConsent())
+ const choose=async(analytics:boolean,marketing:boolean,personalization:boolean)=>{await saveLocalConsent({analytics,marketing,personalization});setVisible(false)}
+ if(!visible)return null
+ return <div className="consent-banner" role="dialog" aria-label="Privacy choices"><div className="consent-copy"><ShieldCheck/><div><b>Your privacy choices</b><p>Essential storage is always used for security and core functionality. Analytics, advertising signals and personalization stay off until you choose to enable them.</p></div></div><div className="consent-actions"><button onClick={()=>choose(false,false,false)}>Essential only</button><button onClick={()=>choose(true,false,false)}>Allow analytics</button><button className="primary" onClick={()=>choose(true,true,true)}>Allow all</button></div></div>
+}
 
 function Brand({dark=false}:{dark?:boolean}){
  return <div className={'ace-brand '+(dark?'dark':'')}><span className="ace-mark"><i/><i/><i/></span><b>AceMarketing</b></div>
@@ -1294,6 +1302,17 @@ function UsersRolesSettings(){
  </div>
 }
 
+function GovernanceSettings(){
+ const [data,setData]=useState<any>(null)
+ useEffect(()=>{api.consentStats().then((r:any)=>setData(r)).catch(()=>null)},[])
+ const s=data?.stats||{}
+ return <div className="settings-detail"><h3>Data governance & consent</h3><p>Consent decisions are enforced server-side before analytics tracking and marketing activation.</p>
+ <div className="stats-grid compact"><Stat label="Consent records" value={String(s.total||0)} sub="Auditable subjects" Icon={ShieldCheck}/><Stat label="Analytics allowed" value={String(s.analytics||0)} sub="Measurement consent" Icon={Activity}/><Stat label="Marketing allowed" value={String(s.marketing||0)} sub="Activation consent" Icon={Target}/><Stat label="Revoked" value={String(s.revoked||0)} sub="Activation blocked" Icon={X}/></div>
+ {['Essential storage','Analytics tracking','Marketing activation','Personalization'].map((x,i)=><div className="setting-line" key={x}><span>{x}</span><b>{i===0?'Always enabled':'Consent required'}</b><span className={i===0?'healthy':'status'}>{i===0?'Essential':'Default off'}</span></div>)}
+ <h4>Recent consent audit</h4>{(data?.audit||[]).slice(0,8).map((x:any)=><div className="audit-row" key={x.id}><ShieldCheck/><div><b>{x.action}</b><small>{x.subject_type} · {x.subject_id}</small></div><span>{new Date(x.created_at).toLocaleString()}</span></div>)}
+ </div>
+}
+
 function BillingUsageSettings(){
  const [data,setData]=useState<any>(null)
  const [subscription,setSubscription]=useState<any>(null)
@@ -1326,7 +1345,7 @@ function Settings(){
   'Workspace':<div className="settings-detail"><h3>Workspace profile</h3><div className="setup-form-grid">{[['Organization','Ace EdTech'],['Timezone','Asia/Kolkata'],['Currency','INR'],['Reporting week','Monday'],['Default attribution','Full path'],['Environment','Production']].map(x=><label key={x[0]}><span>{x[0]}</span><input defaultValue={x[1]}/></label>)}</div><button className="app-primary">Save workspace</button></div>,
   'Users & roles':<UsersRolesSettings/>,
   'Tracking':<div className="settings-detail"><h3>Tracking configuration</h3>{[['Primary domain','www.example.com'],['Cross-domain tracking','Enabled'],['GCLID persistence','90 days'],['FBCLID persistence','90 days'],['Server event endpoint','/api/track']].map(x=><div className="setting-line" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><button>Edit</button></div>)}</div>,
-  'Governance':<div className="settings-detail"><h3>Data governance & audit</h3>{[['Consent enforcement','Required before optional activation'],['Retention','180 days'],['Deletion SLA','30 days'],['PII hashing','SHA-256 design'],['Audit logging','Enabled']].map(x=><div className="setting-line" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><button>Edit</button></div>)}<h4>Recent audit activity</h4>{[['Agent approval policy changed','Sakshee','2h ago'],['Google Ads connector refreshed','System','3h ago'],['Audience suppression updated','Growth Lead','Yesterday'],['API key created','Sakshee','2d ago']].map(x=><div className="audit-row" key={x[0]}><Activity/><div><b>{x[0]}</b><small>{x[1]}</small></div><span>{x[2]}</span></div>)}</div>,
+  'Governance':<GovernanceSettings/>,
   'API & webhooks':<div className="settings-detail"><h3>API keys & webhooks</h3><div className="api-key-box"><div><span>Workspace API key</span><code>{apiKey||'••••••••••••••••••••'}</code></div><button onClick={makeKey}>{apiKey?'Rotate key':'Create key'}</button></div><h4>Outbound webhooks</h4>{[['lead.qualified','https://example.com/hooks/qualified'],['revenue.closed','https://example.com/hooks/revenue'],['sync.failed','https://example.com/hooks/ops']].map(x=><div className="setting-line" key={x[0]}><code>{x[0]}</code><b>{x[1]}</b><span className="healthy">Active</span></div>)}</div>,
   'Agent approvals':<div className="settings-detail"><h3>Agent approval boundaries</h3>{[['Signal return','Auto-run','Low risk'],['CRM enrichment','Auto-run','Low risk'],['Lead qualification call','Human approval','Customer contact'],['Audience suppression','Human approval','Spend impact'],['Custom integration write','Human approval','External mutation']].map(x=><div className="setting-line" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><em>{x[2]}</em></div>)}</div>,
   'Notifications':<div className="settings-detail"><h3>Notifications</h3>{[['Critical delivery failures','Email + Slack','Enabled'],['Token expiry','Email','Enabled'],['Audience stale > 60m','Slack','Enabled'],['Daily performance summary','Email','Enabled']].map(x=><div className="setting-line" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><span className="healthy">{x[2]}</span></div>)}</div>,
@@ -1398,5 +1417,6 @@ export default function AcePlatform(){
  if(view==='industries')return <IndustriesPublicPage {...nav}/>
  if(view==='agents-public')return <AgentsPublicPage {...nav}/>
  if(view==='integrations-public')return <IntegrationsPublicPage {...nav}/>
- return view==='site'?<Marketing {...nav}/>:<Product back={goHome}/>
+ const content=view==='site'?<Marketing {...nav}/>:<Product back={goHome}/>
+ return <>{content}<ConsentBanner/></>
 }
