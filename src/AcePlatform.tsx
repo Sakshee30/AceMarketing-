@@ -9,7 +9,7 @@ import {
 import './ace-platform.css'
 import { api } from './lib/api'
 
-type View='site'|'app'|'login'|'pricing'|'demo'|'company'|'resources'
+type View='site'|'app'|'login'|'pricing'|'demo'|'company'|'resources'|'case-studies'
 type AppTab='Overview'|'AdSync'|'Funnel'|'Events'|'Live Sync'|'Offline Attribution'|'Journeys'|'Attribution'|'Enrich'|'Agents'|'Integrations'|'Audiences'|'Monitoring'|'Settings'
 
 const agents=[
@@ -45,20 +45,20 @@ const caseStudies=[
 function Brand({dark=false}:{dark?:boolean}){
  return <div className={'ace-brand '+(dark?'dark':'')}><span className="ace-mark"><i/><i/><i/></span><b>AceMarketing</b></div>
 }
-function Header({openApp,openLogin,openPricing,openDemo,openCompany,openResources}:{openApp:()=>void,openLogin:()=>void,openPricing:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void}){
+function Header({openApp,openLogin,openPricing,openDemo,openCompany,openResources,openCaseStudies}:{openApp:()=>void,openLogin:()=>void,openPricing:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void,openCaseStudies:()=>void}){
  const [open,setOpen]=useState(false)
  return <header className="marketing-header"><Brand/><nav className={open?'mobile-open':''}>
-  <a href="#platform">Platform</a><a href="#problems">Use cases</a><a href="#agents">Agents</a><a href="#integrations">Integrations</a><a href="#industries">Industries</a><button className="ghost-nav" onClick={openResources}>Resources</button><button className="ghost-nav" onClick={openCompany}>Company</button><button className="ghost-nav" onClick={openPricing}>Pricing</button>
+  <a href="#platform">Platform</a><a href="#problems">Use cases</a><a href="#agents">Agents</a><a href="#integrations">Integrations</a><a href="#industries">Industries</a><button className="ghost-nav" onClick={openCaseStudies}>Case Studies</button><button className="ghost-nav" onClick={openResources}>Resources</button><button className="ghost-nav" onClick={openCompany}>Company</button><button className="ghost-nav" onClick={openPricing}>Pricing</button>
   <button className="ghost-nav" onClick={openLogin}>Login</button><button className="ghost-nav" onClick={openApp}>Open product</button><button onClick={openDemo} className="header-cta">Book a demo <ArrowRight size={15}/></button>
  </nav><button className="menu-toggle" onClick={()=>setOpen(!open)}>{open?<X/>:<Menu/>}</button></header>
 }
-function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResources}:{openApp:()=>void,openLogin:()=>void,openPricing:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void}){
+function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResources,openCaseStudies}:{openApp:()=>void,openLogin:()=>void,openPricing:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void,openCaseStudies:()=>void}){
  const [agentFilter,setAgentFilter]=useState('All')
  const visibleAgents=agentFilter==='All'?agents:agents.filter(a=>a[2]===agentFilter)
  return <div className="marketing-page">
   <div className="reference-banner"><span>Public EasyInsights benchmark referenced for parity:</span><b>up to 45% incremental revenue uplift</b><a href="#impact">See impact model <ArrowRight/></a></div>
   <section className="hero-wrap">
-   <Header openApp={openApp} openLogin={openLogin} openPricing={openPricing} openDemo={openDemo} openCompany={openCompany} openResources={openResources}/>
+   <Header openApp={openApp} openLogin={openLogin} openPricing={openPricing} openDemo={openDemo} openCompany={openCompany} openResources={openResources} openCaseStudies={openCaseStudies}/>
    <div className="hero-grid">
     <div className="hero-copy">
      <span className="kicker">FIRST-PARTY PERFORMANCE MARKETING INFRASTRUCTURE</span>
@@ -213,7 +213,7 @@ function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResou
   </section>
 
   <DemoSection openApp={openApp}/>
-  <footer className="marketing-footer"><Brand/><p>AceMarketing · first-party growth operating system.</p><div><button onClick={openResources}>Resources</button><button onClick={openCompany}>Company</button><button onClick={openPricing}>Pricing</button><button onClick={openDemo}>Book demo</button></div></footer>
+  <footer className="marketing-footer"><Brand/><p>AceMarketing · first-party growth operating system.</p><div><button onClick={openCaseStudies}>Case Studies</button><button onClick={openResources}>Resources</button><button onClick={openCompany}>Company</button><button onClick={openPricing}>Pricing</button><button onClick={openDemo}>Book demo</button></div></footer>
  </div>
 }
 
@@ -233,6 +233,41 @@ function CompanyPage({back,openDemo}:{back:()=>void,openDemo:()=>void}){
   <section className="standalone-hero company-hero"><span className="kicker">COMPANY</span><h1>Built around the reality of complex performance marketing funnels.</h1><p>AceMarketing is being developed as a SaaS operating layer for teams that need attribution, signal activation, funnel automation and first-party data workflows without rebuilding every system in-house.</p><button onClick={openDemo}>Talk to the product team <ArrowRight/></button></section>
   <section className="company-values"><div className="section-title"><span className="kicker dark">OPERATING PRINCIPLES</span><h2>Implementation is not a template.</h2></div><div>{[['If data can solve it, map it','Unusual CRMs, custom stages and offline paths should be modeled explicitly instead of forced into a generic demo funnel.'],['Built from marketing problems','The product is organized around lead quality, conversion, attribution and operational handoffs rather than generic BI dashboards.'],['Work with the existing stack','Connect what teams already use and add specialized adapters where standard connectors are not enough.']].map((x,i)=><article key={x[0]}><span>0{i+1}</span><h3>{x[0]}</h3><p>{x[1]}</p></article>)}</div></section>
   <section className="custom-services"><div><span className="kicker">CUSTOM SERVICES</span><h2>Extend the platform when the standard path is not enough.</h2><p>Architecture accommodates attribution modeling, server-to-server integrations, cohort-style reporting, automated reports and custom data-engineering workflows.</p></div><div className="service-grid">{['Server-to-server integration','Attribution modeling','Cohort / media planning reports','Automated reports','Custom event design','Bespoke connector pipelines'].map(x=><article key={x}><Check/><b>{x}</b></article>)}</div></section>
+ </div>
+}
+
+function CaseStudiesPage({back,openDemo}:{back:()=>void,openDemo:()=>void}){
+ const studies=[
+  {
+   sector:'Healthcare',name:'Apollo Ayurvaid',title:'Call tracking & WhatsApp conversions',
+   challenge:['Inbound calls were not attributed to ad campaigns','WhatsApp enquiries were missing from conversion reporting','Telephony had no native ad-platform integration'],
+   solution:['Connect telephony through API','Match inbound calls to active-session click IDs using timestamp overlap','Return WhatsApp conversion events to Google Ads and Meta'],
+   metrics:[['Match method','Session-time overlap'],['Channels','Google + Meta'],['Outcome','Offline signal restored']]
+  },
+  {
+   sector:'EdTech',name:'Jaro Education',title:'High-volume lead management',
+   challenge:['14,000+ daily leads','15+ active ad accounts','Complex LeadSquared stage mappings','Fragmented conversions at scale'],
+   solution:['Unified OCI + ECL pipeline','Centralized imports across ad accounts','Real-time stage-based conversion events','Cross-platform attribution'],
+   metrics:[['2,50,000+','conversions imported daily'],['14,000+','daily leads processed'],['15+','ad accounts'],['4','platforms unified']]
+  },
+  {
+   sector:'High AOV',name:'GemPundit',title:'WhatsApp funnel + partial-payment tracking',
+   challenge:['Long consideration cycle','Users move from ads to WhatsApp','Partial payments obscure final value','GCLID was lost after web exit'],
+   solution:['Persist GCLID from landing page','Associate click ID with WhatsApp identity','Create partial-payment conversion events','Adjust conversion value for bidding'],
+   metrics:[['Bridge','Web → WhatsApp'],['Signal','Partial payment'],['Optimization','Revenue-aware bidding']]
+  },
+  {
+   sector:'Home Services',name:'Berger Paints',title:'Quality-first CTWA optimization',
+   challenge:['Need profitable pan-India lead generation','Heavy CTWA acquisition','Campaigns needed optimization beyond raw lead volume'],
+   solution:['Server-side CAPI activation','CRM online + offline signal return','Custom CTWA events such as house size and location','Automated alerts and monitoring'],
+   metrics:[['19%','reduction in CAC'],['4×','growth in quality leads'],['24×7','automated monitoring']]
+  }
+ ]
+ return <div className="standalone-page case-study-page">
+  <div className="standalone-top"><Brand/><button onClick={back}>Back to website</button></div>
+  <section className="standalone-hero case-study-hero"><span className="kicker">CASE STUDIES</span><h1>Reference implementation patterns for complex acquisition funnels.</h1><p>These are paraphrased from the supplied EasyInsights brochure and are presented as reference patterns, not AceMarketing customer claims.</p></section>
+  <section className="case-study-detail-grid">{studies.map((s,i)=><article key={s.name}><div className="case-study-title"><span>{String(i+1).padStart(2,'0')} · {s.sector}</span><h2>{s.name}</h2><h3>{s.title}</h3></div><div className="case-columns"><div><b>The challenge</b>{s.challenge.map(x=><p key={x}><span>•</span>{x}</p>)}</div><div><b>Implementation pattern</b>{s.solution.map(x=><p key={x}><Check/>{x}</p>)}</div></div><div className="case-metrics">{s.metrics.map(x=><div key={x[0]}><strong>{x[0]}</strong><small>{x[1]}</small></div>)}</div></article>)}</section>
+  <section className="case-study-cta"><div><span className="kicker">APPLY THE PATTERN</span><h2>Map one of these workflows to your own funnel.</h2><p>Use the demo flow to capture your CRM, channels, offline steps and optimization goals.</p></div><button onClick={openDemo}>Book implementation walkthrough <ArrowRight/></button></section>
  </div>
 }
 
@@ -348,7 +383,11 @@ function Events(){
  ]
  return <><PageHead crumb="Activation / Events" title="Conversion event manager" sub="Define the business outcomes that should be captured, transformed and returned to downstream platforms." action="New event"/>
  <div className="event-layout"><div className="app-panel event-list"><div className="panel-head"><div><h3>Configured events</h3><p>Business logic → destinations</p></div><span className="healthy">6 active</span></div>{events.map(x=><button className={active===x[0]?'selected':''} key={x[0]} onClick={()=>setActive(x[0])}><span><Zap/></span><div><b>{x[0]}</b><small>{x[1]} → {x[2]}</small></div><i>{x[4]}</i><ChevronRight/></button>)}</div>
- <div className="app-panel event-editor"><div className="panel-head"><div><h3>{active}</h3><p>Transformation and delivery rules</p></div><button>Edit</button></div><div className="event-step"><span>1</span><div><b>Source condition</b><p>CRM stage changes to <strong>{active}</strong> and identity contains a valid first-party key.</p></div></div><div className="event-step"><span>2</span><div><b>Identity resolution</b><p>Resolve GCLID / FBCLID, hashed email, hashed phone and workspace customer ID.</p></div></div><div className="event-step"><span>3</span><div><b>Normalize & deduplicate</b><p>Apply event schema, revenue/value rules and deterministic event ID before delivery.</p></div></div><div className="event-step"><span>4</span><div><b>Activate</b><p>Send to configured ad-platform destinations and write delivery status to the audit stream.</p></div></div><div className="delivery-summary"><div><span>Median latency</span><b>42s</b></div><div><span>Match rate</span><b>94.8%</b></div><div><span>24h delivery</span><b>99.82%</b></div></div></div></div></>
+ <div className="app-panel event-editor"><div className="panel-head"><div><h3>{active}</h3><p>Transformation and delivery rules</p></div><button>Edit</button></div><div className="event-step"><span>1</span><div><b>Source condition</b><p>CRM stage changes to <strong>{active}</strong> and identity contains a valid first-party key.</p></div></div><div className="event-step"><span>2</span><div><b>Identity resolution</b><p>Resolve GCLID / FBCLID, hashed email, hashed phone and workspace customer ID.</p></div></div><div className="event-step"><span>3</span><div><b>Normalize & deduplicate</b><p>Apply event schema, revenue/value rules and deterministic event ID before delivery.</p></div></div><div className="event-step"><span>4</span><div><b>Activate</b><p>Send to configured ad-platform destinations and write delivery status to the audit stream.</p></div></div><div className="delivery-summary"><div><span>Median latency</span><b>42s</b></div><div><span>Match rate</span><b>94.8%</b></div><div><span>24h delivery</span><b>99.82%</b></div></div></div></div>
+ <div className="event-tooling-grid">
+  <div className="app-panel"><div className="panel-head"><div><h3>Custom event templates</h3><p>Common business events from the brochure patterns</p></div></div>{[['Pricing-page Lead','High intent','Optimize'],['High-value Purchase','Revenue','Primary'],['Prepaid Order','Payment type','Optimize'],['Fulfilled Order','Revenue quality','Adjust'],['Returned Order','Negative outcome','Exclude'],['Partial Payment','Value adjustment','Adjust']].map(x=><div className="template-row" key={x[0]}><Zap/><div><b>{x[0]}</b><small>{x[1]}</small></div><span>{x[2]}</span></div>)}</div>
+  <div className="app-panel"><div className="panel-head"><div><h3>Conversion adjustments</h3><p>Teach bidding the difference between raw and valuable outcomes</p></div></div>{[['Raw form fill','Qualified lead','Upgrade signal'],['Partial payment','Full payment / zero','Reclassify'],['Returned order','Zero value','Correct revenue'],['Duplicate lead','Excluded','Deduplicate']].map(x=><div className="adjustment-row" key={x[0]}><span>{x[0]}</span><ArrowRight/><b>{x[1]}</b><em>{x[2]}</em></div>)}</div>
+ </div></>
 }
 
 function LiveSync(){
@@ -429,7 +468,8 @@ function Monitoring(){
  return <><PageHead crumb="Operations / Monitoring" title="Platform monitoring" sub="Observe connector health, event delivery, sync latency and processing failures." action="Create alert"/>
  <div className="stats-grid"><Stat label="Platform status" value="Healthy" sub="All critical services" Icon={Activity}/><Stat label="Events / min" value="8,412" sub="Current throughput" Icon={Zap}/><Stat label="Failed events" value="0.18%" sub="Retry queue enabled" Icon={BarChart3}/><Stat label="P95 latency" value="1.7s" sub="Ingestion pipeline" Icon={Gauge}/></div>
  <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Connector uptime</h3><p>Last 24 hours</p></div><span className="healthy">99.98%</span></div>{['Google Ads','Meta Ads','Zoho CRM','WhatsApp','Exotel'].map((x,i)=><div className="monitor-row" key={x}><span>{x}</span><div className="spark-bars">{Array.from({length:18}).map((_,j)=><i key={j} className={(i===3&&j===11)?'warn':''}/>)}</div><b>{i===3?'99.91%':'100%'}</b></div>)}</div>
- <div className="app-panel"><div className="panel-head"><div><h3>Recent alerts</h3><p>Operational events</p></div></div>{[['Resolved','WhatsApp API rate limit recovered','12 min ago'],['Resolved','Google Ads token refreshed','48 min ago'],['Info','Audience sync completed','1h ago'],['Info','Daily attribution rebuild complete','3h ago']].map(x=><div className="alert-row" key={x[1]}><span className={x[0].toLowerCase()}>{x[0]}</span><div><b>{x[1]}</b><small>{x[2]}</small></div></div>)}</div></div></>
+ <div className="app-panel"><div className="panel-head"><div><h3>Recent alerts</h3><p>Operational events</p></div></div>{[['Resolved','WhatsApp API rate limit recovered','12 min ago'],['Resolved','Google Ads token refreshed','48 min ago'],['Info','Audience sync completed','1h ago'],['Info','Daily attribution rebuild complete','3h ago']].map(x=><div className="alert-row" key={x[1]}><span className={x[0].toLowerCase()}>{x[0]}</span><div><b>{x[1]}</b><small>{x[2]}</small></div></div>)}</div></div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Automated monitoring rules</h3><p>Guardrails for signal loss and stale optimization inputs</p></div><button>+ Add rule</button></div><div className="monitor-rule-grid">{[['Event delivery rate','< 98% for 10 min','Critical'],['GCLID coverage','< 85%','Warning'],['CRM sync latency','> 5 min','Warning'],['Audience sync','No update for 60 min','Critical'],['CAPI token','Expires in < 24h','Info'],['Failed event queue','> 500 records','Critical']].map(x=><article key={x[0]}><Activity/><div><b>{x[0]}</b><small>{x[1]}</small></div><span className={String(x[2]).toLowerCase()}>{x[2]}</span></article>)}</div></div></>
 }
 function Settings(){
  return <><PageHead crumb="Workspace / Settings" title="Workspace settings" sub="Configure organization, access, tracking, data governance and automation boundaries."/>
@@ -450,4 +490,4 @@ function Product({back}:{back:()=>void}){
  return <div className="product"><aside><Brand/><div className="workspace"><span>AM</span><div><b>Ace EdTech</b><small>Production workspace</small></div><ChevronDown/></div><nav>{appTabs.map(([x,I])=><button key={x} className={tab===x?'active':''} onClick={()=>setTab(x)}><I/>{x}</button>)}</nav><div className="aside-footer"><button onClick={back}><ArrowRight/>Back to website</button><div className="profile-mini"><span>S</span><div><b>Sakshee</b><small>Workspace owner</small></div></div></div></aside>
  <main><header className="product-head"><div className="global-search"><Search/>Search journeys, leads, campaigns...</div><div><span className="sync">● Live sync healthy</span><button><Headphones/></button><button><Globe2/></button><span className="avatar-sm">S</span></div></header><div className="product-body">{view}</div></main></div>
 }
-export default function AcePlatform(){const[view,setView]=useState<View>('site');if(view==='login')return <Login back={()=>setView('site')} openApp={()=>setView('app')}/>;if(view==='pricing')return <Pricing back={()=>setView('site')} openApp={()=>setView('app')}/>;if(view==='demo')return <DemoPage back={()=>setView('site')} openApp={()=>setView('app')}/>;if(view==='company')return <CompanyPage back={()=>setView('site')} openDemo={()=>setView('demo')}/>;if(view==='resources')return <ResourcesPage back={()=>setView('site')}/>;return view==='site'?<Marketing openApp={()=>setView('app')} openLogin={()=>setView('login')} openPricing={()=>setView('pricing')} openDemo={()=>setView('demo')} openCompany={()=>setView('company')} openResources={()=>setView('resources')}/>:<Product back={()=>setView('site')}/>}
+export default function AcePlatform(){const[view,setView]=useState<View>('site');if(view==='login')return <Login back={()=>setView('site')} openApp={()=>setView('app')}/>;if(view==='pricing')return <Pricing back={()=>setView('site')} openApp={()=>setView('app')}/>;if(view==='demo')return <DemoPage back={()=>setView('site')} openApp={()=>setView('app')}/>;if(view==='company')return <CompanyPage back={()=>setView('site')} openDemo={()=>setView('demo')}/>;if(view==='resources')return <ResourcesPage back={()=>setView('site')}/>;if(view==='case-studies')return <CaseStudiesPage back={()=>setView('site')} openDemo={()=>setView('demo')}/>;return view==='site'?<Marketing openApp={()=>setView('app')} openLogin={()=>setView('login')} openPricing={()=>setView('pricing')} openDemo={()=>setView('demo')} openCompany={()=>setView('company')} openResources={()=>setView('resources')} openCaseStudies={()=>setView('case-studies')}/>:<Product back={()=>setView('site')}/>}
