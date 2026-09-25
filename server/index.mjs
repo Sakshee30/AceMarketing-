@@ -93,6 +93,7 @@ const server = http.createServer(async (req,res)=>{
     ]})
     if (req.method === 'GET' && url.pathname === '/api/monitoring') return send(res,200,{status:'healthy',eventsPerMinute:8412,failedEventRate:0.18,p95LatencySeconds:1.7})
     if (req.method === 'GET' && url.pathname === '/api/signal-console') return send(res,200,{google:[['Qualified Lead',8214,96.1],['Consultation',2314,94.7],['Enrolment',982,97.3]],meta:[['Lead',12842,94.8],['Qualified',7621,95.4],['Purchase',982,96.2]],whatsapp:[['Chat Started',6904,'Matched'],['Qualified',3086,'Synced'],['Booked',711,'Revenue linked']]})
+    if (req.method === 'GET' && url.pathname === '/api/resources') return send(res,200,{items:['Custom Events','Server-Side Activation','Attribution','CRM Enrichment','Offline Conversion Tracking','Audience Operations']})
     if (req.method === 'GET' && url.pathname === '/api/security-posture') return send(res,200,{controls:[
       {name:'ISO 27001',status:'roadmap'},
       {name:'SHA-256 hashing',status:'design_implemented'},
