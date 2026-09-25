@@ -2,7 +2,8 @@ import { randomUUID } from 'node:crypto'
 import { closeQueue, completeJob, failJob, leaseJobs, queueAvailable } from './queue.mjs'
 import { deliverSignal } from './providers.mjs'
 import { syncAudienceProvider, writebackLead } from './activation-adapters.mjs'
-import { updateActivationRun, updateAudienceSyncState } from './lead-ops.mjs'
+import { closeLeadOps, updateActivationRun, updateAudienceSyncState } from './lead-ops.mjs'
+import { closeAudienceScheduler, runDueAudienceSchedules } from './audience-scheduler.mjs'
 import { dispatchAgentTransport, markMeetingReminder, updateAgentRun } from './agent-orchestrator.mjs'
 import { closeStore, mutateState, withWorkspace } from './store.mjs'
 
@@ -11,6 +12,9 @@ if(!queueAvailable()) throw new Error('DATABASE_URL is required for the worker r
 const workerId=process.env.WORKER_ID||('worker_'+randomUUID())
 const batchSize=Number(process.env.WORKER_BATCH_SIZE||10)
 const pollMs=Number(process.env.WORKER_POLL_MS||1000)
+const audienceScheduleBatch=Number(process.env.AUDIENCE_SCHEDULER_BATCH_SIZE||5)
+const audienceSchedulePollMs=Number(process.env.AUDIENCE_SCHEDULER_POLL_MS||15000)
+let lastAudienceSchedulePoll=0
 let stopping=false
 
 const updateDelivery=async(workspaceId,deliveryId,patch)=>withWorkspace(workspaceId,()=>mutateState(s=>{
@@ -53,6 +57,10 @@ const handle=async job=>{
 }
 
 const runBatch=async()=>{
+  if(Date.now()-lastAudienceSchedulePoll>=audienceSchedulePollMs){
+    lastAudienceSchedulePoll=Date.now()
+    await runDueAudienceSchedules(audienceScheduleBatch)
+  }
   const jobs=await leaseJobs({workerId,limit:batchSize})
   for(const job of jobs){
     try{
@@ -95,7 +103,7 @@ const shutdown=async signal=>{
   if(stopping) return
   stopping=true
   console.log(`${signal} received; stopping worker`)
-  await Promise.allSettled([closeQueue(),closeStore()])
+  await Promise.allSettled([closeQueue(),closeStore(),closeLeadOps(),closeAudienceScheduler()])
   process.exit(0)
 }
 process.on('SIGTERM',()=>shutdown('SIGTERM'))
