@@ -880,3 +880,25 @@ New API endpoints:
 - `POST /api/lead-grading/activate`
 
 The supplied brochure lists **Lead Grading** as one of the prebuilt agents alongside CRM Enrichment, Voice Lead Qualification, Scheduler, Reminder, Feedback and Ask EI. AceMarketing now has a dedicated operational surface for this agent as well.
+
+
+## Parity pass: operational first-party Audience Builder
+
+This pass upgrades **Audiences** from a static segment list into an interactive audience-building workflow.
+
+The Audience Builder now supports:
+- segment creation from lead grade, propensity, CRM stage, pricing-page activity, LTV tier or recency;
+- condition / operator / value logic;
+- destination selection for Google Ads, Meta Ads and LinkedIn Ads;
+- Activate, Suppress, Retarget and Lookalike Seed modes;
+- pre-save audience-size preview;
+- workspace-coverage estimate;
+- first-party signal catalog;
+- destination-policy guidance;
+- creation and initial sync state.
+
+New API endpoints:
+- `POST /api/audiences/preview`
+- `POST /api/audiences`
+
+The supplied brochure describes syncing offline lists, LTV, lifecycle and propensity segments, suppressing low-value users, activating high-value users and creating lookalike audiences. AceMarketing now provides an actual builder for those audience workflows rather than only showing predefined segments.
