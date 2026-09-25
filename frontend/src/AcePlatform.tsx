@@ -1533,18 +1533,39 @@ function Settings(){
  const sections=['Workspace','Users & roles','Tracking','Governance','API & webhooks','Agent approvals','Notifications','Billing & usage']
  const [section,setSection]=useState('Workspace')
  const [apiKey,setApiKey]=useState('')
- const makeKey=async()=>{try{const r:any=await api.createApiKey();setApiKey(r.key)}catch{setApiKey('ace_demo_key_local_only')}}
+ const [notice,setNotice]=useState('')
+ const [busy,setBusy]=useState('')
+ const [settings,setSettings]=useState<any>({
+  organization:'Ace EdTech',timezone:'Asia/Kolkata',currency:'INR',reportingWeek:'Monday',defaultAttribution:'Full path',environment:'Production',
+  primaryDomain:'www.example.com',crossDomainTracking:'Enabled',gclidPersistenceDays:90,fbclidPersistenceDays:90
+ })
+ const load=()=>api.settings().then((r:any)=>setSettings((x:any)=>({...x,...r}))).catch(()=>null)
+ useEffect(()=>{load()},[])
+ const save=async(keys?:string[])=>{
+  setBusy('save');setNotice('')
+  try{
+   const payload:any={}
+   for(const [key,value] of Object.entries(settings)) if(!keys||keys.includes(key)) payload[key]=value
+   const r:any=await api.saveSettings(payload)
+   setSettings((x:any)=>({...x,...r}))
+   setNotice('Workspace settings saved.')
+  }catch(e:any){setNotice(e?.message||'Settings could not be saved.')}
+  finally{setBusy('')}
+ }
+ const makeKey=async()=>{try{const r:any=await api.createApiKey();setApiKey(r.key);setNotice('API key created. Copy it now; only its fingerprint is stored.')}catch(e:any){setNotice(e?.message||'API key could not be created.')}}
+ const workspaceFields=[['organization','Organization'],['timezone','Timezone'],['currency','Currency'],['reportingWeek','Reporting week'],['defaultAttribution','Default attribution'],['environment','Environment']]
  const content:any={
-  'Workspace':<div className="settings-detail"><h3>Workspace profile</h3><div className="setup-form-grid">{[['Organization','Ace EdTech'],['Timezone','Asia/Kolkata'],['Currency','INR'],['Reporting week','Monday'],['Default attribution','Full path'],['Environment','Production']].map(x=><label key={x[0]}><span>{x[0]}</span><input defaultValue={x[1]}/></label>)}</div><button className="app-primary">Save workspace</button></div>,
+  'Workspace':<div className="settings-detail"><h3>Workspace profile</h3><p>These values are persisted for this workspace and used by reporting and operational views.</p><div className="setup-form-grid">{workspaceFields.map(([key,label])=><label key={key}><span>{label}</span><input value={String(settings[key]??'')} onChange={e=>setSettings({...settings,[key]:e.target.value})}/></label>)}</div><button className="app-primary" disabled={busy==='save'} onClick={()=>save(workspaceFields.map(x=>x[0]))}>{busy==='save'?'Saving…':'Save workspace'}</button></div>,
   'Users & roles':<UsersRolesSettings/>,
-  'Tracking':<div className="settings-detail"><h3>Tracking configuration</h3>{[['Primary domain','www.example.com'],['Cross-domain tracking','Enabled'],['GCLID persistence','90 days'],['FBCLID persistence','90 days'],['Server event endpoint','/api/track']].map(x=><div className="setting-line" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><button>Edit</button></div>)}</div>,
+  'Tracking':<div className="settings-detail"><h3>Tracking configuration</h3><p>Update first-party collection defaults without editing code.</p><div className="setup-form-grid"><label><span>Primary domain</span><input value={settings.primaryDomain||''} onChange={e=>setSettings({...settings,primaryDomain:e.target.value})}/></label><label><span>Cross-domain tracking</span><select value={settings.crossDomainTracking||'Enabled'} onChange={e=>setSettings({...settings,crossDomainTracking:e.target.value})}><option>Enabled</option><option>Disabled</option></select></label><label><span>GCLID persistence days</span><input type="number" min="1" max="365" value={settings.gclidPersistenceDays||90} onChange={e=>setSettings({...settings,gclidPersistenceDays:Number(e.target.value)})}/></label><label><span>FBCLID persistence days</span><input type="number" min="1" max="365" value={settings.fbclidPersistenceDays||90} onChange={e=>setSettings({...settings,fbclidPersistenceDays:Number(e.target.value)})}/></label></div><div className="setting-line"><span>Server event endpoint</span><b>/api/track</b><span className="healthy">Active</span></div><button className="app-primary" disabled={busy==='save'} onClick={()=>save(['primaryDomain','crossDomainTracking','gclidPersistenceDays','fbclidPersistenceDays'])}>{busy==='save'?'Saving…':'Save tracking settings'}</button></div>,
   'Governance':<GovernanceSettings/>,
-  'API & webhooks':<div className="settings-detail"><h3>API keys & webhooks</h3><div className="api-key-box"><div><span>Workspace API key</span><code>{apiKey||'••••••••••••••••••••'}</code></div><button onClick={makeKey}>{apiKey?'Rotate key':'Create key'}</button></div><h4>Outbound webhooks</h4>{[['lead.qualified','https://example.com/hooks/qualified'],['revenue.closed','https://example.com/hooks/revenue'],['sync.failed','https://example.com/hooks/ops']].map(x=><div className="setting-line" key={x[0]}><code>{x[0]}</code><b>{x[1]}</b><span className="healthy">Active</span></div>)}</div>,
+  'API & webhooks':<div className="settings-detail"><h3>API keys & webhooks</h3><div className="api-key-box"><div><span>Workspace API key</span><code>{apiKey||'Hidden until created or rotated'}</code></div><button onClick={makeKey}>{apiKey?'Rotate key':'Create key'}</button></div><p>Outbound webhook subscriptions are managed in the Developer console, where endpoints and delivery history are persisted.</p></div>,
   'Agent approvals':<div className="settings-detail"><h3>Agent approval boundaries</h3>{[['Signal return','Auto-run','Low risk'],['CRM enrichment','Auto-run','Low risk'],['Lead qualification call','Human approval','Customer contact'],['Audience suppression','Human approval','Spend impact'],['Custom integration write','Human approval','External mutation']].map(x=><div className="setting-line" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><em>{x[2]}</em></div>)}</div>,
   'Notifications':<div className="settings-detail"><h3>Notifications</h3>{[['Critical delivery failures','Email + Slack','Enabled'],['Token expiry','Email','Enabled'],['Audience stale > 60m','Slack','Enabled'],['Daily performance summary','Email','Enabled']].map(x=><div className="setting-line" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><span className="healthy">{x[2]}</span></div>)}</div>,
   'Billing & usage':<BillingUsageSettings/>
  }
  return <><PageHead crumb="Workspace / Settings" title="Workspace settings" sub="Configure organization, access, tracking, governance, developer access and automation boundaries."/>
+ {notice&&<div className="delivery-notice ok"><CheckCircle2/><span>{notice}</span></div>}
  <div className="settings-shell"><aside className="settings-nav">{sections.map(x=><button key={x} className={section===x?'active':''} onClick={()=>setSection(x)}>{x}<ChevronRight/></button>)}</aside><div className="app-panel">{content[section]}</div></div></>
 }
 function Product({back}:{back:()=>void}){
