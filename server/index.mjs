@@ -94,6 +94,17 @@ const server = http.createServer(async (req,res)=>{
     if (req.method === 'GET' && url.pathname === '/api/monitoring') return send(res,200,{status:'healthy',eventsPerMinute:8412,failedEventRate:0.18,p95LatencySeconds:1.7})
     if (req.method === 'GET' && url.pathname === '/api/signal-console') return send(res,200,{google:[['Qualified Lead',8214,96.1],['Consultation',2314,94.7],['Enrolment',982,97.3]],meta:[['Lead',12842,94.8],['Qualified',7621,95.4],['Purchase',982,96.2]],whatsapp:[['Chat Started',6904,'Matched'],['Qualified',3086,'Synced'],['Booked',711,'Revenue linked']]})
     if (req.method === 'GET' && url.pathname === '/api/resources') return send(res,200,{items:['Custom Events','Server-Side Activation','Attribution','CRM Enrichment','Offline Conversion Tracking','Audience Operations']})
+    if (req.method === 'GET' && url.pathname === '/api/ai-action') return send(res,200,{steps:[
+      {step:1,agent:'Lead Grading',action:'score_intent'},
+      {step:2,agent:'CRM Enrichment',action:'assemble_context'},
+      {step:3,agent:'Voice Lead Qualification',action:'qualify'},
+      {step:4,agent:'Voice Scheduler',action:'schedule'},
+      {step:5,agent:'Meeting Reminder',action:'remind'},
+      {step:6,agent:'Signal Return',action:'match_and_activate'}
+    ]})
+    if (req.method === 'GET' && url.pathname === '/api/source-notes') return send(res,200,{notes:[
+      {topic:'Shopify support',publicSite:'Current demo page says ecommerce Shopify is unsupported',brochure:'Shopify appears in integration list',aceMarketing:'planned_connector_with_source_conflict_label'}
+    ]})
     if (req.method === 'GET' && url.pathname === '/api/case-studies') return send(res,200,{items:[
       {name:'Apollo Ayurvaid',sector:'Healthcare',pattern:'Call + WhatsApp attribution'},
       {name:'Jaro Education',sector:'EdTech',pattern:'High-volume OCI/ECL'},
