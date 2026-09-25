@@ -1278,20 +1278,44 @@ const server = http.createServer(async (req,res)=>{
       return item?send(req,res,200,{item}):send(req,res,404,{error:'event rule not found'})
     }
     if (req.method === 'GET' && url.pathname === '/api/adjustments') {
-      let state=await getState()
-      if(!(state.adjustments||[]).length){
-        const now=new Date().toISOString()
-        await mutateState(s=>{
-          s.adjustments=[
-            {id:'adj_501',event:'partial_payment',source:'crm_billing',destination:'google_ads',fromValue:15000,toValue:84000,currency:'INR',reason:'Final payment received',status:'pending',createdAt:now},
-            {id:'adj_500',event:'returned_order',source:'commerce_backend',destination:'google_ads',fromValue:7200,toValue:0,currency:'INR',reason:'Order returned / revenue reversed',status:'pending',createdAt:now},
-            {id:'adj_499',event:'low_quality_lead',source:'crm',destination:'google_ads',fromValue:'lead',toValue:'excluded',reason:'Lead disposition = junk / invalid',status:'applied',createdAt:now},
-            {id:'adj_498',event:'duplicate_lead',source:'crm',destination:'meta_ads',fromValue:'lead',toValue:'deduplicated',reason:'Existing customer identity match',status:'applied',createdAt:now}
-          ]
-        })
-        state=await getState()
-      }
+      const state=await getState()
       return send(req,res,200,{items:(state.adjustments||[]).slice(0,500)})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/adjustments') {
+      const body=await readBody(req)
+      const event=String(body.event||'').trim()
+      const source=String(body.source||'').trim()
+      const destination=String(body.destination||'').trim()
+      const reason=String(body.reason||'').trim()
+      if(!event||!source||!destination||!reason) return send(req,res,400,{error:'event, source, destination and reason are required'})
+      const parseValue=value=>{
+        if(value==null||value==='')return null
+        const numeric=Number(value)
+        return Number.isFinite(numeric)?numeric:String(value).slice(0,200)
+      }
+      const now=new Date().toISOString()
+      const item={
+        id:'adj_'+randomUUID(),
+        event:event.slice(0,160),
+        source:source.slice(0,160),
+        destination:destination.slice(0,160),
+        fromValue:parseValue(body.fromValue),
+        toValue:parseValue(body.toValue),
+        currency:String(body.currency||'INR').slice(0,12),
+        reason:reason.slice(0,500),
+        status:'pending',
+        createdAt:now,
+        createdBy:req.user?.email||req.user?.userId||null
+      }
+      await mutateState(s=>{
+        s.adjustments=s.adjustments||[]
+        s.adjustments.unshift(item)
+        s.adjustments=s.adjustments.slice(0,1000)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'adjustment.created',entityId:item.id,event:item.event,destination:item.destination,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,{item})
     }
     if (req.method === 'POST' && url.pathname === '/api/adjustments/preview') {
       const body=await readBody(req)
