@@ -709,3 +709,37 @@ New API endpoints:
 - `POST /api/adjustments/apply`
 
 The supplied brochure explicitly describes Google Ads conversion adjustments used to reclassify low-value events and provides partial-payment patterns. AceMarketing now has a concrete review/apply workflow rather than only mentioning adjustments inside the event manager.
+
+
+## Parity pass: fraud detection and deep linking
+
+This pass adds two more capabilities currently exposed in EasyInsights' public agent/navigation surface.
+
+### Fraud & noise detection
+New **Fraud** workspace includes:
+- duplicate-lead burst detection;
+- bot form activity;
+- invalid contact patterns;
+- disposable-email clusters;
+- click-spam / low-quality source patterns;
+- source-level suspect-rate analysis;
+- quality gates before events reach ad platforms;
+- blocking suspect patterns from optimization signals.
+
+### Deep linking
+New **Deep Links** workspace includes:
+- app-first destinations with web fallbacks;
+- UTM passthrough;
+- GCLID / FBCLID passthrough;
+- deferred deep-linking concept;
+- attribution-window configuration;
+- cross-device/app routing logic;
+- downstream conversion performance by link.
+
+New API endpoints:
+- `GET /api/fraud`
+- `POST /api/fraud/block`
+- `GET /api/deep-links`
+- `POST /api/deep-links/activate`
+
+EasyInsights' current public Attribution Model navigation exposes **Fraud Detection** and **Deep Linking** alongside Customer Journey, Attribution, Audience, Events, Lead Grading and Lead Qualification. AceMarketing now includes operational UI for the two capabilities that were previously missing.
