@@ -14,6 +14,9 @@ const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
 
 export const api = {
   health: () => request<{ ok: boolean; service: string }>('/health'),
+  publicIndustries: () => request('/public/industries'),
+  publicAgents: () => request('/public/agents'),
+  publicIntegrations: () => request('/public/integrations'),
   launchpad: () => request('/launchpad'),
   saveLaunchpad: (payload: Record<string, unknown>) => request('/launchpad', { method: 'POST', body: JSON.stringify(payload) }),
   login: async (email: string, password: string) => {
