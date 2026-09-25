@@ -1225,3 +1225,21 @@ Changes:
 - public agent cards now use a tighter three-column desktop grid closer to the pricing/reference card density.
 
 AceMarketing keeps original copy and brand assets while using the supplied screenshots for layout, typography scale, spacing and interaction alignment.
+
+
+## Footer + functional-box parity pass
+
+This pass addresses the latest screenshot feedback directly.
+
+Implemented:
+- footer information architecture is now backend-owned through `GET /api/public/navigation`;
+- Platform, Solutions, and Resources footer items are rendered from backend configuration;
+- every footer item routes to a working AceMarketing view/workspace;
+- Privacy, Terms, and Security links are functional;
+- Pricing "Talk to sales" now opens the demo/sales route instead of navigating backward;
+- footer spacing, brand size, column widths, link typography, muted text, and legal area were retuned from the supplied reference screenshots;
+- navbar and Agents mega-menu desktop dimensions were tightened again;
+- public typography is standardized on Inter/system sans;
+- pricing/agent card density was refined to the supplied reference proportions.
+
+AceMarketing keeps its own wording and brand assets while the public layout, typography scale, spacing, and interaction model track the supplied EasyInsights references closely.
