@@ -7,6 +7,12 @@ const initial={
   quoteRequests:[],
   audiences:[],
   customIntegrations:[],
+  connectorConnections:[
+    {id:'conn_google_seed',connector:'Google Ads',provider:'google',status:'needs_configuration',authType:'oauth2',createdAt:'2026-09-25T12:00:00.000Z',updatedAt:'2026-09-25T12:00:00.000Z'},
+    {id:'conn_meta_seed',connector:'Meta Ads',provider:'meta',status:'needs_configuration',authType:'oauth2',createdAt:'2026-09-25T12:00:00.000Z',updatedAt:'2026-09-25T12:00:00.000Z'}
+  ],
+  oauthStates:[],
+  connectorCredentials:[],
   signalDeliveries:[
     {id:'sig_1001',event:'lead.qualified',destination:'Meta Ads',status:'delivered',attempts:1,httpStatus:200,latencyMs:418,idempotencyKey:'seed_meta_qualified_1001',createdAt:'2026-09-25T12:02:00.000Z',updatedAt:'2026-09-25T12:02:00.418Z'},
     {id:'sig_1002',event:'revenue.closed',destination:'Google Ads',status:'retrying',attempts:2,httpStatus:429,latencyMs:912,idempotencyKey:'seed_google_revenue_1002',createdAt:'2026-09-25T12:04:00.000Z',updatedAt:'2026-09-25T12:06:00.000Z',nextAttemptAt:'2026-09-25T12:11:00.000Z',lastError:'rate_limited'},
