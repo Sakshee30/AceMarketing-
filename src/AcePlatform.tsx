@@ -2,8 +2,8 @@
 import {useMemo,useState} from 'react'
 import {
   Activity,ArrowRight,BarChart3,Bell,Bot,Building2,Cable,CalendarDays,Check,CheckCircle2,ChevronDown,ChevronRight,
-  CircleDollarSign,Code2,DatabaseZap,Gauge,Globe2,Headphones,Layers3,Menu,MessageCircle,MessageSquareText,
-  MousePointer2,Network,PhoneCall,PhoneIncoming,PieChart,Plus,RadioTower,Search,Settings2,ShieldCheck,
+  CircleDollarSign,Code2,DatabaseZap,Gauge,Globe2,GraduationCap,HeartPulse,Home,Landmark,Layers3,Menu,MessageCircle,MessageSquareText,
+  MousePointer2,Network,PhoneCall,PhoneIncoming,PieChart,Plane,Plus,RadioTower,Search,Settings2,ShieldCheck,ShoppingCart,Store,
   Sparkles,Target,UsersRound,WandSparkles,X,Zap
 } from 'lucide-react'
 import './ace-platform.css'
@@ -50,13 +50,13 @@ function Header({openApp,openLogin,openPricing,openDemo,openCompany,openResource
  const [menu,setMenu]=useState<'industries'|'agents'|'resources'|null>(null)
  const closeMenu=()=>setMenu(null)
  const industryItems=[
-  ['Edtech','Track and activate student data across channels to improve lead quality, personalize outreach, and increase enrollments.'],
-  ['Fintech','Activate first-party data wherever it lives while maintaining strict privacy, security, and regulatory controls.'],
-  ['Healthcare','Connect patient acquisition and engagement with privacy-aware measurement and activation.'],
-  ['Retail','Unify customer data across channels to improve personalization, conversions, and loyalty.'],
-  ['Home Improvement','Connect customer interactions across touchpoints to capture high-quality leads and optimize follow-ups.'],
-  ['Travel','Unify customer data to personalize each stage of the guest journey and improve experience.'],
-  ['Consumer Goods','Activate first-party data to improve campaigns, understand buyer behavior, and drive repeat purchase.']
+  ['Edtech','Track and activate student data across channels to improve lead quality, personalize outreach, and increase enrollments.',GraduationCap],
+  ['Fintech','Enable teams to activate data wherever it lives - while maintaining strict privacy, security, and regulatory compliance.',Landmark],
+  ['Healthcare','Activate PHI and customer data securely to deliver compliant, data-driven patient engagement.',HeartPulse],
+  ['Retail','Unify customer data across channels to deliver high-intent personalization, increase conversions, and build lasting brand loyalty.',Store],
+  ['Home Improvement','Connect customer interactions across touchpoints to capture high-quality leads, optimize follow-ups, and drive project conversions.',Home],
+  ['Travel','Unify customer data to personalize every stage of the guest journey and enhance overall experience.',Plane],
+  ['Consumer Goods','Activate first-party data to optimize campaigns, understand buyer behavior, and drive repeat purchases at scale.',ShoppingCart]
  ]
  const agentItems=[
   ['Lead Quality','Meta Advanced CAPI','Google ECL / OCI','Call Tracking Events','Lead Grading'],
@@ -83,8 +83,8 @@ function Header({openApp,openLogin,openPricing,openDemo,openCompany,openResource
   {menu==='industries'&&<div className="ei-mega-menu industries-menu" onMouseEnter={()=>setMenu('industries')}>
     <div className="ei-mega-label">INDUSTRIES</div>
     <div className="ei-industry-columns">
-     <div>{industryItems.slice(0,4).map((x,i)=><button key={x[0]} onClick={()=>{closeMenu();location.hash='industries'}} className="ei-industry-item"><span className="ei-industry-icon"><Building2/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>)}</div>
-     <div>{industryItems.slice(4).map((x,i)=><button key={x[0]} onClick={()=>{closeMenu();location.hash='industries'}} className="ei-industry-item"><span className="ei-industry-icon"><Building2/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>)}</div>
+     <div>{industryItems.slice(0,4).map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();location.hash='industries'}} className="ei-industry-item"><span className="ei-industry-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>})}</div>
+     <div>{industryItems.slice(4).map((x:any)=>{const Icon=x[2];return <button key={x[0]} onClick={()=>{closeMenu();location.hash='industries'}} className="ei-industry-item"><span className="ei-industry-icon"><Icon/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>})}</div>
     </div>
    </div>}
   {menu==='agents'&&<div className="ei-mega-menu agents-menu" onMouseEnter={()=>setMenu('agents')}>
