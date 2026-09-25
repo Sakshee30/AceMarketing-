@@ -87,7 +87,7 @@ function Header({openApp,openLogin,openPricing,openDemo,openCompany,openResource
     <button className={menu==='industries'?'ei-nav-item active':'ei-nav-item'} onMouseEnter={()=>setMenu('industries')} onClick={()=>setMenu(menu==='industries'?null:'industries')}>Industries <ChevronDown/></button>
     <button className={menu==='agents'?'ei-nav-item active':'ei-nav-item'} onMouseEnter={()=>setMenu('agents')} onClick={()=>setMenu(menu==='agents'?null:'agents')}>Agents <ChevronDown/></button>
     <button className="ei-nav-item" onClick={openCaseStudies}>Case Studies</button>
-    <a className="ei-nav-item" href="#integrations">Integrations</a>
+    <button className="ei-nav-item" onClick={openApp}>Integrations</button>
     <button className="ei-nav-item" onClick={openPricing}>Pricing</button>
     <button className={menu==='resources'?'ei-nav-item active':'ei-nav-item'} onMouseEnter={()=>setMenu('resources')} onClick={()=>setMenu(menu==='resources'?null:'resources')}>Resources <ChevronDown/></button>
    </nav>
@@ -132,7 +132,7 @@ function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResou
   <section className="ei-hero-wrap">
    <div className="ei-hero-card">
     <div className="ei-hero-copy">
-     <h1>Generate and convert <em>more leads</em> from paid advertising.</h1>
+     <h1>Generate and convert<br/><em>more leads</em> from paid<br/>advertising.</h1>
      <p>AceMarketing stitches your entire funnel — every source, tool, and offline step — into one journey and deploys agents that plug leaks across acquisition, qualification, follow-up, and revenue.</p>
      <button className="ei-hero-cta" onClick={openDemo}>Get a Demo</button>
     </div>
@@ -150,28 +150,12 @@ function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResou
    </div>
   </section>
 
-  <section className="trust-row">
-   <span>Built for complex acquisition stacks</span>
-   {['Ads','CRM','WhatsApp','Calls','Web/App','Offline'].map(x=><b key={x}>{x}</b>)}
-  </section>
-
-  <section className="case-change-section">
-   <div className="section-title"><span className="kicker dark">THE CASE FOR CHANGE</span><h2>Paid growth is only as good as the signals and context feeding it.</h2><p>The supplied brochure highlights six structural reasons lead-generation teams need a shared first-party operating layer rather than isolated platform optimization.</p></div>
-   <div className="case-change-grid">
-    {[
-      ['01','Algorithms need better signal','Automated bidding can only learn from the outcomes you send back; shallow form-fill events teach the wrong lesson.'],
-      ['02','CPM is no longer the main lever','Inventory efficiency alone cannot fix a funnel that loses quality and revenue context after the click.'],
-      ['03','Stacks are fragmented','Marketing teams often operate across multiple platforms with no common source of truth across the full customer journey.'],
-      ['04','Platform know-how is table stakes','Differentiation moves upstream to first-party data quality, signal design and measurement discipline.'],
-      ['05','Post-click leakage remains large','Even strong targeting cannot repair qualification, routing and follow-up failures after a lead enters the funnel.'],
-      ['06','Journeys are omnichannel','A customer can move from social to search to WhatsApp to calls before revenue, while each platform sees only its own slice.']
-    ].map(x=><article key={x[0]}><span>{x[0]}</span><h3>{x[1]}</h3><p>{x[2]}</p></article>)}
+  <section className="ei-trust-strip" aria-label="Reference customer categories">
+   <div className="ei-trust-label">TRUSTED ACROSS COMPLEX, MULTI-TOUCH FUNNELS</div>
+   <div className="ei-trust-track">
+    {['Blue Tokai','Apollo AyurVAID','India IVF','ISB','Leverage Edu','WATI','Berger Paints','GemPundit','Jaro Education','Sova Health'].map(x=><span key={x}>{x}</span>)}
    </div>
-   <div className="trusted-reference">
-    <span>REFERENCE BRANDS SHOWN IN THE SUPPLIED BROCHURE</span>
-    <div>{['ISB','Vedantu','Bhanzu','GrowthSchool','Leverage Edu','Jaro Education','Edureka','WebVeda','Testleaf'].map(x=><b key={x}>{x}</b>)}</div>
-    <small>Names are shown as brochure references only; no customer logo artwork is copied into AceMarketing.</small>
-   </div>
+   <small>Reference names reflect publicly shown EasyInsights customers/case-study brands; AceMarketing does not copy their logo artwork or present them as AceMarketing customers.</small>
   </section>
 
   <section className="ei-problems" id="problems">
@@ -188,15 +172,6 @@ function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResou
    <div className="ei-problem-cta"><span>See all three fixed in one platform.</span><button onClick={openDemo}>Get a Demo</button></div>
   </section>
 
-  <section className="split-system" id="platform">
-   <div className="section-title light"><span className="kicker">TWO CAPABILITIES · ONE SYSTEM</span><h2>The journey gives every automation the full context.</h2></div>
-   <div className="capability-grid">
-    <article><Network/><span>CAPABILITY 01</span><h3>Stitch the journey</h3><p>Connect forms, website, app, ad accounts, CRM, calling, WhatsApp and offline stages into one customer path from first touch through revenue.</p><ul><li>Identity stitching</li><li>Click-ID persistence</li><li>Online + offline events</li><li>Session-level chronology</li></ul></article>
-    <article><Bot/><span>CAPABILITY 02</span><h3>Deploy funnel agents</h3><p>Use specialized agents to qualify, enrich, route, schedule, remind, match closures and return the right conversion signals.</p><ul><li>Prebuilt agents</li><li>Custom agent builder</li><li>Human approval controls</li><li>Audit trail</li></ul></article>
-   </div>
-   <div className="formula">STITCHED JOURNEY <b>+</b> AGENTS AT EVERY STEP <b>=</b> A FUNNEL THAT LEARNS</div>
-  </section>
-
   <section className="ei-system-overview" id="platform">
    <div className="ei-section-heading centered"><span>TWO CAPABILITIES, ONE SYSTEM</span><h2>The stitched journey is what makes the agents effective.</h2><p>Every automation works with the full picture instead of isolated fragments.</p></div>
    <div className="ei-capability-layout">
@@ -204,26 +179,6 @@ function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResou
     <article><div className="ei-cap-num">02</div><Bot/><span>CAPABILITY 02</span><h3>Deploy agents that plug the leaks</h3><p>Choose specialized agents for qualification, routing, follow-up, closure match-back and signal return. Each agent acts with shared journey context.</p><ul><li>11 prebuilt agents</li><li>Custom agents</li><li>Human approval controls</li><li>Audit trail</li></ul></article>
    </div>
    <div className="ei-equation"><b>stitched journey</b><span>+</span><b>agents at every step</b><span>=</span><strong>a funnel that learns</strong></div>
-  </section>
-
-  <section className="connectivity-band">
-   <div className="section-title"><span className="kicker dark">PLATFORM AGNOSTIC</span><h2>CRM, WhatsApp, calling, web and app systems in one data layer.</h2><p>The brochure groups connectivity across CRM platforms, WhatsApp/marketing platforms, calling platforms, and website/app platforms. AceMarketing now mirrors that information architecture.</p></div>
-   <div className="connectivity-columns">
-    <article><span>CRM</span><b>Zoho · Salesforce · LeadSquared · HubSpot · HighLevel · Dynamics</b></article>
-    <article><span>WHATSAPP & MARKETING</span><b>WhatsApp · WATI · Gupshup · MoEngage · CleverTap</b></article>
-    <article><span>CALLING</span><b>Exotel · Knowlarity · Tata Tele · MyOperator</b></article>
-    <article><span>WEB & APP</span><b>Shopify · WooCommerce · Magento · WordPress · React · Custom</b></article>
-   </div>
-  </section>
-
-  <section className="activation-capabilities">
-   <div className="section-title"><span className="kicker dark">FIRST-PARTY DATA ACTIVATION</span><h2>More than conversion uploads.</h2><p>The current EasyInsights product also emphasizes website behavior, dynamic audiences, device exclusions and feed enhancement. AceMarketing now represents those workflows directly.</p></div>
-   <div className="activation-cap-grid">
-    <article><MousePointer2/><h3>Website behavior</h3><p>Capture visits, high-intent page sequences, form starts, button clicks and authenticated activity across the journey.</p><span>Server-side event stream</span></article>
-    <article><UsersRound/><h3>Dynamic audiences</h3><p>Keep acquisition, nurturing, decision and post-purchase segments fresh as customer behavior changes.</p><span>Real-time activate / suppress</span></article>
-    <article><ShieldCheck/><h3>Device & identity exclusion</h3><p>Suppress existing customers or irrelevant identities so campaigns do not repeatedly spend against the same people.</p><span>Waste-control workflow</span></article>
-    <article><Layers3/><h3>Feed enhancement</h3><p>Attach custom product, customer and event attributes to activation payloads for more granular targeting and personalization.</p><span>Custom attributes</span></article>
-   </div>
   </section>
 
   <section className="ei-agents-section" id="agents">
@@ -235,24 +190,6 @@ function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResou
     {agentFilter==='Visibility'&&<><div className="ei-agent-group-label"><span>03</span><b>VISIBILITY & ATTRIBUTION</b></div><div className="ei-agent-cards one">{agents.filter(a=>a[2]==='Visibility').map((a,i)=><article key={a[0]}><div className="ei-agent-card-top"><span>{String(i+1).padStart(2,'0')}</span><Sparkles/></div><h3>{a[0]}</h3><strong>{a[3]}</strong><p>{a[1]}</p><button onClick={openApp}>View agent <ArrowRight/></button></article>)}</div></>}
    </div>
    <div className="ei-agent-builder-note"><span>Don’t see your leak?</span><b>Build your own agent on the stitched journey — or configure one with the workspace builder.</b><button onClick={openApp}>Build custom agent</button></div>
-  </section>
-
-  <section className="section white" id="integrations">
-   <div className="section-title"><span className="kicker dark">CONNECTIVITY</span><h2>Keep the tools your teams already use.</h2><p>Standard connectors and custom adapters bring data into one workspace without replacing the existing stack.</p></div>
-   <div className="integration-grid">{integrations.map((x,i)=><article key={x}><span className={'integration-logo c'+(i%6)}>{x.slice(0,2).toUpperCase()}</span><b>{x}</b><Check/></article>)}</div>
-  </section>
-
-  <section className="industry-section" id="industries">
-   <div className="section-title"><span className="kicker dark">INDUSTRIES</span><h2>Designed for long, multi-touch customer journeys.</h2></div>
-   <div className="industry-grid">{industries.map((x,i)=><article key={x[0]}><span>{String(i+1).padStart(2,'0')}</span><Building2/><h3>{x[0]}</h3><p>{x[1]}</p><ArrowRight/></article>)}</div>
-  </section>
-
-  <section className="impact-section" id="impact">
-   <div className="section-title light"><span className="kicker">ADSYNC · EXPECTED IMPACT MODEL</span><h2>Five signal-quality improvements compound across the optimization loop.</h2><p>The brochure frames AdSync impact across synchronization, junk-lead control, identifier coverage, conversion-event design and audience suppression.</p></div>
-   <div className="impact-grid">
-    <article><span>01</span><div><b>Real-time data synchronization</b><div className="impact-bar"><i style={{width:'70%'}}/></div></div><strong>10%</strong></article><article><span>02</span><div><b>Control junk leads re-entering ad algorithms</b><div className="impact-bar"><i style={{width:'70%'}}/></div></div><strong>10%</strong></article><article><span>03</span><div><b>Better GCLID & FBCLID coverage</b><div className="impact-bar"><i style={{width:'35%'}}/></div></div><strong>5%</strong></article><article><span>04</span><div><b>Campaign-specific conversion events</b><div className="impact-bar"><i style={{width:'70%'}}/></div></div><strong>10%</strong></article><article><span>05</span><div><b>Real-time contextual audiences & suppression</b><div className="impact-bar"><i style={{width:'70%'}}/></div></div><strong>10%</strong></article>
-   </div>
-   <div className="impact-total"><span>Total expected impact</span><strong>45%</strong><small>Compounded gain across signal quality, coverage and audience control (as presented in the supplied brochure).</small></div>
   </section>
 
   <section className="ei-proof-section" id="proof">
@@ -325,6 +262,11 @@ function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResou
       ['India DPDP','Consent + data-principal controls','Roadmap']
     ].map(x=><article key={x[0]}><ShieldCheck/><div><b>{x[0]}</b><span>{x[1]}</span></div><em>{x[2]}</em></article>)}
    </div>
+  </section>
+
+  <section className="ei-final-cta">
+   <div><span>IMPROVE LEAD QUALITY WITH ACEMARKETING</span><h2>Connect ad platforms, CRM, and conversion data to optimize for better leads.</h2></div>
+   <button onClick={openDemo}>Book a demo <ArrowRight/></button>
   </section>
 
   <DemoSection openApp={openApp}/>
