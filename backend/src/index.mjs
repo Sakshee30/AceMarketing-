@@ -7,6 +7,7 @@ import { connectorVaultReady, encryptSecret } from './vault.mjs'
 import { enqueueJob, queueStats } from './queue.mjs'
 import { attributionStats, captureClickSession, closeAttributionStore, recordAssistedEvent, reconcileAttribution } from './attribution-store.mjs'
 import { closeLeadOps, createActivationRun, createAudience as createLeadAudience, getAudienceBundle, getLeadProfile, leadOpsStats, listActivationRuns, listAudiences as listLeadAudiences, listLeadProfiles, materializeAudience, overrideLeadGrade as persistLeadGrade, previewAudience as previewLeadAudience, scoreLead, upsertLeadProfile, updateAudienceSyncState } from './lead-ops.mjs'
+import { closeAgentOrchestrator, completeFollowUp as persistCompleteFollowUp, createAgentRun, createFollowUp, createMeeting, listAgentRuns, listFeedback as listPersistedFeedback, listFollowUps as listPersistedFollowUps, listMeetings as listPersistedMeetings, listRoutingDecisions, recordFeedback, routeLead } from './agent-orchestrator.mjs'
 import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, publicChallenges, publicCaseStudies, publicResources, publicResourceCenter } from './public-content.mjs'
 
 const CONNECTOR_PROVIDERS={
@@ -972,70 +973,75 @@ const server = http.createServer(async (req,res)=>{
     }
     if (req.method === 'GET' && url.pathname === '/api/routing') {
       return send(req,res,200,{rules:[
-        {id:'rr_1',name:'High-intent education lead',when:'grade = A AND course IS NOT NULL',destination:'Senior counsellor pool',slaSeconds:60,status:'active'},
-        {id:'rr_2',name:'WhatsApp re-engagement',when:'source = whatsapp AND stage = connected',destination:'WhatsApp nurture',slaSeconds:180,status:'active'},
-        {id:'rr_3',name:'Low confidence review',when:'identity_confidence < 0.65',destination:'Manual review',slaSeconds:900,status:'active'}
-      ]})
+        {id:'rr_1',name:'High-intent education lead',when:'score >= 85',destination:'Senior counsellor pool',slaSeconds:60,status:'active'},
+        {id:'rr_2',name:'Financing requested',when:'financingInterest = true',destination:'Finance-trained counsellor',slaSeconds:300,status:'active'},
+        {id:'rr_3',name:'WhatsApp re-engagement',when:'source = whatsapp',destination:'WhatsApp nurture',slaSeconds:180,status:'active'},
+        {id:'rr_4',name:'Low confidence review',when:'identityConfidence < 0.65',destination:'Manual review',slaSeconds:900,status:'active'}
+      ],recent:await listRoutingDecisions(workspaceId,50)})
     }
     if (req.method === 'POST' && url.pathname === '/api/routing/test') {
       const body=await readBody(req)
-      if(!body.rule) return send(req,res,400,{error:'rule required'})
-      return send(req,res,200,{rule:String(body.rule),matched:true,destination:'Senior counsellor pool',reason:'grade=A and required context present',evaluatedAt:new Date().toISOString()})
+      const decision=await routeLead(workspaceId,{leadRef:body.leadRef||'test_lead',score:body.score??90,source:body.source||'web',financingInterest:body.financingInterest,identityConfidence:body.identityConfidence??0.95})
+      return send(req,res,200,{rule:decision.rule_name,matched:true,destination:decision.destination,reason:decision.reason,slaSeconds:decision.sla_seconds,evaluatedAt:decision.created_at})
     }
-    if (req.method === 'GET' && url.pathname === '/api/follow-ups') {
-      const state=await getState()
-      return send(req,res,200,{items:state.followUps||[]})
+    if (req.method === 'GET' && url.pathname === '/api/follow-ups') return send(req,res,200,{items:await listPersistedFollowUps(workspaceId)})
+    if (req.method === 'POST' && url.pathname === '/api/follow-ups') {
+      const body=await readBody(req)
+      const item=await createFollowUp(workspaceId,body)
+      return send(req,res,201,item)
     }
     if (req.method === 'POST' && url.pathname === '/api/follow-ups/complete') {
       const body=await readBody(req)
       if(!body.id) return send(req,res,400,{error:'id required'})
-      let updated=null
-      await mutateState(s=>{
-        s.followUps=s.followUps||[]
-        const item=s.followUps.find(x=>x.id===body.id)
-        if(item){item.status='completed';item.completedAt=new Date().toISOString();updated={...item}}
-        s.audit.unshift({id:randomUUID(),action:'followup.completed',entityId:String(body.id),at:new Date().toISOString()})
-      })
+      const updated=await persistCompleteFollowUp(workspaceId,String(body.id))
       return updated?send(req,res,200,updated):send(req,res,404,{error:'follow-up not found'})
     }
     if (req.method === 'GET' && url.pathname === '/api/qualification-calls') {
-      const state=await getState()
-      return send(req,res,200,{items:state.qualificationCalls||[]})
+      const runs=(await listAgentRuns(workspaceId,100)).filter(x=>x.agent_type==='voice_qualification')
+      return send(req,res,200,{items:runs.map(x=>({id:x.id,lead:x.input?.lead||x.entity_id||'Lead',source:x.input?.source||'Unknown',agent:'Voice Lead Qualification',status:x.status,duration:x.output?.duration||'—',intent:x.output?.intent??x.input?.intent??0,next:x.output?.next||'Awaiting execution',attempts:x.attempts,externalId:x.external_id,lastError:x.last_error,createdAt:x.created_at}))})
     }
     if (req.method === 'POST' && url.pathname === '/api/qualification-calls/retry') {
       const body=await readBody(req)
       if(!body.id) return send(req,res,400,{error:'id required'})
-      let updated=null
-      await mutateState(s=>{
-        s.qualificationCalls=s.qualificationCalls||[]
-        const item=s.qualificationCalls.find(x=>x.id===body.id)
-        if(item){item.status='queued';item.attempts=Number(item.attempts||0)+1;item.lastAttemptAt=new Date().toISOString();updated={...item}}
-        s.audit.unshift({id:randomUUID(),action:'qualification.retry_queued',entityId:String(body.id),at:new Date().toISOString()})
-      })
-      return updated?send(req,res,202,updated):send(req,res,404,{error:'qualification call not found'})
+      const run=await createAgentRun(workspaceId,{agentType:'voice_qualification',entityId:String(body.id),triggerKey:'manual_retry',input:{lead:body.lead||'Lead',source:body.source||'workspace',intent:body.intent||0}})
+      const job=await enqueueJob({workspaceId,kind:'agent_action',idempotencyKey:'agent:'+run.id,payload:{agentRunId:run.id,actionType:'voice_qualification',payload:{lead:body.lead||'Lead',source:body.source||'workspace',intent:body.intent||0,runId:run.id}}})
+      return send(req,res,202,{id:run.id,status:'queued',jobId:job?.id||null})
     }
-    if (req.method === 'GET' && url.pathname === '/api/meetings') {
-      const state=await getState()
-      return send(req,res,200,{items:state.meetings||[]})
+    if (req.method === 'POST' && url.pathname === '/api/qualification-calls') {
+      const body=await readBody(req)
+      if(!body.lead) return send(req,res,400,{error:'lead required'})
+      const run=await createAgentRun(workspaceId,{agentType:'voice_qualification',entityId:String(body.leadRef||body.lead),triggerKey:String(body.trigger||'lead_created'),input:body})
+      const job=await enqueueJob({workspaceId,kind:'agent_action',idempotencyKey:'agent:'+run.id,payload:{agentRunId:run.id,actionType:'voice_qualification',payload:{...body,runId:run.id}}})
+      return send(req,res,202,{id:run.id,status:'queued',jobId:job?.id||null})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/meetings') return send(req,res,200,{items:await listPersistedMeetings(workspaceId)})
+    if (req.method === 'POST' && url.pathname === '/api/meetings') {
+      const body=await readBody(req)
+      const item=await createMeeting(workspaceId,body)
+      return send(req,res,201,item)
     }
     if (req.method === 'POST' && url.pathname === '/api/meetings/remind') {
       const body=await readBody(req)
       if(!body.id) return send(req,res,400,{error:'id required'})
-      let updated=null
-      await mutateState(s=>{
-        s.meetings=s.meetings||[]
-        const item=s.meetings.find(x=>x.id===body.id)
-        if(item){item.remindersSent=Number(item.remindersSent||0)+1;item.lastReminderAt=new Date().toISOString();updated={...item}}
-        s.audit.unshift({id:randomUUID(),action:'meeting.reminder_sent',entityId:String(body.id),at:new Date().toISOString()})
-      })
-      return updated?send(req,res,200,updated):send(req,res,404,{error:'meeting not found'})
+      const run=await createAgentRun(workspaceId,{agentType:'meeting_reminder',entityId:String(body.id),triggerKey:'manual_reminder',input:{meetingId:String(body.id)}})
+      const job=await enqueueJob({workspaceId,kind:'agent_action',idempotencyKey:'agent:'+run.id,payload:{agentRunId:run.id,actionType:'meeting_reminder',payload:{meetingId:String(body.id),runId:run.id}}})
+      return send(req,res,202,{id:body.id,runId:run.id,status:'queued',jobId:job?.id||null})
     }
-    if (req.method === 'GET' && url.pathname === '/api/feedback') {
-      const state=await getState()
-      const items=state.feedback||[]
-      const average=items.length?Number((items.reduce((n,x)=>n+Number(x.score||0),0)/items.length).toFixed(2)):0
-      return send(req,res,200,{average,items})
+    if (req.method === 'GET' && url.pathname === '/api/feedback') return send(req,res,200,await listPersistedFeedback(workspaceId))
+    if (req.method === 'POST' && url.pathname === '/api/feedback') {
+      const body=await readBody(req)
+      if(!body.lead) return send(req,res,400,{error:'lead required'})
+      const item=await recordFeedback(workspaceId,body)
+      return send(req,res,201,item)
     }
+    if (req.method === 'POST' && url.pathname === '/api/feedback/request') {
+      const body=await readBody(req)
+      if(!body.lead) return send(req,res,400,{error:'lead required'})
+      const run=await createAgentRun(workspaceId,{agentType:'feedback',entityId:String(body.leadRef||body.lead),triggerKey:'manual_feedback',input:body})
+      const job=await enqueueJob({workspaceId,kind:'agent_action',idempotencyKey:'agent:'+run.id,payload:{agentRunId:run.id,actionType:'feedback',payload:{...body,runId:run.id}}})
+      return send(req,res,202,{runId:run.id,status:'queued',jobId:job?.id||null})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/agent-runs') return send(req,res,200,{items:await listAgentRuns(workspaceId,200)})
     if (req.method === 'GET' && url.pathname === '/api/approvals') {
       const state=await getState()
       return send(req,res,200,{items:state.approvals||[]})
@@ -1114,6 +1120,6 @@ server.keepAliveTimeout=65_000
 server.headersTimeout=66_000
 server.requestTimeout=30_000
 server.listen(PORT,()=>console.log(`AceMarketing API listening on http://localhost:${PORT}`))
-const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
+const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
 process.on('SIGTERM',()=>shutdown('SIGTERM'))
 process.on('SIGINT',()=>shutdown('SIGINT'))
