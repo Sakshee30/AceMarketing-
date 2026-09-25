@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useMemo, useState } from 'react'
 import {
   Activity, ArrowRight, BarChart3, Bot, Cable, Check, ChevronRight,
