@@ -1810,3 +1810,43 @@ PLAN_LIMIT_CUSTOM_INTEGRATIONS=25
 ```
 
 Set any limit to `0` for unlimited usage. AceMarketing does not charge cards or create invoices until a real payment/billing provider is connected; the entitlement layer is deliberately provider-independent.
+
+
+## Billing provider synchronization pass
+
+The provider-independent entitlement layer can now be synchronized from a real Stripe subscription without hard-coding public plan prices.
+
+Implemented:
+- `backend/migrations/010_billing_provider.sql`;
+- `backend/src/billing-provider.mjs`;
+- Stripe Checkout Session creation for deployment-configured plan codes;
+- Stripe Billing Portal Session creation for linked customers;
+- public `POST /api/billing/webhook` with raw-body HMAC-SHA256 signature verification and timestamp tolerance;
+- idempotent provider-event storage using Stripe event IDs;
+- workspace mapping from Checkout/Subscription metadata and existing customer/subscription IDs;
+- subscription status synchronization for trialing, active, past-due, paused and cancelled states;
+- payment failure/success status updates;
+- external customer/subscription/price IDs and cancel-at-period-end state persisted on workspace subscriptions;
+- configured price IDs map to AceMarketing plan codes and entitlement JSON from deployment configuration;
+- Settings → Billing & usage exposes checkout or billing-portal actions only when the provider is actually configured.
+
+New APIs:
+- `POST /api/billing/checkout`
+- `POST /api/billing/portal`
+- `POST /api/billing/webhook`
+- expanded `GET /api/billing/subscription` with provider readiness and recent event receipts.
+
+### Billing catalog configuration
+
+AceMarketing deliberately does not invent EasyInsights public price tiers. Configure sellable plans in deployment:
+
+```text
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+BILLING_CHECKOUT_SUCCESS_URL=https://app.example.com/#/workspace
+BILLING_CHECKOUT_CANCEL_URL=https://app.example.com/#/workspace
+BILLING_PORTAL_RETURN_URL=https://app.example.com/#/workspace
+BILLING_PLAN_CATALOG_JSON={"usage":{"priceId":"price_...","entitlements":{"tracked_events":1000000,"assisted_events":250000,"signal_dispatches":250000,"agent_actions":50000,"audience_syncs":500,"custom_integration_tests":1000,"members":25,"custom_integrations":25}}}
+```
+
+The Checkout and Portal endpoints are owner-only. The webhook endpoint is unauthenticated by design but rejects requests unless the Stripe signature verifies against the raw request body and falls within the configured timestamp tolerance.
