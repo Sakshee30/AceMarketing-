@@ -47,10 +47,60 @@ function Brand({dark=false}:{dark?:boolean}){
 }
 function Header({openApp,openLogin,openPricing,openDemo,openCompany,openResources,openCaseStudies,openSolutions}:{openApp:()=>void,openLogin:()=>void,openPricing:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void,openCaseStudies:()=>void,openSolutions:()=>void}){
  const [open,setOpen]=useState(false)
- return <header className="marketing-header"><Brand/><nav className={open?'mobile-open':''}>
-  <a href="#platform">Platform</a><button className="ghost-nav" onClick={openSolutions}>Solutions</button><a href="#problems">Use cases</a><a href="#agents">Agents</a><a href="#integrations">Integrations</a><a href="#industries">Industries</a><button className="ghost-nav" onClick={openCaseStudies}>Case Studies</button><button className="ghost-nav" onClick={openResources}>Resources</button><button className="ghost-nav" onClick={openCompany}>Company</button><button className="ghost-nav" onClick={openPricing}>Pricing</button>
-  <button className="ghost-nav" onClick={openLogin}>Login</button><button className="ghost-nav" onClick={openApp}>Open product</button><button onClick={openDemo} className="header-cta">Book a demo <ArrowRight size={15}/></button>
- </nav><button className="menu-toggle" onClick={()=>setOpen(!open)}>{open?<X/>:<Menu/>}</button></header>
+ const [menu,setMenu]=useState<'industries'|'agents'|'resources'|null>(null)
+ const closeMenu=()=>setMenu(null)
+ const industryItems=[
+  ['Edtech','Track and activate student data across channels to improve lead quality, personalize outreach, and increase enrollments.'],
+  ['Fintech','Activate first-party data wherever it lives while maintaining strict privacy, security, and regulatory controls.'],
+  ['Healthcare','Connect patient acquisition and engagement with privacy-aware measurement and activation.'],
+  ['Retail','Unify customer data across channels to improve personalization, conversions, and loyalty.'],
+  ['Home Improvement','Connect customer interactions across touchpoints to capture high-quality leads and optimize follow-ups.'],
+  ['Travel','Unify customer data to personalize each stage of the guest journey and improve experience.'],
+  ['Consumer Goods','Activate first-party data to improve campaigns, understand buyer behavior, and drive repeat purchase.']
+ ]
+ const agentItems=[
+  ['Lead Quality','Meta Advanced CAPI','Google ECL / OCI','Call Tracking Events','Lead Grading'],
+  ['Conversion','CRM Enrichment','Voice Lead Qualification','Voice Scheduler','Meeting Reminder','Feedback Agent'],
+  ['Visibility','Ask Ace','Journey Intelligence','Attribution Diagnostics']
+ ]
+ return <header className="ei-header-shell" onMouseLeave={closeMenu}>
+  <div className="ei-header">
+   <button className="ei-brand-button" onClick={()=>window.scrollTo({top:0,behavior:'smooth'})}><Brand dark/></button>
+   <nav className={open?'ei-nav mobile-open':'ei-nav'}>
+    <button className={menu==='industries'?'ei-nav-item active':'ei-nav-item'} onMouseEnter={()=>setMenu('industries')} onClick={()=>setMenu(menu==='industries'?null:'industries')}>Industries <ChevronDown/></button>
+    <button className={menu==='agents'?'ei-nav-item active':'ei-nav-item'} onMouseEnter={()=>setMenu('agents')} onClick={()=>setMenu(menu==='agents'?null:'agents')}>Agents <ChevronDown/></button>
+    <button className="ei-nav-item" onClick={openCaseStudies}>Case Studies</button>
+    <a className="ei-nav-item" href="#integrations">Integrations</a>
+    <button className="ei-nav-item" onClick={openPricing}>Pricing</button>
+    <button className={menu==='resources'?'ei-nav-item active':'ei-nav-item'} onMouseEnter={()=>setMenu('resources')} onClick={()=>setMenu(menu==='resources'?null:'resources')}>Resources <ChevronDown/></button>
+   </nav>
+   <div className="ei-header-actions">
+    <button className="ei-voice-pill" onClick={openApp}><span className="voice-bars">••••</span><b>Voice Agent</b><small>NEW</small></button>
+    <button className="ei-demo-pill" onClick={openDemo}>Book a demo</button>
+   </div>
+   <button className="menu-toggle ei-menu-toggle" onClick={()=>setOpen(!open)}>{open?<X/>:<Menu/>}</button>
+  </div>
+  {menu==='industries'&&<div className="ei-mega-menu industries-menu" onMouseEnter={()=>setMenu('industries')}>
+    <div className="ei-mega-label">INDUSTRIES</div>
+    <div className="ei-industry-columns">
+     <div>{industryItems.slice(0,4).map((x,i)=><button key={x[0]} onClick={()=>{closeMenu();location.hash='industries'}} className="ei-industry-item"><span className="ei-industry-icon"><Building2/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>)}</div>
+     <div>{industryItems.slice(4).map((x,i)=><button key={x[0]} onClick={()=>{closeMenu();location.hash='industries'}} className="ei-industry-item"><span className="ei-industry-icon"><Building2/></span><div><b>{x[0]}</b><p>{x[1]}</p></div></button>)}</div>
+    </div>
+   </div>}
+  {menu==='agents'&&<div className="ei-mega-menu agents-menu" onMouseEnter={()=>setMenu('agents')}>
+    <div className="ei-mega-label">AGENTS</div>
+    <div className="ei-agent-columns">{agentItems.map(group=><div key={group[0]}><h4>{group[0]}</h4>{group.slice(1).map(name=><button key={name} onClick={()=>{closeMenu();location.hash='agents'}}><Bot/><span>{name}</span><ChevronRight/></button>)}</div>)}</div>
+   </div>}
+  {menu==='resources'&&<div className="ei-mega-menu resources-menu" onMouseEnter={()=>setMenu('resources')}>
+    <div className="ei-mega-label">RESOURCES</div>
+    <div className="ei-resource-grid">
+     <button onClick={openResources}><Layers3/><div><b>Resource Center</b><p>Guides, implementation notes and product education.</p></div></button>
+     <button onClick={openCompany}><Building2/><div><b>Company</b><p>Product principles, architecture and platform direction.</p></div></button>
+     <button onClick={openSolutions}><Sparkles/><div><b>Solutions</b><p>Explore use cases by growth and measurement problem.</p></div></button>
+     <button onClick={openLogin}><UsersRound/><div><b>Customer Login</b><p>Open your existing AceMarketing workspace.</p></div></button>
+    </div>
+   </div>}
+ </header>
 }
 function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResources,openCaseStudies,openSolutions}:{openApp:()=>void,openLogin:()=>void,openPricing:()=>void,openDemo:()=>void,openCompany:()=>void,openResources:()=>void,openCaseStudies:()=>void,openSolutions:()=>void}){
  const [agentFilter,setAgentFilter]=useState('All')
@@ -58,26 +108,25 @@ function Marketing({openApp,openLogin,openPricing,openDemo,openCompany,openResou
  const [cookiePrefs,setCookiePrefs]=useState({analytics:false,advertising:false,functionality:false})
  const visibleAgents=agentFilter==='All'?agents:agents.filter(a=>a[2]===agentFilter)
  return <div className="marketing-page">
-  <div className="reference-banner"><span>Public EasyInsights benchmark referenced for parity:</span><b>up to 45% incremental revenue uplift</b><a href="#impact">See impact model <ArrowRight/></a></div>
-  <section className="hero-wrap">
-   <Header openApp={openApp} openLogin={openLogin} openPricing={openPricing} openDemo={openDemo} openCompany={openCompany} openResources={openResources} openCaseStudies={openCaseStudies} openSolutions={openSolutions}/>
-   <div className="hero-grid">
-    <div className="hero-copy">
-     <span className="kicker">FIRST-PARTY PERFORMANCE MARKETING INFRASTRUCTURE</span>
-     <h1>Turn every customer signal into <em>better growth.</em></h1>
-     <p>Stitch ad clicks, website activity, CRM stages, calls, WhatsApp conversations and offline outcomes into one measurable customer journey — then use agents to act on the gaps automatically.</p>
-     <div className="hero-actions"><button className="btn-primary" onClick={openApp}>Explore product <ArrowRight/></button><a href="#platform" className="btn-link">See the system</a></div>
-     <div className="hero-checks"><span><Check/> Server-side conversion activation</span><span><Check/> Online + offline journey stitching</span><span><Check/> Agent-based funnel operations</span></div>
+  <div className="ei-promo-bar"><span>Performance marketers can drive up to <b>45% incremental revenue uplift</b> with better first-party signals.</span><a href="#impact">Can your brand achieve the same uplift? <ArrowRight/></a></div>
+  <Header openApp={openApp} openLogin={openLogin} openPricing={openPricing} openDemo={openDemo} openCompany={openCompany} openResources={openResources} openCaseStudies={openCaseStudies} openSolutions={openSolutions}/>
+  <section className="ei-hero-wrap">
+   <div className="ei-hero-card">
+    <div className="ei-hero-copy">
+     <h1>Generate and convert <em>more leads</em> from paid advertising.</h1>
+     <p>AceMarketing stitches your entire funnel — every source, tool, and offline step — into one journey and deploys agents that plug leaks across acquisition, qualification, follow-up, and revenue.</p>
+     <button className="ei-hero-cta" onClick={openDemo}>Get a Demo</button>
     </div>
-    <div className="hero-product">
-      <div className="glow g1"/><div className="glow g2"/>
-      <div className="mock-shell">
-       <div className="mock-top"><span>Unified Journey</span><span className="live-dot">● LIVE</span></div>
-       {[
-        ['Google Ads','Click ID captured','0s'],['Website','Pricing + program pages','+24s'],['WhatsApp','Conversation started','+3m'],['CRM','Qualified by counsellor','+18m'],['Call','Consultation completed','+2h'],['Revenue','Enrolment recorded','+2d']
-       ].map((x,i)=><div className="journey-line" key={x[0]}><span className={'node n'+i}/><div><b>{x[0]}</b><small>{x[1]}</small></div><time>{x[2]}</time></div>)}
-      </div>
-      <div className="signal-toast"><Zap/><div><b>Outcome returned to ad platforms</b><small>Qualified Lead + Enrolment signals synchronized</small></div></div>
+    <div className="ei-hero-visual">
+     <div className="ei-visual-overlay"/>
+     <div className="ei-visual-copy"><span>Connect every touchpoint</span><b>Website forms,<br/>Calls & WhatsApp<br/>messages.</b></div>
+     <div className="ei-visual-panel">
+      <div className="ei-visual-top"><span>Unified Journey</span><small>LIVE</small></div>
+      {[
+       ['Google Ads','Click captured'],['Website','High-intent pages'],['WhatsApp','Conversation started'],['CRM','Qualified lead'],['Revenue','Closed outcome']
+      ].map((x,i)=><div className="ei-visual-row" key={x[0]}><span>{i+1}</span><div><b>{x[0]}</b><small>{x[1]}</small></div></div>)}
+     </div>
+     <button className="ei-hero-next" aria-label="Next hero slide"><ArrowRight/></button>
     </div>
    </div>
   </section>
