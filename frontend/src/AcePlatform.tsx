@@ -146,6 +146,12 @@ function Marketing({openHome,openApp,openLogin,openPricing,openDemo,openCompany,
  const [problemTab,setProblemTab]=useState<'Lead Quality'|'Conversion'|'Attribution'>('Lead Quality')
  const [cookieOpen,setCookieOpen]=useState(true)
  const [cookiePrefs,setCookiePrefs]=useState({analytics:false,advertising:false,functionality:false})
+ const [heroSlide,setHeroSlide]=useState(0)
+ const heroSlides=[
+  {eyebrow:'Connect every touchpoint',title:'Website forms, calls & WhatsApp messages.',rows:[['Google Ads','Click captured'],['Website','High-intent pages'],['WhatsApp','Conversation started'],['CRM','Qualified lead'],['Revenue','Closed outcome']]},
+  {eyebrow:'Return stronger outcomes',title:'Teach ad platforms from qualified and closed revenue.',rows:[['Lead Grading','Intent scored'],['CRM','Stage enriched'],['Google Ads','Qualified signal'],['Meta CAPI','Server event'],['Bidding','Learning updated']]},
+  {eyebrow:'Act on the stitched journey',title:'Let specialized agents work every revenue handoff.',rows:[['Lead','Arrives'],['Voice Agent','Qualifies'],['Scheduler','Books meeting'],['Reminder','Protects show rate'],['Ask Ace','Explains performance']]}
+ ]
  const fallbackChallenges=[
   {key:'operations',label:'Business & operational impact',title:'Teams lose speed when every system tells a different story.',points:['Acquisition cost rises while lead quality becomes harder to explain','Marketing, sales, and leadership work from different numbers','Teams spend time repairing tracking instead of scaling campaigns','Budget decisions are made without reliable funnel evidence'],action:'Connect the operating truth'},
   {key:'tracking',label:'Tracking & data quality',title:'Broken event chains make optimization noisy before anyone notices.',points:['Conversions fire inconsistently across destinations','Duplicate events distort optimization signals','Cross-domain and messaging paths break continuity','Reporting lacks one normalized event model'],action:'Repair signal quality'},
@@ -170,14 +176,15 @@ function Marketing({openHome,openApp,openLogin,openPricing,openDemo,openCompany,
     </div>
     <div className="ei-hero-visual">
      <div className="ei-visual-overlay"/>
-     <div className="ei-visual-copy"><span>Connect every touchpoint</span><b>Website forms,<br/>Calls & WhatsApp<br/>messages.</b></div>
-     <div className="ei-visual-panel">
-      <div className="ei-visual-top"><span>Unified Journey</span><small>LIVE</small></div>
-      {[
-       ['Google Ads','Click captured'],['Website','High-intent pages'],['WhatsApp','Conversation started'],['CRM','Qualified lead'],['Revenue','Closed outcome']
-      ].map((x,i)=><div className="ei-visual-row" key={x[0]}><span>{i+1}</span><div><b>{x[0]}</b><small>{x[1]}</small></div></div>)}
+     <div className="hero-slide-motion" key={heroSlide}>
+      <div className="ei-visual-copy"><span>{heroSlides[heroSlide].eyebrow}</span><b>{heroSlides[heroSlide].title}</b></div>
+      <div className="ei-visual-panel">
+       <div className="ei-visual-top"><span>{heroSlide===0?'Unified Journey':heroSlide===1?'Signal Return':'Agent Workflow'}</span><small>LIVE</small></div>
+       {heroSlides[heroSlide].rows.map((x,i)=><div className="ei-visual-row" key={x[0]}><span>{i+1}</span><div><b>{x[0]}</b><small>{x[1]}</small></div></div>)}
+      </div>
      </div>
-     <button className="ei-hero-next" aria-label="Next hero slide"><ArrowRight/></button>
+     <div className="ei-hero-dots" aria-label="Hero slides">{heroSlides.map((_,i)=><button key={i} className={heroSlide===i?'active':''} aria-label={'Show hero slide '+(i+1)} onClick={()=>setHeroSlide(i)}/>)}</div>
+     <button className="ei-hero-next" aria-label="Next hero slide" onClick={()=>setHeroSlide(x=>(x+1)%heroSlides.length)}><ArrowRight/></button>
     </div>
    </div>
   </section>
