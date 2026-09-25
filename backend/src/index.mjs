@@ -20,6 +20,7 @@ import { closeReportScheduler, listReportDeliveries, listReportSchedules, queueR
 import { closeEventRules, createEventRule, evaluateEventRules, eventRuleStats, listEventRuleRuns, listEventRules, markEventRuleActivation, setEventRuleEnabled } from './event-rules.mjs'
 import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, publicChallenges, publicCaseStudies, publicResources, publicResourceCenter } from './public-content.mjs'
 import { parseWhatsAppWebhook, resolveWhatsAppWorkspace, sendWhatsAppMessage, verifyWhatsAppWebhookChallenge, verifyWhatsAppWebhookSignature } from './whatsapp-cloud.mjs'
+import { normalizeCallEvent, resolveCallWorkspace, verifyCallWebhook } from './call-events.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -215,7 +216,7 @@ const send = (req,res,status,data,extra={}) => {
   res.end(status===204?'':JSON.stringify(data))
 }
 
-const publicPaths=new Set(['/api/health','/api/ready','/api/auth/login','/api/invitations/activate','/api/demo-requests','/api/track','/api/pricing/recommend','/api/pricing/quote','/api/public/navigation','/api/public/industries','/api/public/agents','/api/public/integrations','/api/public/challenges','/api/public/case-studies','/api/public/resources','/api/public/resource-center','/api/webhooks/whatsapp'])
+const publicPaths=new Set(['/api/health','/api/ready','/api/auth/login','/api/invitations/activate','/api/demo-requests','/api/track','/api/pricing/recommend','/api/pricing/quote','/api/public/navigation','/api/public/industries','/api/public/agents','/api/public/integrations','/api/public/challenges','/api/public/case-studies','/api/public/resources','/api/public/resource-center','/api/webhooks/whatsapp','/api/webhooks/calls'])
 const isPublicRequest=(method,path)=>publicPaths.has(path)||(method==='GET'&&path==='/api/integrations/oauth/callback')||(method==='POST'&&path==='/api/billing/webhook')||path==='/api/consent'
 const meteredMetricFor=(method,path)=>{
   if(method!=='POST') return null
@@ -328,6 +329,60 @@ const server = http.createServer(async (req,res)=>{
       return send(req,res,400,{error:error instanceof Error?error.message:'invalid WhatsApp webhook'})
     }
   }
+  if(req.method==='POST'&&url.pathname==='/api/webhooks/calls'){
+    try{
+      const raw=await readRawBody(req)
+      const verified=verifyCallWebhook(raw,req.headers)
+      if(!verified.ok) return send(req,res,401,{error:verified.error})
+      let body={}
+      try{body=raw?JSON.parse(raw):{}}catch{return send(req,res,400,{error:'invalid call webhook json'})}
+      const resolvedWorkspace=resolveCallWorkspace(body,req.headers['x-workspace-id'])
+      if(!resolvedWorkspace) return send(req,res,400,{error:'unable to resolve workspace for call event'})
+      workspaceId=resolvedWorkspace
+      const event=normalizeCallEvent(body)
+      await withWorkspace(workspaceId,async()=>{
+        const now=new Date().toISOString()
+        let duplicate=false
+        await mutateState(s=>{
+          s.callEvents=s.callEvents||[]
+          duplicate=s.callEvents.some(x=>x.id===event.id)
+          if(!duplicate) s.callEvents.unshift({...event,receivedAt:now})
+          s.callEvents=s.callEvents.slice(0,10000)
+          s.audit=s.audit||[]
+          s.audit.unshift({id:randomUUID(),action:'call.webhook.received',entityId:event.id,provider:event.provider,duplicate,at:now})
+          s.audit=s.audit.slice(0,1000)
+        })
+        if(!duplicate){
+          await upsertLeadProfile(workspaceId,{
+            externalLeadId:event.customerId||('call:'+event.from),
+            phone:event.from||null,
+            source:event.source||'Telephony',
+            campaign:event.campaign||null,
+            lastActivity:event.endedAt||event.startedAt,
+            callOutcome:event.disposition||event.status,
+            callSummary:[event.status,event.durationSeconds?event.durationSeconds+'s':null,event.disposition].filter(Boolean).join(' · '),
+            attributes:{callEventId:event.id,provider:event.provider,direction:event.direction,to:event.to}
+          }).catch(()=>null)
+          await recordAssistedEvent(workspaceId,{
+            event:'call.completed',
+            eventType:'call.completed',
+            eventId:event.id,
+            customerId:event.customerId||('call:'+event.from),
+            phone:event.from||null,
+            source:'call',
+            occurredAt:event.endedAt||event.startedAt,
+            gclid:event.gclid||null,
+            fbclid:event.fbclid||null,
+            msclkid:event.msclkid||null,
+            data:{provider:event.provider,status:event.status,durationSeconds:event.durationSeconds,campaign:event.campaign}
+          }).catch(()=>null)
+        }
+      })
+      return send(req,res,200,{received:true,duplicate:false,workspaceId,eventId:event.id})
+    }catch(error){
+      return send(req,res,400,{error:error instanceof Error?error.message:'invalid call webhook'})
+    }
+  }
   if(req.method==='GET'&&url.pathname==='/api/integrations/oauth/callback'){
     const signed=parseOAuthState(url.searchParams.get('state'))
     if(!signed) return send(req,res,400,{error:'invalid or expired oauth state'})
@@ -380,6 +435,10 @@ const server = http.createServer(async (req,res)=>{
     if (req.method === 'GET' && url.pathname === '/api/public/case-studies') return send(req,res,200,{items:publicCaseStudies})
     if (req.method === 'GET' && url.pathname === '/api/public/resources') return send(req,res,200,{items:publicResources})
     if (req.method === 'GET' && url.pathname === '/api/public/resource-center') return send(req,res,200,publicResourceCenter)
+    if (req.method === 'GET' && url.pathname === '/api/call-events') {
+      const state=await getState()
+      return send(req,res,200,{items:(state.callEvents||[]).slice(0,200)})
+    }
     if (req.method === 'GET' && url.pathname === '/api/whatsapp/messages') {
       const state=await getState()
       return send(req,res,200,{items:(state.whatsappEvents||[]).slice(0,200)})
@@ -1010,16 +1069,39 @@ const server = http.createServer(async (req,res)=>{
       if(!body.location || !body.records) return send(req,res,400,{error:'location and records required'})
       return send(req,res,202,{batchId:randomUUID(),location:body.location,records:body.records,status:'queued',queuedAt:new Date().toISOString()})
     }
-    if (req.method === 'GET' && url.pathname === '/api/offline-attribution') return send(req,res,200,{
-      callAttribution:{matched:4218,matchRate:91.6,method:'timestamp_overlap'},
-      whatsapp:{matched:6904,identifiers:['gclid','fbclid','phone']},
-      revenueAdjustments:{count:1284,types:['partial_payment','full_payment','zero_value_adjustment']},
-      rules:[
-        {conversion:'Inbound Call',source:'Telephony',match:'active_session_overlap',destination:['Google Ads','Meta Ads']},
-        {conversion:'WhatsApp Enquiry',source:'WhatsApp',match:'persisted_click_id_plus_phone',destination:['Google Ads','Meta Ads']},
-        {conversion:'Partial Payment',source:'Custom Backend',match:'customer_id_plus_order',destination:['Google Ads']}
-      ]
-    })
+    if (req.method === 'GET' && url.pathname === '/api/offline-attribution') {
+      const [state,stats]=await Promise.all([getState(),attributionStats(workspaceId)])
+      const calls=(state.callEvents||[])
+      const whatsapp=(state.whatsappEvents||[]).filter(x=>x.kind==='message')
+      const connectedCalls=calls.filter(x=>['answered','completed','connected','qualified'].includes(String(x.status||'').toLowerCase()))
+      const waWithIdentity=whatsapp.filter(x=>x.from)
+      return send(req,res,200,{
+        generatedAt:new Date().toISOString(),
+        callAttribution:{
+          events:calls.length,
+          connected:connectedCalls.length,
+          providers:[...new Set(calls.map(x=>x.provider).filter(Boolean))],
+          method:'first-party identity + click/session reconciliation'
+        },
+        whatsapp:{
+          messages:whatsapp.length,
+          identifiable:waWithIdentity.length,
+          identifiers:['phone','gclid','fbclid','customer_id']
+        },
+        attribution:{
+          available:Boolean(stats?.available),
+          matchedEvents:Number(stats?.matchedEvents||0),
+          unmatchedEvents:Number(stats?.unmatchedEvents||0),
+          matchRate:Number(stats?.matchRate||0),
+          matchedValue:Number(stats?.matchedValue||0)
+        },
+        rules:[
+          {conversion:'Inbound Call',source:'Telephony',match:'first-party identity + session/click reconciliation',destination:['Google Ads','Meta Ads']},
+          {conversion:'WhatsApp Enquiry',source:'WhatsApp',match:'persisted click/customer identity + phone',destination:['Google Ads','Meta Ads']},
+          {conversion:'Partial Payment',source:'Custom Backend',match:'customer_id + order',destination:['Google Ads']}
+        ]
+      })
+    }
     if (req.method === 'POST' && url.pathname === '/api/track') {
       const body=await readBody(req)
       const category=['essential','analytics','marketing','personalization'].includes(String(body.eventCategory))?String(body.eventCategory):'analytics'
