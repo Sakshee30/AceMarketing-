@@ -31,6 +31,13 @@ if(!process.env.GOOGLE_OAUTH_CLIENT_ID)calendarMissing.push('GOOGLE_OAUTH_CLIENT
 if(!process.env.GOOGLE_OAUTH_CLIENT_SECRET)calendarMissing.push('GOOGLE_OAUTH_CLIENT_SECRET')
 if(!process.env.CONNECTOR_OAUTH_REDIRECT_URI)calendarMissing.push('CONNECTOR_OAUTH_REDIRECT_URI')
 if(calendarMissing.length)weak.push('Google Calendar scheduling incomplete: '+calendarMissing.join(', '))
+const authUiMissing=[]
+if(!process.env.AUTH_GOOGLE_REDIRECT_URI)authUiMissing.push('AUTH_GOOGLE_REDIRECT_URI')
+if(!process.env.AUTH_GOOGLE_SUCCESS_URL)authUiMissing.push('AUTH_GOOGLE_SUCCESS_URL')
+if(!process.env.AUTH_PUBLIC_APP_URL)authUiMissing.push('AUTH_PUBLIC_APP_URL')
+if(!process.env.SMTP_HOST)authUiMissing.push('SMTP_HOST')
+if(!process.env.SMTP_FROM)authUiMissing.push('SMTP_FROM')
+if(authUiMissing.length)weak.push('login/password recovery incomplete: '+authUiMissing.join(', '))
 if(missing.length||weak.length){
   console.error(JSON.stringify({ok:false,missing,issues:weak},null,2))
   process.exit(1)
