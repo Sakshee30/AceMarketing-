@@ -15,6 +15,7 @@ const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
 
 export const api = {
   health: () => request<{ ok: boolean; service: string }>('/health'),
+  dashboardSummary: () => request('/dashboard-summary'),
   publicNavigation: () => request('/public/navigation'),
   publicIndustries: () => request('/public/industries'),
   publicAgents: () => request('/public/agents'),
