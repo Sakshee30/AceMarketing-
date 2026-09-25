@@ -25,14 +25,20 @@ export const api = {
   launchpad: () => request('/launchpad'),
   saveLaunchpad: (payload: Record<string, unknown>) => request('/launchpad', { method: 'POST', body: JSON.stringify(payload) }),
   login: async (email: string, password: string) => {
-    const result = await request<{ token: string; user: { email: string; role: string }; expiresIn: number }>('/auth/login', {
+    const result = await request<{ token: string; user: { id?: string; email: string; role: string }; workspaceId?: string; expiresIn: number }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     })
-    if (typeof window !== 'undefined') window.localStorage.setItem('ace_token', result.token)
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('ace_token', result.token)
+      if (result.workspaceId) window.localStorage.setItem('ace_workspace_id', result.workspaceId)
+    }
     return result
   },
-  logout: () => { if (typeof window !== 'undefined') window.localStorage.removeItem('ace_token') },
+  logout: async () => {
+    try { await request('/auth/logout', { method: 'POST', body: JSON.stringify({}) }) } catch {}
+    if (typeof window !== 'undefined') window.localStorage.removeItem('ace_token')
+  },
   pricingRecommendation: (payload: Record<string, unknown>) => request<{ recommended: string[] }>('/pricing/recommend', { method: 'POST', body: JSON.stringify(payload) }),
   submitQuote: (payload: Record<string, unknown>) => request<{ id: string; status: string }>('/pricing/quote', { method: 'POST', body: JSON.stringify(payload) }),
   submitDemo: (payload: DemoRequest) =>
@@ -114,7 +120,6 @@ export const api = {
   monitoringRules: () => request('/monitoring-rules'),
   saveConsent: (prefs: Record<string, boolean>) => request('/consent-preferences', { method: 'POST', body: JSON.stringify(prefs) }),
   me: () => request('/auth/me'),
-  logout: () => request('/auth/logout', { method: 'POST', body: JSON.stringify({}) }),
   members: () => request('/members'),
   inviteMember: (payload: {email:string;role:string}) => request('/members/invite', { method: 'POST', body: JSON.stringify(payload) }),
   changeMemberRole: (memberId:string,role:string) => request('/members/role', { method: 'POST', body: JSON.stringify({memberId,role}) }),
