@@ -3570,3 +3570,16 @@ The Funnel workspace filters are now operational instead of cosmetic.
 - The backend returns available channel values for the active date window so the UI does not infer them from an already-filtered result.
 - Funnel statistics, campaign rows and CSV export now reflect the same active filter state.
 - CSV exports include filter metadata and the selected date-window suffix in the file name.
+
+
+### Reports truthfulness and persisted schedules
+
+The Reports workspace no longer renders hard-coded scheduled-report rows that imply delivery channels or active schedules which do not exist.
+
+- The report list always includes the live Cohort Performance view.
+- Every additional row is loaded from persisted `ace_report_schedules` records.
+- Selecting a persisted schedule shows its real cadence, recipients, lookback window, next run, last run and last status.
+- `Send report now` queues the selected persisted schedule through the existing durable report worker.
+- Creating a schedule persists it first, refreshes the list, and selects the newly created schedule.
+- The UI no longer claims Slack delivery; the implemented delivery path is SMTP email with CSV attachment.
+- Recent delivery history remains sourced from persisted `ace_report_deliveries` records.
