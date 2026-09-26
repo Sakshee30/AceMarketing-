@@ -519,3 +519,24 @@ test('feed enhancement persists destination mappings and previews payload', asyn
   await expect(page.getByText('Enhanced payload preview')).toBeVisible()
   await expect(page.locator('.code-block')).toContainText('customer_tier')
 })
+
+
+test('integration catalog search and connector request persist', async ({ page }, testInfo) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  await openWorkspaceTab(page,'Integrations')
+  await expect(page.getByRole('heading', { name: 'Platform-agnostic connectivity' })).toBeVisible()
+  const search=page.getByLabel('Search integration catalog')
+  await search.fill('Snowflake')
+  await expect(page.getByText('Snowflake', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText('Configurable adapter', { exact: true }).first()).toBeVisible()
+  await page.getByRole('button', { name: 'Request connector' }).click()
+  const form=page.locator('.integration-request-form')
+  const connector='CI Connector '+testInfo.project.name
+  await form.getByLabel('Connector name').fill(connector)
+  await form.getByLabel('Business need').fill('CI needs a governed bidirectional connector for attribution and activation data.')
+  await form.getByLabel('Direction').selectOption('Bidirectional')
+  await form.getByLabel('Priority').selectOption('High')
+  await form.getByRole('button', { name: 'Submit connector request' }).click()
+  await expect(page.getByText('Connector request submitted and tracked in this workspace.', { exact: true })).toBeVisible()
+})
