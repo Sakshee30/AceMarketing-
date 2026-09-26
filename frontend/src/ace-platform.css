@@ -1603,3 +1603,14 @@
 .developer-revoked-keys[open] summary{margin-bottom:8px}
 @media(max-width:760px){.developer-key-row{grid-template-columns:1fr auto}.developer-key-row>button{grid-column:1/-1;width:100%}}
 @media(prefers-reduced-motion:reduce){.developer-key-row>button{transition:none!important}}
+
+
+/* Workspace section fault isolation */
+.workspace-section-error{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:16px;border:1px solid rgba(177,72,47,.2)!important;background:linear-gradient(180deg,#fffaf8,#fff4ef)!important}
+.workspace-section-error>svg{width:28px;height:28px;color:#b5523b}
+.workspace-section-error h2{margin:0 0 5px;font-size:18px;color:#7a3325}
+.workspace-section-error p{margin:0 0 4px;color:#7c5449;overflow-wrap:anywhere}
+.workspace-section-error small{color:#8b6d63}
+.workspace-section-error button{display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(177,72,47,.18);background:#fff;color:#8a3e2f;border-radius:10px;padding:9px 12px;font-weight:800;cursor:pointer}
+.workspace-section-error button svg{width:15px;height:15px}
+@media(max-width:760px){.workspace-section-error{grid-template-columns:auto 1fr}.workspace-section-error button{grid-column:1/-1;width:100%;justify-content:center}}
