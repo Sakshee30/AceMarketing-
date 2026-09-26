@@ -32,7 +32,9 @@ const ensureRules=async workspaceId=>{
     ['api_error_rate','gt',2,'critical',10],
     ['api_p95_latency_ms','gt',2000,'warning',10],
     ['dead_letter_jobs','gt',0,'critical',5],
-    ['audience_sync_errors','gt',0,'warning',15]
+    ['audience_sync_errors','gt',0,'warning',15],
+    ['tracking_inactivity_minutes','gt',30,'warning',30],
+    ['signal_delivery_backlog_minutes','gt',15,'critical',15]
   ]
   for(const [metric,operator,threshold,severity,windowMinutes] of defaults){
     await pool.query(
@@ -53,7 +55,7 @@ const compare=(value,operator,threshold)=>{
 }
 
 const metricSnapshot=async(workspaceId,windowMinutes=10)=>{
-  const [api,jobs,audiences]=await Promise.all([
+  const [api,jobs,audiences,tracking,signalBacklog]=await Promise.all([
     pool.query(
       `SELECT COUNT(*)::int requests,
          COUNT(*) FILTER (WHERE status_code>=500)::int errors,
@@ -63,14 +65,21 @@ const metricSnapshot=async(workspaceId,windowMinutes=10)=>{
       [workspaceId,windowMinutes]
     ),
     pool.query(`SELECT COUNT(*)::int count FROM ace_jobs WHERE workspace_id=$1 AND status='dead_letter'`,[workspaceId]).catch(()=>({rows:[{count:0}]})),
-    pool.query(`SELECT COUNT(*)::int count FROM ace_audiences WHERE workspace_id=$1 AND status='error'`,[workspaceId]).catch(()=>({rows:[{count:0}]}))
+    pool.query(`SELECT COUNT(*)::int count FROM ace_audiences WHERE workspace_id=$1 AND status='error'`,[workspaceId]).catch(()=>({rows:[{count:0}]})),
+    pool.query(`SELECT EXTRACT(EPOCH FROM (now()-MAX(created_at)))/60 AS minutes
+                FROM ace_api_metrics WHERE workspace_id=$1 AND method='POST' AND path='/api/track'`,[workspaceId]).catch(()=>({rows:[{minutes:0}]})),
+    pool.query(`SELECT COALESCE(MAX(EXTRACT(EPOCH FROM (now()-created_at))/60),0)::numeric AS minutes
+                FROM ace_jobs
+                WHERE workspace_id=$1 AND kind='signal_delivery' AND status IN ('pending','retry','leased')`,[workspaceId]).catch(()=>({rows:[{minutes:0}]}))
   ])
   const a=api.rows[0]
   return {
     api_error_rate:a.requests?Number(((a.errors/a.requests)*100).toFixed(3)):0,
     api_p95_latency_ms:Number(a.p95||0),
     dead_letter_jobs:Number(jobs.rows[0]?.count||0),
-    audience_sync_errors:Number(audiences.rows[0]?.count||0)
+    audience_sync_errors:Number(audiences.rows[0]?.count||0),
+    tracking_inactivity_minutes:Number(tracking.rows[0]?.minutes||0),
+    signal_delivery_backlog_minutes:Number(signalBacklog.rows[0]?.minutes||0)
   }
 }
 
@@ -78,15 +87,44 @@ const titleFor=metric=>({
   api_error_rate:'API error rate above threshold',
   api_p95_latency_ms:'API p95 latency elevated',
   dead_letter_jobs:'Dead-letter jobs require review',
-  audience_sync_errors:'Audience provider sync errors detected'
+  audience_sync_errors:'Audience provider sync errors detected',
+  tracking_inactivity_minutes:'Tracking activity has gone quiet',
+  signal_delivery_backlog_minutes:'Signal delivery queue is falling behind'
 }[metric]||metric)
 
 const detailFor=(metric,value,threshold)=>({
   api_error_rate:`5xx error rate is ${value}% against a ${threshold}% threshold.`,
   api_p95_latency_ms:`API p95 latency is ${value}ms against a ${threshold}ms threshold.`,
   dead_letter_jobs:`${value} job(s) are in dead-letter state.`,
-  audience_sync_errors:`${value} audience(s) are currently in provider error state.`
+  audience_sync_errors:`${value} audience(s) are currently in provider error state.`,
+  tracking_inactivity_minutes:`No tracked event has been observed for approximately ${Number(value).toFixed(1)} minutes; threshold is ${threshold} minutes.`,
+  signal_delivery_backlog_minutes:`The oldest pending/retrying signal delivery is approximately ${Number(value).toFixed(1)} minutes old; threshold is ${threshold} minutes.`
 }[metric]||`${metric} is ${value}; threshold is ${threshold}.`)
+
+const ownerFor=metric=>({
+  api_error_rate:'Platform engineering',
+  api_p95_latency_ms:'Platform engineering',
+  dead_letter_jobs:'Marketing operations',
+  audience_sync_errors:'Marketing operations',
+  tracking_inactivity_minutes:'Tracking / analytics owner',
+  signal_delivery_backlog_minutes:'Activation operations'
+}[metric]||'Workspace operations')
+
+const recommendationFor=metric=>({
+  api_error_rate:'Inspect recent 5xx routes, deployment changes and dependency failures; correlate request IDs before retrying affected operations.',
+  api_p95_latency_ms:'Inspect slow API routes, database saturation and provider latency; compare p95 with the previous healthy window.',
+  dead_letter_jobs:'Open Delivery, inspect the last error and provider response, fix credentials/payload issues, then replay the dead-letter queue.',
+  audience_sync_errors:'Open Audiences and connector health, review provider errors and identity coverage, then rematerialize or resync after correction.',
+  tracking_inactivity_minutes:'Check site/app installation, recent release changes, consent configuration and ingestion requests; send a controlled test event after verification.',
+  signal_delivery_backlog_minutes:'Open Delivery and worker health, inspect queue age and connector credentials, then retry/replay only after the underlying destination issue is resolved.'
+}[metric]||'Inspect the source evidence and recent changes before resolving the incident.')
+
+const enrichAlert=row=>({
+  ...row,
+  owner:ownerFor(row.metric),
+  affectedPeriod:(Number(row.window_minutes||0)||10)+' minute monitoring window',
+  recommendation:recommendationFor(row.metric)
+})
 
 export const evaluateMonitoring=async workspaceId=>{
   if(!pool)return []
@@ -179,7 +217,10 @@ export const monitoringSnapshot=async workspaceId=>{
       [workspaceId]
     ),
     pool.query(`SELECT * FROM ace_monitoring_rules WHERE workspace_id=$1 ORDER BY severity,metric`,[workspaceId]),
-    pool.query(`SELECT * FROM ace_alert_incidents WHERE workspace_id=$1 ORDER BY detected_at DESC LIMIT 50`,[workspaceId])
+    pool.query(`SELECT i.*,r.window_minutes
+                FROM ace_alert_incidents i
+                LEFT JOIN ace_monitoring_rules r ON r.id=i.rule_id AND r.workspace_id=i.workspace_id
+                WHERE i.workspace_id=$1 ORDER BY i.detected_at DESC LIMIT 50`,[workspaceId])
   ])
   const r=recent.rows[0],d=day.rows[0],u=usage.rows[0]
   return {
@@ -196,15 +237,19 @@ export const monitoringSnapshot=async workspaceId=>{
     },
     usage:Object.fromEntries(Object.entries(u).map(([k,v])=>[k,Number(v||0)])),
     rules:rules.rows,
-    recentAlerts:alerts.rows
+    recentAlerts:alerts.rows.map(enrichAlert)
   }
 }
 
 export const listAlerts=async workspaceId=>{
   if(!pool)return []
   await evaluateMonitoring(workspaceId)
-  const {rows}=await pool.query(`SELECT * FROM ace_alert_incidents WHERE workspace_id=$1 ORDER BY CASE WHEN status='open' THEN 0 ELSE 1 END,detected_at DESC LIMIT 200`,[workspaceId])
-  return rows
+  const {rows}=await pool.query(`SELECT i.*,r.window_minutes
+                                FROM ace_alert_incidents i
+                                LEFT JOIN ace_monitoring_rules r ON r.id=i.rule_id AND r.workspace_id=i.workspace_id
+                                WHERE i.workspace_id=$1
+                                ORDER BY CASE WHEN i.status='open' THEN 0 ELSE 1 END,i.detected_at DESC LIMIT 200`,[workspaceId])
+  return rows.map(enrichAlert)
 }
 
 export const resolveAlert=async(workspaceId,id)=>{
@@ -226,7 +271,7 @@ export const listMonitoringRules=async workspaceId=>{
 
 export const saveMonitoringRule=async(workspaceId,input={})=>{
   if(!pool)return null
-  const allowedMetrics=['api_error_rate','api_p95_latency_ms','dead_letter_jobs','audience_sync_errors']
+  const allowedMetrics=['api_error_rate','api_p95_latency_ms','dead_letter_jobs','audience_sync_errors','tracking_inactivity_minutes','signal_delivery_backlog_minutes']
   const metric=String(input.metric||'')
   const operator=String(input.operator||'gt')
   const threshold=Number(input.threshold)
