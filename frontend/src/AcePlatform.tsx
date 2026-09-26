@@ -981,9 +981,7 @@ function Adjustments(){
  const [builder,setBuilder]=useState(false)
  const [notice,setNotice]=useState('')
  const load=()=>api.adjustments().then((r:any)=>{const mapped=(r.items||[]).map((x:any)=>({...x,event:String(x.event||'').replaceAll('_',' ').replace(/\b\w/g,(m:string)=>m.toUpperCase()),source:String(x.source||'').replaceAll('_',' / '),destination:String(x.destination||'').replaceAll('_',' '),from:x.fromValue??'—',to:x.toValue??'—',status:String(x.status||'pending').replace(/^./,(m:string)=>m.toUpperCase())}));setItems(mapped);setSelected(x=>x&&mapped.some((y:any)=>y.id===x)?x:(mapped[0]?.id||''))}).catch((e:any)=>{setItems([]);setNotice(e?.message||'Adjustments could not be loaded.')})
- const loadReactivation=()=>api.leadReactivation(dormantDays,recentDays).then((r:any)=>setReactivation(r)).catch(()=>setReactivation({items:[],stats:{}}))
- useEffect(()=>{load();loadReactivation()},[])
- useEffect(()=>{loadReactivation()},[dormantDays,recentDays])
+ useEffect(()=>{load()},[])
  const current=items.find(x=>x.id===selected)||items[0]
  const apply=async(id:string)=>{setBusy('apply');setNotice('');try{await api.applyAdjustment(id);setNotice('Adjustment applied and audit state updated.');await load();setPreview(null)}catch(e:any){setNotice(e?.message||'Adjustment could not be applied.')}finally{setBusy('')}}
  const showPreview=async(id:string)=>{setBusy('preview');setNotice('');try{const r:any=await api.previewAdjustment(id);setPreview(r)}catch(e:any){setNotice(e?.message||'Preview could not be generated.')}finally{setBusy('')}}
