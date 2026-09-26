@@ -136,9 +136,10 @@ const tiktokEventName=event=>{
   return mapped||String(event||'CustomEvent').replace(/[^A-Za-z0-9_]/g,'_').slice(0,100)||'CustomEvent'
 }
 
-const deliverTikTok=async(_workspaceId,signal)=>{
-  const pixelId=String(signal.tiktokPixelId||signal.data?.tiktokPixelId||process.env.TIKTOK_PIXEL_ID||'').trim()
-  const token=String(signal.tiktokEventsToken||signal.data?.tiktokEventsToken||process.env.TIKTOK_EVENTS_TOKEN||'').trim()
+const deliverTikTok=async(workspaceId,signal)=>{
+  const credential=await credentialFor(workspaceId,'TikTok Ads').catch(()=>({}))
+  const pixelId=String(signal.tiktokPixelId||signal.data?.tiktokPixelId||credential.pixel_id||process.env.TIKTOK_PIXEL_ID||'').trim()
+  const token=String(signal.tiktokEventsToken||signal.data?.tiktokEventsToken||credential.access_token||process.env.TIKTOK_EVENTS_TOKEN||'').trim()
   if(!pixelId||!token) throw new Error('TIKTOK_PIXEL_ID and TIKTOK_EVENTS_TOKEN are required')
   const occurred=new Date(signal.occurredAt||Date.now())
   const eventTime=Math.floor((Number.isNaN(occurred.getTime())?Date.now():occurred.getTime())/1000)
@@ -220,9 +221,10 @@ const pinterestActionSource=value=>{
   return 'web'
 }
 
-const deliverPinterest=async(_workspaceId,signal)=>{
-  const advertiserId=String(signal.pinterestAdvertiserId||signal.data?.pinterestAdvertiserId||process.env.PINTEREST_AD_ACCOUNT_ID||'').trim()
-  const token=String(signal.pinterestConversionToken||signal.data?.pinterestConversionToken||process.env.PINTEREST_CONVERSION_TOKEN||'').trim()
+const deliverPinterest=async(workspaceId,signal)=>{
+  const credential=await credentialFor(workspaceId,'Pinterest').catch(()=>({}))
+  const advertiserId=String(signal.pinterestAdvertiserId||signal.data?.pinterestAdvertiserId||credential.ad_account_id||process.env.PINTEREST_AD_ACCOUNT_ID||'').trim()
+  const token=String(signal.pinterestConversionToken||signal.data?.pinterestConversionToken||credential.access_token||process.env.PINTEREST_CONVERSION_TOKEN||'').trim()
   if(!advertiserId||!token) throw new Error('PINTEREST_AD_ACCOUNT_ID and PINTEREST_CONVERSION_TOKEN are required')
   const occurred=new Date(signal.occurredAt||Date.now())
   const eventTime=Math.floor((Number.isNaN(occurred.getTime())?Date.now():occurred.getTime())/1000)
@@ -277,9 +279,10 @@ const microsoftEventName=event=>String(event||'conversion')
   .replace(/^[_-]+|[_-]+$/g,'')
   .slice(0,128)||'conversion'
 
-const deliverMicrosoft=async(_workspaceId,signal)=>{
-  const tagId=String(signal.microsoftUetTagId||signal.data?.microsoftUetTagId||process.env.MICROSOFT_UET_TAG_ID||'').trim()
-  const token=String(signal.microsoftCapiToken||signal.data?.microsoftCapiToken||process.env.MICROSOFT_CAPI_TOKEN||'').trim()
+const deliverMicrosoft=async(workspaceId,signal)=>{
+  const credential=await credentialFor(workspaceId,'Microsoft Ads / Bing Ads').catch(()=>({}))
+  const tagId=String(signal.microsoftUetTagId||signal.data?.microsoftUetTagId||credential.tag_id||process.env.MICROSOFT_UET_TAG_ID||'').trim()
+  const token=String(signal.microsoftCapiToken||signal.data?.microsoftCapiToken||credential.access_token||process.env.MICROSOFT_CAPI_TOKEN||'').trim()
   if(!tagId||!token) throw new Error('MICROSOFT_UET_TAG_ID and MICROSOFT_CAPI_TOKEN are required')
   const occurred=new Date(signal.occurredAt||Date.now())
   const eventTime=Math.floor((Number.isNaN(occurred.getTime())?Date.now():occurred.getTime())/1000)
