@@ -1283,3 +1283,12 @@
  .integration-category-head{align-items:flex-start}
 }
 @media(prefers-reduced-motion:reduce){.integration-app-grid article{transition:none}.integration-app-grid article:hover{transform:none}}
+
+
+/* Public integration search */
+.public-integration-search{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:0 auto 24px;max-width:1180px}
+.public-integration-search>div{display:flex;align-items:center;gap:9px;flex:1}
+.public-integration-search input{width:100%;border:0;outline:0;background:transparent;font:inherit}
+.public-integration-search svg{width:18px;height:18px}
+.public-integration-search>span{white-space:nowrap;font-size:12px}
+@media(max-width:760px){.public-integration-search{align-items:stretch;flex-direction:column}.public-integration-search>span{white-space:normal}}
