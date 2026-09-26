@@ -76,6 +76,7 @@ const groups:ShortcutGroup[]=[
     description:'Connect destinations, activate audiences and run the platform safely',
     items:[
       {label:'Integrations',tab:'Integrations',icon:Cable,description:'Ads, CRM, calling, messaging and commerce connectors'},
+      {label:'Data Flows',tab:'Data Flows',icon:Network,description:'Build, test and activate source-to-destination sync recipes'},
       {label:'Audiences',tab:'Audiences',icon:UsersRound,description:'Build, preview and activate first-party segments'},
       {label:'Delivery',tab:'Delivery',icon:Activity,description:'Outbound signal queue, retries and dead letters'},
       {label:'Monitoring',tab:'Monitoring',icon:Activity,description:'Reliability, usage and operational health'},
