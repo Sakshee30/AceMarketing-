@@ -1,3 +1,4 @@
+import { normalizeCallEvent } from '../src/call-events.mjs'
 const base=(process.env.SMOKE_BASE_URL||'http://127.0.0.1:3001').replace(/\/$/,'')
 const timeout=Number(process.env.SMOKE_TIMEOUT_MS||5000)
 
@@ -13,6 +14,19 @@ const request=async(path,options={})=>{
     return body
   }finally{clearTimeout(timer)}
 }
+
+const callAttribution=normalizeCallEvent({
+  callId:'smoke_call_attribution',
+  from:'+919876543210',
+  to:'+911234567890',
+  campaign:'Brand Search',
+  keyword:'best mba course',
+  creative:'Lead Form A',
+  adGroup:'MBA Search',
+  gclid:'smoke-gclid',
+  status:'completed'
+})
+if(callAttribution.keyword!=='best mba course'||callAttribution.creative!=='Lead Form A'||callAttribution.adGroup!=='MBA Search')throw new Error('call attribution normalization failed')
 
 const health=await request('/api/health')
 if(health.ok!==true)throw new Error('health response is not ok')
@@ -37,4 +51,4 @@ if(process.env.SMOKE_EMAIL&&process.env.SMOKE_PASSWORD){
   await request('/api/monitoring',{headers:{Authorization:'Bearer '+auth.token,'X-Workspace-ID':workspace}})
 }
 
-console.log(JSON.stringify({ok:true,base,checks:['health','ready','public-navigation','resource-center',...(process.env.SMOKE_EMAIL?['authenticated-monitoring']:[])]}))
+console.log(JSON.stringify({ok:true,base,checks:['call-attribution-normalization','health','ready','public-navigation','resource-center',...(process.env.SMOKE_EMAIL?['authenticated-monitoring']:[])]}))
