@@ -5457,3 +5457,31 @@ AceMarketing now includes a native LinkedIn server-side conversion path alongsid
 - E2E coverage verifies that the LinkedIn quick-start creates a real persisted AdSync pipeline targeting `LinkedIn Ads`.
 
 This implementation addresses the brochure requirement for server-side LinkedIn conversion signaling while keeping delivery retry, audit and dashboard visibility inside AceMarketing's existing signal-delivery pipeline.
+
+
+## Microsoft Ads + Pinterest server-side conversion delivery — 2026-09-26
+
+AceMarketing AdSync now converts two previously catalog-only advertising integrations into native outbound signal destinations.
+
+### Microsoft Advertising Conversions API
+- Adds a native provider for `Microsoft Ads / Bing Ads`.
+- Sends real-time custom conversion events to `https://capi.uet.microsoft.com/v1/{tagId}/events`.
+- Uses a stable event ID for UET/CAPI deduplication.
+- Supports Microsoft click ID (`msclkid`), SHA-256 email/phone, anonymous/external IDs, IP/user-agent and mobile advertising IDs when present.
+- Enforces Microsoft's seven-day server-event timestamp window.
+- Propagates consent as `adStorageConsent`.
+- Sends conversion value, currency and transaction ID when available.
+- Requires `MICROSOFT_UET_TAG_ID` and `MICROSOFT_CAPI_TOKEN`.
+
+### Pinterest Conversions API
+- Adds a native provider for the existing `Pinterest` connector entry.
+- Sends server events to Pinterest v5 ad-account event ingestion.
+- Supports deduplication with stable `event_id`.
+- Maps AceMarketing business events to Pinterest event names such as `lead`, `schedule`, `checkout`, `signup`, `start_trial` and `subscribe`.
+- Supports web/offline action sources, SHA-256 email/phone, external IDs, client IP/user-agent, conversion value, currency and order ID.
+- Supports Pinterest test-event mode through `PINTEREST_TEST_EVENTS=true`.
+- Requires `PINTEREST_AD_ACCOUNT_ID` and `PINTEREST_CONVERSION_TOKEN`.
+
+The AdSync dashboard now exposes installable quick-start pipelines for Google, Meta, LinkedIn, Microsoft/Bing, Pinterest and ChatGPT Ads. All of them use the same persisted event-rule, durable delivery, retry, audit and monitoring pipeline instead of isolated UI-only actions.
+
+E2E coverage verifies that Microsoft and Pinterest quick-start cards create persisted AdSync pipelines and select the correct real delivery destinations.
