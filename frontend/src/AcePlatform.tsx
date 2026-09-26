@@ -12,7 +12,7 @@ import { api } from './lib/api'
 import {getLocalConsent,saveLocalConsent} from './lib/tracker'
 
 type View='site'|'app'|'login'|'pricing'|'demo'|'company'|'resources'|'case-studies'|'privacy'|'terms'|'security'|'solutions'|'industries'|'agents-public'|'integrations-public'
-type AppTab='Launchpad'|'Overview'|'AdSync'|'Funnel'|'Events'|'Adjustments'|'Diagnostics'|'Fraud'|'Deep Links'|'Sites'|'Fingerprinting'|'Live Sync'|'Data Hub'|'Offline Attribution'|'Matchback'|'POS & Stores'|'Journeys'|'Identity'|'Models'|'Attribution'|'Planner'|'Reports'|'Enrich'|'Lead Grading'|'Behavior'|'Feed'|'Agents'|'Routing'|'Follow-ups'|'Calls'|'Meetings'|'Feedback'|'Approvals'|'Ask Ace'|'Integrations'|'Data Flows'|'Audiences'|'Delivery'|'Monitoring'|'Alerts'|'Developers'|'Settings'
+type AppTab='Launchpad'|'Overview'|'AdSync'|'Funnel'|'Events'|'Adjustments'|'Diagnostics'|'Fraud'|'Deep Links'|'Sites'|'Fingerprinting'|'Live Sync'|'Data Hub'|'Customer 360'|'Offline Attribution'|'Matchback'|'POS & Stores'|'Journeys'|'Identity'|'Models'|'Attribution'|'Planner'|'Reports'|'Enrich'|'Lead Grading'|'Behavior'|'Feed'|'Agents'|'Routing'|'Follow-ups'|'Calls'|'Meetings'|'Feedback'|'Approvals'|'Ask Ace'|'Integrations'|'Data Flows'|'Audiences'|'Delivery'|'Monitoring'|'Alerts'|'Developers'|'Settings'
 
 const agents=[
  ['Meta Advanced CAPI','Return qualified outcomes to Meta server-side with deduplication.','Lead Quality','+25–40% ROAS'],
@@ -604,12 +604,12 @@ function Login({back,openApp}:{back:()=>void,openApp:()=>void}){
  return <div className="login-page"><div className="login-brand"><Brand/><button onClick={back}>Back to website</button></div><div className="login-shell"><div className="login-story"><span className="kicker">ACE MARKETING PLATFORM</span><h1>One workspace for the complete acquisition journey.</h1><p>Connect paid media, CRM, calls, messaging and offline outcomes — then activate clean signals and measure revenue in one place.</p><div className="login-flow">{['Connect','Stitch','Enrich','Activate','Attribute'].map((x,i)=><div key={x}><span>{i+1}</span><b>{x}</b>{i<4&&<ArrowRight/>}</div>)}</div></div>{mode==='login'?loginForm:mode==='forgot'?forgotForm:resetForm}</div></div>
 }
 const appTabs=[
- ['Launchpad',WandSparkles],['Overview',Gauge],['AdSync',RadioTower],['Funnel',BarChart3],['Events',Zap],['Adjustments',CircleDollarSign],['Diagnostics',ShieldCheck],['Fraud',ShieldCheck],['Deep Links',Network],['Sites',Globe2],['Fingerprinting',MousePointer2],['Live Sync',Activity],['Data Hub',DatabaseZap],['Offline Attribution',PhoneCall],['Matchback',CircleDollarSign],['POS & Stores',Building2],['Journeys',Network],['Identity',UsersRound],['Models',Target],['Attribution',PieChart],['Planner',CircleDollarSign],['Reports',BarChart3],['Enrich',DatabaseZap],['Lead Grading',Target],['Behavior',MousePointer2],['Feed',Layers3],['Agents',Bot],['Routing',Network],['Follow-ups',MessageCircle],['Calls',PhoneIncoming],['Meetings',CalendarDays],['Feedback',MessageSquareText],['Approvals',CheckCircle2],['Ask Ace',Sparkles],['Integrations',Cable],['Data Flows',Network],['Audiences',UsersRound],['Delivery',RadioTower],['Monitoring',Activity],['Alerts',Bell],['Developers',Code2],['Settings',Settings2]
+ ['Launchpad',WandSparkles],['Overview',Gauge],['AdSync',RadioTower],['Funnel',BarChart3],['Events',Zap],['Adjustments',CircleDollarSign],['Diagnostics',ShieldCheck],['Fraud',ShieldCheck],['Deep Links',Network],['Sites',Globe2],['Fingerprinting',MousePointer2],['Live Sync',Activity],['Data Hub',DatabaseZap],['Customer 360',UsersRound],['Offline Attribution',PhoneCall],['Matchback',CircleDollarSign],['POS & Stores',Building2],['Journeys',Network],['Identity',UsersRound],['Models',Target],['Attribution',PieChart],['Planner',CircleDollarSign],['Reports',BarChart3],['Enrich',DatabaseZap],['Lead Grading',Target],['Behavior',MousePointer2],['Feed',Layers3],['Agents',Bot],['Routing',Network],['Follow-ups',MessageCircle],['Calls',PhoneIncoming],['Meetings',CalendarDays],['Feedback',MessageSquareText],['Approvals',CheckCircle2],['Ask Ace',Sparkles],['Integrations',Cable],['Data Flows',Network],['Audiences',UsersRound],['Delivery',RadioTower],['Monitoring',Activity],['Alerts',Bell],['Developers',Code2],['Settings',Settings2]
 
 ] as const
 const dashboardSections=[
  {id:'workspace',label:'Workspace',icon:Gauge,tabs:['Overview','Launchpad']},
- {id:'tracking',label:'Tracking & Data',icon:DatabaseZap,tabs:['AdSync','Funnel','Events','Adjustments','Diagnostics','Fraud','Deep Links','Sites','Fingerprinting','Live Sync','Data Hub','Offline Attribution','Matchback','POS & Stores']},
+ {id:'tracking',label:'Tracking & Data',icon:DatabaseZap,tabs:['AdSync','Funnel','Events','Adjustments','Diagnostics','Fraud','Deep Links','Sites','Fingerprinting','Live Sync','Data Hub','Customer 360','Offline Attribution','Matchback','POS & Stores']},
  {id:'measurement',label:'Measurement & Intelligence',icon:PieChart,tabs:['Journeys','Identity','Models','Attribution','Planner','Reports']},
  {id:'conversion',label:'Lead & Conversion',icon:Target,tabs:['Enrich','Lead Grading','Behavior','Feed','Agents','Routing','Follow-ups','Calls','Meetings','Feedback','Approvals','Ask Ace']},
  {id:'activation',label:'Activation & Integrations',icon:RadioTower,tabs:['Integrations','Data Flows','Audiences','Delivery']},
@@ -1061,6 +1061,75 @@ function DataHub(){
  <div className="app-panel"><div className="panel-head"><div><h3>Data quality controls</h3><p>Before records become shared truth</p></div><button onClick={rebuild} disabled={rebuilding}>{rebuilding?'Rebuilding…':'Rebuild canonical view'}</button></div>{[['Schema validation','Required'],['Duplicate resolution','Deterministic event / identity keys'],['Unknown fields','Quarantine + mapping review'],['Late data','Reprocess attribution window'],['PII activation','Hash before destination'],['Audience activation','Marketing consent re-check'],['Auditability','Source + transform lineage retained']].map(x=><div className="setting-line" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><Check/></div>)}</div></div>
  <div className="app-panel"><div className="panel-head"><div><h3>Recent source activity</h3><p>Observed changes across the unified data layer</p></div><button onClick={load}>Refresh</button></div>{(hub?.recent||[]).length?(hub.recent||[]).map((x:any)=><div className="sync-history-row" key={x.id}><time>{x.time?new Date(x.time).toLocaleTimeString():'—'}</time><b>{x.source}</b><span>{x.kind}</span><span>{x.operation}</span><em className={x.status==='healthy'?'healthy':'status'}>{x.status}</em></div>):<div className="empty-delivery-state"><Activity/><div><b>No recent source activity</b><small>The Data Hub does not fabricate sync history when nothing has been ingested.</small></div></div>}</div></>
 }
+function Customer360(){
+ const [data,setData]=useState<any>({items:[],customer:null,total:0})
+ const [selected,setSelected]=useState('')
+ const [query,setQuery]=useState('')
+ const [loading,setLoading]=useState(true)
+ const [notice,setNotice]=useState('')
+ const load=async(id?:string)=>{
+  setLoading(true);setNotice('')
+  try{
+   const r:any=await api.customer360(id)
+   setData(r)
+   if(r.customer?.id)setSelected(r.customer.id)
+  }catch(e:any){setNotice(e?.message||'Customer 360 could not be loaded.')}
+  finally{setLoading(false)}
+ }
+ useEffect(()=>{load()},[])
+ const choose=(id:string)=>{setSelected(id);load(id)}
+ const items=(data.items||[]).filter((x:any)=>{
+  const q=query.trim().toLowerCase()
+  return !q||[x.name,x.externalLeadId,x.source,x.campaign,x.stage,x.grade].some(v=>String(v||'').toLowerCase().includes(q))
+ })
+ const customer=data.customer
+ const identity=customer?.identity||{}
+ const ops=customer?.operations||{}
+ const timeline=customer?.timeline||[]
+ const attrs=Object.entries(customer?.attributes||{}).slice(0,12)
+ const journey=Object.entries(customer?.journey||{}).filter(([,v])=>v!==null&&v!==''&&typeof v!=='object').slice(0,12)
+ return <><PageHead crumb="Data / Customer 360" title="Customer 360" sub="One operator view for identity, acquisition, lifecycle, audiences, interactions and agent activity across the stitched customer journey." action={loading?'Refreshing…':'Refresh'} onAction={()=>load(selected||undefined)}/>
+ {notice&&<div className="delivery-notice error"><ShieldCheck/><span>{notice}</span></div>}
+ <div className="stats-grid">
+  <Stat label="Known customers" value={String(data.total||0)} sub="Persisted active profiles" Icon={UsersRound}/>
+  <Stat label="Customer score" value={customer?String(customer.score||0):'—'} sub={customer?.grade?'Grade '+customer.grade:'No selected customer'} Icon={Target}/>
+  <Stat label="Tracked activity" value={customer?String(ops.trackedEvents||0):'—'} sub="First-party events linked to profile" Icon={Activity}/>
+  <Stat label="Active audiences" value={customer?String((customer.audiences||[]).length):'—'} sub="Materialized audience memberships" Icon={RadioTower}/>
+ </div>
+ <div className="customer360-layout">
+  <div className="app-panel customer360-list">
+   <div className="panel-head"><div><h3>Customer directory</h3><p>Search canonical profiles and open the stitched record</p></div><span className="healthy">{items.length}</span></div>
+   <div className="customer360-search"><Search/><input aria-label="Search customer 360 profiles" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search name, lead ID, source, campaign..."/></div>
+   <div className="customer360-list-scroll">{items.length?items.map((x:any)=><button key={x.id} className={selected===x.id?'selected':''} onClick={()=>choose(x.id)}>
+    <span className="customer360-avatar">{String(x.name||'C').slice(0,1).toUpperCase()}</span>
+    <div><b>{x.name}</b><small>{x.source}{x.campaign?' · '+x.campaign:''}</small><em>{x.stage} · Grade {x.grade||'—'} · score {x.score||0}</em></div>
+    <strong>{x.activityCount||0}<small>activities</small></strong><ChevronRight/>
+   </button>):<div className="empty-delivery-state"><UsersRound/><div><b>No matching customer profiles</b><small>Connected CRM, tracking and enrichment records will appear here.</small></div></div>}</div>
+  </div>
+  <div className="customer360-main">
+   {customer?<>
+    <section className="app-panel customer360-hero">
+     <div className="customer360-person"><span>{String(customer.name||'C').slice(0,1).toUpperCase()}</span><div><small>CUSTOMER PROFILE</small><h2>{customer.name}</h2><p>{customer.externalLeadId} · {customer.source}{customer.campaign?' · '+customer.campaign:''}</p></div></div>
+     <div className="customer360-score"><span>Lifecycle</span><b>{customer.stage}</b><em>Grade {customer.grade||'—'} · {customer.score||0}/100</em></div>
+    </section>
+    <div className="customer360-cards">
+     <section className="app-panel"><div className="panel-head"><div><h3>Identity graph</h3><p>Persisted deterministic identifiers</p></div><UsersRound/></div><div className="site-detail-grid">{[
+      ['Device ID',identity.deviceId||'—'],['Platform',identity.platform||'—'],['App ID',identity.appId||'—'],['Email hash',identity.hasEmailHash?'Present':'Not available'],['Phone hash',identity.hasPhoneHash?'Present':'Not available'],['Last updated',customer.updatedAt?new Date(customer.updatedAt).toLocaleString():'—']
+     ].map(x=><div key={x[0]}><span>{x[0]}</span><b>{String(x[1])}</b></div>)}</div></section>
+     <section className="app-panel"><div className="panel-head"><div><h3>Operational footprint</h3><p>Actions linked to this customer</p></div><Activity/></div><div className="customer360-op-grid">{[
+      ['Tracked events',ops.trackedEvents||0],['Agent runs',ops.agentRuns||0],['Routes',ops.routes||0],['Follow-ups',ops.followUps||0],['Meetings',ops.meetings||0],['Feedback',ops.feedback||0]
+     ].map(x=><div key={x[0]}><b>{String(x[1])}</b><span>{x[0]}</span></div>)}</div></section>
+    </div>
+    <div className="customer360-cards">
+     <section className="app-panel"><div className="panel-head"><div><h3>Customer attributes</h3><p>Normalized profile and journey evidence</p></div><DatabaseZap/></div>{attrs.length||journey.length?<div className="customer360-attributes">{[...attrs,...journey].slice(0,16).map(([k,v]:any)=><div key={String(k)}><span>{String(k).replaceAll('_',' ')}</span><b>{String(v)}</b></div>)}</div>:<div className="empty-delivery-state"><DatabaseZap/><div><b>No additional attributes</b><small>Enrichment and journey attributes will appear when captured.</small></div></div>}</section>
+     <section className="app-panel"><div className="panel-head"><div><h3>Audience membership</h3><p>Materialized activation and suppression groups</p></div><RadioTower/></div>{(customer.audiences||[]).length?<div className="customer360-audiences">{customer.audiences.map((x:any)=><div key={x.id}><span className={x.mode==='suppress'?'warning':'healthy'}>{x.mode}</span><div><b>{x.name}</b><small>{x.destination} · {x.status}</small></div></div>)}</div>:<div className="empty-delivery-state"><UsersRound/><div><b>No materialized audience membership</b><small>Build or materialize an audience to see activation context here.</small></div></div>}</section>
+    </div>
+    <section className="app-panel customer360-timeline"><div className="panel-head"><div><h3>Unified activity timeline</h3><p>Newest first · tracking, routing, follow-up, meetings, feedback and agent actions</p></div><button onClick={()=>window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:'Journeys'}))}>Open journey view</button></div>{timeline.length?<div className="customer360-timeline-list">{timeline.map((x:any)=><article key={x.id}><span className={'customer360-dot '+x.type}><Activity/></span><div><small>{x.source}</small><b>{x.title}</b><p>{x.detail}</p></div><time>{x.at?new Date(x.at).toLocaleString():'—'}</time></article>)}</div>:<div className="empty-delivery-state"><Activity/><div><b>No linked activity yet</b><small>This profile exists, but no persisted interaction events are currently linked.</small></div></div>}</section>
+   </>:<div className="app-panel empty-delivery-state customer360-empty"><UsersRound/><div><b>{loading?'Loading Customer 360…':'No customer selected'}</b><small>Select a profile to inspect its stitched operational record.</small></div></div>}
+  </div>
+ </div></>
+}
+
 function OfflineAttribution(){
  const [data,setData]=useState<any>({callAttribution:{},whatsapp:{},attribution:{},rules:[],templates:[]})
  const [selected,setSelected]=useState('')
@@ -2225,7 +2294,7 @@ function Product({back}:{back:()=>void}){
  const searchMatches=search.trim()?appTabs.filter(([name])=>name.toLowerCase().includes(search.trim().toLowerCase())).slice(0,8):[]
  const runSearch=(name?:string)=>{const target=(name||searchMatches[0]?.[0]) as AppTab|undefined;if(target){setTab(target);setSearch('')}}
  const currentWorkspace=workspaces.find(x=>x.name===workspace)||workspaces[0]
- const view=useMemo(()=>({Launchpad:<Launchpad/>,Overview:<Overview/>,AdSync:<AdSync/>,Funnel:<Funnel/>,Events:<Events/>,Adjustments:<Adjustments/>,Diagnostics:<Diagnostics/>,Fraud:<Fraud/>,"Deep Links":<DeepLinks/>,Sites:<Sites/>,Fingerprinting:<Fingerprinting/>,"Live Sync":<LiveSync/>,"Data Hub":<DataHub/>,"Offline Attribution":<OfflineAttribution/>,Matchback:<Matchback/>,"POS & Stores":<POSAndStores/>,Journeys:<Journeys/>,Identity:<Identity/>,Models:<Models/>,Attribution:<Attribution/>,Planner:<Planner/>,Reports:<Reports/>,Enrich:<Enrich/>,"Lead Grading":<LeadGrading/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Routing:<Routing/>,"Follow-ups":<FollowUps/>,Calls:<Calls/>,Meetings:<Meetings/>,Feedback:<Feedback/>,Approvals:<Approvals/>,"Ask Ace":<AskAce/>,Integrations:<Integrations/>,"Data Flows":<DataFlows/>,Audiences:<Audiences/>,Delivery:<DeliveryCenter/>,Monitoring:<Monitoring/>,Alerts:<Alerts/>,Developers:<Developers/>,Settings:<Settings/>}[tab]),[tab])
+ const view=useMemo(()=>({Launchpad:<Launchpad/>,Overview:<Overview/>,AdSync:<AdSync/>,Funnel:<Funnel/>,Events:<Events/>,Adjustments:<Adjustments/>,Diagnostics:<Diagnostics/>,Fraud:<Fraud/>,"Deep Links":<DeepLinks/>,Sites:<Sites/>,Fingerprinting:<Fingerprinting/>,"Live Sync":<LiveSync/>,"Data Hub":<DataHub/>,"Customer 360":<Customer360/>,"Offline Attribution":<OfflineAttribution/>,Matchback:<Matchback/>,"POS & Stores":<POSAndStores/>,Journeys:<Journeys/>,Identity:<Identity/>,Models:<Models/>,Attribution:<Attribution/>,Planner:<Planner/>,Reports:<Reports/>,Enrich:<Enrich/>,"Lead Grading":<LeadGrading/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Routing:<Routing/>,"Follow-ups":<FollowUps/>,Calls:<Calls/>,Meetings:<Meetings/>,Feedback:<Feedback/>,Approvals:<Approvals/>,"Ask Ace":<AskAce/>,Integrations:<Integrations/>,"Data Flows":<DataFlows/>,Audiences:<Audiences/>,Delivery:<DeliveryCenter/>,Monitoring:<Monitoring/>,Alerts:<Alerts/>,Developers:<Developers/>,Settings:<Settings/>}[tab]),[tab])
  return <div className={'product '+(mobileNavOpen?'mobile-nav-open':'')}><aside className="product-sidebar" aria-label="Workspace navigation"><Brand/><div className="workspace-wrap"><button className="workspace" onClick={()=>setWorkspaceOpen(!workspaceOpen)}><span>{currentWorkspace?.initials||'AM'}</span><div><b>{workspace}</b><small>{currentWorkspace?.environment||'Production'} workspace</small></div><ChevronDown/></button>{workspaceOpen&&<div className="workspace-menu">{workspaces.map((x:any)=><button key={x.id||x.name} onClick={()=>chooseWorkspace(x)} className={workspace===x.name?'active':''}><span>{x.initials||String(x.name).split(/\s+/).map((s:string)=>s[0]).join('').slice(0,3)}</span><div><b>{x.name}</b><small>{x.environment||'Production'}</small></div>{workspace===x.name&&<Check/>}</button>)}<button className="new-workspace" onClick={()=>{setWorkspaceOpen(false);setCreateOpen(true)}}><Plus/>Create workspace</button></div>}</div><nav className="product-nav">
  <div className="product-nav-filter"><Search/><input value={navFilter} onChange={e=>setNavFilter(e.target.value)} placeholder="Find feature..."/></div>
  {dashboardSections.map(section=>{
