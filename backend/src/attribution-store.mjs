@@ -176,7 +176,7 @@ export const reconcileAttribution=async(workspaceId,limit=250)=>{
 export const attributionStats=async(workspaceId,{periodDays=null}={})=>{
   if(!pool) return {available:false}
   const days=[7,30,90].includes(Number(periodDays))?Number(periodDays):null
-  const [sessions,events,methods,recent]=await Promise.all([
+  const [sessions,events,methods,recent,channels,campaigns,eventTypes,touchSummary]=await Promise.all([
     pool.query(`SELECT COUNT(*)::int total,
       COUNT(*) FILTER (WHERE gclid IS NOT NULL)::int gclid,
       COUNT(*) FILTER (WHERE fbclid IS NOT NULL)::int fbclid,
@@ -187,7 +187,8 @@ export const attributionStats=async(workspaceId,{periodDays=null}={})=>{
     pool.query(`SELECT COUNT(*)::int total,
       COUNT(*) FILTER (WHERE status='matched')::int matched,
       COUNT(*) FILTER (WHERE status='unmatched')::int unmatched,
-      COALESCE(SUM(value) FILTER (WHERE status='matched'),0)::numeric matched_value
+      COALESCE(SUM(value) FILTER (WHERE status='matched'),0)::numeric matched_value,
+      COALESCE(AVG(match_confidence) FILTER (WHERE status='matched' AND match_confidence IS NOT NULL),0)::numeric avg_confidence
       FROM ace_assisted_events
       WHERE workspace_id=$1
         AND ($2::int IS NULL OR occurred_at>=now()-($2*interval '1 day'))`,[workspaceId,days]),
@@ -196,14 +197,70 @@ export const attributionStats=async(workspaceId,{periodDays=null}={})=>{
       WHERE workspace_id=$1
         AND ($2::int IS NULL OR occurred_at>=now()-($2*interval '1 day'))
       GROUP BY COALESCE(match_method,'unmatched') ORDER BY count DESC`,[workspaceId,days]),
-    pool.query(`SELECT id,event_type,source,occurred_at,status,match_method,match_confidence,value,currency
+    pool.query(`SELECT e.id,e.event_type,e.source,e.occurred_at,e.status,e.match_method,e.match_confidence,e.value,e.currency,
+        s.utm_source,s.utm_medium,s.utm_campaign,s.utm_term,s.utm_content,s.landing_url,s.referrer,s.first_seen_at,s.last_seen_at
+      FROM ace_assisted_events e
+      LEFT JOIN ace_click_sessions s ON s.id=e.matched_session_id AND s.workspace_id=e.workspace_id
+      WHERE e.workspace_id=$1
+        AND ($2::int IS NULL OR e.occurred_at>=now()-($2*interval '1 day'))
+      ORDER BY e.occurred_at DESC LIMIT 30`,[workspaceId,days]),
+    pool.query(`SELECT COALESCE(NULLIF(s.utm_source,''),NULLIF(e.source,''),'Direct / Unknown') channel,
+        COUNT(*)::int events,
+        COUNT(*) FILTER (WHERE e.status='matched')::int matched,
+        COALESCE(SUM(e.value) FILTER (WHERE e.status='matched'),0)::numeric value,
+        COALESCE(AVG(e.match_confidence) FILTER (WHERE e.status='matched' AND e.match_confidence IS NOT NULL),0)::numeric avg_confidence
+      FROM ace_assisted_events e
+      LEFT JOIN ace_click_sessions s ON s.id=e.matched_session_id AND s.workspace_id=e.workspace_id
+      WHERE e.workspace_id=$1
+        AND ($2::int IS NULL OR e.occurred_at>=now()-($2*interval '1 day'))
+      GROUP BY COALESCE(NULLIF(s.utm_source,''),NULLIF(e.source,''),'Direct / Unknown')
+      ORDER BY value DESC,matched DESC,events DESC
+      LIMIT 25`,[workspaceId,days]),
+    pool.query(`SELECT COALESCE(NULLIF(s.utm_campaign,''),'Unattributed campaign') campaign,
+        COALESCE(NULLIF(s.utm_source,''),NULLIF(e.source,''),'Direct / Unknown') channel,
+        COUNT(*)::int events,
+        COUNT(*) FILTER (WHERE e.status='matched')::int matched,
+        COALESCE(SUM(e.value) FILTER (WHERE e.status='matched'),0)::numeric value,
+        COALESCE(AVG(e.match_confidence) FILTER (WHERE e.status='matched' AND e.match_confidence IS NOT NULL),0)::numeric avg_confidence
+      FROM ace_assisted_events e
+      LEFT JOIN ace_click_sessions s ON s.id=e.matched_session_id AND s.workspace_id=e.workspace_id
+      WHERE e.workspace_id=$1
+        AND ($2::int IS NULL OR e.occurred_at>=now()-($2*interval '1 day'))
+      GROUP BY COALESCE(NULLIF(s.utm_campaign,''),'Unattributed campaign'),COALESCE(NULLIF(s.utm_source,''),NULLIF(e.source,''),'Direct / Unknown')
+      ORDER BY value DESC,matched DESC,events DESC
+      LIMIT 30`,[workspaceId,days]),
+    pool.query(`SELECT event_type,
+        COUNT(*)::int events,
+        COUNT(*) FILTER (WHERE status='matched')::int matched,
+        COALESCE(SUM(value) FILTER (WHERE status='matched'),0)::numeric value
       FROM ace_assisted_events
       WHERE workspace_id=$1
         AND ($2::int IS NULL OR occurred_at>=now()-($2*interval '1 day'))
-      ORDER BY occurred_at DESC LIMIT 20`,[workspaceId,days])
+      GROUP BY event_type
+      ORDER BY value DESC,matched DESC,events DESC
+      LIMIT 20`,[workspaceId,days]),
+    pool.query(`SELECT
+        COUNT(*) FILTER (WHERE s.id IS NOT NULL)::int matched_sessions,
+        COUNT(DISTINCT s.utm_source) FILTER (WHERE s.utm_source IS NOT NULL AND s.utm_source<>'')::int source_count,
+        COUNT(DISTINCT s.utm_campaign) FILTER (WHERE s.utm_campaign IS NOT NULL AND s.utm_campaign<>'')::int campaign_count,
+        COUNT(*) FILTER (WHERE s.referrer IS NOT NULL AND s.referrer<>'')::int referrer_evidence,
+        COUNT(*) FILTER (WHERE s.landing_url IS NOT NULL AND s.landing_url<>'')::int landing_evidence
+      FROM ace_assisted_events e
+      LEFT JOIN ace_click_sessions s ON s.id=e.matched_session_id AND s.workspace_id=e.workspace_id
+      WHERE e.workspace_id=$1
+        AND ($2::int IS NULL OR e.occurred_at>=now()-($2*interval '1 day'))`,[workspaceId,days])
   ])
   const e=events.rows[0],s=sessions.rows[0]
   const rate=e.total?Number(((e.matched/e.total)*100).toFixed(2)):0
+  const totalMatchedValue=Number(e.matched_value||0)
+  const normalizeShare=row=>({
+    ...row,
+    events:Number(row.events||0),
+    matched:Number(row.matched||0),
+    value:Number(row.value||0),
+    avgConfidence:Number(Number(row.avg_confidence||0).toFixed(1)),
+    share:totalMatchedValue>0?Number((Number(row.value||0)/totalMatchedValue*100).toFixed(1)):0
+  })
   return {
     available:true,
     activeClickSessions:s.total,
@@ -212,8 +269,13 @@ export const attributionStats=async(workspaceId,{periodDays=null}={})=>{
     matchedEvents:e.matched,
     unmatchedEvents:e.unmatched,
     matchRate:rate,
-    matchedValue:Number(e.matched_value||0),
+    matchedValue:totalMatchedValue,
+    averageMatchConfidence:Number(Number(e.avg_confidence||0).toFixed(1)),
     methods:methods.rows,
+    channels:channels.rows.map(normalizeShare),
+    campaigns:campaigns.rows.map(normalizeShare),
+    eventTypes:eventTypes.rows.map(row=>({...row,events:Number(row.events||0),matched:Number(row.matched||0),value:Number(row.value||0)})),
+    touchSummary:touchSummary.rows[0]||{},
     recent:recent.rows,
     periodDays:days
   }
