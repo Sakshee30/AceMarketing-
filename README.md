@@ -3778,3 +3778,24 @@ Implemented:
 - existing sidebar navigation, API-backed pages and hash routing remain unchanged.
 
 The navigator dispatches the existing `ace-app-tab` workspace event, so it reuses the same page components and backend-connected functionality instead of creating duplicate screens.
+
+
+## Actionable business-event template pass
+
+The Conversion Event Manager now turns backend-provided event templates into real, editable workspace workflows instead of static reference rows.
+
+Implemented:
+- backend template metadata for category, description, business use case, destinations, value mode and currency;
+- reusable lead-quality, commerce and attribution event templates;
+- Pricing-page Lead, New Customer Purchase, High-value Purchase, Prepaid Order, Fulfilled Order, Returned Order, First-touch Attribution and Last-touch Attribution templates;
+- category filters in the dashboard;
+- `Use template` action for every template card;
+- editable rule name, source event, output event, condition field/operator/value, currency and activation destinations;
+- live human-readable rule preview before persistence;
+- measurement-only support for attribution/negative-quality events that should not automatically be sent to ad platforms;
+- persisted creation through the existing `POST /api/events/rules` endpoint;
+- enabled/paused state remains enforced by the event-rule backend;
+- clickable recent rule matches now return the operator to the matching persisted rule;
+- Playwright coverage for selecting a template, verifying its prefilled logic and persisting the rule.
+
+This closes a usability gap where template rows were visible but not actionable. The template system now produces the same persisted event rules used by ingestion, attribution and provider activation.
