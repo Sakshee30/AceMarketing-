@@ -184,6 +184,7 @@ const signedHeaders=(body,secret)=>{
 export const dispatchAgentTransport=async(kind,payload={})=>{
   const routes={
     voice_qualification:process.env.VOICE_QUALIFICATION_WEBHOOK_URL||process.env.VOICE_AGENT_WEBHOOK_URL||'',
+    voice_scheduler:process.env.VOICE_SCHEDULER_WEBHOOK_URL||process.env.VOICE_AGENT_WEBHOOK_URL||'',
     meeting_reminder:process.env.MEETING_REMINDER_WEBHOOK_URL||'',
     feedback:process.env.FEEDBACK_WEBHOOK_URL||''
   }
