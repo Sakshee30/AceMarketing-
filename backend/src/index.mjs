@@ -1017,6 +1017,97 @@ const server = http.createServer(async (req,res)=>{
         }
       }),requests:(state.integrationRequests||[]).slice(0,100)})
     }
+    if (req.method === 'GET' && url.pathname === '/api/integration-flows') {
+      const state=await getState()
+      const items=(state.integrationFlows||[]).slice().sort((a,b)=>Date.parse(b.updatedAt||b.createdAt||0)-Date.parse(a.updatedAt||a.createdAt||0))
+      const active=items.filter(x=>x.status==='active').length
+      const healthy=items.filter(x=>x.lastTestStatus==='passed').length
+      return send(req,res,200,{items,stats:{total:items.length,active,healthy,needsAttention:Math.max(0,items.length-healthy)}})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/integration-flows') {
+      const body=await readBody(req)
+      const name=String(body.name||'').trim()
+      const source=String(body.source||'').trim()
+      const destination=String(body.destination||'').trim()
+      if(name.length<2||name.length>120) return send(req,res,400,{error:'name must be 2-120 characters'})
+      if(!source||!destination) return send(req,res,400,{error:'source and destination are required'})
+      if(source===destination) return send(req,res,400,{error:'source and destination must be different'})
+      const now=new Date().toISOString()
+      const item={
+        id:'flow_'+randomUUID(),
+        name,
+        source,
+        destination,
+        object:String(body.object||'Lead / customer event').slice(0,120),
+        trigger:String(body.trigger||'On record change').slice(0,120),
+        identityField:String(body.identityField||'email / phone / click id').slice(0,120),
+        mode:['Real-time','Every 15 minutes','Hourly','Daily'].includes(body.mode)?body.mode:'Real-time',
+        status:'paused',
+        lastTestAt:null,
+        lastTestStatus:'not_tested',
+        lastTestDetail:'Run a readiness test before activation.',
+        createdAt:now,
+        updatedAt:now
+      }
+      await mutateState(s=>{
+        s.integrationFlows=s.integrationFlows||[]
+        s.integrationFlows.unshift(item)
+        s.integrationFlows=s.integrationFlows.slice(0,500)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'integration_flow.created',entityId:item.id,source,destination,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,{item})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/integration-flows/test') {
+      const body=await readBody(req)
+      const id=String(body.id||'')
+      const state=await getState()
+      const item=(state.integrationFlows||[]).find(x=>x.id===id)
+      if(!item) return send(req,res,404,{error:'integration flow not found'})
+      const connections=state.connectorConnections||[]
+      const custom=await listCustomIntegrations(workspaceId).catch(()=>[])
+      const readiness=name=>{
+        const native=connections.find(x=>x.connector===name)
+        const customMatch=custom.find(x=>String(x.name||'').toLowerCase()===String(name).toLowerCase())
+        if(native) return ['connected','healthy','active'].includes(String(native.status||'').toLowerCase())
+        if(customMatch) return ['healthy','connected','active'].includes(String(customMatch.status||'').toLowerCase())
+        return false
+      }
+      const sourceReady=readiness(item.source)
+      const destinationReady=readiness(item.destination)
+      const passed=sourceReady&&destinationReady
+      const now=new Date().toISOString()
+      const detail=passed
+        ?'Source and destination are connected and ready for governed synchronization.'
+        :'Connect '+[!sourceReady?item.source:null,!destinationReady?item.destination:null].filter(Boolean).join(' and ')+' before activation.'
+      await mutateState(s=>{
+        const flow=(s.integrationFlows||[]).find(x=>x.id===id)
+        if(flow){flow.lastTestAt=now;flow.lastTestStatus=passed?'passed':'needs_attention';flow.lastTestDetail=detail;flow.updatedAt=now}
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'integration_flow.tested',entityId:id,status:passed?'passed':'needs_attention',at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,200,{id,passed,sourceReady,destinationReady,detail,testedAt:now})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/integration-flows/toggle') {
+      const body=await readBody(req)
+      const id=String(body.id||'')
+      const enabled=Boolean(body.enabled)
+      const snapshot=await getState()
+      const existing=(snapshot.integrationFlows||[]).find(x=>x.id===id)
+      if(!existing) return send(req,res,404,{error:'integration flow not found'})
+      if(enabled&&existing.lastTestStatus!=='passed') return send(req,res,409,{error:'flow must pass its readiness test before activation'})
+      const now=new Date().toISOString()
+      await mutateState(s=>{
+        const flow=(s.integrationFlows||[]).find(x=>x.id===id)
+        if(flow){flow.status=enabled?'active':'paused';flow.updatedAt=now}
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:enabled?'integration_flow.activated':'integration_flow.paused',entityId:id,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,200,{id,status:enabled?'active':'paused',updatedAt:now})
+    }
     if (req.method === 'POST' && url.pathname === '/api/integration-requests') {
       const body=await readBody(req)
       const connector=String(body.connector||'').trim()
