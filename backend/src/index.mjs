@@ -444,7 +444,7 @@ const server = http.createServer(async (req,res)=>{
             lastActivity:event.endedAt||event.startedAt,
             callOutcome:event.disposition||event.status,
             callSummary:[event.status,event.durationSeconds?event.durationSeconds+'s':null,event.disposition].filter(Boolean).join(' · '),
-            attributes:{callEventId:event.id,provider:event.provider,direction:event.direction,to:event.to}
+            attributes:{callEventId:event.id,provider:event.provider,direction:event.direction,to:event.to,keyword:event.keyword||null,creative:event.creative||null,adGroup:event.adGroup||null}
           }).catch(()=>null)
           await recordAssistedEvent(workspaceId,{
             event:'call.completed',
@@ -457,7 +457,7 @@ const server = http.createServer(async (req,res)=>{
             gclid:event.gclid||null,
             fbclid:event.fbclid||null,
             msclkid:event.msclkid||null,
-            data:{provider:event.provider,status:event.status,durationSeconds:event.durationSeconds,campaign:event.campaign}
+            data:{provider:event.provider,status:event.status,durationSeconds:event.durationSeconds,campaign:event.campaign,keyword:event.keyword,creative:event.creative,adGroup:event.adGroup}
           }).catch(()=>null)
         }
       })
