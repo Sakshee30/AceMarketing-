@@ -987,3 +987,33 @@ test('Ask Ace reports grounded funnel handoff coverage', async ({ page }, testIn
   await expect(page.locator('.ask-insights').last()).toContainText('Routed leads')
   await expect(page.locator('.ask-insights').last()).toContainText('Meetings scheduled')
 })
+
+
+test('repeat purchase and abandoned checkout templates are executable', async ({ page }, testInfo) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  await openWorkspaceTab(page,'Events')
+  await expect(page.getByRole('heading',{name:'Conversion event manager'})).toBeVisible()
+
+  await page.getByRole('button',{name:'Commerce',exact:true}).click()
+
+  const repeatCard=page.locator('.template-card').filter({hasText:'Repeat Purchase'}).first()
+  await expect(repeatCard).toBeVisible()
+  await repeatCard.getByRole('button',{name:'Use template'}).click()
+  const builder=page.locator('.audience-builder')
+  await expect(builder.getByLabel('Source event')).toHaveValue('purchase')
+  await expect(builder.getByLabel('Condition field')).toHaveValue('properties.purchaseCount')
+  await expect(builder.getByLabel('Operator')).toHaveValue('gte')
+  await expect(builder.getByLabel('Condition value')).toHaveValue('2')
+  await builder.getByLabel('Rule name').fill('CI Repeat Purchase '+testInfo.project.name)
+  await builder.getByRole('button',{name:'Create & enable rule'}).click()
+  await expect(page.getByText('Event rule created and enabled.',{exact:true})).toBeVisible()
+
+  const abandonedCard=page.locator('.template-card').filter({hasText:'Abandoned Checkout'}).first()
+  await expect(abandonedCard).toBeVisible()
+  await abandonedCard.getByRole('button',{name:'Use template'}).click()
+  const abandonedBuilder=page.locator('.audience-builder')
+  await expect(abandonedBuilder.getByLabel('Source event')).toHaveValue('checkout_abandoned')
+  await expect(abandonedBuilder.getByLabel('Operator')).toHaveValue('exists')
+  await expect(abandonedBuilder).toContainText('commerce webhook/backend')
+})
