@@ -240,6 +240,7 @@ export const api = {
   solutions: () => request('/solutions'),
   askAce: (question: string) => request('/ask-ace', { method: 'POST', body: JSON.stringify({ question }) }),
   connectIntegration: (connector: string) => request<any>('/integrations/connect', { method: 'POST', body: JSON.stringify({ connector }) }),
+  connectServerSecretIntegration: (connector:string,credentials:Record<string,string>) => request<any>('/integrations/connect-secret',{method:'POST',body:JSON.stringify({connector,credentials})}),
   completeIntegrationOAuth: (state: string, code: string) => request('/integrations/oauth/callback', { method: 'POST', body: JSON.stringify({ state, code }) }),
   disconnectIntegration: (connector: string) => request('/integrations/disconnect', { method: 'POST', body: JSON.stringify({ connector }) }),
   chatgptAds: () => request('/chatgpt-ads'),
