@@ -42,6 +42,7 @@ const groups:ShortcutGroup[]=[
     items:[
       {label:'Live Sync',tab:'Live Sync',icon:Activity,description:'Inspect real-time ingestion activity'},
       {label:'Data Hub',tab:'Data Hub',icon:DatabaseZap,description:'Unified customer and event truth'},
+      {label:'Customer 360',tab:'Customer 360',icon:UsersRound,description:'Inspect one stitched customer across identity, lifecycle and interactions'},
       {label:'Offline Attribution',tab:'Offline Attribution',icon:Target,description:'Connect assisted and offline outcomes'},
       {label:'Matchback',tab:'Matchback',icon:Target,description:'Resolve unmatched downstream conversions'},
       {label:'POS & Stores',tab:'POS & Stores',icon:DatabaseZap,description:'Import and attribute store/POS revenue'},
