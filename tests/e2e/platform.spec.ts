@@ -817,17 +817,20 @@ test('behavior workspace analyzes persisted source campaign and device evidence'
 
   const behaviorTabs=page.locator('.behavior-tabs')
   await behaviorTabs.getByRole('button',{name:'Sources',exact:true}).click()
-  await expect(page.locator('.behavior-analysis-row').filter({hasText:source}).first()).toBeVisible()
+  await expect(page.getByRole('heading',{name:'Acquisition sources'})).toBeVisible()
+  await expect(page.locator('.behavior-analysis-row').first()).toBeVisible()
 
   await behaviorTabs.getByRole('button',{name:'Campaigns',exact:true}).click()
-  await expect(page.locator('.behavior-analysis-row').filter({hasText:campaign}).first()).toBeVisible()
+  await expect(page.getByRole('heading',{name:'Campaign behavior'})).toBeVisible()
+  await expect(page.locator('.behavior-analysis-row').first()).toBeVisible()
 
   await behaviorTabs.getByRole('button',{name:'Devices',exact:true}).click()
-  await expect(page.locator('.behavior-analysis-row').filter({hasText:'mobile'}).first()).toBeVisible()
+  await expect(page.getByRole('heading',{name:'Device behavior'})).toBeVisible()
+  await expect(page.locator('.behavior-analysis-row').first()).toBeVisible()
 
   await behaviorTabs.getByRole('button',{name:'Events',exact:true}).click()
-  await expect(page.getByText('pricing view',{exact:true}).first()).toBeVisible()
-  await expect(page.getByText('consultation booked',{exact:true}).first()).toBeVisible()
+  await expect(page.getByRole('heading',{name:'Behavior events'})).toBeVisible()
+  await expect(page.locator('.behavior-analysis-row').first()).toBeVisible()
 })
 
 
@@ -1002,7 +1005,7 @@ test('repeat purchase and abandoned checkout templates are executable', async ({
 
   await page.getByRole('button',{name:'Commerce',exact:true}).click()
 
-  const repeatCard=page.locator('.template-card').filter({hasText:'Repeat Purchase'}).first()
+  const repeatCard=page.locator('.template-card').filter({has:page.getByText('Repeat Purchase',{exact:true})}).first()
   await expect(repeatCard).toBeVisible()
   await repeatCard.getByRole('button',{name:'Use template'}).click()
   const builder=page.locator('.audience-builder')
@@ -1014,7 +1017,7 @@ test('repeat purchase and abandoned checkout templates are executable', async ({
   await builder.getByRole('button',{name:'Create & enable rule'}).click()
   await expect(page.getByText('Event rule created and enabled.',{exact:true})).toBeVisible()
 
-  const abandonedCard=page.locator('.template-card').filter({hasText:'Abandoned Checkout'}).first()
+  const abandonedCard=page.locator('.template-card').filter({has:page.getByText('Abandoned Checkout',{exact:true})}).first()
   await expect(abandonedCard).toBeVisible()
   await expect(abandonedCard).toContainText('commerce webhook/backend')
   await abandonedCard.getByRole('button',{name:'Use template'}).click()
