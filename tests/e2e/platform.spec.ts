@@ -540,3 +540,15 @@ test('integration catalog search and connector request persist', async ({ page }
   await form.getByRole('button', { name: 'Submit connector request' }).click()
   await expect(page.getByText('Connector request submitted and tracked in this workspace.', { exact: true })).toBeVisible()
 })
+
+
+test('public integration catalog search exposes expanded categories', async ({ page }) => {
+  await page.goto('/#/integrations')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading', { name: 'Connect the systems your teams already depend on.' })).toBeVisible()
+  const search=page.getByLabel('Search public integrations')
+  await search.fill('Snowflake')
+  await expect(page.getByText('Snowflake', { exact: true })).toBeVisible()
+  await search.fill('TikTok')
+  await expect(page.getByText('TikTok Ads', { exact: true })).toBeVisible()
+})
