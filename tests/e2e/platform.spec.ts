@@ -163,6 +163,52 @@ test.describe('workspace critical flows',()=>{
     await expect(page.getByText(/Duplicate evidence/i)).toBeVisible()
   })
 
+  test('grouped performance uses persisted conversion evidence and explicit cost basis',async({page},testInfo)=>{
+    const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()
+    const customerId='grouped_customer_'+suffix
+    const category='CI Category '+suffix
+
+    const consent=await page.request.post('/api/consent',{data:{subjectType:'customer',subjectId:customerId,essential:true,analytics:true,marketing:true,personalization:true,source:'ci'}})
+    expect(consent.ok()).toBeTruthy()
+
+    const tracked=await page.request.post('/api/track',{data:{
+      event:'purchase',
+      eventCategory:'analytics',
+      customerId,
+      category,
+      product:'CI Product '+suffix,
+      brand:'CI Brand',
+      value:2500,
+      currency:'INR',
+      source:'ci',
+      campaign:'grouped-performance-ci'
+    }})
+    expect(tracked.ok()).toBeTruthy()
+
+    const grouped=await page.request.get('/api/grouped-performance?dimension=category&months=6')
+    expect(grouped.ok()).toBeTruthy()
+    const groupedPayload=await grouped.json()
+    const row=groupedPayload.items.find((x:any)=>x.key===category)
+    expect(row).toBeTruthy()
+    expect(row.conversions).toBeGreaterThanOrEqual(1)
+    expect(row.revenue).toBeGreaterThanOrEqual(2500)
+    expect(row.contribution).toBeNull()
+
+    const cost=await page.request.post('/api/grouped-performance/costs',{data:{dimension:'category',key:category,cost:1000}})
+    expect(cost.ok()).toBeTruthy()
+
+    const regrouped=await page.request.get('/api/grouped-performance?dimension=category&months=6')
+    const regroupedPayload=await regrouped.json()
+    const costed=regroupedPayload.items.find((x:any)=>x.key===category)
+    expect(costed.cost).toBe(1000)
+    expect(costed.contribution).toBeGreaterThanOrEqual(1500)
+
+    await openWorkspaceTab(page,'Grouped Performance')
+    await expect(page.getByRole('heading',{name:'Grouped performance'})).toBeVisible()
+    await expect(page.getByText('Grouped performance table')).toBeVisible()
+    await expect(page.getByText(category,{exact:true})).toBeVisible()
+  })
+
   test('executive briefs persist scheduled metric snippets and render leadership workflow',async({page},testInfo)=>{
     const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()
     const created=await page.request.post('/api/report-schedules',{data:{
