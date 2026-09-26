@@ -4089,3 +4089,22 @@ Implemented:
 - responsive attribution cards include hover polish and reduced-motion handling.
 
 The operating path is now: signed telephony webhook → normalized campaign/keyword/creative evidence → lead enrichment → assisted attribution event → Calls visibility.
+
+
+## Operational alert runbook pass
+
+The monitoring and alerting layer now includes brochure-aligned operational context instead of stopping at threshold badges.
+
+Implemented:
+- new default `tracking_inactivity_minutes` rule detects when first-party tracking goes quiet after prior tracked-event activity;
+- new default `signal_delivery_backlog_minutes` rule detects an aging pending/retry/leased signal-delivery queue;
+- existing API error-rate, p95 latency, dead-letter job and audience-sync error monitoring remains unchanged;
+- alert payloads are enriched with a deterministic operational owner, affected monitoring window and metric-specific investigation guidance;
+- Alert Center detail now shows Owner and Affected period next to metric, threshold, observed value and status;
+- each alert includes a Recommended investigation runbook;
+- incidents can route directly into Delivery, Audiences or Diagnostics depending on the breached metric;
+- tracking-inactivity guidance covers site/app installation, release changes, consent and controlled test-event verification;
+- delivery-backlog guidance covers worker health, queue age, connector credentials and replay boundaries;
+- Playwright coverage creates a real tracking-inactivity rule, verifies enriched API evidence, opens the Alert Center, validates owner/runbook context, resolves the incident and restores the production threshold.
+
+This closes the operational-context gap described in the supplied EasyInsights workflow notes: alert source, affected period, impact context, owner, status and recommended investigation steps.
