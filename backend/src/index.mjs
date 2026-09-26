@@ -670,6 +670,7 @@ const server = http.createServer(async (req,res)=>{
         'Leak Monitor':section(profiles?'live':'setup',Number((state.leakRecoveries||[]).length),(state.leakRecoveries||[]).length+' recovery actions'),
         Events:section(eventRules.length?'live':'setup',eventRules.length,eventRules.length+' conversion rules'),
         Diagnostics:section(trackedCount||eventRules.length?'live':'setup',Number((state.quarantinedEvents||[]).length),(state.quarantinedEvents||[]).length+' quarantined events'),
+        'Match Quality':section((state.recentEvents||[]).length?'live':'setup',(state.recentEvents||[]).length,(state.recentEvents||[]).length+' events scored for identity coverage'),
         Reconciliation:section(trackedCount||deliveries.length||Number(attr?.assistedEvents||0)>0?'live':'setup',failedDeliveries+Number(attr?.unmatchedEvents||0),failedDeliveries+' failed · '+Number(attr?.unmatchedEvents||0)+' unmatched'),
         'Live Sync':section(trackedCount?'live':'setup',trackedCount,trackedCount+' tracked events'),
         'Data Hub':section(profiles||trackedCount?'live':'setup',profiles,profiles+' unified profiles'),
@@ -1787,6 +1788,79 @@ const server = http.createServer(async (req,res)=>{
       const persisted=(state.recentEvents||[]).slice(0,200)
       const items=[...source,...persisted].filter((x,index,arr)=>arr.findIndex(y=>String(y.id||y.eventId||'')===String(x.id||x.eventId||''))===index)
       return send(req,res,200,{domain,items:items.filter(x=>!domain||String(x.domain||x.host||x.url||'').includes(domain)).slice(0,100)})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/match-quality') {
+      const state=await getState()
+      const events=(state.recentEvents||[]).slice(0,5000)
+      const signalWeight={customerId:3,emailSha256:3,phoneSha256:3,deviceId:2,visitorId:2,gclid:2,gbraid:2,wbraid:2,fbclid:2,msclkid:2,oppref:2,obref:1,ipAddress:1,userAgent:1}
+      const normalizedEvent=event=>({
+        customerId:event.customerId||null,
+        emailSha256:event.emailSha256||event.email_sha256||null,
+        phoneSha256:event.phoneSha256||event.phone_sha256||null,
+        deviceId:event.deviceId||event.device_id||null,
+        visitorId:event.visitorId||null,
+        gclid:event.gclid||null,gbraid:event.gbraid||null,wbraid:event.wbraid||null,
+        fbclid:event.fbclid||null,msclkid:event.msclkid||null,
+        oppref:event.oppref||event.openaiClickRef||null,obref:event.obref||event.openaiBrowserRef||null,
+        ipAddress:event.ipAddress||null,userAgent:event.userAgent||null
+      })
+      const scoreOne=event=>{
+        const ids=normalizedEvent(event)
+        const present=Object.entries(ids).filter(([,value])=>Boolean(value)).map(([key])=>key)
+        const points=present.reduce((n,key)=>n+(signalWeight[key]||0),0)
+        const max=12
+        const score=Math.min(100,Math.round(points/max*100))
+        const missing=Object.keys(signalWeight).filter(key=>!ids[key])
+        return {score,present,missing}
+      }
+      const rows=new Map()
+      let totalScore=0, strong=0, weak=0
+      const signalCounts=Object.fromEntries(Object.keys(signalWeight).map(k=>[k,0]))
+      for(const event of events){
+        const quality=scoreOne(event)
+        totalScore+=quality.score
+        if(quality.score>=70)strong++
+        if(quality.score<40)weak++
+        for(const key of quality.present)signalCounts[key]=(signalCounts[key]||0)+1
+        const key=String(event.event||event.eventType||event.name||'unknown')
+        const row=rows.get(key)||{event:key,count:0,totalScore:0,sourceCounts:{}}
+        row.count++
+        row.totalScore+=quality.score
+        const source=String(event.source||event.channel||event.utm_source||'Unknown')
+        row.sourceCounts[source]=(row.sourceCounts[source]||0)+1
+        rows.set(key,row)
+      }
+      const items=[...rows.values()].map(row=>({
+        event:row.event,
+        count:row.count,
+        averageScore:row.count?Math.round(row.totalScore/row.count):0,
+        topSource:Object.entries(row.sourceCounts).sort((a,b)=>b[1]-a[1])[0]?.[0]||'Unknown'
+      })).sort((a,b)=>b.count-a.count)
+      const coverage=Object.entries(signalCounts).map(([signal,count])=>({signal,count,rate:events.length?Number((count/events.length*100).toFixed(1)):0})).sort((a,b)=>b.rate-a.rate)
+      const recommendations=[]
+      const rate=s=>coverage.find(x=>x.signal===s)?.rate||0
+      if(rate('emailSha256')<50)recommendations.push({key:'email_hash',title:'Increase hashed email coverage',detail:'Capture consented email earlier and hash it server-side before activation.',tab:'Data Hub'})
+      if(rate('phoneSha256')<40)recommendations.push({key:'phone_hash',title:'Increase hashed phone coverage',detail:'Normalize and hash phone values server-side where users provide them.',tab:'Data Hub'})
+      if(rate('customerId')<50)recommendations.push({key:'customer_id',title:'Persist a stable first-party customer ID',detail:'Use one durable customer/lead identifier across web, CRM and offline events.',tab:'Identity'})
+      if(rate('gclid')+rate('gbraid')+rate('wbraid')<25)recommendations.push({key:'google_click_ids',title:'Improve Google click-ID capture',detail:'Preserve GCLID/GBRAID/WBRAID from landing session through conversion.',tab:'Sites'})
+      if(rate('fbclid')<20)recommendations.push({key:'meta_click_id',title:'Improve Meta click-ID capture',detail:'Preserve Meta click/browser identifiers alongside first-party identity.',tab:'Sites'})
+      if(rate('oppref')<10)recommendations.push({key:'oppref',title:'Preserve ChatGPT Ads oppref',detail:'Capture the OpenAI click reference from landing URLs and carry it into conversion events.',tab:'ChatGPT Ads'})
+      if(rate('deviceId')<30)recommendations.push({key:'device_id',title:'Strengthen device identity',detail:'Persist deterministic first-party device IDs where available.',tab:'Fingerprinting'})
+      const averageScore=events.length?Math.round(totalScore/events.length):0
+      return send(req,res,200,{
+        available:events.length>0,
+        averageScore,
+        totalEvents:events.length,
+        strongEvents:strong,
+        weakEvents:weak,
+        strongRate:events.length?Number((strong/events.length*100).toFixed(1)):0,
+        weakRate:events.length?Number((weak/events.length*100).toFixed(1)):0,
+        coverage,
+        items,
+        recommendations,
+        note:'AceMarketing internal identity-coverage score; not a provider-reported Meta, Google, or OpenAI match-quality score.',
+        generatedAt:new Date().toISOString()
+      })
     }
     if (req.method === 'GET' && url.pathname === '/api/fraud') {
       const [profiles,state]=await Promise.all([listLeadProfiles(workspaceId,500),getState()])
