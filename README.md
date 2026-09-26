@@ -5417,3 +5417,12 @@ Playwright now:
 ### Product-parity note
 
 EasyInsights publicly describes high event match rate and full coverage as part of its first-party data activation offering. AceMarketing implements the comparable operational visibility using its own scoring model, code and UI without claiming third-party provider scores that have not actually been retrieved.
+
+
+## Dashboard navigation and section-health update — 2026-09-26
+
+The workspace dashboard now exposes one searchable navigator for the full product surface and reports backend-derived status for every major operational section. The navigator can be opened with **Ctrl/Cmd + K**, searched by feature name/use case, and filtered by **Live**, **Needs attention**, and **Setup**.
+
+The `GET /api/dashboard-summary` contract now covers the broader workspace surface, including governed adjustments, fraud review, deep links, tracked sites, identity/fingerprinting readiness, offline attribution and matchback, POS/store signals, attribution models, behavior/feed operations, approvals, developer API/webhook readiness, and the previously implemented data, activation, agent, reporting, compliance, and monitoring areas.
+
+This keeps navigation functional instead of decorative: section badges are driven by persisted workspace state and backend metrics, and the frontend refreshes operational status automatically every 30 seconds. The implementation preserves reduced-motion accessibility and responsive mobile behavior.
