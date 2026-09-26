@@ -658,6 +658,7 @@ const server = http.createServer(async (req,res)=>{
         'Data Flows':section(activeIntegrationFlows?'live':integrationFlows.length?'attention':'setup',activeIntegrationFlows,activeIntegrationFlows+' active flows'),
         'Real-Time Activation':section(activeActivationRules?'live':activationRules.length?'attention':'setup',activeActivationRules,activeActivationRules+' active rules · '+activationRuleRuns.length+' runs'),
         Personalization:section(Number((state.personalizationRules||[]).filter(x=>x.status==='active').length)?'live':(state.personalizationRules||[]).length?'attention':'setup',Number((state.personalizationRules||[]).filter(x=>x.status==='active').length),(state.personalizationRules||[]).length+' rules · '+(state.personalizationDecisions||[]).length+' decisions'),
+        Exclusions:section(Number(audienceStats?.audiences?.suppressedIdentities||0)>0?'live':Number(audienceStats?.exclusions?.deviceIds||0)>0||Number(audienceStats?.exclusions?.converted||0)>0?'attention':'setup',Number(audienceStats?.audiences?.suppressedIdentities||0),Number(audienceStats?.audiences?.suppressedIdentities||0)+' suppressed identities'),
         Audiences:section(Number(audienceStats?.audiences?.total||0)>0?'live':'setup',Number(audienceStats?.audiences?.total||0),Number(audienceStats?.audiences?.total||0)+' audiences'),
         Delivery:section(deliveries.length?'live':'setup',deliveries.length,deliveries.length+' delivery records'),
         Monitoring:section('live',Number(monitoring?.openAlerts||monitoring?.alerts?.open||0),Number(monitoring?.openAlerts||monitoring?.alerts?.open||0)+' open alerts'),
@@ -3290,6 +3291,55 @@ const server = http.createServer(async (req,res)=>{
       return send(req,res,200,{destination:destination||null,profileId:profile?.id||null,mappings:mappings.length,payload,generatedAt:new Date().toISOString(),notice:profile?'Preview generated from the latest persisted profile plus custom attribute samples.':'No persisted profile available; custom samples may still appear.'})
     }
     if (req.method === 'GET' && url.pathname === '/api/solutions') return send(req,res,200,{items:['Agency','Lead Generation','Enterprise','Mid Market Brand','Attribution Model','Alerts and Monitoring','Server to Server Integration']})
+    if (req.method === 'GET' && url.pathname === '/api/exclusions') {
+      const [audiences,stats]=await Promise.all([listLeadAudiences(workspaceId),audienceOpsStats(workspaceId)])
+      const suppressions=audiences.filter(x=>String(x.mode||'').toLowerCase()==='suppress')
+      const presets=[
+        {key:'converted_customers',name:'Converted customers',description:'Exclude customers who already reached a converted/customer stage.',condition:'CRM stage',operator:'is one of',value:'converted,enrolled,closed_won,customer',identityMode:'auto'},
+        {key:'low_quality_leads',name:'Low-quality leads',description:'Exclude Grade C/D leads from acquisition optimization or prospecting.',condition:'Lead grade',operator:'is one of',value:'C,D',identityMode:'auto'},
+        {key:'device_ids',name:'Known device IDs',description:'Exclude known first-party device IDs to reduce repeat prospecting exposure.',condition:'Device ID present',operator:'is',value:'yes',identityMode:'device'}
+      ]
+      const previews=[]
+      for(const preset of presets){
+        const preview=await previewLeadAudience(workspaceId,{name:preset.name,condition:preset.condition,operator:preset.operator,value:preset.value,destination:'Meta Ads, Google Ads',mode:'Suppress',identityMode:preset.identityMode}).catch(()=>({available:false,estimatedSize:0,matchedPercent:0}))
+        previews.push({...preset,preview})
+      }
+      return send(req,res,200,{
+        items:suppressions.map(x=>({id:x.id,name:x.name,size:x.matched_size,estimatedSize:x.estimated_size,destination:x.destination,identityMode:x.identity_mode,status:x.status,definition:x.definition,providerState:x.provider_state,lastSyncedAt:x.last_synced_at,lastSyncError:x.last_sync_error})),
+        presets:previews,
+        stats:{
+          total:suppressions.length,
+          active:suppressions.filter(x=>['active','ready_for_sync','syncing'].includes(String(x.status||'').toLowerCase())).length,
+          suppressedIdentities:Number(stats?.audiences?.suppressedIdentities||0),
+          converted:Number(stats?.exclusions?.converted||0),
+          lowQuality:Number(stats?.exclusions?.lowQuality||0),
+          deviceIds:Number(stats?.exclusions?.deviceIds||0)
+        }
+      })
+    }
+    if (req.method === 'POST' && url.pathname === '/api/exclusions/create') {
+      const body=await readBody(req)
+      const presets={
+        converted_customers:{name:'Converted customers',condition:'CRM stage',operator:'is one of',value:'converted,enrolled,closed_won,customer',identityMode:'auto'},
+        low_quality_leads:{name:'Low-quality leads',condition:'Lead grade',operator:'is one of',value:'C,D',identityMode:'auto'},
+        device_ids:{name:'Known device IDs',condition:'Device ID present',operator:'is',value:'yes',identityMode:'device'}
+      }
+      const preset=presets[String(body.preset||'')]
+      if(!preset) return send(req,res,400,{error:'valid exclusion preset required'})
+      const destination=String(body.destination||'Meta Ads, Google Ads').trim()
+      if(!destination) return send(req,res,400,{error:'destination required'})
+      const existing=(await listLeadAudiences(workspaceId)).find(x=>String(x.mode||'').toLowerCase()==='suppress'&&String(x.name||'')===String(body.name||preset.name)&&String(x.destination||'')===destination)
+      if(existing) return send(req,res,200,{duplicate:true,item:{id:existing.id,name:existing.name,status:existing.status,size:existing.matched_size,destination:existing.destination}})
+      const item=await createLeadAudience(workspaceId,{name:String(body.name||preset.name),destination,mode:'Suppress',condition:preset.condition,operator:preset.operator,value:preset.value,identityMode:preset.identityMode})
+      if(!item) return send(req,res,503,{error:'audience store unavailable'})
+      const now=new Date().toISOString()
+      await mutateState(s=>{
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'exclusion.created',entityId:item.id,preset:String(body.preset),destination,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,{duplicate:false,item:{id:item.id,name:item.name,status:item.status,size:item.matched_size,estimatedSize:item.estimated_size,destination:item.destination,identityMode:item.identity_mode}})
+    }
     if (req.method === 'POST' && url.pathname === '/api/audiences/preview') {
       const body=await readBody(req)
       if(!body.name || !body.condition) return send(req,res,400,{error:'name and condition required'})
