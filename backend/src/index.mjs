@@ -201,7 +201,7 @@ const leadReactivationCandidates=(profiles=[],events=[],followUps=[],options={})
   for(const lead of profiles||[]){
     const leadRef=String(lead.external_lead_id||lead.name||lead.id||'')
     if(!leadRef||openReactivation.has(leadRef.toLowerCase()))continue
-    const lastRaw=lead.journey?.lastActivity||lead.journey?.last_activity||null
+    const lastRaw=lead.journey?.previousLastActivity||lead.journey?.lastActivity||lead.journey?.last_activity||null
     if(!lastRaw)continue
     const lastTime=Date.parse(lastRaw)
     if(!Number.isFinite(lastTime)||lastTime>dormantCutoff)continue
@@ -253,6 +253,8 @@ const buildSignalReplayPayload=(body,item={})=>{
     gclid:body.gclid||null,
     gbraid:body.gbraid||null,
     wbraid:body.wbraid||null,
+    msclkid:body.msclkid||body.data?.msclkid||null,
+    epik:body.epik||body.data?.epik||body.data?.click_id||null,
     fbc:body.fbc||null,
     fbp:body.fbp||null,
     oppref:body.oppref||body.openaiClickRef||null,
@@ -267,9 +269,16 @@ const buildSignalReplayPayload=(body,item={})=>{
     city:body.city||null,
     region:body.region||null,
     postalCode:body.postalCode||body.postal_code||null,
-    ipAddress:body.ipAddress||null,
-    userAgent:body.userAgent||null,
-    androidAdvertisingId:body.androidAdvertisingId||null,
+    ipAddress:body.ipAddress||body.data?.ipAddress||null,
+    userAgent:body.userAgent||body.data?.userAgent||null,
+    anonymousId:body.anonymousId||body.visitorId||body.data?.anonymousId||body.data?.visitorId||null,
+    externalId:body.externalId||body.data?.externalId||null,
+    idfa:body.idfa||body.data?.idfa||null,
+    androidAdvertisingId:body.androidAdvertisingId||body.data?.androidAdvertisingId||null,
+    linkedinFirstPartyAdsTrackingUuid:body.linkedinFirstPartyAdsTrackingUuid||body.liFatId||body.data?.linkedinFirstPartyAdsTrackingUuid||body.data?.liFatId||null,
+    linkedinConversionUrn:body.linkedinConversionUrn||body.data?.linkedinConversionUrn||null,
+    microsoftUetTagId:body.microsoftUetTagId||body.data?.microsoftUetTagId||null,
+    pinterestAdvertiserId:body.pinterestAdvertiserId||body.data?.pinterestAdvertiserId||null,
     openaiPixelId:body.openaiPixelId||null,
     validateOnly:body.validateOnly===true,
     emailSha256:body.emailSha256||body.email_sha256||(body.email?sha256Normalized(body.email):null),
@@ -288,7 +297,7 @@ const buildSignalReplayPayload=(body,item={})=>{
 const validateSignalDispatch=body=>{
   const destination=String(body.destination||'').toLowerCase()
   if(!body.event||!destination) return 'event and destination required'
-  if(!destination.includes('meta')&&!destination.includes('google')&&!destination.includes('webhook')&&!destination.includes('chatgpt')&&!destination.includes('openai')) return 'unsupported delivery destination'
+  if(!destination.includes('meta')&&!destination.includes('google')&&!destination.includes('linkedin')&&!destination.includes('microsoft')&&!destination.includes('bing')&&!destination.includes('pinterest')&&!destination.includes('webhook')&&!destination.includes('chatgpt')&&!destination.includes('openai')) return 'unsupported delivery destination'
   if(destination.includes('google')){
     const hasIdentity=Boolean(body.gclid||body.gbraid||body.wbraid||body.email||body.emailSha256||body.email_sha256||body.phone||body.phoneSha256||body.phone_sha256)
     if(!hasIdentity) return 'Google delivery requires gclid, gbraid, wbraid, or a user identifier'
@@ -296,6 +305,20 @@ const validateSignalDispatch=body=>{
   if(destination.includes('meta')){
     const hasIdentity=Boolean(body.email||body.emailSha256||body.email_sha256||body.phone||body.phoneSha256||body.phone_sha256||body.externalId||body.customerId||body.fbc||body.fbp)
     if(!hasIdentity) return 'Meta delivery requires a customer identifier, click/browser identifier, email, or phone'
+  }
+  if(destination.includes('linkedin')){
+    const hasIdentity=Boolean(body.email||body.emailSha256||body.email_sha256||body.linkedinFirstPartyAdsTrackingUuid||body.liFatId||body.androidAdvertisingId||body.data?.emailSha256||body.data?.linkedinFirstPartyAdsTrackingUuid||body.data?.liFatId||body.data?.androidAdvertisingId)
+    if(!hasIdentity) return 'LinkedIn delivery requires hashed email, LinkedIn first-party tracking UUID, or Google advertising ID'
+  }
+  if(destination.includes('microsoft')||destination.includes('bing')){
+    const hasIdentity=Boolean(body.msclkid||body.email||body.emailSha256||body.email_sha256||body.phone||body.phoneSha256||body.phone_sha256||body.anonymousId||body.visitorId||body.externalId||body.customerId||body.idfa||body.androidAdvertisingId||body.data?.msclkid)
+    if(!hasIdentity) return 'Microsoft delivery requires msclkid or a supported first-party/device identifier'
+  }
+  if(destination.includes('pinterest')){
+    const hasEmail=Boolean(body.email||body.emailSha256||body.email_sha256||body.data?.emailSha256)
+    const hasMaid=Boolean(body.androidAdvertisingId||body.idfa||body.data?.androidAdvertisingId||body.data?.idfa)
+    const hasRequestContext=Boolean((body.ipAddress||body.data?.ipAddress)&&(body.userAgent||body.data?.userAgent))
+    if(!hasEmail&&!hasMaid&&!hasRequestContext) return 'Pinterest delivery requires hashed email, mobile advertising ID, or IP plus user agent'
   }
   if(destination.includes('chatgpt')||destination.includes('openai')){
     const actionSource=String(body.actionSource||'web').toLowerCase()
