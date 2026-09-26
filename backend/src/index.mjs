@@ -2377,8 +2377,64 @@ const server = http.createServer(async (req,res)=>{
       const profiles=await listLeadProfiles(workspaceId,500)
       const lead=profiles.find(x=>x.external_lead_id===body.lead||x.name===body.lead)
       if(!lead) return send(req,res,404,{error:'lead not found'})
-      const mode=lead.grade==='D'?'Suppress':lead.grade==='C'?'Retarget':'Activate'
-      return send(req,res,202,{lead:lead.name||lead.external_lead_id,grade:lead.grade,status:'ready_for_activation',mode,destinations:['crm','routing','ad_signals'],queuedAt:new Date().toISOString()})
+      const grade=String(lead.grade||'D').toUpperCase()
+      let operation=null
+      let nextTab='Audiences'
+      let action='suppression_review'
+      if(grade==='A'||grade==='B'){
+        const destination=grade==='A'?'Priority sales queue':'Sales queue'
+        operation=await routeLead(workspaceId,{
+          leadRef:lead.external_lead_id,
+          score:lead.score,
+          source:lead.source||'Lead grading',
+          routingRule:{
+            name:'Grade '+grade+' activation',
+            destination,
+            reason:'Lead grading activation · grade '+grade+' · score '+Number(lead.score||0),
+            slaSeconds:grade==='A'?120:300
+          }
+        })
+        nextTab='Routing'
+        action='routing'
+      }else if(grade==='C'){
+        operation=await createFollowUp(workspaceId,{
+          leadRef:lead.external_lead_id,
+          reason:'Lead grading nurture · grade C · score '+Number(lead.score||0),
+          channel:'whatsapp',
+          priority:'medium',
+          delayMinutes:60,
+          owner:'Nurture queue'
+        })
+        nextTab='Follow-ups'
+        action='nurture_followup'
+      }else{
+        operation=await createFollowUp(workspaceId,{
+          leadRef:lead.external_lead_id,
+          reason:'Review Grade D lead for acquisition suppression',
+          channel:'review',
+          priority:'low',
+          delayMinutes:15,
+          owner:'Marketing operations'
+        })
+        nextTab='Audiences'
+        action='suppression_review'
+      }
+      const now=new Date().toISOString()
+      await mutateState(s=>{
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'lead_grade.activated',entityId:lead.id,leadRef:lead.external_lead_id,grade,operationType:action,operationId:operation?.id||null,nextTab,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,202,{
+        lead:lead.name||lead.external_lead_id,
+        leadId:lead.external_lead_id,
+        grade,
+        status:'activated',
+        action,
+        nextTab,
+        operation:operation?{id:operation.id,status:operation.status||'open',destination:operation.destination||operation.owner||null,dueAt:operation.due_at||null}:null,
+        queuedAt:now
+      })
     }
     if (req.method === 'GET' && url.pathname === '/api/behavior') {
       const state=await getState()
