@@ -3897,3 +3897,22 @@ Implemented:
 - ambiguous Attribution/Monitoring and duplicate text locators were tightened.
 
 This removes cross-tenant in-memory behavior leakage and substantially reduces state races in the desktop/mobile end-to-end suite.
+
+
+## CRM enrichment operational pass
+
+CRM Enrichment is now fully wired through the frontend API client and exposes an operational lead-selection/writeback workflow.
+
+Implemented:
+- added missing frontend API client methods for `/api/enrich`, `/api/enrich/writeback`, `/api/lead-grading`, `/api/lead-grading/override`, and `/api/lead-grading/activate`;
+- audited every `api.*` call used by `AcePlatform.tsx` and confirmed there are no remaining undefined client methods;
+- searchable enriched-lead list by name, lead ID, source, campaign, stage, or grade;
+- per-lead acquisition, campaign, CRM stage, journey depth, pricing-page, intent, call, WhatsApp, and scoring evidence;
+- explainable score-driver display;
+- governed CRM writeback actions for HubSpot, Zoho CRM, and Salesforce;
+- visible writeback run history with queued/running/succeeded/failed state and error evidence;
+- writeback requests continue through the existing durable job queue and worker `crm_writeback` handler rather than simulating immediate provider success;
+- responsive dashboard layout and reduced-motion-safe interactions;
+- Playwright coverage creates a persisted lead, finds it in CRM Enrichment, queues a HubSpot writeback, verifies the HTTP 202 response, and confirms the persisted writeback run appears in the UI.
+
+This closes a runtime gap where the Enrich and Lead Grading screens referenced API client methods that did not exist even though the backend routes were implemented.
