@@ -713,7 +713,7 @@ const server = http.createServer(async (req,res)=>{
         Monitoring:section('live',Number(monitoring?.openAlerts||monitoring?.alerts?.open||0),Number(monitoring?.openAlerts||monitoring?.alerts?.open||0)+' open alerts'),
         Alerts:section(Number(monitoring?.openAlerts||monitoring?.alerts?.open||0)>0?'attention':'live',Number(monitoring?.openAlerts||monitoring?.alerts?.open||0),Number(monitoring?.openAlerts||monitoring?.alerts?.open||0)+' open alerts'),
         Compliance:section(Number(consentSummary?.total||0)>0?'live':'attention',Number(consentSummary?.total||0),Number(consentSummary?.total||0)+' consent subjects'),
-        Developers:section(Number((state.apiKeys||[]).length)>0||Number((state.webhooks||[]).length)>0?'live':'setup',Number((state.apiKeys||[]).length)+Number((state.webhooks||[]).length),(state.apiKeys||[]).length+' API keys · '+(state.webhooks||[]).length+' webhooks'),
+        Developers:section(Number((state.apiKeys||[]).filter(x=>x.status!=='revoked').length)>0||Number((state.webhooks||[]).length)>0?'live':'setup',Number((state.apiKeys||[]).filter(x=>x.status!=='revoked').length)+Number((state.webhooks||[]).length),(state.apiKeys||[]).filter(x=>x.status!=='revoked').length+' active API keys · '+(state.webhooks||[]).length+' webhooks'),
         Settings:section('live',connectedConnectors.length,'Workspace configuration')
       }
       const recent=[
@@ -4720,19 +4720,54 @@ const server = http.createServer(async (req,res)=>{
       const state=await getState()
       return send(req,res,200,{items:(state.audit||[]).slice(0,250)})
     }
+    if (req.method === 'GET' && url.pathname === '/api/api-keys') {
+      const state=await getState()
+      const items=(state.apiKeys||[]).map(x=>({
+        id:x.id,
+        name:x.name,
+        prefix:x.prefix,
+        status:x.status||'active',
+        createdAt:x.createdAt,
+        revokedAt:x.revokedAt||null,
+        lastUsedAt:x.lastUsedAt||null
+      })).sort((a,b)=>Date.parse(b.createdAt||0)-Date.parse(a.createdAt||0))
+      return send(req,res,200,{items,active:items.filter(x=>x.status==='active').length})
+    }
     if (req.method === 'POST' && url.pathname === '/api/api-keys') {
       const body=await readBody(req)
-      const label=String(body.name||'workspace')
+      const label=String(body.name||'workspace').trim()
+      if(label.length<2||label.length>80) return send(req,res,400,{error:'name must be 2-80 characters'})
       const secret='ace_'+randomBytes(24).toString('base64url')
       const fingerprint=createHash('sha256').update(secret).digest('hex')
       const createdAt=new Date().toISOString()
-      const record={id:'key_'+randomUUID(),name:label,prefix:secret.slice(0,12),fingerprint,status:'active',createdAt}
+      const record={id:'key_'+randomUUID(),name:label,prefix:secret.slice(0,12),fingerprint,status:'active',createdAt,lastUsedAt:null,revokedAt:null}
       await mutateState(s=>{
         s.apiKeys=s.apiKeys||[]
         s.apiKeys.unshift(record)
-        s.audit.unshift({id:randomUUID(),action:'api_key.created',entityId:record.id,at:createdAt})
+        s.apiKeys=s.apiKeys.slice(0,200)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'api_key.created',entityId:record.id,name:record.name,at:createdAt})
+        s.audit=s.audit.slice(0,1000)
       })
       return send(req,res,201,{id:record.id,name:record.name,prefix:record.prefix,key:secret,createdAt,notice:'Store this key now; only its SHA-256 fingerprint is persisted.'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/api-keys/revoke') {
+      const body=await readBody(req)
+      const id=String(body.id||'')
+      if(!id) return send(req,res,400,{error:'id required'})
+      const snapshot=await getState()
+      const existing=(snapshot.apiKeys||[]).find(x=>x.id===id)
+      if(!existing) return send(req,res,404,{error:'api key not found'})
+      if(existing.status==='revoked') return send(req,res,200,{id,status:'revoked',revokedAt:existing.revokedAt||null})
+      const revokedAt=new Date().toISOString()
+      await mutateState(s=>{
+        const key=(s.apiKeys||[]).find(x=>x.id===id)
+        if(key){key.status='revoked';key.revokedAt=revokedAt}
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'api_key.revoked',entityId:id,at:revokedAt})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,200,{id,status:'revoked',revokedAt})
     }
     return send(req,res,404,{error:'not found'})
   } catch (error) {
