@@ -163,6 +163,47 @@ test.describe('workspace critical flows',()=>{
     await expect(page.getByText(/Duplicate evidence/i)).toBeVisible()
   })
 
+  test('personalization studio returns consent-aware variants and records feedback',async({page},testInfo)=>{
+    const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()
+    const customerId='personalization_customer_'+suffix
+
+    const consent=await page.request.post('/api/consent',{data:{subjectType:'customer',subjectId:customerId,essential:true,analytics:true,marketing:true,personalization:true,source:'ci'}})
+    expect(consent.ok()).toBeTruthy()
+
+    const created=await page.request.post('/api/personalization-rules',{data:{
+      name:'CI personalization '+suffix,
+      surface:'website',
+      variant:'CI VIP offer',
+      message:'Welcome back with a personalized experience.',
+      cta:'View offer',
+      destination:'/offers/ci',
+      priority:999,
+      conditions:[],
+      requiresPersonalizationConsent:true
+    }})
+    expect(created.ok()).toBeTruthy()
+    const createdPayload=await created.json()
+    expect(createdPayload.item?.id).toBeTruthy()
+
+    const decision=await page.request.post('/api/personalization/decide',{data:{customerId,surface:'website'}})
+    expect(decision.ok()).toBeTruthy()
+    const decisionPayload=await decision.json()
+    expect(decisionPayload.decision.status).toBe('decided')
+    expect(decisionPayload.decision.variant).toBe('CI VIP offer')
+
+    const feedback=await page.request.post('/api/personalization/feedback',{data:{decisionId:decisionPayload.decision.id,kind:'impression'}})
+    expect(feedback.ok()).toBeTruthy()
+
+    const rules=await page.request.get('/api/personalization-rules')
+    const rulesPayload=await rules.json()
+    const perf=rulesPayload.performance.find((x:any)=>x.ruleId===createdPayload.item.id)
+    expect(perf?.impressions).toBeGreaterThanOrEqual(1)
+
+    await openWorkspaceTab(page,'Personalization')
+    await expect(page.getByRole('heading',{name:'Personalization studio'})).toBeVisible()
+    await expect(page.getByText('CI personalization '+suffix,{exact:true})).toBeVisible()
+  })
+
   test('real-time activation persists rules and executes on matching consented events',async({page},testInfo)=>{
     const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()
     const customerId='activation_customer_'+suffix
@@ -770,7 +811,7 @@ test('all workspace sections render without a frontend crash', async ({ page }) 
     'Launchpad','Overview','AdSync','Funnel','Events','Adjustments','Diagnostics','Reconciliation','Fraud','Deep Links','Sites','Fingerprinting',
     'Live Sync','Data Hub','Customer 360','Offline Attribution','Matchback','POS & Stores','Journeys','Identity','Models','Attribution','Planner','Reports',
     'Enrich','Lead Grading','Behavior','Feed','Agents','Routing','Follow-ups','Calls','Meetings','Feedback','Approvals','Ask Ace',
-    'Integrations','Data Flows','Real-Time Activation','Audiences','Delivery','Monitoring','Alerts','Developers','Settings'
+    'Integrations','Data Flows','Real-Time Activation','Personalization','Audiences','Delivery','Monitoring','Alerts','Developers','Settings'
   ]
 
   for(const tab of tabs){
