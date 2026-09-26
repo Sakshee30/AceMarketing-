@@ -115,6 +115,8 @@ export const api = {
   applyAdjustment: (id: string) => request('/adjustments/apply', { method: 'POST', body: JSON.stringify({ id }) }),
   previewAdjustment: (id: string) => request('/adjustments/preview', { method: 'POST', body: JSON.stringify({ id }) }),
   diagnostics: () => request('/diagnostics'),
+  reconciliation: () => request('/reconciliation'),
+  runReconciliationAction: (issue:string,limit=250) => request('/reconciliation/action', { method:'POST', body:JSON.stringify({issue,limit}) }),
   runDiagnosticsScan: () => request('/diagnostics/scan', { method: 'POST', body: JSON.stringify({}) }),
   fraud: () => request('/fraud'),
   blockFraudPattern: (pattern: string) => request('/fraud/block', { method: 'POST', body: JSON.stringify({ pattern }) }),
