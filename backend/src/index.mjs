@@ -1160,7 +1160,7 @@ const server = http.createServer(async (req,res)=>{
       if(!question) return send(req,res,400,{error:'question required'})
       if(question.length>500) return send(req,res,400,{error:'question too long'})
       const q=question.toLowerCase()
-      const [attribution,leadStats,leads,activationRuns,audiences,monitoring,state,routingDecisions,agentRuns,meetings,feedbackResult,followUps]=await Promise.all([
+      const [attribution,leadStats,leads,activationRuns,audiences,monitoring,state,routingDecisions,agentRuns,meetings,feedbackResult,followUpItems]=await Promise.all([
         attributionStats(workspaceId).catch(()=>({available:false})),
         leadOpsStats(workspaceId).catch(()=>({available:false})),
         listLeadProfiles(workspaceId,500).catch(()=>[]),
@@ -1218,11 +1218,13 @@ const server = http.createServer(async (req,res)=>{
       }
       const voiceRuns=(agentRuns||[]).filter(x=>String(x.agent_type||'')==='voice_qualification')
       const feedbackItems=feedbackResult?.items||[]
+      const followUpCoverageCount=uniqueKnown(followUpItems,x=>x.lead_ref)
       const funnelCoverage=[
         {key:'lead',label:'Lead profiles',count:leads.length,source:'Lead operations'},
         {key:'routing',label:'Routed leads',count:uniqueKnown(routingDecisions,x=>x.lead_ref),source:'Routing decisions'},
         {key:'qualification',label:'Voice-qualified/attempted',count:uniqueKnown(voiceRuns,x=>x.entity_id||x.input?.lead),source:'Agent runs'},
         {key:'meeting',label:'Meetings scheduled',count:uniqueKnown(meetings,x=>x.lead_ref),source:'Meetings'},
+        {key:'follow_up',label:'Follow-ups created',count:followUpCoverageCount,source:'Follow-up operations'},
         {key:'feedback',label:'Feedback captured',count:uniqueKnown(feedbackItems,x=>x.lead_ref),source:'Feedback'}
       ].map((x,index)=>({...x,coverage:index===0?100:pct(x.count,Math.max(1,leads.length))}))
       const weakestHandoff=funnelCoverage.slice(1).sort((a,b)=>a.coverage-b.coverage)[0]||null
