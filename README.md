@@ -4502,3 +4502,115 @@ Playwright now verifies:
 ### Product-parity note
 
 EasyInsights publicly describes server-side forwarding, cross-channel stitching, cleansing/normalization, deduplication, enhanced matching and conversion discrepancy resolution across Meta, Google and analytics systems. AceMarketing implements the comparable operator workflow using its own UI, code and data contracts while keeping provider-reported metrics separate from internally observed delivery evidence.
+
+
+## Personalization studio implementation
+
+This pass adds a dedicated **Personalization** workspace and decision API to AceMarketing on `main`.
+
+The implementation turns existing Customer 360, consent and first-party context into a reusable decision layer for website, app, CRM and messaging experiences.
+
+### Backend contracts
+
+New endpoints:
+
+- `GET /api/personalization-rules`
+- `POST /api/personalization-rules`
+- `POST /api/personalization-rules/toggle`
+- `POST /api/personalization/decide`
+- `POST /api/personalization/feedback`
+
+Rules support:
+
+- experience surface (website, app, CRM, WhatsApp or email);
+- priority ordering;
+- named experience variant;
+- message, CTA and destination;
+- up to eight profile/context conditions;
+- equals, contains, greater-than, less-than, one-of, exists and not-exists operators;
+- active/paused state;
+- personalization-consent enforcement by default.
+
+### Decision flow
+
+The personalization decision path is:
+
+**Resolve customer → Load Customer 360 profile → Merge journey/profile context → Match highest-priority rule → Check personalization consent → Return variant → Persist decision**
+
+Customer context may include persisted attributes such as:
+
+- grade;
+- score;
+- lifecycle stage;
+- acquisition source/campaign;
+- device platform;
+- LTV tier;
+- conversion propensity;
+- normalized Customer 360 attributes and journey fields.
+
+When a matching rule requires personalization consent and consent is unavailable, the backend returns a `consent_blocked` decision and does not return personalized content.
+
+### Measurement
+
+`POST /api/personalization/feedback` records:
+
+- impression;
+- click;
+- conversion.
+
+The rules API calculates per-rule:
+
+- decisions;
+- impressions;
+- clicks;
+- conversions;
+- CTR;
+- conversion rate.
+
+These metrics represent AceMarketing-recorded personalization feedback only and are not presented as external-channel provider metrics.
+
+### Frontend workspace
+
+New dashboard section:
+
+**Activation & Integrations → Personalization**
+
+Operators can:
+
+1. Create priority-ordered personalization rules.
+2. Select website/app/CRM/WhatsApp/email surfaces.
+3. Define a variant, message, CTA and destination.
+4. Target by Customer 360/profile conditions.
+5. Pause or re-enable rules.
+6. Test a real customer/profile/device identifier through the backend decision service.
+7. See whether a variant was selected, blocked by consent or had no matching rule.
+8. Record impression, click and conversion feedback for a returned decision.
+9. Review rule-level CTR and conversion rate.
+
+The UI uses the AceMarketing design system, responsive layouts, subtle animation and reduced-motion support.
+
+### Dashboard and health integration
+
+Personalization is included in:
+
+- the main workspace sidebar;
+- the global dashboard navigator;
+- dashboard section health;
+- the complete workspace render regression sweep.
+
+Dashboard health reports active personalization rule count and persisted decision count.
+
+### Regression coverage
+
+Playwright now verifies:
+
+- personalization consent can be recorded;
+- a rule can be created;
+- the decision API returns the expected variant;
+- impression feedback can be persisted;
+- rule performance reflects the recorded impression;
+- the Personalization workspace renders the created rule.
+
+### Product-parity note
+
+EasyInsights publicly describes first-party audience segmentation, returning-user recognition, real-time activation, personalized marketing, behavioral segmentation and category-based recommendation events. AceMarketing implements the comparable decisioning workflow using its own UI, code, Customer 360 contracts and consent architecture rather than third-party proprietary source code or branded assets.
