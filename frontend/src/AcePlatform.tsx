@@ -5,7 +5,7 @@ import {
   Activity,ArrowRight,BarChart3,Bell,BookOpen,Bot,Building2,Cable,CalendarDays,Check,CheckCircle2,ChevronDown,ChevronRight,
   CircleDollarSign,Code2,DatabaseZap,Filter,Gauge,Globe2,GraduationCap,Headphones,HeartPulse,Home,Landmark,Layers3,Menu,MessageCircle,MessageSquareText,
   MousePointer2,Network,PhoneCall,PhoneIncoming,PhoneOutgoing,PieChart,Plane,Plus,RadioTower,Search,Settings2,ShieldCheck,ShoppingCart,Store,
-  Sparkles,Smartphone,Target,UsersRound,WandSparkles,X,Zap
+  Sparkles,Smartphone,Table2,Target,UsersRound,WandSparkles,X,Zap
 } from 'lucide-react'
 import './ace-platform.css'
 import { api } from './lib/api'
