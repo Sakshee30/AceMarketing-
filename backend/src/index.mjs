@@ -639,6 +639,7 @@ const server = http.createServer(async (req,res)=>{
         Funnel:section(profiles?'live':trackedCount?'attention':'setup',profiles,profiles+' known lead profiles'),
         Events:section(eventRules.length?'live':'setup',eventRules.length,eventRules.length+' conversion rules'),
         Diagnostics:section(trackedCount||eventRules.length?'live':'setup',Number((state.quarantinedEvents||[]).length),(state.quarantinedEvents||[]).length+' quarantined events'),
+        Reconciliation:section(trackedCount||deliveries.length||Number(attr?.assistedEvents||0)>0?'live':'setup',failedDeliveries+Number(attr?.unmatchedEvents||0),failedDeliveries+' failed · '+Number(attr?.unmatchedEvents||0)+' unmatched'),
         'Live Sync':section(trackedCount?'live':'setup',trackedCount,trackedCount+' tracked events'),
         'Data Hub':section(profiles||trackedCount?'live':'setup',profiles,profiles+' unified profiles'),
         'Customer 360':section(profiles?'live':'setup',profiles,profiles+' stitched customer profiles'),
@@ -1825,6 +1826,92 @@ const server = http.createServer(async (req,res)=>{
       let updated=null
       await mutateState(s=>{const item=(s.deepLinks||[]).find(x=>x.slug===String(body.slug));if(item){item.status='active';item.activatedAt=new Date().toISOString();updated={...item}}})
       return updated?send(req,res,200,updated):send(req,res,404,{error:'deep link not found'})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/reconciliation') {
+      const [state,attr]=await Promise.all([getState(),attributionStats(workspaceId)])
+      const deliveries=state.signalDeliveries||[]
+      const quarantined=state.quarantinedEvents||[]
+      const adjustments=state.adjustments||[]
+      const duplicateAudit=(state.audit||[]).filter(x=>String(x.action||'').includes('duplicate'))
+      const grouped={}
+      for(const item of deliveries){
+        const key=String(item.destination||'Unknown')
+        const row=grouped[key]||{destination:key,total:0,delivered:0,queued:0,failed:0}
+        row.total++
+        const status=String(item.status||'queued').toLowerCase()
+        if(['delivered','succeeded'].includes(status))row.delivered++
+        else if(['failed','dead_letter'].includes(status))row.failed++
+        else row.queued++
+        grouped[key]=row
+      }
+      const channels=Object.values(grouped).map(row=>({...row,successRate:row.total?Number((row.delivered/row.total*100).toFixed(1)):0,gap:Math.max(0,row.total-row.delivered)}))
+      const matched=Number(attr?.matchedEvents||0),unmatched=Number(attr?.unmatchedEvents||0),assisted=Number(attr?.assistedEvents||0)
+      const terminal=deliveries.filter(x=>['delivered','succeeded','failed','dead_letter'].includes(String(x.status||'').toLowerCase()))
+      const failed=terminal.filter(x=>['failed','dead_letter'].includes(String(x.status||'').toLowerCase())).length
+      const issues=[
+        {key:'unmatched_attribution',label:'Unmatched attribution',count:unmatched,severity:unmatched?'warning':'healthy',detail:'Offline/assisted conversions without a deterministic or assisted match.',action:'reprocess'},
+        {key:'failed_deliveries',label:'Failed deliveries',count:failed,severity:failed?'critical':'healthy',detail:'Provider signal deliveries that failed or reached dead-letter state.',action:'retry'},
+        {key:'duplicate_evidence',label:'Duplicate evidence',count:duplicateAudit.length,severity:duplicateAudit.length?'warning':'healthy',detail:'Duplicate activity detected by idempotency/audit controls.',action:'review'},
+        {key:'quarantined_events',label:'Quarantined events',count:quarantined.length,severity:quarantined.length?'warning':'healthy',detail:'Events isolated because schema or field validation requires review.',action:'review'}
+      ]
+      const score=Math.max(0,Math.min(100,100-Math.min(35,unmatched*2)-Math.min(30,failed*5)-Math.min(20,duplicateAudit.length*3)-Math.min(15,quarantined.length*2)))
+      return send(req,res,200,{
+        available:true,
+        score,
+        totals:{
+          trackedEvents:trackedEvents.length,
+          assistedEvents:assisted,
+          matchedEvents:matched,
+          unmatchedEvents:unmatched,
+          deliveries:deliveries.length,
+          failedDeliveries:failed,
+          duplicates:duplicateAudit.length,
+          quarantined:quarantined.length,
+          pendingAdjustments:adjustments.filter(x=>String(x.status||'pending').toLowerCase()!=='applied').length
+        },
+        channels,
+        issues,
+        recentActions:(state.reconciliationActions||[]).slice(0,50),
+        generatedAt:new Date().toISOString()
+      })
+    }
+    if (req.method === 'POST' && url.pathname === '/api/reconciliation/action') {
+      const body=await readBody(req)
+      const issue=String(body.issue||'').trim()
+      if(!['unmatched_attribution','failed_deliveries','duplicate_evidence','quarantined_events'].includes(issue)) return send(req,res,400,{error:'valid reconciliation issue required'})
+      let result={status:'queued',detail:'Review queued'}
+      if(issue==='unmatched_attribution'){
+        const r=await reconcileAttribution(workspaceId,Math.max(1,Math.min(500,Number(body.limit||250))))
+        result={status:'completed',detail:'Attribution reconciliation completed',matched:Number(r?.matched||0),unmatched:Number(r?.unmatched||0)}
+      }else if(issue==='failed_deliveries'){
+        if(!queueAvailable()) return send(req,res,503,{error:'signal delivery queue unavailable',required:'DATABASE_URL'})
+        const state=await getState()
+        const failed=(state.signalDeliveries||[]).filter(x=>['failed','dead_letter'].includes(String(x.status||'').toLowerCase())).slice(0,Math.max(1,Math.min(250,Number(body.limit||100))))
+        const now=new Date().toISOString()
+        const jobs=[]
+        for(const item of failed){
+          await mutateState(s=>{
+            const target=(s.signalDeliveries||[]).find(x=>x.id===item.id)
+            if(target){target.status='queued';target.nextAttemptAt=now;target.updatedAt=now;target.lastError=null}
+          })
+          const replayPayload=item.replayPayload||buildSignalReplayPayload(item,item)
+          const job=await enqueueJob({workspaceId,kind:'signal_delivery',idempotencyKey:'reconcile-retry:'+item.id+':'+Date.now(),payload:{...replayPayload,deliveryId:item.id,event:item.event,destination:item.destination,idempotencyKey:item.idempotencyKey}})
+          jobs.push(job?.id||null)
+        }
+        result={status:'queued',detail:'Failed deliveries re-queued',replayed:failed.length,jobs:jobs.filter(Boolean)}
+      }else{
+        result={status:'review',detail:issue==='duplicate_evidence'?'Duplicate evidence queued for adjustment/review.':'Quarantined events queued for schema review.'}
+      }
+      const action={id:'recon_'+randomUUID(),issue,status:result.status,detail:result.detail,createdAt:new Date().toISOString(),createdBy:req.user?.email||req.user?.userId||'workspace',result}
+      await mutateState(s=>{
+        s.reconciliationActions=s.reconciliationActions||[]
+        s.reconciliationActions.unshift(action)
+        s.reconciliationActions=s.reconciliationActions.slice(0,500)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'reconciliation.action',entityId:action.id,issue,status:action.status,at:action.createdAt})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,200,action)
     }
     if (req.method === 'GET' && url.pathname === '/api/diagnostics') {
       const [state,attr,jobs]=await Promise.all([getState(),attributionStats(workspaceId),queueStats(workspaceId)])
