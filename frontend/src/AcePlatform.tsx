@@ -1478,6 +1478,7 @@ function Calls(){
  const [scheduleAt,setScheduleAt]=useState('')
  const [busy,setBusy]=useState('')
  const [notice,setNotice]=useState('')
+ const [builder,setBuilder]=useState(false)
  const load=async()=>{
   const [runs,events]:any=await Promise.all([api.qualificationCalls().catch(()=>({items:[]})),api.callEvents().catch(()=>({items:[]}))])
   const mapped=(runs.items||[]).map((x:any)=>({id:x.id,kind:'agent',lead:x.lead,source:x.source,agent:x.agent,status:String(x.status).replace('_',' '),duration:x.duration,intent:x.intent||0,next:x.next,attempts:x.attempts,lastError:x.lastError,createdAt:x.createdAt}))
@@ -1506,12 +1507,26 @@ function Calls(){
   }catch(e:any){setNotice(e?.message||'Meeting could not be created.')}
   finally{setBusy('')}
  }
+ const createQualification=async(e:any)=>{
+  e.preventDefault();const fd=new FormData(e.currentTarget);setBusy('create');setNotice('')
+  try{
+   const r:any=await api.createQualificationCall({
+    lead:String(fd.get('lead')||''),
+    leadRef:String(fd.get('lead')||''),
+    phone:String(fd.get('phone')||''),
+    source:String(fd.get('source')||'Workspace'),
+    intent:Number(fd.get('intent')||0),
+    trigger:String(fd.get('trigger')||'manual_qualification')
+   })
+   setBuilder(false);setNotice('Qualification call queued through the durable voice-agent worker'+(r?.id?' · '+String(r.id).slice(0,18):'')+'.');await load();if(r?.id)setSelected(r.id)
+  }catch(err:any){setNotice(err?.message||'Qualification call could not be queued.')}finally{setBusy('')}
+ }
  const connected=tracked.filter(x=>['answered','completed','connected','qualified'].includes(String(x.status).toLowerCase())).length
  const qualified=calls.filter(x=>String(x.status).toLowerCase().includes('succeed')||String(x.status).toLowerCase().includes('qualified')).length
- return <><PageHead crumb="Conversion / Calls" title="Voice qualification & call tracking" sub="Run qualification agents and ingest signed telephony events into lead context and offline attribution." action="Configure call agent" onAction={()=>window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:'Agents'}))}/>
+ return <><PageHead crumb="Conversion / Calls" title="Voice qualification & call tracking" sub="Run qualification agents and ingest signed telephony events into lead context and offline attribution." action="Start qualification" onAction={()=>setBuilder(true)}/>
  {notice&&<div className="delivery-notice ok"><CheckCircle2/><span>{notice}</span></div>}
  <div className="stats-grid"><Stat label="Qualification runs" value={String(calls.length)} sub="Persisted agent executions" Icon={PhoneIncoming}/><Stat label="Tracked call events" value={String(tracked.length)} sub="Signed telephony webhook events" Icon={PhoneCall}/><Stat label="Connected tracked calls" value={String(connected)} sub="Answered / completed outcomes" Icon={Activity}/><Stat label="Qualified runs" value={String(qualified)} sub="Successful qualification outcomes" Icon={Target}/></div>
- <div className="call-ops-layout"><div className="app-panel call-list"><div className="panel-head"><div><h3>Recent call activity</h3><p>Agent runs plus provider call-tracking events</p></div><button onClick={load}>Refresh</button></div>{rows.length?rows.map(x=><button key={x.kind+':'+x.id} className={selected===x.id?'selected':''} onClick={()=>setSelected(x.id)}><PhoneIncoming/><div><b>{x.lead}</b><small>{x.source} · {x.duration}</small></div><span>{x.status}</span><ChevronRight/></button>):<div className="empty-delivery-state"><PhoneIncoming/><div><b>No calls recorded yet</b><small>Qualification runs and signed telephony events will appear here.</small></div></div>}</div>
+ <div className="call-ops-layout"><div className="app-panel call-list"><div className="panel-head"><div><h3>Recent call activity</h3><p>Agent runs plus provider call-tracking events</p></div><div className="panel-actions"><button onClick={load}>Refresh</button><button onClick={()=>window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:'Agents'}))}>Configure agent</button></div></div>{rows.length?rows.map(x=><button key={x.kind+':'+x.id} className={selected===x.id?'selected':''} onClick={()=>setSelected(x.id)}><PhoneIncoming/><div><b>{x.lead}</b><small>{x.source} · {x.duration}</small></div><span>{x.status}</span><ChevronRight/></button>):<div className="empty-delivery-state"><PhoneIncoming/><div><b>No calls recorded yet</b><small>Qualification runs and signed telephony events will appear here.</small></div></div>}</div>
  {current?<div className="app-panel call-detail"><div className="panel-head"><div><h3>{current.lead}</h3><p>{current.agent}</p></div><span className="score">{current.kind==='agent'?current.intent+' intent':'Tracked call'}</span></div><div className="call-detail-grid">{[['Call ID',current.id],['Source',current.source],['Outcome',current.status],['Next action',current.next||'Review journey']].map(x=><div key={x[0]}><span>{x[0]}</span><b>{x[1]}</b></div>)}</div>
  <div className="source-conflict-note"><PhoneCall/><div><b>{current.kind==='tracked'?'Provider event captured':'Qualification execution'}</b><p>{current.kind==='tracked'?('Provider: '+(current.provider||'telephony')+(current.campaign?' · Campaign: '+current.campaign:'')):(current.lastError?'Last error: '+current.lastError:'Execution state comes from the durable agent worker; no synthetic transcript is shown.')}</p></div></div>
  <div className="call-schedule-box"><label>Consultation time<input type="datetime-local" value={scheduleAt} onChange={e=>setScheduleAt(e.target.value)}/></label><button className="approve" disabled={!scheduleAt||busy==='schedule'} onClick={schedule}><CalendarDays/>{busy==='schedule'?'Scheduling…':'Schedule consultation'}</button></div>
