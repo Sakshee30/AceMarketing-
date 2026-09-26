@@ -78,6 +78,7 @@ const groups:ShortcutGroup[]=[
     items:[
       {label:'Integrations',tab:'Integrations',icon:Cable,description:'Ads, CRM, calling, messaging and commerce connectors'},
       {label:'Data Flows',tab:'Data Flows',icon:Network,description:'Build, test and activate source-to-destination sync recipes'},
+      {label:'Real-Time Activation',tab:'Real-Time Activation',icon:Zap,description:'Trigger consent-aware signals, routing and follow-up from live events'},
       {label:'Audiences',tab:'Audiences',icon:UsersRound,description:'Build, preview and activate first-party segments'},
       {label:'Delivery',tab:'Delivery',icon:Activity,description:'Outbound signal queue, retries and dead letters'},
       {label:'Monitoring',tab:'Monitoring',icon:Activity,description:'Reliability, usage and operational health'},
