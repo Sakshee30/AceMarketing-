@@ -4071,3 +4071,21 @@ Implemented:
 - the suite had reached 102 passing tests before these final assertion fixes, with the remaining failures limited to the Behavior and event-card selector categories now addressed.
 
 These changes preserve strict backend correctness checks while making the browser suite reflect the actual responsive UI contract.
+
+
+## Call-tracking campaign/keyword/creative attribution pass
+
+The Call Tracking Events path now carries the full attribution context advertised by the EasyInsights-style call-tracking workflow instead of stopping at campaign-only metadata.
+
+Implemented:
+- signed call webhook normalization accepts campaign, keyword/search term, creative/ad name and ad-group/ad-set metadata;
+- normalized aliases include `keyword`, `searchKeyword`, `searchTerm`, `creative`, `creativeName`, `adCreative`, `adName`, `adGroup`, `adGroupName`, `adset` and `adSet`;
+- call keyword, creative and ad-group evidence is persisted into the enriched lead profile attributes;
+- assisted `call.completed` attribution events now also retain campaign, keyword, creative and ad-group evidence alongside click IDs;
+- the Calls detail panel displays Campaign, Keyword, Creative and Ad group / ad set for tracked calls;
+- the Calls dashboard reports Campaign coverage, Keyword coverage, Creative coverage and Click-ID coverage across persisted tracked calls;
+- click-ID coverage recognizes GCLID, FBCLID and MSCLKID;
+- backend smoke coverage validates the attribution normalizer without weakening the signed-webhook security boundary;
+- responsive attribution cards include hover polish and reduced-motion handling.
+
+The operating path is now: signed telephony webhook → normalized campaign/keyword/creative evidence → lead enrichment → assisted attribution event → Calls visibility.
