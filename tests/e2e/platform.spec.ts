@@ -1467,6 +1467,13 @@ test('signal-return quick starts create real pipelines and open live modules', a
   await expect(page.locator('.agent-selector').getByText('Pinterest Conversions API · Qualified Lead',{exact:true}).first()).toBeVisible()
   await expect(page.locator('.agent-config')).toContainText('Pinterest')
 
+  const tiktokCard=page.locator('.signal-agent-quickstarts article').filter({hasText:'TikTok Events API'}).first()
+  await expect(tiktokCard).toBeVisible()
+  await tiktokCard.getByRole('button',{name:'Install pipeline',exact:true}).click()
+  await expect(page.getByText('TikTok Events API pipeline created. Connect provider credentials before expecting external delivery.',{exact:true})).toBeVisible()
+  await expect(page.locator('.agent-selector').getByText('TikTok Events API · Qualified Lead',{exact:true}).first()).toBeVisible()
+  await expect(page.locator('.agent-config')).toContainText('TikTok Ads')
+
   const callCard=page.locator('.signal-agent-quickstarts article').filter({hasText:'Call Tracking Events'}).first()
   await callCard.getByRole('button',{name:'Open module',exact:true}).click()
   await expect(page.getByRole('heading',{name:'Voice qualification & call tracking'})).toBeVisible()
