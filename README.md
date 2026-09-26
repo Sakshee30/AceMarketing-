@@ -4004,3 +4004,18 @@ Implemented:
 - Playwright coverage creates a real lead profile, verifies the API returns `funnel_monitoring` with grounded evidence, then asks the same question in the UI and confirms the handoff cards render.
 
 This closes the step-by-step monitoring gap for the Journey & Attribution assistant while keeping all answers evidence-backed.
+
+
+## Repeat-purchase and abandoned-checkout event parity
+
+The business-event catalog now includes two additional commerce patterns documented by EasyInsights-style event workflows.
+
+Implemented:
+- `Repeat Purchase`: derives `repeat_purchase` from a purchase event when `properties.purchaseCount >= 2`;
+- `Abandoned Checkout`: derives `abandoned_checkout` from an explicit `checkout_abandoned` event emitted by the commerce backend/webhook after its inactivity window;
+- the abandoned-checkout template deliberately does not pretend a stateless browser rule can measure 30 minutes of elapsed time by itself;
+- both templates use the existing safe event-rule engine, PostgreSQL persistence, assisted-event creation, consent-gated Google Ads / Meta Ads activation, rule-run audit trail and enable/pause controls;
+- both templates are editable before persistence, including source event, output event, conditions, value mode, currency and destinations;
+- Playwright coverage verifies the Repeat Purchase condition and creates a real persisted rule, and verifies the Abandoned Checkout webhook/backend semantics and rule-builder fields.
+
+This brings the commerce event template catalog closer to the documented business signals while preserving truthful execution boundaries.
