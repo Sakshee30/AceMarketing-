@@ -953,3 +953,37 @@ test('voice qualification can be queued from the Calls workspace', async ({ page
   await expect(page.getByText(/Qualification call queued through the durable voice-agent worker/)).toBeVisible()
   await expect(page.locator('.call-list').getByText(lead,{exact:true}).first()).toBeVisible()
 })
+
+
+test('Ask Ace reports grounded funnel handoff coverage', async ({ page }, testInfo) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()+'_'+Date.now()
+  const lead='ci_ask_funnel_'+suffix
+
+  const created=await page.request.post('/api/enrich/upsert',{data:{
+    externalLeadId:lead,
+    name:'CI Ask Funnel '+suffix,
+    source:'Google Ads',
+    campaign:'CI Ask Funnel Campaign',
+    crmStage:'lead',
+    journeyDepth:2,
+    pricingPageViews:1
+  }})
+  expect(created.ok()).toBeTruthy()
+
+  const apiResponse=await page.request.post('/api/ask-ace',{data:{question:'Where is the funnel dropping between lead and revenue?'}})
+  expect(apiResponse.ok()).toBeTruthy()
+  const payload=await apiResponse.json()
+  expect(payload.intent).toBe('funnel_monitoring')
+  expect(payload.grounded).toBeTruthy()
+  expect((payload.insights||[]).some((x:any)=>x.label==='Lead profiles'&&Number(x.value)>=1)).toBeTruthy()
+
+  await openWorkspaceTab(page,'Ask Ace')
+  await expect(page.getByRole('heading',{name:'Journey & attribution assistant'})).toBeVisible()
+  await page.getByRole('button',{name:'Where is the funnel dropping between lead and revenue?',exact:true}).click()
+  await expect(page.getByText('funnel monitoring',{exact:true})).toBeVisible()
+  await expect(page.locator('.ask-insights').last()).toContainText('Lead profiles')
+  await expect(page.locator('.ask-insights').last()).toContainText('Routed leads')
+  await expect(page.locator('.ask-insights').last()).toContainText('Meetings scheduled')
+})
