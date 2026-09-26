@@ -951,7 +951,7 @@ test('all workspace sections render without a frontend crash', async ({ page }) 
 
   const tabs=[
     'Launchpad','Overview','AdSync','ChatGPT Ads','Funnel','Events','Adjustments','Diagnostics','Reconciliation','Fraud','Deep Links','Sites','Fingerprinting',
-    'Live Sync','Data Hub','Customer 360','Offline Attribution','Matchback','POS & Stores','Journeys','Identity','Models','Attribution','Planner','Reports','Executive Briefs',
+    'Live Sync','Data Hub','Customer 360','Offline Attribution','Matchback','POS & Stores','Journeys','Identity','Models','Attribution','Planner','Reports','Grouped Performance','Executive Briefs',
     'Enrich','Lead Grading','Behavior','Feed','Agents','Routing','Follow-ups','Calls','Meetings','Feedback','Approvals','Ask Ace',
     'Integrations','Data Flows','Real-Time Activation','Personalization','Exclusions','Audiences','Delivery','Monitoring','Alerts','Compliance','Developers','Settings'
   ]
