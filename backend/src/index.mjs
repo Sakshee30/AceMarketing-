@@ -611,6 +611,7 @@ const server = http.createServer(async (req,res)=>{
         Diagnostics:section(trackedCount||eventRules.length?'live':'setup',Number((state.quarantinedEvents||[]).length),(state.quarantinedEvents||[]).length+' quarantined events'),
         'Live Sync':section(trackedCount?'live':'setup',trackedCount,trackedCount+' tracked events'),
         'Data Hub':section(profiles||trackedCount?'live':'setup',profiles,profiles+' unified profiles'),
+        'Customer 360':section(profiles?'live':'setup',profiles,profiles+' stitched customer profiles'),
         Journeys:section(profiles?'live':'setup',profiles,profiles+' stitched profiles'),
         Attribution:section(Number(attr?.matchedEvents||0)>0?'live':attr?.available?'attention':'setup',Number(attr?.matchedEvents||0),Number(attr?.matchedEvents||0)+' matched conversions'),
         Enrich:section(profiles?'live':'setup',profiles,profiles+' enriched profiles'),
