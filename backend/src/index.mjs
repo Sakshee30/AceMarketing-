@@ -2448,7 +2448,15 @@ const server = http.createServer(async (req,res)=>{
     }
     if (req.method === 'GET' && url.pathname === '/api/attribution') return send(req,res,200,await attributionStats(workspaceId))
     if (req.method === 'GET' && url.pathname === '/api/agents') {
-      const [state,profiles,runs,customIntegrations]=await Promise.all([getState(),listLeadProfiles(workspaceId,1),listAgentRuns(workspaceId),listCustomIntegrations(workspaceId)])
+      const [state,profiles,runs,customIntegrations,eventRules,audiences,attribution]=await Promise.all([
+        getState(),
+        listLeadProfiles(workspaceId,1),
+        listAgentRuns(workspaceId),
+        listCustomIntegrations(workspaceId),
+        listEventRules(workspaceId).catch(()=>[]),
+        listLeadAudiences(workspaceId).catch(()=>[]),
+        attributionStats(workspaceId).catch(()=>({available:false}))
+      ])
       const connected=new Set((state.connectorConnections||[]).filter(x=>String(x.status||'').toLowerCase()==='connected').map(x=>x.connector))
       const hasProfiles=profiles.length>0
       const builtIn=agents.map((name,i)=>{
@@ -2463,12 +2471,12 @@ const server = http.createServer(async (req,res)=>{
         else if(name==='Meeting Reminder'&&process.env.MEETING_REMINDER_WEBHOOK_URL)status='configured'
         else if(name==='Feedback Agent'&&process.env.FEEDBACK_WEBHOOK_URL)status='configured'
         else if(name==='Lead Reactivation'&&hasProfiles)status='configured'
-        else if(name==='Attribution Agent'&&hasProfiles)status='configured'
+        else if(name==='Attribution Agent'&&Boolean(attribution?.available)&&(Number(attribution?.matchedEvents||0)>0||Number(attribution?.activeClickSessions||0)>0))status='configured'
         else if(name==='Deep Linking Agent'&&(state.deepLinks||[]).length)status='configured'
         else if(name==='Fraud Detection Agent'&&(state.fraudPatterns||[]).length)status='configured'
         else if(name==='Customer Journey Agent'&&hasProfiles)status='configured'
-        else if(name==='Audiences Agent'&&(state.audiences||[]).length)status='configured'
-        else if(name==='Event Agent'&&hasProfiles)status='configured'
+        else if(name==='Audiences Agent'&&audiences.length)status='configured'
+        else if(name==='Event Agent'&&eventRules.length)status='configured'
         else if(name==='Ask Ace')status='available'
         const meta=agentCatalog[name]||{}
         return {id:'builtin_'+i,name,status,type:'built_in',...meta}
