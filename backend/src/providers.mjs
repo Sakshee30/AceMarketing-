@@ -108,6 +108,79 @@ const deliverGoogle=async(workspaceId,signal)=>{
   return {provider:'google',...result}
 }
 
+const pinterestEventName=event=>{
+  const raw=String(event||'lead').trim().toLowerCase().replace(/[.\s]+/g,'_')
+  const mapped={
+    lead_created:'lead',
+    lead_qualified:'lead',
+    qualified_lead:'lead',
+    consultation_booked:'schedule',
+    meeting_scheduled:'schedule',
+    revenue_closed:'checkout',
+    customer_enrolled:'checkout',
+    purchase:'checkout',
+    registration_completed:'signup',
+    trial_started:'start_trial',
+    subscription_created:'subscribe',
+    page_view:'page_visit',
+    page_viewed:'page_visit'
+  }[raw]
+  return (mapped||raw.replace(/[^a-z0-9_-]+/g,'_').slice(0,100))||'lead'
+}
+
+const pinterestActionSource=value=>{
+  const raw=String(value||'web').toLowerCase()
+  if(['app_android','app_ios','web','offline'].includes(raw)) return raw
+  if(['website','browser'].includes(raw)) return 'web'
+  if(['store','pos','phone','call','crm'].includes(raw)) return 'offline'
+  return 'web'
+}
+
+const deliverPinterest=async(_workspaceId,signal)=>{
+  const advertiserId=String(signal.pinterestAdvertiserId||signal.data?.pinterestAdvertiserId||process.env.PINTEREST_AD_ACCOUNT_ID||'').trim()
+  const token=String(signal.pinterestConversionToken||signal.data?.pinterestConversionToken||process.env.PINTEREST_CONVERSION_TOKEN||'').trim()
+  if(!advertiserId||!token) throw new Error('PINTEREST_AD_ACCOUNT_ID and PINTEREST_CONVERSION_TOKEN are required')
+  const occurred=new Date(signal.occurredAt||Date.now())
+  const eventTime=Math.floor((Number.isNaN(occurred.getTime())?Date.now():occurred.getTime())/1000)
+  const eventId=String(signal.externalEventId||signal.idempotencyKey||signal.deliveryId||'').trim()
+  if(!eventId) throw new Error('Pinterest conversion event id is required for deduplication')
+  const userData={}
+  const emailHash=signal.emailSha256||signal.data?.emailSha256||(signal.email?sha(signal.email):'')
+  if(emailHash) userData.em=[String(emailHash).toLowerCase()]
+  const phoneHash=signal.phoneSha256||signal.data?.phoneSha256||(signal.phone?sha(String(signal.phone).replace(/\D/g,'')):'')
+  if(phoneHash) userData.ph=[String(phoneHash).toLowerCase()]
+  const externalId=signal.externalId||signal.customerId||signal.data?.externalId
+  if(externalId) userData.external_id=[String(externalId)]
+  if(signal.ipAddress||signal.data?.ipAddress) userData.client_ip_address=String(signal.ipAddress||signal.data.ipAddress)
+  if(signal.userAgent||signal.data?.userAgent) userData.client_user_agent=String(signal.userAgent||signal.data.userAgent)
+  if(signal.epik||signal.data?.epik) userData.click_id=String(signal.epik||signal.data.epik)
+  if(!Object.keys(userData).length) throw new Error('Pinterest conversion requires at least one user identifier or request context field')
+  const customData={}
+  if(signal.currency) customData.currency=String(signal.currency).toUpperCase()
+  if(signal.value!=null) customData.value=String(Number(signal.value))
+  if(signal.orderId||signal.data?.orderId) customData.order_id=String(signal.orderId||signal.data.orderId)
+  if(signal.data?.numItems!=null) customData.num_items=Number(signal.data.numItems)
+  const event={
+    event_name:pinterestEventName(signal.pinterestEventName||signal.event),
+    action_source:pinterestActionSource(signal.actionSource),
+    event_time:eventTime,
+    event_id:eventId,
+    opt_out:Boolean(signal.optOut),
+    user_data:userData,
+    ...(signal.eventSourceUrl?{event_source_url:String(signal.eventSourceUrl)}:{}),
+    ...(Object.keys(customData).length?{custom_data:customData}:{})
+  }
+  const test=signal.validateOnly||signal.data?.testEvent||process.env.PINTEREST_TEST_EVENTS==='true'
+  const endpoint='https://api.pinterest.com/v5/ad_accounts/'+encodeURIComponent(advertiserId)+'/events'+(test?'?test=true':'')
+  const result=await requestJson(endpoint,{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+    body:JSON.stringify({data:[event]})
+  })
+  if(Array.isArray(result.body?.events)&&result.body.events.some(item=>item?.status==='failed')) throw new Error('Pinterest conversion validation failed: '+JSON.stringify(result.body.events).slice(0,1500))
+  return {provider:'pinterest',...result}
+}
+
 const microsoftEventName=event=>String(event||'conversion')
   .trim()
   .toLowerCase()
@@ -326,6 +399,7 @@ export const deliverSignal=async(workspaceId,signal)=>{
   if(destination.includes('google')) return deliverGoogle(workspaceId,signal)
   if(destination.includes('linkedin')) return deliverLinkedIn(workspaceId,signal)
   if(destination.includes('microsoft')||destination.includes('bing')) return deliverMicrosoft(workspaceId,signal)
+  if(destination.includes('pinterest')) return deliverPinterest(workspaceId,signal)
   if(destination.includes('webhook')) return deliverWebhook(signal)
   throw new Error('unsupported delivery destination: '+signal.destination)
 }
