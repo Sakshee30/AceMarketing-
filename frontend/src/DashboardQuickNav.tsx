@@ -54,6 +54,7 @@ const groups:ShortcutGroup[]=[
       {label:'Attribution',tab:'Attribution',icon:Target,description:'Channel, campaign and revenue credit'},
       {label:'Planner',tab:'Planner',icon:BarChart3,description:'Model budget and growth scenarios'},
       {label:'Reports',tab:'Reports',icon:BarChart3,description:'Operational and scheduled reporting'},
+      {label:'Grouped Performance',tab:'Grouped Performance',icon:BarChart3,description:'Group product/category/source performance and optional cost-based contribution'},
       {label:'Executive Briefs',tab:'Executive Briefs',icon:BarChart3,description:'Schedule compact leadership metric snippets and delivery history'}
     ]
   },
