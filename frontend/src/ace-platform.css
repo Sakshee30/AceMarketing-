@@ -1614,3 +1614,19 @@
 .workspace-section-error button{display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(177,72,47,.18);background:#fff;color:#8a3e2f;border-radius:10px;padding:9px 12px;font-weight:800;cursor:pointer}
 .workspace-section-error button svg{width:15px;height:15px}
 @media(max-width:760px){.workspace-section-error{grid-template-columns:auto 1fr}.workspace-section-error button{grid-column:1/-1;width:100%;justify-content:center}}
+
+
+/* Ask Ace stitched customer journey */
+.ask-journey{margin-top:12px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#fff,#fbf9ff);overflow:hidden}
+.ask-journey-head{display:flex;align-items:center;gap:9px;padding:11px 12px;border-bottom:1px solid #eee9f3;background:#faf7ff}
+.ask-journey-head>svg{width:17px;color:#6b2ce8}
+.ask-journey-head b,.ask-journey-head small{display:block}
+.ask-journey-head b{font-size:9px}
+.ask-journey-head small{font-size:7px;color:#8d8393;margin-top:2px}
+.ask-journey-event{display:grid;grid-template-columns:24px 1fr;gap:9px;padding:10px 12px;border-top:1px solid #f1edf4;position:relative}
+.ask-journey-event:first-of-type{border-top:0}
+.ask-journey-event>span{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#f1eaff;color:#6b2ce8;font-size:7px;font-weight:800}
+.ask-journey-event b,.ask-journey-event small{display:block}
+.ask-journey-event b{font-size:8px}
+.ask-journey-event small{font-size:7px;color:#8d8393;margin-top:2px}
+.ask-journey-event p{font-size:7px;color:#776f7b;line-height:1.45;margin:4px 0 0}
