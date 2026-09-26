@@ -710,3 +710,47 @@ test('custom agent can execute a governed routing test', async ({ page }, testIn
   await openWorkspaceTab(page,'Routing')
   await expect(page.getByText('CI Sales Queue', { exact: true }).first()).toBeVisible()
 })
+
+
+test('audience waste-control preset materializes a real suppression segment', async ({ page }, testInfo) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()+'_'+Date.now()
+  const cLead='ci_audience_c_'+suffix
+  const dLead='ci_audience_d_'+suffix
+
+  for(const [lead,grade] of [[cLead,'C'],[dLead,'D']] as const){
+    const upsert=await page.request.post('/api/enrich/upsert',{data:{
+      externalLeadId:lead,
+      name:'Audience '+grade+' '+suffix,
+      source:'CI',
+      crmStage:'lead',
+      journeyDepth:1,
+      lastActivity:new Date().toISOString()
+    }})
+    expect(upsert.ok()).toBeTruthy()
+    const override=await page.request.post('/api/lead-grading/override',{data:{lead,grade}})
+    expect(override.ok()).toBeTruthy()
+  }
+
+  await openWorkspaceTab(page,'Audiences')
+  await expect(page.getByRole('heading',{name:'Audience management'})).toBeVisible()
+  const preset=page.locator('.audience-preset-row').filter({hasText:'Low-quality leads'}).first()
+  await expect(preset).toBeVisible()
+  await preset.click()
+
+  const form=page.locator('.audience-builder')
+  await expect(form.getByText('Audience preset')).toBeVisible()
+  await expect(form.getByLabel('Operator')).toHaveValue('is one of')
+  await expect(form.getByLabel('Value')).toHaveValue('C,D')
+  await expect(form.getByLabel('Mode')).toHaveValue('Suppress')
+  await expect(form.locator('.audience-preview')).toBeVisible()
+  const estimated=Number((await form.locator('.audience-preview strong').first().innerText()).replace(/,/g,''))
+  expect(estimated).toBeGreaterThanOrEqual(2)
+
+  await form.getByRole('button',{name:'Create & materialize audience'}).click()
+  await expect(page.getByText('Audience created and materialized.',{exact:true})).toBeVisible()
+  const row=page.locator('.audience-row').filter({hasText:'Low-quality lead suppression'}).first()
+  await expect(row).toBeVisible()
+  await expect(row).toContainText('Suppress')
+})
