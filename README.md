@@ -4270,3 +4270,67 @@ Connector authorization/configuration and credential-refresh failures no longer 
 ### Regression coverage
 
 The end-to-end dashboard navigation test now validates the `sections` payload and visible section state badges. The complete workspace render sweep also includes **Data Flows** so every current dashboard tab is exercised by the frontend regression suite.
+
+
+## Customer 360 implementation
+
+This pass adds a dedicated **Customer 360** workspace on `main`, built from AceMarketing's persisted first-party records rather than sample customer cards.
+
+### Backend
+
+New endpoint:
+
+- `GET /api/customer-360`
+- `GET /api/customer-360?id=<profile-or-lead-id>`
+
+The endpoint composes existing workspace stores into one customer record:
+
+- canonical lead/customer profile;
+- acquisition source and campaign;
+- lifecycle stage, lead grade, score and intent;
+- deterministic identity availability (hashed email/phone, device, app/platform);
+- normalized profile and journey attributes;
+- tracked first-party events;
+- routing decisions;
+- follow-up tasks;
+- scheduled meetings and reminders;
+- feedback records;
+- agent runs;
+- call and WhatsApp context;
+- materialized audience memberships.
+
+No synthetic activity is inserted when a customer has no linked events.
+
+### Frontend
+
+The new **Customer 360** section is available under **Tracking & Data** and through the global dashboard navigator.
+
+Operators can:
+
+1. Search customer profiles by name, lead ID, source, campaign, lifecycle stage or grade.
+2. Open a single stitched customer record.
+3. Inspect identity evidence and profile freshness.
+4. Review lifecycle stage, lead score and grade.
+5. See counts for tracked events, agent runs, routing, follow-ups, meetings and feedback.
+6. Review normalized customer/journey attributes.
+7. Inspect activation/suppression audience memberships.
+8. Review a unified newest-first operational timeline.
+9. Jump from Customer 360 into the dedicated Journey view.
+
+The layout is responsive, uses the existing AceMarketing design system, includes subtle interaction motion, and respects `prefers-reduced-motion`.
+
+### Dashboard health and tests
+
+`GET /api/dashboard-summary` now exposes Customer 360 readiness from real profile availability, and the dashboard navigator displays the corresponding section status.
+
+Playwright coverage now verifies:
+
+- the Customer 360 API contract;
+- the Customer 360 workspace renders;
+- search is available;
+- customer identity/timeline surfaces render when persisted profile data exists;
+- Customer 360 is included in the complete dashboard-section render sweep.
+
+### Product-parity note
+
+EasyInsights publicly describes Customer 360 and personalization/audience use cases alongside stitched journeys and first-party activation. AceMarketing implements the comparable workflow using its own product identity, UI, code and data contracts rather than bundling third-party proprietary source code or branded assets.
