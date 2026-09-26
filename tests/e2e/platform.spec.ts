@@ -80,8 +80,11 @@ test.describe('workspace critical flows',()=>{
   })
 
   test('dashboard sections collapse and remain navigable',async({page})=>{
+    const mobileToggle=page.getByRole('button',{name:'Open workspace navigation'})
+    if(await mobileToggle.isVisible().catch(()=>false)) await mobileToggle.click()
     const sidebar=page.locator('.product-sidebar')
     const activation=sidebar.locator('.product-nav-group').filter({hasText:'Activation & Integrations'}).locator('.product-nav-group-head')
+    await activation.scrollIntoViewIfNeeded()
     await expect(activation).toBeVisible()
     await activation.click()
     await expect(sidebar.getByRole('button',{name:'Audiences',exact:true})).toBeHidden()
@@ -796,8 +799,15 @@ test('behavior workspace analyzes persisted source campaign and device evidence'
     expect(response.ok()).toBeTruthy()
   }
 
+  const evidenceResponse=await page.request.get('/api/behavior')
+  expect(evidenceResponse.ok()).toBeTruthy()
+  const evidence=await evidenceResponse.json()
+  expect((evidence.sources||[]).some((x:any)=>x.name===source)).toBeTruthy()
+  expect((evidence.campaigns||[]).some((x:any)=>x.name===campaign)).toBeTruthy()
+
   await openWorkspaceTab(page,'Behavior')
   await expect(page.getByRole('heading',{name:'Website & app behavior'})).toBeVisible()
+  await page.getByRole('button',{name:'Refresh',exact:true}).click()
   await expect(page.getByText('Persisted workspace event window',{exact:true})).toBeVisible()
 
   const behaviorTabs=page.locator('.behavior-tabs')
