@@ -108,6 +108,90 @@ const deliverGoogle=async(workspaceId,signal)=>{
   return {provider:'google',...result}
 }
 
+const tiktokEventName=event=>{
+  const raw=String(event||'').trim().toLowerCase().replace(/[.\s-]+/g,'_')
+  const mapped={
+    page_view:'PageView',
+    page_viewed:'PageView',
+    view_content:'ViewContent',
+    contents_viewed:'ViewContent',
+    lead_created:'SubmitForm',
+    lead_qualified:'SubmitForm',
+    qualified_lead:'SubmitForm',
+    registration_completed:'CompleteRegistration',
+    signup:'CompleteRegistration',
+    consultation_booked:'Contact',
+    meeting_scheduled:'Contact',
+    checkout_started:'InitiateCheckout',
+    checkout_initiated:'InitiateCheckout',
+    items_added:'AddToCart',
+    add_to_cart:'AddToCart',
+    purchase:'CompletePayment',
+    order_created:'CompletePayment',
+    revenue_closed:'CompletePayment',
+    customer_enrolled:'CompletePayment',
+    subscription_created:'Subscribe',
+    trial_started:'StartTrial'
+  }[raw]
+  return mapped||String(event||'CustomEvent').replace(/[^A-Za-z0-9_]/g,'_').slice(0,100)||'CustomEvent'
+}
+
+const deliverTikTok=async(_workspaceId,signal)=>{
+  const pixelId=String(signal.tiktokPixelId||signal.data?.tiktokPixelId||process.env.TIKTOK_PIXEL_ID||'').trim()
+  const token=String(signal.tiktokEventsToken||signal.data?.tiktokEventsToken||process.env.TIKTOK_EVENTS_TOKEN||'').trim()
+  if(!pixelId||!token) throw new Error('TIKTOK_PIXEL_ID and TIKTOK_EVENTS_TOKEN are required')
+  const occurred=new Date(signal.occurredAt||Date.now())
+  const eventTime=Math.floor((Number.isNaN(occurred.getTime())?Date.now():occurred.getTime())/1000)
+  const eventId=String(signal.externalEventId||signal.idempotencyKey||signal.deliveryId||'').trim()
+  if(!eventId) throw new Error('TikTok event_id is required for deduplication')
+  const user={}
+  const emailHash=signal.emailSha256||signal.data?.emailSha256||(signal.email?sha(signal.email):'')
+  if(emailHash) user.email=String(emailHash).toLowerCase()
+  const phoneHash=signal.phoneSha256||signal.data?.phoneSha256||(signal.phone?sha(String(signal.phone).replace(/\D/g,'')):'')
+  if(phoneHash) user.phone=String(phoneHash).toLowerCase()
+  const externalId=signal.externalId||signal.customerId||signal.data?.externalId
+  if(externalId) user.external_id=sha(String(externalId))
+  const ttclid=signal.ttclid||signal.data?.ttclid
+  if(ttclid) user.ttclid=String(ttclid)
+  const ttp=signal.ttp||signal.data?.ttp
+  if(ttp) user.ttp=String(ttp)
+  if(signal.ipAddress||signal.data?.ipAddress) user.ip=String(signal.ipAddress||signal.data.ipAddress)
+  if(signal.userAgent||signal.data?.userAgent) user.user_agent=String(signal.userAgent||signal.data.userAgent)
+  if(!Object.keys(user).length) throw new Error('TikTok event requires at least one customer or request-context identifier')
+  const properties={}
+  if(signal.value!=null) properties.value=Number(signal.value)
+  if(signal.currency) properties.currency=String(signal.currency).toUpperCase()
+  if(signal.orderId||signal.data?.orderId) properties.order_id=String(signal.orderId||signal.data.orderId)
+  if(signal.data?.contentType) properties.content_type=String(signal.data.contentType)
+  if(Array.isArray(signal.contents||signal.data?.contents)) properties.contents=(signal.contents||signal.data.contents).slice(0,100)
+  const event={
+    event:tiktokEventName(signal.tiktokEventName||signal.event),
+    event_time:eventTime,
+    event_id:eventId,
+    user,
+    ...(Object.keys(properties).length?{properties}:{})
+  }
+  if(signal.eventSourceUrl||signal.data?.referrer){
+    event.page={}
+    if(signal.eventSourceUrl) event.page.url=String(signal.eventSourceUrl)
+    if(signal.data?.referrer) event.page.referrer=String(signal.data.referrer)
+  }
+  const body={
+    event_source:String(signal.tiktokEventSource||signal.data?.tiktokEventSource||'web'),
+    event_source_id:pixelId,
+    data:[event]
+  }
+  const testCode=signal.data?.tiktokTestEventCode||process.env.TIKTOK_TEST_EVENT_CODE
+  if(testCode) body.test_event_code=String(testCode)
+  const result=await requestJson('https://business-api.tiktok.com/open_api/v1.3/event/track/',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Access-Token':token},
+    body:JSON.stringify(body)
+  })
+  if(Number(result.body?.code||0)!==0) throw new Error('TikTok Events API rejected event: '+String(result.body?.message||result.body?.code||'unknown error'))
+  return {provider:'tiktok',...result}
+}
+
 const pinterestEventName=event=>{
   const raw=String(event||'lead').trim().toLowerCase().replace(/[.\s]+/g,'_')
   const mapped={
@@ -405,6 +489,7 @@ export const deliverSignal=async(workspaceId,signal)=>{
   if(destination.includes('linkedin')) return deliverLinkedIn(workspaceId,signal)
   if(destination.includes('microsoft')||destination.includes('bing')) return deliverMicrosoft(workspaceId,signal)
   if(destination.includes('pinterest')) return deliverPinterest(workspaceId,signal)
+  if(destination.includes('tiktok')) return deliverTikTok(workspaceId,signal)
   if(destination.includes('webhook')) return deliverWebhook(signal)
   throw new Error('unsupported delivery destination: '+signal.destination)
 }
