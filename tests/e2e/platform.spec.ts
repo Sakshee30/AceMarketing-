@@ -993,6 +993,34 @@ test('integration catalog search and connector request persist', async ({ page }
 })
 
 
+
+test('native server-side ad connectors persist encrypted workspace credentials', async ({ page }, testInfo) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  await openWorkspaceTab(page,'Integrations')
+  const search=page.getByLabel('Search integration catalog')
+  await search.fill('TikTok')
+  const card=page.locator('.integration-app-grid article').filter({hasText:'TikTok Ads'}).first()
+  await expect(card).toContainText('Native server-side connector')
+  await card.getByRole('button',{name:'Configure'}).click()
+  const modal=page.locator('.server-secret-connector')
+  await expect(modal.getByText('Configure TikTok Ads',{exact:true})).toBeVisible()
+  await modal.getByLabel('Pixel / Event Source ID').fill('ci_pixel_'+testInfo.project.name.replace(/[^a-z0-9]+/gi,'_'))
+  await modal.getByLabel('Events API access token').fill('ci_tiktok_events_token_'+Date.now())
+  await modal.getByRole('button',{name:'Save & connect'}).click()
+  await expect(page.getByText('TikTok Ads credentials saved securely and connector marked connected.',{exact:true})).toBeVisible()
+  await expect(card.getByRole('button',{name:'Manage'})).toBeVisible()
+
+  const integrations=await page.request.get('/api/integrations')
+  expect(integrations.ok()).toBeTruthy()
+  const payload=await integrations.json()
+  const item=(payload.items||[]).find((x:any)=>x.name==='TikTok Ads')
+  expect(item?.status).toBe('connected')
+  expect(item?.authType).toBe('server_secret')
+  expect(JSON.stringify(payload)).not.toContain('ci_tiktok_events_token_')
+})
+
+
 test('public integration catalog search exposes expanded categories', async ({ page }) => {
   await page.goto('/#/integrations')
   await dismissConsent(page)
