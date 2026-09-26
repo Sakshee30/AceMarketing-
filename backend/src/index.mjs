@@ -1672,6 +1672,7 @@ const server = http.createServer(async (req,res)=>{
       const periodDays=allowedPeriods.has(requestedDays)?requestedDays:30
       const cutoff=Date.now()-periodDays*24*60*60*1000
       const requestedChannel=String(url.searchParams.get('channel')||'').trim()
+      const requestedAccount=String(url.searchParams.get('account')||'').trim()
       const requestedDisposition=String(url.searchParams.get('disposition')||'').trim()
       const inWindow=item=>{
         const raw=item.updated_at||item.updatedAt||item.created_at||item.createdAt||item.starts_at||item.startsAt||null
@@ -1679,9 +1680,19 @@ const server = http.createServer(async (req,res)=>{
         const time=Date.parse(raw)
         return Number.isNaN(time)||time>=cutoff
       }
+      const accountFor=lead=>String(
+        lead.attributes?.adAccountName||
+        lead.attributes?.adAccount||
+        lead.attributes?.accountName||
+        lead.attributes?.account||
+        'Default / Unknown'
+      )
       const periodProfiles=allProfiles.filter(inWindow)
       const channels=[...new Set(periodProfiles.map(lead=>String(lead.source||'First-party')))].sort((a,b)=>a.localeCompare(b))
-      const profiles=requestedChannel?periodProfiles.filter(lead=>String(lead.source||'First-party')===requestedChannel):periodProfiles
+      const accounts=[...new Set(periodProfiles.map(accountFor))].sort((a,b)=>a.localeCompare(b))
+      let profiles=periodProfiles
+      if(requestedChannel)profiles=profiles.filter(lead=>String(lead.source||'First-party')===requestedChannel)
+      if(requestedAccount)profiles=profiles.filter(lead=>accountFor(lead)===requestedAccount)
       const qualifiedStages=new Set(['qualified','consultation','opportunity','converted','enrolled','closed_won','customer'])
       const consultationStages=new Set(['consultation','opportunity','converted','enrolled','closed_won','customer'])
       const bookingStages=new Set(['converted','enrolled','closed_won','customer'])
@@ -1695,8 +1706,11 @@ const server = http.createServer(async (req,res)=>{
       const campaigns=new Map()
       const ensure=lead=>{
         const name=String(lead.campaign||lead.source||'Unattributed')
-        const row=campaigns.get(name)||{name,channel:String(lead.source||'First-party'),leads:0,qualified:0,appointments:0,consultations:0,bookings:0}
-        campaigns.set(name,row)
+        const account=accountFor(lead)
+        const channel=String(lead.source||'First-party')
+        const key=channel+'::'+account+'::'+name
+        const row=campaigns.get(key)||{key,name,account,channel,leads:0,qualified:0,appointments:0,consultations:0,bookings:0}
+        campaigns.set(key,row)
         return row
       }
       for(const lead of profiles){
@@ -1711,13 +1725,22 @@ const server = http.createServer(async (req,res)=>{
         const lead=profileByLead.get(String(meeting.lead_ref||''))
         if(lead)ensure(lead).appointments++
       }
+      const rate=(part,total)=>total?Number((Number(part||0)/Number(total)*100).toFixed(1)):0
+      const enrichRates=row=>({
+        ...row,
+        leadToQualifiedRate:rate(row.qualified,row.leads),
+        qualifiedToAppointmentRate:rate(row.appointments,row.qualified),
+        appointmentToConsultationRate:rate(row.consultations,row.appointments),
+        consultationToBookingRate:rate(row.bookings,row.consultations),
+        leadToBookingRate:rate(row.bookings,row.leads)
+      })
       const dispositionKey={
         Qualified:'qualified',
         Appointments:'appointments',
         Consultations:'consultations',
         Bookings:'bookings'
       }[requestedDisposition]||''
-      let campaignRows=[...campaigns.values()].sort((a,b)=>b.leads-a.leads)
+      let campaignRows=[...campaigns.values()].map(enrichRates).sort((a,b)=>b.leads-a.leads||b.bookings-a.bookings)
       if(dispositionKey)campaignRows=campaignRows.filter(row=>Number(row[dispositionKey]||0)>0)
       const stages={
         leads:profiles.length,
@@ -1726,15 +1749,25 @@ const server = http.createServer(async (req,res)=>{
         consultations:profiles.filter(lead=>consultationStages.has(String(lead.crm_stage||'').toLowerCase())).length,
         bookings:profiles.filter(lead=>bookingStages.has(String(lead.crm_stage||'').toLowerCase())).length
       }
+      const stageRates={
+        leadToQualified:rate(stages.qualified,stages.leads),
+        qualifiedToAppointment:rate(stages.appointments,stages.qualified),
+        appointmentToConsultation:rate(stages.consultations,stages.appointments),
+        consultationToBooking:rate(stages.bookings,stages.consultations),
+        leadToBooking:rate(stages.bookings,stages.leads)
+      }
       return send(req,res,200,{
         available:true,
         stages,
+        stageRates,
         campaigns:campaignRows,
         filters:{
           channel:requestedChannel||'All channels',
+          account:requestedAccount||'All accounts',
           disposition:requestedDisposition||'All dispositions',
           periodDays,
-          channels
+          channels,
+          accounts
         },
         generatedAt:new Date().toISOString()
       })
