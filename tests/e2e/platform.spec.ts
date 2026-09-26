@@ -887,3 +887,33 @@ test('lead grading activation creates a persisted downstream operation', async (
   await expect(page.getByRole('heading',{name:'Lead routing'})).toBeVisible()
   await expect(page.getByText('Priority sales queue',{exact:true}).first()).toBeVisible()
 })
+
+
+test('feedback insight routing creates a recovery follow-up task', async ({ page }, testInfo) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()+'_'+Date.now()
+  const lead='ci_feedback_'+suffix
+
+  const recorded=await page.request.post('/api/feedback',{data:{
+    lead,
+    score:2,
+    channel:'Post-call',
+    theme:'Pricing objection',
+    response:'Pricing felt too high for the current package.'
+  }})
+  expect(recorded.ok()).toBeTruthy()
+
+  await openWorkspaceTab(page,'Feedback')
+  await expect(page.getByRole('heading',{name:'Feedback agent'})).toBeVisible()
+  const card=page.locator('.feedback-grid article').filter({hasText:lead}).first()
+  await expect(card).toBeVisible()
+  await card.getByRole('button',{name:'Route insight',exact:true}).click()
+
+  await expect(page.getByText('Feedback routed into a persisted follow-up task.',{exact:true})).toBeVisible()
+  const result=page.locator('.feedback-route-result')
+  await expect(result).toContainText('Customer recovery')
+  await result.getByRole('button',{name:/Open Follow-ups/}).click()
+  await expect(page.getByRole('heading',{name:'Follow-up operations'})).toBeVisible()
+  await expect(page.getByText(lead,{exact:true}).first()).toBeVisible()
+})
