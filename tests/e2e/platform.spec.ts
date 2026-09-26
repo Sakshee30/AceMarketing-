@@ -143,6 +143,44 @@ test.describe('workspace critical flows',()=>{
     }
   })
 
+  test('real-time activation persists rules and executes on matching consented events',async({page},testInfo)=>{
+    const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()
+    const customerId='activation_customer_'+suffix
+    const eventName='activation_checkout_'+suffix
+
+    const consent=await page.request.post('/api/consent',{data:{subjectType:'customer',subjectId:customerId,essential:true,analytics:true,marketing:true,personalization:true,source:'ci'}})
+    expect(consent.ok()).toBeTruthy()
+
+    const created=await page.request.post('/api/activation-rules',{data:{
+      name:'CI high-value activation '+suffix,
+      triggerEvent:eventName,
+      conditions:[{field:'value',operator:'greater_than',value:'4000'}],
+      actionType:'signal',
+      destination:'Meta Ads',
+      outputEvent:'ci_high_value_checkout',
+      reason:'CI activation verification',
+      requiresMarketingConsent:true
+    }})
+    expect(created.ok()).toBeTruthy()
+    const createdPayload=await created.json()
+    expect(createdPayload.item?.id).toBeTruthy()
+
+    const tracked=await page.request.post('/api/track',{data:{event:eventName,eventCategory:'marketing',customerId,value:5000,currency:'INR',source:'ci'}})
+    expect(tracked.ok()).toBeTruthy()
+    const trackedPayload=await tracked.json()
+    expect(Array.isArray(trackedPayload.activationRuns)).toBeTruthy()
+    expect(trackedPayload.activationRuns.some((x:any)=>x.ruleId===createdPayload.item.id&&x.status==='succeeded')).toBeTruthy()
+
+    const rules=await page.request.get('/api/activation-rules')
+    expect(rules.ok()).toBeTruthy()
+    const rulesPayload=await rules.json()
+    expect(rulesPayload.runs.some((x:any)=>x.ruleId===createdPayload.item.id)).toBeTruthy()
+
+    await openWorkspaceTab(page,'Real-Time Activation')
+    await expect(page.getByRole('heading',{name:'Real-time activation'})).toBeVisible()
+    await expect(page.getByText('CI high-value activation '+suffix,{exact:true})).toBeVisible()
+  })
+
   test('data flows persist recipes and enforce readiness before activation',async({page})=>{
     await openWorkspaceTab(page,'Data Flows')
     await expect(page.locator('.product-body h1')).toContainText(/Data flows/i)
@@ -712,7 +750,7 @@ test('all workspace sections render without a frontend crash', async ({ page }) 
     'Launchpad','Overview','AdSync','Funnel','Events','Adjustments','Diagnostics','Fraud','Deep Links','Sites','Fingerprinting',
     'Live Sync','Data Hub','Customer 360','Offline Attribution','Matchback','POS & Stores','Journeys','Identity','Models','Attribution','Planner','Reports',
     'Enrich','Lead Grading','Behavior','Feed','Agents','Routing','Follow-ups','Calls','Meetings','Feedback','Approvals','Ask Ace',
-    'Integrations','Data Flows','Audiences','Delivery','Monitoring','Alerts','Developers','Settings'
+    'Integrations','Data Flows','Real-Time Activation','Audiences','Delivery','Monitoring','Alerts','Developers','Settings'
   ]
 
   for(const tab of tabs){
