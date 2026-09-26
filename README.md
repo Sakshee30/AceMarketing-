@@ -3861,3 +3861,23 @@ Implemented:
 - Playwright coverage creates persisted C- and D-grade leads, opens the Low-quality Lead suppression preset, verifies multi-value matching, materializes the audience and confirms the Suppress segment appears in the dashboard.
 
 This closes the gap between audience analytics and audience activation: the lifecycle/waste-control cards now execute the workflows they describe.
+
+
+## Persisted behavior intelligence pass
+
+The Behavior workspace now analyzes persisted first-party tracking evidence instead of relying only on a flat in-memory event counter.
+
+Implemented:
+- consented `/api/track` events are additionally persisted into the workspace state with a 5,000-event bounded window;
+- raw email and phone values are removed before persistence, while existing or derived SHA-256 contact identifiers are retained;
+- behavior analytics now expose event, source, campaign and device distributions;
+- known-identity rate includes customer, visitor, device and hashed-contact evidence;
+- high-intent and device-identity rates are calculated from the persisted stream;
+- Behavior dashboard tabs for Events, Sources, Campaigns and Devices;
+- ranked contribution rows with recent matching evidence;
+- latest first-party sequence now includes source/campaign/device context;
+- the UI identifies whether it is reading the persisted workspace store or a process-only fallback window;
+- responsive analysis layout, transitions and reduced-motion support;
+- Playwright coverage sends real consent-safe first-party events and verifies source, campaign, device and event analysis in the dashboard.
+
+This makes website/app behavior useful as journey and activation evidence across server restarts while keeping raw contact PII out of the persisted behavior record.
