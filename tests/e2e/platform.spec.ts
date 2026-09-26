@@ -11,7 +11,15 @@ const dismissConsent=async(page:any)=>{
 }
 
 const openWorkspaceTab=async(page:any,name:string)=>{
-  await page.evaluate((tab)=>window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:tab})),name)
+  const toggle=page.getByRole('button',{name:'Open workspace navigation'})
+  if(await toggle.isVisible().catch(()=>false)) await toggle.click()
+  const sidebar=page.locator('.product-sidebar')
+  await expect(sidebar).toBeVisible()
+  const filter=sidebar.getByPlaceholder('Find feature...')
+  await filter.fill(name)
+  const target=sidebar.locator('.product-nav-group-items').getByRole('button',{name,exact:true})
+  await expect(target).toBeVisible()
+  await target.click()
   await expect(page.locator('.product-body')).toBeVisible()
 }
 
@@ -486,8 +494,9 @@ test('feed enhancement persists destination mappings and previews payload', asyn
   await expect(page.getByText('ci_customer_tier', { exact: true }).first()).toBeVisible()
   await page.getByRole('button', { name: 'New mapping' }).click()
   await page.getByLabel('Source attribute').selectOption('ci_customer_tier')
-  await page.getByLabel('Destination').selectOption('Meta Ads')
-  await page.getByLabel('Destination field').fill('customer_tier')
+  const mappingForm=page.locator('.connector-card')
+  await mappingForm.locator('select[name="destination"]').selectOption('Meta Ads')
+  await mappingForm.getByLabel('Destination field').fill('customer_tier')
   await page.locator('.connector-card').getByRole('button', { name: 'Save feed mapping' }).click()
   await expect(page.getByText(/Meta Ads · customer_tier/)).toBeVisible()
   await page.getByRole('button', { name: 'Preview' }).click()
