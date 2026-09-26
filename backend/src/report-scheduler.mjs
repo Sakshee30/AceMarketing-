@@ -49,24 +49,28 @@ export const listReportSchedules=async workspaceId=>{
 export const saveReportSchedule=async(workspaceId,input={},createdBy=null)=>{
   if(!pool)throw new Error('report scheduler unavailable')
   const id=String(input.id||'rep_'+randomUUID())
-  const name=String(input.name||'Cohort Performance').trim().slice(0,160)
+  const reportType=['cohort','executive_brief'].includes(String(input.reportType||input.report_type))?String(input.reportType||input.report_type):'cohort'
+  const name=String(input.name||(reportType==='executive_brief'?'Executive Growth Brief':'Cohort Performance')).trim().slice(0,160)
   const cadence=['daily','weekly','monthly'].includes(String(input.cadence))?String(input.cadence):'weekly'
   const recipients=cleanRecipients(input.recipients)
   const enabled=input.enabled!==false
   const lookback=Math.max(1,Math.min(36,Number(input.lookbackMonths)||6))
+  const allowedMetrics=['acquired','qualifiedRate','consultationRate','conversionRate','revenue','revenuePerAcquired','topSource','topSourceConversionRate']
+  const metrics=[...new Set((Array.isArray(input.metrics)?input.metrics:String(input.metrics||'').split(',')).map(x=>String(x).trim()).filter(x=>allowedMetrics.includes(x)))].slice(0,8)
+  const config=reportType==='executive_brief'?{metrics:metrics.length?metrics:['acquired','conversionRate','revenue','revenuePerAcquired','topSource'],title:String(input.title||name).trim().slice(0,160),note:String(input.note||'').trim().slice(0,500)}:{}
   const {rows}=await pool.query(
     `INSERT INTO ace_report_schedules
-      (id,workspace_id,name,report_type,recipients,cadence,enabled,lookback_months,next_run_at,last_status,created_by)
-     VALUES ($1,$2,$3,'cohort',$4::text[],$5,$6,$7,now(),$8,$9)
+      (id,workspace_id,name,report_type,recipients,cadence,enabled,lookback_months,next_run_at,last_status,created_by,config)
+     VALUES ($1,$2,$3,$4,$5::text[],$6,$7,$8,now(),$9,$10,$11::jsonb)
      ON CONFLICT (id) DO UPDATE SET
-       name=EXCLUDED.name,recipients=EXCLUDED.recipients,cadence=EXCLUDED.cadence,
-       enabled=EXCLUDED.enabled,lookback_months=EXCLUDED.lookback_months,
+       name=EXCLUDED.name,report_type=EXCLUDED.report_type,recipients=EXCLUDED.recipients,cadence=EXCLUDED.cadence,
+       enabled=EXCLUDED.enabled,lookback_months=EXCLUDED.lookback_months,config=EXCLUDED.config,
        next_run_at=CASE WHEN EXCLUDED.enabled THEN LEAST(ace_report_schedules.next_run_at,now()) ELSE ace_report_schedules.next_run_at END,
        last_status=CASE WHEN EXCLUDED.enabled THEN 'scheduled' ELSE 'paused' END,
        last_error=NULL,updated_at=now()
      WHERE ace_report_schedules.workspace_id=$2
      RETURNING *`,
-    [id,workspaceId,name,recipients,cadence,enabled,lookback,enabled?'scheduled':'paused',createdBy]
+    [id,workspaceId,name,reportType,recipients,cadence,enabled,lookback,enabled?'scheduled':'paused',createdBy,JSON.stringify(config)]
   )
   if(!rows[0])throw new Error('report schedule not found')
   return rows[0]
@@ -147,7 +151,30 @@ const buildCsv=data=>{
   return rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n')
 }
 
+const executiveMetric=(key,data)=>{
+  const totals=data.totals||{}
+  const top=(data.sources||[]).slice().sort((a,b)=>Number(b.revenue||0)-Number(a.revenue||0)||Number(b.conversionRate||0)-Number(a.conversionRate||0))[0]||{}
+  const map={
+    acquired:{label:'Acquired',value:Number(totals.acquired||0).toLocaleString('en-IN')},
+    qualifiedRate:{label:'Qualified rate',value:String(totals.qualifiedRate||0)+'%'},
+    consultationRate:{label:'Consultation rate',value:String(totals.consultationRate||0)+'%'},
+    conversionRate:{label:'Conversion rate',value:String(totals.conversionRate||0)+'%'},
+    revenue:{label:'Attributed revenue',value:money(totals.revenue)},
+    revenuePerAcquired:{label:'Revenue / acquired',value:money(totals.revenuePerAcquired)},
+    topSource:{label:'Top source',value:top.source||'No source evidence'},
+    topSourceConversionRate:{label:'Top source conversion',value:top.source?String(top.conversionRate||0)+'%':'—'}
+  }
+  return map[key]||null
+}
+const buildExecutiveHtml=(schedule,data)=>{
+  const config=schedule.config||{}
+  const metrics=(config.metrics||['acquired','conversionRate','revenue','revenuePerAcquired','topSource']).map(key=>executiveMetric(key,data)).filter(Boolean)
+  const cards=metrics.map(x=>`<td style="padding:14px;border:1px solid #e5e7eb;border-radius:8px"><div style="font-size:12px;color:#6b7280">${htmlEscape(x.label)}</div><div style="font-size:22px;font-weight:700;color:#173f2b;margin-top:4px">${htmlEscape(x.value)}</div></td>`).join('')
+  const topSources=(data.sources||[]).slice(0,5).map(x=>`<tr><td>${htmlEscape(x.source)}</td><td>${x.acquired}</td><td>${x.conversionRate}%</td><td>${money(x.revenue)}</td></tr>`).join('')
+  return `<!doctype html><html><body style="font-family:Arial,sans-serif;color:#111827"><h2>${htmlEscape(config.title||schedule.name)}</h2><p>Automated AceMarketing executive data snippet · ${new Date().toISOString()}</p>${config.note?`<p style="color:#4b5563">${htmlEscape(config.note)}</p>`:''}<table cellpadding="8" cellspacing="8" style="border-collapse:separate;width:100%"><tr>${cards||'<td>No metric evidence yet.</td>'}</tr></table><h3>Top acquisition sources</h3><table cellpadding="8" cellspacing="0" border="1" style="border-collapse:collapse;width:100%"><tr><th>Source</th><th>Acquired</th><th>Conversion</th><th>Attributed revenue</th></tr>${topSources||'<tr><td colspan="4">No source evidence yet.</td></tr>'}</table><p style="color:#6b7280">Generated from persisted first-party acquisition and matched downstream events. No missing spend or CAC values are inferred.</p></body></html>`
+}
 const buildHtml=(schedule,data)=>{
+  if(schedule.report_type==='executive_brief')return buildExecutiveHtml(schedule,data)
   const totals=data.totals||{}
   const rows=(data.cohorts||[]).map(x=>`<tr><td>${htmlEscape(new Date(x.month).toLocaleDateString('en-IN',{month:'short',year:'numeric'}))}</td><td>${x.acquired}</td><td>${x.qualifiedRate}%</td><td>${x.consultationRate}%</td><td>${x.conversionRate}%</td><td>${money(x.revenue)}</td></tr>`).join('')
   return `<!doctype html><html><body style="font-family:Arial,sans-serif;color:#111827"><h2>${htmlEscape(schedule.name)}</h2><p>Automated AceMarketing cohort report · ${new Date().toISOString()}</p><table cellpadding="8" cellspacing="0" border="1" style="border-collapse:collapse"><tr><th>Acquired</th><th>Conversions</th><th>Conversion rate</th><th>Attributed revenue</th><th>Revenue/acquired</th></tr><tr><td>${totals.acquired||0}</td><td>${totals.conversions||0}</td><td>${totals.conversionRate||0}%</td><td>${money(totals.revenue)}</td><td>${money(totals.revenuePerAcquired)}</td></tr></table><h3>Cohorts</h3><table cellpadding="8" cellspacing="0" border="1" style="border-collapse:collapse"><tr><th>Month</th><th>Acquired</th><th>Qualified</th><th>Consultation</th><th>Conversion</th><th>Revenue</th></tr>${rows||'<tr><td colspan="6">No matched cohort data yet.</td></tr>'}</table><p style="color:#6b7280">Generated from persisted first-party acquisition and matched downstream events.</p></body></html>`
@@ -162,17 +189,18 @@ export const deliverReport=async(workspaceId,{scheduleId,deliveryId,attempts=1}=
   await pool.query(`UPDATE ace_report_deliveries SET status='sending',attempts=$3,updated_at=now() WHERE workspace_id=$1 AND id=$2`,[workspaceId,deliveryId,attempts])
   const snapshot=await cohortAnalytics(workspaceId,{months:schedule.lookback_months})
   const csv=buildCsv(snapshot)
-  const info=await transport().sendMail({
+  const mail={
     from:process.env.SMTP_FROM,
     to:schedule.recipients.join(','),
     subject:`${schedule.name} · AceMarketing`,
     html:buildHtml(schedule,snapshot),
-    attachments:[{filename:'cohort-report.csv',content:csv,contentType:'text/csv'}]
-  })
+    ...(schedule.report_type==='cohort'?{attachments:[{filename:'cohort-report.csv',content:csv,contentType:'text/csv'}]}:{})
+  }
+  const info=await transport().sendMail(mail)
   await pool.query(
     `UPDATE ace_report_deliveries SET status='sent',snapshot=$3::jsonb,provider_message_id=$4,attempts=$5,last_error=NULL,sent_at=now(),updated_at=now()
      WHERE workspace_id=$1 AND id=$2`,
-    [workspaceId,deliveryId,JSON.stringify({totals:snapshot.totals,lookbackMonths:snapshot.lookbackMonths,generatedAt:snapshot.generatedAt}),String(info.messageId||''),attempts]
+    [workspaceId,deliveryId,JSON.stringify({reportType:schedule.report_type,config:schedule.config||{},totals:snapshot.totals,topSources:(snapshot.sources||[]).slice(0,5),lookbackMonths:snapshot.lookbackMonths,generatedAt:snapshot.generatedAt}),String(info.messageId||''),attempts]
   )
   await pool.query(`UPDATE ace_report_schedules SET last_status='sent',last_error=NULL,updated_at=now() WHERE workspace_id=$1 AND id=$2`,[workspaceId,scheduleId])
   return {messageId:info.messageId||null,recipients:schedule.recipients,count:schedule.recipients.length}
