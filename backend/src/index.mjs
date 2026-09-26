@@ -161,7 +161,7 @@ const integrations = [
   'Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads / Bing Ads','X','Pinterest','TikTok Ads','Yahoo Ads','Taboola','Spotify Ads','Snapchat Ads','Criteo','DV360','Google Merchant Center','Meta Lead Ads','Meta CAPI','Meta Catalog','GA4','Google Calendar',
   'Apollo','Lusha','Calixa'
 ]
-const agents = ['Meta Advanced CAPI','Google ECL / OCI','Call Tracking Events','Custom Integration','Lead Grading','CRM Enrichment','Voice Lead Qualification','Voice Scheduler','Meeting Reminder','Feedback Agent','Lead Reactivation','Ask Ace']
+const agents = ['Meta Advanced CAPI','Google ECL / OCI','Call Tracking Events','Custom Integration','Lead Grading','CRM Enrichment','Voice Lead Qualification','Voice Scheduler','Meeting Reminder','Feedback Agent','Lead Reactivation','Attribution Agent','Deep Linking Agent','Fraud Detection Agent','Customer Journey Agent','Audiences Agent','Event Agent','Ask Ace']
 const agentCatalog={
   'Meta Advanced CAPI':{category:'Lead Quality · Signal Return',description:'Send deduplicated server-side business outcomes to Meta Ads.',operationTab:'Delivery',action:'Operate Meta signal delivery',prerequisites:['Meta Ads connection','First-party identity','Business event']},
   'Google ECL / OCI':{category:'Lead Quality · Signal Return',description:'Return enhanced and offline conversion outcomes to Google Ads.',operationTab:'AdSync',action:'Operate Google conversion signals',prerequisites:['Google Ads connection','GCLID/GBRAID/WBRAID or hashed identity','Conversion action']},
@@ -174,6 +174,12 @@ const agentCatalog={
   'Meeting Reminder':{category:'Conversion · Handoff',description:'Send provider-backed reminders and persist reminder execution state.',operationTab:'Meetings',action:'Open reminders',prerequisites:['Scheduled meeting','Reminder provider']},
   'Feedback Agent':{category:'Conversion · Handoff',description:'Collect post-interaction feedback and surface objection themes.',operationTab:'Feedback',action:'Open feedback operations',prerequisites:['Customer interaction','Feedback provider or manual record']},
   'Lead Reactivation':{category:'Conversion · Recovery',description:'Detect renewed high-intent behavior from dormant leads and turn it into governed re-engagement work.',operationTab:'Follow-ups',action:'Open reactivation queue',prerequisites:['Persisted lead activity','Recent first-party intent event']},
+  'Attribution Agent':{category:'Visibility & Attribution',description:'Inspect persisted first-touch, last-touch and assisted conversion evidence across stitched journeys.',operationTab:'Attribution',action:'Open attribution',prerequisites:['Tracked acquisition touch','Assisted conversion evidence']},
+  'Deep Linking Agent':{category:'Tracking & Journey',description:'Create and operate governed deep-link routes with fallback destinations and activation evidence.',operationTab:'Deep Links',action:'Open deep links',prerequisites:['Destination route','Web fallback']},
+  'Fraud Detection Agent':{category:'Tracking & Quality',description:'Surface suspicious identity and traffic patterns for review or blocking without silently discarding evidence.',operationTab:'Fraud',action:'Open fraud detection',prerequisites:['Tracked events','Identity or traffic evidence']},
+  'Customer Journey Agent':{category:'Visibility & Attribution',description:'Explore stitched chronology across acquisition, CRM, calls, meetings, follow-ups and revenue outcomes.',operationTab:'Journeys',action:'Open customer journeys',prerequisites:['Persisted lead or customer identity','Journey events']},
+  'Audiences Agent':{category:'Activation',description:'Build, materialize, suppress and sync first-party audiences from governed profile and behavioral evidence.',operationTab:'Audiences',action:'Open audience management',prerequisites:['Lead profiles','Consent-aware destination']},
+  'Event Agent':{category:'Tracking & Activation',description:'Define safe business-event transformations and activate approved derived signals to destinations.',operationTab:'Events',action:'Open event manager',prerequisites:['Source event','Business condition']},
   'Ask Ace':{category:'Visibility & Attribution',description:'Query stitched journey, attribution, lead quality, audience and signal evidence in natural language.',operationTab:'Ask Ace',action:'Ask workspace questions',prerequisites:['Workspace evidence']}
 }
 const trackedEventsByWorkspace = new Map()
@@ -2457,6 +2463,12 @@ const server = http.createServer(async (req,res)=>{
         else if(name==='Meeting Reminder'&&process.env.MEETING_REMINDER_WEBHOOK_URL)status='configured'
         else if(name==='Feedback Agent'&&process.env.FEEDBACK_WEBHOOK_URL)status='configured'
         else if(name==='Lead Reactivation'&&hasProfiles)status='configured'
+        else if(name==='Attribution Agent'&&hasProfiles)status='configured'
+        else if(name==='Deep Linking Agent'&&(state.deepLinks||[]).length)status='configured'
+        else if(name==='Fraud Detection Agent'&&(state.fraudPatterns||[]).length)status='configured'
+        else if(name==='Customer Journey Agent'&&hasProfiles)status='configured'
+        else if(name==='Audiences Agent'&&(state.audiences||[]).length)status='configured'
+        else if(name==='Event Agent'&&hasProfiles)status='configured'
         else if(name==='Ask Ace')status='available'
         const meta=agentCatalog[name]||{}
         return {id:'builtin_'+i,name,status,type:'built_in',...meta}
