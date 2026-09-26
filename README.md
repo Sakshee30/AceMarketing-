@@ -4614,3 +4614,89 @@ Playwright now verifies:
 ### Product-parity note
 
 EasyInsights publicly describes first-party audience segmentation, returning-user recognition, real-time activation, personalized marketing, behavioral segmentation and category-based recommendation events. AceMarketing implements the comparable decisioning workflow using its own UI, code, Customer 360 contracts and consent architecture rather than third-party proprietary source code or branded assets.
+
+
+## Audience suppression and exclusions implementation
+
+This pass adds a dedicated **Exclusions** workspace on `main` for first-party suppression audiences.
+
+### Backend contracts
+
+New endpoints:
+
+- `GET /api/exclusions`
+- `POST /api/exclusions/create`
+
+The exclusions API uses the existing audience store and materialization pipeline rather than creating a separate audience system.
+
+Built-in first-party presets:
+
+1. **Converted customers**  
+   Uses CRM stages `converted`, `enrolled`, `closed_won`, and `customer`.
+
+2. **Low-quality leads**  
+   Uses Lead Grades `C` and `D`.
+
+3. **Known device IDs**  
+   Uses profiles where a first-party device ID is present and materializes a device-identity audience.
+
+Each preset is previewed against live workspace profiles before an exclusion is created.
+
+### Suppression workflow
+
+The workflow is:
+
+**Profile evidence → Preview eligible identities → Create suppression audience → Materialize → Sync to Meta/Google → Use as acquisition exclusion**
+
+Created exclusion audiences use `mode: Suppress` and reuse the existing:
+
+- audience materialization store;
+- deterministic identity logic;
+- Meta/Google audience sync queue;
+- provider-state tracking;
+- activation-run history.
+
+The create endpoint also detects an existing matching exclusion audience for the same name and destination and returns it as a duplicate instead of silently creating another segment.
+
+### Frontend workspace
+
+New dashboard section:
+
+**Activation & Integrations → Exclusions**
+
+Operators can:
+
+- inspect live counts for converted profiles, low-quality leads and known devices;
+- preview the estimated size of each recommended exclusion;
+- create a Meta Ads exclusion;
+- create a Google Ads exclusion;
+- see existing materialized suppression audiences;
+- inspect identity mode and provider destination;
+- queue an exclusion sync through the existing audience pipeline.
+
+The UI is responsive, animated, and respects reduced-motion preferences.
+
+### Dashboard integration
+
+Exclusions is included in:
+
+- the main workspace sidebar;
+- the global dashboard navigator;
+- dashboard section health;
+- the full workspace render regression sweep.
+
+Dashboard health uses the real materialized suppressed-identity count and eligible converted/device evidence.
+
+### Regression coverage
+
+Playwright now verifies:
+
+- `GET /api/exclusions`;
+- converted-customer, low-quality-lead and known-device presets;
+- the Exclusions workspace renders;
+- the materialized-exclusions area is available;
+- Exclusions is part of the complete workspace render sweep.
+
+### Product-parity note
+
+EasyInsights publicly describes dynamic audience creation/suppression and a device-ID exclusion workflow that uploads known first-party devices to Meta and Google so existing customers are not repeatedly targeted. AceMarketing implements the comparable suppression workflow using its own UI, audience contracts and provider queue rather than third-party proprietary source code or branded assets.
