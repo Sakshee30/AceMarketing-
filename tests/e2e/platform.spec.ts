@@ -628,10 +628,28 @@ test.describe('privacy consent runtime',()=>{
   })
 
   test('essential-only choice keeps marketing click IDs out of storage',async({page})=>{
-    await page.goto('/?gclid=test-gclid&fbclid=test-fbclid#/')
+    await page.goto('/?gclid=test-gclid&gbraid=test-gbraid&wbraid=test-wbraid&fbclid=test-fbclid&msclkid=test-msclkid&ttclid=test-ttclid#/')
     await page.getByRole('dialog',{name:'Privacy choices'}).getByRole('button',{name:'Essential only'}).click()
-    const stored=await page.evaluate(()=>({gclid:localStorage.getItem('ace:gclid'),fbclid:localStorage.getItem('ace:fbclid')}))
-    expect(stored).toEqual({gclid:null,fbclid:null})
+    const stored=await page.evaluate(()=>Object.fromEntries(['gclid','gbraid','wbraid','fbclid','msclkid','ttclid'].map(key=>[key,localStorage.getItem('ace:'+key)])))
+    expect(stored).toEqual({gclid:null,gbraid:null,wbraid:null,fbclid:null,msclkid:null,ttclid:null})
+  })
+
+  test('marketing consent persists cross-platform click IDs and TikTok attribution evidence',async({page})=>{
+    const suffix=Date.now()
+    const ttclid='ci-ttclid-'+suffix
+    await page.goto('/?gclid=ci-gclid-'+suffix+'&gbraid=ci-gbraid-'+suffix+'&wbraid=ci-wbraid-'+suffix+'&fbclid=ci-fbclid-'+suffix+'&msclkid=ci-msclkid-'+suffix+'&ttclid='+ttclid+'#/')
+    await page.getByRole('dialog',{name:'Privacy choices'}).getByRole('button',{name:'Allow all'}).click()
+    const stored=await page.evaluate(()=>Object.fromEntries(['gclid','gbraid','wbraid','fbclid','msclkid','ttclid'].map(key=>[key,localStorage.getItem('ace:'+key)])))
+    expect(stored.ttclid).toBe(ttclid)
+    expect(stored.msclkid).toContain('ci-msclkid-')
+    expect(stored.gbraid).toContain('ci-gbraid-')
+
+    const tracked=await page.request.post('/api/track',{data:{event:'ci_tiktok_click_capture',eventCategory:'essential',visitorId:'ci_tiktok_visitor_'+suffix,ttclid,utm_source:'TikTok Ads',occurredAt:new Date().toISOString()}})
+    expect(tracked.ok()).toBeTruthy()
+    const attribution=await page.request.get('/api/attribution')
+    expect(attribution.ok()).toBeTruthy()
+    const payload=await attribution.json()
+    expect(Number(payload.clickIdCoverage?.tiktok||0)).toBeGreaterThan(0)
   })
 })
 
