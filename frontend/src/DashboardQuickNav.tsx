@@ -103,6 +103,7 @@ export default function DashboardQuickNav(){
   const [open,setOpen]=useState(false)
   const [compact,setCompact]=useState(()=>typeof window!=='undefined'&&window.localStorage.getItem('ace_quick_nav_compact')==='true')
   const [query,setQuery]=useState('')
+  const [statusFilter,setStatusFilter]=useState<'all'|'live'|'attention'|'setup'>('all')
   const [summary,setSummary]=useState<any>(null)
   const [statusError,setStatusError]=useState('')
   const [statusLoading,setStatusLoading]=useState(false)
@@ -113,7 +114,7 @@ export default function DashboardQuickNav(){
     const sync=()=>{
       const inWorkspace=window.location.hash.startsWith('#/workspace')
       setVisible(inWorkspace)
-      if(!inWorkspace){setOpen(false);setQuery('')}
+      if(!inWorkspace){setOpen(false);setQuery('');setStatusFilter('all')}
     }
     window.addEventListener('hashchange',sync)
     return()=>window.removeEventListener('hashchange',sync)
@@ -174,23 +175,31 @@ export default function DashboardQuickNav(){
     }
   },[visible])
 
+  const sections=summary?.sections||{}
   const filtered=useMemo(()=>{
     const q=query.trim().toLowerCase()
-    if(!q)return groups
     return groups.map(group=>({
       ...group,
-      items:group.items.filter(item=>
-        item.label.toLowerCase().includes(q)||
-        item.tab.toLowerCase().includes(q)||
-        item.description.toLowerCase().includes(q)||
-        group.label.toLowerCase().includes(q)
-      )
+      items:group.items.filter(item=>{
+        const matchesQuery=!q||
+          item.label.toLowerCase().includes(q)||
+          item.tab.toLowerCase().includes(q)||
+          item.description.toLowerCase().includes(q)||
+          group.label.toLowerCase().includes(q)
+        const state=String(sections[item.tab]?.state||'setup')
+        const matchesState=statusFilter==='all'||state===statusFilter
+        return matchesQuery&&matchesState
+      })
     })).filter(group=>group.items.length)
-  },[query])
+  },[query,statusFilter,summary])
 
   const resultCount=filtered.reduce((sum,group)=>sum+group.items.length,0)
   const totals=summary?.totals||{}
-  const sections=summary?.sections||{}
+  const statusCounts=groups.flatMap(group=>group.items).reduce((acc,item)=>{
+    const state=String(sections[item.tab]?.state||'setup') as 'live'|'attention'|'setup'
+    acc[state]=(acc[state]||0)+1
+    return acc
+  },{live:0,attention:0,setup:0} as Record<'live'|'attention'|'setup',number>)
 
   const jump=(tab:string)=>{
     window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:tab}))
@@ -229,6 +238,12 @@ export default function DashboardQuickNav(){
         <Search/>
         <input ref={searchRef} value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search attribution, calls, audiences, settings..." aria-label="Search dashboard sections"/>
         <span>{resultCount} {resultCount===1?'result':'results'}</span>
+      </div>
+      <div className="ace-quick-nav-filters" aria-label="Filter dashboard sections by live status">
+        <button className={statusFilter==='all'?'active':''} onClick={()=>setStatusFilter('all')}>All <b>{groups.reduce((sum,group)=>sum+group.items.length,0)}</b></button>
+        <button className={statusFilter==='live'?'active live':''} onClick={()=>setStatusFilter('live')}>Live <b>{statusCounts.live}</b></button>
+        <button className={statusFilter==='attention'?'active attention':''} onClick={()=>setStatusFilter('attention')}>Needs attention <b>{statusCounts.attention}</b></button>
+        <button className={statusFilter==='setup'?'active setup':''} onClick={()=>setStatusFilter('setup')}>Setup <b>{statusCounts.setup}</b></button>
       </div>
       <div className="ace-quick-nav-groups">
         {filtered.map(group=><section key={group.label}>
