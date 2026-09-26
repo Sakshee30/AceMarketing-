@@ -1160,14 +1160,19 @@ const server = http.createServer(async (req,res)=>{
       if(!question) return send(req,res,400,{error:'question required'})
       if(question.length>500) return send(req,res,400,{error:'question too long'})
       const q=question.toLowerCase()
-      const [attribution,leadStats,leads,activationRuns,audiences,monitoring,state]=await Promise.all([
+      const [attribution,leadStats,leads,activationRuns,audiences,monitoring,state,routingDecisions,agentRuns,meetings,feedbackResult,followUps]=await Promise.all([
         attributionStats(workspaceId).catch(()=>({available:false})),
         leadOpsStats(workspaceId).catch(()=>({available:false})),
         listLeadProfiles(workspaceId,500).catch(()=>[]),
         listActivationRuns(workspaceId,200).catch(()=>[]),
         listLeadAudiences(workspaceId).catch(()=>[]),
         monitoringSnapshot(workspaceId).catch(()=>({})),
-        getState().catch(()=>({}))
+        getState().catch(()=>({})),
+        listRoutingDecisions(workspaceId,500).catch(()=>[]),
+        listAgentRuns(workspaceId,500).catch(()=>[]),
+        listPersistedMeetings(workspaceId).catch(()=>[]),
+        listPersistedFeedback(workspaceId).catch(()=>({items:[]})),
+        listPersistedFollowUps(workspaceId).catch(()=>[])
       ])
       const pct=(part,total)=>total?Number(((Number(part||0)/Number(total))*100).toFixed(1)):0
       const money=value=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(Number(value||0))
@@ -1201,12 +1206,41 @@ const server = http.createServer(async (req,res)=>{
       const suppressAudiences=audiences.filter(x=>String(x.mode||'').toLowerCase()==='suppress')
       const staleAudiences=audiences.filter(x=>x.status==='error'||x.last_sync_error)
       const evidence=(label,value,note,source)=>({label,value:String(value),note,source})
+      const normalizeRef=value=>String(value||'').trim().toLowerCase()
+      const knownLeadRefs=new Set(leads.flatMap(x=>[x.external_lead_id,x.name,x.customer_id].map(normalizeRef).filter(Boolean)))
+      const uniqueKnown=(rows,selector)=>{
+        const refs=new Set()
+        for(const row of rows||[]){
+          const ref=normalizeRef(selector(row))
+          if(ref&&(!knownLeadRefs.size||knownLeadRefs.has(ref)))refs.add(ref)
+        }
+        return refs.size
+      }
+      const voiceRuns=(agentRuns||[]).filter(x=>String(x.agent_type||'')==='voice_qualification')
+      const feedbackItems=feedbackResult?.items||[]
+      const funnelCoverage=[
+        {key:'lead',label:'Lead profiles',count:leads.length,source:'Lead operations'},
+        {key:'routing',label:'Routed leads',count:uniqueKnown(routingDecisions,x=>x.lead_ref),source:'Routing decisions'},
+        {key:'qualification',label:'Voice-qualified/attempted',count:uniqueKnown(voiceRuns,x=>x.entity_id||x.input?.lead),source:'Agent runs'},
+        {key:'meeting',label:'Meetings scheduled',count:uniqueKnown(meetings,x=>x.lead_ref),source:'Meetings'},
+        {key:'feedback',label:'Feedback captured',count:uniqueKnown(feedbackItems,x=>x.lead_ref),source:'Feedback'}
+      ].map((x,index)=>({...x,coverage:index===0?100:pct(x.count,Math.max(1,leads.length))}))
+      const weakestHandoff=funnelCoverage.slice(1).sort((a,b)=>a.coverage-b.coverage)[0]||null
       let intent='workspace_summary'
       let answer=''
       let insights=[]
       let confidence='medium'
       let followUps=[]
-      if(q.includes('campaign')||q.includes('revenue')||q.includes('roas')||q.includes('channel')){
+      if(q.includes('funnel')||q.includes('drop')||q.includes('handoff')||q.includes('step-by-step')||q.includes('step by step')||q.includes('stage coverage')){
+        intent='funnel_monitoring'
+        const total=leads.length
+        answer=total
+          ? 'The workspace has '+total+' persisted lead profiles. '+funnelCoverage.slice(1).map(x=>x.label+': '+x.count+' ('+x.coverage+'% coverage)').join(' · ')+'.'+(weakestHandoff?' The thinnest observed handoff is '+weakestHandoff.label+' at '+weakestHandoff.coverage+'% coverage.':'')
+          : 'There are no persisted lead profiles yet, so step-by-step funnel coverage cannot be measured reliably.'
+        insights=funnelCoverage.map(x=>evidence(x.label,x.count,(x.coverage||0)+'% of persisted lead profiles',x.source))
+        confidence=total?'high':'low'
+        followUps=['Which leads have not reached routing yet?','How many leads reached meetings?','Where is attribution breaking after the handoff?']
+      }else if(q.includes('campaign')||q.includes('revenue')||q.includes('roas')||q.includes('channel')){
         intent='campaign_performance'
         const matchedValue=Number(attribution.matchedValue||0)
         answer=topCampaign
