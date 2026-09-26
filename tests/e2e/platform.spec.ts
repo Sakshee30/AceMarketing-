@@ -79,6 +79,29 @@ test.describe('workspace critical flows',()=>{
     await expect(page.locator('.product-body h1')).toContainText(/Acquisition command center/i)
   })
 
+  test('dashboard navigator exposes live backend status and jumps between sections',async({page})=>{
+    const response=await page.request.get('/api/dashboard-summary')
+    expect(response.ok()).toBeTruthy()
+    const payload=await response.json()
+    expect(typeof payload.readiness).toBe('number')
+    expect(payload.totals).toBeTruthy()
+
+    const navigator=page.getByRole('button',{name:'Open dashboard section navigator'})
+    await expect(navigator).toBeVisible()
+    await navigator.click()
+    const dialog=page.getByRole('dialog',{name:'Dashboard section navigator'})
+    await expect(dialog).toBeVisible()
+    await expect(dialog.getByText('workspace readiness')).toBeVisible()
+    await expect(dialog.getByText('connected systems')).toBeVisible()
+    await expect(dialog.getByText('open alerts')).toBeVisible()
+
+    const search=dialog.getByRole('textbox',{name:'Search dashboard sections'})
+    await search.fill('attribution')
+    await expect(dialog.getByRole('button',{name:/Attribution.*Channel, campaign and revenue credit/i})).toBeVisible()
+    await dialog.getByRole('button',{name:/Attribution.*Channel, campaign and revenue credit/i}).click()
+    await expect(page.locator('.product-body h1')).toContainText(/Attribution/i)
+  })
+
   test('dashboard sections collapse and remain navigable',async({page})=>{
     const mobileToggle=page.getByRole('button',{name:'Open workspace navigation'})
     if(await mobileToggle.isVisible().catch(()=>false)) await mobileToggle.click()
