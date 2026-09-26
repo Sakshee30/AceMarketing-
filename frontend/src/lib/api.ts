@@ -292,5 +292,7 @@ export const api = {
   retryWebhook: (id: string) => request('/webhooks/retry', { method: 'POST', body: JSON.stringify({ id }) }),
   rotateWebhookSecret: () => request('/webhooks/secret/rotate', { method: 'POST', body: JSON.stringify({}) }),
   auditLog: () => request('/audit-log'),
-  createApiKey: () => request('/api-keys', { method: 'POST', body: JSON.stringify({ name: 'workspace' }) }),
+  apiKeys: () => request('/api-keys'),
+  createApiKey: (payload: {name:string}) => request('/api-keys', { method: 'POST', body: JSON.stringify(payload) }),
+  revokeApiKey: (id:string) => request('/api-keys/revoke', { method: 'POST', body: JSON.stringify({id}) }),
 }
