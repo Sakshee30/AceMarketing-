@@ -29,6 +29,7 @@ jobs:
       NODE_ENV: test
       AUTH_REQUIRED: "false"
       DEFAULT_WORKSPACE_ID: ws_default
+      RATE_LIMIT_PER_MINUTE: "20000"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
