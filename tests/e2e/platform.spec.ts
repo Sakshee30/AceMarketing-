@@ -1446,6 +1446,13 @@ test('signal-return quick starts create real pipelines and open live modules', a
   await expect(page.locator('.agent-selector').getByText('Meta Advanced CAPI · Qualified Lead',{exact:true}).first()).toBeVisible()
   await expect(page.locator('.agent-config')).toContainText('Meta Ads')
 
+  const linkedinCard=page.locator('.signal-agent-quickstarts article').filter({hasText:'LinkedIn Conversions API'}).first()
+  await expect(linkedinCard).toBeVisible()
+  await linkedinCard.getByRole('button',{name:'Install pipeline',exact:true}).click()
+  await expect(page.getByText('LinkedIn Conversions API pipeline created. Connect provider credentials before expecting external delivery.',{exact:true})).toBeVisible()
+  await expect(page.locator('.agent-selector').getByText('LinkedIn Conversions API · Qualified Lead',{exact:true}).first()).toBeVisible()
+  await expect(page.locator('.agent-config')).toContainText('LinkedIn Ads')
+
   const callCard=page.locator('.signal-agent-quickstarts article').filter({hasText:'Call Tracking Events'}).first()
   await callCard.getByRole('button',{name:'Open module',exact:true}).click()
   await expect(page.getByRole('heading',{name:'Voice qualification & call tracking'})).toBeVisible()
