@@ -108,6 +108,62 @@ const deliverGoogle=async(workspaceId,signal)=>{
   return {provider:'google',...result}
 }
 
+const microsoftEventName=event=>String(event||'conversion')
+  .trim()
+  .toLowerCase()
+  .replace(/[^a-z0-9_-]+/g,'_')
+  .replace(/^[_-]+|[_-]+$/g,'')
+  .slice(0,128)||'conversion'
+
+const deliverMicrosoft=async(_workspaceId,signal)=>{
+  const tagId=String(signal.microsoftUetTagId||signal.data?.microsoftUetTagId||process.env.MICROSOFT_UET_TAG_ID||'').trim()
+  const token=String(signal.microsoftCapiToken||signal.data?.microsoftCapiToken||process.env.MICROSOFT_CAPI_TOKEN||'').trim()
+  if(!tagId||!token) throw new Error('MICROSOFT_UET_TAG_ID and MICROSOFT_CAPI_TOKEN are required')
+  const occurred=new Date(signal.occurredAt||Date.now())
+  const eventTime=Math.floor((Number.isNaN(occurred.getTime())?Date.now():occurred.getTime())/1000)
+  if(eventTime<Math.floor(Date.now()/1000)-7*24*60*60) throw new Error('Microsoft CAPI eventTime must be within the last 7 days')
+  const eventId=String(signal.externalEventId||signal.idempotencyKey||signal.deliveryId||'').trim()
+  if(!eventId) throw new Error('Microsoft CAPI event id is required for deduplication')
+  const userData={}
+  const msclkid=signal.msclkid||signal.data?.msclkid
+  if(msclkid) userData.msclkid=String(msclkid)
+  const emailHash=signal.emailSha256||signal.data?.emailSha256||(signal.email?sha(signal.email):'')
+  if(emailHash) userData.em=String(emailHash).toLowerCase()
+  const phoneHash=signal.phoneSha256||signal.data?.phoneSha256||(signal.phone?sha(String(signal.phone).replace(/\D/g,'')):'')
+  if(phoneHash) userData.ph=String(phoneHash).toLowerCase()
+  const anonymousId=signal.anonymousId||signal.visitorId||signal.data?.anonymousId||signal.data?.visitorId
+  if(anonymousId) userData.anonymousId=String(anonymousId)
+  const externalId=signal.externalId||signal.customerId||signal.data?.externalId
+  if(externalId) userData.externalId=String(externalId)
+  if(signal.userAgent||signal.data?.userAgent) userData.clientUserAgent=String(signal.userAgent||signal.data.userAgent)
+  if(signal.ipAddress||signal.data?.ipAddress) userData.clientIpAddress=String(signal.ipAddress||signal.data.ipAddress)
+  if(signal.idfa||signal.data?.idfa) userData.idfa=String(signal.idfa||signal.data.idfa)
+  if(signal.androidAdvertisingId||signal.data?.androidAdvertisingId) userData.gaid=String(signal.androidAdvertisingId||signal.data.androidAdvertisingId)
+  if(!Object.keys(userData).some(key=>['anonymousId','externalId','em','ph','msclkid','idfa','gaid'].includes(key))) throw new Error('Microsoft CAPI requires at least one supported user identifier')
+  const customData={}
+  if(signal.value!=null) customData.value=Number(signal.value)
+  if(signal.currency) customData.currency=String(signal.currency).toUpperCase()
+  if(signal.orderId||signal.data?.transactionId) customData.transactionId=String(signal.orderId||signal.data.transactionId)
+  if(signal.data?.eventCategory) customData.eventCategory=String(signal.data.eventCategory)
+  if(signal.data?.eventLabel) customData.eventLabel=String(signal.data.eventLabel)
+  const event={
+    eventType:'custom',
+    eventId,
+    eventName:microsoftEventName(signal.microsoftEventName||signal.event),
+    eventTime,
+    adStorageConsent:signal.adStorageConsent===false?'D':'G',
+    userData,
+    ...(Object.keys(customData).length?{customData}:{})
+  }
+  if(signal.eventSourceUrl) event.eventSourceUrl=String(signal.eventSourceUrl)
+  const result=await requestJson('https://capi.uet.microsoft.com/v1/'+encodeURIComponent(tagId)+'/events',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+    body:JSON.stringify({data:[event],continueOnValidationError:false,dataProvider:'acemarketing'})
+  })
+  return {provider:'microsoft_ads',...result}
+}
+
 const deliverLinkedIn=async(workspaceId,signal)=>{
   const token=await credentialFor(workspaceId,'LinkedIn Ads')
   const accessToken=token.access_token
@@ -269,6 +325,7 @@ export const deliverSignal=async(workspaceId,signal)=>{
   if(destination.includes('meta')) return deliverMeta(workspaceId,signal)
   if(destination.includes('google')) return deliverGoogle(workspaceId,signal)
   if(destination.includes('linkedin')) return deliverLinkedIn(workspaceId,signal)
+  if(destination.includes('microsoft')||destination.includes('bing')) return deliverMicrosoft(workspaceId,signal)
   if(destination.includes('webhook')) return deliverWebhook(signal)
   throw new Error('unsupported delivery destination: '+signal.destination)
 }
