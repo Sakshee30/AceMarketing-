@@ -18,3 +18,18 @@
 .ace-section-state.setup{background:#f1f4f2;color:#76827c;box-shadow:inset 0 0 0 1px rgba(74,89,81,.08)}
 .ace-section-detail{color:#9aa49f!important;font-size:8.8px!important}
 .ace-quick-nav-items>button:hover .ace-section-detail{color:#6f7d76!important}
+
+
+/* Live section-health filters */
+.ace-quick-nav-filters{margin:-6px 18px 14px;display:flex;gap:7px;flex-wrap:wrap}
+.ace-quick-nav-filters button{border:1px solid rgba(23,38,31,.09);background:#fff;color:#68766f;border-radius:999px;padding:7px 10px;display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:10px;font-weight:700;cursor:pointer;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease,background .16s ease}
+.ace-quick-nav-filters button:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(20,32,27,.08)}
+.ace-quick-nav-filters button b{min-width:20px;height:20px;border-radius:999px;background:#f1f5f3;display:grid;place-items:center;font-size:9px}
+.ace-quick-nav-filters button.active{border-color:rgba(22,137,80,.24);background:#eef8f2;color:#147447;box-shadow:inset 0 0 0 1px rgba(22,137,80,.06)}
+.ace-quick-nav-filters button.active.attention{background:#fff6e6;color:#956113;border-color:rgba(149,97,19,.2)}
+.ace-quick-nav-filters button.active.setup{background:#f3f5f4;color:#65736c;border-color:rgba(101,115,108,.18)}
+.ace-quick-nav-filters button.active.live b{background:#dff4e8}
+.ace-quick-nav-filters button.active.attention b{background:#ffedc8}
+.ace-quick-nav-filters button.active.setup b{background:#e6ebe8}
+@media(max-width:620px){.ace-quick-nav-filters{margin:-4px 12px 12px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px}.ace-quick-nav-filters button{white-space:nowrap}}
+@media(prefers-reduced-motion:reduce){.ace-quick-nav-filters button{transition:none!important}}
