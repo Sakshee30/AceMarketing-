@@ -657,6 +657,7 @@ const server = http.createServer(async (req,res)=>{
         Integrations:section(connectedConnectors.length?'live':'setup',connectedConnectors.length,connectedConnectors.length+' connected systems'),
         'Data Flows':section(activeIntegrationFlows?'live':integrationFlows.length?'attention':'setup',activeIntegrationFlows,activeIntegrationFlows+' active flows'),
         'Real-Time Activation':section(activeActivationRules?'live':activationRules.length?'attention':'setup',activeActivationRules,activeActivationRules+' active rules · '+activationRuleRuns.length+' runs'),
+        Personalization:section(Number((state.personalizationRules||[]).filter(x=>x.status==='active').length)?'live':(state.personalizationRules||[]).length?'attention':'setup',Number((state.personalizationRules||[]).filter(x=>x.status==='active').length),(state.personalizationRules||[]).length+' rules · '+(state.personalizationDecisions||[]).length+' decisions'),
         Audiences:section(Number(audienceStats?.audiences?.total||0)>0?'live':'setup',Number(audienceStats?.audiences?.total||0),Number(audienceStats?.audiences?.total||0)+' audiences'),
         Delivery:section(deliveries.length?'live':'setup',deliveries.length,deliveries.length+' delivery records'),
         Monitoring:section('live',Number(monitoring?.openAlerts||monitoring?.alerts?.open||0),Number(monitoring?.openAlerts||monitoring?.alerts?.open||0)+' open alerts'),
@@ -2451,6 +2452,102 @@ const server = http.createServer(async (req,res)=>{
         s.audit=s.audit.slice(0,1000)
       })
       return send(req,res,201,{id:item.id,status:item.status,matchMethod:item.match_method,matchConfidence:item.match_confidence,matchedSessionId:item.matched_session_id})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/personalization-rules') {
+      const state=await getState()
+      const items=(state.personalizationRules||[]).slice().sort((a,b)=>Number(b.priority||0)-Number(a.priority||0)||Date.parse(b.updatedAt||b.createdAt||0)-Date.parse(a.updatedAt||a.createdAt||0))
+      const decisions=state.personalizationDecisions||[]
+      const feedback=state.personalizationFeedback||[]
+      const performance=items.map(rule=>{
+        const ruleDecisions=decisions.filter(x=>x.ruleId===rule.id)
+        const ruleFeedback=feedback.filter(x=>x.ruleId===rule.id)
+        const impressions=ruleFeedback.filter(x=>x.kind==='impression').length
+        const clicks=ruleFeedback.filter(x=>x.kind==='click').length
+        const conversions=ruleFeedback.filter(x=>x.kind==='conversion').length
+        return {ruleId:rule.id,decisions:ruleDecisions.length,impressions,clicks,conversions,ctr:impressions?Number((clicks/impressions*100).toFixed(1)):0,conversionRate:impressions?Number((conversions/impressions*100).toFixed(1)):0}
+      })
+      return send(req,res,200,{items,performance,recentDecisions:decisions.slice(0,100),recentFeedback:feedback.slice(0,100),stats:{total:items.length,active:items.filter(x=>x.status==='active').length,decisions:decisions.length,impressions:feedback.filter(x=>x.kind==='impression').length,clicks:feedback.filter(x=>x.kind==='click').length,conversions:feedback.filter(x=>x.kind==='conversion').length}})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/personalization-rules') {
+      const body=await readBody(req)
+      const name=String(body.name||'').trim()
+      const surface=String(body.surface||'website').trim()
+      const variant=String(body.variant||'').trim()
+      if(name.length<3||name.length>120) return send(req,res,400,{error:'name must be 3-120 characters'})
+      if(!variant) return send(req,res,400,{error:'variant required'})
+      const conditions=(Array.isArray(body.conditions)?body.conditions:[]).slice(0,8).map(x=>({field:String(x.field||'').trim(),operator:String(x.operator||'equals'),value:x.value??''})).filter(x=>x.field)
+      const now=new Date().toISOString()
+      const item={id:'pers_'+randomUUID(),name,surface,variant,message:String(body.message||'').trim(),cta:String(body.cta||'').trim(),destination:String(body.destination||'').trim(),conditions,priority:Math.max(0,Math.min(1000,Number(body.priority||100))),status:body.enabled===false?'paused':'active',requiresPersonalizationConsent:body.requiresPersonalizationConsent!==false,createdAt:now,updatedAt:now,createdBy:req.user?.email||req.user?.userId||'workspace'}
+      await mutateState(s=>{
+        s.personalizationRules=s.personalizationRules||[]
+        s.personalizationRules.unshift(item)
+        s.personalizationRules=s.personalizationRules.slice(0,500)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'personalization_rule.created',entityId:item.id,surface:item.surface,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,{item})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/personalization-rules/toggle') {
+      const body=await readBody(req)
+      const id=String(body.id||'')
+      let updated=null
+      await mutateState(s=>{
+        const item=(s.personalizationRules||[]).find(x=>x.id===id)
+        if(item){item.status=body.enabled?'active':'paused';item.updatedAt=new Date().toISOString();updated={...item}}
+      })
+      return updated?send(req,res,200,{item:updated}):send(req,res,404,{error:'personalization rule not found'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/personalization/decide') {
+      const body=await readBody(req)
+      const customerRef=String(body.customerId||body.leadId||body.visitorId||body.deviceId||'').trim()
+      if(!customerRef) return send(req,res,400,{error:'customerId, leadId, visitorId, or deviceId required'})
+      const consent=await consentAllows(workspaceId,{subjectType:body.customerId?'customer':'visitor',subjectId:customerRef,category:'personalization'})
+      const profile=await getLeadProfile(workspaceId,customerRef).catch(()=>null)
+      const state=await getState()
+      const context={
+        ...body,
+        ...(profile?.attributes||{}),
+        ...(profile?.journey||{}),
+        grade:profile?.grade??body.grade,
+        score:profile?.score??body.score,
+        stage:profile?.crm_stage??body.stage,
+        source:profile?.source??body.source,
+        campaign:profile?.campaign??body.campaign,
+        devicePlatform:profile?.device_platform??body.devicePlatform,
+        ltvTier:profile?.journey?.ltvTier??body.ltvTier,
+        conversionPropensity:profile?.journey?.conversionPropensity??body.conversionPropensity
+      }
+      const rules=(state.personalizationRules||[]).filter(x=>x.status==='active'&&(!body.surface||String(x.surface)===String(body.surface))).sort((a,b)=>Number(b.priority||0)-Number(a.priority||0))
+      const matched=rules.find(rule=>(rule.conditions||[]).every(condition=>activationConditionMatches(condition,context)))
+      const blocked=matched?.requiresPersonalizationConsent&&!consent.allowed
+      const decision={id:'pdec_'+randomUUID(),customerRef,surface:String(body.surface||matched?.surface||'website'),ruleId:matched?.id||null,ruleName:matched?.name||null,variant:blocked?null:(matched?.variant||null),message:blocked?null:(matched?.message||null),cta:blocked?null:(matched?.cta||null),destination:blocked?null:(matched?.destination||null),matched:Boolean(matched),status:blocked?'consent_blocked':matched?'decided':'no_match',createdAt:new Date().toISOString()}
+      await mutateState(s=>{
+        s.personalizationDecisions=s.personalizationDecisions||[]
+        s.personalizationDecisions.unshift(decision)
+        s.personalizationDecisions=s.personalizationDecisions.slice(0,5000)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'personalization.decided',entityId:decision.id,ruleId:decision.ruleId,status:decision.status,at:decision.createdAt})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,200,{decision,consent:{allowed:consent.allowed,reason:consent.reason},profileFound:Boolean(profile)})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/personalization/feedback') {
+      const body=await readBody(req)
+      if(!body.decisionId||!['impression','click','conversion'].includes(String(body.kind))) return send(req,res,400,{error:'decisionId and kind impression/click/conversion required'})
+      const state=await getState()
+      const decision=(state.personalizationDecisions||[]).find(x=>x.id===String(body.decisionId))
+      if(!decision) return send(req,res,404,{error:'personalization decision not found'})
+      const item={id:'pfb_'+randomUUID(),decisionId:decision.id,ruleId:decision.ruleId,customerRef:decision.customerRef,kind:String(body.kind),value:body.value==null?null:Number(body.value),currency:body.currency||null,createdAt:new Date().toISOString()}
+      await mutateState(s=>{
+        s.personalizationFeedback=s.personalizationFeedback||[]
+        s.personalizationFeedback.unshift(item)
+        s.personalizationFeedback=s.personalizationFeedback.slice(0,10000)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'personalization.feedback',entityId:item.id,decisionId:item.decisionId,kind:item.kind,at:item.createdAt})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,{item})
     }
     if (req.method === 'GET' && url.pathname === '/api/activation-rules') {
       const state=await getState()
