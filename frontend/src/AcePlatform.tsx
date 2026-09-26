@@ -707,6 +707,7 @@ function AdSync(){
  const quickAgents=[
   {id:'meta_capi',name:'Meta Advanced CAPI',detail:'Qualified leads → server-side Meta conversion',sourceEvent:'lead.qualified',outputEvent:'qualified_lead',destination:'Meta Ads',Icon:RadioTower},
   {id:'google_ecl',name:'Google ECL / OCI',detail:'Qualified leads → enhanced/offline Google conversion',sourceEvent:'lead.qualified',outputEvent:'qualified_lead',destination:'Google Ads',Icon:Target},
+  {id:'linkedin_capi',name:'LinkedIn Conversions API',detail:'Qualified leads → server-side LinkedIn conversion event',sourceEvent:'lead.qualified',outputEvent:'qualified_lead',destination:'LinkedIn Ads',Icon:Network},
   {id:'chatgpt_ads',name:'ChatGPT Ads CAPI',detail:'Qualified leads → ChatGPT Ads server-side conversion with oppref matching',sourceEvent:'lead.qualified',outputEvent:'lead_created',destination:'ChatGPT Ads',Icon:Bot},
   {id:'call_tracking',name:'Call Tracking Events',detail:'Ingest signed telephony events and attribute calls',tab:'Calls',Icon:PhoneCall},
   {id:'custom_integration',name:'Custom Integration',detail:'Build a governed connector for any unsupported system',tab:'Integrations',Icon:Cable}
@@ -714,7 +715,7 @@ function AdSync(){
  const load=async()=>{
   try{
    const [events,delivery]:any=await Promise.all([api.events(),api.signalDeliveries()])
-   const pipelines=(events.items||[]).filter((x:any)=>(x.destinations||[]).some((d:string)=>['Google Ads','Meta Ads','ChatGPT Ads'].includes(d)))
+   const pipelines=(events.items||[]).filter((x:any)=>(x.destinations||[]).some((d:string)=>['Google Ads','Meta Ads','LinkedIn Ads','ChatGPT Ads'].includes(d)))
    setData({...events,items:pipelines})
    setDeliveries(delivery.items||[])
    if(pipelines.length)setSelected((x:string)=>x&&pipelines.some((p:any)=>p.id===x)?x:pipelines[0].id)
