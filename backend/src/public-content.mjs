@@ -91,6 +91,7 @@ export const publicAgents = [
   {number:16,name:'Customer Journey Agent',category:'Visibility',summary:'Explore stitched acquisition, CRM, call, meeting and revenue chronology.'},
   {number:17,name:'Audiences Agent',category:'Activation',summary:'Build, suppress, materialize and sync first-party audiences from governed evidence.'},
   {number:18,name:'Event Agent',category:'Activation',summary:'Transform source activity into governed business events and approved activation signals.'},
+  {number:19,name:'ChatGPT Ads CAPI Agent',category:'Lead Quality',summary:'Send server-side ChatGPT Ads conversions with oppref matching, stable event IDs and consent-aware delivery.'},
 ]
 
 export const publicIntegrations = [
@@ -99,7 +100,7 @@ export const publicIntegrations = [
   {group:'Calling',items:['Exotel','Knowlarity','Tata Tele','MyOperator','Twilio']},
   {group:'Web, Forms & Commerce',items:['WordPress','React App','Shopify','WooCommerce','Magento','Typeform','Custom Backend']},
   {group:'Warehouse, Database & Storage',items:['BigQuery','Snowflake','MongoDB','Oracle DB','Google Cloud Storage','Amazon S3']},
-  {group:'Advertising & Analytics',items:['Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads / Bing Ads','X','Pinterest','TikTok Ads','Yahoo Ads','Taboola','Spotify Ads','Snapchat Ads','Criteo','DV360','Google Merchant Center','Meta Lead Ads','Meta CAPI','Meta Catalog','GA4','Google Calendar']},
+  {group:'Advertising & Analytics',items:['Google Ads','Meta Ads','ChatGPT Ads','LinkedIn Ads','Microsoft Ads / Bing Ads','X','Pinterest','TikTok Ads','Yahoo Ads','Taboola','Spotify Ads','Snapchat Ads','Criteo','DV360','Google Merchant Center','Meta Lead Ads','Meta CAPI','Meta Catalog','GA4','Google Calendar']},
   {group:'Sales Intelligence',items:['Apollo','Lusha','Calixa']},
 ]
 
