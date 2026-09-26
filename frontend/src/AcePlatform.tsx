@@ -1937,6 +1937,7 @@ function Integrations(){
  const [connectionNotice,setConnectionNotice]=useState<any>(null)
  const builtInCount=groups.reduce((sum:any,g:any)=>sum+g[1].length,0)
  const start=(name:string)=>{
+  if(name==='ChatGPT Ads'){window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:'ChatGPT Ads'}));return}
   const item=integrationItems.find((x:any)=>x.name===name)
   if(!item||item.authType==='manual'||item.status==='manual'){
    setDraft((x:any)=>({...x,name,baseUrl:'',secret:'',username:''}))
