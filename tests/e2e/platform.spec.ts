@@ -85,6 +85,9 @@ test.describe('workspace critical flows',()=>{
     const payload=await response.json()
     expect(typeof payload.readiness).toBe('number')
     expect(payload.totals).toBeTruthy()
+    expect(payload.sections).toBeTruthy()
+    expect(payload.sections.Attribution).toBeTruthy()
+    expect(['live','attention','setup']).toContain(payload.sections.Attribution.state)
 
     const navigator=page.getByRole('button',{name:'Open dashboard section navigator'})
     await expect(navigator).toBeVisible()
@@ -97,8 +100,10 @@ test.describe('workspace critical flows',()=>{
 
     const search=dialog.getByRole('textbox',{name:'Search dashboard sections'})
     await search.fill('attribution')
-    await expect(dialog.getByRole('button',{name:/Attribution.*Channel, campaign and revenue credit/i})).toBeVisible()
-    await dialog.getByRole('button',{name:/Attribution.*Channel, campaign and revenue credit/i}).click()
+    const attributionButton=dialog.getByRole('button',{name:/Attribution.*Channel, campaign and revenue credit/i})
+    await expect(attributionButton).toBeVisible()
+    await expect(attributionButton).toContainText(/Live|Needs setup|Setup/)
+    await attributionButton.click()
     await expect(page.locator('.product-body h1')).toContainText(/Attribution/i)
   })
 
