@@ -12,7 +12,7 @@ import { api } from './lib/api'
 import {getLocalConsent,saveLocalConsent} from './lib/tracker'
 
 type View='site'|'app'|'login'|'pricing'|'demo'|'company'|'resources'|'case-studies'|'privacy'|'terms'|'security'|'solutions'|'industries'|'agents-public'|'integrations-public'
-type AppTab='Launchpad'|'Overview'|'AdSync'|'Funnel'|'Events'|'Adjustments'|'Diagnostics'|'Fraud'|'Deep Links'|'Sites'|'Fingerprinting'|'Live Sync'|'Data Hub'|'Customer 360'|'Offline Attribution'|'Matchback'|'POS & Stores'|'Journeys'|'Identity'|'Models'|'Attribution'|'Planner'|'Reports'|'Enrich'|'Lead Grading'|'Behavior'|'Feed'|'Agents'|'Routing'|'Follow-ups'|'Calls'|'Meetings'|'Feedback'|'Approvals'|'Ask Ace'|'Integrations'|'Data Flows'|'Audiences'|'Delivery'|'Monitoring'|'Alerts'|'Developers'|'Settings'
+type AppTab='Launchpad'|'Overview'|'AdSync'|'Funnel'|'Events'|'Adjustments'|'Diagnostics'|'Fraud'|'Deep Links'|'Sites'|'Fingerprinting'|'Live Sync'|'Data Hub'|'Customer 360'|'Offline Attribution'|'Matchback'|'POS & Stores'|'Journeys'|'Identity'|'Models'|'Attribution'|'Planner'|'Reports'|'Enrich'|'Lead Grading'|'Behavior'|'Feed'|'Agents'|'Routing'|'Follow-ups'|'Calls'|'Meetings'|'Feedback'|'Approvals'|'Ask Ace'|'Integrations'|'Data Flows'|'Real-Time Activation'|'Audiences'|'Delivery'|'Monitoring'|'Alerts'|'Developers'|'Settings'
 
 const agents=[
  ['Meta Advanced CAPI','Return qualified outcomes to Meta server-side with deduplication.','Lead Quality','+25–40% ROAS'],
@@ -604,7 +604,7 @@ function Login({back,openApp}:{back:()=>void,openApp:()=>void}){
  return <div className="login-page"><div className="login-brand"><Brand/><button onClick={back}>Back to website</button></div><div className="login-shell"><div className="login-story"><span className="kicker">ACE MARKETING PLATFORM</span><h1>One workspace for the complete acquisition journey.</h1><p>Connect paid media, CRM, calls, messaging and offline outcomes — then activate clean signals and measure revenue in one place.</p><div className="login-flow">{['Connect','Stitch','Enrich','Activate','Attribute'].map((x,i)=><div key={x}><span>{i+1}</span><b>{x}</b>{i<4&&<ArrowRight/>}</div>)}</div></div>{mode==='login'?loginForm:mode==='forgot'?forgotForm:resetForm}</div></div>
 }
 const appTabs=[
- ['Launchpad',WandSparkles],['Overview',Gauge],['AdSync',RadioTower],['Funnel',BarChart3],['Events',Zap],['Adjustments',CircleDollarSign],['Diagnostics',ShieldCheck],['Fraud',ShieldCheck],['Deep Links',Network],['Sites',Globe2],['Fingerprinting',MousePointer2],['Live Sync',Activity],['Data Hub',DatabaseZap],['Customer 360',UsersRound],['Offline Attribution',PhoneCall],['Matchback',CircleDollarSign],['POS & Stores',Building2],['Journeys',Network],['Identity',UsersRound],['Models',Target],['Attribution',PieChart],['Planner',CircleDollarSign],['Reports',BarChart3],['Enrich',DatabaseZap],['Lead Grading',Target],['Behavior',MousePointer2],['Feed',Layers3],['Agents',Bot],['Routing',Network],['Follow-ups',MessageCircle],['Calls',PhoneIncoming],['Meetings',CalendarDays],['Feedback',MessageSquareText],['Approvals',CheckCircle2],['Ask Ace',Sparkles],['Integrations',Cable],['Data Flows',Network],['Audiences',UsersRound],['Delivery',RadioTower],['Monitoring',Activity],['Alerts',Bell],['Developers',Code2],['Settings',Settings2]
+ ['Launchpad',WandSparkles],['Overview',Gauge],['AdSync',RadioTower],['Funnel',BarChart3],['Events',Zap],['Adjustments',CircleDollarSign],['Diagnostics',ShieldCheck],['Fraud',ShieldCheck],['Deep Links',Network],['Sites',Globe2],['Fingerprinting',MousePointer2],['Live Sync',Activity],['Data Hub',DatabaseZap],['Customer 360',UsersRound],['Offline Attribution',PhoneCall],['Matchback',CircleDollarSign],['POS & Stores',Building2],['Journeys',Network],['Identity',UsersRound],['Models',Target],['Attribution',PieChart],['Planner',CircleDollarSign],['Reports',BarChart3],['Enrich',DatabaseZap],['Lead Grading',Target],['Behavior',MousePointer2],['Feed',Layers3],['Agents',Bot],['Routing',Network],['Follow-ups',MessageCircle],['Calls',PhoneIncoming],['Meetings',CalendarDays],['Feedback',MessageSquareText],['Approvals',CheckCircle2],['Ask Ace',Sparkles],['Integrations',Cable],['Data Flows',Network],['Real-Time Activation',Zap],['Audiences',UsersRound],['Delivery',RadioTower],['Monitoring',Activity],['Alerts',Bell],['Developers',Code2],['Settings',Settings2]
 
 ] as const
 const dashboardSections=[
@@ -612,7 +612,7 @@ const dashboardSections=[
  {id:'tracking',label:'Tracking & Data',icon:DatabaseZap,tabs:['AdSync','Funnel','Events','Adjustments','Diagnostics','Fraud','Deep Links','Sites','Fingerprinting','Live Sync','Data Hub','Customer 360','Offline Attribution','Matchback','POS & Stores']},
  {id:'measurement',label:'Measurement & Intelligence',icon:PieChart,tabs:['Journeys','Identity','Models','Attribution','Planner','Reports']},
  {id:'conversion',label:'Lead & Conversion',icon:Target,tabs:['Enrich','Lead Grading','Behavior','Feed','Agents','Routing','Follow-ups','Calls','Meetings','Feedback','Approvals','Ask Ace']},
- {id:'activation',label:'Activation & Integrations',icon:RadioTower,tabs:['Integrations','Data Flows','Audiences','Delivery']},
+ {id:'activation',label:'Activation & Integrations',icon:RadioTower,tabs:['Integrations','Data Flows','Real-Time Activation','Audiences','Delivery']},
  {id:'operations',label:'Operations & Developer',icon:Activity,tabs:['Monitoring','Alerts','Developers','Settings']}
 ] as const
 const tabMeta=Object.fromEntries(appTabs.map(([name,Icon])=>[name,{Icon}])) as Record<string,{Icon:any}>
@@ -1929,6 +1929,83 @@ function Integrations(){
  {builderStep===3&&<div className="connector-step"><h3>Connection test</h3><p>Validate authorization, schema compatibility and a small sample before enabling continuous sync.</p><div className="custom-test-result">{testResult?.ok===false?<X/>:<CheckCircle2/>}<div><b>{testResult?.ok===false?'Test needs attention':'Connection test passed'}</b><small>{testResult?.ok===false?(testResult?.error||'Connection could not be validated'):`HTTP ${testResult?.statusCode} · ${testResult?.latencyMs}ms · ${testResult?.sampleRecords||0} sample records inspected`}</small></div></div><div className="diagnostic-evidence">{[['Authentication','Valid'],['Identity field',draft.identity],['Lifecycle field',draft.stage],['Revenue field',draft.revenue]].map(x=><article key={x[0]}><span>{x[0]}</span><b>{x[1]}</b></article>)}</div><button onClick={saveCustom}>Create integration & enable sync</button></div>}
  </div></div>}</>
 }
+function RealTimeActivation(){
+ const [data,setData]=useState<any>({items:[],runs:[],stats:{}})
+ const [builder,setBuilder]=useState(false)
+ const [selected,setSelected]=useState('')
+ const [busy,setBusy]=useState('')
+ const [notice,setNotice]=useState('')
+ const [testResult,setTestResult]=useState<any>(null)
+ const load=async()=>{
+  try{
+   const r:any=await api.activationRules()
+   setData(r)
+   if(r.items?.length)setSelected((x:string)=>x&&r.items.some((i:any)=>i.id===x)?x:r.items[0].id)
+  }catch(e:any){setNotice(e?.message||'Real-time activation rules could not be loaded.')}
+ }
+ useEffect(()=>{load()},[])
+ const current=(data.items||[]).find((x:any)=>x.id===selected)||data.items?.[0]
+ const create=async(e:any)=>{
+  e.preventDefault();setBusy('create');setNotice('')
+  const fd=new FormData(e.currentTarget)
+  const conditionField=String(fd.get('conditionField')||'').trim()
+  const payload:any={
+   name:String(fd.get('name')||''),
+   triggerEvent:String(fd.get('triggerEvent')||''),
+   actionType:String(fd.get('actionType')||'signal'),
+   destination:String(fd.get('destination')||''),
+   outputEvent:String(fd.get('outputEvent')||''),
+   channel:String(fd.get('channel')||'whatsapp'),
+   owner:String(fd.get('owner')||'Marketing automation'),
+   priority:String(fd.get('priority')||'medium'),
+   delayMinutes:Number(fd.get('delayMinutes')||0),
+   reason:String(fd.get('reason')||''),
+   requiresMarketingConsent:true,
+   conditions:conditionField?[{field:conditionField,operator:String(fd.get('operator')||'equals'),value:String(fd.get('conditionValue')||'')}]:[]
+  }
+  try{
+   const r:any=await api.createActivationRule(payload)
+   setBuilder(false);setNotice('Activation rule created and enabled.');await load();if(r?.item?.id)setSelected(r.item.id)
+  }catch(e:any){setNotice(e?.message||'Activation rule could not be created.')}
+  finally{setBusy('')}
+ }
+ const toggle=async()=>{
+  if(!current)return
+  setBusy('toggle');setNotice('')
+  try{await api.toggleActivationRule(current.id,current.status!=='active');setNotice(current.status==='active'?'Activation rule paused.':'Activation rule enabled.');await load()}
+  catch(e:any){setNotice(e?.message||'Activation rule status could not be changed.')}
+  finally{setBusy('')}
+ }
+ const test=async()=>{
+  if(!current)return
+  setBusy('test');setNotice('');setTestResult(null)
+  try{
+   const sample:any={event:current.triggerEvent,customerId:'activation_test_customer',value:5000,source:'workspace_test'}
+   for(const condition of current.conditions||[]){
+    sample[condition.field]=condition.operator==='greater_than'?Number(condition.value||0)+1:condition.value||'test'
+   }
+   const r:any=await api.testActivationRule(current.id,sample)
+   setTestResult(r);setNotice(r.matched?'Test event matches this rule.':'Test event does not match this rule.')
+  }catch(e:any){setNotice(e?.message||'Activation rule test failed.')}
+  finally{setBusy('')}
+ }
+ const stats=data.stats||{}
+ const runs=(data.runs||[]).filter((x:any)=>!current||x.ruleId===current.id)
+ const actionLabel=(x:any)=>x.actionType==='signal'?('Send '+(x.outputEvent||x.triggerEvent)+' → '+(x.destination||'destination')):x.actionType==='route'?('Route → '+(x.destination||'queue')):('Create '+(x.channel||'follow-up')+' follow-up')
+ return <><PageHead crumb="Activation / Real-Time Activation" title="Real-time activation" sub="Turn fresh first-party behavior into governed signals, routing, and follow-up actions as soon as events arrive." action="Create activation rule" onAction={()=>setBuilder(true)}/>
+ {notice&&<div className={'delivery-notice '+(notice.toLowerCase().includes('could not')||notice.toLowerCase().includes('failed')?'error':'ok')}>{notice.toLowerCase().includes('could not')||notice.toLowerCase().includes('failed')?<ShieldCheck/>:<CheckCircle2/>}<span>{notice}</span></div>}
+ <div className="stats-grid"><Stat label="Rules" value={String(stats.total||0)} sub="Persisted activation policies" Icon={Zap}/><Stat label="Active" value={String(stats.active||0)} sub="Evaluated on event ingestion" Icon={Activity}/><Stat label="Recent runs" value={String(stats.runs||0)} sub="Persisted rule executions" Icon={RadioTower}/><Stat label="Succeeded" value={String(stats.succeeded||0)} sub="Actions completed or queued" Icon={CheckCircle2}/></div>
+ <div className="activation-rule-explainer app-panel"><div><Zap/><div><span>EVENT-DRIVEN AUTOMATION</span><h3>Event → condition → consent → action</h3><p>Every incoming first-party event is evaluated against active rules. Marketing actions are skipped when marketing consent is unavailable.</p></div></div><div className="data-flow-steps">{['Receive event','Evaluate conditions','Check consent','Run action','Persist result'].map((x,i)=><span key={x}><b>{i+1}</b>{x}{i<4&&<ArrowRight/>}</span>)}</div></div>
+ <div className="activation-rule-layout"><div className="app-panel activation-rule-list"><div className="panel-head"><div><h3>Activation rules</h3><p>Active and paused real-time automations</p></div><button onClick={load}>Refresh</button></div>{(data.items||[]).length?(data.items||[]).map((x:any)=><button key={x.id} className={selected===x.id?'selected':''} onClick={()=>{setSelected(x.id);setTestResult(null)}}><Zap/><div><b>{x.name}</b><small>{x.triggerEvent} · {x.actionType.replace('_',' ')}</small></div><span className={x.status==='active'?'healthy':'status'}>{x.status}</span><ChevronRight/></button>):<div className="empty-delivery-state"><Zap/><div><b>No activation rules yet</b><small>Create a rule to react to tracked customer behavior in real time.</small></div></div>}</div>
+ <div className="app-panel activation-rule-detail">{current?<><div className="panel-head"><div><h3>{current.name}</h3><p>{actionLabel(current)}</p></div><span className={current.status==='active'?'healthy':'status'}>{current.status}</span></div><div className="site-detail-grid">{[['Trigger event',current.triggerEvent],['Action',current.actionType],['Destination',current.destination||current.channel||'—'],['Consent','Marketing consent required'],['Priority',current.priority||'medium'],['Delay',Number(current.delayMinutes||0)+' min']].map(x=><div key={x[0]}><span>{x[0]}</span><b>{String(x[1])}</b></div>)}</div>
+ <div className="agent-section"><h4>Conditions</h4>{(current.conditions||[]).length?<div className="context-chips">{current.conditions.map((x:any,i:number)=><span key={i}>{x.field} {String(x.operator).replaceAll('_',' ')} {String(x.value)}</span>)}</div>:<div className="context-chips"><span>Any {current.triggerEvent} event</span></div>}</div>
+ <div className="approval-actions"><button disabled={busy==='test'} onClick={test}><Activity/>{busy==='test'?'Testing…':'Test rule'}</button><button className={current.status==='active'?'':'approve'} disabled={busy==='toggle'} onClick={toggle}>{busy==='toggle'?'Saving…':current.status==='active'?'Pause rule':'Enable rule'}</button></div>
+ {testResult&&<div className={'activation-test-result '+(testResult.matched?'matched':'not-matched')}><ShieldCheck/><div><b>{testResult.matched?'Rule matched':'Rule did not match'}</b><small>Dry-run only · no external action was executed</small></div></div>}
+ <div className="agent-section"><h4>Recent executions</h4>{runs.length?runs.slice(0,10).map((x:any)=><div className="agent-run" key={x.id}><Activity/><div><b>{x.eventId||'Tracked event'}</b><small>{x.detail||x.actionType}</small></div><span>{x.createdAt?new Date(x.createdAt).toLocaleString():'—'}</span><em className={x.status}>{x.status}</em></div>):<div className="empty-delivery-state"><Activity/><div><b>No executions for this rule</b><small>Matching live events will appear here after ingestion.</small></div></div>}</div></>:<div className="empty-delivery-state"><Zap/><div><b>Select an activation rule</b></div></div>}</div></div>
+ {builder&&<div className="connector-modal"><form className="connector-card activation-rule-builder" onSubmit={create}><div className="connector-modal-head"><div><Zap/><div><b>Create real-time activation rule</b><small>Persist a governed event-to-action policy.</small></div></div><button type="button" onClick={()=>setBuilder(false)}><X/></button></div><label>Rule name<input name="name" required placeholder="High-value checkout → Meta signal"/></label><label>Trigger event<input name="triggerEvent" required defaultValue="checkout_initiated" placeholder="checkout_initiated"/></label><div className="two-col"><label>Condition field<input name="conditionField" placeholder="value"/></label><label>Operator<select name="operator"><option value="equals">Equals</option><option value="contains">Contains</option><option value="greater_than">Greater than</option><option value="less_than">Less than</option><option value="one_of">One of</option><option value="exists">Exists</option></select></label></div><label>Condition value<input name="conditionValue" placeholder="4000"/></label><label>Action type<select name="actionType" defaultValue="signal"><option value="signal">Send conversion signal</option><option value="follow_up">Create follow-up</option><option value="route">Route lead</option></select></label><label>Destination / queue<input name="destination" defaultValue="Meta Ads" placeholder="Meta Ads or Priority sales queue"/></label><label>Output event<input name="outputEvent" defaultValue="high_value_checkout" placeholder="high_value_checkout"/></label><div className="two-col"><label>Follow-up channel<select name="channel"><option value="whatsapp">WhatsApp</option><option value="email">Email</option><option value="call">Call</option></select></label><label>Delay minutes<input name="delayMinutes" type="number" min="0" defaultValue="0"/></label></div><div className="two-col"><label>Owner<input name="owner" defaultValue="Marketing automation"/></label><label>Priority<select name="priority"><option value="medium">Medium</option><option value="high">High</option><option value="low">Low</option></select></label></div><label>Reason<textarea name="reason" rows={3} defaultValue="Triggered by real-time first-party behavior."/></label><div className="source-conflict-note"><ShieldCheck/><div><b>Consent-aware execution</b><p>Marketing actions are evaluated only after the incoming event passes consent checks, and rules requiring marketing consent are skipped when that consent is unavailable.</p></div></div><button disabled={busy==='create'}>{busy==='create'?'Creating…':'Create & enable rule'}</button></form></div>}
+ </> 
+}
+
 function Audiences(){
  const [segments,setSegments]=useState<any[]>([])
  const [stats,setStats]=useState<any>(null)
@@ -2294,7 +2371,7 @@ function Product({back}:{back:()=>void}){
  const searchMatches=search.trim()?appTabs.filter(([name])=>name.toLowerCase().includes(search.trim().toLowerCase())).slice(0,8):[]
  const runSearch=(name?:string)=>{const target=(name||searchMatches[0]?.[0]) as AppTab|undefined;if(target){setTab(target);setSearch('')}}
  const currentWorkspace=workspaces.find(x=>x.name===workspace)||workspaces[0]
- const view=useMemo(()=>({Launchpad:<Launchpad/>,Overview:<Overview/>,AdSync:<AdSync/>,Funnel:<Funnel/>,Events:<Events/>,Adjustments:<Adjustments/>,Diagnostics:<Diagnostics/>,Fraud:<Fraud/>,"Deep Links":<DeepLinks/>,Sites:<Sites/>,Fingerprinting:<Fingerprinting/>,"Live Sync":<LiveSync/>,"Data Hub":<DataHub/>,"Customer 360":<Customer360/>,"Offline Attribution":<OfflineAttribution/>,Matchback:<Matchback/>,"POS & Stores":<POSAndStores/>,Journeys:<Journeys/>,Identity:<Identity/>,Models:<Models/>,Attribution:<Attribution/>,Planner:<Planner/>,Reports:<Reports/>,Enrich:<Enrich/>,"Lead Grading":<LeadGrading/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Routing:<Routing/>,"Follow-ups":<FollowUps/>,Calls:<Calls/>,Meetings:<Meetings/>,Feedback:<Feedback/>,Approvals:<Approvals/>,"Ask Ace":<AskAce/>,Integrations:<Integrations/>,"Data Flows":<DataFlows/>,Audiences:<Audiences/>,Delivery:<DeliveryCenter/>,Monitoring:<Monitoring/>,Alerts:<Alerts/>,Developers:<Developers/>,Settings:<Settings/>}[tab]),[tab])
+ const view=useMemo(()=>({Launchpad:<Launchpad/>,Overview:<Overview/>,AdSync:<AdSync/>,Funnel:<Funnel/>,Events:<Events/>,Adjustments:<Adjustments/>,Diagnostics:<Diagnostics/>,Fraud:<Fraud/>,"Deep Links":<DeepLinks/>,Sites:<Sites/>,Fingerprinting:<Fingerprinting/>,"Live Sync":<LiveSync/>,"Data Hub":<DataHub/>,"Customer 360":<Customer360/>,"Offline Attribution":<OfflineAttribution/>,Matchback:<Matchback/>,"POS & Stores":<POSAndStores/>,Journeys:<Journeys/>,Identity:<Identity/>,Models:<Models/>,Attribution:<Attribution/>,Planner:<Planner/>,Reports:<Reports/>,Enrich:<Enrich/>,"Lead Grading":<LeadGrading/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Routing:<Routing/>,"Follow-ups":<FollowUps/>,Calls:<Calls/>,Meetings:<Meetings/>,Feedback:<Feedback/>,Approvals:<Approvals/>,"Ask Ace":<AskAce/>,Integrations:<Integrations/>,"Data Flows":<DataFlows/>,"Real-Time Activation":<RealTimeActivation/>,Audiences:<Audiences/>,Delivery:<DeliveryCenter/>,Monitoring:<Monitoring/>,Alerts:<Alerts/>,Developers:<Developers/>,Settings:<Settings/>}[tab]),[tab])
  return <div className={'product '+(mobileNavOpen?'mobile-nav-open':'')}><aside className="product-sidebar" aria-label="Workspace navigation"><Brand/><div className="workspace-wrap"><button className="workspace" onClick={()=>setWorkspaceOpen(!workspaceOpen)}><span>{currentWorkspace?.initials||'AM'}</span><div><b>{workspace}</b><small>{currentWorkspace?.environment||'Production'} workspace</small></div><ChevronDown/></button>{workspaceOpen&&<div className="workspace-menu">{workspaces.map((x:any)=><button key={x.id||x.name} onClick={()=>chooseWorkspace(x)} className={workspace===x.name?'active':''}><span>{x.initials||String(x.name).split(/\s+/).map((s:string)=>s[0]).join('').slice(0,3)}</span><div><b>{x.name}</b><small>{x.environment||'Production'}</small></div>{workspace===x.name&&<Check/>}</button>)}<button className="new-workspace" onClick={()=>{setWorkspaceOpen(false);setCreateOpen(true)}}><Plus/>Create workspace</button></div>}</div><nav className="product-nav">
  <div className="product-nav-filter"><Search/><input value={navFilter} onChange={e=>setNavFilter(e.target.value)} placeholder="Find feature..."/></div>
  {dashboardSections.map(section=>{
