@@ -4130,3 +4130,27 @@ Implemented:
 - Playwright coverage creates a 45-day dormant lead, records a fresh pricing intent event, verifies candidacy, creates the reactivation follow-up from the UI and confirms persistence through the Follow-ups API.
 
 This completes the recovery loop: dormant lead → renewed intent → eligibility evidence → governed follow-up → auditable re-engagement.
+
+
+## Specialist agent catalog parity pass
+
+AceMarketing's Agent Library now exposes specialist operational modules that are already implemented elsewhere in the workspace, aligning the agent surface with the broader current EasyInsights-style catalog instead of hiding those capabilities in navigation.
+
+Added built-in specialist agents:
+- `Attribution Agent` → Full-path Attribution;
+- `Deep Linking Agent` → Deep Links;
+- `Fraud Detection Agent` → Fraud;
+- `Customer Journey Agent` → Journeys;
+- `Audiences Agent` → Audience Management;
+- `Event Agent` → Conversion Event Manager.
+
+Configuration state is grounded in the relevant backing store:
+- Attribution Agent uses persisted click/matched attribution evidence;
+- Event Agent uses persisted event rules;
+- Audiences Agent uses persisted audiences;
+- Customer Journey Agent uses lead/profile evidence;
+- Deep Linking and Fraud agents use their workspace operational evidence when present.
+
+The public agent catalog now includes these specialist capabilities as well as Lead Reactivation. The Agent Library built-in count remains dynamic, so future capabilities do not require another hard-coded UI count.
+
+Playwright coverage opens Customer Journey Agent and Event Agent from the Agent Library and verifies navigation to their actual operational workspaces.
