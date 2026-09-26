@@ -13,7 +13,7 @@ const pool=databaseUrl?new Pool({
 }):null
 
 const OPERATORS=new Set(['equals','not_equals','gt','gte','lt','lte','contains','exists','in'])
-const DESTINATIONS=new Set(['Google Ads','Meta Ads'])
+const DESTINATIONS=new Set(['Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads / Bing Ads','Pinterest','ChatGPT Ads'])
 const cleanName=value=>String(value||'').trim().slice(0,160)
 const pathOk=value=>/^[A-Za-z0-9_.-]{1,120}$/.test(String(value||''))
 const getPath=(input,path)=>{
