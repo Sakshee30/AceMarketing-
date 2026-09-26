@@ -5584,3 +5584,19 @@ Ask Ace now supports customer-specific journey questions in addition to aggregat
 - Playwright coverage creates a real persisted lead, tracked pricing event and follow-up, asks for that lead by external ID, and verifies both the API chronology and rendered chat timeline.
 
 This brings the natural-language assistant closer to the same stitched-journey operating model used throughout Customer 360 and the Journey explorer.
+
+
+## Voice Scheduler agent — 2026-09-26
+
+The advertised Voice Scheduler is now a distinct durable agent workflow rather than a label that only opens the manual Meetings screen.
+
+- `POST /api/voice-scheduler` queues a persisted `voice_scheduler` agent run with lead, phone, preferred window, optional proposed slot, duration, owner and calendar-sync preference.
+- `GET /api/voice-scheduler` exposes recent scheduler runs and their resulting meeting state.
+- The worker dispatches scheduling requests to `VOICE_SCHEDULER_WEBHOOK_URL` (or the shared voice-agent transport fallback).
+- A meeting is **not** fabricated when the voice provider merely accepts the call. The worker persists a meeting only when the provider response contains a confirmed `startsAt` / `confirmedStartsAt`.
+- When Google Calendar is connected, a confirmed provider time is synchronized through the existing Calendar provider before the meeting record is persisted; if Calendar is unavailable and the request did not require Calendar, the confirmed meeting can still be stored without inventing a calendar event.
+- The resulting meeting ID, start time, meeting link and calendar-sync status are written into the agent-run output.
+- Meetings now includes a dedicated Voice Scheduler panel and booking-call form beside the existing manual scheduler and reminder controls.
+- Playwright coverage verifies the queue path end-to-end and explicitly checks that a queued call does not pretend a meeting already exists before provider confirmation.
+
+This closes the gap between the public Voice Scheduler capability and the backend agent execution model.
