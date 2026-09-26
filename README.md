@@ -3916,3 +3916,21 @@ Implemented:
 - Playwright coverage creates a persisted lead, finds it in CRM Enrichment, queues a HubSpot writeback, verifies the HTTP 202 response, and confirms the persisted writeback run appears in the UI.
 
 This closes a runtime gap where the Enrich and Lead Grading screens referenced API client methods that did not exist even though the backend routes were implemented.
+
+
+## Executable lead-grade activation pass
+
+Lead Grading now creates persisted downstream operations instead of returning only a recommendation payload.
+
+Implemented:
+- Grade A creates a priority sales-routing decision with a 2-minute SLA;
+- Grade B creates a standard sales-routing decision with a 5-minute SLA;
+- Grade C creates a persisted nurture follow-up task;
+- Grade D creates a governed suppression-review follow-up and points the operator to Audiences;
+- every activation writes an audit record with grade, operation type, operation ID and next workspace tab;
+- the Lead Grading UI shows the created operation, destination/status and a direct link into Routing, Follow-ups or Audiences;
+- dashboard copy now matches the actual backend behavior instead of implying signal return/retargeting happens automatically;
+- animated activation-result feedback respects reduced-motion preferences;
+- Playwright coverage creates a persisted lead, forces Grade A, executes the activation, opens Routing and verifies the resulting priority routing decision.
+
+This makes "Use grade in activation" a real workflow rather than a presentation-only action.
