@@ -594,7 +594,7 @@ const server = http.createServer(async (req,res)=>{
     if (req.method === 'GET' && url.pathname === '/api/dashboard-summary') {
       const state=await getState()
       const safe=async(fn,fallback)=>{try{return await fn()}catch{return fallback}}
-      const [leadStats,attr,audienceStats,queue,monitoring,eventRules,agentRuns,meetings,followUps,feedbackResult]=await Promise.all([
+      const [leadStats,attr,audienceStats,queue,monitoring,eventRules,agentRuns,meetings,followUps,feedbackResult,consentSummary]=await Promise.all([
         safe(()=>leadOpsStats(workspaceId),{available:false,total:0,aGrade:0,abQuality:0}),
         safe(()=>attributionStats(workspaceId),{available:false,matchedEvents:0,unmatchedEvents:0,assistedEvents:0,activeClickSessions:0}),
         safe(()=>audienceOpsStats(workspaceId),{available:false,audiences:{total:0,active:0,activatedIdentities:0,suppressedIdentities:0,errors:0},profiles:{total:0}}),
@@ -604,7 +604,8 @@ const server = http.createServer(async (req,res)=>{
         safe(()=>listAgentRuns(workspaceId),[]),
         safe(()=>listPersistedMeetings(workspaceId),[]),
         safe(()=>listPersistedFollowUps(workspaceId),[]),
-        safe(()=>listPersistedFeedback(workspaceId),{items:[]})
+        safe(()=>listPersistedFeedback(workspaceId),{items:[]}),
+        safe(()=>consentStats(workspaceId),{total:0,analytics:0,marketing:0,personalization:0,revoked:0})
       ])
       const connectors=state.connectorConnections||[]
       const connectedConnectors=connectors.filter(x=>['connected','healthy','active'].includes(String(x.status||'').toLowerCase()))
@@ -663,7 +664,7 @@ const server = http.createServer(async (req,res)=>{
         Delivery:section(deliveries.length?'live':'setup',deliveries.length,deliveries.length+' delivery records'),
         Monitoring:section('live',Number(monitoring?.openAlerts||monitoring?.alerts?.open||0),Number(monitoring?.openAlerts||monitoring?.alerts?.open||0)+' open alerts'),
         Alerts:section(Number(monitoring?.openAlerts||monitoring?.alerts?.open||0)>0?'attention':'live',Number(monitoring?.openAlerts||monitoring?.alerts?.open||0),Number(monitoring?.openAlerts||monitoring?.alerts?.open||0)+' open alerts'),
-        Compliance:section(Number((await consentStats(workspaceId))?.total||0)>0?'live':'attention',Number((await consentStats(workspaceId))?.total||0),Number((await consentStats(workspaceId))?.total||0)+' consent subjects'),
+        Compliance:section(Number(consentSummary?.total||0)>0?'live':'attention',Number(consentSummary?.total||0),Number(consentSummary?.total||0)+' consent subjects'),
         Settings:section('live',connectedConnectors.length,'Workspace configuration')
       }
       const recent=[
