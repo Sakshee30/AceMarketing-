@@ -178,6 +178,8 @@ export const api = {
   toggleRoutingRule: (id:string,enabled:boolean) => request('/routing/rules/toggle', { method: 'POST', body: JSON.stringify({id,enabled}) }),
   testRoutingRule: (ruleId: string) => request('/routing/test', { method: 'POST', body: JSON.stringify({ ruleId }) }),
   followUps: () => request('/follow-ups'),
+  leadReactivation: (dormantDays=30,recentDays=7) => request('/lead-reactivation?dormantDays='+dormantDays+'&recentDays='+recentDays),
+  runLeadReactivation: (payload: Record<string, unknown>) => request('/lead-reactivation/run', { method: 'POST', body: JSON.stringify(payload) }),
   createFollowUp: (payload: Record<string, unknown>) => request('/follow-ups', { method: 'POST', body: JSON.stringify(payload) }),
   completeFollowUp: (id: string) => request('/follow-ups/complete', { method: 'POST', body: JSON.stringify({ id }) }),
   qualificationCalls: () => request('/qualification-calls'),
