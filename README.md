@@ -5550,3 +5550,22 @@ This pass closes additional end-to-end gaps discovered by the desktop/mobile rel
 - The shared E2E navigation helper reports the exact section-level render error when a module fails.
 
 Release promotion still requires the complete CI workflow to pass; successful TypeScript/backend validation and production builds alone are not treated as equivalent to a green browser/runtime suite.
+
+
+## Native server-secret advertising connectors — 2026-09-26
+
+The Integrations workspace can now configure native server-side advertising providers without requiring a deployment edit for every workspace.
+
+- `TikTok Ads`, `Pinterest`, and `Microsoft Ads / Bing Ads` are first-class `server_secret` connectors.
+- Each connector exposes only the provider fields required by its native delivery adapter:
+  - TikTok Ads: Pixel / Event Source ID + Events API access token.
+  - Pinterest: ad account ID + Conversions API access token.
+  - Microsoft Ads / Bing Ads: UET tag ID + Conversions API token.
+- Credentials are accepted only when `CONNECTOR_ENCRYPTION_KEY` is configured.
+- Secrets are stored through the existing AES-256-GCM connector vault and are never returned by `GET /api/integrations`.
+- The delivery adapters read workspace-scoped vault credentials first, while environment variables remain available as operational fallback.
+- Connected server-secret providers display **Manage** in the Integrations dashboard rather than an OAuth refresh action.
+- Replacing credentials does not require an application redeploy.
+- CI uses a test-only encryption key and Playwright verifies TikTok configure → encrypted persistence → connected status while asserting the API response never leaks the submitted token.
+
+This closes the gap between having a native CAPI delivery adapter and having a genuinely configurable connector in the product UI.
