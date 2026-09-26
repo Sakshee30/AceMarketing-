@@ -125,14 +125,18 @@ export default function DashboardQuickNav(){
       if(!visible)return
       if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='k'){
         event.preventDefault()
-        setOpen(true)
+        if(!open){
+          setQuery('')
+          setStatusFilter('all')
+          setOpen(true)
+        }
         requestAnimationFrame(()=>searchRef.current?.focus())
       }
       if(event.key==='Escape')setOpen(false)
     }
     window.addEventListener('keydown',onKey)
     return()=>window.removeEventListener('keydown',onKey)
-  },[visible])
+  },[visible,open])
 
   useEffect(()=>{
     if(open)requestAnimationFrame(()=>searchRef.current?.focus())
@@ -205,7 +209,15 @@ export default function DashboardQuickNav(){
     window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:tab}))
     setOpen(false)
     setQuery('')
+    setStatusFilter('all')
     window.scrollTo({top:0,behavior:'smooth'})
+  }
+
+  const toggleNavigator=()=>{
+    if(open){setOpen(false);return}
+    setQuery('')
+    setStatusFilter('all')
+    setOpen(true)
   }
 
   const toggleCompact=()=>{
@@ -216,7 +228,7 @@ export default function DashboardQuickNav(){
 
   if(!visible)return null
   return <div className={'ace-quick-nav '+(compact?'compact':'')}>
-    <button className="ace-quick-nav-trigger" onClick={()=>setOpen(x=>!x)} aria-expanded={open} aria-label="Open dashboard section navigator">
+    <button className="ace-quick-nav-trigger" onClick={toggleNavigator} aria-expanded={open} aria-label="Open dashboard section navigator">
       <span className="ace-quick-nav-pulse"/>
       <b>{compact?'Navigate':'Dashboard navigator'}</b>
       {!compact&&<kbd>Ctrl K</kbd>}
