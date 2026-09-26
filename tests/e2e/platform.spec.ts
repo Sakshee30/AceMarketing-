@@ -1149,3 +1149,58 @@ test('alert center shows owner affected period and investigation runbook', async
   }})
   expect(restore.ok()).toBeTruthy()
 })
+
+
+test('lead reactivation converts renewed intent into a governed follow-up', async ({ page }, testInfo) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()+'_'+Date.now()
+  const lead='ci_reactivate_'+suffix
+  const device='ci_reactivate_device_'+suffix
+  const oldActivity=new Date(Date.now()-45*24*60*60*1000).toISOString()
+
+  const created=await page.request.post('/api/enrich/upsert',{data:{
+    externalLeadId:lead,
+    name:'CI Dormant Lead '+suffix,
+    deviceId:device,
+    source:'Google Ads',
+    campaign:'Dormant Search',
+    crmStage:'lead',
+    journeyDepth:1,
+    lastActivity:oldActivity
+  }})
+  expect(created.ok()).toBeTruthy()
+
+  const renewed=await page.request.post('/api/track',{data:{
+    event:'pricing_view',
+    eventCategory:'essential',
+    customerId:lead,
+    deviceId:device,
+    utm_source:'Google Ads',
+    utm_campaign:'Reactivation Search',
+    occurredAt:new Date().toISOString()
+  }})
+  expect(renewed.ok()).toBeTruthy()
+
+  const candidatesResponse=await page.request.get('/api/lead-reactivation?dormantDays=30&recentDays=7')
+  expect(candidatesResponse.ok()).toBeTruthy()
+  const candidates=await candidatesResponse.json()
+  expect((candidates.items||[]).some((x:any)=>x.leadRef===lead&&x.renewedEvent==='pricing_view')).toBeTruthy()
+
+  await openWorkspaceTab(page,'Follow-ups')
+  await expect(page.getByRole('heading',{name:'Follow-up operations'})).toBeVisible()
+  const panel=page.locator('.reactivation-panel')
+  await expect(panel.getByText('Lead Reactivation agent',{exact:true})).toBeVisible()
+  const card=panel.locator('article').filter({hasText:'CI Dormant Lead '+suffix}).first()
+  await expect(card).toBeVisible()
+  await expect(card).toContainText('pricing view')
+  await card.getByRole('button',{name:'Create reactivation follow-up',exact:true}).click()
+
+  await expect(page.getByText('Reactivation follow-up created from renewed intent evidence.',{exact:true})).toBeVisible()
+  await expect(page.locator('.followup-list').getByText(lead,{exact:true}).first()).toBeVisible()
+
+  const followupsResponse=await page.request.get('/api/follow-ups')
+  expect(followupsResponse.ok()).toBeTruthy()
+  const followups=await followupsResponse.json()
+  expect((followups.items||[]).some((x:any)=>x.lead_ref===lead&&/Lead reactivation/i.test(x.reason))).toBeTruthy()
+})
