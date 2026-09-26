@@ -163,6 +163,38 @@ test.describe('workspace critical flows',()=>{
     await expect(page.getByText(/Duplicate evidence/i)).toBeVisible()
   })
 
+  test('ChatGPT Ads workspace validates oppref conversion payloads without exposing credentials',async({page})=>{
+    const status=await page.request.get('/api/chatgpt-ads')
+    expect(status.ok()).toBeTruthy()
+    const statusPayload=await status.json()
+    expect(Array.isArray(statusPayload.supportedEventTypes)).toBeTruthy()
+    expect(statusPayload.supportedEventTypes).toContain('lead_created')
+    expect(typeof statusPayload.configured).toBe('boolean')
+
+    const validation=await page.request.post('/api/chatgpt-ads/validate',{data:{
+      event:'lead_created',
+      openaiEventType:'lead_created',
+      actionSource:'web',
+      eventSourceUrl:'https://example.com/thank-you',
+      customerId:'chatgpt_ads_ci_customer',
+      externalEventId:'chatgpt_ads_ci_event',
+      oppref:'gAAAAA_ci_reference',
+      currency:'INR'
+    }})
+    expect(validation.ok()).toBeTruthy()
+    const validationPayload=await validation.json()
+    expect(validationPayload.valid).toBeTruthy()
+    expect(validationPayload.payload.oppref).toBe('gAAAAA_ci_reference')
+    expect(validationPayload.payload.destination).toBe('ChatGPT Ads')
+    expect(validationPayload).not.toHaveProperty('apiKey')
+
+    await openWorkspaceTab(page,'ChatGPT Ads')
+    await expect(page.getByRole('heading',{name:'ChatGPT Ads conversion measurement'})).toBeVisible()
+    await expect(page.getByText('Conversion payload builder')).toBeVisible()
+    await expect(page.getByText('Measurement readiness')).toBeVisible()
+    await expect(page.getByText('Recent ChatGPT Ads deliveries')).toBeVisible()
+  })
+
   test('compliance center exposes consent, retention and privacy operations',async({page})=>{
     const response=await page.request.get('/api/compliance-center')
     expect(response.ok()).toBeTruthy()
@@ -843,7 +875,7 @@ test('all workspace sections render without a frontend crash', async ({ page }) 
   await dismissConsent(page)
 
   const tabs=[
-    'Launchpad','Overview','AdSync','Funnel','Events','Adjustments','Diagnostics','Reconciliation','Fraud','Deep Links','Sites','Fingerprinting',
+    'Launchpad','Overview','AdSync','ChatGPT Ads','Funnel','Events','Adjustments','Diagnostics','Reconciliation','Fraud','Deep Links','Sites','Fingerprinting',
     'Live Sync','Data Hub','Customer 360','Offline Attribution','Matchback','POS & Stores','Journeys','Identity','Models','Attribution','Planner','Reports',
     'Enrich','Lead Grading','Behavior','Feed','Agents','Routing','Follow-ups','Calls','Meetings','Feedback','Approvals','Ask Ace',
     'Integrations','Data Flows','Real-Time Activation','Personalization','Exclusions','Audiences','Delivery','Monitoring','Alerts','Compliance','Developers','Settings'
