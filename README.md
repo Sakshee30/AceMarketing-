@@ -3799,3 +3799,25 @@ Implemented:
 - Playwright coverage for selecting a template, verifying its prefilled logic and persisting the rule.
 
 This closes a usability gap where template rows were visible but not actionable. The template system now produces the same persisted event rules used by ingestion, attribution and provider activation.
+
+
+## Full-path attribution analysis pass
+
+The Attribution workspace now goes beyond match-method counts and exposes persisted source, campaign, outcome and match evidence from the attribution store.
+
+Implemented:
+- backend joins between assisted outcomes and their matched click sessions;
+- source/channel contribution ranking;
+- campaign contribution ranking;
+- attributed event-value totals and share calculations;
+- average deterministic match confidence;
+- outcome-type ranking;
+- recent matched/unmatched outcome evidence with source, campaign, match method and currency;
+- source/campaign evidence counts from persisted UTM, landing-page and referrer fields;
+- channel, campaign, outcome and match-evidence tabs in the dashboard;
+- direct navigation from attribution into Journeys and Matchback;
+- explicit unmatched-state handling instead of forcing unknown conversions into a channel;
+- responsive and animated attribution UI with reduced-motion support;
+- Playwright coverage that creates a real tracked click session + assisted closed-won outcome and verifies the source/campaign attribution appears in the UI.
+
+The attribution engine remains deterministic: customer ID, click IDs, hashed phone/email and visitor identity are used in priority order. Unmatched events remain unmatched until sufficient evidence exists.
