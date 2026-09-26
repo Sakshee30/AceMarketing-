@@ -4220,3 +4220,20 @@ Fix connector    Persist active flow
 ```
 
 The readiness test is intentionally truthful: it verifies configured connector state and does not claim that an unsupported or disconnected provider is live. Provider-specific transport execution still uses the existing native/custom connector and delivery architecture.
+
+
+## Dashboard navigation live-status hardening
+
+The dashboard navigator now uses the existing backend-backed `GET /api/dashboard-summary` contract instead of rendering stale placeholder status.
+
+Implemented on `main`:
+
+- Fetches workspace readiness when the user enters the workspace.
+- Refreshes readiness, connected systems, open alerts and failed-delivery counts every 30 seconds.
+- Provides a manual **Refresh status** action for operators.
+- Shows the last successful refresh time.
+- Preserves graceful error feedback when the summary API is unavailable.
+- Adds loading/disabled feedback and reduced-motion-safe refresh animation.
+- Keeps the dashboard grouped into **Start & measure**, **Unify & attribute**, **Convert with agents**, and **Activate & operate** so the growing product remains navigable.
+
+This is part of the dashboard production-polish pass. The live counters are sourced from backend state and must not be presented as provider-verified external status unless the connected provider account has also been verified in the target deployment environment.
