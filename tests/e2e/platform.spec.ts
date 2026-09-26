@@ -233,8 +233,11 @@ test('dashboard navigator opens primary operating sections', async ({ page }) =>
   await expect(page.getByRole('button', { name: 'Open dashboard section navigator' })).toBeVisible()
   await page.getByRole('button', { name: 'Open dashboard section navigator' }).click()
   await expect(page.getByRole('dialog', { name: 'Dashboard section navigator' })).toBeVisible()
-  await page.getByRole('dialog', { name: 'Dashboard section navigator' }).locator('button').filter({ hasText: 'Attribution' }).click()
-  await expect(page.getByText('Attribution', { exact: false }).first()).toBeVisible()
+  const navigator=page.getByRole('dialog', { name: 'Dashboard section navigator' })
+  const attributionButton=navigator.locator('button').filter({has:page.getByText('Attribution',{exact:true})}).first()
+  await expect(attributionButton).toBeVisible()
+  await attributionButton.click()
+  await expect(page.getByRole('heading', { name: 'Full-path attribution' })).toBeVisible()
 })
 
 
