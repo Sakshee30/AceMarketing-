@@ -188,6 +188,7 @@ export const api = {
   approvals: () => request('/approvals'),
   decideApproval: (id: string, decision: 'approved' | 'rejected') => request('/approvals/decision', { method: 'POST', body: JSON.stringify({ id, decision }) }),
   createAgent: (payload: Record<string, unknown>) => request('/agents/custom', { method: 'POST', body: JSON.stringify(payload) }),
+  testCustomAgent: (payload: Record<string, unknown>) => request('/agents/custom/test', { method: 'POST', body: JSON.stringify(payload) }),
   audiences: () => request('/audiences'),
   audienceSchedules: () => request('/audience-schedules'),
   saveAudienceSchedule: (id:string,cadence:string,enabled=true,maxStalenessSeconds?:number) => request('/audience-schedules',{method:'POST',body:JSON.stringify({id,cadence,enabled,maxStalenessSeconds})}),
