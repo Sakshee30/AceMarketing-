@@ -143,6 +143,26 @@ test.describe('workspace critical flows',()=>{
     }
   })
 
+  test('reconciliation center exposes live discrepancy evidence and persists repair actions',async({page})=>{
+    const response=await page.request.get('/api/reconciliation')
+    expect(response.ok()).toBeTruthy()
+    const payload=await response.json()
+    expect(payload.available).toBeTruthy()
+    expect(typeof payload.score).toBe('number')
+    expect(Array.isArray(payload.issues)).toBeTruthy()
+
+    const action=await page.request.post('/api/reconciliation/action',{data:{issue:'duplicate_evidence',limit:25}})
+    expect(action.ok()).toBeTruthy()
+    const actionPayload=await action.json()
+    expect(actionPayload.status).toBe('review')
+
+    await openWorkspaceTab(page,'Reconciliation')
+    await expect(page.getByRole('heading',{name:'Conversion reconciliation center'})).toBeVisible()
+    await expect(page.getByText('Issue reconciliation')).toBeVisible()
+    await expect(page.getByText('Destination delivery comparison')).toBeVisible()
+    await expect(page.getByText(/Duplicate evidence/i)).toBeVisible()
+  })
+
   test('real-time activation persists rules and executes on matching consented events',async({page},testInfo)=>{
     const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()
     const customerId='activation_customer_'+suffix
@@ -747,7 +767,7 @@ test('all workspace sections render without a frontend crash', async ({ page }) 
   await dismissConsent(page)
 
   const tabs=[
-    'Launchpad','Overview','AdSync','Funnel','Events','Adjustments','Diagnostics','Fraud','Deep Links','Sites','Fingerprinting',
+    'Launchpad','Overview','AdSync','Funnel','Events','Adjustments','Diagnostics','Reconciliation','Fraud','Deep Links','Sites','Fingerprinting',
     'Live Sync','Data Hub','Customer 360','Offline Attribution','Matchback','POS & Stores','Journeys','Identity','Models','Attribution','Planner','Reports',
     'Enrich','Lead Grading','Behavior','Feed','Agents','Routing','Follow-ups','Calls','Meetings','Feedback','Approvals','Ask Ace',
     'Integrations','Data Flows','Real-Time Activation','Audiences','Delivery','Monitoring','Alerts','Developers','Settings'
