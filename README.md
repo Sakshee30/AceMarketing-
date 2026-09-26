@@ -3934,3 +3934,17 @@ Implemented:
 - Playwright coverage creates a persisted lead, forces Grade A, executes the activation, opens Routing and verifies the resulting priority routing decision.
 
 This makes "Use grade in activation" a real workflow rather than a presentation-only action.
+
+
+## Dashboard reliability and accessibility follow-up
+
+A CI-driven reliability pass removed several false negatives and one real public-surface accessibility defect.
+
+Implemented:
+- CI raises `RATE_LIMIT_PER_MINUTE` only inside GitHub Actions so the combined smoke/load/Playwright suite does not throttle itself; the production default remains unchanged;
+- sidebar collapse assertions now verify visual collapse instead of DOM removal;
+- Behavior E2E selectors are scoped to the Behavior tab strip and analysis rows;
+- public header brand, mobile navigation toggle and footer brand now expose explicit accessible names;
+- the latest public-surface accessibility regression therefore tests real named controls instead of silently tolerating icon-only buttons.
+
+The previous CI run improved to 83/94 Playwright tests passing after the rate-limit correction; the current head includes the additional API wiring, selector, accessibility and runtime fixes that address several of the remaining failures.
