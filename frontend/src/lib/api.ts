@@ -141,6 +141,9 @@ export const api = {
     if(filters?.periodDays)params.set('periodDays',String(filters.periodDays))
     return request('/funnel'+(params.toString()?'?'+params.toString():''))
   },
+  leakMonitor: () => request('/leak-monitor'),
+  saveLeakMonitorSettings: (payload: Record<string,unknown>) => request('/leak-monitor/settings',{method:'POST',body:JSON.stringify(payload)}),
+  recoverLeak: (payload: Record<string,unknown>) => request('/leak-monitor/recover',{method:'POST',body:JSON.stringify(payload)}),
   liveSync: () => request('/live-sync'),
   dataHub: () => request('/data-hub'),
   rebuildDataHub: () => request('/data-hub/rebuild', { method: 'POST', body: JSON.stringify({}) }),
