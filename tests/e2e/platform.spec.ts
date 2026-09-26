@@ -754,3 +754,45 @@ test('audience waste-control preset materializes a real suppression segment', as
   await expect(row).toBeVisible()
   await expect(row).toContainText('Suppress')
 })
+
+
+test('behavior workspace analyzes persisted source campaign and device evidence', async ({ page }, testInfo) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()+'_'+Date.now()
+  const source='ci_behavior_source_'+suffix
+  const campaign='ci_behavior_campaign_'+suffix
+  const visitor='ci_behavior_visitor_'+suffix
+
+  for(const [event,device] of [['page_view','desktop'],['pricing_view','mobile'],['consultation_booked','mobile']] as const){
+    const response=await page.request.post('/api/track',{data:{
+      event,
+      eventCategory:'essential',
+      visitorId:visitor,
+      deviceId:visitor+'_device',
+      devicePlatform:device,
+      utm_source:source,
+      utm_medium:'cpc',
+      utm_campaign:campaign,
+      occurredAt:new Date().toISOString()
+    }})
+    expect(response.ok()).toBeTruthy()
+  }
+
+  await openWorkspaceTab(page,'Behavior')
+  await expect(page.getByRole('heading',{name:'Website & app behavior'})).toBeVisible()
+  await expect(page.getByText('Persisted workspace event window',{exact:true})).toBeVisible()
+
+  await page.getByRole('button',{name:'Sources',exact:true}).click()
+  await expect(page.getByText(source,{exact:true}).first()).toBeVisible()
+
+  await page.getByRole('button',{name:'Campaigns',exact:true}).click()
+  await expect(page.getByText(campaign,{exact:true}).first()).toBeVisible()
+
+  await page.getByRole('button',{name:'Devices',exact:true}).click()
+  await expect(page.getByText('mobile',{exact:true}).first()).toBeVisible()
+
+  await page.getByRole('button',{name:'Events',exact:true}).click()
+  await expect(page.getByText('pricing view',{exact:true}).first()).toBeVisible()
+  await expect(page.getByText('consultation booked',{exact:true}).first()).toBeVisible()
+})
