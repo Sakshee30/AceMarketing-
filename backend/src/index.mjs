@@ -3554,7 +3554,7 @@ const server = http.createServer(async (req,res)=>{
         else if(name==='Custom Integration'&&customIntegrations.length)status='configured'
         else if((name==='Lead Grading'||name==='CRM Enrichment')&&hasProfiles)status='configured'
         else if(name==='Voice Lead Qualification'&&(process.env.VOICE_QUALIFICATION_WEBHOOK_URL||process.env.VOICE_AGENT_WEBHOOK_URL))status='configured'
-        else if(name==='Voice Scheduler'&&(connected.has('Google Calendar')||(state.meetings||[]).length))status='configured'
+        else if(name==='Voice Scheduler'&&(process.env.VOICE_SCHEDULER_WEBHOOK_URL||process.env.VOICE_AGENT_WEBHOOK_URL))status='configured'
         else if(name==='Meeting Reminder'&&process.env.MEETING_REMINDER_WEBHOOK_URL)status='configured'
         else if(name==='Feedback Agent'&&process.env.FEEDBACK_WEBHOOK_URL)status='configured'
         else if(name==='Lead Reactivation'&&hasProfiles)status='configured'
@@ -4613,6 +4613,36 @@ const server = http.createServer(async (req,res)=>{
       if(!body.id) return send(req,res,400,{error:'id required'})
       const updated=await persistCompleteFollowUp(workspaceId,String(body.id))
       return updated?send(req,res,200,updated):send(req,res,404,{error:'follow-up not found'})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/voice-scheduler') {
+      const runs=(await listAgentRuns(workspaceId,100)).filter(x=>x.agent_type==='voice_scheduler')
+      return send(req,res,200,{items:runs.map(x=>({id:x.id,lead:x.input?.lead||x.input?.leadRef||x.entity_id||'Lead',phone:x.input?.phone||x.input?.attendeePhone||'',status:x.status,preferredWindow:x.input?.preferredWindow||null,proposedStartsAt:x.input?.proposedStartsAt||null,meetingId:x.output?.meetingId||null,startsAt:x.output?.startsAt||null,meetingLink:x.output?.meetingLink||null,calendarSynced:Boolean(x.output?.calendarSynced),schedulerStatus:x.output?.schedulerStatus||null,externalId:x.external_id,lastError:x.last_error,createdAt:x.created_at}))})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/voice-scheduler') {
+      const body=await readBody(req)
+      const leadRef=String(body.leadRef||body.lead||'').trim()
+      const phone=String(body.phone||body.attendeePhone||'').trim()
+      if(!leadRef)return send(req,res,400,{error:'leadRef or lead required'})
+      if(!phone)return send(req,res,400,{error:'phone required'})
+      if(body.proposedStartsAt&&Number.isNaN(Date.parse(String(body.proposedStartsAt))))return send(req,res,400,{error:'invalid proposedStartsAt'})
+      const input={
+        leadRef,
+        lead:String(body.lead||leadRef),
+        phone,
+        attendeePhone:phone,
+        attendeeEmail:String(body.attendeeEmail||'').trim(),
+        preferredWindow:String(body.preferredWindow||'').trim(),
+        proposedStartsAt:body.proposedStartsAt?new Date(body.proposedStartsAt).toISOString():null,
+        durationMinutes:Math.max(15,Math.min(180,Number(body.durationMinutes||45))),
+        owner:String(body.owner||'Voice Scheduler'),
+        title:String(body.title||('Consultation · '+leadRef)),
+        syncCalendar:body.syncCalendar!==false,
+        requireCalendar:body.requireCalendar===true,
+        timezone:String(body.timezone||'Asia/Kolkata')
+      }
+      const run=await createAgentRun(workspaceId,{agentType:'voice_scheduler',entityId:leadRef,triggerKey:String(body.trigger||'manual_voice_scheduler'),input})
+      const job=await enqueueJob({workspaceId,kind:'agent_action',idempotencyKey:'agent:'+run.id,payload:{agentRunId:run.id,actionType:'voice_scheduler',payload:{...input,runId:run.id}}})
+      return send(req,res,202,{id:run.id,status:'queued',jobId:job?.id||null,leadRef})
     }
     if (req.method === 'GET' && url.pathname === '/api/qualification-calls') {
       const runs=(await listAgentRuns(workspaceId,100)).filter(x=>x.agent_type==='voice_qualification')
