@@ -1041,3 +1041,60 @@ test('signal-return quick starts create real pipelines and open live modules', a
   await callCard.getByRole('button',{name:'Open module',exact:true}).click()
   await expect(page.getByRole('heading',{name:'Voice qualification & call tracking'})).toBeVisible()
 })
+
+
+test('funnel supports account-level drilldown and stage conversion rates', async ({ page }, testInfo) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()+'_'+Date.now()
+  const alphaLead='ci_funnel_alpha_'+suffix
+  const betaLead='ci_funnel_beta_'+suffix
+
+  const alpha=await page.request.post('/api/enrich/upsert',{data:{
+    externalLeadId:alphaLead,
+    name:'Alpha Lead '+suffix,
+    source:'Google Ads',
+    campaign:'Campaign Alpha',
+    crmStage:'consultation',
+    journeyDepth:4,
+    attributes:{adAccountName:'Account Alpha'}
+  }})
+  expect(alpha.ok()).toBeTruthy()
+
+  const beta=await page.request.post('/api/enrich/upsert',{data:{
+    externalLeadId:betaLead,
+    name:'Beta Lead '+suffix,
+    source:'Google Ads',
+    campaign:'Campaign Beta',
+    crmStage:'lead',
+    journeyDepth:1,
+    attributes:{adAccountName:'Account Beta'}
+  }})
+  expect(beta.ok()).toBeTruthy()
+
+  const meeting=await page.request.post('/api/meetings',{data:{
+    leadRef:alphaLead,
+    startsAt:new Date(Date.now()+60*60*1000).toISOString(),
+    owner:'CI Counsellor',
+    reminderPlan:['voice'],
+    syncCalendar:false
+  }})
+  expect(meeting.ok()).toBeTruthy()
+
+  const apiResponse=await page.request.get('/api/funnel?account=Account%20Alpha&periodDays=30')
+  expect(apiResponse.ok()).toBeTruthy()
+  const payload=await apiResponse.json()
+  expect(payload.filters.account).toBe('Account Alpha')
+  expect(payload.campaigns.some((x:any)=>x.name==='Campaign Alpha'&&x.account==='Account Alpha')).toBeTruthy()
+  expect(payload.campaigns.some((x:any)=>x.name==='Campaign Beta')).toBeFalsy()
+  expect(payload.stageRates.leadToQualified).toBeGreaterThan(0)
+
+  await openWorkspaceTab(page,'Funnel')
+  await expect(page.getByRole('heading',{name:'Channel, account & campaign funnel'})).toBeVisible()
+  const accountButton=page.getByRole('button',{name:/All accounts/})
+  await accountButton.click()
+  await expect(page.getByRole('button',{name:/Account Alpha/})).toBeVisible()
+  await expect(page.getByText('Campaign Alpha',{exact:true}).first()).toBeVisible()
+  await expect(page.locator('.funnel-campaign-detail')).toContainText('Account Alpha')
+  await expect(page.locator('.funnel-campaign-detail')).toContainText('Lead → Qualified')
+})
