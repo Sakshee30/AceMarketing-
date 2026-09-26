@@ -666,3 +666,38 @@ test('attribution workspace ranks persisted channel and campaign evidence', asyn
   await expect(page.getByText('closed won', { exact: true }).first()).toBeVisible()
   await expect(page.getByText(/12500|12,500/).first()).toBeVisible()
 })
+
+
+test('custom agent can execute a governed routing test', async ({ page }, testInfo) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  await openWorkspaceTab(page,'Agents')
+  await expect(page.getByRole('heading', { name: 'Agent operations' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Build custom agent' }).click()
+  const form=page.locator('.custom-agent-builder')
+  const name='CI Routing Agent '+testInfo.project.name
+  await form.getByLabel('Agent name').fill(name)
+  await form.getByLabel('Trigger').selectOption('Lead becomes qualified')
+  await form.getByLabel('Action').selectOption('Route to sales queue')
+  await form.getByLabel('Approval').selectOption('Auto-run low risk')
+  await form.getByRole('button', { name: 'Create agent' }).click()
+
+  await expect(page.getByText('Custom agent created and activated.', { exact: true })).toBeVisible()
+  await expect(page.locator('.agent-selector').getByText(name, { exact: true }).first()).toBeVisible()
+  await page.getByRole('button', { name: 'Test agent' }).click()
+
+  const tester=page.locator('.custom-agent-test')
+  await tester.getByLabel('Lead / entity reference').fill('ci_agent_lead_'+testInfo.project.name)
+  await tester.getByLabel('Lead score').fill('93')
+  await tester.getByLabel('Source').fill('CI Website')
+  await tester.getByLabel('Routing destination').fill('CI Sales Queue')
+  await tester.getByRole('button', { name: 'Run test' }).click()
+
+  await expect(page.getByText('Custom agent test completed and persisted as an agent run.', { exact: true })).toBeVisible()
+  await expect(page.getByText('Last test succeeded', { exact: true })).toBeVisible()
+  await expect(page.getByText(/CI Sales Queue/)).toBeVisible()
+
+  await openWorkspaceTab(page,'Routing')
+  await expect(page.getByText('CI Sales Queue', { exact: true }).first()).toBeVisible()
+})
