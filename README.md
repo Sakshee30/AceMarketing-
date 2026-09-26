@@ -5172,3 +5172,130 @@ Playwright now:
 ### Product-parity note
 
 EasyInsights publicly describes grouping and product/category-level performance analysis in its customer-success material. AceMarketing implements the same category of workflow with its own UI, code, evidence model and profitability safeguards rather than copying proprietary source code, text or branded assets.
+
+
+## Funnel leak monitor implementation
+
+This pass adds a dedicated **Funnel Leak Monitor** to AceMarketing on `main`.
+
+### Why this exists
+
+EasyInsights' current product positioning emphasizes step-by-step funnel monitoring and agents that catch losses at each handoff between lead capture, CRM, calling, meetings and revenue. AceMarketing already had individual routing, follow-up, call and meeting workspaces; this implementation adds the missing cross-stage leak detector.
+
+### Backend contracts
+
+New endpoints:
+
+- `GET /api/leak-monitor`
+- `POST /api/leak-monitor/settings`
+- `POST /api/leak-monitor/recover`
+
+### Leak detection
+
+The monitor evaluates persisted active lead profiles against:
+
+- current CRM stage;
+- last persisted activity time;
+- stage-specific inactivity threshold;
+- routing-decision evidence;
+- open follow-up evidence;
+- future meeting evidence.
+
+Converted/customer stages are excluded from the leak queue.
+
+Default inactivity thresholds are:
+
+- new: 30 minutes;
+- lead: 60 minutes;
+- qualified: 60 minutes;
+- routed: 120 minutes;
+- contacted: 240 minutes;
+- consultation: 720 minutes.
+
+Operators can change these thresholds without mutating or deleting any lead records.
+
+The monitor also detects missing handoffs even before a stage has exceeded its time threshold, including:
+
+- qualified lead with no routing decision;
+- routed lead with no open follow-up;
+- contacted lead with no future meeting;
+- consultation-stage lead with no recovery follow-up.
+
+### Severity
+
+Leak severity is derived from the evidence:
+
+- **medium** — stalled or missing handoff;
+- **high** — activity is at least twice the stage threshold;
+- **critical** — missing handoff plus severe time overrun.
+
+The queue is sorted by severity and time stalled.
+
+### Recovery action
+
+`POST /api/leak-monitor/recover` creates a real persisted follow-up task through the existing agent-orchestrator follow-up store.
+
+The action supports:
+
+- call / voice;
+- WhatsApp;
+- email;
+- configurable priority;
+- optional delay;
+- recovery reason;
+- assigned recovery queue/owner.
+
+The backend protects against creating another open leak-recovery follow-up for the same lead.
+
+Every recovery also creates:
+
+- a persisted `leakRecoveries` record;
+- an audit event;
+- a real follow-up task visible in the existing Follow-ups workspace.
+
+### Frontend workspace
+
+New dashboard section:
+
+**Tracking & Data → Leak Monitor**
+
+Operators can:
+
+1. See total, critical and high-priority leaks.
+2. See how many recovery actions are already queued.
+3. Inspect leak counts by funnel stage.
+4. Inspect lead grade, score, source and campaign.
+5. See inactivity duration vs stage threshold.
+6. See routing, follow-up and meeting evidence.
+7. Queue a recovery follow-up directly from the leak row.
+8. Configure stage inactivity thresholds.
+9. Review recent recovery actions.
+
+The layout is responsive and uses the existing AceMarketing dashboard interaction system.
+
+### Dashboard integration
+
+Leak Monitor is included in:
+
+- the main workspace sidebar;
+- the global dashboard navigator;
+- dashboard section health;
+- the full workspace render regression sweep.
+
+### Regression coverage
+
+Playwright now:
+
+- records consent for a unique test lead;
+- tracks a real qualified lead;
+- leaves that lead intentionally without a routing decision;
+- verifies the Leak Monitor detects the missing routing handoff;
+- queues a recovery;
+- verifies a real follow-up task is persisted;
+- opens the Leak Monitor workspace;
+- verifies the lead and recovery state are visible;
+- includes Leak Monitor in the complete workspace render sweep.
+
+### Product-parity note
+
+EasyInsights publicly describes full-funnel monitoring and agents that catch leaks at handoffs before they cost conversions. AceMarketing implements the comparable workflow using its own lead-profile, routing, follow-up, meeting and audit stores rather than copying proprietary source code, copy or branded assets.
