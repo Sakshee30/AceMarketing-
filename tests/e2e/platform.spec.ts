@@ -29,6 +29,10 @@ const openWorkspaceTab=async(page:any,name:string)=>{
     window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:tab}))
   },name)
   await expect(body).toBeVisible()
+  const sectionError=page.locator('.workspace-section-error')
+  if(await sectionError.isVisible().catch(()=>false)){
+    throw new Error('Workspace section '+name+' render failure: '+(await sectionError.innerText()))
+  }
   await expect.poll(async()=>page.evaluate((tab)=>localStorage.getItem('ace_active_tab')===tab,name),{message:'Expected active workspace tab '+name}).toBeTruthy()
 }
 
