@@ -5,7 +5,8 @@ import { syncAudienceProvider, writebackLead } from './activation-adapters.mjs'
 import { closeLeadOps, updateActivationRun, updateAudienceSyncState } from './lead-ops.mjs'
 import { closeAudienceScheduler, runDueAudienceSchedules } from './audience-scheduler.mjs'
 import { closeReportScheduler, deliverReport, markReportDeliveryFailure, runDueReportSchedules } from './report-scheduler.mjs'
-import { dispatchAgentTransport, markMeetingReminder, updateAgentRun } from './agent-orchestrator.mjs'
+import { createMeeting, dispatchAgentTransport, markMeetingReminder, updateAgentRun } from './agent-orchestrator.mjs'
+import { createCalendarEvent } from './calendar-provider.mjs'
 import { closeStore, mutateState, withWorkspace } from './store.mjs'
 
 if(!queueAvailable()) throw new Error('DATABASE_URL is required for the worker runtime')
@@ -58,8 +59,45 @@ const handle=async job=>{
     await updateAgentRun(job.workspace_id,agentRunId,{status:'running',attempts:job.attempts})
     const result=await dispatchAgentTransport(actionType,payload||{})
     if(actionType==='meeting_reminder'&&payload?.meetingId) await markMeetingReminder(job.workspace_id,payload.meetingId)
-    await updateAgentRun(job.workspace_id,agentRunId,{status:'succeeded',externalId:result.externalId,output:{provider:result.provider,status:result.status},attempts:job.attempts})
-    return result
+    let schedulerMeeting=null
+    let calendar=null
+    if(actionType==='voice_scheduler'){
+      const confirmedStartsAt=result.response?.startsAt||result.response?.confirmedStartsAt||null
+      if(confirmedStartsAt){
+        const attendeeEmail=result.response?.attendeeEmail||payload?.attendeeEmail||''
+        const attendeePhone=result.response?.attendeePhone||payload?.phone||payload?.attendeePhone||''
+        const leadRef=payload?.leadRef||payload?.lead||payload?.customerId||'voice_scheduler_lead'
+        if(payload?.syncCalendar!==false){
+          try{
+            calendar=await createCalendarEvent(job.workspace_id,{
+              leadRef,
+              startsAt:confirmedStartsAt,
+              durationMinutes:Number(result.response?.durationMinutes||payload?.durationMinutes||45),
+              title:result.response?.title||payload?.title||('Consultation · '+String(leadRef)),
+              attendees:attendeeEmail?[attendeeEmail]:[]
+            })
+          }catch(error){
+            if(payload?.requireCalendar===true) throw error
+          }
+        }
+        schedulerMeeting=await createMeeting(job.workspace_id,{
+          leadRef,
+          startsAt:confirmedStartsAt,
+          owner:result.response?.owner||payload?.owner||'Voice Scheduler',
+          attendeeEmail,
+          attendeePhone,
+          status:'confirmed',
+          reminderPlan:['24h','3h','30m'],
+          externalCalendarId:calendar?.externalId||'',
+          meetingLink:calendar?.meetingLink||result.response?.meetingLink||'',
+          calendarHtmlLink:calendar?.htmlLink||'',
+          risk:'low'
+        })
+      }
+    }
+    const output={provider:result.provider,status:result.status,...(schedulerMeeting?{meetingId:schedulerMeeting.id,startsAt:schedulerMeeting.starts_at,meetingLink:schedulerMeeting.meeting_link||null,calendarSynced:Boolean(calendar?.externalId)}:{schedulerStatus:actionType==='voice_scheduler'?'provider_accepted_no_confirmed_time':undefined})}
+    await updateAgentRun(job.workspace_id,agentRunId,{status:'succeeded',externalId:result.externalId,output,attempts:job.attempts})
+    return {...result,...(schedulerMeeting?{meeting:schedulerMeeting,calendar}: {})}
   }
   throw new Error('unsupported job kind: '+job.kind)
 }
