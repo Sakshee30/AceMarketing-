@@ -4423,3 +4423,82 @@ Real-Time Activation is also included in the full workspace-section render sweep
 ### Product-parity note
 
 EasyInsights publicly describes trigger-based real-time activation, dynamic audience/suppression workflows, first-party custom-event activation and personalized marketing based on current behavior. AceMarketing implements the comparable event-to-action workflow with its own UI, code, data contracts and operational controls.
+
+
+## Conversion reconciliation center
+
+This pass adds a dedicated **Reconciliation** workspace on `main` to explain and repair conversion-count gaps using AceMarketing's own persisted evidence.
+
+### Backend
+
+New endpoints:
+
+- `GET /api/reconciliation`
+- `POST /api/reconciliation/action`
+
+The reconciliation summary combines:
+
+- tracked first-party events;
+- assisted/offline attribution events;
+- matched vs unmatched attribution;
+- signal delivery status by destination;
+- failed/dead-letter deliveries;
+- duplicate evidence recorded by idempotency/audit controls;
+- quarantined schema/field events;
+- pending conversion adjustments;
+- persisted reconciliation action history.
+
+The endpoint also calculates a workspace reconciliation quality score from unmatched, failed, duplicate and quarantined evidence.
+
+### Repair actions
+
+Operators can run safe actions from the reconciliation center:
+
+1. **Unmatched attribution** — re-runs the existing attribution reconciliation service.
+2. **Failed deliveries** — re-queues failed/dead-letter provider signals through the existing durable signal-delivery queue.
+3. **Duplicate evidence** — creates a persisted review action rather than destructively deleting records.
+4. **Quarantined events** — creates a persisted schema-review action rather than silently accepting invalid events.
+
+Every action creates a reconciliation audit record with status, detail, actor and timestamp.
+
+### Frontend
+
+New dashboard section:
+
+**Tracking & Data → Reconciliation**
+
+The workspace displays:
+
+- overall reconciliation quality score;
+- unmatched attribution count;
+- failed delivery count;
+- quarantined-event count;
+- issue-by-issue repair controls;
+- destination delivery comparison;
+- tracked/assisted/matched/delivery evidence totals;
+- duplicate and pending-adjustment evidence;
+- recent reconciliation action history.
+
+The destination comparison explicitly represents **AceMarketing-sent delivery records**, not external provider-reported conversion totals, so the UI does not fabricate Meta, Google or GA4 numbers that have not actually been retrieved.
+
+### Navigation and health
+
+Reconciliation is included in:
+
+- the main workspace sidebar;
+- the global dashboard navigator;
+- dashboard section health;
+- the complete workspace render regression sweep.
+
+### Regression coverage
+
+Playwright now verifies:
+
+- the reconciliation API contract;
+- quality score and issue data;
+- a persisted duplicate-review action;
+- the Reconciliation workspace renders its issue and destination-comparison surfaces.
+
+### Product-parity note
+
+EasyInsights publicly describes server-side forwarding, cross-channel stitching, cleansing/normalization, deduplication, enhanced matching and conversion discrepancy resolution across Meta, Google and analytics systems. AceMarketing implements the comparable operator workflow using its own UI, code and data contracts while keeping provider-reported metrics separate from internally observed delivery evidence.
