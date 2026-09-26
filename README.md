@@ -3821,3 +3821,23 @@ Implemented:
 - Playwright coverage that creates a real tracked click session + assisted closed-won outcome and verifies the source/campaign attribution appears in the UI.
 
 The attribution engine remains deterministic: customer ID, click IDs, hashed phone/email and visitor identity are used in priority order. Unmatched events remain unmatched until sufficient evidence exists.
+
+
+## Governed custom-agent execution pass
+
+Custom agents now have an operational test path instead of stopping at configuration storage.
+
+Implemented:
+- `POST /api/agents/custom/test`;
+- approval gating: pending or rejected agents cannot execute tests;
+- persisted custom-agent test runs through the existing agent orchestration store;
+- successful test runs complete with explicit output evidence;
+- safe `Route to sales queue` actions execute a real persisted routing decision;
+- external mutation actions (CRM write, conversion signal return, audience suppression) remain behind their dedicated governed integration workflows instead of being simulated;
+- Agents UI now links pending custom agents to the Approval Center;
+- active custom agents expose a Test Agent workflow with lead/entity context, score, source and routing destination;
+- last test result is displayed with persisted operation evidence;
+- recent runs are filtered to the selected custom agent;
+- Playwright coverage creates an auto-run routing agent, executes it, and verifies the resulting routing decision appears in the Routing workspace.
+
+This preserves the platform's human-approval boundary while making custom agents demonstrably executable where the action is safe and fully supported.
