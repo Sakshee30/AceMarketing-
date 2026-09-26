@@ -677,6 +677,7 @@ const server = http.createServer(async (req,res)=>{
         Attribution:section(Number(attr?.matchedEvents||0)>0?'live':attr?.available?'attention':'setup',Number(attr?.matchedEvents||0),Number(attr?.matchedEvents||0)+' matched conversions'),
         Planner:section(Number(attr?.matchedEvents||0)>0?'live':attr?.available?'attention':'setup',Number(attr?.matchedEvents||0),Number(attr?.matchedEvents||0)+' matched events for planning'),
         Reports:section(reportSchedules.length?'live':Number(attr?.matchedEvents||0)>0?'attention':'setup',reportSchedules.length,reportSchedules.length+' scheduled reports'),
+        'Grouped Performance':section((state.recentEvents||[]).length?'live':'setup',(state.recentEvents||[]).length,(state.recentEvents||[]).length+' persisted events available for grouping'),
         'Executive Briefs':section(reportSchedules.some(x=>x.report_type==='executive_brief')?'live':reportMailConfigured()?'attention':'setup',reportSchedules.filter(x=>x.report_type==='executive_brief').length,reportSchedules.filter(x=>x.report_type==='executive_brief').length+' executive briefs'),
         Enrich:section(profiles?'live':'setup',profiles,profiles+' enriched profiles'),
         'Lead Grading':section(profiles?'live':'setup',Number(leadStats?.abQuality||0),Number(leadStats?.abQuality||0)+' A/B leads'),
@@ -3042,6 +3043,96 @@ const server = http.createServer(async (req,res)=>{
         s.audit=s.audit.slice(0,1000)
       })
       return send(req,res,201,item)
+    }
+    if (req.method === 'GET' && url.pathname === '/api/grouped-performance') {
+      const state=await getState()
+      const dimension=String(url.searchParams.get('dimension')||'category')
+      const allowed=new Set(['category','productCategory','product','brand','source','campaign'])
+      if(!allowed.has(dimension)) return send(req,res,400,{error:'unsupported grouping dimension'})
+      const analytics=await cohortAnalytics(workspaceId,{months:Number(url.searchParams.get('months')||6)}).catch(()=>({available:false,eventDefinitions:{conversion:[]}}))
+      const conversionEvents=new Set((analytics.eventDefinitions?.conversion||[]).map(x=>String(x).toLowerCase()))
+      const events=(state.recentEvents||[]).slice(0,5000)
+      const costs=state.groupingCosts?.[dimension]||{}
+      const rows=new Map()
+      const pick=(event,key)=>{
+        const aliases={
+          category:['category','productCategory','product_category'],
+          productCategory:['productCategory','product_category','category'],
+          product:['product','productName','product_name','sku'],
+          brand:['brand'],
+          source:['source','utm_source'],
+          campaign:['campaign','utm_campaign']
+        }[key]||[key]
+        for(const name of aliases){
+          if(event[name]!=null&&String(event[name]).trim())return String(event[name]).trim()
+          if(event.data&&event.data[name]!=null&&String(event.data[name]).trim())return String(event.data[name]).trim()
+          if(event.properties&&event.properties[name]!=null&&String(event.properties[name]).trim())return String(event.properties[name]).trim()
+        }
+        return 'Unassigned'
+      }
+      const subject=e=>String(e.customerId||e.leadId||e.visitorId||e.deviceId||e.device_id||e.emailSha256||e.phoneSha256||e.id||'')
+      for(const event of events){
+        const key=pick(event,dimension)
+        const row=rows.get(key)||{key,events:0,subjects:new Set(),conversions:new Set(),revenue:0}
+        row.events++
+        row.subjects.add(subject(event))
+        const eventName=String(event.event||event.eventType||event.name||'').toLowerCase()
+        if(conversionEvents.has(eventName)){
+          row.conversions.add(subject(event))
+          const value=Number(event.value??event.revenue??event.amount??event.data?.value??0)
+          if(Number.isFinite(value))row.revenue+=value
+        }
+        rows.set(key,row)
+      }
+      const items=[...rows.values()].map(row=>{
+        const costRaw=costs[row.key]
+        const cost=costRaw==null?null:Number(costRaw)
+        const contribution=cost==null?null:Number((row.revenue-cost).toFixed(2))
+        const marginRate=cost==null||row.revenue<=0?null:Number(((row.revenue-cost)/row.revenue*100).toFixed(1))
+        return {
+          key:row.key,
+          events:row.events,
+          subjects:row.subjects.size,
+          conversions:row.conversions.size,
+          conversionRate:row.subjects.size?Number((row.conversions.size/row.subjects.size*100).toFixed(1)):0,
+          revenue:Number(row.revenue.toFixed(2)),
+          cost,
+          contribution,
+          marginRate
+        }
+      }).sort((a,b)=>b.revenue-a.revenue||b.conversions-a.conversions||b.subjects-a.subjects)
+      const totals=items.reduce((a,x)=>({events:a.events+x.events,subjects:a.subjects+x.subjects,conversions:a.conversions+x.conversions,revenue:a.revenue+x.revenue,cost:a.cost+(x.cost||0),costedGroups:a.costedGroups+(x.cost!=null?1:0)}),{events:0,subjects:0,conversions:0,revenue:0,cost:0,costedGroups:0})
+      return send(req,res,200,{
+        dimension,
+        available:events.length>0,
+        conversionEvents:[...conversionEvents],
+        totals:{...totals,conversionRate:totals.subjects?Number((totals.conversions/totals.subjects*100).toFixed(1)):0,contribution:totals.costedGroups?Number((totals.revenue-totals.cost).toFixed(2)):null,marginRate:totals.costedGroups&&totals.revenue>0?Number(((totals.revenue-totals.cost)/totals.revenue*100).toFixed(1)):null},
+        items,
+        generatedAt:new Date().toISOString()
+      })
+    }
+    if (req.method === 'POST' && url.pathname === '/api/grouped-performance/costs') {
+      const body=await readBody(req)
+      const dimension=String(body.dimension||'')
+      const key=String(body.key||'').trim()
+      const allowed=new Set(['category','productCategory','product','brand','source','campaign'])
+      if(!allowed.has(dimension)) return send(req,res,400,{error:'unsupported grouping dimension'})
+      if(!key) return send(req,res,400,{error:'group key required'})
+      if(body.cost===null||body.cost===''){
+        await mutateState(s=>{s.groupingCosts=s.groupingCosts||{};s.groupingCosts[dimension]=s.groupingCosts[dimension]||{};delete s.groupingCosts[dimension][key]})
+        return send(req,res,200,{dimension,key,cost:null})
+      }
+      const cost=Number(body.cost)
+      if(!Number.isFinite(cost)||cost<0) return send(req,res,400,{error:'cost must be a non-negative number'})
+      await mutateState(s=>{
+        s.groupingCosts=s.groupingCosts||{}
+        s.groupingCosts[dimension]=s.groupingCosts[dimension]||{}
+        s.groupingCosts[dimension][key]=Number(cost.toFixed(2))
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'grouped_performance.cost_saved',dimension,group:key,cost:Number(cost.toFixed(2)),at:new Date().toISOString()})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,200,{dimension,key,cost:Number(cost.toFixed(2))})
     }
     if (req.method === 'GET' && url.pathname === '/api/cohorts') {
       const months=Number(url.searchParams.get('months')||6)
