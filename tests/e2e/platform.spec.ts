@@ -296,8 +296,8 @@ test('funnel period control updates backend-filtered workspace', async ({ page }
   await dismissConsent(page)
   await page.getByLabel('Dashboard sections').getByRole('button', { name: 'Tracking & Data', exact: true }).click()
   await openWorkspaceTab(page,'Funnel')
-  await expect(page.getByRole('heading', { name: 'Channel & campaign funnel' })).toBeVisible()
-  await page.getByRole('button', { name: /Last 30 days/ }).click()
+  await expect(page.getByRole('heading', { name: 'Channel, account & campaign funnel' })).toBeVisible()
+  await page.getByLabel('Funnel period').selectOption('Last 90 days')
   await expect(page.getByText('90 day window')).toBeVisible()
 })
 
@@ -1094,9 +1094,8 @@ test('funnel supports account-level drilldown and stage conversion rates', async
 
   await openWorkspaceTab(page,'Funnel')
   await expect(page.getByRole('heading',{name:'Channel, account & campaign funnel'})).toBeVisible()
-  const accountButton=page.getByRole('button',{name:/All accounts/})
-  await accountButton.click()
-  await expect(page.getByRole('button',{name:/Account Alpha/})).toBeVisible()
+  await page.getByLabel('Funnel account').selectOption('Account Alpha')
+  await expect(page.getByLabel('Funnel account')).toHaveValue('Account Alpha')
   await expect(page.getByText('Campaign Alpha',{exact:true}).first()).toBeVisible()
   await expect(page.locator('.funnel-campaign-detail')).toContainText('Account Alpha')
   await expect(page.locator('.funnel-campaign-detail')).toContainText('Lead → Qualified')
