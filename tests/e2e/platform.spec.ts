@@ -126,6 +126,23 @@ test.describe('workspace critical flows',()=>{
     await expect(page.locator('.product-body h1')).toContainText(/Audience/i)
   })
 
+  test('customer 360 exposes stitched backend profile context',async({page})=>{
+    const response=await page.request.get('/api/customer-360')
+    expect(response.ok()).toBeTruthy()
+    const payload=await response.json()
+    expect(payload.available).toBeTruthy()
+    expect(Array.isArray(payload.items)).toBeTruthy()
+
+    await openWorkspaceTab(page,'Customer 360')
+    await expect(page.getByRole('heading',{name:'Customer 360'})).toBeVisible()
+    await expect(page.getByLabel('Search customer 360 profiles')).toBeVisible()
+    if(payload.customer){
+      await expect(page.locator('.customer360-hero')).toContainText(payload.customer.name)
+      await expect(page.getByText('Unified activity timeline')).toBeVisible()
+      await expect(page.getByText('Identity graph')).toBeVisible()
+    }
+  })
+
   test('data flows persist recipes and enforce readiness before activation',async({page})=>{
     await openWorkspaceTab(page,'Data Flows')
     await expect(page.locator('.product-body h1')).toContainText(/Data flows/i)
@@ -693,7 +710,7 @@ test('all workspace sections render without a frontend crash', async ({ page }) 
 
   const tabs=[
     'Launchpad','Overview','AdSync','Funnel','Events','Adjustments','Diagnostics','Fraud','Deep Links','Sites','Fingerprinting',
-    'Live Sync','Data Hub','Offline Attribution','Matchback','POS & Stores','Journeys','Identity','Models','Attribution','Planner','Reports',
+    'Live Sync','Data Hub','Customer 360','Offline Attribution','Matchback','POS & Stores','Journeys','Identity','Models','Attribution','Planner','Reports',
     'Enrich','Lead Grading','Behavior','Feed','Agents','Routing','Follow-ups','Calls','Meetings','Feedback','Approvals','Ask Ace',
     'Integrations','Data Flows','Audiences','Delivery','Monitoring','Alerts','Developers','Settings'
   ]
