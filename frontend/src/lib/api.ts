@@ -215,6 +215,8 @@ export const api = {
   createActivationRule: (payload: Record<string, unknown>) => request('/activation-rules', { method: 'POST', body: JSON.stringify(payload) }),
   toggleActivationRule: (id:string,enabled:boolean) => request('/activation-rules/toggle', { method: 'POST', body: JSON.stringify({id,enabled}) }),
   testActivationRule: (id:string,event:Record<string,unknown>) => request('/activation-rules/test', { method: 'POST', body: JSON.stringify({id,event}) }),
+  exclusions: () => request('/exclusions'),
+  createExclusion: (preset:string,destination:string,name?:string) => request('/exclusions/create',{method:'POST',body:JSON.stringify({preset,destination,name})}),
   audiences: () => request('/audiences'),
   audienceSchedules: () => request('/audience-schedules'),
   saveAudienceSchedule: (id:string,cadence:string,enabled=true,maxStalenessSeconds?:number) => request('/audience-schedules',{method:'POST',body:JSON.stringify({id,cadence,enabled,maxStalenessSeconds})}),
