@@ -850,3 +850,39 @@ test('CRM enrichment selects a persisted lead and queues writeback evidence', as
   await expect(page.getByText(/CRM writeback queued to HubSpot/)).toBeVisible()
   await expect(page.locator('.enrich-writeback-row').filter({hasText:'HubSpot'}).first()).toContainText('queued')
 })
+
+
+test('lead grading activation creates a persisted downstream operation', async ({ page }, testInfo) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()+'_'+Date.now()
+  const lead='ci_grade_'+suffix
+  const created=await page.request.post('/api/enrich/upsert',{data:{
+    externalLeadId:lead,
+    name:'CI Grade '+suffix,
+    source:'Google Ads',
+    campaign:'CI Grade Campaign',
+    crmStage:'qualified',
+    journeyDepth:5,
+    pricingPageViews:3,
+    conversionPropensity:95
+  }})
+  expect(created.ok()).toBeTruthy()
+
+  const override=await page.request.post('/api/lead-grading/override',{data:{lead,grade:'A'}})
+  expect(override.ok()).toBeTruthy()
+
+  await openWorkspaceTab(page,'Lead Grading')
+  await expect(page.getByRole('heading',{name:'Lead grading'})).toBeVisible()
+  const row=page.locator('.grading-list>button').filter({hasText:lead}).first()
+  await expect(row).toBeVisible()
+  await row.click()
+  await page.getByRole('button',{name:'Use grade in activation'}).click()
+
+  await expect(page.getByText(/Grade A activation created a persisted routing/)).toBeVisible()
+  const result=page.locator('.grade-activation-result')
+  await expect(result).toContainText('Priority sales queue')
+  await result.getByRole('button',{name:/Open Routing/}).click()
+  await expect(page.getByRole('heading',{name:'Lead routing'})).toBeVisible()
+  await expect(page.getByText('Priority sales queue',{exact:true}).first()).toBeVisible()
+})
