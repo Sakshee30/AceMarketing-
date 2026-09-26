@@ -150,11 +150,16 @@ const deliverPinterest=async(_workspaceId,signal)=>{
   const phoneHash=signal.phoneSha256||signal.data?.phoneSha256||(signal.phone?sha(String(signal.phone).replace(/\D/g,'')):'')
   if(phoneHash) userData.ph=[String(phoneHash).toLowerCase()]
   const externalId=signal.externalId||signal.customerId||signal.data?.externalId
-  if(externalId) userData.external_id=[String(externalId)]
-  if(signal.ipAddress||signal.data?.ipAddress) userData.client_ip_address=String(signal.ipAddress||signal.data.ipAddress)
-  if(signal.userAgent||signal.data?.userAgent) userData.client_user_agent=String(signal.userAgent||signal.data.userAgent)
+  if(externalId) userData.external_id=[sha(String(externalId))]
+  const clientIp=signal.ipAddress||signal.data?.ipAddress
+  const clientUa=signal.userAgent||signal.data?.userAgent
+  if(clientIp) userData.client_ip_address=String(clientIp)
+  if(clientUa) userData.client_user_agent=String(clientUa)
   if(signal.epik||signal.data?.epik) userData.click_id=String(signal.epik||signal.data.epik)
-  if(!Object.keys(userData).length) throw new Error('Pinterest conversion requires at least one user identifier or request context field')
+  const maid=signal.androidAdvertisingId||signal.idfa||signal.data?.androidAdvertisingId||signal.data?.idfa
+  if(maid) userData.hashed_maids=[sha(String(maid))]
+  const hasRequiredIdentity=Boolean(userData.em?.length||userData.hashed_maids?.length||(userData.client_ip_address&&userData.client_user_agent))
+  if(!hasRequiredIdentity) throw new Error('Pinterest conversion requires hashed email, hashed mobile-ad ID, or both client IP and user agent')
   const customData={}
   if(signal.currency) customData.currency=String(signal.currency).toUpperCase()
   if(signal.value!=null) customData.value=String(Number(signal.value))
