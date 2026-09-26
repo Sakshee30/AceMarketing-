@@ -51,6 +51,35 @@ const CONNECTOR_PROVIDERS={
   'Google Calendar':{provider:'google',authType:'oauth2',clientId:process.env.GOOGLE_OAUTH_CLIENT_ID||'',clientSecret:process.env.GOOGLE_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://accounts.google.com/o/oauth2/v2/auth',tokenUrl:'https://oauth2.googleapis.com/token',scopes:['openid','email','https://www.googleapis.com/auth/calendar.events']},
   'WhatsApp':{provider:'meta',authType:'oauth2',clientId:process.env.META_OAUTH_CLIENT_ID||'',clientSecret:process.env.META_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://www.facebook.com/v23.0/dialog/oauth',tokenUrl:'https://graph.facebook.com/v23.0/oauth/access_token',scopes:['whatsapp_business_management','whatsapp_business_messaging']}
 }
+const SERVER_SECRET_CONNECTORS={
+  'TikTok Ads':{
+    provider:'tiktok',
+    authType:'server_secret',
+    capability:'native_server_capi',
+    fields:[
+      {key:'pixel_id',label:'Pixel / Event Source ID',secret:false},
+      {key:'access_token',label:'Events API access token',secret:true}
+    ]
+  },
+  'Pinterest':{
+    provider:'pinterest',
+    authType:'server_secret',
+    capability:'native_server_capi',
+    fields:[
+      {key:'ad_account_id',label:'Pinterest ad account ID',secret:false},
+      {key:'access_token',label:'Conversions API access token',secret:true}
+    ]
+  },
+  'Microsoft Ads / Bing Ads':{
+    provider:'microsoft_ads',
+    authType:'server_secret',
+    capability:'native_server_capi',
+    fields:[
+      {key:'tag_id',label:'Microsoft UET tag ID',secret:false},
+      {key:'access_token',label:'Conversions API token',secret:true}
+    ]
+  }
+}
 const connectorTokenHealth=async(workspaceId)=>{
   const state=await getState()
   const connections=state.connectorConnections||[]
@@ -1165,14 +1194,16 @@ const server = http.createServer(async (req,res)=>{
         }
         const saved=connections.find(x=>x.connector===name)
         const provider=CONNECTOR_PROVIDERS[name]
+        const secretProvider=SERVER_SECRET_CONNECTORS[name]
         const health=tokenHealth.find(x=>x.connector===name)||null
         return {
           name,
-          status:saved?.status||(provider?'available':'manual'),
-          provider:provider?.provider||'custom',
-          authType:provider?.authType||'manual',
-          capability:provider?'native_oauth':'configurable_adapter',
-          configured:Boolean(provider?.clientId&&provider?.clientSecret&&CONNECTOR_REDIRECT_URI),
+          status:saved?.status||(provider?'available':secretProvider?'available':'manual'),
+          provider:provider?.provider||secretProvider?.provider||'custom',
+          authType:provider?.authType||secretProvider?.authType||'manual',
+          capability:provider?'native_oauth':secretProvider?.capability||'configurable_adapter',
+          configured:provider?Boolean(provider.clientId&&provider.clientSecret&&CONNECTOR_REDIRECT_URI):secretProvider?connectorVaultReady():false,
+          credentialFields:secretProvider?.fields||[],
           updatedAt:saved?.updatedAt||null,
           tokenHealth:health
         }
@@ -1315,6 +1346,36 @@ const server = http.createServer(async (req,res)=>{
       const item=await persistCustomIntegration(workspaceId,body)
       await mutateState(s=>{s.audit.unshift({id:randomUUID(),action:'custom_integration.created',entityId:item.id,at:new Date().toISOString()});s.audit=s.audit.slice(0,1000)})
       return send(req,res,201,item)
+    }
+    if (req.method === 'POST' && url.pathname === '/api/integrations/connect-secret') {
+      const body=await readBody(req)
+      const connector=String(body.connector||'')
+      const definition=SERVER_SECRET_CONNECTORS[connector]
+      if(!definition) return send(req,res,400,{error:'connector does not support server-secret configuration'})
+      if(!connectorVaultReady()) return send(req,res,503,{error:'connector credential vault is not configured',required:['CONNECTOR_ENCRYPTION_KEY']})
+      const values={}
+      for(const field of definition.fields){
+        const value=String(body.credentials?.[field.key]||'').trim()
+        if(!value) return send(req,res,400,{error:field.label+' is required',field:field.key})
+        if(value.length>4096) return send(req,res,400,{error:field.label+' is too long',field:field.key})
+        values[field.key]=value
+      }
+      const now=new Date().toISOString()
+      const encrypted=encryptSecret(values)
+      await mutateState(s=>{
+        s.connectorCredentials=s.connectorCredentials||[]
+        const existingCredential=s.connectorCredentials.find(x=>x.connector===connector)
+        const credential={id:existingCredential?.id||'cred_'+randomUUID(),connector,provider:definition.provider,encrypted,expiresAt:null,updatedAt:now,createdAt:existingCredential?.createdAt||now}
+        if(existingCredential)Object.assign(existingCredential,credential);else s.connectorCredentials.unshift(credential)
+        s.connectorConnections=s.connectorConnections||[]
+        const existingConnection=s.connectorConnections.find(x=>x.connector===connector)
+        const connection={id:existingConnection?.id||'conn_'+randomUUID(),connector,provider:definition.provider,status:'connected',authType:'server_secret',createdAt:existingConnection?.createdAt||now,updatedAt:now,expiresAt:null}
+        if(existingConnection)Object.assign(existingConnection,connection);else s.connectorConnections.unshift(connection)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'connector.server_secret_connected',entityId:connector,provider:definition.provider,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,{connector,status:'connected',authType:'server_secret',provider:definition.provider,updatedAt:now})
     }
     if (req.method === 'POST' && url.pathname === '/api/integrations/connect') {
       const body=await readBody(req)
