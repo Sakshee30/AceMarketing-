@@ -30,6 +30,7 @@ const groups:ShortcutGroup[]=[
       {label:'Events',tab:'Events',icon:Activity,description:'Manage conversion events and rules'},
       {label:'Adjustments',tab:'Adjustments',icon:Target,description:'Preview and apply governed performance adjustments'},
       {label:'Diagnostics',tab:'Diagnostics',icon:ShieldCheck,description:'Scan tracking and delivery issues'},
+      {label:'Reconciliation',tab:'Reconciliation',icon:Activity,description:'Explain conversion gaps and repair unmatched, failed or quarantined evidence'},
       {label:'Fraud',tab:'Fraud',icon:ShieldCheck,description:'Review and block suspicious patterns'},
       {label:'Deep Links',tab:'Deep Links',icon:Network,description:'Manage measurable destination routes'},
       {label:'Sites',tab:'Sites',icon:Network,description:'Configure tracked domains and site health'},
