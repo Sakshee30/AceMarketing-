@@ -581,6 +581,8 @@ const server = http.createServer(async (req,res)=>{
       const connectors=state.connectorConnections||[]
       const connectedConnectors=connectors.filter(x=>['connected','healthy','active'].includes(String(x.status||'').toLowerCase()))
       const deliveries=state.signalDeliveries||[]
+      const integrationFlows=state.integrationFlows||[]
+      const activeIntegrationFlows=integrationFlows.filter(x=>x.status==='active').length
       const failedDeliveries=deliveries.filter(x=>['failed','dead_letter'].includes(String(x.status||'').toLowerCase())).length
       const delivered=deliveries.filter(x=>['delivered','succeeded'].includes(String(x.status||'').toLowerCase())).length
       const terminal=deliveries.filter(x=>['delivered','succeeded','failed','dead_letter'].includes(String(x.status||'').toLowerCase())).length
@@ -592,7 +594,7 @@ const server = http.createServer(async (req,res)=>{
         {key:'tracking',title:'Tracking & quality',tab:'Diagnostics',ready:eventRules.length>0||trackedCount>0,primary:eventRules.length,detail:eventRules.length+' event rules · '+Number((state.quarantinedEvents||[]).length)+' quarantined'},
         {key:'measurement',title:'Measurement',tab:'Attribution',ready:Boolean(attr?.available&&Number(attr?.matchedEvents||0)>0),primary:Number(attr?.matchedEvents||0),detail:Number(attr?.matchedEvents||0)+' matched · '+Number(attr?.unmatchedEvents||0)+' unmatched'},
         {key:'conversion',title:'Lead & conversion',tab:'Lead Grading',ready:profiles>0,primary:Number(leadStats?.abQuality||0),detail:Number(leadStats?.abQuality||0)+' A/B leads · '+meetings.length+' meetings'},
-        {key:'activation',title:'Activation',tab:'Audiences',ready:Number(audienceStats?.audiences?.total||0)>0||deliveries.length>0,primary:Number(audienceStats?.audiences?.total||0),detail:Number(audienceStats?.audiences?.total||0)+' audiences · '+deliveries.length+' deliveries'},
+        {key:'activation',title:'Activation',tab:'Audiences',ready:Number(audienceStats?.audiences?.total||0)>0||deliveries.length>0||activeIntegrationFlows>0,primary:Number(audienceStats?.audiences?.total||0)+activeIntegrationFlows,detail:Number(audienceStats?.audiences?.total||0)+' audiences · '+activeIntegrationFlows+' active flows · '+deliveries.length+' deliveries'},
         {key:'operations',title:'Operations',tab:'Monitoring',ready:connectedConnectors.length>0,primary:connectedConnectors.length,detail:connectedConnectors.length+' connected · '+failedDeliveries+' failed deliveries'}
       ]
       const readiness=Math.round(areas.filter(x=>x.ready).length/areas.length*100)
@@ -618,6 +620,8 @@ const server = http.createServer(async (req,res)=>{
           followUps:followUps.length,
           agentRuns:agentRuns.length,
           deliveries:deliveries.length,
+          integrationFlows:integrationFlows.length,
+          activeIntegrationFlows,
           failedDeliveries,
           deliveryRate,
           queueDeadLetter:Number(queue?.deadLetter||queue?.dead_letter||0),
