@@ -4154,3 +4154,21 @@ Configuration state is grounded in the relevant backing store:
 The public agent catalog now includes these specialist capabilities as well as Lead Reactivation. The Agent Library built-in count remains dynamic, so future capabilities do not require another hard-coded UI count.
 
 Playwright coverage opens Customer Journey Agent and Event Agent from the Agent Library and verifies navigation to their actual operational workspaces.
+
+
+## Live dashboard navigator and workspace-status pass
+
+The workspace navigator now acts as a live operating surface rather than a static shortcut menu.
+
+Implemented:
+- four clear navigation groups covering setup/measurement, journey/attribution, conversion agents, and activation/operations;
+- searchable direct navigation across the complete dashboard with `Ctrl/Cmd + K`;
+- live workspace readiness sourced from `GET /api/dashboard-summary`;
+- connected-system, open-alert, and failed-delivery counters inside the navigator;
+- 30-second background status refresh while the workspace is open;
+- responsive status cards for desktop, tablet, and mobile;
+- failure messaging when the live workspace-status API is unavailable;
+- reduced-motion support retained for users who disable animation;
+- Playwright coverage that verifies the backend summary contract, live status rendering, search, and direct navigation into Attribution.
+
+This pass keeps the existing grouped sidebar intact while making a large EasyInsights-style workspace substantially faster to navigate and easier to understand operationally.
