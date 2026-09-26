@@ -769,32 +769,80 @@ function Funnel(){
  <div className="app-panel"><div className="panel-head"><div><h3>Campaign breakdown</h3><p>{channel} · {disposition} · {period}</p></div><span className="healthy">{campaigns.length} campaigns</span></div><div className="funnel-table"><div className="funnel-tr funnel-th"><span>Campaign</span><span>Channel</span><span>Leads</span><span>Qualified</span><span>Appt.</span><span>Consult.</span><span>Bookings</span></div>{campaigns.length?campaigns.map((r:any)=><div className="funnel-tr" key={r.name}><div><b>{r.name}</b><small>Backend-filtered campaign record</small></div><span>{r.channel}</span>{[r.leads,r.qualified,r.appointments,r.consultations,r.bookings].map((v,i)=><strong key={i}>{Number(v||0).toLocaleString()}</strong>)}</div>):<div className="empty-delivery-state"><Filter/><div><b>No campaigns match these filters</b><small>Change channel, disposition or date window to inspect a broader funnel.</small></div></div>}</div></div></>
 }
 function Events(){
+ const emptyDraft={name:'High-value Purchase',sourceEvent:'purchase',outputEvent:'high_value_purchase',field:'value',operator:'gte',value:'4000',destinations:['Google Ads','Meta Ads'],valueMode:'copy',fixedValue:'',currency:'INR'}
  const [data,setData]=useState<any>({items:[],runs:[],stats:{},templates:[]})
  const [active,setActive]=useState('')
  const [builder,setBuilder]=useState(false)
  const [busy,setBusy]=useState('')
- const load=()=>api.events().then((r:any)=>{setData(r);if(!active&&r.items?.[0])setActive(r.items[0].id)}).catch(()=>null)
+ const [notice,setNotice]=useState('')
+ const [templateFilter,setTemplateFilter]=useState('All')
+ const [draft,setDraft]=useState<any>(emptyDraft)
+ const load=()=>api.events().then((r:any)=>{setData(r);if(!active&&r.items?.[0])setActive(r.items[0].id)}).catch((e:any)=>setNotice(e?.message||'Event rules could not be loaded.'))
  useEffect(()=>{load()},[])
  const current=(data.items||[]).find((x:any)=>x.id===active)||data.items?.[0]
- const create=async(e:any)=>{e.preventDefault();const f=new FormData(e.currentTarget);setBusy('create');try{await api.createEventRule({name:String(f.get('name')||''),sourceEvent:String(f.get('sourceEvent')||''),outputEvent:String(f.get('outputEvent')||''),conditions:[{field:String(f.get('field')||''),operator:String(f.get('operator')||'equals'),value:String(f.get('value')||'')}],destinations:Array.from(f.getAll('destinations')).map(String),valueMode:String(f.get('valueMode')||'copy'),fixedValue:f.get('fixedValue')?Number(f.get('fixedValue')):undefined,currency:String(f.get('currency')||'INR')});setBuilder(false);await load()}finally{setBusy('')}}
- const toggle=async(x:any)=>{setBusy(x.id);try{await api.toggleEventRule(x.id,!x.enabled);await load()}finally{setBusy('')}}
+ const openBuilder=(template?:any)=>{
+  if(template){
+   setDraft({
+    name:template.name||'Business event',
+    sourceEvent:template.sourceEvent||'',
+    outputEvent:template.outputEvent||'',
+    field:template.condition?.field||'',
+    operator:template.condition?.operator||'equals',
+    value:String(template.condition?.value??''),
+    destinations:Array.isArray(template.destinations)?template.destinations:[],
+    valueMode:template.valueMode||'copy',
+    fixedValue:template.fixedValue==null?'':String(template.fixedValue),
+    currency:template.currency||'INR'
+   })
+  }else setDraft({...emptyDraft})
+  setBuilder(true)
+ }
+ const create=async(e:any)=>{
+  e.preventDefault();setBusy('create');setNotice('')
+  try{
+   const item:any=await api.createEventRule({
+    name:draft.name,
+    sourceEvent:draft.sourceEvent,
+    outputEvent:draft.outputEvent,
+    conditions:draft.field?[{field:draft.field,operator:draft.operator||'equals',value:draft.value}]:[],
+    destinations:draft.destinations||[],
+    valueMode:draft.valueMode||'copy',
+    fixedValue:draft.valueMode==='fixed'&&draft.fixedValue!==''?Number(draft.fixedValue):undefined,
+    currency:draft.currency||'INR'
+   })
+   setBuilder(false)
+   setNotice('Event rule created and enabled.')
+   await load()
+   if(item?.item?.id)setActive(item.item.id)
+  }catch(err:any){setNotice(err?.message||'Event rule could not be created.')}
+  finally{setBusy('')}
+ }
+ const toggle=async(x:any)=>{setBusy(x.id);setNotice('');try{await api.toggleEventRule(x.id,!x.enabled);setNotice((x.enabled?'Paused ':'Enabled ')+x.name+'.');await load()}catch(err:any){setNotice(err?.message||'Rule status could not be changed.')}finally{setBusy('')}}
  const stats=data.stats||{}
- return <><PageHead crumb="Activation / Events" title="Conversion event manager" sub="Define business logic that transforms raw behavior and CRM outcomes into measurable, activatable events." action="New event" onAction={()=>setBuilder(true)}/>
+ const categories=['All',...Array.from(new Set((data.templates||[]).map((x:any)=>x.category||'Other')))] as string[]
+ const visibleTemplates=(data.templates||[]).filter((x:any)=>templateFilter==='All'||(x.category||'Other')===templateFilter)
+ const toggleDestination=(name:string)=>setDraft((x:any)=>({...x,destinations:(x.destinations||[]).includes(name)?(x.destinations||[]).filter((d:string)=>d!==name):[...(x.destinations||[]),name]}))
+ return <><PageHead crumb="Activation / Events" title="Conversion event manager" sub="Define business logic that transforms raw behavior and CRM outcomes into measurable, activatable events." action="New event" onAction={()=>openBuilder()}/>
+ {notice&&<div className="delivery-notice ok"><CheckCircle2/><span>{notice}</span></div>}
  <div className="stats-grid"><Stat label="Rules" value={String(stats.rules||0)} sub={(stats.enabled||0)+' enabled'} Icon={Zap}/><Stat label="Matches · 24h" value={String(stats.runs24h||0)} sub="Derived business events" Icon={Activity}/><Stat label="Activations · 24h" value={String(stats.activations24h||0)} sub="Queued provider signals" Icon={RadioTower}/><Stat label="Rule engine" value="Safe" sub="Whitelisted operators · no eval" Icon={ShieldCheck}/></div>
- <div className="event-layout"><div className="app-panel event-list"><div className="panel-head"><div><h3>Configured events</h3><p>Persisted business logic → normalized output → destinations</p></div><button className="app-primary" onClick={()=>setBuilder(true)}><Plus/>New rule</button></div>{(data.items||[]).length?(data.items||[]).map((x:any)=><button className={(current?.id===x.id?'selected ':'')} key={x.id} onClick={()=>setActive(x.id)}><span><Zap/></span><div><b>{x.name}</b><small>{x.source_event} → {x.output_event}</small></div><i>{x.enabled?'Active':'Paused'}</i><ChevronRight/></button>):<div className="empty-state"><Zap/><b>No event rules yet</b><small>Create a business rule or use one of the templates below.</small></div>}</div>
- <div className="app-panel event-editor">{current?<><div className="panel-head"><div><h3>{current.name}</h3><p>{current.source_event} → {current.output_event}</p></div><button disabled={busy===current.id} onClick={()=>toggle(current)}>{current.enabled?'Pause':'Enable'}</button></div>
+ <div className="event-layout"><div className="app-panel event-list"><div className="panel-head"><div><h3>Configured events</h3><p>Persisted business logic → normalized output → destinations</p></div><button className="app-primary" onClick={()=>openBuilder()}><Plus/>New rule</button></div>{(data.items||[]).length?(data.items||[]).map((x:any)=><button className={(current?.id===x.id?'selected ':'')} key={x.id} onClick={()=>setActive(x.id)}><span><Zap/></span><div><b>{x.name}</b><small>{x.source_event} → {x.output_event}</small></div><i>{x.enabled?'Active':'Paused'}</i><ChevronRight/></button>):<div className="empty-state"><Zap/><b>No event rules yet</b><small>Create a business rule or use one of the templates below.</small></div>}</div>
+ <div className="app-panel event-editor">{current?<><div className="panel-head"><div><h3>{current.name}</h3><p>{current.source_event} → {current.output_event}</p></div><button disabled={busy===current.id} onClick={()=>toggle(current)}>{busy===current.id?'Updating…':current.enabled?'Pause':'Enable'}</button></div>
  <div className="event-step"><span>1</span><div><b>Source event</b><p>Evaluate when <strong>{current.source_event}</strong> arrives through the first-party ingestion API.</p></div></div>
  <div className="event-step"><span>2</span><div><b>Business conditions</b><p>{(current.conditions||[]).length?(current.conditions||[]).map((c:any)=>c.field+' '+c.operator+' '+String(c.value)).join(' AND '):'No conditions — every matching source event qualifies.'}</p></div></div>
  <div className="event-step"><span>3</span><div><b>Normalize & persist</b><p>Create <strong>{current.output_event}</strong> in the assisted-event store with deterministic rule-run idempotency.</p></div></div>
  <div className="event-step"><span>4</span><div><b>Activate</b><p>{(current.destinations||[]).length?'Queue to '+current.destinations.join(' + ')+' only when marketing consent is present.':'Measurement only — no ad-platform activation.'}</p></div></div></>:<div className="empty-state"><Zap/><b>Select or create an event rule</b></div>}</div></div>
- <div className="event-tooling-grid"><div className="app-panel"><div className="panel-head"><div><h3>Business-event templates</h3><p>Common first-party event patterns</p></div></div>{(data.templates||[]).map((x:any)=><div className="template-row" key={x.name}><Zap/><div><b>{x.name}</b><small>{x.sourceEvent} → {x.outputEvent}</small></div><span>{x.condition.field} {x.condition.operator} {String(x.condition.value)}</span></div>)}</div>
- <div className="app-panel"><div className="panel-head"><div><h3>Recent rule matches</h3><p>Auditable transformations and activation counts</p></div></div>{(data.runs||[]).slice(0,8).map((x:any)=><div className="adjustment-row" key={x.id}><span>{x.source_event}</span><ArrowRight/><b>{x.output_event}</b><em>{x.activation_queued||0} queued</em></div>)}</div></div>
- {builder&&<div className="connector-modal"><form className="connector-card audience-builder" onSubmit={create}><div className="connector-modal-head"><div><Zap/><div><b>New business event rule</b><small>Transform real first-party behavior into an activation-ready event.</small></div></div><button type="button" onClick={()=>setBuilder(false)}><X/></button></div>
- <label>Rule name<input name="name" required defaultValue="High-value Purchase"/></label><div className="audience-rule-grid"><label>Source event<input name="sourceEvent" required defaultValue="purchase"/></label><label>Output event<input name="outputEvent" required defaultValue="high_value_purchase"/></label><label>Condition field<input name="field" required defaultValue="value"/></label></div>
- <div className="audience-rule-grid"><label>Operator<select name="operator" defaultValue="gte"><option value="equals">equals</option><option value="not_equals">not equals</option><option value="gt">greater than</option><option value="gte">greater/equal</option><option value="lt">less than</option><option value="lte">less/equal</option><option value="contains">contains</option><option value="exists">exists</option><option value="in">in</option></select></label><label>Condition value<input name="value" defaultValue="4000"/></label><label>Value mode<select name="valueMode" defaultValue="copy"><option value="copy">Copy source value</option><option value="fixed">Fixed value</option></select></label></div>
- <label>Fixed value (only for fixed mode)<input name="fixedValue" type="number" step="0.01"/></label><label>Currency<input name="currency" defaultValue="INR"/></label>
- <div className="context-chips"><label><input type="checkbox" name="destinations" value="Google Ads"/> Google Ads</label><label><input type="checkbox" name="destinations" value="Meta Ads"/> Meta Ads</label></div>
- <div className="audience-builder-actions"><button type="button" onClick={()=>setBuilder(false)}>Cancel</button><button className="app-primary" disabled={busy==='create'} type="submit">{busy==='create'?'Creating…':'Create rule'}</button></div></form></div>}</>
+ <div className="event-tooling-grid"><div className="app-panel"><div className="panel-head"><div><h3>Business-event templates</h3><p>Choose a pattern, review its logic, then persist it as a real workspace rule.</p></div><span className="healthy">{(data.templates||[]).length} templates</span></div>
+ <div className="event-template-filters">{categories.map(x=><button key={x} className={templateFilter===x?'active':''} onClick={()=>setTemplateFilter(x)}>{x}</button>)}</div>
+ <div className="event-template-list">{visibleTemplates.map((x:any)=><article className="template-row template-card" key={x.id||x.name}><Zap/><div><div className="template-card-title"><b>{x.name}</b><em>{x.category||'Business event'}</em></div><small>{x.description||x.sourceEvent+' → '+x.outputEvent}</small><p>{x.useCase||'Create a governed derived event from first-party data.'}</p></div><div className="template-card-actions"><span>{x.condition?.field} {x.condition?.operator} {String(x.condition?.value)}</span><button onClick={()=>openBuilder(x)}>Use template<ArrowRight/></button></div></article>)}</div>
+ </div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Recent rule matches</h3><p>Auditable transformations and activation counts</p></div><button onClick={load}>Refresh</button></div>{(data.runs||[]).length?(data.runs||[]).slice(0,8).map((x:any)=><button className="adjustment-row event-run-row" key={x.id} onClick={()=>{const match=(data.items||[]).find((rule:any)=>rule.id===x.rule_id);if(match)setActive(match.id)}}><span>{x.source_event}</span><ArrowRight/><b>{x.output_event}</b><em>{x.activation_queued||0} queued</em></button>):<div className="empty-delivery-state"><Activity/><div><b>No rule matches yet</b><small>Send a source event that meets a configured rule to create an auditable match.</small></div></div>}</div></div>
+ {builder&&<div className="connector-modal"><form className="connector-card audience-builder" onSubmit={create}><div className="connector-modal-head"><div><Zap/><div><b>Business event rule</b><small>Review the template or define your own rule before it becomes active.</small></div></div><button type="button" onClick={()=>setBuilder(false)}><X/></button></div>
+ <label>Rule name<input value={draft.name} onChange={e=>setDraft({...draft,name:e.target.value})} required/></label><div className="audience-rule-grid"><label>Source event<input value={draft.sourceEvent} onChange={e=>setDraft({...draft,sourceEvent:e.target.value})} required/></label><label>Output event<input value={draft.outputEvent} onChange={e=>setDraft({...draft,outputEvent:e.target.value})} required/></label><label>Condition field<input value={draft.field} onChange={e=>setDraft({...draft,field:e.target.value})} required/></label></div>
+ <div className="audience-rule-grid"><label>Operator<select value={draft.operator} onChange={e=>setDraft({...draft,operator:e.target.value})}><option value="equals">equals</option><option value="not_equals">not equals</option><option value="gt">greater than</option><option value="gte">greater/equal</option><option value="lt">less than</option><option value="lte">less/equal</option><option value="contains">contains</option><option value="exists">exists</option><option value="in">in</option></select></label><label>Condition value<input value={draft.value} onChange={e=>setDraft({...draft,value:e.target.value})}/></label><label>Value mode<select value={draft.valueMode} onChange={e=>setDraft({...draft,valueMode:e.target.value})}><option value="copy">Copy source value</option><option value="fixed">Fixed value</option></select></label></div>
+ {draft.valueMode==='fixed'&&<label>Fixed value<input value={draft.fixedValue} onChange={e=>setDraft({...draft,fixedValue:e.target.value})} type="number" step="0.01" required/></label>}<label>Currency<input value={draft.currency} onChange={e=>setDraft({...draft,currency:e.target.value})}/></label>
+ <div className="template-destination-picker"><span>Activation destinations</span><div className="context-chips"><label><input type="checkbox" checked={(draft.destinations||[]).includes('Google Ads')} onChange={()=>toggleDestination('Google Ads')}/> Google Ads</label><label><input type="checkbox" checked={(draft.destinations||[]).includes('Meta Ads')} onChange={()=>toggleDestination('Meta Ads')}/> Meta Ads</label><small>Leave both off for measurement-only attribution events.</small></div></div>
+ <div className="event-rule-preview"><b>Rule preview</b><span>When <code>{draft.sourceEvent||'source_event'}</code> arrives and <code>{draft.field||'field'} {draft.operator} {String(draft.value||'value')}</code>, create <code>{draft.outputEvent||'derived_event'}</code>{(draft.destinations||[]).length?' and queue '+draft.destinations.join(' + '):' for measurement only'}.</span></div>
+ <div className="audience-builder-actions"><button type="button" onClick={()=>setBuilder(false)}>Cancel</button><button className="app-primary" disabled={busy==='create'} type="submit">{busy==='create'?'Creating…':'Create & enable rule'}</button></div></form></div>}</>
 }
 function Adjustments(){
  const [items,setItems]=useState<any[]>([])
