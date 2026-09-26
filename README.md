@@ -4037,3 +4037,23 @@ Implemented:
 - Playwright coverage installs the Meta CAPI pipeline, verifies the persisted rule/destination, then opens the Call Tracking module.
 
 This gives operators clear agent-level entry points while preserving one shared production signal-return architecture underneath.
+
+
+## Multi-account channel/campaign funnel parity
+
+The Funnel workspace now matches the brochure requirement for stage-level narrowing across channels, ad accounts and campaigns using persisted CRM/meeting evidence.
+
+Implemented:
+- backend account extraction from persisted lead attributes such as `adAccountName`, `adAccount`, `accountName` or `account`;
+- account filter support in `GET /api/funnel`;
+- campaign identity now includes channel + account + campaign so same-named campaigns in different accounts do not collapse into one row;
+- stage counts for Leads, Qualified, Appointments, Consultations and Bookings;
+- conversion rates for Lead → Qualified, Qualified → Appointment, Appointment → Consultation, Consultation → Booking and Lead → Booking;
+- responsive stage-flow cards that make funnel narrowing visually obvious;
+- channel, account, disposition and time-window filters;
+- campaign drill-down panel with counts and rates for the selected campaign;
+- CSV export now includes account and all stage-conversion rates;
+- the UI explicitly reports that missing CRM evidence is not replaced with media-platform totals;
+- Playwright coverage creates two leads in different ad accounts, creates a meeting for one lead, verifies the account-filtered API response, then confirms Account Alpha / Campaign Alpha drill-down in the dashboard.
+
+This brings AdSync funnel mapping substantially closer to the supplied EasyInsights EdTech brochure requirement for multi-channel, multi-account, stage-level campaign analysis.
