@@ -169,6 +169,8 @@ export const api = {
   attribution: () => request('/attribution'),
   reports: () => request('/reports'),
   cohorts: (months=6) => request('/cohorts?months='+months),
+  groupedPerformance: (dimension='category',months=6) => request('/grouped-performance?dimension='+encodeURIComponent(dimension)+'&months='+months),
+  saveGroupedPerformanceCost: (dimension:string,key:string,cost:number|null) => request('/grouped-performance/costs',{method:'POST',body:JSON.stringify({dimension,key,cost})}),
   reportSchedules: () => request('/report-schedules'),
   saveReportSchedule: (payload:any) => request('/report-schedules',{method:'POST',body:JSON.stringify(payload)}),
   runReportNow: (id:string) => request('/report-schedules/run-now',{method:'POST',body:JSON.stringify({id})}),
