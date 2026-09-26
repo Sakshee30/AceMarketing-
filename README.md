@@ -3746,3 +3746,15 @@ Feed & Payload Enhancement now manages explicit source-field → destination-fie
 - The preview is destination-specific and shows the exact generated payload, mapping count and source profile boundary.
 - Delivery-history enrichment rates remain based on persisted outbound delivery payloads.
 - Feed previews do not claim provider acceptance; they validate only the mapping contract before live dispatch.
+
+
+### Searchable integration catalog and connector requests
+
+The Integrations workspace now exposes a broader connector catalog while keeping capability status truthful.
+
+- Native OAuth connectors remain explicitly labelled as native.
+- Non-native catalog entries are labelled **Configurable adapter** and route through the existing tested custom-integration builder instead of pretending OAuth support exists.
+- The catalog now covers CRM, messaging, calling, commerce/forms, warehouses/databases/storage, advertising/analytics and sales-intelligence categories.
+- Users can search the full catalog by connector or category.
+- `POST /api/integration-requests` persists a connector request with connector name, business need, direction and priority.
+- Requested connectors are visible in the workspace and counted separately from connected/native integrations.
