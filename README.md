@@ -3948,3 +3948,24 @@ Implemented:
 - the latest public-surface accessibility regression therefore tests real named controls instead of silently tolerating icon-only buttons.
 
 The previous CI run improved to 83/94 Playwright tests passing after the rate-limit correction; the current head includes the additional API wiring, selector, accessibility and runtime fixes that address several of the remaining failures.
+
+
+## Actionable feedback-agent routing pass
+
+The Feedback agent now supports the full operating loop from outreach through recovery work instead of stopping at passive feedback display.
+
+Implemented:
+- provider-backed feedback requests can be queued from the Feedback dashboard through the existing agent worker;
+- recorded responses remain persisted in the feedback store;
+- each feedback card now exposes `Route insight`;
+- low-satisfaction responses create high-priority customer-recovery call tasks;
+- pricing/fee objections create high-priority sales-manager follow-ups;
+- product/program mismatch creates a sales-operations disposition-review task;
+- high-scoring promoter feedback creates a low-priority marketing/testimonial review task;
+- each routed response writes an audit record linking the feedback item to the created follow-up;
+- the dashboard displays the created owner, priority, channel and action with direct navigation into Follow-ups;
+- feedback routing policy cards now document the real backend behavior rather than a suggestion-only mapping;
+- responsive animation and reduced-motion handling were added for routing results;
+- Playwright coverage records low-satisfaction pricing feedback, routes it, opens Follow-ups and verifies the persisted recovery task.
+
+This completes the feedback loop: request → collect → understand → route → follow up.
