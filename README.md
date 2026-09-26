@@ -5507,3 +5507,22 @@ This pass fixes several cases where a surface could look complete in the UI but 
 - **Provider destination persistence:** the event-rule store uses the same native destination set as the AdSync UI so a successful-looking pipeline cannot silently lose its provider destination before persistence.
 
 These changes are covered by the existing desktop/mobile Playwright release suite together with provider quick-start and lead-reactivation regression tests. A deployment should only be promoted once the complete CI workflow is green.
+
+
+## TikTok Events API AdSync — 2026-09-26
+
+AceMarketing now includes a native TikTok Events API 2.0 delivery path for server-side web/CRM/offline conversion signals.
+
+- AdSync exposes a **TikTok Events API** quick-start pipeline targeting `TikTok Ads`.
+- Delivery posts to TikTok's consolidated `/open_api/v1.3/event/track/` endpoint.
+- The adapter requires `TIKTOK_PIXEL_ID` and `TIKTOK_EVENTS_TOKEN`; `TIKTOK_TEST_EVENT_CODE` is optional for Events Manager validation.
+- Stable `event_id` values are preserved for event deduplication.
+- AceMarketing maps common business events into TikTok events such as `SubmitForm`, `CompleteRegistration`, `Contact`, `InitiateCheckout`, `AddToCart`, `CompletePayment`, `Subscribe` and `StartTrial`, while allowing custom event names.
+- Matching evidence can include SHA-256 email, SHA-256 phone, SHA-256 external ID, TikTok Click ID (`ttclid`), TikTok cookie ID (`ttp`), client IP and user agent.
+- Conversion value, currency, order ID, page URL/referrer and contents are carried when available.
+- HTTP success alone is not considered acceptance: a TikTok response with a non-zero body `code` is treated as a provider failure and flows through the existing retry/dead-letter path.
+- The durable signal replay payload preserves `ttclid`, `ttp`, TikTok event-source configuration and other provider matching fields across queued retries.
+- The central event-rule destination allowlist now includes `TikTok Ads`, so a TikTok quick-start persists its real destination instead of being reduced to a UI-only card.
+- Playwright coverage verifies creation of the TikTok AdSync pipeline and selection of the `TikTok Ads` delivery destination.
+
+The provider remains credential-gated: external TikTok delivery only succeeds after real TikTok Events Manager credentials are configured.
