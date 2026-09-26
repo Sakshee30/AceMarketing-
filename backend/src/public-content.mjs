@@ -84,6 +84,7 @@ export const publicAgents = [
   {number:9,name:'Meeting Reminder',category:'Conversion',summary:'Reduce no-shows with contextual reminders and recovery sequences.'},
   {number:10,name:'Feedback Agent',category:'Conversion',summary:'Capture objections and post-interaction feedback for funnel improvement.'},
   {number:11,name:'Ask Ace',category:'Visibility',summary:'Query journey and attribution evidence in natural language inside the workspace.'},
+  {number:12,name:'Lead Reactivation',category:'Conversion',summary:'Detect renewed high-intent behavior from dormant leads and create governed re-engagement work.'},
 ]
 
 export const publicIntegrations = [
