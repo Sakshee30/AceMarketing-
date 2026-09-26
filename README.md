@@ -3761,3 +3761,20 @@ The Integrations workspace now exposes a broader connector catalog while keeping
 
 
 The public Integrations route mirrors the same expanded catalog and includes search across CRM, messaging, calling, commerce/forms, warehouse/database/storage, advertising/analytics, and sales-intelligence categories. Public catalog entries describe discoverability only; actual native OAuth versus configurable-adapter capability remains explicit inside the authenticated workspace.
+
+
+## Full workspace navigation and dashboard polish pass
+
+The authenticated workspace now has a faster navigation layer on top of the existing grouped sidebar and section-status strip.
+
+Implemented:
+- searchable floating dashboard navigator covering the complete workspace feature set;
+- direct navigation across Launchpad, signal quality, stitched data, attribution, conversion agents, audiences, delivery, monitoring, developer tooling and settings;
+- grouped navigation into Start & Measure, Unify & Attribute, Convert with Agents, and Activate & Operate;
+- `Ctrl/Cmd + K` keyboard access while inside `#/workspace`;
+- responsive two-column/one-column navigator layout;
+- compact-mode preference persisted in local storage;
+- reduced-motion support and focus/hover interaction polish;
+- existing sidebar navigation, API-backed pages and hash routing remain unchanged.
+
+The navigator dispatches the existing `ace-app-tab` workspace event, so it reuses the same page components and backend-connected functionality instead of creating duplicate screens.
