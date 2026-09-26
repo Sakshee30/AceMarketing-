@@ -3050,7 +3050,8 @@ const server = http.createServer(async (req,res)=>{
       const allowed=new Set(['category','productCategory','product','brand','source','campaign'])
       if(!allowed.has(dimension)) return send(req,res,400,{error:'unsupported grouping dimension'})
       const analytics=await cohortAnalytics(workspaceId,{months:Number(url.searchParams.get('months')||6)}).catch(()=>({available:false,eventDefinitions:{conversion:[]}}))
-      const conversionEvents=new Set((analytics.eventDefinitions?.conversion||[]).map(x=>String(x).toLowerCase()))
+      const conversionContract=(analytics.eventDefinitions?.conversion?.length?analytics.eventDefinitions.conversion:String(process.env.COHORT_CONVERSION_EVENTS||'purchase,enrolment,enrollment,booking,revenue.closed,closed_won,sale').split(',').map(x=>x.trim()).filter(Boolean))
+      const conversionEvents=new Set(conversionContract.map(x=>String(x).toLowerCase()))
       const events=(state.recentEvents||[]).slice(0,5000)
       const costs=state.groupingCosts?.[dimension]||{}
       const rows=new Map()
