@@ -1018,6 +1018,13 @@ test('native server-side ad connectors persist encrypted workspace credentials',
   expect(item?.status).toBe('connected')
   expect(item?.authType).toBe('server_secret')
   expect(JSON.stringify(payload)).not.toContain('ci_tiktok_events_token_')
+
+  await card.getByRole('button',{name:'Disconnect'}).click()
+  await expect(page.getByText('TikTok Ads disconnected and stored workspace credentials removed.',{exact:true})).toBeVisible()
+  await expect(card.getByRole('button',{name:'Configure'})).toBeVisible()
+  const after=await page.request.get('/api/integrations')
+  const afterPayload=await after.json()
+  expect((afterPayload.items||[]).find((x:any)=>x.name==='TikTok Ads')?.status).toBe('disconnected')
 })
 
 
