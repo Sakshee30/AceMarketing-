@@ -3969,3 +3969,21 @@ Implemented:
 - Playwright coverage records low-satisfaction pricing feedback, routes it, opens Follow-ups and verifies the persisted recovery task.
 
 This completes the feedback loop: request → collect → understand → route → follow up.
+
+
+## Voice qualification initiation pass
+
+The Calls workspace can now initiate Voice Lead Qualification instead of only observing/retrying existing runs.
+
+Implemented:
+- `Start qualification` action in Calls;
+- qualification builder for lead reference, phone number, source, initial intent score and trigger;
+- frontend submission through the existing `POST /api/qualification-calls` endpoint;
+- persisted `voice_qualification` agent run created before external execution;
+- durable `agent_action` job queued for the worker;
+- call activity refreshes immediately and selects the newly queued run;
+- provider execution remains honest: the worker needs a configured voice-qualification transport to complete the call, otherwise retry/failure evidence is preserved;
+- existing call-tracking webhook events, retries, consultation scheduling and agent configuration remain intact;
+- Playwright coverage creates a qualification run from the Calls UI, verifies HTTP 202 and confirms the persisted run appears in recent call activity.
+
+This closes the UI gap for the Voice Lead Qualification agent: operators can now start, observe, retry and schedule from the same conversion workspace.
