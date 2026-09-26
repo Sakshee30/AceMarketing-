@@ -5492,3 +5492,18 @@ E2E coverage verifies that Microsoft and Pinterest quick-start cards create pers
 The event-rule engine's destination allowlist now includes every native server-side AdSync provider currently exposed by the dashboard: `Google Ads`, `Meta Ads`, `LinkedIn Ads`, `Microsoft Ads / Bing Ads`, `Pinterest`, and `ChatGPT Ads`. This prevents a frontend-created provider pipeline from being accepted while its destination is silently removed before persistence.
 
 Pinterest matching has also been tightened to follow the provider contract: external IDs are SHA-256 hashed, and an event must carry hashed email, a hashed mobile advertising ID, or the client IP + user-agent pair before delivery.
+
+
+## Dashboard and runtime reliability hardening — 2026-09-26
+
+This pass fixes several cases where a surface could look complete in the UI but fail or lose state at runtime.
+
+- **Dashboard navigator reset:** reopening the Ctrl/Cmd+K navigator now clears stale text and status filters, so a previous search cannot hide unrelated modules on the next open.
+- **Follow-ups render repair:** the Follow-ups workspace now loads Lead Reactivation candidates through the existing `/api/lead-reactivation` backend API. The previous undefined refresh handler could crash that entire section at render time.
+- **Cross-module navigation:** Feedback → Follow-ups now lands on a renderable Follow-up operations surface because the target module no longer crashes during initialization.
+- **Reactivation baseline preservation:** when a dormant profile receives a new high-intent event, the lead profile retains its immediately previous activity timestamp before updating the latest activity. The reactivation engine can therefore evaluate “dormant → renewed intent” instead of losing the dormant baseline.
+- **Durable provider identity:** queued/retried AdSync deliveries now retain Microsoft `msclkid`, Pinterest click identity, LinkedIn first-party tracking identifiers, anonymous/external IDs, mobile ad IDs, IP/user-agent and provider-specific configuration needed by downstream adapters.
+- **Delivery validation parity:** signal validation now recognizes and validates Google, Meta, LinkedIn, Microsoft/Bing, Pinterest, ChatGPT Ads and custom-webhook destinations consistently with the provider router.
+- **Provider destination persistence:** the event-rule store uses the same native destination set as the AdSync UI so a successful-looking pipeline cannot silently lose its provider destination before persistence.
+
+These changes are covered by the existing desktop/mobile Playwright release suite together with provider quick-start and lead-reactivation regression tests. A deployment should only be promoted once the complete CI workflow is green.
