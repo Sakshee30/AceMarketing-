@@ -623,3 +623,46 @@ test('all workspace sections render without a frontend crash', async ({ page }) 
 
   expect(pageErrors).toEqual([])
 })
+
+
+test('attribution workspace ranks persisted channel and campaign evidence', async ({ page }, testInfo) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()
+  const customerId='ci_attr_customer_'+suffix
+  const source='ci_search_'+suffix
+  const campaign='ci_revenue_'+suffix
+  const gclid='ci_gclid_'+suffix+'_'+Date.now()
+
+  const click=await page.request.post('/api/track',{data:{
+    event:'page_view',
+    visitorId:'ci_attr_visitor_'+suffix,
+    customerId,
+    gclid,
+    utm_source:source,
+    utm_medium:'cpc',
+    utm_campaign:campaign,
+    landingUrl:'https://example.com/pricing'
+  }})
+  expect(click.ok()).toBeTruthy()
+
+  const outcome=await page.request.post('/api/assisted-events',{data:{
+    eventType:'closed_won',
+    source:'crm',
+    customerId,
+    gclid,
+    value:12500,
+    currency:'INR',
+    idempotencyKey:'ci_attr_outcome_'+suffix+'_'+Date.now()
+  }})
+  expect(outcome.ok()).toBeTruthy()
+
+  await openWorkspaceTab(page,'Attribution')
+  await expect(page.getByRole('heading', { name: 'Full-path attribution' })).toBeVisible()
+  await expect(page.getByText(source, { exact: true }).first()).toBeVisible()
+  await page.getByRole('button', { name: 'Campaigns', exact: true }).click()
+  await expect(page.getByText(campaign, { exact: true }).first()).toBeVisible()
+  await page.getByRole('button', { name: 'Match evidence', exact: true }).click()
+  await expect(page.getByText('closed won', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText(/12500|12,500/).first()).toBeVisible()
+})
