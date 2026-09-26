@@ -7,7 +7,7 @@ import { connectorVaultReady, decryptSecret, encryptSecret } from './vault.mjs'
 import { enqueueJob, queueAvailable, queueStats } from './queue.mjs'
 import { attributionStats, captureClickSession, closeAttributionStore, recordAssistedEvent, reconcileAttribution } from './attribution-store.mjs'
 import { audienceOpsStats, closeLeadOps, createActivationRun, createAudience as createLeadAudience, getAudienceBundle, getLeadProfile, leadOpsStats, listActivationRuns, listAudiences as listLeadAudiences, listLeadProfiles, materializeAudience, overrideLeadGrade as persistLeadGrade, previewAudience as previewLeadAudience, scoreLead, upsertLeadProfile, updateAudienceSyncState } from './lead-ops.mjs'
-import { closeAgentOrchestrator, completeFollowUp as persistCompleteFollowUp, createAgentRun, createFollowUp, createMeeting, getMeeting, listAgentRuns, listFeedback as listPersistedFeedback, listFollowUps as listPersistedFollowUps, listMeetings as listPersistedMeetings, listRoutingDecisions, recordFeedback, rescheduleMeeting, routeLead } from './agent-orchestrator.mjs'
+import { closeAgentOrchestrator, completeFollowUp as persistCompleteFollowUp, createAgentRun, createFollowUp, createMeeting, getMeeting, listAgentRuns, listFeedback as listPersistedFeedback, listFollowUps as listPersistedFollowUps, listMeetings as listPersistedMeetings, listRoutingDecisions, recordFeedback, rescheduleMeeting, routeLead, updateAgentRun } from './agent-orchestrator.mjs'
 import { closeCustomIntegrations, createCustomIntegration as persistCustomIntegration, listCustomIntegrations, testCustomIntegration as runCustomIntegrationTest } from './custom-integrations.mjs'
 import { closeObservability, listAlerts as listLiveAlerts, listMonitoringRules as listLiveMonitoringRules, monitoringSnapshot, recordApiTelemetry, resolveAlert as resolveLiveAlert, saveMonitoringRule } from './observability.mjs'
 import { assertCapacity, closeEntitlements, finalizeReservation, resourceCountAllowed, subscriptionSummary, updateWorkspaceEntitlements } from './entitlements.mjs'
@@ -3234,6 +3234,50 @@ const server = http.createServer(async (req,res)=>{
         s.audit.unshift({id:randomUUID(),action:'agent.custom_created',entityId:agent.id,at:createdAt})
       })
       return send(req,res,201,agent)
+    }
+    if (req.method === 'POST' && url.pathname === '/api/agents/custom/test') {
+      const body=await readBody(req)
+      if(!body.id) return send(req,res,400,{error:'id required'})
+      const state=await getState()
+      const agent=(state.customAgents||[]).find(x=>x.id===String(body.id))
+      if(!agent) return send(req,res,404,{error:'custom agent not found'})
+      if(agent.status==='pending_approval') return send(req,res,409,{error:'custom agent requires approval before testing',status:agent.status,agentId:agent.id})
+      if(agent.status==='rejected') return send(req,res,409,{error:'custom agent activation was rejected',status:agent.status,agentId:agent.id})
+      if(agent.status!=='active') return send(req,res,409,{error:'custom agent is not active',status:agent.status,agentId:agent.id})
+      const entityId=String(body.leadRef||body.entityId||'agent_test')
+      const input={
+        test:true,
+        leadRef:body.leadRef||null,
+        trigger:agent.trigger,
+        action:agent.action,
+        context:body.context&&typeof body.context==='object'?body.context:{}
+      }
+      const run=await createAgentRun(workspaceId,{agentType:'custom:'+agent.id,entityId,triggerKey:'manual_test',input})
+      if(!run) return send(req,res,503,{error:'agent run store unavailable'})
+      let operation=null
+      if(agent.action==='Route to sales queue'){
+        operation=await routeLead(workspaceId,{
+          leadRef:entityId,
+          score:Number(body.context?.score||85),
+          source:String(body.context?.source||'Custom agent'),
+          routingRule:{name:agent.name,destination:String(body.context?.destination||'Sales queue'),reason:'Custom agent test: '+agent.trigger,slaSeconds:Number(body.context?.slaSeconds||300)}
+        })
+      }
+      const output={
+        test:true,
+        evaluated:true,
+        trigger:agent.trigger,
+        action:agent.action,
+        operation:operation?{kind:'routing',id:operation.id,destination:operation.destination,status:operation.status}:null,
+        note:operation?'Safe routing action executed and persisted.':'Definition validated. External mutation requires the destination-specific operational workflow and configured integration.'
+      }
+      const completed=await updateAgentRun(workspaceId,run.id,{status:'succeeded',output})
+      await mutateState(s=>{
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'agent.custom_tested',entityId:agent.id,runId:run.id,operationId:operation?.id||null,at:new Date().toISOString()})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,200,{run:completed||run,output})
     }
     if (req.method === 'GET' && url.pathname === '/api/settings') {
       const state=await getState()
