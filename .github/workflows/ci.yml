@@ -30,6 +30,7 @@ jobs:
       AUTH_REQUIRED: "false"
       DEFAULT_WORKSPACE_ID: ws_default
       RATE_LIMIT_PER_MINUTE: "20000"
+      CONNECTOR_ENCRYPTION_KEY: "ci-only-connector-encryption-key-not-for-production"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
