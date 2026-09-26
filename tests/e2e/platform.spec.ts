@@ -1052,6 +1052,7 @@ test('all workspace sections render without a frontend crash', async ({ page }) 
   for(const tab of tabs){
     await page.evaluate(name=>window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:name})),tab)
     await expect(page.locator('.product-body')).toBeVisible()
+    await expect(page.locator('.workspace-section-error'),{message:'Expected '+tab+' to render without the section error boundary'}).toHaveCount(0)
     await expect.poll(async()=>((await page.locator('.product-body').innerText()).trim().length),{message:'Expected '+tab+' to render content'}).toBeGreaterThan(20)
   }
 
