@@ -1,4 +1,4 @@
-import {randomUUID} from 'node:crypto'
+import {createHash,randomUUID} from 'node:crypto'
 import pg from 'pg'
 
 const {Pool}=pg
@@ -14,6 +14,7 @@ const pool=databaseUrl?new Pool({
 }):null
 
 const lastEval=new Map()
+const monitoringRuleId=(workspaceId,metric)=>'mr_'+createHash('sha256').update(String(workspaceId)+'\n'+String(metric)).digest('hex').slice(0,40)
 
 const usageColumn=(method,path)=>{
   if(method==='POST'&&path==='/api/track') return 'tracked_events'
@@ -38,7 +39,7 @@ const ensureRules=async workspaceId=>{
       `INSERT INTO ace_monitoring_rules (id,workspace_id,metric,operator,threshold,severity,window_minutes)
        VALUES ($1,$2,$3,$4,$5,$6,$7)
        ON CONFLICT (workspace_id,metric) DO NOTHING`,
-      ['mr_'+workspaceId+'_'+metric,workspaceId,metric,operator,threshold,severity,windowMinutes]
+      [monitoringRuleId(workspaceId,metric),workspaceId,metric,operator,threshold,severity,windowMinutes]
     )
   }
 }
@@ -234,7 +235,7 @@ export const saveMonitoringRule=async(workspaceId,input={})=>{
   if(!['gt','gte','lt','lte'].includes(operator))throw new Error('invalid monitoring operator')
   if(!Number.isFinite(threshold))throw new Error('valid threshold required')
   if(!['info','warning','critical'].includes(severity))throw new Error('invalid severity')
-  const id='mr_'+workspaceId+'_'+metric
+  const id=monitoringRuleId(workspaceId,metric)
   const {rows}=await pool.query(
     `INSERT INTO ace_monitoring_rules (id,workspace_id,metric,operator,threshold,severity,window_minutes,enabled)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
