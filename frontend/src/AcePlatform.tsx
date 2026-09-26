@@ -114,7 +114,7 @@ function Header({openHome,openApp,openLogin,openPricing,openDemo,openCompany,ope
 
  return <header className="ei-header-shell" onMouseLeave={closeMenu}>
   <div className="ei-header">
-   <button className="ei-brand-button" onClick={openHome}><Brand dark/></button>
+   <button className="ei-brand-button" aria-label="AceMarketing home" onClick={openHome}><Brand dark/></button>
    <nav className={open?'ei-nav mobile-open':'ei-nav'}>
     <button type="button" aria-haspopup="menu" aria-expanded={menu==='industries'} className={menu==='industries'?'ei-nav-item active':'ei-nav-item'} onMouseEnter={()=>setMenu('industries')} onFocus={()=>setMenu('industries')} onClick={()=>toggleMenu('industries')}>Industries <ChevronDown/></button>
     <button type="button" aria-haspopup="menu" aria-expanded={menu==='agents'} className={menu==='agents'?'ei-nav-item active':'ei-nav-item'} onMouseEnter={()=>setMenu('agents')} onFocus={()=>setMenu('agents')} onClick={()=>toggleMenu('agents')}>Agents <ChevronDown/></button>
@@ -127,7 +127,7 @@ function Header({openHome,openApp,openLogin,openPricing,openDemo,openCompany,ope
     <button className="ei-voice-pill" onClick={openApp}><span className="voice-bars">••••</span><b>Voice Agent</b><small>NEW</small></button>
     <button className="ei-demo-pill" onClick={openDemo}>Book a demo</button>
    </div>
-   <button className="menu-toggle ei-menu-toggle" onClick={()=>setOpen(!open)}>{open?<X/>:<Menu/>}</button>
+   <button className="menu-toggle ei-menu-toggle" aria-label={open?'Close navigation menu':'Open navigation menu'} onClick={()=>setOpen(!open)}>{open?<X/>:<Menu/>}</button>
   </div>
 
   {menu==='industries'&&<div className="ei-mega-menu industries-menu" role="menu" onMouseEnter={()=>setMenu('industries')}>
@@ -336,7 +336,7 @@ function PublicFooter({openHome,openApp,openDemo,openCompany,openResources,openS
  return <footer className="ei-footer">
   <div className="ei-footer-top">
    <div className="ei-footer-brand">
-    <button className="public-footer-brand" onClick={openHome}><Brand/></button>
+    <button className="public-footer-brand" aria-label="AceMarketing home" onClick={openHome}><Brand/></button>
     <p>Connected first-party data, journey intelligence, and conversion operations for performance teams.</p>
     <button className="ei-footer-demo" onClick={openDemo}>Book a demo</button>
    </div>
