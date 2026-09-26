@@ -179,6 +179,7 @@ export default function DashboardQuickNav(){
 
   const resultCount=filtered.reduce((sum,group)=>sum+group.items.length,0)
   const totals=summary?.totals||{}
+  const sections=summary?.sections||{}
 
   const jump=(tab:string)=>{
     window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:tab}))
@@ -222,9 +223,9 @@ export default function DashboardQuickNav(){
         {filtered.map(group=><section key={group.label}>
           <div className="ace-quick-nav-group-title"><div><h4>{group.label}</h4><p>{group.description}</p></div><span>{group.items.length}</span></div>
           <div className="ace-quick-nav-items">
-            {group.items.map(item=>{const Icon=item.icon;return <button key={item.tab} onClick={()=>jump(item.tab)}>
+            {group.items.map(item=>{const Icon=item.icon;const section=sections[item.tab];return <button key={item.tab} onClick={()=>jump(item.tab)}>
               <span><Icon/></span>
-              <div><b>{item.label}</b><small>{item.description}</small></div>
+              <div><b>{item.label}{section&&<em className={'ace-section-state '+String(section.state||'setup')} title={section.detail||''}>{section.state==='live'?'Live':section.state==='attention'?'Needs setup':'Setup'}</em>}</b><small>{item.description}</small>{section&&<small className="ace-section-detail">{section.detail}</small>}</div>
             </button>})}
           </div>
         </section>)}
