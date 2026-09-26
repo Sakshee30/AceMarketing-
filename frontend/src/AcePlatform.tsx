@@ -12,11 +12,12 @@ import { api } from './lib/api'
 import {getLocalConsent,saveLocalConsent} from './lib/tracker'
 
 type View='site'|'app'|'login'|'pricing'|'demo'|'company'|'resources'|'case-studies'|'privacy'|'terms'|'security'|'solutions'|'industries'|'agents-public'|'integrations-public'
-type AppTab='Launchpad'|'Overview'|'AdSync'|'Funnel'|'Events'|'Adjustments'|'Diagnostics'|'Reconciliation'|'Fraud'|'Deep Links'|'Sites'|'Fingerprinting'|'Live Sync'|'Data Hub'|'Customer 360'|'Offline Attribution'|'Matchback'|'POS & Stores'|'Journeys'|'Identity'|'Models'|'Attribution'|'Planner'|'Reports'|'Enrich'|'Lead Grading'|'Behavior'|'Feed'|'Agents'|'Routing'|'Follow-ups'|'Calls'|'Meetings'|'Feedback'|'Approvals'|'Ask Ace'|'Integrations'|'Data Flows'|'Real-Time Activation'|'Personalization'|'Exclusions'|'Audiences'|'Delivery'|'Monitoring'|'Alerts'|'Compliance'|'Developers'|'Settings'
+type AppTab='Launchpad'|'Overview'|'AdSync'|'ChatGPT Ads'|'Funnel'|'Events'|'Adjustments'|'Diagnostics'|'Reconciliation'|'Fraud'|'Deep Links'|'Sites'|'Fingerprinting'|'Live Sync'|'Data Hub'|'Customer 360'|'Offline Attribution'|'Matchback'|'POS & Stores'|'Journeys'|'Identity'|'Models'|'Attribution'|'Planner'|'Reports'|'Enrich'|'Lead Grading'|'Behavior'|'Feed'|'Agents'|'Routing'|'Follow-ups'|'Calls'|'Meetings'|'Feedback'|'Approvals'|'Ask Ace'|'Integrations'|'Data Flows'|'Real-Time Activation'|'Personalization'|'Exclusions'|'Audiences'|'Delivery'|'Monitoring'|'Alerts'|'Compliance'|'Developers'|'Settings'
 
 const agents=[
  ['Meta Advanced CAPI','Return qualified outcomes to Meta server-side with deduplication.','Lead Quality','+25–40% ROAS'],
  ['Google ECL / OCI','Send enhanced and offline conversions back to Google Ads.','Lead Quality','−30–50% CPQL'],
+ ['ChatGPT Ads CAPI','Send consent-aware server-side conversion events to ChatGPT Ads with oppref matching.','Lead Quality','First-party measurement'],
  ['Call Tracking Events','Attribute inbound calls to campaign, keyword and creative context.','Lead Quality','+80% call attribution'],
  ['Custom Integration','Connect custom CRMs, ad platforms and internal data sources.','Lead Quality','100% channel mix'],
  ['Lead Grading','Score and prioritize leads from journey and CRM evidence.','Conversion','+40–60% conversion'],
@@ -27,7 +28,7 @@ const agents=[
  ['Feedback Agent','Collect post-interaction feedback and surface objections.','Conversion','5× more feedback'],
  ['Ask Ace','Ask journey, funnel and attribution questions in plain language.','Visibility','+20–40% qualified leads']
 ]
-const integrations=['Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads','GA4','Zoho CRM','Salesforce','HubSpot','LeadSquared','Meritto','HighLevel','Microsoft Dynamics 365','WhatsApp','WATI','Gupshup','MoEngage','CleverTap','Bitespeed','AiSensy','Exotel','Knowlarity','Tata Tele','MyOperator','Shopify','WooCommerce','Magento','WordPress','Custom Backend']
+const integrations=['Google Ads','Meta Ads','ChatGPT Ads','LinkedIn Ads','Microsoft Ads','GA4','Zoho CRM','Salesforce','HubSpot','LeadSquared','Meritto','HighLevel','Microsoft Dynamics 365','WhatsApp','WATI','Gupshup','MoEngage','CleverTap','Bitespeed','AiSensy','Exotel','Knowlarity','Tata Tele','MyOperator','Shopify','WooCommerce','Magento','WordPress','Custom Backend']
 const industries=[
  ['EdTech','Track the student journey across ads, forms, calls, counsellors and enrolment.'],
  ['FinTech','Connect acquisition and downstream conversion while preserving strict data controls.'],
@@ -604,12 +605,12 @@ function Login({back,openApp}:{back:()=>void,openApp:()=>void}){
  return <div className="login-page"><div className="login-brand"><Brand/><button onClick={back}>Back to website</button></div><div className="login-shell"><div className="login-story"><span className="kicker">ACE MARKETING PLATFORM</span><h1>One workspace for the complete acquisition journey.</h1><p>Connect paid media, CRM, calls, messaging and offline outcomes — then activate clean signals and measure revenue in one place.</p><div className="login-flow">{['Connect','Stitch','Enrich','Activate','Attribute'].map((x,i)=><div key={x}><span>{i+1}</span><b>{x}</b>{i<4&&<ArrowRight/>}</div>)}</div></div>{mode==='login'?loginForm:mode==='forgot'?forgotForm:resetForm}</div></div>
 }
 const appTabs=[
- ['Launchpad',WandSparkles],['Overview',Gauge],['AdSync',RadioTower],['Funnel',BarChart3],['Events',Zap],['Adjustments',CircleDollarSign],['Diagnostics',ShieldCheck],['Reconciliation',Activity],['Fraud',ShieldCheck],['Deep Links',Network],['Sites',Globe2],['Fingerprinting',MousePointer2],['Live Sync',Activity],['Data Hub',DatabaseZap],['Customer 360',UsersRound],['Offline Attribution',PhoneCall],['Matchback',CircleDollarSign],['POS & Stores',Building2],['Journeys',Network],['Identity',UsersRound],['Models',Target],['Attribution',PieChart],['Planner',CircleDollarSign],['Reports',BarChart3],['Enrich',DatabaseZap],['Lead Grading',Target],['Behavior',MousePointer2],['Feed',Layers3],['Agents',Bot],['Routing',Network],['Follow-ups',MessageCircle],['Calls',PhoneIncoming],['Meetings',CalendarDays],['Feedback',MessageSquareText],['Approvals',CheckCircle2],['Ask Ace',Sparkles],['Integrations',Cable],['Data Flows',Network],['Real-Time Activation',Zap],['Personalization',Sparkles],['Exclusions',ShieldCheck],['Audiences',UsersRound],['Delivery',RadioTower],['Monitoring',Activity],['Alerts',Bell],['Compliance',ShieldCheck],['Developers',Code2],['Settings',Settings2]
+ ['Launchpad',WandSparkles],['Overview',Gauge],['AdSync',RadioTower],['ChatGPT Ads',Bot],['Funnel',BarChart3],['Events',Zap],['Adjustments',CircleDollarSign],['Diagnostics',ShieldCheck],['Reconciliation',Activity],['Fraud',ShieldCheck],['Deep Links',Network],['Sites',Globe2],['Fingerprinting',MousePointer2],['Live Sync',Activity],['Data Hub',DatabaseZap],['Customer 360',UsersRound],['Offline Attribution',PhoneCall],['Matchback',CircleDollarSign],['POS & Stores',Building2],['Journeys',Network],['Identity',UsersRound],['Models',Target],['Attribution',PieChart],['Planner',CircleDollarSign],['Reports',BarChart3],['Enrich',DatabaseZap],['Lead Grading',Target],['Behavior',MousePointer2],['Feed',Layers3],['Agents',Bot],['Routing',Network],['Follow-ups',MessageCircle],['Calls',PhoneIncoming],['Meetings',CalendarDays],['Feedback',MessageSquareText],['Approvals',CheckCircle2],['Ask Ace',Sparkles],['Integrations',Cable],['Data Flows',Network],['Real-Time Activation',Zap],['Personalization',Sparkles],['Exclusions',ShieldCheck],['Audiences',UsersRound],['Delivery',RadioTower],['Monitoring',Activity],['Alerts',Bell],['Compliance',ShieldCheck],['Developers',Code2],['Settings',Settings2]
 
 ] as const
 const dashboardSections=[
  {id:'workspace',label:'Workspace',icon:Gauge,tabs:['Overview','Launchpad']},
- {id:'tracking',label:'Tracking & Data',icon:DatabaseZap,tabs:['AdSync','Funnel','Events','Adjustments','Diagnostics','Reconciliation','Fraud','Deep Links','Sites','Fingerprinting','Live Sync','Data Hub','Customer 360','Offline Attribution','Matchback','POS & Stores']},
+ {id:'tracking',label:'Tracking & Data',icon:DatabaseZap,tabs:['AdSync','ChatGPT Ads','Funnel','Events','Adjustments','Diagnostics','Reconciliation','Fraud','Deep Links','Sites','Fingerprinting','Live Sync','Data Hub','Customer 360','Offline Attribution','Matchback','POS & Stores']},
  {id:'measurement',label:'Measurement & Intelligence',icon:PieChart,tabs:['Journeys','Identity','Models','Attribution','Planner','Reports']},
  {id:'conversion',label:'Lead & Conversion',icon:Target,tabs:['Enrich','Lead Grading','Behavior','Feed','Agents','Routing','Follow-ups','Calls','Meetings','Feedback','Approvals','Ask Ace']},
  {id:'activation',label:'Activation & Integrations',icon:RadioTower,tabs:['Integrations','Data Flows','Real-Time Activation','Personalization','Exclusions','Audiences','Delivery']},
@@ -706,13 +707,14 @@ function AdSync(){
  const quickAgents=[
   {id:'meta_capi',name:'Meta Advanced CAPI',detail:'Qualified leads → server-side Meta conversion',sourceEvent:'lead.qualified',outputEvent:'qualified_lead',destination:'Meta Ads',Icon:RadioTower},
   {id:'google_ecl',name:'Google ECL / OCI',detail:'Qualified leads → enhanced/offline Google conversion',sourceEvent:'lead.qualified',outputEvent:'qualified_lead',destination:'Google Ads',Icon:Target},
+  {id:'chatgpt_ads',name:'ChatGPT Ads CAPI',detail:'Qualified leads → ChatGPT Ads server-side conversion with oppref matching',sourceEvent:'lead.qualified',outputEvent:'lead_created',destination:'ChatGPT Ads',Icon:Bot},
   {id:'call_tracking',name:'Call Tracking Events',detail:'Ingest signed telephony events and attribute calls',tab:'Calls',Icon:PhoneCall},
   {id:'custom_integration',name:'Custom Integration',detail:'Build a governed connector for any unsupported system',tab:'Integrations',Icon:Cable}
  ]
  const load=async()=>{
   try{
    const [events,delivery]:any=await Promise.all([api.events(),api.signalDeliveries()])
-   const pipelines=(events.items||[]).filter((x:any)=>(x.destinations||[]).some((d:string)=>['Google Ads','Meta Ads'].includes(d)))
+   const pipelines=(events.items||[]).filter((x:any)=>(x.destinations||[]).some((d:string)=>['Google Ads','Meta Ads','ChatGPT Ads'].includes(d)))
    setData({...events,items:pipelines})
    setDeliveries(delivery.items||[])
    if(pipelines.length)setSelected((x:string)=>x&&pipelines.some((p:any)=>p.id===x)?x:pipelines[0].id)
@@ -763,6 +765,60 @@ function AdSync(){
  <div className="app-panel"><div className="panel-head"><div><h3>Signal operating path</h3><p>The same persisted rule and delivery infrastructure is used across AdSync, Events and Delivery.</p></div><div className="panel-actions"><button onClick={()=>openTab('Events')}>Open event rules</button><button onClick={()=>openTab('Delivery')}>Open delivery queue</button></div></div><div className="mapping-rule"><span>Business event</span><ArrowRight/><b>Event rule</b><ArrowRight/><b>Durable queue</b><ArrowRight/><b>Google / Meta</b><ArrowRight/><b>Receipt / retry / DLQ</b></div></div>
  {builder&&<div className="connector-modal"><form className="connector-card" onSubmit={createPipeline}><div className="connector-modal-head"><div><RadioTower/><div><b>New conversion pipeline</b><small>Create a persisted event rule for signal activation.</small></div></div><button type="button" onClick={()=>setBuilder(false)}><X/></button></div><label>Pipeline name<input name="name" required defaultValue="Qualified Lead to Google"/></label><label>Source event<input name="sourceEvent" required defaultValue="lead.qualified"/></label><label>Output event<input name="outputEvent" required defaultValue="qualified_lead"/></label><label>Destination<select name="destination"><option>Google Ads</option><option>Meta Ads</option></select></label><button disabled={busy==='create'}>{busy==='create'?'Creating…':'Create pipeline'}</button></form></div>}</>
 }
+function ChatGPTAds(){
+ const [data,setData]=useState<any>({configured:false,deliveries:{recent:[]},matching:{},supportedEventTypes:[]})
+ const [busy,setBusy]=useState('')
+ const [notice,setNotice]=useState('')
+ const [validation,setValidation]=useState<any>(null)
+ const [draft,setDraft]=useState<any>({
+  event:'lead_created',
+  openaiEventType:'lead_created',
+  actionSource:'web',
+  eventSourceUrl:'https://example.com/thank-you',
+  customerId:'',
+  externalEventId:'',
+  oppref:'',
+  obref:'',
+  openaiAmountMinor:'',
+  currency:'INR',
+  optOut:false
+ })
+ const load=async()=>{try{setData(await api.chatgptAds())}catch(e:any){setNotice(e?.message||'ChatGPT Ads status could not be loaded.')}}
+ useEffect(()=>{load()},[])
+ const payload=()=>{
+  const now=new Date().toISOString()
+  const raw:any={...draft,occurredAt:now,externalEventId:draft.externalEventId||('ace_'+Date.now())}
+  if(raw.openaiAmountMinor==='')delete raw.openaiAmountMinor
+  else raw.openaiAmountMinor=Number(raw.openaiAmountMinor)
+  if(!raw.customerId)delete raw.customerId
+  if(!raw.oppref)delete raw.oppref
+  if(!raw.obref)delete raw.obref
+  return raw
+ }
+ const validate=async()=>{
+  setBusy('validate');setNotice('');setValidation(null)
+  try{const r:any=await api.validateChatgptAds(payload());setValidation(r);setNotice(r.configured?'Payload is valid and provider credentials are configured.':'Payload is valid. Configure OPENAI_CONVERSIONS_API_KEY and OPENAI_ADS_PIXEL_ID before live delivery.')}
+  catch(e:any){setValidation({valid:false,error:e?.message||'Validation failed'});setNotice(e?.message||'Validation failed.')}
+  finally{setBusy('')}
+ }
+ const send=async()=>{
+  setBusy('send');setNotice('')
+  try{const r:any=await api.sendChatgptAds(payload());setNotice(r.duplicate?'Matching ChatGPT Ads conversion already exists; duplicate was not queued.':'ChatGPT Ads conversion queued through the durable delivery worker.');await load()}
+  catch(e:any){setNotice(e?.message||'ChatGPT Ads conversion could not be queued.')}
+  finally{setBusy('')}
+ }
+ const d=data.deliveries||{},m=data.matching||{}
+ const typeLabel=(x:string)=>x.replaceAll('_',' ')
+ return <><PageHead crumb="Tracking / ChatGPT Ads" title="ChatGPT Ads conversion measurement" sub="Capture OpenAI click references and send consent-aware server-side conversion events through the official ChatGPT Ads Conversions API." action="Refresh" onAction={load}/>
+ {notice&&<div className={'delivery-notice '+(notice.toLowerCase().includes('failed')||notice.toLowerCase().includes('could not')?'error':'ok')}><Bot/><span>{notice}</span></div>}
+ <div className="stats-grid"><Stat label="Provider setup" value={data.configured?'Ready':'Needs setup'} sub={data.pixelConfigured&&data.conversionsKeyConfigured?'Pixel ID + Conversions API key configured':'Server-side credentials stay in environment secrets'} Icon={ShieldCheck}/><Stat label="oppref coverage" value={String(m.opprefCoverage||0)+'%'} sub={String(m.opprefEvents||0)+' of '+String(m.recentEvents||0)+' recent events preserve oppref'} Icon={MousePointer2}/><Stat label="CAPI deliveries" value={String(d.total||0)} sub={String(d.queued||0)+' queued · '+String(d.failed||0)+' failed'} Icon={RadioTower}/><Stat label="Delivery rate" value={d.deliveryRate==null?'—':String(d.deliveryRate)+'%'} sub="Terminal AceMarketing delivery records" Icon={Activity}/></div>
+ <div className="chatgpt-ads-hero app-panel"><div><Bot/><div><span>SERVER-SIDE CONVERSION MEASUREMENT</span><h3>Ad click → oppref → first-party conversion → ChatGPT Ads CAPI</h3><p>AceMarketing preserves the OpenAI click reference when your site sends it, keeps conversion credentials server-side, and reuses stable event IDs for retries and deduplication.</p></div></div><div className="data-flow-steps">{['Capture oppref','Persist event','Check consent','Map event','Queue CAPI','Monitor delivery'].map((x,i)=><span key={x}><b>{i+1}</b>{x}{i<5&&<ArrowRight/>}</span>)}</div></div>
+ <div className="chatgpt-ads-layout"><section className="app-panel"><div className="panel-head"><div><h3>Conversion payload builder</h3><p>Validate the event locally, then queue it through the same durable worker used for Meta and Google.</p></div><span className={data.configured?'healthy':'status'}>{data.configured?'Configured':'Environment setup required'}</span></div><div className="setup-form-grid"><label><span>Event type</span><select value={draft.openaiEventType} onChange={e=>setDraft({...draft,openaiEventType:e.target.value,event:e.target.value})}>{(data.supportedEventTypes||['lead_created','order_created','appointment_scheduled']).map((x:string)=><option key={x} value={x}>{typeLabel(x)}</option>)}</select></label><label><span>Action source</span><select value={draft.actionSource} onChange={e=>setDraft({...draft,actionSource:e.target.value})}><option value="web">Web</option><option value="mobile_app">Mobile app</option><option value="offline">Offline</option><option value="physical_store">Physical store</option><option value="phone_call">Phone call</option><option value="email">Email</option><option value="other">Other</option></select></label><label><span>Source URL</span><input value={draft.eventSourceUrl} onChange={e=>setDraft({...draft,eventSourceUrl:e.target.value})} placeholder="https://example.com/thank-you"/></label><label><span>Customer ID</span><input value={draft.customerId} onChange={e=>setDraft({...draft,customerId:e.target.value})} placeholder="customer_123"/></label><label><span>OpenAI click reference (oppref)</span><input value={draft.oppref} onChange={e=>setDraft({...draft,oppref:e.target.value})} placeholder="Opaque value from landing-page URL"/></label><label><span>Browser reference (obref)</span><input value={draft.obref} onChange={e=>setDraft({...draft,obref:e.target.value})} placeholder="Optional __obref cookie value"/></label><label><span>Event ID</span><input value={draft.externalEventId} onChange={e=>setDraft({...draft,externalEventId:e.target.value})} placeholder="Stable order/lead/event ID"/></label><label><span>Amount in minor units</span><input type="number" min="0" value={draft.openaiAmountMinor} onChange={e=>setDraft({...draft,openaiAmountMinor:e.target.value})} placeholder="2599"/></label><label><span>Currency</span><input value={draft.currency} onChange={e=>setDraft({...draft,currency:e.target.value.toUpperCase()})} maxLength={3}/></label><label><span>Future personalization opt-out</span><select value={draft.optOut?'true':'false'} onChange={e=>setDraft({...draft,optOut:e.target.value==='true'})}><option value="false">Default</option><option value="true">Opt out</option></select></label></div><div className="source-conflict-note"><ShieldCheck/><div><b>Secrets stay server-side</b><p>Set OPENAI_CONVERSIONS_API_KEY and OPENAI_ADS_PIXEL_ID in the backend environment. The dashboard never exposes either secret.</p></div></div><div className="approval-actions"><button disabled={busy==='validate'} onClick={validate}>{busy==='validate'?'Validating…':'Validate payload'}</button><button className="approve" disabled={busy==='send'||!data.configured} onClick={send}>{busy==='send'?'Queueing…':'Queue live conversion'}</button></div>{validation&&<div className={'activation-test-result '+(validation.valid?'matched':'not-matched')}><ShieldCheck/><div><b>{validation.valid?'Payload valid':'Payload invalid'}</b><small>{validation.notice||validation.error||'Local validation completed.'}</small></div></div>}</section>
+ <section className="app-panel"><div className="panel-head"><div><h3>Measurement readiness</h3><p>Official ChatGPT Ads requirements reflected in AceMarketing setup</p></div></div><div className="chatgpt-readiness">{[['Conversions API key',data.conversionsKeyConfigured],['Pixel ID',data.pixelConfigured],['oppref preservation',Number(m.opprefEvents||0)>0],['Durable delivery queue',true],['Marketing-consent guard',true],['Stable event-ID replay',true]].map(([label,ok]:any)=><article key={label}><span className={ok?'ready':'attention'}>{ok?<Check/>:<AlertTriangle/>}</span><div><b>{label}</b><small>{ok?'Ready':'Needs setup / evidence'}</small></div></article>)}</div><div className="agent-section"><h4>Supported events</h4><div className="context-chips">{(data.supportedEventTypes||[]).map((x:string)=><span key={x}>{typeLabel(x)}</span>)}</div></div><div className="source-conflict-note"><MousePointer2/><div><b>Click matching</b><p>Capture <code>oppref</code> from the landing-page URL and forward it unchanged with server events. When using the Pixel too, reuse the same event ID for deduplication.</p></div></div></section></div>
+ <section className="app-panel"><div className="panel-head"><div><h3>Recent ChatGPT Ads deliveries</h3><p>Durable queue state and provider results</p></div><button onClick={()=>window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:'Delivery'}))}>Open full delivery center</button></div>{(d.recent||[]).length?<div className="chatgpt-deliveries">{(d.recent||[]).map((x:any)=><article key={x.id}><span className={'delivery-state '+x.status}><RadioTower/></span><div><b>{x.event}</b><small>{x.externalEventId||x.id} · {x.replayPayload?.oppref?'oppref captured':'no oppref'}</small></div><strong>{x.status}</strong><time>{x.updatedAt||x.createdAt?new Date(x.updatedAt||x.createdAt).toLocaleString():'—'}</time></article>)}</div>:<div className="empty-delivery-state"><Bot/><div><b>No ChatGPT Ads deliveries yet</b><small>Validate your setup, then queue a consented conversion when credentials are configured.</small></div></div>}</section>
+ </> 
+}
+
 function Funnel(){
  const [data,setData]=useState<any>({stages:{},stageRates:{},campaigns:[],filters:{channels:[],accounts:[]}})
  const [channel,setChannel]=useState('All channels')
@@ -1855,7 +1911,7 @@ function Integrations(){
   ['Calling Platforms',['Exotel','Knowlarity','Tata Tele','MyOperator','Twilio']],
   ['Website, Forms & Commerce',['Shopify','WooCommerce','Magento','WordPress','Typeform','React App','Custom Backend']],
   ['Warehouse, Database & Storage',['BigQuery','Snowflake','MongoDB','Oracle DB','Google Cloud Storage','Amazon S3']],
-  ['Advertising & Analytics',['Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads / Bing Ads','X','Pinterest','TikTok Ads','Yahoo Ads','Taboola','Spotify Ads','Snapchat Ads','Criteo','DV360','Google Merchant Center','Meta Lead Ads','Meta CAPI','Meta Catalog','GA4','Google Calendar']],
+  ['Advertising & Analytics',['Google Ads','Meta Ads','ChatGPT Ads','LinkedIn Ads','Microsoft Ads / Bing Ads','X','Pinterest','TikTok Ads','Yahoo Ads','Taboola','Spotify Ads','Snapchat Ads','Criteo','DV360','Google Merchant Center','Meta Lead Ads','Meta CAPI','Meta Catalog','GA4','Google Calendar']],
   ['Sales Intelligence',['Apollo','Lusha','Calixa']]
  ]
  const [connector,setConnector]=useState('')
@@ -2542,7 +2598,7 @@ function Product({back}:{back:()=>void}){
  const searchMatches=search.trim()?appTabs.filter(([name])=>name.toLowerCase().includes(search.trim().toLowerCase())).slice(0,8):[]
  const runSearch=(name?:string)=>{const target=(name||searchMatches[0]?.[0]) as AppTab|undefined;if(target){setTab(target);setSearch('')}}
  const currentWorkspace=workspaces.find(x=>x.name===workspace)||workspaces[0]
- const view=useMemo(()=>({Launchpad:<Launchpad/>,Overview:<Overview/>,AdSync:<AdSync/>,Funnel:<Funnel/>,Events:<Events/>,Adjustments:<Adjustments/>,Diagnostics:<Diagnostics/>,Reconciliation:<Reconciliation/>,Fraud:<Fraud/>,"Deep Links":<DeepLinks/>,Sites:<Sites/>,Fingerprinting:<Fingerprinting/>,"Live Sync":<LiveSync/>,"Data Hub":<DataHub/>,"Customer 360":<Customer360/>,"Offline Attribution":<OfflineAttribution/>,Matchback:<Matchback/>,"POS & Stores":<POSAndStores/>,Journeys:<Journeys/>,Identity:<Identity/>,Models:<Models/>,Attribution:<Attribution/>,Planner:<Planner/>,Reports:<Reports/>,Enrich:<Enrich/>,"Lead Grading":<LeadGrading/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Routing:<Routing/>,"Follow-ups":<FollowUps/>,Calls:<Calls/>,Meetings:<Meetings/>,Feedback:<Feedback/>,Approvals:<Approvals/>,"Ask Ace":<AskAce/>,Integrations:<Integrations/>,"Data Flows":<DataFlows/>,"Real-Time Activation":<RealTimeActivation/>,Personalization:<Personalization/>,Exclusions:<Exclusions/>,Audiences:<Audiences/>,Delivery:<DeliveryCenter/>,Monitoring:<Monitoring/>,Alerts:<Alerts/>,Compliance:<Compliance/>,Developers:<Developers/>,Settings:<Settings/>}[tab]),[tab])
+ const view=useMemo(()=>({Launchpad:<Launchpad/>,Overview:<Overview/>,AdSync:<AdSync/>,"ChatGPT Ads":<ChatGPTAds/>,Funnel:<Funnel/>,Events:<Events/>,Adjustments:<Adjustments/>,Diagnostics:<Diagnostics/>,Reconciliation:<Reconciliation/>,Fraud:<Fraud/>,"Deep Links":<DeepLinks/>,Sites:<Sites/>,Fingerprinting:<Fingerprinting/>,"Live Sync":<LiveSync/>,"Data Hub":<DataHub/>,"Customer 360":<Customer360/>,"Offline Attribution":<OfflineAttribution/>,Matchback:<Matchback/>,"POS & Stores":<POSAndStores/>,Journeys:<Journeys/>,Identity:<Identity/>,Models:<Models/>,Attribution:<Attribution/>,Planner:<Planner/>,Reports:<Reports/>,Enrich:<Enrich/>,"Lead Grading":<LeadGrading/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Routing:<Routing/>,"Follow-ups":<FollowUps/>,Calls:<Calls/>,Meetings:<Meetings/>,Feedback:<Feedback/>,Approvals:<Approvals/>,"Ask Ace":<AskAce/>,Integrations:<Integrations/>,"Data Flows":<DataFlows/>,"Real-Time Activation":<RealTimeActivation/>,Personalization:<Personalization/>,Exclusions:<Exclusions/>,Audiences:<Audiences/>,Delivery:<DeliveryCenter/>,Monitoring:<Monitoring/>,Alerts:<Alerts/>,Compliance:<Compliance/>,Developers:<Developers/>,Settings:<Settings/>}[tab]),[tab])
  return <div className={'product '+(mobileNavOpen?'mobile-nav-open':'')}><aside className="product-sidebar" aria-label="Workspace navigation"><Brand/><div className="workspace-wrap"><button className="workspace" onClick={()=>setWorkspaceOpen(!workspaceOpen)}><span>{currentWorkspace?.initials||'AM'}</span><div><b>{workspace}</b><small>{currentWorkspace?.environment||'Production'} workspace</small></div><ChevronDown/></button>{workspaceOpen&&<div className="workspace-menu">{workspaces.map((x:any)=><button key={x.id||x.name} onClick={()=>chooseWorkspace(x)} className={workspace===x.name?'active':''}><span>{x.initials||String(x.name).split(/\s+/).map((s:string)=>s[0]).join('').slice(0,3)}</span><div><b>{x.name}</b><small>{x.environment||'Production'}</small></div>{workspace===x.name&&<Check/>}</button>)}<button className="new-workspace" onClick={()=>{setWorkspaceOpen(false);setCreateOpen(true)}}><Plus/>Create workspace</button></div>}</div><nav className="product-nav">
  <div className="product-nav-filter"><Search/><input value={navFilter} onChange={e=>setNavFilter(e.target.value)} placeholder="Find feature..."/></div>
  {dashboardSections.map(section=>{
