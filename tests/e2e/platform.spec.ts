@@ -163,6 +163,25 @@ test.describe('workspace critical flows',()=>{
     await expect(page.getByText(/Duplicate evidence/i)).toBeVisible()
   })
 
+  test('compliance center exposes consent, retention and privacy operations',async({page})=>{
+    const response=await page.request.get('/api/compliance-center')
+    expect(response.ok()).toBeTruthy()
+    const payload=await response.json()
+    expect(typeof payload.readiness).toBe('number')
+    expect(payload.consent).toBeTruthy()
+    expect(payload.policy).toBeTruthy()
+    expect(payload.privacy).toBeTruthy()
+    expect(Array.isArray(payload.checks)).toBeTruthy()
+
+    await openWorkspaceTab(page,'Compliance')
+    await expect(page.getByRole('heading',{name:'Privacy, consent & compliance center'})).toBeVisible()
+    await expect(page.getByText('Consent coverage')).toBeVisible()
+    await expect(page.getByText('Subject rights operations')).toBeVisible()
+    await expect(page.getByText('Retention policy')).toBeVisible()
+    await expect(page.getByLabel('Privacy subject selector')).toBeVisible()
+    await expect(page.getByLabel('Privacy delete confirmation')).toBeVisible()
+  })
+
   test('exclusion workspace exposes first-party suppression presets and navigation',async({page})=>{
     const response=await page.request.get('/api/exclusions')
     expect(response.ok()).toBeTruthy()
@@ -827,7 +846,7 @@ test('all workspace sections render without a frontend crash', async ({ page }) 
     'Launchpad','Overview','AdSync','Funnel','Events','Adjustments','Diagnostics','Reconciliation','Fraud','Deep Links','Sites','Fingerprinting',
     'Live Sync','Data Hub','Customer 360','Offline Attribution','Matchback','POS & Stores','Journeys','Identity','Models','Attribution','Planner','Reports',
     'Enrich','Lead Grading','Behavior','Feed','Agents','Routing','Follow-ups','Calls','Meetings','Feedback','Approvals','Ask Ace',
-    'Integrations','Data Flows','Real-Time Activation','Personalization','Exclusions','Audiences','Delivery','Monitoring','Alerts','Developers','Settings'
+    'Integrations','Data Flows','Real-Time Activation','Personalization','Exclusions','Audiences','Delivery','Monitoring','Alerts','Compliance','Developers','Settings'
   ]
 
   for(const tab of tabs){
