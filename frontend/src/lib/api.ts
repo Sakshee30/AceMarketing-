@@ -189,6 +189,7 @@ export const api = {
   feedback: () => request('/feedback'),
   recordFeedback: (payload: Record<string, unknown>) => request('/feedback', { method: 'POST', body: JSON.stringify(payload) }),
   requestFeedback: (payload: Record<string, unknown>) => request('/feedback/request', { method: 'POST', body: JSON.stringify(payload) }),
+  routeFeedback: (id: string) => request('/feedback/route', { method: 'POST', body: JSON.stringify({id}) }),
   agentRuns: () => request('/agent-runs'),
   approvals: () => request('/approvals'),
   decideApproval: (id: string, decision: 'approved' | 'rejected') => request('/approvals/decision', { method: 'POST', body: JSON.stringify({ id, decision }) }),
