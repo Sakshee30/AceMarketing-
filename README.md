@@ -4019,3 +4019,21 @@ Implemented:
 - Playwright coverage verifies the Repeat Purchase condition and creates a real persisted rule, and verifies the Abandoned Checkout webhook/backend semantics and rule-builder fields.
 
 This brings the commerce event template catalog closer to the documented business signals while preserving truthful execution boundaries.
+
+
+## Signal-return agent quick-start pass
+
+The AdSync workspace now exposes the four core signal-return operating paths as distinct, functional quick starts rather than requiring users to infer everything from a generic pipeline builder.
+
+Implemented:
+- `Meta Advanced CAPI` quick start creates a persisted `lead.qualified → qualified_lead` rule targeting Meta Ads;
+- `Google ECL / OCI` quick start creates the equivalent persisted rule targeting Google Ads;
+- `Call Tracking Events` opens the live Calls workspace, where signed telephony events and voice-qualification runs are already operational;
+- `Custom Integration` opens the real Integrations workspace and custom-adapter builder;
+- installed Meta/Google pipelines are detected from persisted event rules, so the UI switches from `Install pipeline` to `Open pipeline` instead of blindly duplicating configuration;
+- created pipelines continue through the existing event-rule engine, consent checks, durable delivery queue, provider adapters, retries, receipts and DLQ;
+- the provider layer remains explicit: Meta requires connected Meta Ads credentials + dataset ID, while Google requires Ads OAuth credentials, developer token, customer ID and conversion action;
+- polished responsive quick-start cards include installed-state styling, hover elevation and reduced-motion handling;
+- Playwright coverage installs the Meta CAPI pipeline, verifies the persisted rule/destination, then opens the Call Tracking module.
+
+This gives operators clear agent-level entry points while preserving one shared production signal-return architecture underneath.
