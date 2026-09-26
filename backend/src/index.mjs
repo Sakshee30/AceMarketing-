@@ -2080,6 +2080,20 @@ const server = http.createServer(async (req,res)=>{
       const event={id:randomUUID(),receivedAt:new Date().toISOString(),consentCategory:category,...body}
       trackedEvents.push(event)
       if(trackedEvents.length>5000) trackedEvents.splice(0,trackedEvents.length-5000)
+      const persistedEvent={...event}
+      if(persistedEvent.email){
+        persistedEvent.emailSha256=persistedEvent.emailSha256||persistedEvent.email_sha256||sha256Normalized(persistedEvent.email)
+        delete persistedEvent.email
+      }
+      if(persistedEvent.phone){
+        persistedEvent.phoneSha256=persistedEvent.phoneSha256||persistedEvent.phone_sha256||sha256Phone(persistedEvent.phone)
+        delete persistedEvent.phone
+      }
+      await mutateState(s=>{
+        s.recentEvents=s.recentEvents||[]
+        s.recentEvents.unshift(persistedEvent)
+        s.recentEvents=s.recentEvents.slice(0,5000)
+      })
       let leadProfile=null
       if(body.customerId||body.email||body.phone||body.emailSha256||body.email_sha256||body.phoneSha256||body.phone_sha256||body.deviceId||body.device_id){
         leadProfile=await upsertLeadProfile(workspaceId,{
@@ -2365,16 +2379,48 @@ const server = http.createServer(async (req,res)=>{
       return send(req,res,202,{lead:lead.name||lead.external_lead_id,grade:lead.grade,status:'ready_for_activation',mode,destinations:['crm','routing','ad_signals'],queuedAt:new Date().toISOString()})
     }
     if (req.method === 'GET' && url.pathname === '/api/behavior') {
-      const counts=new Map()
-      let known=0,highIntent=0
-      for(const event of trackedEvents){
-        const name=String(event.event||event.eventType||event.name||'event')
-        counts.set(name,(counts.get(name)||0)+1)
-        if(event.customerId||event.email||event.phone||event.emailSha256||event.phoneSha256)known++
-        if(/pricing|checkout|book|consult|apply|purchase|revenue/i.test(name))highIntent++
+      const state=await getState()
+      const sourceEvents=(state.recentEvents||[]).length?(state.recentEvents||[]):trackedEvents
+      const countBy=(selector)=>{
+        const map=new Map()
+        for(const event of sourceEvents){
+          const key=String(selector(event)||'Unknown').trim()||'Unknown'
+          map.set(key,(map.get(key)||0)+1)
+        }
+        return [...map.entries()].map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count)
       }
-      const events=[...counts.entries()].map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count)
-      return send(req,res,200,{events,stats:{events:trackedEvents.length,knownIdentities:known,knownIdentityRate:trackedEvents.length?Number((known/trackedEvents.length*100).toFixed(1)):0,highIntentEvents:highIntent},recent:trackedEvents.slice(-50).reverse(),generatedAt:new Date().toISOString()})
+      const eventCounts=new Map()
+      let known=0,highIntent=0,deviceIdentified=0
+      for(const event of sourceEvents){
+        const name=String(event.event||event.eventType||event.name||'event')
+        eventCounts.set(name,(eventCounts.get(name)||0)+1)
+        if(event.customerId||event.visitorId||event.deviceId||event.device_id||event.emailSha256||event.email_sha256||event.phoneSha256||event.phone_sha256)known++
+        if(event.deviceId||event.device_id)deviceIdentified++
+        if(/pricing|checkout|book|consult|apply|purchase|revenue|qualified|enrol|closed_won/i.test(name))highIntent++
+      }
+      const events=[...eventCounts.entries()].map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count)
+      const sources=countBy(event=>event.utm_source||event.source||event.channel||'Direct / First-party')
+      const campaigns=countBy(event=>event.utm_campaign||event.campaign||'Unattributed campaign')
+      const devices=countBy(event=>event.devicePlatform||event.device_platform||event.platform||'Unknown device')
+      const total=sourceEvents.length
+      return send(req,res,200,{
+        events,
+        sources,
+        campaigns,
+        devices,
+        stats:{
+          events:total,
+          knownIdentities:known,
+          knownIdentityRate:total?Number((known/total*100).toFixed(1)):0,
+          deviceIdentifiedEvents:deviceIdentified,
+          deviceIdentityRate:total?Number((deviceIdentified/total*100).toFixed(1)):0,
+          highIntentEvents:highIntent,
+          highIntentRate:total?Number((highIntent/total*100).toFixed(1)):0
+        },
+        recent:sourceEvents.slice(0,100),
+        persistence:(state.recentEvents||[]).length?'workspace_store':'process_window',
+        generatedAt:new Date().toISOString()
+      })
     }
     if (req.method === 'GET' && url.pathname === '/api/feed') {
       const [profiles,state]=await Promise.all([listLeadProfiles(workspaceId,200),getState()])
