@@ -305,19 +305,21 @@ test('attribution period selector requests a new backend window', async ({ page 
 })
 
 
-test('AdSync creates and operates a persisted conversion pipeline', async ({ page }) => {
+test('AdSync creates and operates a persisted conversion pipeline', async ({ page }, testInfo) => {
   await page.goto('/#/workspace')
   await dismissConsent(page)
   await openWorkspaceTab(page,'AdSync')
   await expect(page.getByRole('heading', { name: 'Server-side signal activation' })).toBeVisible()
   await page.getByRole('button', { name: 'Add pipeline' }).click()
   const modal=page.getByText('New conversion pipeline').locator('..').locator('..')
-  await page.getByLabel('Pipeline name').fill('CI Qualified Lead to Meta')
+  const pipelineName='CI Qualified Lead '+testInfo.project.name
+  await page.getByLabel('Pipeline name').fill(pipelineName)
   await page.getByLabel('Source event').fill('lead.qualified')
   await page.getByLabel('Output event').fill('qualified_lead_ci')
   await page.getByLabel('Destination').selectOption('Meta Ads')
   await page.getByRole('button', { name: 'Create pipeline' }).click()
-  await expect(page.locator('.agent-selector').getByText('CI Qualified Lead to Meta', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText('Conversion pipeline rule created.', { exact: true })).toBeVisible()
+  await expect(page.locator('.agent-selector').getByText(pipelineName, { exact: true }).first()).toBeVisible()
   await expect(page.getByRole('button', { name: /Send test source event/ })).toBeVisible()
 })
 
@@ -357,13 +359,14 @@ test('custom routing rule persists and drives selected-rule test', async ({ page
 })
 
 
-test('meetings can be scheduled directly from the meetings workspace', async ({ page }) => {
+test('meetings can be scheduled directly from the meetings workspace', async ({ page }, testInfo) => {
   await page.goto('/#/workspace')
   await dismissConsent(page)
   await openWorkspaceTab(page,'Meetings')
   await expect(page.getByRole('heading', { name: 'Scheduler & meeting reminders' })).toBeVisible()
   await page.locator('.page-head').getByRole('button', { name: 'Schedule meeting' }).click()
-  await page.getByLabel('Lead reference').fill('ci_meeting_lead')
+  const meetingLead='ci_meeting_'+testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()
+  await page.getByLabel('Lead reference').fill(meetingLead)
   const dt=new Date(Date.now()+24*60*60*1000)
   const local=dt.toISOString().slice(0,16)
   await page.getByLabel('Start time').fill(local)
@@ -371,40 +374,49 @@ test('meetings can be scheduled directly from the meetings workspace', async ({ 
   await page.getByLabel('Attendee email').fill('ci-meeting@example.com')
   await page.getByLabel('Calendar sync').selectOption('no')
   await page.locator('.connector-card').getByRole('button', { name: 'Schedule meeting' }).click()
-  await expect(page.locator('.meeting-list').getByText('ci_meeting_lead', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText('Meeting scheduled.', { exact: true })).toBeVisible()
+  await expect(page.locator('.meeting-list').getByText(meetingLead, { exact: true }).first()).toBeVisible()
   await expect(page.getByRole('button', { name: 'Send reminder now' })).toBeVisible()
 })
 
 
-test('matchback rules persist without seeded performance claims', async ({ page }) => {
+test('matchback rules persist without seeded performance claims', async ({ page }, testInfo) => {
   await page.goto('/#/workspace')
   await dismissConsent(page)
   await openWorkspaceTab(page,'Matchback')
   await expect(page.getByRole('heading', { name: 'Closure matchback & revenue reconciliation' })).toBeVisible()
   await expect(page.getByText('₹84.0L', { exact: true })).toHaveCount(0)
   await page.getByRole('button', { name: 'New matchback rule' }).click()
-  await page.getByLabel('Rule name').fill('CI Closed Won')
+  const ruleName='CI Closed Won '+testInfo.project.name
+  await page.getByLabel('Rule name').fill(ruleName)
   await page.getByLabel('Source').fill('ci_crm')
   await page.getByLabel('Event type').fill('closed_won')
   await page.getByLabel('Destination').fill('Google Ads')
   await page.getByLabel('Identity method').fill('customer_id + gclid')
   await page.getByRole('button', { name: 'Create matchback rule' }).click()
-  await expect(page.locator('.matchback-list').getByText('CI Closed Won', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText('Matchback rule created.', { exact: true })).toBeVisible()
+  await expect(page.locator('.matchback-list').getByText(ruleName, { exact: true }).first()).toBeVisible()
   await expect(page.getByRole('button', { name: 'Run reconciliation' })).toBeVisible()
 })
 
 
-test('journey explorer renders stitched chronology', async ({ page }) => {
+test('journey explorer renders stitched chronology', async ({ page }, testInfo) => {
   await page.goto('/#/workspace')
   await dismissConsent(page)
-  await page.request.post('/api/enrich/upsert',{data:{externalLeadId:'ci_journey_lead',name:'CI Journey Lead',source:'Google Ads',campaign:'CI Search',crmStage:'qualified',journeyDepth:2,lastActivity:new Date().toISOString()}})
-  await page.request.post('/api/follow-ups',{data:{leadRef:'ci_journey_lead',reason:'CI chronology follow-up',channel:'Email',priority:'medium',delayMinutes:30,owner:'CI Owner'}})
+  const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()
+  const leadRef='ci_journey_'+suffix
+  const leadName='CI Journey '+testInfo.project.name
+  const followReason='CI chronology '+testInfo.project.name
+  const upsert=await page.request.post('/api/enrich/upsert',{data:{externalLeadId:leadRef,name:leadName,source:'Google Ads',campaign:'CI Search',crmStage:'qualified',journeyDepth:2,lastActivity:new Date().toISOString()}})
+  expect(upsert.ok()).toBeTruthy()
+  const follow=await page.request.post('/api/follow-ups',{data:{leadRef,reason:followReason,channel:'Email',priority:'medium',delayMinutes:30,owner:'CI Owner'}})
+  expect(follow.ok()).toBeTruthy()
   await openWorkspaceTab(page,'Journeys')
   await expect(page.getByRole('heading', { name: 'Customer journey explorer' })).toBeVisible()
-  await expect(page.getByText('CI Journey Lead', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText(leadName, { exact: true }).first()).toBeVisible()
   const detail=page.locator('.journey-detail')
   await expect(detail.getByText('Stitched chronology')).toBeVisible()
-  await expect(detail.getByText('CI chronology follow-up', { exact: true }).first()).toBeVisible()
+  await expect(detail.getByText(followReason, { exact: true }).first()).toBeVisible()
   await expect(detail.getByText(/Journey timeline source/)).toHaveCount(0)
 })
 
@@ -444,19 +456,22 @@ test('site operations add a property and show evidence-aware installation test',
 })
 
 
-test('POS import computes match coverage from transaction rows', async ({ page }) => {
+test('POS import computes match coverage from transaction rows', async ({ page }, testInfo) => {
   await page.goto('/#/workspace')
   await dismissConsent(page)
   await openWorkspaceTab(page,'POS & Stores')
   await expect(page.getByRole('heading', { name: 'POS, walk-in & store-sale attribution' })).toBeVisible()
   await page.locator('.page-head').getByRole('button', { name: 'Import POS batch' }).click()
   await expect(page.getByLabel('Matched records')).toHaveCount(0)
-  await page.getByLabel('Store ID').fill('CI-STORE')
-  await page.getByLabel('Store name').fill('CI Store')
-  await page.getByLabel('CSV transactions').fill('transaction_id,customer_id,email,phone,net_revenue,currency,occurred_at,gclid,fbclid\nCI-TXN-1,ci_pos_customer,,,12500,INR,2026-09-26T10:00:00Z,,')
+  const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toUpperCase()
+  const storeId='CI-STORE-'+suffix
+  const storeName='CI Store '+testInfo.project.name
+  await page.getByLabel('Store ID').fill(storeId)
+  await page.getByLabel('Store name').fill(storeName)
+  await page.getByLabel('CSV transactions').fill('transaction_id,customer_id,email,phone,net_revenue,currency,occurred_at,gclid,fbclid\nCI-TXN-'+suffix+',ci_pos_'+suffix.toLowerCase()+',,,12500,INR,2026-09-26T10:00:00Z,,')
   await page.getByRole('button', { name: 'Process transaction batch' }).click()
   await expect(page.getByText(/POS batch processed:/)).toBeVisible()
-  await expect(page.locator('.pos-list').getByText('CI Store', { exact: true }).first()).toBeVisible()
+  await expect(page.locator('.pos-list').getByText(storeName, { exact: true }).first()).toBeVisible()
 })
 
 
@@ -481,19 +496,20 @@ test('custom model can be created and run from workspace evidence', async ({ pag
 })
 
 
-test('feed enhancement persists destination mappings and previews payload', async ({ page }) => {
+test('feed enhancement persists destination mappings and previews payload', async ({ page }, testInfo) => {
   await page.goto('/#/workspace')
   await dismissConsent(page)
   await openWorkspaceTab(page,'Feed')
   await expect(page.getByRole('heading', { name: 'Feed & payload enhancement' })).toBeVisible()
   await page.getByRole('button', { name: 'Add attribute' }).first().click()
-  await page.getByLabel('Key').fill('ci_customer_tier')
+  const attribute='ci_customer_tier_'+testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()
+  await page.getByLabel('Key').fill(attribute)
   await page.getByLabel('Source').fill('custom')
   await page.getByLabel('Example value').fill('high_ltv')
   await page.locator('.connector-card').getByRole('button', { name: 'Save attribute' }).click()
-  await expect(page.getByText('ci_customer_tier', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText(attribute, { exact: true }).first()).toBeVisible()
   await page.getByRole('button', { name: 'New mapping' }).click()
-  await page.getByLabel('Source attribute').selectOption('ci_customer_tier')
+  await page.getByLabel('Source attribute').selectOption(attribute)
   const mappingForm=page.locator('.connector-card')
   await mappingForm.locator('select[name="destination"]').selectOption('Meta Ads')
   await mappingForm.getByLabel('Destination field').fill('customer_tier')
