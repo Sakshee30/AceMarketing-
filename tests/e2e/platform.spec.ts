@@ -94,7 +94,7 @@ test.describe('workspace critical flows',()=>{
     await navigator.click()
     const dialog=page.getByRole('dialog',{name:'Dashboard section navigator'})
     await expect(dialog).toBeVisible()
-    await expect(dialog.getByText('workspace readiness')).toBeVisible()
+    await expect(dialog.getByText('workspace readiness',{exact:true})).toBeVisible()
     await expect(dialog.getByText('connected systems')).toBeVisible()
     await expect(dialog.getByText('open alerts')).toBeVisible()
 
@@ -160,7 +160,7 @@ test.describe('workspace critical flows',()=>{
     await expect(page.getByRole('heading',{name:'Conversion reconciliation center'})).toBeVisible()
     await expect(page.getByText('Issue reconciliation')).toBeVisible()
     await expect(page.getByText('Destination delivery comparison')).toBeVisible()
-    await expect(page.getByText(/Duplicate evidence/i)).toBeVisible()
+    await expect(page.getByText(/Duplicate evidence/i).first()).toBeVisible()
   })
 
   test('funnel leak monitor detects missing handoffs and queues a real recovery follow-up',async({page},testInfo)=>{
@@ -297,7 +297,7 @@ test.describe('workspace critical flows',()=>{
     expect(costed.contribution).toBeGreaterThanOrEqual(1500)
 
     await openWorkspaceTab(page,'Grouped Performance')
-    await expect(page.getByRole('heading',{name:'Grouped performance'})).toBeVisible()
+    await expect(page.getByRole('heading',{name:'Grouped performance',exact:true})).toBeVisible()
     await expect(page.getByText('Grouped performance table')).toBeVisible()
     await expect(page.getByText(category,{exact:true})).toBeVisible()
   })
@@ -327,7 +327,7 @@ test.describe('workspace critical flows',()=>{
     await openWorkspaceTab(page,'Executive Briefs')
     await expect(page.getByRole('heading',{name:'Executive data snippets'})).toBeVisible()
     await expect(page.getByText('Live brief preview')).toBeVisible()
-    await expect(page.getByText('Schedule executive brief')).toBeVisible()
+    await expect(page.getByRole('heading',{name:'Schedule executive brief',exact:true})).toBeVisible()
     await expect(page.getByText('CI Executive Brief '+suffix,{exact:true})).toBeVisible()
   })
 
@@ -377,7 +377,7 @@ test.describe('workspace critical flows',()=>{
     await expect(page.getByRole('heading',{name:'Privacy, consent & compliance center'})).toBeVisible()
     await expect(page.getByText('Consent coverage')).toBeVisible()
     await expect(page.getByText('Subject rights operations')).toBeVisible()
-    await expect(page.getByText('Retention policy')).toBeVisible()
+    await expect(page.getByText('Retention policy',{exact:true}).first()).toBeVisible()
     await expect(page.getByLabel('Privacy subject selector')).toBeVisible()
     await expect(page.getByLabel('Privacy delete confirmation')).toBeVisible()
   })
@@ -436,7 +436,7 @@ test.describe('workspace critical flows',()=>{
 
     await openWorkspaceTab(page,'Personalization')
     await expect(page.getByRole('heading',{name:'Personalization studio'})).toBeVisible()
-    await expect(page.getByText('CI personalization '+suffix,{exact:true})).toBeVisible()
+    await expect(page.getByText('CI personalization '+suffix,{exact:true}).first()).toBeVisible()
   })
 
   test('real-time activation persists rules and executes on matching consented events',async({page},testInfo)=>{
@@ -474,7 +474,7 @@ test.describe('workspace critical flows',()=>{
 
     await openWorkspaceTab(page,'Real-Time Activation')
     await expect(page.getByRole('heading',{name:'Real-time activation'})).toBeVisible()
-    await expect(page.getByText('CI high-value activation '+suffix,{exact:true})).toBeVisible()
+    await expect(page.getByText('CI high-value activation '+suffix,{exact:true}).first()).toBeVisible()
   })
 
   test('data flows persist recipes and enforce readiness before activation',async({page})=>{
@@ -643,7 +643,7 @@ test('dashboard navigator opens primary operating sections', async ({ page }) =>
   await page.getByRole('button', { name: 'Open dashboard section navigator' }).click()
   await expect(page.getByRole('dialog', { name: 'Dashboard section navigator' })).toBeVisible()
   const navigator=page.getByRole('dialog', { name: 'Dashboard section navigator' })
-  const attributionButton=navigator.locator('button').filter({has:page.getByText('Attribution',{exact:true})}).first()
+  const attributionButton=navigator.getByRole('button',{name:/^Attribution\b/}).first()
   await expect(attributionButton).toBeVisible()
   await attributionButton.click()
   await expect(page.getByRole('heading', { name: 'Full-path attribution' })).toBeVisible()
@@ -995,7 +995,7 @@ test('workspace quick navigator searches and opens dashboard sections', async ({
   await expect(search).toBeFocused()
   await search.fill('attribution')
   const navigator=page.getByRole('dialog', { name: 'Dashboard section navigator' })
-  const attributionButton=navigator.locator('button').filter({has:page.getByText('Attribution',{exact:true})}).first()
+  const attributionButton=navigator.getByRole('button',{name:/^Attribution\b/}).first()
   await expect(attributionButton).toBeVisible()
   await attributionButton.click()
   await expect(page.getByRole('heading', { name: 'Full-path attribution' })).toBeVisible()
