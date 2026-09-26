@@ -205,6 +205,57 @@ test.describe('workspace critical flows',()=>{
     await expect(page.getByText(/Recovery queued/i).first()).toBeVisible()
   })
 
+  test('match quality scores persisted identity coverage and exposes fix recommendations',async({page},testInfo)=>{
+    const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()
+    const strongCustomer='match_quality_strong_'+suffix+'_'+Date.now()
+    const weakVisitor='match_quality_weak_'+suffix+'_'+Date.now()
+
+    const strongConsent=await page.request.post('/api/consent',{data:{subjectType:'customer',subjectId:strongCustomer,essential:true,analytics:true,marketing:true,personalization:true,source:'ci'}})
+    expect(strongConsent.ok()).toBeTruthy()
+    const weakConsent=await page.request.post('/api/consent',{data:{subjectType:'visitor',subjectId:weakVisitor,essential:true,analytics:true,marketing:false,personalization:false,source:'ci'}})
+    expect(weakConsent.ok()).toBeTruthy()
+
+    const strong=await page.request.post('/api/track',{data:{
+      event:'lead_created',
+      eventCategory:'analytics',
+      customerId:strongCustomer,
+      emailSha256:'a'.repeat(64),
+      phoneSha256:'b'.repeat(64),
+      deviceId:'device_'+suffix,
+      visitorId:'visitor_'+suffix,
+      gclid:'gclid_'+suffix,
+      fbclid:'fbclid_'+suffix,
+      source:'ci_match_quality'
+    }})
+    expect(strong.ok()).toBeTruthy()
+
+    const weak=await page.request.post('/api/track',{data:{
+      event:'page_view',
+      eventCategory:'analytics',
+      visitorId:weakVisitor,
+      source:'ci_match_quality'
+    }})
+    expect(weak.ok()).toBeTruthy()
+
+    const response=await page.request.get('/api/match-quality')
+    expect(response.ok()).toBeTruthy()
+    const payload=await response.json()
+    expect(payload.totalEvents).toBeGreaterThanOrEqual(2)
+    expect(typeof payload.averageScore).toBe('number')
+    expect(Array.isArray(payload.coverage)).toBeTruthy()
+    expect(Array.isArray(payload.items)).toBeTruthy()
+    expect(Array.isArray(payload.recommendations)).toBeTruthy()
+    expect(payload.note).toMatch(/internal identity-coverage score/i)
+    expect(payload.items.some((x:any)=>x.event==='lead_created')).toBeTruthy()
+    expect(payload.items.some((x:any)=>x.event==='page_view')).toBeTruthy()
+
+    await openWorkspaceTab(page,'Match Quality')
+    await expect(page.getByRole('heading',{name:'Event match quality'})).toBeVisible()
+    await expect(page.getByText('Identifier coverage')).toBeVisible()
+    await expect(page.getByText('Event-type quality')).toBeVisible()
+    await expect(page.getByText('Provider-score boundary')).toBeVisible()
+  })
+
   test('grouped performance uses persisted conversion evidence and explicit cost basis',async({page},testInfo)=>{
     const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()
     const customerId='grouped_customer_'+suffix
@@ -992,7 +1043,7 @@ test('all workspace sections render without a frontend crash', async ({ page }) 
   await dismissConsent(page)
 
   const tabs=[
-    'Launchpad','Overview','AdSync','ChatGPT Ads','Funnel','Leak Monitor','Events','Adjustments','Diagnostics','Reconciliation','Fraud','Deep Links','Sites','Fingerprinting',
+    'Launchpad','Overview','AdSync','ChatGPT Ads','Funnel','Leak Monitor','Events','Adjustments','Diagnostics','Match Quality','Reconciliation','Fraud','Deep Links','Sites','Fingerprinting',
     'Live Sync','Data Hub','Customer 360','Offline Attribution','Matchback','POS & Stores','Journeys','Identity','Models','Attribution','Planner','Reports','Grouped Performance','Executive Briefs',
     'Enrich','Lead Grading','Behavior','Feed','Agents','Routing','Follow-ups','Calls','Meetings','Feedback','Approvals','Ask Ace',
     'Integrations','Data Flows','Real-Time Activation','Personalization','Exclusions','Audiences','Delivery','Monitoring','Alerts','Compliance','Developers','Settings'
