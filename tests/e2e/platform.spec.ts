@@ -1461,6 +1461,68 @@ test('Ask Ace reports grounded funnel handoff coverage', async ({ page }, testIn
 })
 
 
+
+test('Ask Ace renders a specific stitched customer journey', async ({ page }, testInfo) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()+'_'+Date.now()
+  const lead='ci_ask_journey_'+suffix
+  const leadName='CI Journey '+suffix
+
+  const created=await page.request.post('/api/enrich/upsert',{data:{
+    externalLeadId:lead,
+    name:leadName,
+    source:'TikTok Ads',
+    campaign:'CI Journey Campaign',
+    crmStage:'qualified',
+    journeyDepth:3,
+    pricingPageViews:2
+  }})
+  expect(created.ok()).toBeTruthy()
+
+  const tracked=await page.request.post('/api/track',{data:{
+    event:'pricing_view',
+    eventCategory:'essential',
+    customerId:lead,
+    visitorId:'ci_ask_journey_visitor_'+suffix,
+    utm_source:'TikTok Ads',
+    utm_campaign:'CI Journey Campaign',
+    occurredAt:new Date().toISOString()
+  }})
+  expect(tracked.ok()).toBeTruthy()
+
+  const followUp=await page.request.post('/api/follow-ups',{data:{
+    leadRef:lead,
+    reason:'CI journey follow-up',
+    channel:'WhatsApp',
+    priority:'high',
+    delayMinutes:5,
+    owner:'CI Sales'
+  }})
+  expect(followUp.ok()).toBeTruthy()
+
+  const apiResponse=await page.request.post('/api/ask-ace',{data:{question:'Show me the journey for '+lead}})
+  expect(apiResponse.ok()).toBeTruthy()
+  const payload=await apiResponse.json()
+  expect(payload.intent).toBe('customer_journey')
+  expect(payload.journey?.externalLeadId).toBe(lead)
+  expect(payload.journeyTimeline?.length).toBeGreaterThanOrEqual(3)
+  expect(payload.journeyTimeline.some((x:any)=>x.type==='event'&&String(x.title).includes('pricing'))).toBeTruthy()
+  expect(payload.journeyTimeline.some((x:any)=>x.type==='follow_up')).toBeTruthy()
+
+  await openWorkspaceTab(page,'Ask Ace')
+  await expect(page.getByRole('heading',{name:'Journey & attribution assistant'})).toBeVisible()
+  const input=page.getByPlaceholder('Ask about revenue, leads, campaigns, audiences or signal health...')
+  await input.fill('Show me the journey for '+lead)
+  await input.press('Enter')
+  await expect(page.getByText('customer journey',{exact:true})).toBeVisible()
+  const journey=page.locator('.ask-journey').last()
+  await expect(journey).toContainText(leadName)
+  await expect(journey).toContainText('pricing view')
+  await expect(journey).toContainText('CI journey follow-up')
+})
+
+
 test('repeat purchase and abandoned checkout templates are executable', async ({ page }, testInfo) => {
   await page.goto('/#/workspace')
   await dismissConsent(page)
