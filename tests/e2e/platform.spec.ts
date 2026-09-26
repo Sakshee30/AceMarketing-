@@ -807,7 +807,12 @@ test('behavior workspace analyzes persisted source campaign and device evidence'
 
   await openWorkspaceTab(page,'Behavior')
   await expect(page.getByRole('heading',{name:'Website & app behavior'})).toBeVisible()
+  const refreshResponse=page.waitForResponse(r=>r.url().includes('/api/behavior')&&r.request().method()==='GET')
   await page.getByRole('button',{name:'Refresh',exact:true}).click()
+  const refreshed=await refreshResponse
+  expect(refreshed.ok()).toBeTruthy()
+  const refreshedPayload=await refreshed.json()
+  expect((refreshedPayload.sources||[]).some((x:any)=>x.name===source)).toBeTruthy()
   await expect(page.getByText('Persisted workspace event window',{exact:true})).toBeVisible()
 
   const behaviorTabs=page.locator('.behavior-tabs')
