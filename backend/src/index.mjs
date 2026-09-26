@@ -3298,6 +3298,37 @@ const server = http.createServer(async (req,res)=>{
       const job=await enqueueJob({workspaceId,kind:'agent_action',idempotencyKey:'agent:'+run.id,payload:{agentRunId:run.id,actionType:'feedback',payload:{...body,runId:run.id}}})
       return send(req,res,202,{runId:run.id,status:'queued',jobId:job?.id||null})
     }
+    if (req.method === 'POST' && url.pathname === '/api/feedback/route') {
+      const body=await readBody(req)
+      if(!body.id) return send(req,res,400,{error:'feedback id required'})
+      const result=await listPersistedFeedback(workspaceId)
+      const item=(result.items||[]).find(x=>x.id===String(body.id))
+      if(!item) return send(req,res,404,{error:'feedback not found'})
+      const score=Number(item.score||0)
+      const theme=String(item.theme||'Uncategorized')
+      let priority='medium'
+      let owner='Customer success'
+      let reason='Review customer feedback · '+theme
+      let channel='review'
+      let delayMinutes=60
+      if(score>0&&score<=2){
+        priority='high';owner='Customer recovery';reason='Low-satisfaction recovery · '+theme;channel='call';delayMinutes=15
+      }else if(/pricing|fee|cost|budget/i.test(theme)){
+        priority='high';owner='Sales manager';reason='Pricing objection follow-up · '+theme;channel='call';delayMinutes=30
+      }else if(/mismatch|program|product|fit/i.test(theme)){
+        priority='medium';owner='Sales operations';reason='Disposition review · '+theme;channel='review';delayMinutes=60
+      }else if(score>=4){
+        priority='low';owner='Marketing';reason='Promoter / testimonial review · '+theme;channel='email';delayMinutes=240
+      }
+      const task=await createFollowUp(workspaceId,{leadRef:item.lead_ref,reason,channel,priority,delayMinutes,owner})
+      const now=new Date().toISOString()
+      await mutateState(s=>{
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'feedback.routed',entityId:item.id,leadRef:item.lead_ref,theme,score,followUpId:task?.id||null,owner,priority,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,202,{feedbackId:item.id,lead:item.lead_ref,theme,score,status:'routed',nextTab:'Follow-ups',task:task?{id:task.id,status:task.status,owner:task.owner,priority:task.priority,channel:task.channel,dueAt:task.due_at,reason:task.reason}:null})
+    }
     if (req.method === 'GET' && url.pathname === '/api/agent-runs') return send(req,res,200,{items:await listAgentRuns(workspaceId,200)})
     if (req.method === 'GET' && url.pathname === '/api/approvals') {
       const state=await getState()
