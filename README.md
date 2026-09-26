@@ -3987,3 +3987,20 @@ Implemented:
 - Playwright coverage creates a qualification run from the Calls UI, verifies HTTP 202 and confirms the persisted run appears in recent call activity.
 
 This closes the UI gap for the Voice Lead Qualification agent: operators can now start, observe, retry and schedule from the same conversion workspace.
+
+
+## Ask Ace funnel handoff monitoring pass
+
+Ask Ace now covers the step-by-step funnel-monitoring use case with persisted workspace evidence rather than only campaign/attribution summaries.
+
+Implemented:
+- new grounded `funnel_monitoring` intent for natural-language questions about funnel drops, handoffs and stage coverage;
+- evidence is assembled from persisted lead profiles, routing decisions, voice-qualification agent runs, meetings, feedback and follow-ups;
+- the response reports observed coverage for Lead profiles, Routed leads, Voice-qualified/attempted, Meetings scheduled and Feedback captured;
+- the thinnest observed handoff is identified from actual workspace coverage instead of a hard-coded funnel;
+- confidence becomes low when no lead population exists rather than fabricating funnel percentages;
+- Ask Ace starter prompts now include `Where is the funnel dropping between lead and revenue?`;
+- the grounded-analysis context explicitly exposes funnel-handoff evidence;
+- Playwright coverage creates a real lead profile, verifies the API returns `funnel_monitoring` with grounded evidence, then asks the same question in the UI and confirms the handoff cards render.
+
+This closes the step-by-step monitoring gap for the Journey & Attribution assistant while keeping all answers evidence-backed.
