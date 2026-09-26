@@ -161,7 +161,7 @@ const integrations = [
   'Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads / Bing Ads','X','Pinterest','TikTok Ads','Yahoo Ads','Taboola','Spotify Ads','Snapchat Ads','Criteo','DV360','Google Merchant Center','Meta Lead Ads','Meta CAPI','Meta Catalog','GA4','Google Calendar',
   'Apollo','Lusha','Calixa'
 ]
-const agents = ['Meta Advanced CAPI','Google ECL / OCI','Call Tracking Events','Custom Integration','Lead Grading','CRM Enrichment','Voice Lead Qualification','Voice Scheduler','Meeting Reminder','Feedback Agent','Ask Ace']
+const agents = ['Meta Advanced CAPI','Google ECL / OCI','Call Tracking Events','Custom Integration','Lead Grading','CRM Enrichment','Voice Lead Qualification','Voice Scheduler','Meeting Reminder','Feedback Agent','Lead Reactivation','Ask Ace']
 const agentCatalog={
   'Meta Advanced CAPI':{category:'Lead Quality · Signal Return',description:'Send deduplicated server-side business outcomes to Meta Ads.',operationTab:'Delivery',action:'Operate Meta signal delivery',prerequisites:['Meta Ads connection','First-party identity','Business event']},
   'Google ECL / OCI':{category:'Lead Quality · Signal Return',description:'Return enhanced and offline conversion outcomes to Google Ads.',operationTab:'AdSync',action:'Operate Google conversion signals',prerequisites:['Google Ads connection','GCLID/GBRAID/WBRAID or hashed identity','Conversion action']},
@@ -173,9 +173,61 @@ const agentCatalog={
   'Voice Scheduler':{category:'Conversion · Handoff',description:'Create consultations from qualified leads and synchronize calendar context.',operationTab:'Meetings',action:'Open scheduling',prerequisites:['Qualified lead','Calendar or meeting provider']},
   'Meeting Reminder':{category:'Conversion · Handoff',description:'Send provider-backed reminders and persist reminder execution state.',operationTab:'Meetings',action:'Open reminders',prerequisites:['Scheduled meeting','Reminder provider']},
   'Feedback Agent':{category:'Conversion · Handoff',description:'Collect post-interaction feedback and surface objection themes.',operationTab:'Feedback',action:'Open feedback operations',prerequisites:['Customer interaction','Feedback provider or manual record']},
+  'Lead Reactivation':{category:'Conversion · Recovery',description:'Detect renewed high-intent behavior from dormant leads and turn it into governed re-engagement work.',operationTab:'Follow-ups',action:'Open reactivation queue',prerequisites:['Persisted lead activity','Recent first-party intent event']},
   'Ask Ace':{category:'Visibility & Attribution',description:'Query stitched journey, attribution, lead quality, audience and signal evidence in natural language.',operationTab:'Ask Ace',action:'Ask workspace questions',prerequisites:['Workspace evidence']}
 }
 const trackedEventsByWorkspace = new Map()
+
+const leadReactivationCandidates=(profiles=[],events=[],followUps=[],options={})=>{
+  const dormantDays=Math.max(7,Math.min(365,Number(options.dormantDays||30)))
+  const recentDays=Math.max(1,Math.min(30,Number(options.recentDays||7)))
+  const now=Date.now()
+  const dormantCutoff=now-dormantDays*24*60*60*1000
+  const recentCutoff=now-recentDays*24*60*60*1000
+  const highIntent=/pricing|checkout|book|consult|apply|purchase|revenue|qualified|enrol|demo|contact_sales/i
+  const openReactivation=new Set(
+    (followUps||[])
+      .filter(x=>x.status==='open'&&/reactivat/i.test(String(x.reason||'')))
+      .map(x=>String(x.lead_ref||'').toLowerCase())
+  )
+  const candidates=[]
+  for(const lead of profiles||[]){
+    const leadRef=String(lead.external_lead_id||lead.name||lead.id||'')
+    if(!leadRef||openReactivation.has(leadRef.toLowerCase()))continue
+    const lastRaw=lead.journey?.lastActivity||lead.journey?.last_activity||null
+    if(!lastRaw)continue
+    const lastTime=Date.parse(lastRaw)
+    if(!Number.isFinite(lastTime)||lastTime>dormantCutoff)continue
+    const matches=(events||[]).filter(event=>{
+      const at=Date.parse(event.receivedAt||event.occurredAt||event.timestamp||'')
+      if(!Number.isFinite(at)||at<recentCutoff)return false
+      const name=String(event.event||event.eventType||event.name||'')
+      if(!highIntent.test(name))return false
+      const customer=String(event.customerId||event.customer_id||'')
+      const device=String(event.deviceId||event.device_id||'')
+      return customer===String(lead.external_lead_id||'')||(lead.device_id&&device===String(lead.device_id))
+    }).sort((a,b)=>Date.parse(b.receivedAt||b.occurredAt||b.timestamp||'')-Date.parse(a.receivedAt||a.occurredAt||a.timestamp||''))
+    const event=matches[0]
+    if(!event)continue
+    const eventAt=event.receivedAt||event.occurredAt||event.timestamp
+    candidates.push({
+      leadRef,
+      name:lead.name||leadRef,
+      grade:lead.grade||null,
+      score:Number(lead.score||0),
+      source:lead.source||null,
+      campaign:lead.campaign||null,
+      lastActivity:new Date(lastTime).toISOString(),
+      dormantDays:Math.max(0,Math.floor((now-lastTime)/(24*60*60*1000))),
+      renewedEvent:String(event.event||event.eventType||event.name||'high_intent_activity'),
+      renewedAt:eventAt,
+      renewedSource:event.utm_source||event.source||event.channel||'First-party',
+      renewedCampaign:event.utm_campaign||event.campaign||null,
+      reason:'Lead reactivation · renewed intent after '+Math.max(0,Math.floor((now-lastTime)/(24*60*60*1000)))+' dormant days'
+    })
+  }
+  return candidates.sort((a,b)=>Date.parse(b.renewedAt)-Date.parse(a.renewedAt))
+}
 
 const sha256Normalized=value=>createHash('sha256').update(String(value||'').trim().toLowerCase()).digest('hex')
 const sha256Phone=value=>createHash('sha256').update(String(value||'').replace(/\D/g,'')).digest('hex')
@@ -634,7 +686,7 @@ const server = http.createServer(async (req,res)=>{
       const challenges=Array.isArray(body.challenges)?body.challenges:[]
       const names=[]
       if(challenges.includes('Lead quality')) names.push('Meta Advanced CAPI','Google ECL / OCI','Call Tracking Events','Custom Integration')
-      if(challenges.includes('Conversion leakage')) names.push('Lead Grading','CRM Enrichment','Voice Lead Qualification','Voice Scheduler','Meeting Reminder','Feedback Agent')
+      if(challenges.includes('Conversion leakage')) names.push('Lead Grading','CRM Enrichment','Voice Lead Qualification','Voice Scheduler','Meeting Reminder','Feedback Agent','Lead Reactivation')
       if(challenges.includes('Attribution')) names.push('Ask Ace')
       return send(req,res,200,{recommended:[...new Set(names)],generatedAt:new Date().toISOString()})
     }
@@ -2404,6 +2456,7 @@ const server = http.createServer(async (req,res)=>{
         else if(name==='Voice Scheduler'&&(connected.has('Google Calendar')||(state.meetings||[]).length))status='configured'
         else if(name==='Meeting Reminder'&&process.env.MEETING_REMINDER_WEBHOOK_URL)status='configured'
         else if(name==='Feedback Agent'&&process.env.FEEDBACK_WEBHOOK_URL)status='configured'
+        else if(name==='Lead Reactivation'&&hasProfiles)status='configured'
         else if(name==='Ask Ace')status='available'
         const meta=agentCatalog[name]||{}
         return {id:'builtin_'+i,name,status,type:'built_in',...meta}
@@ -3237,6 +3290,39 @@ const server = http.createServer(async (req,res)=>{
       const selected=custom||fallback||null
       const decision=await routeLead(workspaceId,{leadRef:body.leadRef||'test_lead',score:body.score??90,source:body.source||'web',financingInterest:body.financingInterest,identityConfidence:body.identityConfidence??0.95,...(selected?{routingRule:{...selected,reason:'manual test of '+selected.when}}:{})})
       return send(req,res,200,{rule:decision.rule_name,matched:true,destination:decision.destination,reason:decision.reason,slaSeconds:decision.sla_seconds,evaluatedAt:decision.created_at})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/lead-reactivation') {
+      const dormantDays=Number(url.searchParams.get('dormantDays')||30)
+      const recentDays=Number(url.searchParams.get('recentDays')||7)
+      const [profiles,followUps]=await Promise.all([listLeadProfiles(workspaceId,500),listPersistedFollowUps(workspaceId)])
+      const candidates=leadReactivationCandidates(profiles,trackedEvents,followUps,{dormantDays,recentDays})
+      return send(req,res,200,{items:candidates,stats:{candidates:candidates.length,dormantDays,recentDays},generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/lead-reactivation/run') {
+      const body=await readBody(req)
+      const leadRef=String(body.leadRef||'').trim()
+      if(!leadRef)return send(req,res,400,{error:'leadRef required'})
+      const dormantDays=Number(body.dormantDays||30)
+      const recentDays=Number(body.recentDays||7)
+      const [profiles,followUps]=await Promise.all([listLeadProfiles(workspaceId,500),listPersistedFollowUps(workspaceId)])
+      const candidates=leadReactivationCandidates(profiles,trackedEvents,followUps,{dormantDays,recentDays})
+      const candidate=candidates.find(x=>x.leadRef===leadRef||x.name===leadRef)
+      if(!candidate)return send(req,res,409,{error:'lead is not currently eligible for reactivation'})
+      const item=await createFollowUp(workspaceId,{
+        leadRef:candidate.leadRef,
+        reason:candidate.reason+' · '+candidate.renewedEvent,
+        channel:String(body.channel||'WhatsApp'),
+        priority:String(body.priority||'high'),
+        delayMinutes:Number(body.delayMinutes??5),
+        owner:String(body.owner||'Reactivation queue')
+      })
+      const now=new Date().toISOString()
+      await mutateState(s=>{
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'lead_reactivation.followup_created',entityId:item?.id||null,leadRef:candidate.leadRef,renewedEvent:candidate.renewedEvent,renewedAt:candidate.renewedAt,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,{item,candidate})
     }
     if (req.method === 'GET' && url.pathname === '/api/follow-ups') {
       const items=await listPersistedFollowUps(workspaceId)
