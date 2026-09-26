@@ -5072,3 +5072,103 @@ Playwright now creates a real `executive_brief` schedule and verifies:
 ### Product-parity note
 
 EasyInsights describes scheduled CMO data snippets and automated email reporting in its public customer-success material. AceMarketing implements the comparable workflow using its own reporting UI, PostgreSQL scheduler, durable worker and evidence contracts.
+
+
+## Grouped performance implementation
+
+This pass adds a dedicated **Grouped Performance** workspace to AceMarketing on `main`.
+
+### Why this exists
+
+EasyInsights publicly describes grouping user-level and business-performance data into product/category views, including leadership use cases such as product-level P&L analysis. AceMarketing implements the comparable grouping workflow using persisted first-party events and explicit evidence boundaries.
+
+### Backend contract
+
+New endpoints:
+
+- `GET /api/grouped-performance?dimension=<dimension>&months=<n>`
+- `POST /api/grouped-performance/costs`
+
+Supported grouping dimensions:
+
+- category;
+- product category;
+- product / SKU;
+- brand;
+- acquisition source;
+- campaign.
+
+The aggregation uses persisted workspace events from `recentEvents`.
+
+### Conversion and revenue rules
+
+Grouped Performance reuses the configured conversion-event contract from the cohort analytics engine.
+
+That means:
+
+- only configured conversion events count toward conversions;
+- only values attached to those conversion events count toward attributed revenue;
+- ordinary page views, clicks or non-conversion events do not inflate revenue.
+
+### Optional cost basis
+
+Operators can persist an explicit cost basis for any group.
+
+When no cost is stored:
+
+- cost is shown as unavailable;
+- contribution is shown as unavailable;
+- margin is shown as unavailable.
+
+When a cost is supplied:
+
+- `contribution = revenue - explicit cost`;
+- `margin % = contribution / revenue` when revenue is greater than zero.
+
+AceMarketing does not infer missing COGS, ad spend, gross margin, operating expense or P&L fields.
+
+### Frontend workspace
+
+New dashboard section:
+
+**Measurement & Intelligence → Grouped Performance**
+
+Operators can:
+
+1. Switch between category, product category, product/SKU, brand, source and campaign.
+2. Inspect unique subjects, event volume, conversions and conversion rate.
+3. Inspect attributed revenue from configured conversion events.
+4. Enter or clear cost basis per group.
+5. See contribution and margin only after explicit cost entry.
+6. Review the exact configured conversion-event contract.
+7. See the evidence boundary for revenue and profitability calculations.
+
+The grouped table is horizontally scrollable on smaller screens, and dimension controls use the existing AceMarketing interaction system with reduced-motion support.
+
+### Dashboard integration
+
+Grouped Performance is included in:
+
+- the main workspace sidebar;
+- the global dashboard navigator;
+- dashboard section health;
+- the complete workspace render regression sweep.
+
+Dashboard health reflects the persisted first-party event inventory available for grouping.
+
+### Regression coverage
+
+Playwright now:
+
+- creates a consented first-party conversion event with a unique category;
+- verifies that the category appears in grouped performance;
+- verifies the conversion count and revenue are derived from the persisted event;
+- verifies contribution is unavailable before a cost basis exists;
+- saves an explicit cost basis;
+- verifies cost and contribution are then calculated;
+- renders the Grouped Performance workspace and confirms the real category is visible;
+- uses a unique category identifier so repeated test runs do not inherit stale cost state.
+
+### Product-parity note
+
+EasyInsights publicly describes grouping and product/category-level performance analysis in its customer-success material. AceMarketing implements the same category of workflow with its own UI, code, evidence model and profitability safeguards rather than copying proprietary source code, text or branded assets.
