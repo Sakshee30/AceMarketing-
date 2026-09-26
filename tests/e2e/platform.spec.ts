@@ -838,7 +838,7 @@ test('CRM enrichment selects a persisted lead and queues writeback evidence', as
   await expect(page.getByRole('heading',{name:'CRM enrichment'})).toBeVisible()
   const search=page.getByLabel('Search enriched leads')
   await search.fill(lead)
-  const leadButton=page.locator('.enrich-leads>button').filter({hasText:lead}).first()
+  const leadButton=page.locator('.enrich-leads>button').filter({hasText:'CI Enrichment '+suffix}).first()
   await expect(leadButton).toBeVisible()
   await leadButton.click()
   await expect(page.locator('.enrich-profile')).toContainText('CI High Intent')
