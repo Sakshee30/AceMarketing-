@@ -1,4 +1,5 @@
 import {useEffect,useMemo,useRef,useState} from 'react'
+import {api} from './lib/api'
 import {
   Activity,BarChart3,Bot,Cable,CalendarDays,ChevronDown,DatabaseZap,Gauge,Network,
   PhoneCall,Search,Settings2,ShieldCheck,Target,UsersRound,X,Zap
@@ -90,6 +91,8 @@ export default function DashboardQuickNav(){
   const [open,setOpen]=useState(false)
   const [compact,setCompact]=useState(()=>typeof window!=='undefined'&&window.localStorage.getItem('ace_quick_nav_compact')==='true')
   const [query,setQuery]=useState('')
+  const [summary,setSummary]=useState<any>(null)
+  const [statusError,setStatusError]=useState('')
   const searchRef=useRef<HTMLInputElement|null>(null)
 
   useEffect(()=>{
@@ -135,6 +138,7 @@ export default function DashboardQuickNav(){
   },[query])
 
   const resultCount=filtered.reduce((sum,group)=>sum+group.items.length,0)
+  const totals=summary?.totals||{}
 
   const jump=(tab:string)=>{
     window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:tab}))
@@ -162,6 +166,13 @@ export default function DashboardQuickNav(){
         <div><b>Jump to any workspace section</b><span>Search the complete dashboard and open a feature directly.</span></div>
         <button onClick={()=>setOpen(false)} aria-label="Close dashboard navigator"><X/></button>
       </div>
+      <div className="ace-quick-nav-status" aria-label="Live workspace status">
+        <div className="ace-quick-nav-readiness"><span><i style={{width:(summary?.readiness||0)+'%'}}/></span><div><b>{summary?summary.readiness+'%':'—'}</b><small>workspace readiness</small></div></div>
+        <div><b>{Number(totals.connectedConnectors||0)}</b><small>connected systems</small></div>
+        <div><b>{Number(totals.openAlerts||0)}</b><small>open alerts</small></div>
+        <div className={Number(totals.failedDeliveries||0)>0?'attention':''}><b>{Number(totals.failedDeliveries||0)}</b><small>failed deliveries</small></div>
+        {statusError&&<span className="ace-quick-nav-status-error">{statusError}</span>}
+      </div>
       <div className="ace-quick-nav-search">
         <Search/>
         <input ref={searchRef} value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search attribution, calls, audiences, settings..." aria-label="Search dashboard sections"/>
@@ -180,7 +191,7 @@ export default function DashboardQuickNav(){
         {!filtered.length&&<div className="ace-quick-nav-empty"><Search/><b>No matching dashboard section</b><span>Try terms such as attribution, CRM, calls, monitoring or settings.</span></div>}
       </div>
       <div className="ace-quick-nav-footer">
-        <span>All workspace pages remain available in the grouped sidebar. This navigator is a faster direct route.</span>
+        <span>Live readiness and operational counts are refreshed from the workspace API every 30 seconds.</span>
         <button onClick={toggleCompact}>{compact?'Show full label':'Use compact mode'}</button>
       </div>
     </div>}
