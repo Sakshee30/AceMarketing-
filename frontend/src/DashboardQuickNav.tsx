@@ -86,6 +86,7 @@ const groups:ShortcutGroup[]=[
       {label:'Delivery',tab:'Delivery',icon:Activity,description:'Outbound signal queue, retries and dead letters'},
       {label:'Monitoring',tab:'Monitoring',icon:Activity,description:'Reliability, usage and operational health'},
       {label:'Alerts',tab:'Alerts',icon:ShieldCheck,description:'Triage live incidents and threshold breaches'},
+      {label:'Compliance',tab:'Compliance',icon:ShieldCheck,description:'Operate consent, subject rights, retention and privacy safeguards'},
       {label:'Developers',tab:'Developers',icon:Cable,description:'API keys, webhooks and delivery contracts'},
       {label:'Settings',tab:'Settings',icon:Settings2,description:'Workspace, access, governance and billing'}
     ]
