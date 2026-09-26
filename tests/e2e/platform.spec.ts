@@ -1204,3 +1204,24 @@ test('lead reactivation converts renewed intent into a governed follow-up', asyn
   const followups=await followupsResponse.json()
   expect((followups.items||[]).some((x:any)=>x.lead_ref===lead&&/Lead reactivation/i.test(x.reason))).toBeTruthy()
 })
+
+
+test('specialist built-in agents open their real operational modules', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  await openWorkspaceTab(page,'Agents')
+  await expect(page.getByRole('heading',{name:'Agent operations'})).toBeVisible()
+
+  const journeyAgent=page.locator('.agent-selector').getByRole('button',{name:/Customer Journey Agent/}).first()
+  await expect(journeyAgent).toBeVisible()
+  await journeyAgent.click()
+  await expect(page.locator('.agent-config')).toContainText('Explore stitched chronology')
+  await page.locator('.agent-config').getByRole('button',{name:'Open customer journeys'}).click()
+  await expect(page.getByRole('heading',{name:'Customer journey explorer'})).toBeVisible()
+
+  await openWorkspaceTab(page,'Agents')
+  const eventAgent=page.locator('.agent-selector').getByRole('button',{name:/Event Agent/}).first()
+  await eventAgent.click()
+  await page.locator('.agent-config').getByRole('button',{name:'Open event manager'}).click()
+  await expect(page.getByRole('heading',{name:'Conversion event manager'})).toBeVisible()
+})
