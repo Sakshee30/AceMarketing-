@@ -621,7 +621,7 @@ const server = http.createServer(async (req,res)=>{
     if (req.method === 'GET' && url.pathname === '/api/dashboard-summary') {
       const state=await getState()
       const safe=async(fn,fallback)=>{try{return await fn()}catch{return fallback}}
-      const [leadStats,attr,audienceStats,queue,monitoring,eventRules,agentRuns,meetings,followUps,feedbackResult,consentSummary]=await Promise.all([
+      const [leadStats,attr,audienceStats,queue,monitoring,eventRules,agentRuns,meetings,followUps,feedbackResult,consentSummary,reportSchedules]=await Promise.all([
         safe(()=>leadOpsStats(workspaceId),{available:false,total:0,aGrade:0,abQuality:0}),
         safe(()=>attributionStats(workspaceId),{available:false,matchedEvents:0,unmatchedEvents:0,assistedEvents:0,activeClickSessions:0}),
         safe(()=>audienceOpsStats(workspaceId),{available:false,audiences:{total:0,active:0,activatedIdentities:0,suppressedIdentities:0,errors:0},profiles:{total:0}}),
@@ -632,7 +632,8 @@ const server = http.createServer(async (req,res)=>{
         safe(()=>listPersistedMeetings(workspaceId),[]),
         safe(()=>listPersistedFollowUps(workspaceId),[]),
         safe(()=>listPersistedFeedback(workspaceId),{items:[]}),
-        safe(()=>consentStats(workspaceId),{total:0,analytics:0,marketing:0,personalization:0,revoked:0})
+        safe(()=>consentStats(workspaceId),{total:0,analytics:0,marketing:0,personalization:0,revoked:0}),
+        safe(()=>listReportSchedules(workspaceId),[])
       ])
       const connectors=state.connectorConnections||[]
       const connectedConnectors=connectors.filter(x=>['connected','healthy','active'].includes(String(x.status||'').toLowerCase()))
@@ -674,6 +675,9 @@ const server = http.createServer(async (req,res)=>{
         'Customer 360':section(profiles?'live':'setup',profiles,profiles+' stitched customer profiles'),
         Journeys:section(profiles?'live':'setup',profiles,profiles+' stitched profiles'),
         Attribution:section(Number(attr?.matchedEvents||0)>0?'live':attr?.available?'attention':'setup',Number(attr?.matchedEvents||0),Number(attr?.matchedEvents||0)+' matched conversions'),
+        Planner:section(Number(attr?.matchedEvents||0)>0?'live':attr?.available?'attention':'setup',Number(attr?.matchedEvents||0),Number(attr?.matchedEvents||0)+' matched events for planning'),
+        Reports:section(reportSchedules.length?'live':Number(attr?.matchedEvents||0)>0?'attention':'setup',reportSchedules.length,reportSchedules.length+' scheduled reports'),
+        'Executive Briefs':section(reportSchedules.some(x=>x.report_type==='executive_brief')?'live':reportMailConfigured()?'attention':'setup',reportSchedules.filter(x=>x.report_type==='executive_brief').length,reportSchedules.filter(x=>x.report_type==='executive_brief').length+' executive briefs'),
         Enrich:section(profiles?'live':'setup',profiles,profiles+' enriched profiles'),
         'Lead Grading':section(profiles?'live':'setup',Number(leadStats?.abQuality||0),Number(leadStats?.abQuality||0)+' A/B leads'),
         Agents:section(agentRuns.length?'live':'attention',agentRuns.length,agentRuns.length+' persisted runs'),
