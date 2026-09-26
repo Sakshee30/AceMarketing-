@@ -1791,6 +1791,7 @@ function Integrations(){
  const [requestOpen,setRequestOpen]=useState(false)
  const [requestBusy,setRequestBusy]=useState(false)
  const [requestNotice,setRequestNotice]=useState('')
+ const [connectionNotice,setConnectionNotice]=useState<any>(null)
  const builtInCount=groups.reduce((sum:any,g:any)=>sum+g[1].length,0)
  const start=(name:string)=>{
   const item=integrationItems.find((x:any)=>x.name===name)
@@ -1803,18 +1804,22 @@ function Integrations(){
  }
  useEffect(()=>{api.integrations().then((r:any)=>{setIntegrationItems(r.items||[]);setIntegrationRequests(r.requests||[]);setConnected((r.items||[]).filter((x:any)=>x.status==='connected').map((x:any)=>x.name))}).catch(()=>null);api.customIntegrations().then((r:any)=>setCustomConnectors(r.items||[])).catch(()=>null);api.whatsappMessages().then((r:any)=>setWaEvents(r.items||[])).catch(()=>null)},[])
  const finish=async()=>{
+  setConnectionNotice(null)
   try{
    const r:any=await api.connectIntegration(connector)
    if(r.status==='authorization_required'&&r.authorizationUrl){
     window.location.assign(r.authorizationUrl)
     return
    }
-   if(r.status==='connected') setConnected(c=>c.includes(connector)?c:[...c,connector])
-   if(r.status==='needs_configuration') alert('Connector OAuth credentials are not configured on the backend yet.')
-  }catch(e:any){alert(e?.message||'Connector authorization could not be started. Check backend OAuth configuration.')}
+   if(r.status==='connected'){
+    setConnected(c=>c.includes(connector)?c:[...c,connector])
+    setConnectionNotice({type:'ok',text:connector+' connected successfully.'})
+   }
+   if(r.status==='needs_configuration') setConnectionNotice({type:'error',text:'Connector OAuth credentials are not configured on the backend yet.'})
+  }catch(e:any){setConnectionNotice({type:'error',text:e?.message||'Connector authorization could not be started. Check backend OAuth configuration.'})}
   setConnector('')
  }
- const refreshIntegration=async(name:string)=>{setRefreshing(name);try{await api.refreshIntegration(name);const r:any=await api.integrations();setIntegrationItems(r.items||[]);setConnected((r.items||[]).filter((x:any)=>x.status==='connected').map((x:any)=>x.name))}catch(e:any){alert(e?.message||'Credential refresh failed')}finally{setRefreshing('')}}
+ const refreshIntegration=async(name:string)=>{setRefreshing(name);setConnectionNotice(null);try{await api.refreshIntegration(name);const r:any=await api.integrations();setIntegrationItems(r.items||[]);setConnected((r.items||[]).filter((x:any)=>x.status==='connected').map((x:any)=>x.name));setConnectionNotice({type:'ok',text:name+' credentials refreshed.'})}catch(e:any){setConnectionNotice({type:'error',text:e?.message||'Credential refresh failed'})}finally{setRefreshing('')}}
  const testCustom=async()=>{try{const r:any=await api.testCustomIntegration(draft);setTestResult(r)}catch(e:any){setTestResult({ok:false,error:e?.message||'Connection test failed'})};setBuilderStep(3)}
  const saveCustom=async()=>{try{await api.createCustomIntegration(draft);const r:any=await api.customIntegrations();setCustomConnectors(r.items||[]);setBuilder(false);setBuilderStep(1);setTestResult(null);setDraft((x:any)=>({...x,secret:'',username:''}))}catch(e:any){setTestResult({ok:false,error:e?.message||'Could not create integration'})}}
  const reloadWhatsApp=()=>api.whatsappMessages().then((r:any)=>setWaEvents(r.items||[])).catch(()=>null)
@@ -1839,6 +1844,7 @@ function Integrations(){
  return <><PageHead crumb="Workspace / Integrations" title="Platform-agnostic connectivity" sub="Connect the systems you already use without rebuilding your stack."/>
  <div className="integration-summary"><div><strong>{builtInCount}+</strong><span>catalogued connector paths</span></div><div><strong>{connected.length+customConnectors.length}</strong><span>connected in this workspace</span></div><div><strong>{integrationRequests.filter((x:any)=>x.status==='requested').length}</strong><span>requested connectors</span></div><div><strong>Native + Custom</strong><span>explicit capability status</span></div></div>
  {requestNotice&&<div className="delivery-notice ok"><CheckCircle2/><span>{requestNotice}</span></div>}
+ {connectionNotice&&<div className={'delivery-notice '+(connectionNotice.type==='error'?'error':'ok')}>{connectionNotice.type==='error'?<ShieldCheck/>:<CheckCircle2/>}<span>{connectionNotice.text}</span></div>}
  <div className="app-panel custom-integration-hero"><div><Cable/><div><span>Custom integration</span><h3>Connect proprietary systems without changing your stack</h3><p>Define authentication, endpoint, identity fields and business mappings, then validate the connection before enabling sync.</p></div></div><div className="panel-actions"><button onClick={()=>setRequestOpen(true)}>Request connector</button><button className="app-primary" onClick={()=>{setBuilder(true);setBuilderStep(1);setTestResult(null)}}><Plus/>Build custom integration</button></div></div>
  <div className="app-panel"><div className="panel-head"><div><h3>Integration catalog</h3><p>Native OAuth connectors are labelled separately from configurable adapters.</p></div><div className="integration-catalog-search"><Search/><input aria-label="Search integration catalog" value={integrationSearch} onChange={e=>setIntegrationSearch(e.target.value)} placeholder="Search CRM, warehouse, ads, messaging..."/></div></div></div>
  <div className="app-panel whatsapp-ops"><div className="panel-head"><div><h3>WhatsApp Cloud API operations</h3><p>Send a provider-backed message and inspect real inbound/outbound webhook activity.</p></div><span className={connected.includes('WhatsApp')?'healthy':'warning'}>{connected.includes('WhatsApp')?'Connected':'Connect WhatsApp first'}</span></div>
