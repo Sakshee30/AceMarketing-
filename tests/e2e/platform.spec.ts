@@ -1631,3 +1631,40 @@ test('specialist built-in agents open their real operational modules', async ({ 
   await page.locator('.agent-config').getByRole('button',{name:'Open event manager'}).click()
   await expect(page.getByRole('heading',{name:'Conversion event manager'})).toBeVisible()
 })
+
+
+test('developer API keys can be created used and revoked end to end', async ({ page }, testInfo) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  await openWorkspaceTab(page,'Developers')
+  await expect(page.getByRole('heading',{name:'Developer & webhook console'})).toBeVisible()
+
+  await page.getByRole('button',{name:'Create API key'}).click()
+  const modal=page.locator('.connector-modal').filter({hasText:'Create API key'}).last()
+  const name='CI ingestion '+testInfo.project.name+' '+Date.now()
+  await modal.getByLabel('Credential name').fill(name)
+  await modal.getByRole('button',{name:'Create key'}).click()
+
+  const reveal=page.locator('.developer-secret-reveal')
+  await expect(reveal).toBeVisible()
+  const key=(await reveal.locator('code').innerText()).trim()
+  expect(key.startsWith('ace_')).toBeTruthy()
+  await expect(page.getByText(name,{exact:true}).first()).toBeVisible()
+
+  const accepted=await page.request.post('/api/track',{
+    headers:{Authorization:'Bearer '+key},
+    data:{event:'ci.developer.key.test',customerId:'ci_key_customer_'+Date.now(),eventCategory:'essential'}
+  })
+  expect(accepted.ok()).toBeTruthy()
+
+  const row=page.locator('.developer-key-row').filter({hasText:name}).first()
+  await expect(row).toBeVisible()
+  await row.getByRole('button',{name:'Revoke'}).click()
+  await expect(page.getByText('API key revoked. Requests using that key will be rejected.',{exact:true})).toBeVisible()
+
+  const rejected=await page.request.post('/api/track',{
+    headers:{Authorization:'Bearer '+key},
+    data:{event:'ci.developer.key.revoked',customerId:'ci_key_customer_revoked_'+Date.now(),eventCategory:'essential'}
+  })
+  expect(rejected.status()).toBe(401)
+})
