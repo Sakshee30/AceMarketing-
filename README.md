@@ -3841,3 +3841,23 @@ Implemented:
 - Playwright coverage creates an auto-run routing agent, executes it, and verifies the resulting routing decision appears in the Routing workspace.
 
 This preserves the platform's human-approval boundary while making custom agents demonstrably executable where the action is safe and fully supported.
+
+
+## Actionable lifecycle and suppression audiences
+
+The Audience workspace now turns lifecycle and waste-control cards into real audience operations rather than informational counters.
+
+Implemented:
+- safe multi-value audience matching with the `is one of` operator;
+- comma-separated text values are normalized and passed to PostgreSQL as a bounded text array;
+- lifecycle presets for Acquisition, Nurture, Decision and Post-purchase stages;
+- waste-control presets for converted customers, device-ID identities and low-quality C/D leads;
+- each preset opens the real Audience Builder with its rule, identity mode, activation mode and destination prefilled;
+- the backend calculates a live preview from persisted lead profiles before creation;
+- operators can review/edit a preset before persistence;
+- created presets use the same `POST /api/audiences` materialization path as custom audiences;
+- suppression presets materialize persisted audience members and remain eligible for the existing consent-checked provider sync workflow;
+- responsive hover/transition polish and reduced-motion support;
+- Playwright coverage creates persisted C- and D-grade leads, opens the Low-quality Lead suppression preset, verifies multi-value matching, materializes the audience and confirms the Suppress segment appears in the dashboard.
+
+This closes the gap between audience analytics and audience activation: the lifecycle/waste-control cards now execute the workflows they describe.
