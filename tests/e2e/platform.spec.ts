@@ -127,7 +127,7 @@ test.describe('workspace critical flows',()=>{
     await expect(page.getByText(/Source → map → verify → activate/i)).toBeVisible()
 
     await page.getByRole('button',{name:'Create flow'}).click()
-    const modal=page.getByRole('form').filter({hasText:'Create data flow'})
+    const modal=page.locator('.data-flow-builder')
     await expect(modal).toBeVisible()
     await modal.getByLabel('Flow name').fill('CI LeadSquared to Meta flow')
     await modal.getByLabel('Source').selectOption({label:'LeadSquared'})
