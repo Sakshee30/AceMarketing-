@@ -4237,3 +4237,36 @@ Implemented on `main`:
 - Keeps the dashboard grouped into **Start & measure**, **Unify & attribute**, **Convert with agents**, and **Activate & operate** so the growing product remains navigable.
 
 This is part of the dashboard production-polish pass. The live counters are sourced from backend state and must not be presented as provider-verified external status unless the connected provider account has also been verified in the target deployment environment.
+
+
+## Dashboard section-health navigation
+
+This implementation pass extends the workspace navigator from a searchable menu into an operational section-health surface.
+
+### Backend-backed section state
+
+`GET /api/dashboard-summary` now returns a `sections` map for core workspace areas. Each section reports:
+
+- `state`: `live`, `attention`, or `setup`
+- `count`: a real workspace count relevant to that section
+- `detail`: a concise explanation of the current backend state
+
+Examples include Attribution matched conversions, qualification-call runs, scheduled meetings, feedback responses, connected integrations, active data flows, audiences, signal deliveries and open monitoring alerts.
+
+### Navigator behavior
+
+The dashboard navigator now displays the backend-derived state beside supported sections:
+
+- **Live** — the section has usable persisted workspace data or an active operational path.
+- **Needs setup** — a prerequisite exists but the workflow still needs configuration or data.
+- **Setup** — the section is available but has not yet been configured for this workspace.
+
+The status is refreshed automatically with the existing dashboard-summary refresh cycle and is also updated by the manual **Refresh status** control.
+
+### Integrations UX hardening
+
+Connector authorization/configuration and credential-refresh failures no longer rely on browser `alert()` dialogs. They now render as inline success/error feedback inside the Integrations workspace so operators retain context and can continue working without modal browser interruptions.
+
+### Regression coverage
+
+The end-to-end dashboard navigation test now validates the `sections` payload and visible section state badges. The complete workspace render sweep also includes **Data Flows** so every current dashboard tab is exercised by the frontend regression suite.
