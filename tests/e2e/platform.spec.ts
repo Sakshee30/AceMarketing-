@@ -166,7 +166,7 @@ test.describe('workspace critical flows',()=>{
   test('grouped performance uses persisted conversion evidence and explicit cost basis',async({page},testInfo)=>{
     const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()
     const customerId='grouped_customer_'+suffix
-    const category='CI Category '+suffix
+    const category='CI Category '+suffix+'_'+Date.now()
 
     const consent=await page.request.post('/api/consent',{data:{subjectType:'customer',subjectId:customerId,essential:true,analytics:true,marketing:true,personalization:true,source:'ci'}})
     expect(consent.ok()).toBeTruthy()
