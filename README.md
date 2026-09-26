@@ -4108,3 +4108,25 @@ Implemented:
 - Playwright coverage creates a real tracking-inactivity rule, verifies enriched API evidence, opens the Alert Center, validates owner/runbook context, resolves the incident and restores the production threshold.
 
 This closes the operational-context gap described in the supplied EasyInsights workflow notes: alert source, affected period, impact context, owner, status and recommended investigation steps.
+
+
+## Lead Reactivation agent pass
+
+The current EasyInsights Agents surface includes a Lead Reactivation capability for detecting renewed intent from dormant leads. AceMarketing now implements that workflow with persisted evidence instead of a static agent card.
+
+Implemented:
+- new built-in `Lead Reactivation` agent in the workspace agent catalog;
+- dormant-lead detection uses the persisted lead profile's last activity and configurable dormancy window;
+- renewed intent must come from a recent first-party event such as pricing, checkout, booking, consultation, purchase, demo, revenue or sales-contact behavior;
+- candidate identity must match through the persisted customer ID or device ID;
+- leads with an existing open reactivation task are excluded to avoid duplicate recovery work;
+- `GET /api/lead-reactivation` returns evidence-backed candidates and window stats;
+- `POST /api/lead-reactivation/run` revalidates eligibility and creates a real persisted follow-up rather than trusting stale UI state;
+- default reactivation execution creates a high-priority WhatsApp follow-up due in five minutes and owned by the Reactivation queue;
+- every reactivation action writes an audit entry with the renewed event and evidence timestamp;
+- Follow-ups now includes a dedicated Lead Reactivation panel with dormancy/recent-intent windows, candidate evidence, grade/score context and a one-click governed follow-up action;
+- the public agent catalog now exposes Lead Reactivation;
+- the built-in agent count is derived dynamically rather than hard-coded;
+- Playwright coverage creates a 45-day dormant lead, records a fresh pricing intent event, verifies candidacy, creates the reactivation follow-up from the UI and confirms persistence through the Follow-ups API.
+
+This completes the recovery loop: dormant lead → renewed intent → eligibility evidence → governed follow-up → auditable re-engagement.
