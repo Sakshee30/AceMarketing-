@@ -158,13 +158,14 @@ const integrations = [
   'Exotel','Knowlarity','Tata Tele','MyOperator','Twilio',
   'Shopify','WooCommerce','Magento','WordPress','Typeform','React App','Custom Backend',
   'BigQuery','Snowflake','MongoDB','Oracle DB','Google Cloud Storage','Amazon S3',
-  'Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads / Bing Ads','X','Pinterest','TikTok Ads','Yahoo Ads','Taboola','Spotify Ads','Snapchat Ads','Criteo','DV360','Google Merchant Center','Meta Lead Ads','Meta CAPI','Meta Catalog','GA4','Google Calendar',
+  'Google Ads','Meta Ads','ChatGPT Ads','LinkedIn Ads','Microsoft Ads / Bing Ads','X','Pinterest','TikTok Ads','Yahoo Ads','Taboola','Spotify Ads','Snapchat Ads','Criteo','DV360','Google Merchant Center','Meta Lead Ads','Meta CAPI','Meta Catalog','GA4','Google Calendar',
   'Apollo','Lusha','Calixa'
 ]
-const agents = ['Meta Advanced CAPI','Google ECL / OCI','Call Tracking Events','Custom Integration','Lead Grading','CRM Enrichment','Voice Lead Qualification','Voice Scheduler','Meeting Reminder','Feedback Agent','Lead Reactivation','Attribution Agent','Deep Linking Agent','Fraud Detection Agent','Customer Journey Agent','Audiences Agent','Event Agent','Ask Ace']
+const agents = ['Meta Advanced CAPI','Google ECL / OCI','ChatGPT Ads CAPI','Call Tracking Events','Custom Integration','Lead Grading','CRM Enrichment','Voice Lead Qualification','Voice Scheduler','Meeting Reminder','Feedback Agent','Lead Reactivation','Attribution Agent','Deep Linking Agent','Fraud Detection Agent','Customer Journey Agent','Audiences Agent','Event Agent','Ask Ace']
 const agentCatalog={
   'Meta Advanced CAPI':{category:'Lead Quality · Signal Return',description:'Send deduplicated server-side business outcomes to Meta Ads.',operationTab:'Delivery',action:'Operate Meta signal delivery',prerequisites:['Meta Ads connection','First-party identity','Business event']},
   'Google ECL / OCI':{category:'Lead Quality · Signal Return',description:'Return enhanced and offline conversion outcomes to Google Ads.',operationTab:'AdSync',action:'Operate Google conversion signals',prerequisites:['Google Ads connection','GCLID/GBRAID/WBRAID or hashed identity','Conversion action']},
+  'ChatGPT Ads CAPI':{category:'Lead Quality · Signal Return',description:'Send server-side conversion events to ChatGPT Ads with oppref matching and event-ID deduplication.',operationTab:'ChatGPT Ads',action:'Operate ChatGPT Ads conversion measurement',prerequisites:['OPENAI_CONVERSIONS_API_KEY','OPENAI_ADS_PIXEL_ID','Consent-aware first-party conversion event']},
   'Call Tracking Events':{category:'Lead Quality · Signal Return',description:'Capture signed telephony events and attribute calls to acquisition context.',operationTab:'Calls',action:'Open call operations',prerequisites:['Call webhook provider','Customer or click identity']},
   'Custom Integration':{category:'Lead Quality · Signal Return',description:'Build tested adapters for proprietary CRM, backend, webhook or data systems.',operationTab:'Integrations',action:'Configure integrations',prerequisites:['Endpoint or source system','Authentication method','Field mapping']},
   'Lead Grading':{category:'Conversion · Handoff',description:'Score and prioritize persisted leads from CRM, journey and behavioral evidence.',operationTab:'Lead Grading',action:'Open lead grading',prerequisites:['Lead profiles','Journey or CRM evidence']},
@@ -254,6 +255,23 @@ const buildSignalReplayPayload=(body,item={})=>{
     wbraid:body.wbraid||null,
     fbc:body.fbc||null,
     fbp:body.fbp||null,
+    oppref:body.oppref||body.openaiClickRef||null,
+    obref:body.obref||body.openaiBrowserRef||null,
+    openaiEventType:body.openaiEventType||null,
+    openaiCustomEventName:body.openaiCustomEventName||null,
+    openaiAmountMinor:body.openaiAmountMinor??body.data?.openaiAmountMinor??null,
+    planId:body.planId||body.data?.planId||null,
+    contents:Array.isArray(body.contents)?body.contents:(Array.isArray(body.data?.contents)?body.data.contents:null),
+    optOut:body.optOut,
+    country:body.country||null,
+    city:body.city||null,
+    region:body.region||null,
+    postalCode:body.postalCode||body.postal_code||null,
+    ipAddress:body.ipAddress||null,
+    userAgent:body.userAgent||null,
+    androidAdvertisingId:body.androidAdvertisingId||null,
+    openaiPixelId:body.openaiPixelId||null,
+    validateOnly:body.validateOnly===true,
     emailSha256:body.emailSha256||body.email_sha256||(body.email?sha256Normalized(body.email):null),
     phoneSha256:body.phoneSha256||body.phone_sha256||(body.phone?sha256Phone(body.phone):null),
     actionSource:body.actionSource||null,
@@ -270,7 +288,7 @@ const buildSignalReplayPayload=(body,item={})=>{
 const validateSignalDispatch=body=>{
   const destination=String(body.destination||'').toLowerCase()
   if(!body.event||!destination) return 'event and destination required'
-  if(!destination.includes('meta')&&!destination.includes('google')&&!destination.includes('webhook')) return 'unsupported delivery destination'
+  if(!destination.includes('meta')&&!destination.includes('google')&&!destination.includes('webhook')&&!destination.includes('chatgpt')&&!destination.includes('openai')) return 'unsupported delivery destination'
   if(destination.includes('google')){
     const hasIdentity=Boolean(body.gclid||body.gbraid||body.wbraid||body.email||body.emailSha256||body.email_sha256||body.phone||body.phoneSha256||body.phone_sha256)
     if(!hasIdentity) return 'Google delivery requires gclid, gbraid, wbraid, or a user identifier'
@@ -278,6 +296,15 @@ const validateSignalDispatch=body=>{
   if(destination.includes('meta')){
     const hasIdentity=Boolean(body.email||body.emailSha256||body.email_sha256||body.phone||body.phoneSha256||body.phone_sha256||body.externalId||body.customerId||body.fbc||body.fbp)
     if(!hasIdentity) return 'Meta delivery requires a customer identifier, click/browser identifier, email, or phone'
+  }
+  if(destination.includes('chatgpt')||destination.includes('openai')){
+    const actionSource=String(body.actionSource||'web').toLowerCase()
+    if(['web','website'].includes(actionSource)&&!body.eventSourceUrl) return 'ChatGPT Ads web events require eventSourceUrl'
+    if(body.openaiAmountMinor!==undefined&&body.openaiAmountMinor!==null&&body.openaiAmountMinor!==''){
+      const amount=Number(body.openaiAmountMinor)
+      if(!Number.isInteger(amount)||amount<0) return 'ChatGPT Ads amount must be a non-negative integer in currency minor units'
+      if(!body.currency) return 'ChatGPT Ads currency is required when amount is present'
+    }
   }
   if(destination.includes('webhook')&&body.webhookUrl){
     try{
@@ -637,6 +664,7 @@ const server = http.createServer(async (req,res)=>{
         Launchpad:section(readiness>=80?'live':readiness>0?'attention':'setup',readiness,readiness+'% workspace readiness'),
         Overview:section('live',trackedCount+profiles,'Live workspace summary'),
         AdSync:section(deliveries.length?'live':connectedConnectors.length?'attention':'setup',deliveries.length,deliveries.length+' signal deliveries'),
+        'ChatGPT Ads':section(deliveries.some(x=>/chatgpt|openai/i.test(String(x.destination||'')))?'live':(process.env.OPENAI_CONVERSIONS_API_KEY&&process.env.OPENAI_ADS_PIXEL_ID)?'attention':'setup',deliveries.filter(x=>/chatgpt|openai/i.test(String(x.destination||''))).length,deliveries.filter(x=>/chatgpt|openai/i.test(String(x.destination||''))).length+' ChatGPT Ads deliveries'),
         Funnel:section(profiles?'live':trackedCount?'attention':'setup',profiles,profiles+' known lead profiles'),
         Events:section(eventRules.length?'live':'setup',eventRules.length,eventRules.length+' conversion rules'),
         Diagnostics:section(trackedCount||eventRules.length?'live':'setup',Number((state.quarantinedEvents||[]).length),(state.quarantinedEvents||[]).length+' quarantined events'),
@@ -3405,6 +3433,62 @@ const server = http.createServer(async (req,res)=>{
       if(!body.id) return send(req,res,400,{error:'id required'})
       const item=await resolveLiveAlert(workspaceId,String(body.id))
       return item?send(req,res,200,item):send(req,res,404,{error:'alert not found'})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/chatgpt-ads') {
+      const state=await getState()
+      const deliveries=(state.signalDeliveries||[]).filter(x=>/chatgpt|openai/i.test(String(x.destination||'')))
+      const recent=(state.recentEvents||[]).slice(0,500)
+      const withOppref=recent.filter(x=>Boolean(x.oppref||x.openaiClickRef)).length
+      const terminal=deliveries.filter(x=>['delivered','succeeded','failed','dead_letter'].includes(String(x.status||'').toLowerCase()))
+      const delivered=terminal.filter(x=>['delivered','succeeded'].includes(String(x.status||'').toLowerCase())).length
+      return send(req,res,200,{
+        configured:Boolean(process.env.OPENAI_CONVERSIONS_API_KEY&&process.env.OPENAI_ADS_PIXEL_ID),
+        pixelConfigured:Boolean(process.env.OPENAI_ADS_PIXEL_ID),
+        conversionsKeyConfigured:Boolean(process.env.OPENAI_CONVERSIONS_API_KEY),
+        supportedEventTypes:['appointment_scheduled','checkout_started','contents_viewed','custom','items_added','lead_created','order_created','page_viewed','registration_completed','subscription_created','trial_started','app_installed','app_opened'],
+        deliveries:{total:deliveries.length,delivered,failed:terminal.length-delivered,queued:deliveries.filter(x=>['queued','retrying'].includes(String(x.status||'').toLowerCase())).length,deliveryRate:terminal.length?Number((delivered/terminal.length*100).toFixed(1)):null,recent:deliveries.slice(0,25)},
+        matching:{recentEvents:recent.length,opprefEvents:withOppref,opprefCoverage:recent.length?Number((withOppref/recent.length*100).toFixed(1)):0},
+        requiredEnvironment:['OPENAI_CONVERSIONS_API_KEY','OPENAI_ADS_PIXEL_ID'],
+        generatedAt:new Date().toISOString()
+      })
+    }
+    if (req.method === 'POST' && url.pathname === '/api/chatgpt-ads/validate') {
+      const body=await readBody(req)
+      const candidate={...body,destination:'ChatGPT Ads',event:String(body.event||'lead_created'),actionSource:body.actionSource||'web'}
+      const error=validateSignalDispatch(candidate)
+      if(error) return send(req,res,400,{valid:false,error})
+      const allowedTypes=new Set(['appointment_scheduled','checkout_started','contents_viewed','custom','items_added','lead_created','order_created','page_viewed','registration_completed','subscription_created','trial_started','app_installed','app_opened'])
+      if(body.openaiEventType&&!allowedTypes.has(String(body.openaiEventType))) return send(req,res,400,{valid:false,error:'unsupported ChatGPT Ads event type'})
+      return send(req,res,200,{valid:true,configured:Boolean(process.env.OPENAI_CONVERSIONS_API_KEY&&process.env.OPENAI_ADS_PIXEL_ID),payload:buildSignalReplayPayload(candidate,{id:'validation_only',idempotencyKey:'validation_only'}),notice:'Local payload validation only; no provider request was sent.'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/chatgpt-ads/send') {
+      const body=await readBody(req)
+      if(!queueAvailable()) return send(req,res,503,{error:'signal delivery queue unavailable',required:'DATABASE_URL'})
+      const candidate={...body,destination:'ChatGPT Ads'}
+      const validationError=validateSignalDispatch(candidate)
+      if(validationError) return send(req,res,400,{error:validationError})
+      if(body.customerId||body.visitorId){
+        const consent=await consentAllows(workspaceId,{subjectType:body.customerId?'customer':'visitor',subjectId:body.customerId||body.visitorId,category:'marketing'})
+        if(!consent.allowed) return send(req,res,403,{error:'marketing consent required',reason:consent.reason})
+      }
+      const rawKey=String(body.idempotencyKey||JSON.stringify([body.event,body.customerId||'',body.externalEventId||'',body.occurredAt||'',body.oppref||'']))
+      const idempotencyKey=createHash('sha256').update('chatgpt-ads:'+rawKey).digest('hex')
+      const state=await getState()
+      const existing=(state.signalDeliveries||[]).find(x=>x.idempotencyKey===idempotencyKey)
+      if(existing) return send(req,res,200,{duplicate:true,item:existing})
+      const now=new Date().toISOString()
+      const item={id:'sig_'+randomUUID(),event:String(body.event),destination:'ChatGPT Ads',customerId:body.customerId?String(body.customerId):null,externalEventId:body.externalEventId?String(body.externalEventId):null,status:'queued',attempts:0,idempotencyKey,createdAt:now,updatedAt:now,nextAttemptAt:now}
+      item.replayPayload=buildSignalReplayPayload(candidate,{...item,idempotencyKey})
+      await mutateState(s=>{
+        s.signalDeliveries=s.signalDeliveries||[]
+        s.signalDeliveries.unshift(item)
+        s.signalDeliveries=s.signalDeliveries.slice(0,10000)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'chatgpt_ads.signal_queued',entityId:item.id,event:item.event,oppref:Boolean(body.oppref),at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      const job=await enqueueJob({workspaceId,kind:'signal_delivery',idempotencyKey:'chatgpt-ads:'+idempotencyKey,payload:item.replayPayload})
+      return send(req,res,202,{duplicate:false,item,job:job?{id:job.id,status:job.status}:null})
     }
     if (req.method === 'GET' && url.pathname === '/api/signal-deliveries') {
       const state=await getState()
