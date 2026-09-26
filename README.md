@@ -5526,3 +5526,27 @@ AceMarketing now includes a native TikTok Events API 2.0 delivery path for serve
 - Playwright coverage verifies creation of the TikTok AdSync pipeline and selection of the `TikTok Ads` delivery destination.
 
 The provider remains credential-gated: external TikTok delivery only succeeds after real TikTok Events Manager credentials are configured.
+
+
+## Cross-platform click identity and dashboard render hardening — 2026-09-26
+
+This pass closes additional end-to-end gaps discovered by the desktop/mobile release suite.
+
+### Cross-platform acquisition identity
+- The browser tracker now consent-gates and persists `gclid`, `gbraid`, `wbraid`, `fbclid`, `msclkid`, and `ttclid`.
+- When marketing consent is granted, the TikTok `_ttp` cookie is also forwarded as `ttp` with tracked events when available.
+- Choosing Essential-only removes persisted marketing click identifiers.
+- Migration `019_tiktok_click_identity.sql` adds indexed `ttclid` fields to click sessions and assisted conversion events.
+- Attribution matching can now reconcile assisted/offline outcomes directly by `ttclid`, and attribution statistics expose TikTok click-ID coverage.
+- The Matchback live-identity panel displays TikTok TTCLID coverage alongside Google and Meta identifiers.
+- E2E coverage verifies both consent behavior and backend TikTok attribution evidence.
+
+### Dashboard runtime fixes
+- Removed accidental Lead Reactivation initialization code from the Conversion Adjustments component. That cross-component state leak referenced variables that did not exist in Adjustments and caused the entire section to crash.
+- Added the missing `RefreshCw` icon import used by Follow-ups and the workspace section recovery surface.
+- Follow-ups initialization isolates queue loading from Lead Reactivation loading so one failed backend request cannot remove the entire module.
+- Each workspace module is wrapped in a section-level React error boundary. A production render exception leaves the dashboard/navigation available and exposes a retryable section error instead of blanking the workspace.
+- The all-sections Playwright test explicitly fails when the recovery boundary appears, so fault isolation is a production safeguard rather than a way to hide regressions.
+- The shared E2E navigation helper reports the exact section-level render error when a module fails.
+
+Release promotion still requires the complete CI workflow to pass; successful TypeScript/backend validation and production builds alone are not treated as equivalent to a green browser/runtime suite.
