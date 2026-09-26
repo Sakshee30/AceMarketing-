@@ -1,5 +1,12 @@
 import {expect,test} from '@playwright/test'
 
+test.beforeEach(async({page,context},testInfo)=>{
+  const raw=['ci',testInfo.project.name,testInfo.workerIndex,testInfo.parallelIndex,testInfo.retry,testInfo.title].join('_').toLowerCase().replace(/[^a-z0-9_-]+/g,'_')
+  const workspaceId=raw.slice(0,60).replace(/_+$/,'')||'ci_workspace'
+  await context.setExtraHTTPHeaders({'X-Workspace-ID':workspaceId})
+  await page.addInitScript((id)=>window.localStorage.setItem('ace_workspace_id',id),workspaceId)
+})
+
 const dismissConsent=async(page:any)=>{
   const dialog=page.getByRole('dialog',{name:'Privacy choices'})
   if(await dialog.isVisible().catch(()=>false)){
@@ -11,16 +18,17 @@ const dismissConsent=async(page:any)=>{
 }
 
 const openWorkspaceTab=async(page:any,name:string)=>{
-  if(!page.url().includes('#/workspace')){
+  const body=page.locator('.product-body')
+  if(!page.url().includes('#/workspace')||!(await body.isVisible().catch(()=>false))){
     await page.goto('/#/workspace')
     await dismissConsent(page)
-    await expect(page.locator('.product-body')).toBeVisible()
+    await expect(body).toBeVisible()
   }
   await page.evaluate((tab)=>{
     localStorage.setItem('ace_active_tab',tab)
     window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:tab}))
   },name)
-  await expect(page.locator('.product-body')).toBeVisible()
+  await expect(body).toBeVisible()
   await expect.poll(async()=>page.evaluate((tab)=>localStorage.getItem('ace_active_tab')===tab,name),{message:'Expected active workspace tab '+name}).toBeTruthy()
 }
 
@@ -72,13 +80,13 @@ test.describe('workspace critical flows',()=>{
   })
 
   test('dashboard sections collapse and remain navigable',async({page})=>{
-    const tracking=page.getByRole('button',{name:/Tracking & Data/i}).first()
-    await expect(tracking).toBeVisible()
-    await tracking.click()
+    const activation=page.getByRole('button',{name:/Activation & Integrations/i}).first()
+    await expect(activation).toBeVisible()
+    await activation.click()
     const sidebar=page.locator('.product-sidebar')
-    await expect(sidebar.getByRole('button',{name:'Diagnostics',exact:true})).toHaveCount(0)
-    await tracking.click()
-    await expect(sidebar.getByRole('button',{name:'Diagnostics',exact:true})).toBeVisible()
+    await expect(sidebar.getByRole('button',{name:'Audiences',exact:true})).toHaveCount(0)
+    await activation.click()
+    await expect(sidebar.getByRole('button',{name:'Audiences',exact:true})).toBeVisible()
 
     const search=page.getByPlaceholder('Find feature...')
     await search.fill('audience')
@@ -520,7 +528,7 @@ test('feed enhancement persists destination mappings and previews payload', asyn
   await mappingForm.locator('select[name="destination"]').selectOption('Meta Ads')
   await mappingForm.getByLabel('Destination field').fill('customer_tier')
   await page.locator('.connector-card').getByRole('button', { name: 'Save feed mapping' }).click()
-  await expect(page.getByText(/Meta Ads · customer_tier/)).toBeVisible()
+  await expect(page.getByText(/Meta Ads · customer_tier/).first()).toBeVisible()
   const metaDestination=page.locator('.health-line').filter({hasText:'Meta Ads'}).first()
   await metaDestination.getByRole('button', { name: 'Preview' }).click()
   await expect(page.getByText('Enhanced payload preview')).toBeVisible()
@@ -581,7 +589,10 @@ test('workspace quick navigator searches and opens dashboard sections', async ({
   await page.keyboard.press('Control+K')
   await expect(search).toBeVisible()
   await search.fill('Monitoring')
-  await page.getByRole('button', { name: /Monitoring/ }).first().click()
+  const navigator2=page.getByRole('dialog', { name: 'Dashboard section navigator' })
+  const monitoringButton=navigator2.locator('button').filter({has:page.getByText('Monitoring',{exact:true})}).first()
+  await expect(monitoringButton).toBeVisible()
+  await monitoringButton.click()
   await expect(page.getByRole('heading', { name: 'Platform monitoring' })).toBeVisible()
 })
 
@@ -651,7 +662,8 @@ test('attribution workspace ranks persisted channel and campaign evidence', asyn
     utm_source:source,
     utm_medium:'cpc',
     utm_campaign:campaign,
-    landingUrl:'https://example.com/pricing'
+    landingUrl:'https://example.com/pricing',
+    eventCategory:'essential'
   }})
   expect(click.ok()).toBeTruthy()
 
