@@ -4334,3 +4334,92 @@ Playwright coverage now verifies:
 ### Product-parity note
 
 EasyInsights publicly describes Customer 360 and personalization/audience use cases alongside stitched journeys and first-party activation. AceMarketing implements the comparable workflow using its own product identity, UI, code and data contracts rather than bundling third-party proprietary source code or branded assets.
+
+
+## Real-time activation implementation
+
+This pass adds a dedicated **Real-Time Activation** workflow to AceMarketing on `main`.
+
+The goal is to close the gap between collecting first-party events and immediately acting on them. Active rules are evaluated during `POST /api/track` ingestion, after the existing consent gate, and can create governed downstream actions without requiring an operator to manually inspect each event.
+
+### Backend contracts
+
+New endpoints:
+
+- `GET /api/activation-rules`
+- `POST /api/activation-rules`
+- `POST /api/activation-rules/toggle`
+- `POST /api/activation-rules/test`
+
+Rules support:
+
+- trigger event matching;
+- up to five field conditions;
+- operators for equals, contains, greater-than, less-than, one-of, exists and not-exists;
+- active/paused state;
+- mandatory marketing-consent enforcement by default;
+- persisted execution history.
+
+Supported actions:
+
+1. **Conversion signal** — queues a provider delivery using the existing signal-delivery worker and replay payload architecture.
+2. **Follow-up** — creates a persisted follow-up task with channel, priority, owner and delay.
+3. **Lead routing** — routes the matching lead/customer into a configured destination using the existing routing service.
+
+Every matching execution is stored in `activationRuleRuns` with the source event, action type, status, detail and downstream operation identifier when available.
+
+### Event-ingestion integration
+
+`POST /api/track` now returns an `activationRuns` array alongside existing derived event-rule and attribution results.
+
+The order is:
+
+**Consent → Persist event → Update customer profile → Attribution/event-rule processing → Real-time activation evaluation → Persist execution result**
+
+Rules configured to require marketing consent are recorded as `skipped` instead of executing when marketing consent is unavailable.
+
+### Frontend workspace
+
+New dashboard section:
+
+**Activation & Integrations → Real-Time Activation**
+
+Operators can:
+
+- create event-driven rules;
+- configure trigger event and optional condition;
+- choose conversion-signal, routing or follow-up action;
+- set destination, output event, channel, owner, priority and delay;
+- dry-run a rule without executing an external action;
+- pause or re-enable rules;
+- inspect recent persisted executions;
+- see whether each execution succeeded, failed or was skipped.
+
+The section uses responsive layout, interaction animation and `prefers-reduced-motion` support.
+
+### Dashboard and navigation health
+
+Real-Time Activation is now included in:
+
+- the main workspace sidebar;
+- the searchable dashboard navigator;
+- dashboard section health;
+- activation readiness calculations.
+
+The dashboard reports active rule count and persisted execution count.
+
+### Regression coverage
+
+Playwright coverage now creates a unique activation rule, records marketing consent, submits a matching tracked event, and verifies:
+
+- the rule was persisted;
+- the event was accepted;
+- the returned `activationRuns` contains the matching successful rule execution;
+- the execution history is persisted;
+- the Real-Time Activation workspace renders the created rule.
+
+Real-Time Activation is also included in the full workspace-section render sweep.
+
+### Product-parity note
+
+EasyInsights publicly describes trigger-based real-time activation, dynamic audience/suppression workflows, first-party custom-event activation and personalized marketing based on current behavior. AceMarketing implements the comparable event-to-action workflow with its own UI, code, data contracts and operational controls.
