@@ -2085,7 +2085,7 @@ const server = http.createServer(async (req,res)=>{
           recoveryQueued:Boolean(recovered)
         })
       }
-      items.sort((a,b)=>({critical:3,high:2,medium:1}[b.severity]-({critical:3,high:2,medium:1}[a.severity])||b.ageMinutes-a.ageMinutes)
+      items.sort((a,b)=>((({critical:3,high:2,medium:1}[b.severity]||0)-({critical:3,high:2,medium:1}[a.severity]||0))||b.ageMinutes-a.ageMinutes))
       const stageCounts=items.reduce((acc,x)=>{acc[x.stage]=(acc[x.stage]||0)+1;return acc},{})
       const recoveries=(state.leakRecoveries||[]).slice(0,100)
       return send(req,res,200,{
