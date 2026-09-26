@@ -1803,26 +1803,98 @@ function FollowUps(){
  const [dormantDays,setDormantDays]=useState(30)
  const [recentDays,setRecentDays]=useState(7)
  const [notice,setNotice]=useState('')
- const load=()=>api.followUps().then((r:any)=>{const mapped=(r.items||[]).map((x:any)=>({id:x.id,lead:x.lead_ref,reason:x.reason,channel:x.channel,due:x.due_at?new Date(x.due_at).toLocaleString():'—',priority:String(x.priority||'medium').replace(/^./,(m:string)=>m.toUpperCase()),status:x.status==='completed'?'Completed':'Open',owner:x.owner||'—',createdAt:x.created_at,completedAt:x.completed_at}));setItems(mapped);setStats(r.stats||{});if(mapped.length)setSelected((v:string)=>v&&mapped.some((x:any)=>x.id===v)?v:mapped[0].id);else setSelected('')}).catch(()=>{setItems([]);setStats({})})
- const loadReactivation=()=>api.leadReactivation(dormantDays,recentDays).then((r:any)=>setReactivation({items:r.items||[],stats:r.stats||{}})).catch(()=>setReactivation({items:[],stats:{}}))
- useEffect(()=>{load();loadReactivation()},[])
- useEffect(()=>{loadReactivation()},[dormantDays,recentDays])
- const current=items.find(x=>x.id===selected)
- const complete=async(id:string)=>{setBusy('complete');try{await api.completeFollowUp(id);await load()}finally{setBusy('')}}
- const create=async(e:any)=>{e.preventDefault();const f=new FormData(e.currentTarget);setBusy('create');try{await api.createFollowUp({leadRef:String(f.get('leadRef')||''),reason:String(f.get('reason')||''),channel:String(f.get('channel')||'WhatsApp'),priority:String(f.get('priority')||'medium'),delayMinutes:Number(f.get('delayMinutes')||15),owner:String(f.get('owner')||'Assigned counsellor')});setBuilder(false);await load()}finally{setBusy('')}}
- const openJourney=async()=>{if(!current)return;const r:any=await api.journeys().catch(()=>({items:[]}));const hit=(r.items||[]).find((x:any)=>String(x.lead||'').toLowerCase()===String(current.lead||'').toLowerCase())||null;setJourneyRecord(hit);setJourneyOpen(true)}
- const reactivate=async(candidate:any)=>{setBusy('reactivate:'+candidate.leadRef);setNotice('');try{await api.runLeadReactivation({leadRef:candidate.leadRef,dormantDays,recentDays,channel:'WhatsApp',priority:'high',delayMinutes:5,owner:'Reactivation queue'});setNotice('Reactivation follow-up created from renewed intent evidence.');await load();await loadReactivation()}catch(err:any){setNotice(err?.message||'Lead reactivation could not be created.')}finally{setBusy('')}}
+ const [queueError,setQueueError]=useState('')
+ const [reactivationError,setReactivationError]=useState('')
+
+ const normalizeFollowUps=(rows:any[])=>Array.isArray(rows)?rows.map((x:any)=>({
+  id:String(x?.id||''),
+  lead:String(x?.lead_ref||x?.lead||'Unknown lead'),
+  reason:String(x?.reason||'Follow-up required'),
+  channel:String(x?.channel||'—'),
+  due:x?.due_at?new Date(x.due_at).toLocaleString():'—',
+  priority:String(x?.priority||'medium').replace(/^./,(m:string)=>m.toUpperCase()),
+  status:x?.status==='completed'?'Completed':'Open',
+  owner:String(x?.owner||'—'),
+  createdAt:x?.created_at||null,
+  completedAt:x?.completed_at||null
+ })).filter((x:any)=>x.id):[]
+
+ const loadQueue=async()=>{
+  try{
+   const r:any=await api.followUps()
+   const mapped=normalizeFollowUps(r?.items||[])
+   setItems(mapped)
+   setStats(r?.stats||{})
+   setSelected((current:string)=>mapped.some((x:any)=>x.id===current)?current:(mapped[0]?.id||''))
+   setQueueError('')
+  }catch(err:any){
+   setQueueError(err?.message||'Follow-up queue could not be loaded.')
+   setItems([])
+   setStats({})
+   setSelected('')
+  }
+ }
+
+ const loadReactivation=async(days=dormantDays,recent=recentDays)=>{
+  try{
+   const r:any=await api.leadReactivation(days,recent)
+   setReactivation({items:Array.isArray(r?.items)?r.items:[],stats:r?.stats||{}})
+   setReactivationError('')
+  }catch(err:any){
+   setReactivation({items:[],stats:{}})
+   setReactivationError(err?.message||'Lead reactivation candidates could not be loaded.')
+  }
+ }
+
+ useEffect(()=>{void loadQueue();void loadReactivation(30,7)},[])
+ useEffect(()=>{void loadReactivation(dormantDays,recentDays)},[dormantDays,recentDays])
+
+ const current=items.find((x:any)=>x.id===selected)||null
+ const complete=async(id:string)=>{
+  setBusy('complete');setNotice('')
+  try{await api.completeFollowUp(id);setNotice('Follow-up marked completed.');await loadQueue()}
+  catch(err:any){setNotice(err?.message||'Follow-up could not be completed.')}
+  finally{setBusy('')}
+ }
+ const create=async(e:any)=>{
+  e.preventDefault();const f=new FormData(e.currentTarget);setBusy('create');setNotice('')
+  try{
+   await api.createFollowUp({leadRef:String(f.get('leadRef')||''),reason:String(f.get('reason')||''),channel:String(f.get('channel')||'WhatsApp'),priority:String(f.get('priority')||'medium'),delayMinutes:Number(f.get('delayMinutes')||15),owner:String(f.get('owner')||'Assigned counsellor')})
+   setBuilder(false);setNotice('Follow-up created.');await loadQueue()
+  }catch(err:any){setNotice(err?.message||'Follow-up could not be created.')}
+  finally{setBusy('')}
+ }
+ const openJourney=async()=>{
+  if(!current)return
+  try{const r:any=await api.journeys();const list=Array.isArray(r?.items)?r.items:[];setJourneyRecord(list.find((x:any)=>String(x?.lead||'').toLowerCase()===String(current.lead||'').toLowerCase())||null)}
+  catch{setJourneyRecord(null)}
+  setJourneyOpen(true)
+ }
+ const reactivate=async(candidate:any)=>{
+  const leadRef=String(candidate?.leadRef||'')
+  if(!leadRef)return
+  setBusy('reactivate:'+leadRef);setNotice('')
+  try{
+   await api.runLeadReactivation({leadRef,dormantDays,recentDays,channel:'WhatsApp',priority:'high',delayMinutes:5,owner:'Reactivation queue'})
+   setNotice('Reactivation follow-up created from renewed intent evidence.')
+   await Promise.all([loadQueue(),loadReactivation()])
+  }catch(err:any){setNotice(err?.message||'Lead reactivation could not be created.')}
+  finally{setBusy('')}
+ }
+
+ const candidates=Array.isArray(reactivation?.items)?reactivation.items:[]
  return <><PageHead crumb="Conversion / Follow-ups" title="Follow-up operations" sub="Keep qualified leads from going cold by turning stalled journey states and renewed intent into prioritized next actions." action="Create follow-up" onAction={()=>setBuilder(true)}/>
  {notice&&<div className="delivery-notice ok"><CheckCircle2/><span>{notice}</span></div>}
- <div className="stats-grid"><Stat label="Open follow-ups" value={String(stats.open||0)} sub="Current persisted queue" Icon={MessageCircle}/><Stat label="Completed today" value={String(stats.completedToday||0)} sub="Persisted completions" Icon={CheckCircle2}/><Stat label="Completed total" value={String(stats.completedTotal||0)} sub="Current retained history" Icon={Target}/><Stat label="Overdue" value={String(stats.overdue||0)} sub="Open tasks past due" Icon={Activity}/></div>
- <div className="followup-layout"><div className="app-panel followup-list"><div className="panel-head"><div><h3>Follow-up queue</h3><p>Persisted tasks ordered by due time</p></div><button onClick={load}>Refresh</button></div>{items.length?items.map(x=><button key={x.id} className={selected===x.id?'selected':''} onClick={()=>setSelected(x.id)}><MessageCircle/><div><b>{x.lead}</b><small>{x.reason}</small></div><span className={x.priority.toLowerCase()}>{x.priority}</span><em>{x.due}</em><ChevronRight/></button>):<div className="empty-delivery-state"><MessageCircle/><div><b>No follow-ups yet</b><small>Create a follow-up or let an agent create one from journey state.</small></div></div>}</div>
- <div className="app-panel followup-detail">{current?<><div className="panel-head"><div><h3>{current.lead}</h3><p>{current.reason}</p></div><span className={current.status==='Completed'?'healthy':'status'}>{current.status}</span></div><div className="site-detail-grid">{[['Recommended channel',current.channel],['Due',current.due],['Priority',current.priority],['Owner',current.owner],['Created',current.createdAt?new Date(current.createdAt).toLocaleString():'—'],['Completed',current.completedAt?new Date(current.completedAt).toLocaleString():'—']].map(x=><div key={x[0]}><span>{x[0]}</span><b>{x[1]}</b></div>)}</div>{current.status!=='Completed'?<div className="approval-actions"><button onClick={openJourney}>Open journey</button><button className="approve" disabled={busy==='complete'} onClick={()=>complete(current.id)}><Check/>{busy==='complete'?'Completing…':'Mark completed'}</button></div>:<div className="approval-final approved"><Check/><b>Follow-up completed</b></div>}</>:<div className="empty-delivery-state"><MessageCircle/><div><b>Select or create a follow-up</b></div></div>}</div></div>
- <div className="app-panel reactivation-panel"><div className="panel-head"><div><h3>Lead Reactivation agent</h3><p>Detect dormant leads that recently returned with high-intent first-party behavior.</p></div><div className="reactivation-controls"><label><span>Dormant</span><select aria-label="Reactivation dormant window" value={dormantDays} onChange={e=>setDormantDays(Number(e.target.value))}><option value={14}>14+ days</option><option value={30}>30+ days</option><option value={60}>60+ days</option><option value={90}>90+ days</option></select></label><label><span>Renewed intent</span><select aria-label="Reactivation recent window" value={recentDays} onChange={e=>setRecentDays(Number(e.target.value))}><option value={1}>Last 24h</option><option value={3}>Last 3 days</option><option value={7}>Last 7 days</option><option value={14}>Last 14 days</option></select></label><button onClick={loadReactivation}>Refresh</button></div></div>
- <div className="reactivation-summary"><div><b>{reactivation.stats?.candidates||0}</b><span>eligible leads</span></div><p>A lead must have an older persisted last activity and then produce a recent pricing, checkout, booking, consultation, purchase, demo or sales-intent event tied to the same customer or device. Existing open reactivation tasks are excluded.</p></div>
- <div className="reactivation-grid">{(reactivation.items||[]).length?(reactivation.items||[]).map((x:any)=><article key={x.leadRef}><div className="reactivation-card-head"><RefreshCw/><div><b>{x.name}</b><small>{x.source||'Unknown source'}{x.campaign?' · '+x.campaign:''}</small></div><span>{x.dormantDays}d dormant</span></div><div className="reactivation-signal"><span>Renewed signal</span><b>{String(x.renewedEvent||'').replaceAll('_',' ')}</b><small>{x.renewedAt?new Date(x.renewedAt).toLocaleString():'—'} · {x.renewedSource||'First-party'}</small></div><div className="reactivation-card-actions"><div><span>Grade {x.grade||'—'}</span><span>Score {x.score||0}</span></div><button className="approve" disabled={busy==='reactivate:'+x.leadRef} onClick={()=>reactivate(x)}>{busy==='reactivate:'+x.leadRef?'Creating…':'Create reactivation follow-up'}<ArrowRight/></button></div></article>):<div className="empty-delivery-state"><RefreshCw/><div><b>No renewed dormant leads right now</b><small>The agent only surfaces evidence-backed reactivation candidates.</small></div></div>}</div></div>
- <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Follow-up policy examples</h3><p>Use custom agents or workflows to create these tasks</p></div></div>{[['Qualified, no booking','15 min'],['Meeting no-show','15 min'],['Pricing objection','Immediate'],['High-intent revisit','5 min'],['Call no-answer','2 hours'],['CRM stage stale','24 hours']].map(x=><div className="setting-line" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b></div>)}</div><div className="app-panel"><div className="panel-head"><div><h3>Queue state</h3><p>Current persisted task outcomes</p></div></div>{[['Open',stats.open||0],['Completed today',stats.completedToday||0],['Completed total',stats.completedTotal||0],['Overdue',stats.overdue||0]].map(x=><div className="developer-event-row" key={x[0]}><b>{x[0]}</b><span>Follow-up tasks</span><strong>{String(x[1])}</strong></div>)}</div></div>
+ {(queueError||reactivationError)&&<div className="delivery-notice error"><Activity/><span>{[queueError,reactivationError].filter(Boolean).join(' · ')}</span></div>}
+ <div className="stats-grid"><Stat label="Open follow-ups" value={String(Number(stats?.open||0))} sub="Current persisted queue" Icon={MessageCircle}/><Stat label="Completed today" value={String(Number(stats?.completedToday||0))} sub="Persisted completions" Icon={CheckCircle2}/><Stat label="Completed total" value={String(Number(stats?.completedTotal||0))} sub="Current retained history" Icon={Target}/><Stat label="Overdue" value={String(Number(stats?.overdue||0))} sub="Open tasks past due" Icon={Activity}/></div>
+ <div className="followup-layout"><div className="app-panel followup-list"><div className="panel-head"><div><h3>Follow-up queue</h3><p>Persisted tasks ordered by due time</p></div><button onClick={()=>void loadQueue()}>Refresh</button></div>{items.length?items.map((x:any)=><button key={x.id} className={selected===x.id?'selected':''} onClick={()=>setSelected(x.id)}><MessageCircle/><div><b>{x.lead}</b><small>{x.reason}</small></div><span className={String(x.priority||'medium').toLowerCase()}>{x.priority}</span><em>{x.due}</em><ChevronRight/></button>):<div className="empty-delivery-state"><MessageCircle/><div><b>No follow-ups yet</b><small>Create a follow-up or let an agent create one from journey state.</small></div></div>}</div>
+ <div className="app-panel followup-detail">{current?<><div className="panel-head"><div><h3>{current.lead}</h3><p>{current.reason}</p></div><span className={current.status==='Completed'?'healthy':'status'}>{current.status}</span></div><div className="site-detail-grid">{[['Recommended channel',current.channel],['Due',current.due],['Priority',current.priority],['Owner',current.owner],['Created',current.createdAt?new Date(current.createdAt).toLocaleString():'—'],['Completed',current.completedAt?new Date(current.completedAt).toLocaleString():'—']].map(x=><div key={x[0]}><span>{x[0]}</span><b>{String(x[1]||'—')}</b></div>)}</div>{current.status!=='Completed'?<div className="approval-actions"><button onClick={openJourney}>Open journey</button><button className="approve" disabled={busy==='complete'} onClick={()=>complete(current.id)}><Check/>{busy==='complete'?'Completing…':'Mark completed'}</button></div>:<div className="approval-final approved"><Check/><b>Follow-up completed</b></div>}</>:<div className="empty-delivery-state"><MessageCircle/><div><b>Select or create a follow-up</b></div></div>}</div></div>
+ <div className="app-panel reactivation-panel"><div className="panel-head"><div><h3>Lead Reactivation agent</h3><p>Detect dormant leads that recently returned with high-intent first-party behavior.</p></div><div className="reactivation-controls"><label><span>Dormant</span><select aria-label="Reactivation dormant window" value={dormantDays} onChange={e=>setDormantDays(Number(e.target.value))}><option value={14}>14+ days</option><option value={30}>30+ days</option><option value={60}>60+ days</option><option value={90}>90+ days</option></select></label><label><span>Renewed intent</span><select aria-label="Reactivation recent window" value={recentDays} onChange={e=>setRecentDays(Number(e.target.value))}><option value={1}>Last 24h</option><option value={3}>Last 3 days</option><option value={7}>Last 7 days</option><option value={14}>Last 14 days</option></select></label><button onClick={()=>void loadReactivation()}>Refresh</button></div></div>
+ <div className="reactivation-summary"><div><b>{Number(reactivation?.stats?.candidates||candidates.length)}</b><span>eligible leads</span></div><p>A lead must have an older persisted last activity and then produce a recent pricing, checkout, booking, consultation, purchase, demo or sales-intent event tied to the same customer or device. Existing open reactivation tasks are excluded.</p></div>
+ <div className="reactivation-grid">{candidates.length?candidates.map((x:any)=><article key={String(x?.leadRef||x?.name||Math.random())}><div className="reactivation-card-head"><RefreshCw/><div><b>{String(x?.name||x?.leadRef||'Lead')}</b><small>{String(x?.source||'Unknown source')}{x?.campaign?' · '+String(x.campaign):''}</small></div><span>{Number(x?.dormantDays||0)}d dormant</span></div><div className="reactivation-signal"><span>Renewed signal</span><b>{String(x?.renewedEvent||'').replaceAll('_',' ')}</b><small>{x?.renewedAt?new Date(x.renewedAt).toLocaleString():'—'} · {String(x?.renewedSource||'First-party')}</small></div><div className="reactivation-card-actions"><div><span>Grade {String(x?.grade||'—')}</span><span>Score {Number(x?.score||0)}</span></div><button className="approve" disabled={busy==='reactivate:'+String(x?.leadRef||'')} onClick={()=>reactivate(x)}>{busy==='reactivate:'+String(x?.leadRef||'')?'Creating…':'Create reactivation follow-up'}<ArrowRight/></button></div></article>):<div className="empty-delivery-state"><RefreshCw/><div><b>No renewed dormant leads right now</b><small>The agent only surfaces evidence-backed reactivation candidates.</small></div></div>}</div></div>
+ <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Follow-up policy examples</h3><p>Use custom agents or workflows to create these tasks</p></div></div>{[['Qualified, no booking','15 min'],['Meeting no-show','15 min'],['Pricing objection','Immediate'],['High-intent revisit','5 min'],['Call no-answer','2 hours'],['CRM stage stale','24 hours']].map(x=><div className="setting-line" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b></div>)}</div><div className="app-panel"><div className="panel-head"><div><h3>Queue state</h3><p>Current persisted task outcomes</p></div></div>{[['Open',stats?.open||0],['Completed today',stats?.completedToday||0],['Completed total',stats?.completedTotal||0],['Overdue',stats?.overdue||0]].map(x=><div className="developer-event-row" key={x[0]}><b>{x[0]}</b><span>Follow-up tasks</span><strong>{String(x[1])}</strong></div>)}</div></div>
  {builder&&<div className="connector-modal"><form className="connector-card" onSubmit={create}><div className="connector-modal-head"><div><MessageCircle/><div><b>Create follow-up</b><small>Persist a manual next action.</small></div></div><button type="button" onClick={()=>setBuilder(false)}><X/></button></div><label>Lead reference<input name="leadRef" required placeholder="customer_123"/></label><label>Reason<input name="reason" required placeholder="Qualified but consultation not booked"/></label><label>Channel<select name="channel"><option>WhatsApp</option><option>Voice</option><option>Email</option><option>Counsellor call</option></select></label><label>Priority<select name="priority"><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></label><label>Delay minutes<input name="delayMinutes" type="number" min="0" defaultValue="15"/></label><label>Owner<input name="owner" defaultValue="Assigned counsellor"/></label><button disabled={busy==='create'}>{busy==='create'?'Creating…':'Create follow-up'}</button></form></div>}
- {journeyOpen&&<div className="connector-modal"><div className="connector-card"><div className="connector-modal-head"><div><Network/><div><b>Journey context</b><small>{current?.lead}</small></div></div><button onClick={()=>setJourneyOpen(false)}><X/></button></div>{journeyRecord?<div className="site-detail-grid">{[['Lead',journeyRecord.lead],['Source',journeyRecord.source],['Stage',journeyRecord.stage],['Touchpoints',journeyRecord.touchpoints],['Duration',journeyRecord.duration]].map(x=><div key={x[0]}><span>{x[0]}</span><b>{String(x[1]??'—')}</b></div>)}</div>:<div className="empty-delivery-state"><Network/><div><b>No persisted journey found</b><small>This follow-up remains valid, but the journey endpoint has no matching lead record.</small></div></div>}</div></div>}</>
+ {journeyOpen&&<div className="connector-modal"><div className="connector-card"><div className="connector-modal-head"><div><Network/><div><b>Journey context</b><small>{current?.lead||'Lead'}</small></div></div><button onClick={()=>setJourneyOpen(false)}><X/></button></div>{journeyRecord?<div className="site-detail-grid">{[['Lead',journeyRecord.lead],['Source',journeyRecord.source],['Stage',journeyRecord.stage],['Touchpoints',journeyRecord.touchpoints],['Duration',journeyRecord.duration]].map(x=><div key={x[0]}><span>{x[0]}</span><b>{String(x[1]??'—')}</b></div>)}</div>:<div className="empty-delivery-state"><Network/><div><b>No persisted journey found</b><small>This follow-up remains valid, but the journey endpoint has no matching lead record.</small></div></div>}</div></div>}</>
 }
 function Calls(){
  const [calls,setCalls]=useState<any[]>([])
