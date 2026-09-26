@@ -1011,9 +1011,9 @@ test('repeat purchase and abandoned checkout templates are executable', async ({
 
   const abandonedCard=page.locator('.template-card').filter({hasText:'Abandoned Checkout'}).first()
   await expect(abandonedCard).toBeVisible()
+  await expect(abandonedCard).toContainText('commerce webhook/backend')
   await abandonedCard.getByRole('button',{name:'Use template'}).click()
   const abandonedBuilder=page.locator('.audience-builder')
   await expect(abandonedBuilder.getByLabel('Source event')).toHaveValue('checkout_abandoned')
   await expect(abandonedBuilder.getByLabel('Operator')).toHaveValue('exists')
-  await expect(abandonedBuilder).toContainText('commerce webhook/backend')
 })
