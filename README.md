@@ -5442,3 +5442,18 @@ The **Developers** workspace now provides a real credential lifecycle instead of
 - Playwright coverage verifies create → authenticated ingest → revoke → rejected reuse as one end-to-end workflow.
 
 This closes a frontend/backend parity gap in the developer console while preserving the browser/first-party tracking path for requests that do not present a server API credential.
+
+
+## LinkedIn Conversions API AdSync — 2026-09-26
+
+AceMarketing now includes a native LinkedIn server-side conversion path alongside Google, Meta and ChatGPT Ads signal delivery.
+
+- The LinkedIn OAuth connector requests `rw_conversions` and `r_ads`.
+- AdSync includes a **LinkedIn Conversions API** quick-start pipeline.
+- Delivery uses LinkedIn's versioned `POST /rest/conversionEvents` contract.
+- The adapter uses a configured conversion-rule URN, stable event ID, event timestamp, optional value/currency, and supported matching identifiers such as SHA-256 email or LinkedIn first-party tracking UUID.
+- Provider credentials stay in the connector credential vault; the conversion-rule URN and Marketing API version are deployment configuration.
+- `backend/.env.example` documents `LINKEDIN_CONVERSION_URN` and `LINKEDIN_MARKETING_VERSION`.
+- E2E coverage verifies that the LinkedIn quick-start creates a real persisted AdSync pipeline targeting `LinkedIn Ads`.
+
+This implementation addresses the brochure requirement for server-side LinkedIn conversion signaling while keeping delivery retry, audit and dashboard visibility inside AceMarketing's existing signal-delivery pipeline.
