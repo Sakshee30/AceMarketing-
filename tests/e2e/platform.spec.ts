@@ -552,3 +552,26 @@ test('public integration catalog search exposes expanded categories', async ({ p
   await search.fill('TikTok')
   await expect(page.getByText('TikTok Ads', { exact: true })).toBeVisible()
 })
+
+
+test('workspace quick navigator searches and opens dashboard sections', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+
+  const trigger=page.getByRole('button', { name: 'Open dashboard section navigator' })
+  await expect(trigger).toBeVisible()
+  await trigger.click()
+
+  const search=page.getByLabel('Search dashboard sections')
+  await expect(search).toBeFocused()
+  await search.fill('attribution')
+  await expect(page.getByRole('button', { name: /Attribution/ }).first()).toBeVisible()
+  await page.getByRole('button', { name: /Attribution/ }).first().click()
+  await expect(page.getByRole('heading', { name: /Attribution/i }).first()).toBeVisible()
+
+  await page.keyboard.press('Control+K')
+  await expect(search).toBeVisible()
+  await search.fill('Monitoring')
+  await page.getByRole('button', { name: /Monitoring/ }).first().click()
+  await expect(page.getByRole('heading', { name: 'Platform monitoring' })).toBeVisible()
+})
