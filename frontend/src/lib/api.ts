@@ -244,6 +244,7 @@ export const api = {
   sendWhatsAppMessage: (payload: Record<string, unknown>) => request('/whatsapp/messages', { method: 'POST', body: JSON.stringify(payload) }),
   connectorHealth: () => request('/connector-health'),
   monitoring: () => request('/monitoring'),
+  complianceCenter: () => request('/compliance-center'),
   consentStats: () => request('/consent/stats'),
   privacyRequests: () => request('/privacy/requests'),
   privacyExport: (selectorType:string,selector:string) => request('/privacy/export',{method:'POST',body:JSON.stringify({selectorType,selector})}),
