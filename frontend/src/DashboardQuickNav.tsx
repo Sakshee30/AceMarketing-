@@ -28,6 +28,7 @@ const groups:ShortcutGroup[]=[
       {label:'Ad Sync',tab:'AdSync',icon:Target,description:'Return qualified conversion signals to ad platforms'},
       {label:'ChatGPT Ads',tab:'ChatGPT Ads',icon:Bot,description:'Send server-side conversions with oppref matching and deduplicated event IDs'},
       {label:'Funnel',tab:'Funnel',icon:BarChart3,description:'Inspect stage conversion and drop-off'},
+      {label:'Leak Monitor',tab:'Leak Monitor',icon:ShieldCheck,description:'Detect stalled handoffs and queue governed recovery follow-ups'},
       {label:'Events',tab:'Events',icon:Activity,description:'Manage conversion events and rules'},
       {label:'Adjustments',tab:'Adjustments',icon:Target,description:'Preview and apply governed performance adjustments'},
       {label:'Diagnostics',tab:'Diagnostics',icon:ShieldCheck,description:'Scan tracking and delivery issues'},
