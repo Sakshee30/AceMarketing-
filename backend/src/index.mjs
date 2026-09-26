@@ -153,11 +153,13 @@ if (IS_PROD && allowedOrigins.size===0) throw new Error('CORS_ALLOWED_ORIGINS is
 const limitRequest=createRateLimiter({windowMs:60_000,max:Number(process.env.RATE_LIMIT_PER_MINUTE||240)})
 
 const integrations = [
-  'Zoho CRM','Salesforce','LeadSquared','Meritto','HubSpot','HighLevel','Microsoft Dynamics 365','Custom CRM',
-  'WhatsApp','Bitespeed','AiSensy','Gupshup','WATI','MoEngage','CleverTap',
-  'Exotel','Knowlarity','Tata Tele','MyOperator',
-  'Shopify','WooCommerce','Magento','WordPress','React App','Custom Backend',
-  'Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads / Bing Ads','X','Pinterest','GA4','Google Calendar'
+  'Zoho CRM','Salesforce','LeadSquared','Meritto','HubSpot','HighLevel','Microsoft Dynamics 365','Freshsales','Custom CRM',
+  'WhatsApp','Bitespeed','AiSensy','Gupshup','WATI','MoEngage','CleverTap','Mailchimp','Klaviyo','Brevo','Twilio SendGrid',
+  'Exotel','Knowlarity','Tata Tele','MyOperator','Twilio',
+  'Shopify','WooCommerce','Magento','WordPress','Typeform','React App','Custom Backend',
+  'BigQuery','Snowflake','MongoDB','Oracle DB','Google Cloud Storage','Amazon S3',
+  'Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads / Bing Ads','X','Pinterest','TikTok Ads','Yahoo Ads','Taboola','Spotify Ads','Snapchat Ads','Criteo','DV360','Google Merchant Center','Meta Lead Ads','Meta CAPI','Meta Catalog','GA4','Google Calendar',
+  'Apollo','Lusha','Calixa'
 ]
 const agents = ['Meta Advanced CAPI','Google ECL / OCI','Call Tracking Events','Custom Integration','Lead Grading','CRM Enrichment','Voice Lead Qualification','Voice Scheduler','Meeting Reminder','Feedback Agent','Ask Ace']
 const agentCatalog={
@@ -948,11 +950,39 @@ const server = http.createServer(async (req,res)=>{
           status:saved?.status||(provider?'available':'manual'),
           provider:provider?.provider||'custom',
           authType:provider?.authType||'manual',
+          capability:provider?'native_oauth':'configurable_adapter',
           configured:Boolean(provider?.clientId&&provider?.clientSecret&&CONNECTOR_REDIRECT_URI),
           updatedAt:saved?.updatedAt||null,
           tokenHealth:health
         }
-      })})
+      }),requests:(state.integrationRequests||[]).slice(0,100)})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/integration-requests') {
+      const body=await readBody(req)
+      const connector=String(body.connector||'').trim()
+      const businessNeed=String(body.businessNeed||'').trim()
+      if(connector.length<2||connector.length>120) return send(req,res,400,{error:'connector must be 2-120 characters'})
+      if(businessNeed.length<5||businessNeed.length>1000) return send(req,res,400,{error:'businessNeed must be 5-1000 characters'})
+      const now=new Date().toISOString()
+      const item={
+        id:'ireq_'+randomUUID(),
+        connector,
+        businessNeed,
+        direction:['Inbound','Outbound','Bidirectional'].includes(body.direction)?body.direction:'Bidirectional',
+        priority:['Normal','High','Critical'].includes(body.priority)?body.priority:'Normal',
+        status:'requested',
+        requestedBy:req.user?.email||req.user?.userId||'workspace',
+        createdAt:now
+      }
+      await mutateState(s=>{
+        s.integrationRequests=s.integrationRequests||[]
+        s.integrationRequests.unshift(item)
+        s.integrationRequests=s.integrationRequests.slice(0,500)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'integration.requested',entityId:item.id,connector:item.connector,priority:item.priority,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,{item})
     }
     if (req.method === 'GET' && url.pathname === '/api/custom-integrations') return send(req,res,200,{items:await listCustomIntegrations(workspaceId)})
     if (req.method === 'POST' && url.pathname === '/api/custom-integrations/test') {
