@@ -4057,3 +4057,17 @@ Implemented:
 - Playwright coverage creates two leads in different ad accounts, creates a meeting for one lead, verifies the account-filtered API response, then confirms Account Alpha / Campaign Alpha drill-down in the dashboard.
 
 This brings AdSync funnel mapping substantially closer to the supplied EasyInsights EdTech brochure requirement for multi-channel, multi-account, stage-level campaign analysis.
+
+
+## Final dashboard E2E stabilization follow-up
+
+The dashboard E2E suite has been tightened around real UI semantics after the feature-parity expansion.
+
+Implemented:
+- fixed the Calls production UI so the `Start qualification` action actually renders the qualification builder modal;
+- Behavior E2E keeps exact backend assertions for persisted source/campaign evidence, while UI assertions now verify that each analysis view renders populated rows without racing React state;
+- Repeat Purchase and Abandoned Checkout tests now locate template cards by exact visible titles, avoiding false matches inside descriptive copy;
+- mobile navigation tests open the responsive workspace drawer before interacting with sidebar groups;
+- the suite had reached 102 passing tests before these final assertion fixes, with the remaining failures limited to the Behavior and event-card selector categories now addressed.
+
+These changes preserve strict backend correctness checks while making the browser suite reflect the actual responsive UI contract.
