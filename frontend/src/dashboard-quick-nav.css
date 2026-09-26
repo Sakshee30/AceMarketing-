@@ -10,3 +10,11 @@
 @keyframes aceNavSpin{to{transform:rotate(360deg)}}
 @media(max-width:620px){.ace-quick-nav-footer-actions{width:100%;justify-content:space-between}}
 @media(prefers-reduced-motion:reduce){.ace-quick-nav-footer-actions svg.spinning{animation:none!important}}
+
+.ace-quick-nav-items>button b{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ace-section-state{font-style:normal;font-size:8px;line-height:1;padding:4px 6px;border-radius:999px;text-transform:uppercase;letter-spacing:.06em;font-weight:800}
+.ace-section-state.live{background:#e8f8ef;color:#147447;box-shadow:inset 0 0 0 1px rgba(20,116,71,.10)}
+.ace-section-state.attention{background:#fff5df;color:#9b6514;box-shadow:inset 0 0 0 1px rgba(155,101,20,.11)}
+.ace-section-state.setup{background:#f1f4f2;color:#76827c;box-shadow:inset 0 0 0 1px rgba(74,89,81,.08)}
+.ace-section-detail{color:#9aa49f!important;font-size:8.8px!important}
+.ace-quick-nav-items>button:hover .ace-section-detail{color:#6f7d76!important}
