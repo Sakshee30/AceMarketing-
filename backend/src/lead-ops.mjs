@@ -76,7 +76,15 @@ export const upsertLeadProfile=async(workspaceId,input={})=>{
       intent=COALESCE(EXCLUDED.intent,ace_lead_profiles.intent),
       score=EXCLUDED.score,grade=EXCLUDED.grade,score_version=EXCLUDED.score_version,score_drivers=EXCLUDED.score_drivers,
       attributes=ace_lead_profiles.attributes||EXCLUDED.attributes,
-      journey=ace_lead_profiles.journey||EXCLUDED.journey,
+      journey=ace_lead_profiles.journey
+        || CASE
+          WHEN EXCLUDED.journey->>'lastActivity' IS NOT NULL
+           AND ace_lead_profiles.journey->>'lastActivity' IS NOT NULL
+           AND EXCLUDED.journey->>'lastActivity' IS DISTINCT FROM ace_lead_profiles.journey->>'lastActivity'
+          THEN jsonb_build_object('previousLastActivity',ace_lead_profiles.journey->>'lastActivity')
+          ELSE '{}'::jsonb
+        END
+        || EXCLUDED.journey,
       call_summary=COALESCE(EXCLUDED.call_summary,ace_lead_profiles.call_summary),
       whatsapp_summary=COALESCE(EXCLUDED.whatsapp_summary,ace_lead_profiles.whatsapp_summary),
       updated_at=now()
