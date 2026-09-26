@@ -830,6 +830,44 @@ test('meetings can be scheduled directly from the meetings workspace', async ({ 
 })
 
 
+
+test('Voice Scheduler queues a real provider-backed booking run', async ({ page }, testInfo) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  await openWorkspaceTab(page,'Meetings')
+  await expect(page.getByRole('heading',{name:'Scheduler & meeting reminders'})).toBeVisible()
+
+  await page.getByRole('button',{name:'Start voice scheduler'}).click()
+  const form=page.locator('.voice-scheduler-builder')
+  const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()+'_'+Date.now()
+  const lead='ci_voice_scheduler_'+suffix
+  await form.getByLabel('Lead reference').fill(lead)
+  await form.getByLabel('Phone number').fill('+919876543210')
+  await form.getByLabel('Attendee email').fill('voice-scheduler@example.com')
+  await form.getByLabel('Preferred window').fill('Tomorrow afternoon')
+  const proposed=new Date(Date.now()+48*60*60*1000).toISOString().slice(0,16)
+  await form.getByLabel('Proposed slot').fill(proposed)
+  await form.getByLabel('Calendar sync').selectOption('no')
+
+  const responsePromise=page.waitForResponse(r=>r.url().includes('/api/voice-scheduler')&&r.request().method()==='POST')
+  await form.getByRole('button',{name:'Queue scheduling call'}).click()
+  const response=await responsePromise
+  expect(response.status()).toBe(202)
+  await expect(page.getByText(/Voice Scheduler queued for/)).toBeVisible()
+  const run=page.locator('.voice-scheduler-run').filter({hasText:lead}).first()
+  await expect(run).toBeVisible()
+  await expect(run).toContainText('queued')
+  await expect(run).toContainText('Awaiting provider outcome')
+
+  const apiRuns=await page.request.get('/api/voice-scheduler')
+  expect(apiRuns.ok()).toBeTruthy()
+  const payload=await apiRuns.json()
+  const item=(payload.items||[]).find((x:any)=>x.lead===lead)
+  expect(item?.status).toBe('queued')
+  expect(item?.meetingId).toBeFalsy()
+})
+
+
 test('matchback rules persist without seeded performance claims', async ({ page }, testInfo) => {
   await page.goto('/#/workspace')
   await dismissConsent(page)
