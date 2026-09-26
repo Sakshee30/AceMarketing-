@@ -175,7 +175,7 @@ const agentCatalog={
   'Feedback Agent':{category:'Conversion · Handoff',description:'Collect post-interaction feedback and surface objection themes.',operationTab:'Feedback',action:'Open feedback operations',prerequisites:['Customer interaction','Feedback provider or manual record']},
   'Ask Ace':{category:'Visibility & Attribution',description:'Query stitched journey, attribution, lead quality, audience and signal evidence in natural language.',operationTab:'Ask Ace',action:'Ask workspace questions',prerequisites:['Workspace evidence']}
 }
-const trackedEvents = []
+const trackedEventsByWorkspace = new Map()
 
 const sha256Normalized=value=>createHash('sha256').update(String(value||'').trim().toLowerCase()).digest('hex')
 const sha256Phone=value=>createHash('sha256').update(String(value||'').replace(/\D/g,'')).digest('hex')
@@ -491,6 +491,8 @@ const server = http.createServer(async (req,res)=>{
     if(authenticatedUser.workspaceId!==workspaceId) return send(req,res,403,{error:'token workspace mismatch'})
   }
   return withWorkspace(workspaceId,async()=>{
+  let trackedEvents=trackedEventsByWorkspace.get(workspaceId)
+  if(!trackedEvents){trackedEvents=[];trackedEventsByWorkspace.set(workspaceId,trackedEvents)}
   try {
     if(authenticatedUser){
       const authState=await getState()
