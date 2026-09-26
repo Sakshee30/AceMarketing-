@@ -27,25 +27,29 @@ export const saveLocalConsent=async(consent:Omit<AceConsent,'essential'>)=>{
   const visitorId=getVisitorId()
   try{await fetch('/api/consent',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subjectType:'visitor',subjectId:visitorId,...full,source:'web'})})}catch{}
   if(full.marketing)persistClickIds()
-  else{localStorage.removeItem('ace:gclid');localStorage.removeItem('ace:fbclid')}
+  else{['gclid','gbraid','wbraid','fbclid','msclkid','ttclid'].forEach(key=>localStorage.removeItem('ace:'+key))}
   if(full.analytics)track({event:'consent_updated',eventCategory:'essential',properties:{analytics:full.analytics,marketing:full.marketing,personalization:full.personalization}})
   window.dispatchEvent(new CustomEvent('ace-consent-changed',{detail:full}))
   return full
 }
 
+const MARKETING_CLICK_IDS=['gclid','gbraid','wbraid','fbclid','msclkid','ttclid'] as const
+const cookieValue=(name:string)=>document.cookie.split(';').map(x=>x.trim()).find(x=>x.startsWith(name+'='))?.slice(name.length+1)||null
 const readClickIds=()=>{
   const consent=getLocalConsent()
-  if(!consent?.marketing)return {gclid:null,fbclid:null}
+  if(!consent?.marketing)return {gclid:null,gbraid:null,wbraid:null,fbclid:null,msclkid:null,ttclid:null,ttp:null}
   const params=new URLSearchParams(window.location.search)
-  return {gclid:params.get('gclid')||localStorage.getItem('ace:gclid'),fbclid:params.get('fbclid')||localStorage.getItem('ace:fbclid')}
+  const ids=Object.fromEntries(MARKETING_CLICK_IDS.map(key=>[key,params.get(key)||localStorage.getItem('ace:'+key)]))
+  return {...ids,ttp:cookieValue('_ttp')}
 }
 export const persistClickIds=()=>{
   const consent=getLocalConsent()
   if(!consent?.marketing)return
   const params=new URLSearchParams(window.location.search)
-  const gclid=params.get('gclid'),fbclid=params.get('fbclid')
-  if(gclid)localStorage.setItem('ace:gclid',gclid)
-  if(fbclid)localStorage.setItem('ace:fbclid',fbclid)
+  for(const key of MARKETING_CLICK_IDS){
+    const value=params.get(key)
+    if(value)localStorage.setItem('ace:'+key,value)
+  }
 }
 export const track=async(payload:AceTrackPayload)=>{
   const category=payload.eventCategory||'analytics'
