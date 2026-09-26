@@ -163,6 +163,35 @@ test.describe('workspace critical flows',()=>{
     await expect(page.getByText(/Duplicate evidence/i)).toBeVisible()
   })
 
+  test('executive briefs persist scheduled metric snippets and render leadership workflow',async({page},testInfo)=>{
+    const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()
+    const created=await page.request.post('/api/report-schedules',{data:{
+      reportType:'executive_brief',
+      name:'CI Executive Brief '+suffix,
+      title:'CI Growth Snapshot',
+      recipients:'ci-'+suffix+'@example.com',
+      cadence:'weekly',
+      lookbackMonths:6,
+      metrics:['acquired','conversionRate','revenue','topSource'],
+      note:'CI scheduled executive snippet'
+    }})
+    expect(created.ok()).toBeTruthy()
+    const payload=await created.json()
+    expect(payload.report_type).toBe('executive_brief')
+    expect(payload.config?.metrics).toEqual(expect.arrayContaining(['acquired','conversionRate','revenue','topSource']))
+
+    const schedules=await page.request.get('/api/report-schedules')
+    expect(schedules.ok()).toBeTruthy()
+    const schedulePayload=await schedules.json()
+    expect(schedulePayload.items.some((x:any)=>x.id===payload.id&&x.report_type==='executive_brief')).toBeTruthy()
+
+    await openWorkspaceTab(page,'Executive Briefs')
+    await expect(page.getByRole('heading',{name:'Executive data snippets'})).toBeVisible()
+    await expect(page.getByText('Live brief preview')).toBeVisible()
+    await expect(page.getByText('Schedule executive brief')).toBeVisible()
+    await expect(page.getByText('CI Executive Brief '+suffix,{exact:true})).toBeVisible()
+  })
+
   test('ChatGPT Ads workspace validates oppref conversion payloads without exposing credentials',async({page})=>{
     const status=await page.request.get('/api/chatgpt-ads')
     expect(status.ok()).toBeTruthy()
