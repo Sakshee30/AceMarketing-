@@ -5299,3 +5299,121 @@ Playwright now:
 ### Product-parity note
 
 EasyInsights publicly describes full-funnel monitoring and agents that catch leaks at handoffs before they cost conversions. AceMarketing implements the comparable workflow using its own lead-profile, routing, follow-up, meeting and audit stores rather than copying proprietary source code, copy or branded assets.
+
+
+## Event match quality implementation
+
+This pass adds a dedicated **Match Quality** workspace to AceMarketing on `main`.
+
+### Why this exists
+
+EasyInsights publicly highlights high event match rate, full event coverage and first-party server-side activation as core capabilities. AceMarketing already captured the raw identifiers across Identity, Fingerprinting, Sites, ChatGPT Ads and Diagnostics, but operators did not have one place to measure how consistently those identifiers were actually present on persisted events.
+
+### Backend contract
+
+New endpoint:
+
+- `GET /api/match-quality`
+
+The endpoint scores up to the latest 5,000 persisted first-party events using AceMarketing's own internal identity-coverage model.
+
+Signals considered include:
+
+- customer ID;
+- hashed email;
+- hashed phone;
+- device ID;
+- visitor ID;
+- GCLID;
+- GBRAID;
+- WBRAID;
+- FBCLID;
+- MSCLKID;
+- ChatGPT Ads `oppref`;
+- optional `obref`;
+- IP address;
+- user agent.
+
+Deterministic first-party identifiers and hashed contact identifiers receive more weight than weaker browser/context signals.
+
+### Important score boundary
+
+The returned score is explicitly:
+
+**AceMarketing internal identity-coverage score**
+
+It is **not** presented as:
+
+- Meta Event Match Quality;
+- Google match rate;
+- OpenAI provider match score;
+- any other provider-reported metric.
+
+Provider-reported scores must come from the corresponding provider integration.
+
+### Match-quality output
+
+The endpoint returns:
+
+- average identity-coverage score;
+- total events scored;
+- strong-event count/rate;
+- weak-event count/rate;
+- identifier-by-identifier coverage;
+- event-type quality averages;
+- dominant source per event type;
+- evidence-based recommendations.
+
+Recommendations can point operators directly to the existing remediation surfaces, including:
+
+- Data Hub;
+- Identity;
+- Sites;
+- ChatGPT Ads;
+- Fingerprinting.
+
+### Frontend workspace
+
+New dashboard section:
+
+**Tracking & Data → Match Quality**
+
+Operators can:
+
+1. Inspect the overall identity-coverage score.
+2. See strong vs weak event ratios.
+3. Review identifier coverage percentages.
+4. Compare average quality by event type.
+5. See which traffic source dominates each event type.
+6. Open the exact AceMarketing section that can fix a missing identifier.
+7. See the provider-score boundary directly in the UI.
+
+The workspace uses responsive layouts and the existing AceMarketing dashboard design system.
+
+### Dashboard integration
+
+Match Quality is included in:
+
+- the main sidebar;
+- the global dashboard navigator;
+- dashboard section health;
+- the complete workspace render regression sweep.
+
+Dashboard health reflects the real persisted event inventory available for identity scoring.
+
+### Regression coverage
+
+Playwright now:
+
+- records a consented event with rich identity evidence;
+- records a lower-identity event;
+- verifies the match-quality API contract;
+- verifies total events, score, identifier coverage, event-type rows and recommendations;
+- verifies the provider-score disclaimer;
+- renders the Match Quality workspace;
+- verifies Identifier Coverage, Event-Type Quality and Provider-Score Boundary surfaces;
+- includes Match Quality in the full workspace render sweep.
+
+### Product-parity note
+
+EasyInsights publicly describes high event match rate and full coverage as part of its first-party data activation offering. AceMarketing implements the comparable operational visibility using its own scoring model, code and UI without claiming third-party provider scores that have not actually been retrieved.
