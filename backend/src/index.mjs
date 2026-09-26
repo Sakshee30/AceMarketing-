@@ -667,6 +667,7 @@ const server = http.createServer(async (req,res)=>{
         AdSync:section(deliveries.length?'live':connectedConnectors.length?'attention':'setup',deliveries.length,deliveries.length+' signal deliveries'),
         'ChatGPT Ads':section(deliveries.some(x=>/chatgpt|openai/i.test(String(x.destination||'')))?'live':(process.env.OPENAI_CONVERSIONS_API_KEY&&process.env.OPENAI_ADS_PIXEL_ID)?'attention':'setup',deliveries.filter(x=>/chatgpt|openai/i.test(String(x.destination||''))).length,deliveries.filter(x=>/chatgpt|openai/i.test(String(x.destination||''))).length+' ChatGPT Ads deliveries'),
         Funnel:section(profiles?'live':trackedCount?'attention':'setup',profiles,profiles+' known lead profiles'),
+        'Leak Monitor':section(profiles?'live':'setup',Number((state.leakRecoveries||[]).length),(state.leakRecoveries||[]).length+' recovery actions'),
         Events:section(eventRules.length?'live':'setup',eventRules.length,eventRules.length+' conversion rules'),
         Diagnostics:section(trackedCount||eventRules.length?'live':'setup',Number((state.quarantinedEvents||[]).length),(state.quarantinedEvents||[]).length+' quarantined events'),
         Reconciliation:section(trackedCount||deliveries.length||Number(attr?.assistedEvents||0)>0?'live':'setup',failedDeliveries+Number(attr?.unmatchedEvents||0),failedDeliveries+' failed · '+Number(attr?.unmatchedEvents||0)+' unmatched'),
@@ -2013,6 +2014,123 @@ const server = http.createServer(async (req,res)=>{
         s.audit=s.audit.slice(0,1000)
       })
       return send(req,res,202,{queued:true,issue:body.issue,replayId,status:'queued'})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/leak-monitor') {
+      const [profiles,followUps,meetings,routes,state]=await Promise.all([
+        listLeadProfiles(workspaceId,500),
+        listPersistedFollowUps(workspaceId),
+        listPersistedMeetings(workspaceId),
+        listRoutingDecisions(workspaceId,500),
+        getState()
+      ])
+      const defaults={new:30,lead:60,qualified:60,routed:120,contacted:240,consultation:720}
+      const thresholds={...defaults,...(state.leakMonitorSettings||{})}
+      const now=Date.now()
+      const leadRef=lead=>String(lead.external_lead_id||lead.id||lead.name||'')
+      const stageKey=value=>{
+        const s=String(value||'lead').toLowerCase()
+        if(/won|converted|customer|enrolled|closed/.test(s))return 'converted'
+        if(/consult|meeting|appointment|demo/.test(s))return 'consultation'
+        if(/contact|called|reached/.test(s))return 'contacted'
+        if(/route|assign|owner/.test(s))return 'routed'
+        if(/qualif|mql|sql/.test(s))return 'qualified'
+        if(/new|created/.test(s))return 'new'
+        return 'lead'
+      }
+      const getActivity=lead=>{
+        const candidates=[lead.updated_at,lead.created_at,lead.journey?.lastActivity,lead.attributes?.lastActivity].filter(Boolean).map(x=>Date.parse(x)).filter(Number.isFinite)
+        return candidates.length?Math.max(...candidates):Date.parse(lead.created_at||0)
+      }
+      const items=[]
+      for(const lead of profiles){
+        const stage=stageKey(lead.crm_stage)
+        if(stage==='converted')continue
+        const ref=leadRef(lead)
+        const last=getActivity(lead)
+        const ageMinutes=Math.max(0,Math.round((now-last)/60000))
+        const threshold=Number(thresholds[stage]||thresholds.lead||60)
+        const openFollowUps=followUps.filter(x=>String(x.lead_ref)===ref&&String(x.status)==='open')
+        const futureMeetings=meetings.filter(x=>String(x.lead_ref)===ref&&Date.parse(x.starts_at||0)>now&&String(x.status)!=='cancelled')
+        const route=routes.find(x=>String(x.lead_ref)===ref)
+        const recovered=(state.leakRecoveries||[]).find(x=>x.leadRef===ref&&x.status==='queued')
+        const missingHandoff=
+          stage==='qualified'&&!route?'Qualified lead has no routing decision':
+          stage==='routed'&&!openFollowUps.length?'Routed lead has no open follow-up':
+          stage==='contacted'&&!futureMeetings.length?'Contacted lead has no future meeting':
+          stage==='consultation'&&!openFollowUps.length?'Consultation-stage lead has no recovery follow-up':
+          ''
+        const stalled=ageMinutes>=threshold
+        if(!stalled&&!missingHandoff)continue
+        const severity=missingHandoff&&ageMinutes>=threshold*2?'critical':ageMinutes>=threshold*2?'high':'medium'
+        items.push({
+          id:'leak_'+String(lead.id||ref),
+          leadRef:ref,
+          name:lead.name||ref,
+          stage,
+          crmStage:lead.crm_stage||'Lead',
+          grade:lead.grade||null,
+          score:Number(lead.score||0),
+          source:lead.source||'First-party',
+          campaign:lead.campaign||null,
+          ageMinutes,
+          thresholdMinutes:threshold,
+          severity,
+          reason:missingHandoff||('No meaningful activity for '+ageMinutes+' minutes'),
+          evidence:{
+            hasRoute:Boolean(route),
+            openFollowUps:openFollowUps.length,
+            futureMeetings:futureMeetings.length,
+            lastActivity:last?new Date(last).toISOString():null
+          },
+          recoveryQueued:Boolean(recovered)
+        })
+      }
+      items.sort((a,b)=>({critical:3,high:2,medium:1}[b.severity]-({critical:3,high:2,medium:1}[a.severity])||b.ageMinutes-a.ageMinutes)
+      const stageCounts=items.reduce((acc,x)=>{acc[x.stage]=(acc[x.stage]||0)+1;return acc},{})
+      const recoveries=(state.leakRecoveries||[]).slice(0,100)
+      return send(req,res,200,{
+        items,
+        thresholds,
+        stats:{
+          total:items.length,
+          critical:items.filter(x=>x.severity==='critical').length,
+          high:items.filter(x=>x.severity==='high').length,
+          medium:items.filter(x=>x.severity==='medium').length,
+          recoveryQueued:items.filter(x=>x.recoveryQueued).length,
+          stageCounts
+        },
+        recoveries,
+        generatedAt:new Date().toISOString()
+      })
+    }
+    if (req.method === 'POST' && url.pathname === '/api/leak-monitor/settings') {
+      const body=await readBody(req)
+      const allowed=['new','lead','qualified','routed','contacted','consultation']
+      const settings={}
+      for(const key of allowed){
+        if(body[key]==null)continue
+        const value=Number(body[key])
+        if(!Number.isFinite(value)||value<5||value>43200) return send(req,res,400,{error:key+' threshold must be 5-43200 minutes'})
+        settings[key]=Math.round(value)
+      }
+      await mutateState(s=>{s.leakMonitorSettings={...(s.leakMonitorSettings||{}),...settings};s.audit=s.audit||[];s.audit.unshift({id:randomUUID(),action:'leak_monitor.settings_updated',settings,at:new Date().toISOString()});s.audit=s.audit.slice(0,1000)})
+      return send(req,res,200,{settings})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/leak-monitor/recover') {
+      const body=await readBody(req)
+      const leadRef=String(body.leadRef||'').trim()
+      if(!leadRef) return send(req,res,400,{error:'leadRef required'})
+      const channel=String(body.channel||'call').toLowerCase()
+      if(!['call','voice','whatsapp','email'].includes(channel)) return send(req,res,400,{error:'unsupported recovery channel'})
+      const delayMinutes=Math.max(0,Math.min(10080,Number(body.delayMinutes||0)))
+      const reason=String(body.reason||'Funnel leak recovery').trim().slice(0,300)
+      const existing=(await listPersistedFollowUps(workspaceId)).find(x=>String(x.lead_ref)===leadRef&&String(x.status)==='open'&&String(x.reason||'').startsWith('Leak recovery'))
+      if(existing) return send(req,res,200,{duplicate:true,item:existing})
+      const followUp=await createFollowUp(workspaceId,{leadRef,reason:'Leak recovery · '+reason,channel,priority:String(body.priority||'high'),delayMinutes,owner:String(body.owner||'Growth recovery queue')})
+      if(!followUp) return send(req,res,503,{error:'follow-up store unavailable'})
+      const recovery={id:'leakrec_'+randomUUID(),leadRef,followUpId:followUp.id,channel,status:'queued',reason,createdAt:new Date().toISOString(),createdBy:req.user?.email||req.user?.userId||'workspace'}
+      await mutateState(s=>{s.leakRecoveries=s.leakRecoveries||[];s.leakRecoveries.unshift(recovery);s.leakRecoveries=s.leakRecoveries.slice(0,1000);s.audit=s.audit||[];s.audit.unshift({id:randomUUID(),action:'leak_monitor.recovery_queued',entityId:recovery.id,leadRef,followUpId:followUp.id,at:recovery.createdAt});s.audit=s.audit.slice(0,1000)})
+      return send(req,res,201,{duplicate:false,item:followUp,recovery})
     }
     if (req.method === 'GET' && url.pathname === '/api/funnel') {
       const [allProfiles,allMeetings]=await Promise.all([listLeadProfiles(workspaceId,500),listPersistedMeetings(workspaceId)])
