@@ -3758,3 +3758,6 @@ The Integrations workspace now exposes a broader connector catalog while keeping
 - Users can search the full catalog by connector or category.
 - `POST /api/integration-requests` persists a connector request with connector name, business need, direction and priority.
 - Requested connectors are visible in the workspace and counted separately from connected/native integrations.
+
+
+The public Integrations route mirrors the same expanded catalog and includes search across CRM, messaging, calling, commerce/forms, warehouse/database/storage, advertising/analytics, and sales-intelligence categories. Public catalog entries describe discoverability only; actual native OAuth versus configurable-adapter capability remains explicit inside the authenticated workspace.
