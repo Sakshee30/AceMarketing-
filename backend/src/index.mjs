@@ -2863,6 +2863,19 @@ const server = http.createServer(async (req,res)=>{
     }
     if (req.method === 'POST' && url.pathname === '/api/track') {
       const body=await readBody(req)
+      const authorization=String(req.headers.authorization||'')
+      const suppliedKey=authorization.replace(/^Bearer\s+/i,'')
+      if(suppliedKey.startsWith('ace_')){
+        const fingerprint=createHash('sha256').update(suppliedKey).digest('hex')
+        const keyState=await getState()
+        const apiKey=(keyState.apiKeys||[]).find(x=>x.fingerprint===fingerprint&&x.status!=='revoked')
+        if(!apiKey) return send(req,res,401,{accepted:false,error:'invalid or revoked api key'})
+        const usedAt=new Date().toISOString()
+        await mutateState(s=>{
+          const key=(s.apiKeys||[]).find(x=>x.id===apiKey.id)
+          if(key) key.lastUsedAt=usedAt
+        })
+      }
       const category=['essential','analytics','marketing','personalization'].includes(String(body.eventCategory))?String(body.eventCategory):'analytics'
       const trackingSubjectId=body.customerId||body.visitorId||body.deviceId||body.device_id
       if(!trackingSubjectId) return send(req,res,400,{accepted:false,error:'customerId, visitorId, or deviceId required'})
