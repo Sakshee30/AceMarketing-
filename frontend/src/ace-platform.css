@@ -1269,3 +1269,17 @@
  .journey-event:not(:last-child):after{left:16px;top:38px}
 }
 @media(prefers-reduced-motion:reduce){.journey-event{animation:none}}
+
+
+/* Integration catalog search */
+.integration-catalog-search{display:flex;align-items:center;gap:8px;min-width:280px;padding:8px 10px;border:1px solid #e7dde9;border-radius:12px;background:#fff}
+.integration-catalog-search svg{width:16px;height:16px;flex:0 0 auto}
+.integration-catalog-search input{width:100%;border:0;outline:0;background:transparent;font:inherit}
+.integration-request-form textarea{resize:vertical;min-height:110px}
+.integration-app-grid article{transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.integration-app-grid article:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(44,31,51,.08)}
+@media(max-width:760px){
+ .integration-catalog-search{min-width:0;width:100%}
+ .integration-category-head{align-items:flex-start}
+}
+@media(prefers-reduced-motion:reduce){.integration-app-grid article{transition:none}.integration-app-grid article:hover{transform:none}}
