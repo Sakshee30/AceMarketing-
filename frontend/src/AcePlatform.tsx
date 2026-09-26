@@ -395,21 +395,27 @@ function AgentsPublicPage(props:any){
 
 function IntegrationsPublicPage(props:any){
  const fallback=[
-  {group:'Advertising & Analytics',items:['Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads / Bing Ads','GA4']},
-  {group:'CRM',items:['Zoho CRM','Salesforce','LeadSquared','Meritto','HubSpot','HighLevel','Microsoft Dynamics 365']},
-  {group:'Messaging & Marketing',items:['WhatsApp','WATI','Gupshup','AiSensy','Bitespeed','MoEngage','CleverTap']},
-  {group:'Calling',items:['Exotel','Knowlarity','Tata Tele','MyOperator']},
-  {group:'Web, App & Commerce',items:['WordPress','React App','WooCommerce','Magento','Custom Backend']}
+  {group:'CRM',items:['Zoho CRM','Salesforce','LeadSquared','Meritto','HubSpot','HighLevel','Microsoft Dynamics 365','Freshsales','Custom CRM']},
+  {group:'Messaging & Marketing',items:['WhatsApp','WATI','Gupshup','AiSensy','Bitespeed','MoEngage','CleverTap','Mailchimp','Klaviyo','Brevo','Twilio SendGrid']},
+  {group:'Calling',items:['Exotel','Knowlarity','Tata Tele','MyOperator','Twilio']},
+  {group:'Web, Forms & Commerce',items:['WordPress','React App','Shopify','WooCommerce','Magento','Typeform','Custom Backend']},
+  {group:'Warehouse, Database & Storage',items:['BigQuery','Snowflake','MongoDB','Oracle DB','Google Cloud Storage','Amazon S3']},
+  {group:'Advertising & Analytics',items:['Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads / Bing Ads','X','Pinterest','TikTok Ads','Yahoo Ads','Taboola','Spotify Ads','Snapchat Ads','Criteo','DV360','Google Merchant Center','Meta Lead Ads','Meta CAPI','Meta Catalog','GA4','Google Calendar']},
+  {group:'Sales Intelligence',items:['Apollo','Lusha','Calixa']}
  ]
  const [groups,setGroups]=useState<any[]>(fallback)
+ const [query,setQuery]=useState('')
  useEffect(()=>{api.publicIntegrations().then((r:any)=>r?.groups&&setGroups(r.groups)).catch(()=>null)},[])
+ const shown=groups.map((g:any)=>({...g,items:(g.items||[]).filter((x:string)=>!query.trim()||x.toLowerCase().includes(query.trim().toLowerCase())||String(g.group).toLowerCase().includes(query.trim().toLowerCase()))})).filter((g:any)=>g.items.length)
+ const total=groups.reduce((n:number,g:any)=>n+(g.items||[]).length,0)
  return <PublicPageFrame {...props}><main className="public-detail-page">
-  <section className="public-detail-hero"><span>INTEGRATIONS</span><h1>Connect the systems your teams already depend on.</h1><p>Use standard connectors for common platforms and custom adapters for proprietary systems, while keeping identity, lifecycle, and revenue fields normalized.</p><button onClick={props.openApp}>Open integration workspace <ArrowRight/></button></section>
-  <section className="integration-public-groups">{groups.map((g:any,i:number)=><article key={g.group}><div><span>{String(i+1).padStart(2,'0')}</span><h2>{g.group}</h2></div><div>{(g.items||[]).map((x:string)=><button key={x} onClick={props.openApp}><Cable/><span>{x}</span><ChevronRight/></button>)}</div></article>)}</section>
-  <section className="public-route-cta"><span>CUSTOM SYSTEM?</span><h2>Map your own API, webhook, file, or database interface.</h2><button onClick={props.openApp}>Build a custom integration</button></section>
+  <section className="public-detail-hero"><span>INTEGRATIONS</span><h1>Connect the systems your teams already depend on.</h1><p>Use native connectors where available and configurable adapters for the rest, while keeping identity, lifecycle, and revenue fields normalized.</p><button onClick={props.openApp}>Open integration workspace <ArrowRight/></button></section>
+  <section className="app-panel public-integration-search"><div><Search/><input aria-label="Search public integrations" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search CRM, warehouse, ads, messaging..."/></div><span>{total}+ catalogued connector paths</span></section>
+  <section className="integration-public-groups">{shown.map((g:any,i:number)=><article key={g.group}><div><span>{String(i+1).padStart(2,'0')}</span><h2>{g.group}</h2></div><div>{(g.items||[]).map((x:string)=><button key={x} onClick={props.openApp}><Cable/><span>{x}</span><ChevronRight/></button>)}</div></article>)}</section>
+  {!shown.length&&<section className="public-route-cta"><span>NO MATCH FOUND</span><h2>Request the connector you need or configure a custom adapter.</h2><button onClick={props.openApp}>Open integration workspace</button></section>}
+  <section className="public-route-cta"><span>CUSTOM SYSTEM?</span><h2>Map your own API, webhook, file, warehouse, or database interface.</h2><div className="panel-actions"><button onClick={props.openApp}>Request a connector</button><button onClick={props.openApp}>Build a custom integration</button></div></section>
  </main></PublicPageFrame>
 }
-
 function DemoPage({back,openApp}:{back:()=>void,openApp:()=>void}){
  const [step,setStep]=useState(1); const [slot,setSlot]=useState('')
  const submit=async(e:any)=>{e.preventDefault();const payload=Object.fromEntries(new FormData(e.currentTarget).entries());await api.submitDemo(payload).catch(()=>null);setStep(2)}
