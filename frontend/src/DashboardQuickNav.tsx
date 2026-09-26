@@ -53,7 +53,8 @@ const groups:ShortcutGroup[]=[
       {label:'Models',tab:'Models',icon:BarChart3,description:'Configure and validate attribution models'},
       {label:'Attribution',tab:'Attribution',icon:Target,description:'Channel, campaign and revenue credit'},
       {label:'Planner',tab:'Planner',icon:BarChart3,description:'Model budget and growth scenarios'},
-      {label:'Reports',tab:'Reports',icon:BarChart3,description:'Operational and scheduled reporting'}
+      {label:'Reports',tab:'Reports',icon:BarChart3,description:'Operational and scheduled reporting'},
+      {label:'Executive Briefs',tab:'Executive Briefs',icon:BarChart3,description:'Schedule compact leadership metric snippets and delivery history'}
     ]
   },
   {
