@@ -144,6 +144,11 @@ const audienceWhere=(condition,operator,value)=>{
     return {sql:`${field.expr}=$2::numeric`,value:n}
   }
   if(op==='contains')return {sql:`LOWER(${field.expr}) LIKE LOWER($2)`,value:'%'+String(value)+'%'}
+  if(op==='is one of'){
+    const values=String(value||'').split(',').map(x=>x.trim().toLowerCase()).filter(Boolean).slice(0,25)
+    if(!values.length)throw new Error('multi-value audience rule requires at least one value')
+    return {sql:`LOWER(${field.expr})=ANY($2::text[])`,value:values}
+  }
   return {sql:`LOWER(${field.expr})=LOWER($2)`,value:String(value)}
 }
 
