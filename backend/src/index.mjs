@@ -2500,6 +2500,123 @@ const server = http.createServer(async (req,res)=>{
       })
       return send(req,res,200,{available:true,items,generatedAt:new Date().toISOString()})
     }
+    if (req.method === 'GET' && url.pathname === '/api/customer-360') {
+      const [profiles,meetings,followUps,feedbackResult,routingDecisions,agentRuns,audiences]=await Promise.all([
+        listLeadProfiles(workspaceId,500),
+        listPersistedMeetings(workspaceId),
+        listPersistedFollowUps(workspaceId),
+        listPersistedFeedback(workspaceId),
+        listRoutingDecisions(workspaceId,500),
+        listAgentRuns(workspaceId,500),
+        listLeadAudiences(workspaceId)
+      ])
+      const feedback=feedbackResult?.items||[]
+      const sameLead=(lead,ref)=>{
+        const value=String(ref||'').trim().toLowerCase()
+        if(!value)return false
+        return [lead.id,lead.external_lead_id,lead.name].filter(Boolean).some(x=>String(x).trim().toLowerCase()===value)
+      }
+      const trackedForLead=lead=>trackedEvents.filter(event=>{
+        const refs=[event.customerId,event.leadId,event.externalLeadId,event.visitorId,event.deviceId,event.device_id]
+        return refs.some(ref=>sameLead(lead,ref))||(lead.device_id&&refs.some(ref=>String(ref||'')===String(lead.device_id)))
+      })
+      const summaries=profiles.map(lead=>{
+        const events=trackedForLead(lead)
+        const leadMeetings=meetings.filter(x=>sameLead(lead,x.lead_ref))
+        const leadFollowUps=followUps.filter(x=>sameLead(lead,x.lead_ref))
+        const leadFeedback=feedback.filter(x=>sameLead(lead,x.lead_ref))
+        const leadRoutes=routingDecisions.filter(x=>sameLead(lead,x.lead_ref))
+        const leadRuns=agentRuns.filter(x=>sameLead(lead,x.entity_id)||sameLead(lead,x.input?.lead)||sameLead(lead,x.input?.leadRef))
+        return {
+          id:lead.id,
+          externalLeadId:lead.external_lead_id,
+          name:lead.name||lead.external_lead_id,
+          source:lead.source||'First-party',
+          campaign:lead.campaign||null,
+          stage:lead.crm_stage||'Lead',
+          grade:lead.grade||null,
+          score:Number(lead.score||0),
+          intent:Number(lead.intent||0),
+          updatedAt:lead.updated_at,
+          activityCount:events.length+leadMeetings.length+leadFollowUps.length+leadFeedback.length+leadRoutes.length+leadRuns.length,
+          meetings:leadMeetings.length,
+          followUps:leadFollowUps.length,
+          feedback:leadFeedback.length
+        }
+      })
+      const requested=String(url.searchParams.get('id')||'').trim()
+      const selected=requested
+        ?profiles.find(x=>[x.id,x.external_lead_id,x.name].filter(Boolean).some(v=>String(v)===requested))
+        :profiles[0]
+      if(!selected) return send(req,res,200,{available:true,total:summaries.length,items:summaries,customer:null,generatedAt:new Date().toISOString()})
+
+      const events=trackedForLead(selected)
+      const leadMeetings=meetings.filter(x=>sameLead(selected,x.lead_ref))
+      const leadFollowUps=followUps.filter(x=>sameLead(selected,x.lead_ref))
+      const leadFeedback=feedback.filter(x=>sameLead(selected,x.lead_ref))
+      const leadRoutes=routingDecisions.filter(x=>sameLead(selected,x.lead_ref))
+      const leadRuns=agentRuns.filter(x=>sameLead(selected,x.entity_id)||sameLead(selected,x.input?.lead)||sameLead(selected,x.input?.leadRef))
+      const audienceBundles=await Promise.all(audiences.slice(0,50).map(async audience=>{
+        const bundle=await getAudienceBundle(workspaceId,audience.id).catch(()=>null)
+        const member=(bundle?.members||[]).find(x=>sameLead(selected,x.external_lead_id)||String(x.device_id||'')===String(selected.device_id||'__none__'))
+        return member?{id:audience.id,name:audience.name,mode:audience.mode,destination:audience.destination,status:audience.status,action:member.action||audience.mode}:null
+      }))
+      const timeline=[]
+      const push=(type,title,detail,at,source,meta={})=>{if(at)timeline.push({id:type+'_'+randomUUID(),type,title,detail,at,source,...meta})}
+      push('profile','Customer profile created','Canonical lead/customer profile entered the workspace.',selected.created_at,'CRM / identity')
+      for(const event of events)push('event',String(event.event||event.eventType||event.name||'Tracked event').replaceAll('_',' '),'First-party activity captured.',event.occurredAt||event.receivedAt||event.timestamp,event.source||event.channel||'Tracking',{value:event.value||null})
+      for(const item of leadRoutes)push('routing',item.rule_name||'Lead routed',item.destination||item.reason||'Routing decision',item.created_at,'Routing',{destination:item.destination||null})
+      for(const item of leadFollowUps){
+        push('follow_up',item.reason||'Follow-up created',(item.channel||'channel')+' · '+(item.status||'open'),item.created_at,'Follow-up',{status:item.status||null})
+        if(item.completed_at)push('follow_up_completed','Follow-up completed',item.reason||'',item.completed_at,'Follow-up',{status:'completed'})
+      }
+      for(const item of leadMeetings){
+        push('meeting','Meeting scheduled',(item.owner||'Owner')+' · '+(item.status||'confirmed'),item.starts_at||item.created_at,'Meetings',{meetingLink:item.meeting_link||null})
+        if(item.last_reminder_at)push('reminder','Meeting reminder sent',String(item.reminders_sent||1)+' reminder(s)',item.last_reminder_at,'Meetings')
+      }
+      for(const item of leadFeedback)push('feedback','Feedback recorded',(item.theme||'Uncategorized')+(item.score!=null?' · '+item.score+'/5':''),item.created_at,'Feedback',{score:item.score,theme:item.theme||null})
+      for(const item of leadRuns)push('agent',String(item.agent_type||item.action_type||'Agent run').replaceAll('_',' '),String(item.status||'queued'),item.created_at,'Agents',{status:item.status||null})
+      if(selected.call_summary)push('call','Call context',String(selected.call_summary),selected.updated_at,'Calls')
+      if(selected.whatsapp_summary)push('whatsapp','WhatsApp context',String(selected.whatsapp_summary),selected.updated_at,'WhatsApp')
+      timeline.sort((a,b)=>Date.parse(b.at||0)-Date.parse(a.at||0))
+
+      const journey=selected.journey||{}
+      const customer={
+        id:selected.id,
+        externalLeadId:selected.external_lead_id,
+        name:selected.name||selected.external_lead_id,
+        source:selected.source||'First-party',
+        campaign:selected.campaign||null,
+        stage:selected.crm_stage||'Lead',
+        grade:selected.grade||null,
+        score:Number(selected.score||0),
+        intent:Number(selected.intent||0),
+        createdAt:selected.created_at,
+        updatedAt:selected.updated_at,
+        identity:{
+          deviceId:selected.device_id||null,
+          platform:selected.device_platform||null,
+          appId:selected.app_id||null,
+          hasEmailHash:Boolean(selected.email_sha256),
+          hasPhoneHash:Boolean(selected.phone_sha256)
+        },
+        attributes:selected.attributes||{},
+        journey,
+        callSummary:selected.call_summary||null,
+        whatsappSummary:selected.whatsapp_summary||null,
+        audiences:audienceBundles.filter(Boolean),
+        operations:{
+          meetings:leadMeetings.length,
+          followUps:leadFollowUps.length,
+          feedback:leadFeedback.length,
+          routes:leadRoutes.length,
+          agentRuns:leadRuns.length,
+          trackedEvents:events.length
+        },
+        timeline
+      }
+      return send(req,res,200,{available:true,total:summaries.length,items:summaries,customer,generatedAt:new Date().toISOString()})
+    }
     if (req.method === 'GET' && url.pathname === '/api/planner') {
       const analytics=await cohortAnalytics(workspaceId,{months:6})
       const sources=analytics?.sources||[]
