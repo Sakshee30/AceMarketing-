@@ -695,7 +695,7 @@ test('all workspace sections render without a frontend crash', async ({ page }) 
     'Launchpad','Overview','AdSync','Funnel','Events','Adjustments','Diagnostics','Fraud','Deep Links','Sites','Fingerprinting',
     'Live Sync','Data Hub','Offline Attribution','Matchback','POS & Stores','Journeys','Identity','Models','Attribution','Planner','Reports',
     'Enrich','Lead Grading','Behavior','Feed','Agents','Routing','Follow-ups','Calls','Meetings','Feedback','Approvals','Ask Ace',
-    'Integrations','Audiences','Delivery','Monitoring','Alerts','Developers','Settings'
+    'Integrations','Data Flows','Audiences','Delivery','Monitoring','Alerts','Developers','Settings'
   ]
 
   for(const tab of tabs){
