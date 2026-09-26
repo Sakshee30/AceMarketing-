@@ -2,7 +2,7 @@ import {useEffect,useMemo,useRef,useState} from 'react'
 import {api} from './lib/api'
 import {
   Activity,BarChart3,Bot,Cable,CalendarDays,ChevronDown,DatabaseZap,Gauge,Network,
-  PhoneCall,Search,Settings2,ShieldCheck,Target,UsersRound,X,Zap
+  PhoneCall,RefreshCw,Search,Settings2,ShieldCheck,Target,UsersRound,X,Zap
 } from 'lucide-react'
 
 type Shortcut = {
@@ -94,6 +94,8 @@ export default function DashboardQuickNav(){
   const [query,setQuery]=useState('')
   const [summary,setSummary]=useState<any>(null)
   const [statusError,setStatusError]=useState('')
+  const [statusLoading,setStatusLoading]=useState(false)
+  const [lastUpdated,setLastUpdated]=useState<Date|null>(null)
   const searchRef=useRef<HTMLInputElement|null>(null)
 
   useEffect(()=>{
@@ -123,6 +125,43 @@ export default function DashboardQuickNav(){
   useEffect(()=>{
     if(open)requestAnimationFrame(()=>searchRef.current?.focus())
   },[open])
+
+  const refreshSummary=async()=>{
+    setStatusLoading(true)
+    try{
+      const next=await api.dashboardSummary()
+      setSummary(next)
+      setStatusError('')
+      setLastUpdated(new Date())
+    }catch(error){
+      setStatusError(error instanceof Error?error.message:'Unable to refresh workspace status')
+    }finally{
+      setStatusLoading(false)
+    }
+  }
+
+  useEffect(()=>{
+    if(!visible)return
+    let active=true
+    const load=async()=>{
+      try{
+        const next=await api.dashboardSummary()
+        if(!active)return
+        setSummary(next)
+        setStatusError('')
+        setLastUpdated(new Date())
+      }catch(error){
+        if(!active)return
+        setStatusError(error instanceof Error?error.message:'Unable to refresh workspace status')
+      }
+    }
+    load()
+    const timer=window.setInterval(load,30000)
+    return()=>{
+      active=false
+      window.clearInterval(timer)
+    }
+  },[visible])
 
   const filtered=useMemo(()=>{
     const q=query.trim().toLowerCase()
@@ -192,8 +231,16 @@ export default function DashboardQuickNav(){
         {!filtered.length&&<div className="ace-quick-nav-empty"><Search/><b>No matching dashboard section</b><span>Try terms such as attribution, CRM, calls, monitoring or settings.</span></div>}
       </div>
       <div className="ace-quick-nav-footer">
-        <span>Live readiness and operational counts are refreshed from the workspace API every 30 seconds.</span>
-        <button onClick={toggleCompact}>{compact?'Show full label':'Use compact mode'}</button>
+        <span>
+          Live readiness and operational counts refresh every 30 seconds.
+          {lastUpdated&&<small> Last updated {lastUpdated.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}.</small>}
+        </span>
+        <div className="ace-quick-nav-footer-actions">
+          <button onClick={refreshSummary} disabled={statusLoading} aria-label="Refresh live workspace status">
+            <RefreshCw className={statusLoading?'spinning':''}/>{statusLoading?'Refreshing':'Refresh status'}
+          </button>
+          <button onClick={toggleCompact}>{compact?'Show full label':'Use compact mode'}</button>
+        </div>
       </div>
     </div>}
   </div>
