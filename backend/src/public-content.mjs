@@ -85,6 +85,12 @@ export const publicAgents = [
   {number:10,name:'Feedback Agent',category:'Conversion',summary:'Capture objections and post-interaction feedback for funnel improvement.'},
   {number:11,name:'Ask Ace',category:'Visibility',summary:'Query journey and attribution evidence in natural language inside the workspace.'},
   {number:12,name:'Lead Reactivation',category:'Conversion',summary:'Detect renewed high-intent behavior from dormant leads and create governed re-engagement work.'},
+  {number:13,name:'Attribution Agent',category:'Visibility',summary:'Inspect first-touch, last-touch and assisted conversion evidence from stitched journeys.'},
+  {number:14,name:'Deep Linking Agent',category:'Tracking',summary:'Operate governed deep-link routes with destination and fallback evidence.'},
+  {number:15,name:'Fraud Detection Agent',category:'Lead Quality',summary:'Surface suspicious identity and traffic patterns for review or blocking.'},
+  {number:16,name:'Customer Journey Agent',category:'Visibility',summary:'Explore stitched acquisition, CRM, call, meeting and revenue chronology.'},
+  {number:17,name:'Audiences Agent',category:'Activation',summary:'Build, suppress, materialize and sync first-party audiences from governed evidence.'},
+  {number:18,name:'Event Agent',category:'Activation',summary:'Transform source activity into governed business events and approved activation signals.'},
 ]
 
 export const publicIntegrations = [
