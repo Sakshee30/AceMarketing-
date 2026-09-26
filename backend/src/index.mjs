@@ -1599,12 +1599,74 @@ const server = http.createServer(async (req,res)=>{
         {key:'feedback',label:'Feedback captured',count:uniqueKnown(feedbackItems,x=>x.lead_ref),source:'Feedback'}
       ].map((x,index)=>({...x,coverage:index===0?100:pct(x.count,Math.max(1,leads.length))}))
       const weakestHandoff=funnelCoverage.slice(1).sort((a,b)=>a.coverage-b.coverage)[0]||null
+      const candidateLead=leads
+        .map(lead=>({
+          lead,
+          refs:[lead.id,lead.external_lead_id,lead.customer_id,lead.name].filter(Boolean).map(value=>String(value).trim()).filter(value=>value.length>=3)
+        }))
+        .find(entry=>entry.refs.some(ref=>q.includes(ref.toLowerCase())))?.lead||null
+      const sameLeadForAsk=(lead,ref)=>{
+        const value=normalizeRef(ref)
+        if(!value)return false
+        return [lead.id,lead.external_lead_id,lead.customer_id,lead.name].filter(Boolean).some(x=>normalizeRef(x)===value)
+      }
+      const specificJourney=candidateLead?(()=>{
+        const timeline=[]
+        const push=(type,title,detail,at,source,meta={})=>{if(at)timeline.push({type,title,detail,at,source,...meta})}
+        push('profile','Customer profile created','Canonical lead/customer profile entered the workspace.',candidateLead.created_at,'CRM / identity')
+        for(const event of trackedEvents.filter(event=>{
+          const refs=[event.customerId,event.leadId,event.externalLeadId,event.visitorId,event.deviceId,event.device_id]
+          return refs.some(ref=>sameLeadForAsk(candidateLead,ref))||(candidateLead.device_id&&refs.some(ref=>String(ref||'')===String(candidateLead.device_id)))
+        })){
+          push('event',String(event.event||event.eventType||event.name||'Tracked event').replaceAll('_',' '),'First-party activity captured.',event.occurredAt||event.receivedAt||event.timestamp,event.source||event.channel||'Tracking',{event:event.event||event.eventType||event.name||null,value:event.value||null})
+        }
+        for(const item of routingDecisions.filter(x=>sameLeadForAsk(candidateLead,x.lead_ref)))push('routing',item.rule_name||'Lead routed',item.destination||item.reason||'Routing decision',item.created_at,'Routing',{destination:item.destination||null})
+        for(const item of followUpItems.filter(x=>sameLeadForAsk(candidateLead,x.lead_ref))){
+          push('follow_up',item.reason||'Follow-up created',(item.channel||'channel')+' · '+(item.status||'open'),item.created_at,'Follow-up',{status:item.status||null,dueAt:item.due_at||null})
+          if(item.completed_at)push('follow_up_completed','Follow-up completed',item.reason||'',item.completed_at,'Follow-up',{status:'completed'})
+        }
+        for(const item of meetings.filter(x=>sameLeadForAsk(candidateLead,x.lead_ref))){
+          push('meeting','Meeting scheduled',(item.owner||'Owner')+' · '+(item.status||'confirmed'),item.starts_at||item.created_at,'Meetings',{startsAt:item.starts_at,status:item.status||null,meetingLink:item.meeting_link||null})
+          if(item.last_reminder_at)push('reminder','Meeting reminder sent',String(item.reminders_sent||1)+' reminder(s)',item.last_reminder_at,'Meetings')
+        }
+        for(const item of feedbackItems.filter(x=>sameLeadForAsk(candidateLead,x.lead_ref)))push('feedback','Feedback recorded',(item.theme||'Uncategorized')+(item.score!=null?' · '+item.score+'/5':''),item.created_at,'Feedback',{score:item.score,theme:item.theme||null})
+        for(const item of agentRuns.filter(x=>sameLeadForAsk(candidateLead,x.entity_id)||sameLeadForAsk(candidateLead,x.input?.lead)||sameLeadForAsk(candidateLead,x.input?.leadRef)))push('agent',String(item.agent_type||item.action_type||'Agent run').replaceAll('_',' '),String(item.status||'queued'),item.created_at,'Agents',{status:item.status||null})
+        if(candidateLead.call_summary)push('call','Call context',String(candidateLead.call_summary),candidateLead.updated_at,'Calls')
+        if(candidateLead.whatsapp_summary)push('whatsapp','WhatsApp context',String(candidateLead.whatsapp_summary),candidateLead.updated_at,'WhatsApp')
+        if(candidateLead.crm_stage)push('stage','Current CRM stage',String(candidateLead.crm_stage),candidateLead.updated_at,'CRM',{stage:candidateLead.crm_stage})
+        timeline.sort((a,b)=>Date.parse(a.at||0)-Date.parse(b.at||0))
+        return {
+          leadId:candidateLead.id,
+          externalLeadId:candidateLead.external_lead_id||null,
+          name:candidateLead.name||candidateLead.external_lead_id||candidateLead.id,
+          source:candidateLead.source||'First-party',
+          campaign:candidateLead.campaign||null,
+          stage:candidateLead.crm_stage||candidateLead.grade||'Lead',
+          grade:candidateLead.grade||null,
+          score:Number(candidateLead.score||0),
+          touchpoints:timeline.length,
+          timeline
+        }
+      })():null
       let intent='workspace_summary'
       let answer=''
       let insights=[]
       let confidence='medium'
       let followUps=[]
-      if(q.includes('funnel')||q.includes('drop')||q.includes('handoff')||q.includes('step-by-step')||q.includes('step by step')||q.includes('stage coverage')){
+      let journeyTimeline=[]
+      if(specificJourney&&(q.includes('journey')||q.includes('timeline')||q.includes('touchpoint')||q.includes('path'))){
+        intent='customer_journey'
+        journeyTimeline=specificJourney.timeline
+        const last=specificJourney.timeline[specificJourney.timeline.length-1]||null
+        answer=specificJourney.name+' has '+specificJourney.touchpoints+' persisted touchpoints from '+specificJourney.source+(specificJourney.campaign?' / '+specificJourney.campaign:'')+'. Current stage: '+specificJourney.stage+'.'+(last?' Latest observed activity: '+last.title+' via '+last.source+'.':' No linked operational activity is available beyond the profile.')
+        insights=[
+          evidence('Customer',specificJourney.name,specificJourney.externalLeadId||specificJourney.leadId,'Lead profile'),
+          evidence('Source / campaign',specificJourney.source+(specificJourney.campaign?' · '+specificJourney.campaign:''),specificJourney.touchpoints+' persisted touchpoints','Stitched journey'),
+          evidence('Current stage',specificJourney.stage,'Grade '+String(specificJourney.grade||'—')+' · score '+specificJourney.score,'Lead operations')
+        ]
+        confidence='high'
+        followUps=['Where did '+specificJourney.name+' last engage?','What follow-ups exist for '+specificJourney.name+'?','Show attribution health for this workspace']
+      }else if(q.includes('funnel')||q.includes('drop')||q.includes('handoff')||q.includes('step-by-step')||q.includes('step by step')||q.includes('stage coverage')){
         intent='funnel_monitoring'
         const total=leads.length
         answer=total
@@ -1691,7 +1753,7 @@ const server = http.createServer(async (req,res)=>{
         confidence=readiness>=3?'high':'medium'
         followUps=['Which campaign is producing the best-quality leads?','Where is attribution breaking?','Which audience should we suppress?']
       }
-      return send(req,res,200,{answer,insights,intent,confidence,followUps,generatedAt:new Date().toISOString(),grounded:true})
+      return send(req,res,200,{answer,insights,intent,confidence,followUps,journey:journeyTimeline.length?specificJourney:null,journeyTimeline,generatedAt:new Date().toISOString(),grounded:true})
     }
     if (req.method === 'GET' && url.pathname === '/api/events') {
       const [items,runs,stats]=await Promise.all([listEventRules(workspaceId),listEventRuleRuns(workspaceId,50),eventRuleStats(workspaceId)])
