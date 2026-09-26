@@ -11,10 +11,17 @@ const dismissConsent=async(page:any)=>{
 }
 
 const openWorkspaceTab=async(page:any,name:string)=>{
-  await page.evaluate((tab)=>localStorage.setItem('ace_active_tab',tab),name)
-  await page.goto('/#/workspace')
-  await dismissConsent(page)
+  if(!page.url().includes('#/workspace')){
+    await page.goto('/#/workspace')
+    await dismissConsent(page)
+    await expect(page.locator('.product-body')).toBeVisible()
+  }
+  await page.evaluate((tab)=>{
+    localStorage.setItem('ace_active_tab',tab)
+    window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:tab}))
+  },name)
   await expect(page.locator('.product-body')).toBeVisible()
+  await expect.poll(async()=>page.evaluate((tab)=>localStorage.getItem('ace_active_tab')===tab,name),{message:'Expected active workspace tab '+name}).toBeTruthy()
 }
 
 const criticalPublicRoutes=[
@@ -565,9 +572,11 @@ test('workspace quick navigator searches and opens dashboard sections', async ({
   const search=page.getByLabel('Search dashboard sections')
   await expect(search).toBeFocused()
   await search.fill('attribution')
-  await expect(page.getByRole('button', { name: /Attribution/ }).first()).toBeVisible()
-  await page.getByRole('button', { name: /Attribution/ }).first().click()
-  await expect(page.getByRole('heading', { name: /Attribution/i }).first()).toBeVisible()
+  const navigator=page.getByRole('dialog', { name: 'Dashboard section navigator' })
+  const attributionButton=navigator.locator('button').filter({has:page.getByText('Attribution',{exact:true})}).first()
+  await expect(attributionButton).toBeVisible()
+  await attributionButton.click()
+  await expect(page.getByRole('heading', { name: 'Full-path attribution' })).toBeVisible()
 
   await page.keyboard.press('Control+K')
   await expect(search).toBeVisible()
