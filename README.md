@@ -3881,3 +3881,19 @@ Implemented:
 - Playwright coverage sends real consent-safe first-party events and verifies source, campaign, device and event analysis in the dashboard.
 
 This makes website/app behavior useful as journey and activation evidence across server restarts while keeping raw contact PII out of the persisted behavior record.
+
+
+## Workspace event isolation and CI reliability pass
+
+The first-party event buffer is now isolated by workspace instead of being process-global.
+
+Implemented:
+- in-memory tracked-event windows are stored in a workspace-keyed map;
+- every authenticated/API request receives only the current workspace event buffer inside the existing `withWorkspace` context;
+- persisted behavior evidence remains workspace-scoped in the durable store;
+- Playwright now assigns a unique workspace tenant to every test/retry/project and sends the same `X-Workspace-ID` through browser and direct API requests;
+- workspace navigation helper now recovers the workspace surface before dispatching tab changes;
+- active navigation-group collapse test no longer asserts against a group that React intentionally keeps open;
+- ambiguous Attribution/Monitoring and duplicate text locators were tightened.
+
+This removes cross-tenant in-memory behavior leakage and substantially reduces state races in the desktop/mobile end-to-end suite.
