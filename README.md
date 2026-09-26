@@ -4807,3 +4807,149 @@ Playwright now verifies:
 ### Product-parity note
 
 EasyInsights publicly identifies privacy, consent and compliance as a major first-party-data challenge, including the disconnect between consent management and ad-platform activation. AceMarketing implements the comparable operational control surface using its own consent, privacy, retention and activation architecture rather than copying third-party proprietary source code or assets.
+
+
+## ChatGPT Ads conversion measurement
+
+This pass adds a dedicated **ChatGPT Ads** conversion-measurement workflow to AceMarketing on `main`.
+
+### Official provider contract
+
+The integration follows the current OpenAI Ads measurement contract:
+
+- server-side events are sent to the ChatGPT Ads Conversions API;
+- the backend uses a Pixel ID plus a dedicated Conversions API key;
+- `oppref` is preserved unchanged when it is captured from an ad click;
+- `obref` can be forwarded as optional browser-reference matching data;
+- stable event IDs are reused for retries/deduplication;
+- web events require a source URL;
+- monetary values are sent as integer minor units;
+- provider credentials remain server-side.
+
+Required backend environment variables:
+
+- `OPENAI_CONVERSIONS_API_KEY`
+- `OPENAI_ADS_PIXEL_ID`
+
+Neither secret is returned by the dashboard API or exposed to browser code.
+
+### Backend provider adapter
+
+`backend/src/providers.mjs` now supports `ChatGPT Ads` as a signal-delivery destination.
+
+The adapter maps AceMarketing events to supported ChatGPT Ads conversion event types, including:
+
+- `lead_created`
+- `appointment_scheduled`
+- `checkout_started`
+- `order_created`
+- `registration_completed`
+- `subscription_created`
+- `trial_started`
+- `page_viewed`
+- `contents_viewed`
+- `items_added`
+- `app_installed`
+- `app_opened`
+- `custom`
+
+It also supports event-scoped matching data such as:
+
+- `oppref`
+- `obref`
+- hashed email
+- hashed phone
+- hashed external/customer ID
+- country/city/region/postal code
+- IP address/user agent when supplied
+- Android advertising ID when supplied.
+
+### Backend APIs
+
+New endpoints:
+
+- `GET /api/chatgpt-ads`
+- `POST /api/chatgpt-ads/validate`
+- `POST /api/chatgpt-ads/send`
+
+`GET /api/chatgpt-ads` returns only configuration booleans and operational statistics. It never returns provider secrets.
+
+`POST /api/chatgpt-ads/validate` performs local schema validation and returns the normalized replay payload without making a provider request.
+
+`POST /api/chatgpt-ads/send`:
+
+1. validates the event;
+2. checks marketing consent when a customer/visitor subject is present;
+3. derives a deterministic idempotency key;
+4. prevents duplicate queue records;
+5. persists the delivery;
+6. queues it through the existing durable `signal_delivery` worker;
+7. lets the provider adapter send the final server-side request.
+
+### Tracking and replay payload
+
+AceMarketing's signal replay contract now preserves ChatGPT Ads measurement fields including:
+
+- `oppref`
+- `obref`
+- OpenAI event type/custom event name
+- amount in minor units
+- plan ID
+- content items
+- opt-out state
+- source/matching metadata.
+
+That means event-rule and real-time-activation pipelines can target `ChatGPT Ads` using the same durable signal architecture already used by Meta and Google.
+
+### Frontend workspace
+
+New dashboard section:
+
+**Tracking & Data → ChatGPT Ads**
+
+Operators can:
+
+- see whether the Pixel ID and Conversions API key are configured;
+- inspect recent `oppref` capture coverage;
+- see ChatGPT Ads delivery totals, queue state, failures and terminal delivery rate;
+- build a supported conversion payload;
+- choose event type and action source;
+- provide `oppref` and optional `obref`;
+- validate the payload locally;
+- queue a live conversion only when server-side credentials are configured;
+- inspect recent ChatGPT Ads deliveries;
+- jump to the full Delivery Center.
+
+The integration also appears in:
+
+- the public integration catalog;
+- the dashboard integration catalog;
+- the AdSync quick-start agent list;
+- the global dashboard navigator;
+- dashboard section-health reporting.
+
+### Security and privacy
+
+The implementation intentionally keeps provider credentials out of browser state.
+
+When a conversion is associated with a customer or visitor, the dedicated send endpoint checks AceMarketing marketing consent before queuing the provider delivery.
+
+The provider adapter only sends matching data supplied by the existing governed signal payload. Raw provider secrets are never returned in status responses or validation results.
+
+### Regression coverage
+
+Playwright now verifies:
+
+- the ChatGPT Ads status contract;
+- supported event types;
+- local conversion-payload validation;
+- `oppref` preservation;
+- destination normalization to `ChatGPT Ads`;
+- provider credentials are not exposed in the validation contract;
+- the ChatGPT Ads workspace renders;
+- conversion builder, readiness and delivery-history surfaces render;
+- ChatGPT Ads is part of the complete workspace render sweep.
+
+### Product-parity note
+
+EasyInsights published a September 2026 guide describing ChatGPT Ads conversion measurement and `oppref`-based server-side tracking. AceMarketing implements the same category of capability using OpenAI's current public Ads measurement contract and its own UI, backend queue, consent controls and operational model.
