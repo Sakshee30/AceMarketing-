@@ -5566,6 +5566,7 @@ The Integrations workspace can now configure native server-side advertising prov
 - The delivery adapters read workspace-scoped vault credentials first, while environment variables remain available as operational fallback.
 - Connected server-secret providers display **Manage** in the Integrations dashboard rather than an OAuth refresh action.
 - Replacing credentials does not require an application redeploy.
-- CI uses a test-only encryption key and Playwright verifies TikTok configure → encrypted persistence → connected status while asserting the API response never leaks the submitted token.
+- Connected native and OAuth integrations expose an explicit **Disconnect** action. Disconnecting removes the stored workspace credential, marks the connector disconnected, and writes an audit event.
+- CI uses a test-only encryption key and Playwright verifies TikTok configure → encrypted persistence → connected status → disconnect, while asserting the API response never leaks the submitted token.
 
 This closes the gap between having a native CAPI delivery adapter and having a genuinely configurable connector in the product UI.
