@@ -5570,3 +5570,17 @@ The Integrations workspace can now configure native server-side advertising prov
 - CI uses a test-only encryption key and Playwright verifies TikTok configure → encrypted persistence → connected status → disconnect, while asserting the API response never leaks the submitted token.
 
 This closes the gap between having a native CAPI delivery adapter and having a genuinely configurable connector in the product UI.
+
+
+## Ask Ace stitched customer journeys — 2026-09-26
+
+Ask Ace now supports customer-specific journey questions in addition to aggregate funnel, attribution, lead-quality, audience and connector-health analysis.
+
+- Questions such as `Show me the journey for <lead/customer reference>` resolve against persisted lead IDs, external lead IDs, customer IDs and lead names.
+- The answer is built from the same workspace evidence used by the Journey explorer: first-party tracked events, routing decisions, follow-ups, meetings/reminders, feedback, agent runs, call/WhatsApp context and CRM stage.
+- Ask Ace returns a structured `customer_journey` intent with the matched customer summary and ordered `journeyTimeline` instead of flattening the result into generic prose.
+- The chat UI renders the stitched chronology inline with source and timestamp for each persisted touchpoint.
+- If no specific customer reference is found, Ask Ace keeps the existing aggregate attribution/journey behavior rather than fabricating a customer path.
+- Playwright coverage creates a real persisted lead, tracked pricing event and follow-up, asks for that lead by external ID, and verifies both the API chronology and rendered chat timeline.
+
+This brings the natural-language assistant closer to the same stitched-journey operating model used throughout Customer 360 and the Journey explorer.
