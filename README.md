@@ -4700,3 +4700,110 @@ Playwright now verifies:
 ### Product-parity note
 
 EasyInsights publicly describes dynamic audience creation/suppression and a device-ID exclusion workflow that uploads known first-party devices to Meta and Google so existing customers are not repeatedly targeted. AceMarketing implements the comparable suppression workflow using its own UI, audience contracts and provider queue rather than third-party proprietary source code or branded assets.
+
+
+## Privacy, consent and compliance center
+
+This pass adds a dedicated **Compliance** workspace on `main` for consent visibility, subject-rights operations, retention, and activation safeguards.
+
+### Backend contract
+
+New endpoint:
+
+- `GET /api/compliance-center`
+
+The compliance summary aggregates existing production privacy services into one operator contract:
+
+- consent counts for analytics, marketing and personalization;
+- consent coverage percentages;
+- revocation count;
+- recent consent audit entries;
+- retention-policy windows;
+- privacy request history;
+- subject export/delete counts;
+- retention purge history;
+- real activation actions skipped because consent was unavailable;
+- personalization decisions blocked because consent was unavailable;
+- operational readiness checks.
+
+The readiness score is an operational control score only. It is **not** presented as legal advice, regulatory certification, or a guarantee of GDPR/DPDP/CPRA/HIPAA compliance.
+
+### Existing governed privacy actions exposed in the workspace
+
+The Compliance Center uses the existing backend privacy contracts:
+
+- `POST /api/privacy/export`
+- `POST /api/privacy/delete`
+- `POST /api/privacy/retention/purge`
+
+Subject selectors support:
+
+- customer ID;
+- visitor ID;
+- lead ID;
+- email;
+- phone.
+
+Privacy export records an auditable export request and returns matched click sessions, assisted events, lead profiles, audience memberships, and consent records.
+
+Deletion remains deliberately destructive and requires the operator to type `DELETE` in the UI before the frontend invokes the backend deletion contract.
+
+### Retention operations
+
+Retention windows remain deployment-controlled through:
+
+- `PRIVACY_RETENTION_CLICK_DAYS`
+- `PRIVACY_RETENTION_ASSISTED_DAYS`
+- `PRIVACY_RETENTION_LEAD_DAYS`
+- `PRIVACY_RETENTION_CONSENT_DAYS`
+
+The UI supports:
+
+1. a dry-run retention preview;
+2. explicit application of the purge only after a preview exists;
+3. audit history for retention operations.
+
+### Frontend workspace
+
+New dashboard section:
+
+**Operations & Developer → Compliance**
+
+Operators can:
+
+- see compliance-readiness checks;
+- inspect analytics/marketing/personalization consent coverage;
+- see revoked-consent count;
+- see how many activation actions were skipped for consent;
+- see how many personalization decisions were blocked;
+- generate a subject-data export;
+- perform a confirmed subject deletion;
+- preview and apply retention purges;
+- inspect consent audit history;
+- inspect privacy request history.
+
+The layout is responsive and uses the existing AceMarketing dashboard design system.
+
+### Dashboard integration
+
+Compliance is included in:
+
+- the main workspace sidebar;
+- the global dashboard navigator;
+- dashboard section health;
+- the full workspace render regression sweep.
+
+### Regression coverage
+
+Playwright now verifies:
+
+- `GET /api/compliance-center`;
+- readiness, consent, policy, privacy and control-check contracts;
+- the Compliance workspace renders;
+- consent coverage, subject-rights and retention surfaces are visible;
+- privacy selector and deletion-confirmation controls are present;
+- Compliance is part of the complete workspace render sweep.
+
+### Product-parity note
+
+EasyInsights publicly identifies privacy, consent and compliance as a major first-party-data challenge, including the disconnect between consent management and ad-platform activation. AceMarketing implements the comparable operational control surface using its own consent, privacy, retention and activation architecture rather than copying third-party proprietary source code or assets.
