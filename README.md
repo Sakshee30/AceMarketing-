@@ -5426,3 +5426,19 @@ The workspace dashboard now exposes one searchable navigator for the full produc
 The `GET /api/dashboard-summary` contract now covers the broader workspace surface, including governed adjustments, fraud review, deep links, tracked sites, identity/fingerprinting readiness, offline attribution and matchback, POS/store signals, attribution models, behavior/feed operations, approvals, developer API/webhook readiness, and the previously implemented data, activation, agent, reporting, compliance, and monitoring areas.
 
 This keeps navigation functional instead of decorative: section badges are driven by persisted workspace state and backend metrics, and the frontend refreshes operational status automatically every 30 seconds. The implementation preserves reduced-motion accessibility and responsive mobile behavior.
+
+
+## Developer API-key lifecycle hardening — 2026-09-26
+
+The **Developers** workspace now provides a real credential lifecycle instead of only displaying integration snippets.
+
+- `GET /api/api-keys` lists persisted credential metadata without returning stored secrets.
+- `POST /api/api-keys` creates a named API key and reveals the complete secret once.
+- `POST /api/api-keys/revoke` revokes a credential and records the action in the workspace audit trail.
+- Only a SHA-256 fingerprint of each secret is persisted; the complete key is not stored.
+- Server-to-server ingestion through `POST /api/track` validates supplied `ace_...` Bearer credentials and rejects invalid or revoked keys.
+- Successful authenticated ingestion updates the credential's `lastUsedAt` timestamp.
+- The dashboard exposes active/revoked credential counts, creation, one-time reveal/copy, last-used metadata, and revocation controls.
+- Playwright coverage verifies create → authenticated ingest → revoke → rejected reuse as one end-to-end workflow.
+
+This closes a frontend/backend parity gap in the developer console while preserving the browser/first-party tracking path for requests that do not present a server API credential.
