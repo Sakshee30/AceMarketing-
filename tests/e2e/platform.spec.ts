@@ -1022,3 +1022,22 @@ test('repeat purchase and abandoned checkout templates are executable', async ({
   await expect(abandonedBuilder.getByLabel('Source event')).toHaveValue('checkout_abandoned')
   await expect(abandonedBuilder.getByLabel('Operator')).toHaveValue('exists')
 })
+
+
+test('signal-return quick starts create real pipelines and open live modules', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  await openWorkspaceTab(page,'AdSync')
+  await expect(page.getByRole('heading',{name:'Server-side signal activation'})).toBeVisible()
+
+  const metaCard=page.locator('.signal-agent-quickstarts article').filter({hasText:'Meta Advanced CAPI'}).first()
+  await expect(metaCard).toBeVisible()
+  await metaCard.getByRole('button',{name:'Install pipeline',exact:true}).click()
+  await expect(page.getByText('Meta Advanced CAPI pipeline created. Connect provider credentials before expecting external delivery.',{exact:true})).toBeVisible()
+  await expect(page.locator('.agent-selector').getByText('Meta Advanced CAPI · Qualified Lead',{exact:true}).first()).toBeVisible()
+  await expect(page.locator('.agent-config')).toContainText('Meta Ads')
+
+  const callCard=page.locator('.signal-agent-quickstarts article').filter({hasText:'Call Tracking Events'}).first()
+  await callCard.getByRole('button',{name:'Open module',exact:true}).click()
+  await expect(page.getByRole('heading',{name:'Voice qualification & call tracking'})).toBeVisible()
+})
