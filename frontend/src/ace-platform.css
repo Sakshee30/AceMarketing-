@@ -1630,3 +1630,20 @@
 .ask-journey-event b{font-size:8px}
 .ask-journey-event small{font-size:7px;color:#8d8393;margin-top:2px}
 .ask-journey-event p{font-size:7px;color:#776f7b;line-height:1.45;margin:4px 0 0}
+
+
+/* Voice Scheduler */
+.voice-scheduler-panel{margin-bottom:12px}
+.voice-scheduler-runs{display:grid;gap:8px}
+.voice-scheduler-run{display:grid;grid-template-columns:24px 1.2fr auto auto;align-items:center;gap:9px;padding:10px 0;border-top:1px solid #eeeaf1}
+.voice-scheduler-run:first-child{border-top:0}
+.voice-scheduler-run>svg{width:16px;color:#6b2ce8}
+.voice-scheduler-run b,.voice-scheduler-run small{display:block}
+.voice-scheduler-run b{font-size:8px}
+.voice-scheduler-run small{font-size:7px;color:#8f8793;margin-top:2px}
+.voice-scheduler-run span{font-size:7px;padding:4px 7px;border-radius:20px;background:#f1eaff;color:#6b2ce8}
+.voice-scheduler-run span.succeeded{background:#e8faf5;color:#0c9b78}
+.voice-scheduler-run span.failed{background:#fff0f1;color:#c84d58}
+.voice-scheduler-run em{font-size:7px;font-style:normal;color:#817688;text-align:right}
+.voice-scheduler-builder .source-conflict-note{margin-top:4px}
+@media(max-width:720px){.voice-scheduler-run{grid-template-columns:24px 1fr}.voice-scheduler-run span,.voice-scheduler-run em{grid-column:2;text-align:left;width:max-content}}
