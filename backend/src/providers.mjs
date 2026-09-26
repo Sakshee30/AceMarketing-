@@ -108,6 +108,45 @@ const deliverGoogle=async(workspaceId,signal)=>{
   return {provider:'google',...result}
 }
 
+const deliverLinkedIn=async(workspaceId,signal)=>{
+  const token=await credentialFor(workspaceId,'LinkedIn Ads')
+  const accessToken=token.access_token
+  const conversion=String(signal.linkedinConversionUrn||signal.data?.linkedinConversionUrn||process.env.LINKEDIN_CONVERSION_URN||'').trim()
+  const version=String(process.env.LINKEDIN_MARKETING_VERSION||'202609').trim()
+  if(!accessToken||!conversion) throw new Error('LinkedIn Ads access token and LINKEDIN_CONVERSION_URN are required')
+  const userIds=[]
+  const emailHash=signal.emailSha256||signal.data?.emailSha256||(signal.email?sha(signal.email):'')
+  if(emailHash) userIds.push({idType:'SHA256_EMAIL',idValue:String(emailHash).toLowerCase()})
+  const liUuid=signal.linkedinFirstPartyAdsTrackingUuid||signal.data?.linkedinFirstPartyAdsTrackingUuid||signal.liFatId||signal.data?.liFatId
+  if(liUuid) userIds.push({idType:'LINKEDIN_FIRST_PARTY_ADS_TRACKING_UUID',idValue:String(liUuid)})
+  if(signal.androidAdvertisingId||signal.data?.androidAdvertisingId) userIds.push({idType:'GOOGLE_AID',idValue:String(signal.androidAdvertisingId||signal.data.androidAdvertisingId)})
+  if(!userIds.length) throw new Error('LinkedIn conversion requires a hashed email, LinkedIn first-party ads tracking UUID, or Google advertising ID')
+  const occurred=new Date(signal.occurredAt||Date.now())
+  const event={
+    conversion,
+    conversionHappenedAt:Number.isNaN(occurred.getTime())?Date.now():occurred.getTime(),
+    user:{userIds},
+    eventId:String(signal.externalEventId||signal.idempotencyKey||signal.deliveryId||'')
+  }
+  if(!event.eventId) throw new Error('LinkedIn conversion event id is required')
+  if(signal.value!=null&&signal.currency){
+    event.conversionValue={currencyCode:String(signal.currency).toUpperCase(),amount:String(Number(signal.value))}
+  }
+  const externalId=signal.externalId||signal.customerId
+  if(externalId) event.user.externalIds=[String(externalId)]
+  const result=await requestJson('https://api.linkedin.com/rest/conversionEvents',{
+    method:'POST',
+    headers:{
+      'Authorization':'Bearer '+accessToken,
+      'Content-Type':'application/json',
+      'Linkedin-Version':version,
+      'X-Restli-Protocol-Version':'2.0.0'
+    },
+    body:JSON.stringify(event)
+  })
+  return {provider:'linkedin',...result}
+}
+
 const OPENAI_STANDARD_EVENT_TYPES=new Set(['appointment_scheduled','checkout_started','contents_viewed','custom','items_added','lead_created','order_created','page_viewed','registration_completed','subscription_created','trial_started','app_installed','app_opened'])
 const openAIEventType=signal=>{
   const explicit=String(signal.openaiEventType||'').trim().toLowerCase()
@@ -229,6 +268,7 @@ export const deliverSignal=async(workspaceId,signal)=>{
   if(destination.includes('chatgpt')||destination.includes('openai')) return deliverOpenAIAds(workspaceId,signal)
   if(destination.includes('meta')) return deliverMeta(workspaceId,signal)
   if(destination.includes('google')) return deliverGoogle(workspaceId,signal)
+  if(destination.includes('linkedin')) return deliverLinkedIn(workspaceId,signal)
   if(destination.includes('webhook')) return deliverWebhook(signal)
   throw new Error('unsupported delivery destination: '+signal.destination)
 }
