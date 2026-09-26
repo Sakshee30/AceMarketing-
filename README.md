@@ -4953,3 +4953,122 @@ Playwright now verifies:
 ### Product-parity note
 
 EasyInsights published a September 2026 guide describing ChatGPT Ads conversion measurement and `oppref`-based server-side tracking. AceMarketing implements the same category of capability using OpenAI's current public Ads measurement contract and its own UI, backend queue, consent controls and operational model.
+
+
+## Executive data snippets implementation
+
+This pass extends AceMarketing's existing cohort-report scheduler with a second durable report type: **Executive Briefs**.
+
+### Why this exists
+
+EasyInsights publicly describes scheduled single-view data snippets and automated email reporting for leadership, alongside cohort reporting for strategic media planning. AceMarketing already had full cohort reports; this implementation adds the smaller leadership-snapshot workflow without replacing the existing reporting stack.
+
+### Database migration
+
+New migration:
+
+- `backend/migrations/018_executive_briefs.sql`
+
+It:
+
+- expands `ace_report_schedules.report_type` from only `cohort` to `cohort | executive_brief`;
+- adds a JSONB `config` field for persisted brief metrics/title/note;
+- adds a workspace/report-type index.
+
+### Scheduler changes
+
+The existing durable report scheduler now supports:
+
+- `cohort` — current full cohort report with CSV attachment;
+- `executive_brief` — compact HTML leadership snippet without the cohort CSV attachment.
+
+Executive briefs use the same:
+
+- PostgreSQL schedule store;
+- due-schedule locking;
+- durable queue;
+- retry/dead-letter behavior;
+- SMTP transport;
+- send-now workflow;
+- delivery history.
+
+### Executive metric configuration
+
+Supported brief metrics are intentionally limited to values AceMarketing can derive from persisted cohort/attribution evidence:
+
+- acquired;
+- qualified rate;
+- consultation rate;
+- conversion rate;
+- attributed revenue;
+- revenue per acquired;
+- top acquisition source;
+- top-source conversion rate.
+
+The report does **not** fabricate missing spend, CAC, ROAS, margin, or P&L values.
+
+### Backend contract
+
+No parallel reporting API was introduced.
+
+The existing endpoints now support `reportType: "executive_brief"`:
+
+- `GET /api/report-schedules`
+- `POST /api/report-schedules`
+- `POST /api/report-schedules/run-now`
+
+A saved executive schedule persists:
+
+- recipients;
+- cadence;
+- lookback months;
+- title;
+- optional leadership note;
+- selected metrics.
+
+Delivery snapshots also record the report type, configuration, totals and top-source evidence.
+
+### Frontend workspace
+
+New dashboard section:
+
+**Measurement & Intelligence → Executive Briefs**
+
+Operators can:
+
+1. Preview the current brief from live persisted evidence.
+2. Select which leadership metrics to include.
+3. Configure report title and leadership note.
+4. Configure recipients.
+5. Choose daily, weekly or monthly cadence.
+6. Choose the cohort lookback window.
+7. Save a durable executive-brief schedule.
+8. Queue any existing brief immediately with **Send now**.
+9. Inspect recent executive delivery history.
+
+### Dashboard integration
+
+Executive Briefs is included in:
+
+- the main sidebar;
+- the global dashboard navigator;
+- dashboard section health;
+- the complete workspace render sweep.
+
+The dashboard health status reflects persisted executive schedules and SMTP readiness.
+
+### Regression coverage
+
+Playwright now creates a real `executive_brief` schedule and verifies:
+
+- the schedule is persisted as `report_type=executive_brief`;
+- configured metrics persist in `config.metrics`;
+- the schedule is returned by the report-schedules API;
+- the Executive Briefs workspace renders;
+- live preview and schedule-builder surfaces render;
+- the created schedule is visible;
+- Executive Briefs is part of the full workspace render sweep.
+
+### Product-parity note
+
+EasyInsights describes scheduled CMO data snippets and automated email reporting in its public customer-success material. AceMarketing implements the comparable workflow using its own reporting UI, PostgreSQL scheduler, durable worker and evidence contracts.
