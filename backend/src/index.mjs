@@ -288,6 +288,33 @@ const validateSignalDispatch=body=>{
   return null
 }
 
+const activationValue=(body,field)=>{
+  if(!field)return null
+  if(Object.prototype.hasOwnProperty.call(body,field))return body[field]
+  if(body.data&&typeof body.data==='object'&&Object.prototype.hasOwnProperty.call(body.data,field))return body.data[field]
+  return null
+}
+const activationConditionMatches=(condition,body)=>{
+  if(!condition||!condition.field)return true
+  const actual=activationValue(body,String(condition.field))
+  const expected=condition.value
+  const op=String(condition.operator||'equals')
+  if(op==='exists')return actual!==null&&actual!==undefined&&String(actual)!==''
+  if(op==='not_exists')return actual===null||actual===undefined||String(actual)===''
+  if(op==='contains')return String(actual||'').toLowerCase().includes(String(expected||'').toLowerCase())
+  if(op==='greater_than')return Number(actual)>Number(expected)
+  if(op==='less_than')return Number(actual)<Number(expected)
+  if(op==='one_of')return String(expected||'').split(',').map(x=>x.trim().toLowerCase()).filter(Boolean).includes(String(actual||'').toLowerCase())
+  return String(actual??'').toLowerCase()===String(expected??'').toLowerCase()
+}
+const activationRuleMatches=(rule,body)=>{
+  if(String(rule.status||'active')!=='active')return false
+  const trigger=String(rule.triggerEvent||'*').trim().toLowerCase()
+  const eventName=String(body.event||body.eventType||body.name||'').trim().toLowerCase()
+  if(trigger!=='*'&&trigger!==eventName)return false
+  return (rule.conditions||[]).every(condition=>activationConditionMatches(condition,body))
+}
+
 const events = [
   {name:'Qualified Lead',source:'CRM',destinations:['Google Ads','Meta Ads'],latency:'real-time',status:'active'},
   {name:'Consultation Booked',source:'CRM',destinations:['Google Ads'],latency:'real-time',status:'active'},
@@ -2331,6 +2358,72 @@ const server = http.createServer(async (req,res)=>{
       })
       return send(req,res,201,{id:item.id,status:item.status,matchMethod:item.match_method,matchConfidence:item.match_confidence,matchedSessionId:item.matched_session_id})
     }
+    if (req.method === 'GET' && url.pathname === '/api/activation-rules') {
+      const state=await getState()
+      const items=(state.activationRules||[]).slice().sort((a,b)=>Date.parse(b.updatedAt||b.createdAt||0)-Date.parse(a.updatedAt||a.createdAt||0))
+      const runs=(state.activationRuleRuns||[]).slice(0,100)
+      const active=items.filter(x=>x.status==='active').length
+      return send(req,res,200,{items,runs,stats:{total:items.length,active,paused:items.length-active,runs:runs.length,succeeded:runs.filter(x=>x.status==='succeeded').length,skipped:runs.filter(x=>x.status==='skipped').length}})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/activation-rules') {
+      const body=await readBody(req)
+      const name=String(body.name||'').trim()
+      const triggerEvent=String(body.triggerEvent||'').trim()
+      const actionType=String(body.actionType||'').trim()
+      if(name.length<3||name.length>120) return send(req,res,400,{error:'name must be 3-120 characters'})
+      if(!triggerEvent) return send(req,res,400,{error:'triggerEvent required'})
+      if(!['signal','follow_up','route'].includes(actionType)) return send(req,res,400,{error:'actionType must be signal, follow_up, or route'})
+      if(actionType==='signal'&&!String(body.destination||'').trim()) return send(req,res,400,{error:'signal destination required'})
+      if(actionType==='route'&&!String(body.destination||'').trim()) return send(req,res,400,{error:'routing destination required'})
+      const conditions=(Array.isArray(body.conditions)?body.conditions:[]).slice(0,5).map(x=>({field:String(x.field||'').trim(),operator:String(x.operator||'equals'),value:x.value??''})).filter(x=>x.field)
+      const now=new Date().toISOString()
+      const item={
+        id:'actrule_'+randomUUID(),
+        name,
+        triggerEvent,
+        conditions,
+        actionType,
+        destination:String(body.destination||'').trim()||null,
+        outputEvent:String(body.outputEvent||triggerEvent).trim()||triggerEvent,
+        channel:String(body.channel||'whatsapp').trim(),
+        owner:String(body.owner||'Marketing automation').trim(),
+        priority:String(body.priority||'medium').trim(),
+        delayMinutes:Math.max(0,Math.min(10080,Number(body.delayMinutes||0))),
+        reason:String(body.reason||name).trim(),
+        status:body.enabled===false?'paused':'active',
+        requiresMarketingConsent:body.requiresMarketingConsent!==false,
+        createdAt:now,
+        updatedAt:now,
+        createdBy:req.user?.email||req.user?.userId||'workspace'
+      }
+      await mutateState(s=>{
+        s.activationRules=s.activationRules||[]
+        s.activationRules.unshift(item)
+        s.activationRules=s.activationRules.slice(0,500)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'activation_rule.created',entityId:item.id,triggerEvent:item.triggerEvent,actionType:item.actionType,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,{item})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/activation-rules/toggle') {
+      const body=await readBody(req)
+      const id=String(body.id||'')
+      let updated=null
+      await mutateState(s=>{
+        const item=(s.activationRules||[]).find(x=>x.id===id)
+        if(item){item.status=body.enabled?'active':'paused';item.updatedAt=new Date().toISOString();updated={...item}}
+      })
+      return updated?send(req,res,200,{item:updated}):send(req,res,404,{error:'activation rule not found'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/activation-rules/test') {
+      const body=await readBody(req)
+      const state=await getState()
+      const rule=(state.activationRules||[]).find(x=>x.id===String(body.id||''))
+      if(!rule) return send(req,res,404,{error:'activation rule not found'})
+      const sample=body.event&&typeof body.event==='object'?body.event:{event:rule.triggerEvent,customerId:'activation_test_customer',value:100}
+      return send(req,res,200,{matched:activationRuleMatches({...rule,status:'active'},sample),ruleId:rule.id,sample,evaluatedAt:new Date().toISOString()})
+    }
     if (req.method === 'POST' && url.pathname === '/api/track') {
       const body=await readBody(req)
       const category=['essential','analytics','marketing','personalization'].includes(String(body.eventCategory))?String(body.eventCategory):'analytics'
@@ -2389,6 +2482,7 @@ const server = http.createServer(async (req,res)=>{
       }
       const derived=await evaluateEventRules(workspaceId,{...body,eventId:body.eventId||event.id},{sourceEventId:event.id}).catch(()=>[])
       const derivedDeliveries=[]
+      const activationRuns=[]
       if(derived.length){
         const marketingConsent=await consentAllows(workspaceId,{subjectType:body.customerId?'customer':'visitor',subjectId:trackingSubjectId,category:'marketing'})
         for(const match of derived){
@@ -2409,7 +2503,59 @@ const server = http.createServer(async (req,res)=>{
           await markEventRuleActivation(workspaceId,match.runId,queued).catch(()=>{})
         }
       }
-      return send(req,res,202,{accepted:true,eventId:event.id,leadProfileId:leadProfile?.id||null,clickSessionId:clickSession?.id||null,assistedEventId:assisted?.id||null,derivedEvents:derived.map(x=>({runId:x.runId,ruleId:x.ruleId,outputEvent:x.outputEvent,assistedEventId:x.assistedEvent?.id||null,destinations:x.destinations})),derivedDeliveries,match:assisted?{status:assisted.status,method:assisted.match_method,confidence:assisted.match_confidence}:null})
+      const activationState=await getState()
+      const activationRules=(activationState.activationRules||[]).filter(rule=>activationRuleMatches(rule,body))
+      if(activationRules.length){
+        const marketingConsent=await consentAllows(workspaceId,{subjectType:body.customerId?'customer':'visitor',subjectId:trackingSubjectId,category:'marketing'})
+        for(const rule of activationRules){
+          const run={id:'actrun_'+randomUUID(),ruleId:rule.id,ruleName:rule.name,eventId:event.id,customerRef:String(body.customerId||body.leadId||body.visitorId||body.deviceId||body.device_id||''),actionType:rule.actionType,status:'queued',detail:'',createdAt:new Date().toISOString()}
+          if(rule.requiresMarketingConsent&& !marketingConsent.allowed){
+            run.status='skipped'
+            run.detail='Marketing consent unavailable'
+          }else{
+            try{
+              if(rule.actionType==='follow_up'){
+                const task=await createFollowUp(workspaceId,{leadRef:run.customerRef,reason:rule.reason||rule.name,channel:rule.channel||'whatsapp',priority:rule.priority||'medium',delayMinutes:Number(rule.delayMinutes||0),owner:rule.owner||'Marketing automation'})
+                run.status=task?'succeeded':'failed'
+                run.detail=task?'Follow-up '+task.id+' created':'Follow-up store unavailable'
+                run.operationId=task?.id||null
+              }else if(rule.actionType==='route'){
+                const routed=await routeLead(workspaceId,{leadRef:run.customerRef,score:Number(leadProfile?.score||body.score||0),source:body.source||'Real-time activation',routingRule:{name:rule.name,destination:rule.destination,reason:rule.reason||rule.name,slaSeconds:Math.max(60,Number(rule.slaSeconds||300))}})
+                run.status=routed?'succeeded':'failed'
+                run.detail=routed?'Routed to '+rule.destination:'Routing store unavailable'
+                run.operationId=routed?.id||null
+              }else if(rule.actionType==='signal'){
+                const deliveryId='sig_'+randomUUID()
+                const idempotencyKey=createHash('sha256').update('activation-rule:'+rule.id+':'+event.id+':'+rule.destination).digest('hex')
+                const now=new Date().toISOString()
+                const item={id:deliveryId,event:rule.outputEvent||body.event||body.eventType||'activation_event',destination:rule.destination,customerId:body.customerId?String(body.customerId):null,externalEventId:event.id,status:'queued',attempts:0,idempotencyKey,createdAt:now,updatedAt:now,nextAttemptAt:now}
+                item.replayPayload=buildSignalReplayPayload({...body,event:item.event,destination:item.destination},{...item,idempotencyKey})
+                const validationError=validateSignalDispatch(item.replayPayload)
+                if(validationError){
+                  run.status='failed';run.detail=validationError
+                }else{
+                  await mutateState(s=>{s.signalDeliveries=s.signalDeliveries||[];s.signalDeliveries.unshift(item);s.signalDeliveries=s.signalDeliveries.slice(0,10000)})
+                  const job=await enqueueJob({workspaceId,kind:'signal_delivery',idempotencyKey:'activation:'+idempotencyKey,payload:item.replayPayload})
+                  run.status='succeeded';run.detail='Signal queued for '+rule.destination;run.operationId=deliveryId;run.jobId=job?.id||null
+                }
+              }
+            }catch(error){
+              run.status='failed'
+              run.detail=error instanceof Error?error.message:'Activation execution failed'
+            }
+          }
+          activationRuns.push(run)
+          await mutateState(s=>{
+            s.activationRuleRuns=s.activationRuleRuns||[]
+            s.activationRuleRuns.unshift(run)
+            s.activationRuleRuns=s.activationRuleRuns.slice(0,2000)
+            s.audit=s.audit||[]
+            s.audit.unshift({id:randomUUID(),action:'activation_rule.executed',entityId:run.id,ruleId:rule.id,status:run.status,eventId:event.id,at:new Date().toISOString()})
+            s.audit=s.audit.slice(0,1000)
+          })
+        }
+      }
+      return send(req,res,202,{accepted:true,eventId:event.id,leadProfileId:leadProfile?.id||null,clickSessionId:clickSession?.id||null,assistedEventId:assisted?.id||null,derivedEvents:derived.map(x=>({runId:x.runId,ruleId:x.ruleId,outputEvent:x.outputEvent,assistedEventId:x.assistedEvent?.id||null,destinations:x.destinations})),derivedDeliveries,activationRuns,match:assisted?{status:assisted.status,method:assisted.match_method,confidence:assisted.match_confidence}:null})
     }
     if (req.method === 'POST' && url.pathname === '/api/assisted-events') {
       const body=await readBody(req)
