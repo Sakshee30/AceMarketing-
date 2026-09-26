@@ -1460,6 +1460,13 @@ test('signal-return quick starts create real pipelines and open live modules', a
   await expect(page.locator('.agent-selector').getByText('Microsoft Ads Conversions API · Qualified Lead',{exact:true}).first()).toBeVisible()
   await expect(page.locator('.agent-config')).toContainText('Microsoft Ads / Bing Ads')
 
+  const pinterestCard=page.locator('.signal-agent-quickstarts article').filter({hasText:'Pinterest Conversions API'}).first()
+  await expect(pinterestCard).toBeVisible()
+  await pinterestCard.getByRole('button',{name:'Install pipeline',exact:true}).click()
+  await expect(page.getByText('Pinterest Conversions API pipeline created. Connect provider credentials before expecting external delivery.',{exact:true})).toBeVisible()
+  await expect(page.locator('.agent-selector').getByText('Pinterest Conversions API · Qualified Lead',{exact:true}).first()).toBeVisible()
+  await expect(page.locator('.agent-config')).toContainText('Pinterest')
+
   const callCard=page.locator('.signal-agent-quickstarts article').filter({hasText:'Call Tracking Events'}).first()
   await callCard.getByRole('button',{name:'Open module',exact:true}).click()
   await expect(page.getByRole('heading',{name:'Voice qualification & call tracking'})).toBeVisible()
