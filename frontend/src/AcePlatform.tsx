@@ -1804,7 +1804,9 @@ function FollowUps(){
  const [recentDays,setRecentDays]=useState(7)
  const [notice,setNotice]=useState('')
  const load=()=>api.followUps().then((r:any)=>{const mapped=(r.items||[]).map((x:any)=>({id:x.id,lead:x.lead_ref,reason:x.reason,channel:x.channel,due:x.due_at?new Date(x.due_at).toLocaleString():'—',priority:String(x.priority||'medium').replace(/^./,(m:string)=>m.toUpperCase()),status:x.status==='completed'?'Completed':'Open',owner:x.owner||'—',createdAt:x.created_at,completedAt:x.completed_at}));setItems(mapped);setStats(r.stats||{});if(mapped.length)setSelected((v:string)=>v&&mapped.some((x:any)=>x.id===v)?v:mapped[0].id);else setSelected('')}).catch(()=>{setItems([]);setStats({})})
- useEffect(()=>{load()},[])
+ const loadReactivation=()=>api.leadReactivation(dormantDays,recentDays).then((r:any)=>setReactivation({items:r.items||[],stats:r.stats||{}})).catch(()=>setReactivation({items:[],stats:{}}))
+ useEffect(()=>{load();loadReactivation()},[])
+ useEffect(()=>{loadReactivation()},[dormantDays,recentDays])
  const current=items.find(x=>x.id===selected)
  const complete=async(id:string)=>{setBusy('complete');try{await api.completeFollowUp(id);await load()}finally{setBusy('')}}
  const create=async(e:any)=>{e.preventDefault();const f=new FormData(e.currentTarget);setBusy('create');try{await api.createFollowUp({leadRef:String(f.get('leadRef')||''),reason:String(f.get('reason')||''),channel:String(f.get('channel')||'WhatsApp'),priority:String(f.get('priority')||'medium'),delayMinutes:Number(f.get('delayMinutes')||15),owner:String(f.get('owner')||'Assigned counsellor')});setBuilder(false);await load()}finally{setBusy('')}}
