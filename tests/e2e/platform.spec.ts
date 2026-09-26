@@ -163,6 +163,22 @@ test.describe('workspace critical flows',()=>{
     await expect(page.getByText(/Duplicate evidence/i)).toBeVisible()
   })
 
+  test('exclusion workspace exposes first-party suppression presets and navigation',async({page})=>{
+    const response=await page.request.get('/api/exclusions')
+    expect(response.ok()).toBeTruthy()
+    const payload=await response.json()
+    expect(Array.isArray(payload.presets)).toBeTruthy()
+    expect(payload.presets.map((x:any)=>x.key)).toEqual(expect.arrayContaining(['converted_customers','low_quality_leads','device_ids']))
+    expect(payload.stats).toBeTruthy()
+
+    await openWorkspaceTab(page,'Exclusions')
+    await expect(page.getByRole('heading',{name:'Audience suppression & exclusions'})).toBeVisible()
+    await expect(page.getByText('Converted customers',{exact:true})).toBeVisible()
+    await expect(page.getByText('Low-quality leads',{exact:true})).toBeVisible()
+    await expect(page.getByText('Known device IDs',{exact:true})).toBeVisible()
+    await expect(page.getByText('Materialized exclusions')).toBeVisible()
+  })
+
   test('personalization studio returns consent-aware variants and records feedback',async({page},testInfo)=>{
     const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()
     const customerId='personalization_customer_'+suffix
@@ -811,7 +827,7 @@ test('all workspace sections render without a frontend crash', async ({ page }) 
     'Launchpad','Overview','AdSync','Funnel','Events','Adjustments','Diagnostics','Reconciliation','Fraud','Deep Links','Sites','Fingerprinting',
     'Live Sync','Data Hub','Customer 360','Offline Attribution','Matchback','POS & Stores','Journeys','Identity','Models','Attribution','Planner','Reports',
     'Enrich','Lead Grading','Behavior','Feed','Agents','Routing','Follow-ups','Calls','Meetings','Feedback','Approvals','Ask Ace',
-    'Integrations','Data Flows','Real-Time Activation','Personalization','Audiences','Delivery','Monitoring','Alerts','Developers','Settings'
+    'Integrations','Data Flows','Real-Time Activation','Personalization','Exclusions','Audiences','Delivery','Monitoring','Alerts','Developers','Settings'
   ]
 
   for(const tab of tabs){
