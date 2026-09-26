@@ -811,3 +811,42 @@ test('behavior workspace analyzes persisted source campaign and device evidence'
   await expect(page.getByText('pricing view',{exact:true}).first()).toBeVisible()
   await expect(page.getByText('consultation booked',{exact:true}).first()).toBeVisible()
 })
+
+
+test('CRM enrichment selects a persisted lead and queues writeback evidence', async ({ page }, testInfo) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()+'_'+Date.now()
+  const lead='ci_enrich_'+suffix
+  const created=await page.request.post('/api/enrich/upsert',{data:{
+    externalLeadId:lead,
+    name:'CI Enrichment '+suffix,
+    source:'Google Ads',
+    campaign:'CI High Intent',
+    crmStage:'qualified',
+    journeyDepth:4,
+    pricingPageViews:2,
+    conversionPropensity:82,
+    ltvTier:'high',
+    callSummary:'Qualified on pricing and implementation timeline.',
+    whatsappSummary:'Requested a product demo and pricing details.'
+  }})
+  expect(created.ok()).toBeTruthy()
+
+  await openWorkspaceTab(page,'Enrich')
+  await expect(page.getByRole('heading',{name:'CRM enrichment'})).toBeVisible()
+  const search=page.getByLabel('Search enriched leads')
+  await search.fill(lead)
+  const leadButton=page.locator('.enrich-leads>button').filter({hasText:lead}).first()
+  await expect(leadButton).toBeVisible()
+  await leadButton.click()
+  await expect(page.locator('.enrich-profile')).toContainText('CI High Intent')
+  await expect(page.locator('.enrich-profile')).toContainText('qualified')
+
+  const responsePromise=page.waitForResponse(r=>r.url().includes('/api/enrich/writeback')&&r.request().method()==='POST')
+  await page.getByRole('button',{name:'Write to HubSpot',exact:true}).click()
+  const response=await responsePromise
+  expect(response.status()).toBe(202)
+  await expect(page.getByText(/CRM writeback queued to HubSpot/)).toBeVisible()
+  await expect(page.locator('.enrich-writeback-row').filter({hasText:'HubSpot'}).first()).toContainText('queued')
+})
