@@ -567,7 +567,7 @@ const server = http.createServer(async (req,res)=>{
     if (req.method === 'GET' && url.pathname === '/api/dashboard-summary') {
       const state=await getState()
       const safe=async(fn,fallback)=>{try{return await fn()}catch{return fallback}}
-      const [leadStats,attr,audienceStats,queue,monitoring,eventRules,agentRuns,meetings,followUps]=await Promise.all([
+      const [leadStats,attr,audienceStats,queue,monitoring,eventRules,agentRuns,meetings,followUps,feedbackResult]=await Promise.all([
         safe(()=>leadOpsStats(workspaceId),{available:false,total:0,aGrade:0,abQuality:0}),
         safe(()=>attributionStats(workspaceId),{available:false,matchedEvents:0,unmatchedEvents:0,assistedEvents:0,activeClickSessions:0}),
         safe(()=>audienceOpsStats(workspaceId),{available:false,audiences:{total:0,active:0,activatedIdentities:0,suppressedIdentities:0,errors:0},profiles:{total:0}}),
@@ -576,7 +576,8 @@ const server = http.createServer(async (req,res)=>{
         safe(()=>listEventRules(workspaceId),[]),
         safe(()=>listAgentRuns(workspaceId),[]),
         safe(()=>listPersistedMeetings(workspaceId),[]),
-        safe(()=>listPersistedFollowUps(workspaceId),[])
+        safe(()=>listPersistedFollowUps(workspaceId),[]),
+        safe(()=>listPersistedFeedback(workspaceId),{items:[]})
       ])
       const connectors=state.connectorConnections||[]
       const connectedConnectors=connectors.filter(x=>['connected','healthy','active'].includes(String(x.status||'').toLowerCase()))
@@ -598,6 +599,37 @@ const server = http.createServer(async (req,res)=>{
         {key:'operations',title:'Operations',tab:'Monitoring',ready:connectedConnectors.length>0,primary:connectedConnectors.length,detail:connectedConnectors.length+' connected · '+failedDeliveries+' failed deliveries'}
       ]
       const readiness=Math.round(areas.filter(x=>x.ready).length/areas.length*100)
+      const feedbackItems=feedbackResult?.items||[]
+      const voiceRuns=agentRuns.filter(x=>String(x.agent_type||x.agentType||'').toLowerCase()==='voice_qualification')
+      const section=(state,count,detail)=>({state,count:Number(count||0),detail})
+      const sections={
+        Launchpad:section(readiness>=80?'live':readiness>0?'attention':'setup',readiness,readiness+'% workspace readiness'),
+        Overview:section('live',trackedCount+profiles,'Live workspace summary'),
+        AdSync:section(deliveries.length?'live':connectedConnectors.length?'attention':'setup',deliveries.length,deliveries.length+' signal deliveries'),
+        Funnel:section(profiles?'live':trackedCount?'attention':'setup',profiles,profiles+' known lead profiles'),
+        Events:section(eventRules.length?'live':'setup',eventRules.length,eventRules.length+' conversion rules'),
+        Diagnostics:section(trackedCount||eventRules.length?'live':'setup',Number((state.quarantinedEvents||[]).length),(state.quarantinedEvents||[]).length+' quarantined events'),
+        'Live Sync':section(trackedCount?'live':'setup',trackedCount,trackedCount+' tracked events'),
+        'Data Hub':section(profiles||trackedCount?'live':'setup',profiles,profiles+' unified profiles'),
+        Journeys:section(profiles?'live':'setup',profiles,profiles+' stitched profiles'),
+        Attribution:section(Number(attr?.matchedEvents||0)>0?'live':attr?.available?'attention':'setup',Number(attr?.matchedEvents||0),Number(attr?.matchedEvents||0)+' matched conversions'),
+        Enrich:section(profiles?'live':'setup',profiles,profiles+' enriched profiles'),
+        'Lead Grading':section(profiles?'live':'setup',Number(leadStats?.abQuality||0),Number(leadStats?.abQuality||0)+' A/B leads'),
+        Agents:section(agentRuns.length?'live':'attention',agentRuns.length,agentRuns.length+' persisted runs'),
+        Routing:section(Number((state.routingDecisions||[]).length)>0?'live':profiles?'attention':'setup',Number((state.routingDecisions||[]).length),(state.routingDecisions||[]).length+' routing decisions'),
+        'Follow-ups':section(followUps.length?'live':profiles?'attention':'setup',followUps.length,followUps.length+' follow-up tasks'),
+        Calls:section(voiceRuns.length?'live':connectedConnectors.some(x=>/exotel|knowlarity|twilio|myoperator|tata/i.test(String(x.connector||x.name||'')))?'attention':'setup',voiceRuns.length,voiceRuns.length+' qualification runs'),
+        Meetings:section(meetings.length?'live':connectedConnectors.some(x=>/calendar/i.test(String(x.connector||x.name||'')))?'attention':'setup',meetings.length,meetings.length+' scheduled meetings'),
+        Feedback:section(feedbackItems.length?'live':agentRuns.some(x=>String(x.agent_type||'').toLowerCase()==='feedback')?'attention':'setup',feedbackItems.length,feedbackItems.length+' feedback responses'),
+        'Ask Ace':section(profiles||Number(attr?.matchedEvents||0)>0?'live':'attention',profiles+Number(attr?.matchedEvents||0),profiles||Number(attr?.matchedEvents||0)>0?'Grounded data available':'Connect data for grounded answers'),
+        Integrations:section(connectedConnectors.length?'live':'setup',connectedConnectors.length,connectedConnectors.length+' connected systems'),
+        'Data Flows':section(activeIntegrationFlows?'live':integrationFlows.length?'attention':'setup',activeIntegrationFlows,activeIntegrationFlows+' active flows'),
+        Audiences:section(Number(audienceStats?.audiences?.total||0)>0?'live':'setup',Number(audienceStats?.audiences?.total||0),Number(audienceStats?.audiences?.total||0)+' audiences'),
+        Delivery:section(deliveries.length?'live':'setup',deliveries.length,deliveries.length+' delivery records'),
+        Monitoring:section('live',Number(monitoring?.openAlerts||monitoring?.alerts?.open||0),Number(monitoring?.openAlerts||monitoring?.alerts?.open||0)+' open alerts'),
+        Alerts:section(Number(monitoring?.openAlerts||monitoring?.alerts?.open||0)>0?'attention':'live',Number(monitoring?.openAlerts||monitoring?.alerts?.open||0),Number(monitoring?.openAlerts||monitoring?.alerts?.open||0)+' open alerts'),
+        Settings:section('live',connectedConnectors.length,'Workspace configuration')
+      }
       const recent=[
         ...trackedEvents.slice(-8).map(x=>({id:x.id||randomUUID(),kind:'event',title:x.event||x.eventType||x.name||'Tracked event',meta:x.source||x.channel||'First-party',time:x.receivedAt||x.occurredAt||x.timestamp||null,tab:'Live Sync'})),
         ...deliveries.slice(0,8).map(x=>({id:'delivery:'+x.id,kind:'delivery',title:(x.event||'Signal')+' → '+(x.destination||'destination'),meta:x.status||'queued',time:x.updatedAt||x.createdAt||null,tab:'Delivery'})),
@@ -607,6 +639,7 @@ const server = http.createServer(async (req,res)=>{
         generatedAt:new Date().toISOString(),
         readiness,
         areas,
+        sections,
         totals:{
           trackedEvents:trackedCount,
           profiles,
