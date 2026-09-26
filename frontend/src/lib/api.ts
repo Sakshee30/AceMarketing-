@@ -158,6 +158,7 @@ export const api = {
   importPosBatch: (payload: Record<string, unknown>) => request('/pos-stores/import', { method: 'POST', body: JSON.stringify(payload) }),
   track: (payload: Record<string, unknown>) => request('/track', { method: 'POST', body: JSON.stringify(payload) }),
   journeys: () => request('/journeys'),
+  customer360: (id?: string) => request('/customer-360'+(id?'?id='+encodeURIComponent(id):'')),
   identity: () => request('/identity'),
   models: () => request('/models'),
   createModel: (payload: Record<string, unknown>) => request('/models', { method: 'POST', body: JSON.stringify(payload) }),
