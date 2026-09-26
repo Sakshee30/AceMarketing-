@@ -84,7 +84,7 @@ test.describe('workspace critical flows',()=>{
     await expect(activation).toBeVisible()
     await activation.click()
     const sidebar=page.locator('.product-sidebar')
-    await expect(sidebar.getByRole('button',{name:'Audiences',exact:true})).toHaveCount(0)
+    await expect(sidebar.getByRole('button',{name:'Audiences',exact:true})).toBeHidden()
     await activation.click()
     await expect(sidebar.getByRole('button',{name:'Audiences',exact:true})).toBeVisible()
 
@@ -798,16 +798,17 @@ test('behavior workspace analyzes persisted source campaign and device evidence'
   await expect(page.getByRole('heading',{name:'Website & app behavior'})).toBeVisible()
   await expect(page.getByText('Persisted workspace event window',{exact:true})).toBeVisible()
 
-  await page.getByRole('button',{name:'Sources',exact:true}).click()
-  await expect(page.getByText(source,{exact:true}).first()).toBeVisible()
+  const behaviorTabs=page.locator('.behavior-tabs')
+  await behaviorTabs.getByRole('button',{name:'Sources',exact:true}).click()
+  await expect(page.locator('.behavior-analysis-row').filter({hasText:source}).first()).toBeVisible()
 
-  await page.getByRole('button',{name:'Campaigns',exact:true}).click()
-  await expect(page.getByText(campaign,{exact:true}).first()).toBeVisible()
+  await behaviorTabs.getByRole('button',{name:'Campaigns',exact:true}).click()
+  await expect(page.locator('.behavior-analysis-row').filter({hasText:campaign}).first()).toBeVisible()
 
-  await page.getByRole('button',{name:'Devices',exact:true}).click()
-  await expect(page.getByText('mobile',{exact:true}).first()).toBeVisible()
+  await behaviorTabs.getByRole('button',{name:'Devices',exact:true}).click()
+  await expect(page.locator('.behavior-analysis-row').filter({hasText:'mobile'}).first()).toBeVisible()
 
-  await page.getByRole('button',{name:'Events',exact:true}).click()
+  await behaviorTabs.getByRole('button',{name:'Events',exact:true}).click()
   await expect(page.getByText('pricing view',{exact:true}).first()).toBeVisible()
   await expect(page.getByText('consultation booked',{exact:true}).first()).toBeVisible()
 })
