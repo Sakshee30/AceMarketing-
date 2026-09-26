@@ -575,3 +575,28 @@ test('workspace quick navigator searches and opens dashboard sections', async ({
   await page.getByRole('button', { name: /Monitoring/ }).first().click()
   await expect(page.getByRole('heading', { name: 'Platform monitoring' })).toBeVisible()
 })
+
+
+test('business event template prefills and persists a real rule', async ({ page }, testInfo) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  await openWorkspaceTab(page,'Events')
+  await expect(page.getByRole('heading', { name: 'Conversion event manager' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Commerce' }).click()
+  const template=page.locator('.template-card').filter({hasText:'High-value Purchase'}).first()
+  await expect(template).toBeVisible()
+  await template.getByRole('button', { name: 'Use template' }).click()
+
+  const form=page.locator('.connector-card')
+  const unique='CI High-value Purchase '+testInfo.project.name
+  await expect(form.getByLabel('Source event')).toHaveValue('purchase')
+  await expect(form.getByLabel('Output event')).toHaveValue('high_value_purchase')
+  await expect(form.getByLabel('Condition field')).toHaveValue('value')
+  await form.getByLabel('Rule name').fill(unique)
+  await expect(form.getByText(/When/)).toContainText('high_value_purchase')
+  await form.getByRole('button', { name: 'Create & enable rule' }).click()
+
+  await expect(page.getByText('Event rule created and enabled.', { exact: true })).toBeVisible()
+  await expect(page.getByText(unique, { exact: true }).first()).toBeVisible()
+})
