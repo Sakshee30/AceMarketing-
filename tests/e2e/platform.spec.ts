@@ -1100,3 +1100,52 @@ test('funnel supports account-level drilldown and stage conversion rates', async
   await expect(page.locator('.funnel-campaign-detail')).toContainText('Account Alpha')
   await expect(page.locator('.funnel-campaign-detail')).toContainText('Lead → Qualified')
 })
+
+
+test('alert center shows owner affected period and investigation runbook', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+
+  const rule=await page.request.post('/api/monitoring-rules',{data:{
+    metric:'tracking_inactivity_minutes',
+    operator:'gt',
+    threshold:-1,
+    severity:'warning',
+    windowMinutes:30,
+    enabled:true
+  }})
+  expect(rule.ok()).toBeTruthy()
+
+  const alertsResponse=await page.request.get('/api/alerts')
+  expect(alertsResponse.ok()).toBeTruthy()
+  const alertsPayload=await alertsResponse.json()
+  const incident=(alertsPayload.items||[]).find((x:any)=>x.metric==='tracking_inactivity_minutes'&&x.status==='open')
+  expect(incident).toBeTruthy()
+  expect(incident.owner).toBe('Tracking / analytics owner')
+  expect(incident.recommendation).toContain('site/app installation')
+
+  await openWorkspaceTab(page,'Alerts')
+  await expect(page.getByRole('heading',{name:'Alert Center'})).toBeVisible()
+  const alertButton=page.locator('.alert-center-list>button').filter({hasText:'Tracking activity has gone quiet'}).first()
+  await expect(alertButton).toBeVisible()
+  await alertButton.click()
+
+  const detail=page.locator('.alert-center-detail')
+  await expect(detail).toContainText('Tracking / analytics owner')
+  await expect(detail).toContainText('30 minute monitoring window')
+  await expect(detail).toContainText('Recommended investigation')
+  await expect(detail).toContainText('site/app installation')
+
+  await detail.getByRole('button',{name:'Mark resolved'}).click()
+  await expect(detail).toContainText('Resolved')
+
+  const restore=await page.request.post('/api/monitoring-rules',{data:{
+    metric:'tracking_inactivity_minutes',
+    operator:'gt',
+    threshold:30,
+    severity:'warning',
+    windowMinutes:30,
+    enabled:true
+  }})
+  expect(restore.ok()).toBeTruthy()
+})
