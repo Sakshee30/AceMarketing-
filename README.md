@@ -4172,3 +4172,51 @@ Implemented:
 - Playwright coverage that verifies the backend summary contract, live status rendering, search, and direct navigation into Attribution.
 
 This pass keeps the existing grouped sidebar intact while making a large EasyInsights-style workspace substantially faster to navigate and easier to understand operationally.
+
+
+## Source-to-destination Data Flows pass
+
+This pass closes the gap between merely connecting tools and defining how business data should actually move between them.
+
+Implemented:
+- new **Data Flows** workspace under Activation & Integrations;
+- persisted flow recipes with source, destination, business object/event, trigger, identity mapping and cadence;
+- backend endpoints:
+  - `GET /api/integration-flows`
+  - `POST /api/integration-flows`
+  - `POST /api/integration-flows/test`
+  - `POST /api/integration-flows/toggle`;
+- readiness tests evaluate the real workspace connector state at both ends of the flow;
+- activation guardrail: a flow cannot be enabled until its readiness test passes;
+- active / paused status is persisted and audited;
+- dashboard readiness now includes active integration-flow evidence;
+- live Data Flows statistics for configured, active, healthy and attention-needed recipes;
+- responsive animated flow cards with clear Source → Destination visibility;
+- dedicated flow builder and direct access through the sidebar and dashboard navigator;
+- Playwright coverage for creation, persistence, readiness testing and activation blocking.
+
+The operating workflow is now:
+
+```text
+Connect source + destination
+          ↓
+Create data flow
+          ↓
+Map business object / event
+          ↓
+Map identity field
+          ↓
+Choose real-time or scheduled cadence
+          ↓
+Run backend readiness test
+          ↓
+Both connectors ready?
+      ↙          ↘
+     No          Yes
+     ↓            ↓
+Needs attention  Activate
+     ↓            ↓
+Fix connector    Persist active flow
+```
+
+The readiness test is intentionally truthful: it verifies configured connector state and does not claim that an unsupported or disconnected provider is live. Provider-specific transport execution still uses the existing native/custom connector and delivery architecture.
