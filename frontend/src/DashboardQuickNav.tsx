@@ -26,6 +26,7 @@ const groups:ShortcutGroup[]=[
       {label:'Launchpad',tab:'Launchpad',icon:Zap,description:'Connect systems and finish workspace readiness'},
       {label:'Command Center',tab:'Overview',icon:Gauge,description:'KPIs, revenue signals and operating health'},
       {label:'Ad Sync',tab:'AdSync',icon:Target,description:'Return qualified conversion signals to ad platforms'},
+      {label:'ChatGPT Ads',tab:'ChatGPT Ads',icon:Bot,description:'Send server-side conversions with oppref matching and deduplicated event IDs'},
       {label:'Funnel',tab:'Funnel',icon:BarChart3,description:'Inspect stage conversion and drop-off'},
       {label:'Events',tab:'Events',icon:Activity,description:'Manage conversion events and rules'},
       {label:'Adjustments',tab:'Adjustments',icon:Target,description:'Preview and apply governed performance adjustments'},
