@@ -919,3 +919,27 @@ test('feedback insight routing creates a recovery follow-up task', async ({ page
   await expect(page.getByRole('heading',{name:'Follow-up operations'})).toBeVisible()
   await expect(page.getByText(lead,{exact:true}).first()).toBeVisible()
 })
+
+
+test('voice qualification can be queued from the Calls workspace', async ({ page }, testInfo) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  await openWorkspaceTab(page,'Calls')
+  await expect(page.getByRole('heading',{name:'Voice qualification & call tracking'})).toBeVisible()
+
+  await page.getByRole('button',{name:'Start qualification',exact:true}).click()
+  const form=page.locator('.qualification-builder')
+  const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()+'_'+Date.now()
+  const lead='CI Voice '+suffix
+  await form.getByLabel('Lead reference').fill(lead)
+  await form.getByLabel('Phone number').fill('+919999999999')
+  await form.getByLabel('Source').fill('CI Website')
+  await form.getByLabel('Initial intent score').fill('82')
+
+  const responsePromise=page.waitForResponse(r=>r.url().includes('/api/qualification-calls')&&r.request().method()==='POST'&&!r.url().includes('/retry'))
+  await form.getByRole('button',{name:'Queue qualification call'}).click()
+  const response=await responsePromise
+  expect(response.status()).toBe(202)
+  await expect(page.getByText(/Qualification call queued through the durable voice-agent worker/)).toBeVisible()
+  await expect(page.locator('.call-list').getByText(lead,{exact:true}).first()).toBeVisible()
+})
