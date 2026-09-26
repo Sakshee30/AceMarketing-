@@ -163,6 +163,48 @@ test.describe('workspace critical flows',()=>{
     await expect(page.getByText(/Duplicate evidence/i)).toBeVisible()
   })
 
+  test('funnel leak monitor detects missing handoffs and queues a real recovery follow-up',async({page},testInfo)=>{
+    const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()+'_'+Date.now()
+    const customerId='leak_customer_'+suffix
+
+    const consent=await page.request.post('/api/consent',{data:{subjectType:'customer',subjectId:customerId,essential:true,analytics:true,marketing:true,personalization:true,source:'ci'}})
+    expect(consent.ok()).toBeTruthy()
+
+    const tracked=await page.request.post('/api/track',{data:{
+      event:'lead.qualified',
+      eventCategory:'analytics',
+      customerId,
+      crmStage:'qualified',
+      source:'CI Funnel Leak',
+      campaign:'leak-monitor-ci',
+      conversionPropensity:90
+    }})
+    expect(tracked.ok()).toBeTruthy()
+
+    const leaks=await page.request.get('/api/leak-monitor')
+    expect(leaks.ok()).toBeTruthy()
+    const leakPayload=await leaks.json()
+    const leak=leakPayload.items.find((x:any)=>x.leadRef===customerId)
+    expect(leak).toBeTruthy()
+    expect(leak.reason).toContain('routing')
+    expect(leak.evidence.hasRoute).toBeFalsy()
+
+    const recovery=await page.request.post('/api/leak-monitor/recover',{data:{leadRef:customerId,channel:'call',reason:leak.reason,priority:'high',delayMinutes:0}})
+    expect(recovery.ok()).toBeTruthy()
+    const recoveryPayload=await recovery.json()
+    expect(recoveryPayload.item?.id).toBeTruthy()
+
+    const followups=await page.request.get('/api/follow-ups')
+    expect(followups.ok()).toBeTruthy()
+    const followPayload=await followups.json()
+    expect((followPayload.items||followPayload).some((x:any)=>x.id===recoveryPayload.item.id||x.lead_ref===customerId)).toBeTruthy()
+
+    await openWorkspaceTab(page,'Leak Monitor')
+    await expect(page.getByRole('heading',{name:'Funnel leak monitor'})).toBeVisible()
+    await expect(page.getByText(customerId,{exact:true}).first()).toBeVisible()
+    await expect(page.getByText(/Recovery queued/i).first()).toBeVisible()
+  })
+
   test('grouped performance uses persisted conversion evidence and explicit cost basis',async({page},testInfo)=>{
     const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()
     const customerId='grouped_customer_'+suffix
@@ -950,7 +992,7 @@ test('all workspace sections render without a frontend crash', async ({ page }) 
   await dismissConsent(page)
 
   const tabs=[
-    'Launchpad','Overview','AdSync','ChatGPT Ads','Funnel','Events','Adjustments','Diagnostics','Reconciliation','Fraud','Deep Links','Sites','Fingerprinting',
+    'Launchpad','Overview','AdSync','ChatGPT Ads','Funnel','Leak Monitor','Events','Adjustments','Diagnostics','Reconciliation','Fraud','Deep Links','Sites','Fingerprinting',
     'Live Sync','Data Hub','Customer 360','Offline Attribution','Matchback','POS & Stores','Journeys','Identity','Models','Attribution','Planner','Reports','Grouped Performance','Executive Briefs',
     'Enrich','Lead Grading','Behavior','Feed','Agents','Routing','Follow-ups','Calls','Meetings','Feedback','Approvals','Ask Ace',
     'Integrations','Data Flows','Real-Time Activation','Personalization','Exclusions','Audiences','Delivery','Monitoring','Alerts','Compliance','Developers','Settings'
