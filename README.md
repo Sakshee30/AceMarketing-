@@ -5485,3 +5485,10 @@ AceMarketing AdSync now converts two previously catalog-only advertising integra
 The AdSync dashboard now exposes installable quick-start pipelines for Google, Meta, LinkedIn, Microsoft/Bing, Pinterest and ChatGPT Ads. All of them use the same persisted event-rule, durable delivery, retry, audit and monitoring pipeline instead of isolated UI-only actions.
 
 E2E coverage verifies that Microsoft and Pinterest quick-start cards create persisted AdSync pipelines and select the correct real delivery destinations.
+
+
+### AdSync destination persistence hardening
+
+The event-rule engine's destination allowlist now includes every native server-side AdSync provider currently exposed by the dashboard: `Google Ads`, `Meta Ads`, `LinkedIn Ads`, `Microsoft Ads / Bing Ads`, `Pinterest`, and `ChatGPT Ads`. This prevents a frontend-created provider pipeline from being accepted while its destination is silently removed before persistence.
+
+Pinterest matching has also been tightened to follow the provider contract: external IDs are SHA-256 hashed, and an event must carry hashed email, a hashed mobile advertising ID, or the client IP + user-agent pair before delivery.
