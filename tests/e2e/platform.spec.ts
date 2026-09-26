@@ -121,6 +121,33 @@ test.describe('workspace critical flows',()=>{
     await expect(page.locator('.product-body h1')).toContainText(/Audience/i)
   })
 
+  test('data flows persist recipes and enforce readiness before activation',async({page})=>{
+    await openWorkspaceTab(page,'Data Flows')
+    await expect(page.locator('.product-body h1')).toContainText(/Data flows/i)
+    await expect(page.getByText(/Source → map → verify → activate/i)).toBeVisible()
+
+    await page.getByRole('button',{name:'Create flow'}).click()
+    const modal=page.getByRole('form').filter({hasText:'Create data flow'})
+    await expect(modal).toBeVisible()
+    await modal.getByLabel('Flow name').fill('CI LeadSquared to Meta flow')
+    await modal.getByLabel('Source').selectOption({label:'LeadSquared'})
+    await modal.getByLabel('Destination').selectOption({label:'Meta Ads'})
+    await modal.getByLabel('Business object / event').fill('Qualified lead')
+    await modal.getByLabel('Trigger').fill('On lifecycle stage change')
+    await modal.getByLabel('Identity mapping').fill('email / phone / fbclid')
+    await modal.getByRole('button',{name:'Create flow'}).click()
+
+    await expect(page.getByText('CI LeadSquared to Meta flow')).toBeVisible()
+    const card=page.locator('.data-flow-card').filter({hasText:'CI LeadSquared to Meta flow'})
+    await expect(card).toContainText('Not tested')
+    await card.getByRole('button',{name:'Test readiness'}).click()
+    await expect(card).toContainText(/Needs attention|Readiness passed/)
+    if(await card.getByText('Needs attention').isVisible().catch(()=>false)){
+      await card.getByRole('button',{name:'Activate'}).click()
+      await expect(page.locator('.delivery-notice')).toContainText(/must pass|readiness/i)
+    }
+  })
+
   test('core operating tabs render',async({page})=>{
     const tabs=[
       ['Journeys',/Customer|journey/i],
