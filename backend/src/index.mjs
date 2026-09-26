@@ -1107,6 +1107,10 @@ const server = http.createServer(async (req,res)=>{
       const tokenHealth=await connectorTokenHealth(workspaceId).catch(()=>[])
       const connections=state.connectorConnections||[]
       return send(req,res,200,{items:integrations.map(name=>{
+        if(name==='ChatGPT Ads'){
+          const configured=Boolean(process.env.OPENAI_CONVERSIONS_API_KEY&&process.env.OPENAI_ADS_PIXEL_ID)
+          return {name,status:configured?'connected':'needs_configuration',provider:'openai',authType:'server_secret',capability:'native_server_capi',configured,updatedAt:null,tokenHealth:null}
+        }
         const saved=connections.find(x=>x.connector===name)
         const provider=CONNECTOR_PROVIDERS[name]
         const health=tokenHealth.find(x=>x.connector===name)||null
