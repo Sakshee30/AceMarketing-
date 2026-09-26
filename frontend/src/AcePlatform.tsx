@@ -1,5 +1,5 @@
 // @ts-nocheck
-import {Fragment,useEffect,useMemo,useState} from 'react'
+import {Component,Fragment,useEffect,useMemo,useState} from 'react'
 import {createPortal} from 'react-dom'
 import {
   Activity,AlertTriangle,ArrowRight,BarChart3,Bell,BookOpen,Bot,Building2,Cable,CalendarDays,Check,CheckCircle2,ChevronDown,ChevronRight,
@@ -2818,6 +2818,18 @@ function Settings(){
  {notice&&<div className="delivery-notice ok"><CheckCircle2/><span>{notice}</span></div>}
  <div className="settings-shell"><aside className="settings-nav">{sections.map(x=><button key={x} className={section===x?'active':''} onClick={()=>setSection(x)}>{x}<ChevronRight/></button>)}</aside><div className="app-panel">{content[section]}</div></div></>
 }
+class WorkspaceSectionBoundary extends Component<any,{error:Error|null}>{
+ constructor(props:any){super(props);this.state={error:null}}
+ static getDerivedStateFromError(error:Error){return {error}}
+ componentDidCatch(error:Error,info:any){
+  try{console.error('workspace section failed',this.props?.tab,error,info?.componentStack||'')}catch{}
+ }
+ componentDidUpdate(prevProps:any){if(prevProps?.tab!==this.props?.tab&&this.state.error)this.setState({error:null})}
+ render(){
+  if(!this.state.error)return this.props.children
+  return <div className="app-panel workspace-section-error" role="alert"><AlertTriangle/><div><h2>{String(this.props?.tab||'Workspace section')} could not render</h2><p>{this.state.error.message||'An unexpected rendering error occurred.'}</p><small>The rest of the dashboard is still available. Retry this section or use the dashboard navigator to continue working.</small></div><button onClick={()=>this.setState({error:null})}><RefreshCw/>Retry section</button></div>
+ }
+}
 function Product({back}:{back:()=>void}){
  const [tab,setTab]=useState<AppTab>(()=>{const saved=window.localStorage.getItem('ace_active_tab') as AppTab|null;return saved&&appTabs.some(([name])=>name===saved)?saved:'Overview'})
  const [workspaceOpen,setWorkspaceOpen]=useState(false)
@@ -2888,7 +2900,7 @@ function Product({back}:{back:()=>void}){
    return <button key={section.id} className={active?'active':''} aria-label={section.label} onClick={()=>setTab(target as AppTab)}><span><Icon/></span><div><b aria-hidden="true">{section.label}</b><small>{area?.ready?'Ready':sectionSummary?'Needs setup':'Checking…'}</small></div><i className={area?.ready?'ready':'setup'}/></button>
   })}
  </div>
- <div className="product-body">{view}</div></main>
+ <div className="product-body"><WorkspaceSectionBoundary key={tab} tab={tab}>{view}</WorkspaceSectionBoundary></div></main>
  {createOpen&&<div className="connector-modal"><div className="connector-card"><div className="connector-modal-head"><div><Building2/><div><b>Create workspace</b><small>Create a persisted tenant workspace.</small></div></div><button onClick={()=>setCreateOpen(false)}><X/></button></div><div className="connector-step"><label>Workspace name<input value={workspaceDraft.name} onChange={e=>setWorkspaceDraft({...workspaceDraft,name:e.target.value})} placeholder="Ace Retail"/></label><label>Environment<select value={workspaceDraft.environment} onChange={e=>setWorkspaceDraft({...workspaceDraft,environment:e.target.value})}><option>Production</option><option>Sandbox</option></select></label><button disabled={workspaceBusy||!workspaceDraft.name.trim()} onClick={createWorkspace}>{workspaceBusy?'Creating…':'Create workspace'}</button></div></div></div>}
  </div>
 }
