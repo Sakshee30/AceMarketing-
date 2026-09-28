@@ -13,6 +13,8 @@ import {getLocalConsent,saveLocalConsent} from './lib/tracker'
 import {RouteAnnouncer} from './components/system/FrontendFoundation'
 import {EmptyState,ErrorState,LoadingState,StaleState} from './components/system/FrontendStates'
 import {initialMutationLifecycle,mutationLifecycle} from './lib/mutation-lifecycle'
+import {confirmDiscardDirtyWork,useDirtyWork} from './lib/dirty-work'
+import {parseWorkspaceTabFromHash,workspaceFeatureByLabel} from './features/workspace/manifest'
 
 type View='site'|'app'|'login'|'pricing'|'demo'|'company'|'resources'|'case-studies'|'privacy'|'terms'|'security'|'solutions'|'industries'|'agents-public'|'integrations-public'
 type AppTab='Launchpad'|'Overview'|'AdSync'|'ChatGPT Ads'|'Funnel'|'Leak Monitor'|'Events'|'Adjustments'|'Diagnostics'|'Match Quality'|'Reconciliation'|'Fraud'|'Deep Links'|'Sites'|'Fingerprinting'|'Live Sync'|'Data Hub'|'Customer 360'|'Offline Attribution'|'Matchback'|'POS & Stores'|'Journeys'|'Identity'|'Models'|'Attribution'|'Planner'|'Reports'|'Grouped Performance'|'Executive Briefs'|'Enrich'|'Lead Grading'|'Behavior'|'Feed'|'Agents'|'Routing'|'Follow-ups'|'Calls'|'Meetings'|'Feedback'|'Approvals'|'Ask Ace'|'Integrations'|'Data Flows'|'Real-Time Activation'|'Personalization'|'Exclusions'|'Audiences'|'Delivery'|'Monitoring'|'Alerts'|'Compliance'|'Developers'|'Settings'
@@ -1514,6 +1516,7 @@ function Models(){
  const [validation,setValidation]=useState<any>(null)
  const [validationOpen,setValidationOpen]=useState(false)
  const [builder,setBuilder]=useState(false)
+ useDirtyWork({key:'custom-model-draft',label:'Custom model draft',dirty:builder,scope:'feature'})
  const [notice,setNotice]=useState('')
  const load=()=>api.models().then((r:any)=>{setData(r);if(r.items?.length)setSelected((x:string)=>x&&r.items.some((m:any)=>m.name===x)?x:r.items[0].name)}).catch(()=>setData({items:[],runs:[]}))
  useEffect(()=>{load()},[])
@@ -1573,13 +1576,15 @@ function Planner(){
  const [compare,setCompare]=useState(false)
  const [notice,setNotice]=useState('')
  const [saving,setSaving]=useState(false)
+ const [savedBudget,setSavedBudget]=useState(2500000)
+ useDirtyWork({key:'planner-scenario',label:'Planner scenario',dirty:budget!==savedBudget,scope:'feature'})
  const load=()=>api.planner().then((r:any)=>setData(r)).catch((e:any)=>setNotice(e?.message||'Planner evidence could not be loaded.'))
  useEffect(()=>{load()},[])
  const channels=data.channels||[]
  const totalShare=channels.reduce((n:number,x:any)=>n+Number(x.share||0),0)||1
  const normalized=channels.map((x:any)=>({...x,share:Number((Number(x.share||0)/totalShare*100).toFixed(1))}))
  const projected=normalized.reduce((s:number,x:any)=>s+(budget*(x.share/100)),0)
- const save=async()=>{if(!normalized.length)return;setSaving(true);setNotice('');try{const r:any=await api.savePlannerScenario({name:'Scenario '+new Date().toLocaleDateString(),budget,allocations:normalized.map((x:any)=>({source:x.name,share:x.share,evidence:x.evidence}))});setNotice('Scenario saved: '+r.id);await load()}catch(e:any){setNotice(e?.message||'Scenario could not be saved.')}finally{setSaving(false)}}
+ const save=async()=>{if(!normalized.length)return;setSaving(true);setNotice('');try{const r:any=await api.savePlannerScenario({name:'Scenario '+new Date().toLocaleDateString(),budget,allocations:normalized.map((x:any)=>({source:x.name,share:x.share,evidence:x.evidence}))});setSavedBudget(budget);setNotice('Scenario saved: '+r.id);await load()}catch(e:any){setNotice(e?.message||'Scenario could not be saved.')}finally{setSaving(false)}}
  const money=(n:any)=>'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:0})
  return <><PageHead crumb="Measurement / Planner" title="Strategic media planner" sub="Use persisted cohort, attribution and revenue evidence to build a human-approved budget scenario." action={saving?'Saving…':'Save scenario'} onAction={save}/>
  {notice&&<div className="delivery-notice ok"><CheckCircle2/><span>{notice}</span></div>}
@@ -3193,23 +3198,44 @@ function Compliance(){
 
 function Settings(){
  const sections=['Workspace','Users & roles','Tracking','Governance','API & webhooks','Agent approvals','Notifications','Billing & usage']
+ const settingsDefaults:any={
+  organization:'Ace EdTech',timezone:'Asia/Kolkata',currency:'INR',reportingWeek:'Monday',defaultAttribution:'Full path',environment:'Production',
+  primaryDomain:'www.example.com',crossDomainTracking:'Enabled',gclidPersistenceDays:90,fbclidPersistenceDays:90,
+  notifyDeliveryFailures:true,notifyTokenExpiry:true,notifyAudienceStale:true,notifyDailySummary:true,notificationEmail:'',notificationSlack:false,
+  approvalSignalReturn:'Auto-run',approvalCrmEnrichment:'Auto-run',approvalLeadQualification:'Human approval',approvalAudienceSuppression:'Human approval',approvalCustomIntegration:'Human approval'
+ }
  const [section,setSection]=useState('Workspace')
  const [apiKey,setApiKey]=useState('')
  const [notice,setNotice]=useState('')
  const [busy,setBusy]=useState('')
- const [settings,setSettings]=useState<any>({
-  organization:'Ace EdTech',timezone:'Asia/Kolkata',currency:'INR',reportingWeek:'Monday',defaultAttribution:'Full path',environment:'Production',
-  primaryDomain:'www.example.com',crossDomainTracking:'Enabled',gclidPersistenceDays:90,fbclidPersistenceDays:90
-,notifyDeliveryFailures:true,notifyTokenExpiry:true,notifyAudienceStale:true,notifyDailySummary:true,notificationEmail:'',notificationSlack:false,approvalSignalReturn:'Auto-run',approvalCrmEnrichment:'Auto-run',approvalLeadQualification:'Human approval',approvalAudienceSuppression:'Human approval',approvalCustomIntegration:'Human approval' })
- const load=()=>api.settings().then((r:any)=>setSettings((x:any)=>({...x,...r}))).catch(()=>null)
+ const [settings,setSettings]=useState<any>(settingsDefaults)
+ const [savedSettings,setSavedSettings]=useState<any>(settingsDefaults)
+ const dirtyKeys=Object.keys(settings).filter(key=>JSON.stringify(settings[key])!==JSON.stringify(savedSettings[key]))
+ useDirtyWork({key:'workspace-settings',label:'Workspace settings',dirty:dirtyKeys.length>0,scope:'workspace'})
+
+ const load=async()=>{
+  try{
+   const r:any=await api.settings()
+   const next={...settingsDefaults,...r}
+   setSettings(next)
+   setSavedSettings(next)
+  }catch{}
+ }
  useEffect(()=>{load()},[])
  const save=async(keys?:string[])=>{
   setBusy('save');setNotice('')
   try{
    const payload:any={}
-   for(const [key,value] of Object.entries(settings)) if(!keys||keys.includes(key)) payload[key]=value
+   for(const [key,value] of Object.entries(settings))if(!keys||keys.includes(key))payload[key]=value
    const r:any=await api.saveSettings(payload)
-   setSettings((x:any)=>({...x,...r}))
+   const next={...settings,...r}
+   setSettings(next)
+   setSavedSettings((previous:any)=>{
+    const confirmed={...previous}
+    const confirmedKeys=new Set([...Object.keys(payload),...Object.keys(r||{})])
+    for(const key of confirmedKeys)confirmed[key]=next[key]
+    return confirmed
+   })
    setNotice('Workspace settings saved.')
   }catch(e:any){setNotice(e?.message||'Settings could not be saved.')}
   finally{setBusy('')}
@@ -3238,6 +3264,7 @@ function Settings(){
   'Billing & usage':<BillingUsageSettings/>
  }
  return <><PageHead crumb="Workspace / Settings" title="Workspace settings" sub="Configure organization, access, tracking, governance, developer access and automation boundaries."/>
+ {dirtyKeys.length>0&&<div className="delivery-notice"><Activity/><span>{dirtyKeys.length} unsaved setting{dirtyKeys.length===1?'':'s'} · save or explicitly leave this page to discard them.</span></div>}
  {notice&&<div className="delivery-notice ok"><CheckCircle2/><span>{notice}</span></div>}
  <div className="settings-shell"><aside className="settings-nav">{sections.map(x=><button key={x} className={section===x?'active':''} onClick={()=>setSection(x)}>{x}<ChevronRight/></button>)}</aside><div className="app-panel">{content[section]}</div></div></>
 }
@@ -3254,7 +3281,7 @@ class WorkspaceSectionBoundary extends Component<any,{error:Error|null}>{
  }
 }
 function Product({back}:{back:()=>void}){
- const [tab,setTab]=useState<AppTab>(()=>{const saved=window.localStorage.getItem('ace_active_tab') as AppTab|null;return saved&&appTabs.some(([name])=>name===saved)?saved:'Overview'})
+ const [tab,setTab]=useState<AppTab>(()=>{const routed=parseWorkspaceTabFromHash(window.location.hash) as AppTab|null;const saved=window.localStorage.getItem('ace_active_tab') as AppTab|null;return routed||(saved&&appTabs.some(([name])=>name===saved)?saved:'Overview')})
  const [workspaceOpen,setWorkspaceOpen]=useState(false)
  const [mobileNavOpen,setMobileNavOpen]=useState(false)
  const [workspace,setWorkspace]=useState('Ace EdTech')
@@ -3275,14 +3302,33 @@ function Product({back}:{back:()=>void}){
  })
  const [navFilter,setNavFilter]=useState('')
  const [sectionSummary,setSectionSummary]=useState<any>(null)
+ const syncTabRoute=(next:AppTab,replace=false)=>{
+  const feature=workspaceFeatureByLabel.get(next)
+  if(!feature)return
+  if(replace)window.history.replaceState(null,'',feature.canonicalHash)
+  else window.history.pushState(null,'',feature.canonicalHash)
+ }
+ const navigateToTab=(next:AppTab,replace=false)=>{
+  if(next===tab){setMobileNavOpen(false);return true}
+  if(!confirmDiscardDirtyWork(next))return false
+  setTab(next)
+  setMobileNavOpen(false)
+  syncTabRoute(next,replace)
+  return true
+ }
+ const leaveWorkspace=()=>{
+  if(confirmDiscardDirtyWork('the public website'))back()
+ }
  useEffect(()=>{api.workspaces().then((r:any)=>{if(r.items?.length){setWorkspaces(r.items);if(!r.items.some((x:any)=>x.name===workspace))setWorkspace(r.items[0].name)}}).catch(()=>null)},[])
  useEffect(()=>{const load=()=>api.dashboardSummary().then((r:any)=>setSectionSummary(r)).catch(()=>null);load();const id=setInterval(load,30000);return()=>clearInterval(id)},[workspaceGeneration])
  useEffect(()=>{window.localStorage.setItem('ace_active_tab',tab)},[tab])
  useEffect(()=>{window.localStorage.setItem('ace_nav_sections',JSON.stringify(navOpen))},[navOpen])
  useEffect(()=>{const section=dashboardSections.find(s=>s.tabs.includes(tab as any));if(section&&!navOpen[section.id])setNavOpen(x=>({...x,[section.id]:true}))},[tab])
- useEffect(()=>{const openTab=(event:any)=>{const next=event?.detail as AppTab;if(appTabs.some(([name])=>name===next))setTab(next)};window.addEventListener('ace-app-tab',openTab as EventListener);return()=>window.removeEventListener('ace-app-tab',openTab as EventListener)},[])
+ useEffect(()=>{const openTab=(event:any)=>{const next=event?.detail as AppTab;if(appTabs.some(([name])=>name===next))navigateToTab(next)};window.addEventListener('ace-app-tab',openTab as EventListener);return()=>window.removeEventListener('ace-app-tab',openTab as EventListener)},[tab])
+ useEffect(()=>{const syncFromHistory=()=>{const next=parseWorkspaceTabFromHash(window.location.hash) as AppTab|null;if(!next||next===tab)return;if(confirmDiscardDirtyWork(next))setTab(next);else syncTabRoute(tab,true)};window.addEventListener('popstate',syncFromHistory);window.addEventListener('hashchange',syncFromHistory);return()=>{window.removeEventListener('popstate',syncFromHistory);window.removeEventListener('hashchange',syncFromHistory)}},[tab])
  const chooseWorkspace=async(x:any)=>{
   if(!x||x.name===workspace){setWorkspaceOpen(false);return}
+  if(!confirmDiscardDirtyWork('workspace '+String(x.name||'')))return
   setWorkspaceOpen(false)
   if(!x.id){
    setWorkspaceTransition({state:'error',item:x,message:'This workspace does not have a persisted backend identity yet.'})
@@ -3316,7 +3362,7 @@ function Product({back}:{back:()=>void}){
  }
  const retryWorkspace=()=>workspaceTransition?.item&&chooseWorkspace(workspaceTransition.item)
  const searchMatches=search.trim()?appTabs.filter(([name])=>name.toLowerCase().includes(search.trim().toLowerCase())).slice(0,8):[]
- const runSearch=(name?:string)=>{const target=(name||searchMatches[0]?.[0]) as AppTab|undefined;if(target){setTab(target);setSearch('')}}
+ const runSearch=(name?:string)=>{const target=(name||searchMatches[0]?.[0]) as AppTab|undefined;if(target&&navigateToTab(target))setSearch('')}
  const currentWorkspace=workspaces.find(x=>x.name===workspace)||workspaces[0]
  const view=useMemo(()=>({Launchpad:<Launchpad/>,Overview:<Overview/>,AdSync:<AdSync/>,"ChatGPT Ads":<ChatGPTAds/>,Funnel:<Funnel/>,"Leak Monitor":<LeakMonitor/>,Events:<Events/>,Adjustments:<Adjustments/>,Diagnostics:<Diagnostics/>,"Match Quality":<MatchQuality/>,Reconciliation:<Reconciliation/>,Fraud:<Fraud/>,"Deep Links":<DeepLinks/>,Sites:<Sites/>,Fingerprinting:<Fingerprinting/>,"Live Sync":<LiveSync/>,"Data Hub":<DataHub/>,"Customer 360":<Customer360/>,"Offline Attribution":<OfflineAttribution/>,Matchback:<Matchback/>,"POS & Stores":<POSAndStores/>,Journeys:<Journeys/>,Identity:<Identity/>,Models:<Models/>,Attribution:<Attribution/>,Planner:<Planner/>,Reports:<Reports/>,"Grouped Performance":<GroupedPerformance/>,"Executive Briefs":<ExecutiveBriefs/>,Enrich:<Enrich/>,"Lead Grading":<LeadGrading/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Routing:<Routing/>,"Follow-ups":<FollowUps/>,Calls:<Calls/>,Meetings:<Meetings/>,Feedback:<Feedback/>,Approvals:<Approvals/>,"Ask Ace":<AskAce/>,Integrations:<Integrations/>,"Data Flows":<DataFlows/>,"Real-Time Activation":<RealTimeActivation/>,Personalization:<Personalization/>,Exclusions:<Exclusions/>,Audiences:<Audiences/>,Delivery:<DeliveryCenter/>,Monitoring:<Monitoring/>,Alerts:<Alerts/>,Compliance:<Compliance/>,Developers:<Developers/>,Settings:<Settings/>}[tab]),[tab,workspaceGeneration])
  return <div className={'product '+(mobileNavOpen?'mobile-nav-open':'')}><a className="skip-link" href="#ace-workspace-main">Skip to workspace content</a><RouteAnnouncer label={tab+' · '+workspace} focusSelector=".product-body .page-head h1"/><aside className="product-sidebar" aria-label="Workspace navigation"><Brand/><div className="workspace-wrap"><button className="workspace" onClick={()=>setWorkspaceOpen(!workspaceOpen)}><span>{currentWorkspace?.initials||'AM'}</span><div><b>{workspace}</b><small>{currentWorkspace?.environment||'Production'} workspace</small></div><ChevronDown/></button>{workspaceOpen&&<div className="workspace-menu">{workspaces.map((x:any)=><button key={x.id||x.name} onClick={()=>void chooseWorkspace(x)} className={workspace===x.name?'active':''}><span>{x.initials||String(x.name).split(/\s+/).map((s:string)=>s[0]).join('').slice(0,3)}</span><div><b>{x.name}</b><small>{x.environment||'Production'}</small></div>{workspace===x.name&&<Check/>}</button>)}<button className="new-workspace" onClick={()=>{setWorkspaceOpen(false);setCreateOpen(true)}}><Plus/>Create workspace</button></div>}</div><nav className="product-nav">
@@ -3328,19 +3374,19 @@ function Product({back}:{back:()=>void}){
   const opened=navFilter.trim()?true:navOpen[section.id]
   return <div className="product-nav-group" key={section.id}>
    <button className="product-nav-group-head" aria-label={'Toggle '+section.id+' navigation group'} onClick={()=>setNavOpen(x=>({...x,[section.id]:!x[section.id]}))}><SectionIcon/><span>{section.label}</span><small>{matching.length}</small><ChevronDown className={opened?'open':''}/></button>
-   {opened&&<div className="product-nav-group-items">{matching.map(name=>{const meta=tabMeta[name];const I=meta?.Icon||Activity;return <button key={name} className={tab===name?'active':''} onClick={()=>{setTab(name as AppTab);setMobileNavOpen(false)}} title={name}><I/>{name}{tab===name&&<span className="nav-active-dot"/>}</button>})}</div>}
+   {opened&&<div className="product-nav-group-items">{matching.map(name=>{const meta=tabMeta[name];const I=meta?.Icon||Activity;return <button key={name} className={tab===name?'active':''} onClick={()=>navigateToTab(name as AppTab)} title={name}><I/>{name}{tab===name&&<span className="nav-active-dot"/>}</button>})}</div>}
   </div>
  })}
- </nav><div className="aside-footer"><button onClick={back}><ArrowRight/>Back to website</button><div className="profile-mini"><span>S</span><div><b>Sakshee</b><small>Workspace owner</small></div></div></div></aside>
+ </nav><div className="aside-footer"><button onClick={leaveWorkspace}><ArrowRight/>Back to website</button><div className="profile-mini"><span>S</span><div><b>Sakshee</b><small>Workspace owner</small></div></div></div></aside>
  {mobileNavOpen&&<button className="product-mobile-nav-backdrop" aria-label="Close workspace navigation" onClick={()=>setMobileNavOpen(false)}/>}
- <main className="product-main" id="ace-workspace-main"><header className="product-head"><button className="product-mobile-nav-toggle" aria-label="Open workspace navigation" onClick={()=>setMobileNavOpen(true)}><Menu/></button><div className="global-search operational-search"><Search/><input value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>e.key==='Enter'&&runSearch()} placeholder="Search journeys, leads, campaigns, settings..."/>{searchMatches.length>0&&<div className="global-search-results">{searchMatches.map(([name,I])=><button key={name} onClick={()=>runSearch(name)}><I/><span>{name}</span><ArrowRight/></button>)}</div>}</div><div><button className="sync sync-button" aria-label="Open monitoring center" onClick={()=>setTab('Monitoring')}>● Monitoring</button><button aria-label="Support" onClick={()=>setTab('Settings')} title="Open workspace support/settings"><Headphones/></button><button aria-label="Region and language" onClick={()=>setRegionOpen(x=>!x)}><Globe2/></button><span className="avatar-sm">S</span>{regionOpen&&<div className="region-popover"><b>Workspace locale</b><span>Timezone · Asia/Kolkata</span><span>Currency · INR</span><button onClick={()=>{setRegionOpen(false);setTab('Settings')}}>Change in Settings</button></div>}</div></header>
+ <main className="product-main" id="ace-workspace-main"><header className="product-head"><button className="product-mobile-nav-toggle" aria-label="Open workspace navigation" onClick={()=>setMobileNavOpen(true)}><Menu/></button><div className="global-search operational-search"><Search/><input value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>e.key==='Enter'&&runSearch()} placeholder="Search journeys, leads, campaigns, settings..."/>{searchMatches.length>0&&<div className="global-search-results">{searchMatches.map(([name,I])=><button key={name} onClick={()=>runSearch(name)}><I/><span>{name}</span><ArrowRight/></button>)}</div>}</div><div><button className="sync sync-button" aria-label="Open monitoring center" onClick={()=>navigateToTab('Monitoring')}>● Monitoring</button><button aria-label="Support" onClick={()=>navigateToTab('Settings')} title="Open workspace support/settings"><Headphones/></button><button aria-label="Region and language" onClick={()=>setRegionOpen(x=>!x)}><Globe2/></button><span className="avatar-sm">S</span>{regionOpen&&<div className="region-popover"><b>Workspace locale</b><span>Timezone · Asia/Kolkata</span><span>Currency · INR</span><button onClick={()=>{setRegionOpen(false);navigateToTab('Settings')}}>Change in Settings</button></div>}</div></header>
  <div className="product-section-strip" aria-label="Dashboard sections">
   {dashboardSections.map((section:any)=>{
    const Icon=section.icon
    const active=section.tabs.includes(tab as any)
    const area=(sectionSummary?.areas||[]).find((x:any)=>x.key===(section.id==='workspace'?'data':section.id))
    const target=section.id==='workspace'?'Overview':section.tabs[0]
-   return <button key={section.id} className={active?'active':''} aria-label={section.label} onClick={()=>setTab(target as AppTab)}><span><Icon/></span><div><b aria-hidden="true">{section.label}</b><small>{area?.ready?'Ready':sectionSummary?'Needs setup':'Checking…'}</small></div><i className={area?.ready?'ready':'setup'}/></button>
+   return <button key={section.id} className={active?'active':''} aria-label={section.label} onClick={()=>navigateToTab(target as AppTab)}><span><Icon/></span><div><b aria-hidden="true">{section.label}</b><small>{area?.ready?'Ready':sectionSummary?'Needs setup':'Checking…'}</small></div><i className={area?.ready?'ready':'setup'}/></button>
   })}
  </div>
  <div className="product-body">{workspaceTransition?<div className={'app-panel workspace-transition '+workspaceTransition.state} role={workspaceTransition.state==='error'?'alert':'status'}><div className="workspace-transition-icon">{workspaceTransition.state==='error'?<AlertTriangle/>:<Activity/>}</div><div><span>{workspaceTransition.state==='error'?'WORKSPACE SWITCH BLOCKED':'SWITCHING WORKSPACE'}</span><h1 tabIndex={-1}>{workspaceTransition.item?.name||'Workspace'}</h1><p>{workspaceTransition.message}</p>{workspaceTransition.state==='resolving'&&<small>Previous workspace content is intentionally hidden until the target scope is confirmed.</small>}</div>{workspaceTransition.state==='error'&&<div className="workspace-transition-actions"><button onClick={()=>setWorkspaceTransition(null)}>Stay in {workspace}</button><button className="app-primary" onClick={retryWorkspace}><RefreshCw/>Retry</button></div>}</div>:<WorkspaceSectionBoundary key={workspaceGeneration+':'+tab} tab={tab}>{view}</WorkspaceSectionBoundary>}</div></main>
@@ -3372,6 +3418,7 @@ const viewHash:Record<View,string>={
  site:'#/',app:'#/workspace',login:'#/login',pricing:'#/pricing',demo:'#/demo',company:'#/company',resources:'#/resources','case-studies':'#/case-studies',privacy:'#/privacy',terms:'#/terms',security:'#/security',solutions:'#/solutions',industries:'#/industries','agents-public':'#/agents', 'integrations-public':'#/integrations'
 }
 const hashView=(hash:string):View=>{
+ if(hash.startsWith('#/workspace')) return 'app'
  if(hash.startsWith('#/resources')) return 'resources'
  if(hash.startsWith('#/case-studies')) return 'case-studies'
  const found=(Object.entries(viewHash) as [View,string][]).find(([,route])=>route===hash)
