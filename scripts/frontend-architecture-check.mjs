@@ -40,6 +40,12 @@ for(const file of walk(frontend)){
 const acePlatform=path.join(frontend,'AcePlatform.tsx')
 if(fs.existsSync(acePlatform)){
   const source=fs.readFileSync(acePlatform,'utf8')
+  if(/function\s+Product\s*\(/.test(source)||source.includes("const appTabs=")){
+    failures.push('frontend/src/AcePlatform.tsx must not contain authenticated customer-workspace composition after extraction.')
+  }
+  if(/from\s+['"]\.\/features\//.test(source)||/import\(['"]\.\/features\//.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx must not directly own customer feature imports after customer-app composition extraction.')
+  }
   if(/function\s+Customer360\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Customer 360 implementation after feature extraction.')
   }
@@ -312,6 +318,20 @@ if(fs.existsSync(acePlatform)){
     }
   }
 
+  const customerWorkspacePath=path.join(frontend,'customer-app','CustomerWorkspace.tsx')
+  if(fs.existsSync(customerWorkspacePath)){
+    const customerWorkspace=fs.readFileSync(customerWorkspacePath,'utf8')
+    if(!customerWorkspace.includes("cancelWorkspaceRequests('workspace_scope_changed')")){
+      failures.push('Customer workspace switch must cancel old-scope requests before activating a new workspace.')
+    }
+    if(!customerWorkspace.includes('confirmDiscardDirtyWork')){
+      failures.push('Customer workspace navigation must preserve dirty-work protection.')
+    }
+    if(!customerWorkspace.includes('WorkspaceSectionBoundary')){
+      failures.push('Customer workspace composition must preserve section-level failure containment.')
+    }
+  }
+
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
@@ -341,6 +361,8 @@ const required=[
   'frontend/src/features/meetings/pages/MeetingsPage.tsx',
   'frontend/src/features/meetings/public.ts',
   'frontend/src/features/meetings/feature.manifest.ts',
+  'frontend/src/customer-app/CustomerWorkspace.tsx',
+  'frontend/src/customer-app/public.ts',
   'frontend/src/features/feedback/data/feedback.api.ts',
   'frontend/src/features/feedback/pages/FeedbackPage.tsx',
   'frontend/src/features/feedback/public.ts',

@@ -6106,3 +6106,13 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Extended architecture enforcement and direct-route E2E coverage across all three features.
 - The remaining AcePlatform file is now focused on public composition, authentication and workspace shell orchestration rather than customer feature implementations.
 - Backend restructuring remains deferred until frontend verification and release gates are complete.
+
+
+### Frontend architecture: customer application composition boundary — 2026-09-28
+
+- Extracted the authenticated **customer workspace composition** from `AcePlatform.tsx` into `frontend/src/customer-app/CustomerWorkspace.tsx`.
+- Preserved all existing feature routes, lazy feature chunks, workspace switching, dirty-work protection, request cancellation, route synchronization, global search, navigation state and section-level failure containment.
+- The root composition now lazy-loads the customer application instead of directly importing every authenticated business feature.
+- Added architecture checks preventing customer feature imports and workspace implementation from drifting back into the public/root composition.
+- Added direct-route E2E protection for the extracted customer application shell.
+- This is an incremental migration: the public website composition remains the next frontend boundary to separate before declaring frontend completion or beginning backend restructuring.

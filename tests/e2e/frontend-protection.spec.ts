@@ -426,3 +426,13 @@ test('loads extracted Meetings feature with accessible schedulers',async({page})
   await page.keyboard.press('Escape')
   await expect(scheduler).toHaveCount(0)
 })
+
+
+test('customer workspace composition remains direct-linkable after app-shell extraction',async({page})=>{
+  await page.goto('/#/workspace?tab=Overview')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Overview/)
+  await expect(page.getByRole('heading',{name:'Acquisition command center'})).toBeVisible()
+  await expect(page.getByRole('navigation',{name:'Workspace navigation'})).toBeVisible()
+  await expect(page.getByRole('button',{name:'Open monitoring center'})).toBeVisible()
+})
