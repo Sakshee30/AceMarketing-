@@ -54,7 +54,8 @@ const longFormFeatures=new Set([
   'Planner',
   'Audiences',
   'Settings',
-  'Executive Briefs'
+  'Executive Briefs',
+  'Integrations'
 ])
 
 export const workspaceFeatureManifest:readonly WorkspaceFeatureManifest[]=(Object.entries(groupTabs) as [WorkspaceFeatureGroupId,readonly string[]][])
@@ -73,7 +74,7 @@ export const workspaceFeatureManifest:readonly WorkspaceFeatureManifest[]=(Objec
       workspaceRequired:true as const,
       permission:'workspace.read' as const,
       unsavedWork:longFormFeatures.has(label)?'confirm' as const:'allow' as const,
-      implementation:((label==='Approvals'||label==='Monitoring'||label==='Alerts'||label==='Reports'||label==='Executive Briefs')?'feature-chunk':'current-composition') as WorkspaceFeatureManifest['implementation'],
+      implementation:((label==='Approvals'||label==='Monitoring'||label==='Alerts'||label==='Reports'||label==='Executive Briefs'||label==='Integrations')?'feature-chunk':'current-composition') as WorkspaceFeatureManifest['implementation'],
       errorBoundary:'workspace-section' as const
     }
   }))
