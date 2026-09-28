@@ -260,3 +260,28 @@ test('loads extracted diagnostics feature from its direct workspace route',async
   await expect(page.getByRole('heading',{name:'Tracking & data quality diagnostics'})).toBeVisible()
   await expect(page.getByText(/Detected issues/i)).toBeVisible()
 })
+
+
+test('loads extracted match quality feature from its direct workspace route',async({page})=>{
+  await page.goto('/#/workspace?tab=Match%20Quality')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Match%20Quality/)
+  await expect(page.getByRole('heading',{name:'Event match quality'})).toBeVisible()
+  await expect(page.getByText(/Identifier coverage/i)).toBeVisible()
+})
+
+test('loads extracted reconciliation feature from its direct workspace route',async({page})=>{
+  await page.goto('/#/workspace?tab=Reconciliation')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Reconciliation/)
+  await expect(page.getByRole('heading',{name:'Conversion reconciliation center'})).toBeVisible()
+  await expect(page.getByText(/Issue reconciliation/i)).toBeVisible()
+})
+
+test('loads extracted fraud feature from its direct workspace route',async({page})=>{
+  await page.goto('/#/workspace?tab=Fraud')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Fraud/)
+  await expect(page.getByRole('heading',{name:'Fraud & noise detection'})).toBeVisible()
+  await expect(page.getByText(/Detected patterns/i)).toBeVisible()
+})
