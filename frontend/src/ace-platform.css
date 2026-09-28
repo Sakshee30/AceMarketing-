@@ -1662,3 +1662,17 @@
 .frontend-fatal-card small{color:#7f7488}
 .page-head h1:focus{outline:3px solid rgba(103,40,239,.35);outline-offset:7px;border-radius:4px}
 @media (prefers-reduced-motion:reduce){.skip-link{transition:none}}
+
+.workspace-transition{min-height:360px;display:grid;grid-template-columns:52px 1fr auto;gap:18px;align-items:center;padding:34px;background:linear-gradient(135deg,#fff,#faf7ff);border-color:#ded2f7}
+.workspace-transition-icon{width:48px;height:48px;border-radius:14px;background:#eee7ff;color:#6728ef;display:grid;place-items:center}
+.workspace-transition-icon svg{width:22px;height:22px}
+.workspace-transition>div>span{font-size:9px;letter-spacing:.12em;font-weight:800;color:#725f82}
+.workspace-transition h1{font:700 30px Manrope;margin:5px 0 8px}
+.workspace-transition p{max-width:680px;color:#756a7c;line-height:1.6;margin:0}
+.workspace-transition small{display:block;color:#95899d;margin-top:8px}
+.workspace-transition.error{border-color:#f0cfd3;background:#fffafb}
+.workspace-transition.error .workspace-transition-icon{background:#fff0f1;color:#c24955}
+.workspace-transition-actions{display:flex;gap:8px;align-items:center}
+.workspace-transition-actions button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:10px 12px;font-size:8px;font-weight:700}
+.workspace-transition-actions .app-primary{border-color:#6728ef;background:#6728ef;color:#fff}
+@media(max-width:760px){.workspace-transition{grid-template-columns:44px 1fr}.workspace-transition-actions{grid-column:1/-1;justify-content:flex-start}}
