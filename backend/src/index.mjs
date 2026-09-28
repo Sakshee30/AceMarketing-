@@ -442,7 +442,11 @@ const permissionForRequest=(method,path)=>{
   }
   if(path.startsWith('/api/members')||path.startsWith('/api/invitations')) return 'members.write'
   if(path.startsWith('/api/integrations')||path.startsWith('/api/custom-integrations')) return 'integrations.write'
-  if(path.startsWith('/api/agents')||path.startsWith('/api/models/run')||path.startsWith('/api/ai/analysis')||path.startsWith('/api/ai/ml/')||path.includes('/api/ai/jobs/')) return 'agents.write'
+  if(path==='/api/ai/analysis') return 'ai.analysis.run'
+  if(path.startsWith('/api/ai/ml/train/')||path==='/api/ai/ml/rank') return 'ai.training.run'
+  if(path==='/api/ai/ml/forecast/seasonal-naive'||path==='/api/ai/ml/anomalies'||path==='/api/ai/ml/segments') return 'ai.analysis.run'
+  if(path.includes('/api/ai/jobs/')) return 'ai.analysis.run'
+  if(path.startsWith('/api/agents')||path.startsWith('/api/models/run')) return 'agents.write'
   if(path.startsWith('/api/audiences')) return 'audiences.write'
   if(path.startsWith('/api/approvals')) return 'approvals.write'
   if(path.startsWith('/api/follow-ups')) return 'followups.write'
