@@ -2490,3 +2490,17 @@ test('Journeys feature chunk preserves stitched chronology and filters',async({p
   await expect(page.getByLabel('Search journeys')).toBeVisible()
   await expect(page).toHaveURL(/#\/workspace\?tab=Journeys/)
 })
+
+
+test('Identity feature chunk preserves identity graph and review export surface',async({page})=>{
+  await page.goto('/#/workspace?tab=Identity')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Identity resolution'})).toBeVisible()
+  const response=await page.request.get('/api/identity')
+  expect(response.ok()).toBeTruthy()
+  const payload=await response.json()
+  expect(Array.isArray(payload.recent)).toBeTruthy()
+  expect(Array.isArray(payload.rules)).toBeTruthy()
+  await expect(page.getByRole('button',{name:'Review match rules'})).toBeVisible()
+  await expect(page).toHaveURL(/#\/workspace\?tab=Identity/)
+})
