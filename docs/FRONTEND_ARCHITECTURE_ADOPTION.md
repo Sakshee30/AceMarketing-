@@ -269,3 +269,13 @@ A frontend feature is not considered complete because the screen renders. Comple
 - Backend loading and test-event failures are now explicit and retryable; failed tests are not rendered with success styling.
 - CI rejects reintroduction of the legacy Launchpad function and verifies the extracted feature files exist.
 - This is an additive migration on `main`; no existing feature or backend route was removed.
+
+
+### Overview command-center feature extraction
+- Overview is now a feature-owned lazy chunk instead of an inline implementation inside `AcePlatform.tsx`.
+- It owns its page, browser data adapter, manifest, public entry point and ownership README.
+- Existing dashboard-summary, live-sync and funnel endpoints, visual classes, direct route and cross-feature navigation are preserved.
+- Overview refresh failures are now explicit and retryable while previously loaded evidence remains visible.
+- Background refresh pauses while the browser tab is hidden and resumes when visible, reducing unnecessary polling pressure.
+- The embedded funnel surface now exposes loading and degraded states rather than silently appearing empty on backend failure.
+- CI rejects reintroduction of the legacy Overview/FunnelPanel implementation into the workspace monolith.
