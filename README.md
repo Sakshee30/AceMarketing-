@@ -5700,3 +5700,13 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Failed resolution attempts preserve the alert's open state and keep the resolution action available for retry.
 - Added Playwright coverage that forces the resolution API to fail and verifies that the incident remains open instead of showing a false success state.
 - Implemented directly on `main`; no separate branch was created.
+
+
+### Public consent persistence hardening — 2026-09-28
+
+- Fixed the landing-page cookie banner so **Necessary only**, **Accept all**, and **Save preferences** all persist through the backend before the banner closes.
+- `POST /api/consent-preferences` now stores the confirmed preference set and writes a `public.consent_saved` audit event instead of returning an ephemeral success response.
+- Consent save failures are no longer swallowed; the banner remains open, shows a retryable error, and preserves the selected toggles.
+- Added busy/disabled states to prevent duplicate consent submissions while a save is in flight.
+- Added Playwright coverage that forces the consent API to fail, verifies the banner stays open, then confirms a successful retry persists all selected categories before dismissal.
+- Implemented directly on `main`; no separate branch was created.
