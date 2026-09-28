@@ -737,43 +737,6 @@ const dashboardSections=[
 const tabMeta=Object.fromEntries(appTabs.map(([name,Icon])=>[name,{Icon}])) as Record<string,{Icon:any}>
 function Stat({label,value,sub,Icon}:{label:string,value:string,sub:string,Icon:any}){return <article className="stat"><div><span>{label}</span><Icon/></div><strong>{value}</strong><small>{sub}</small></article>}
 function PageHead({crumb,title,sub,action,onAction}:{crumb:string,title:string,sub:string,action?:string,onAction?:()=>void}){return <div className="page-head"><div><span>{crumb}</span><h1 tabIndex={-1}>{title}</h1><p>{sub}</p></div>{action&&<button className="app-primary" onClick={onAction}><Sparkles/>{action}</button>}</div>}
-function LeakMonitor(){
- const [data,setData]=useState<any>({items:[],stats:{},thresholds:{},recoveries:[]})
- const [busy,setBusy]=useState('')
- const [notice,setNotice]=useState('')
- const [settingsOpen,setSettingsOpen]=useState(false)
- const [thresholdDraft,setThresholdDraft]=useState<any>({})
- const load=async()=>{try{const r:any=await api.leakMonitor();setData(r);setThresholdDraft(r.thresholds||{})}catch(e:any){setNotice(e?.message||'Leak monitor could not be loaded.')}}
- useEffect(()=>{load()},[])
- const recover=async(item:any,channel='call')=>{
-  setBusy(item.leadRef);setNotice('')
-  try{
-   const r:any=await api.recoverLeak({leadRef:item.leadRef,channel,reason:item.reason,priority:item.severity==='critical'?'high':'medium',delayMinutes:0})
-   setNotice(r.duplicate?'An open leak-recovery follow-up already exists for '+item.name+'.':'Recovery follow-up queued for '+item.name+'.')
-   await load()
-  }catch(e:any){setNotice(e?.message||'Leak recovery could not be queued.')}
-  finally{setBusy('')}
- }
- const saveSettings=async()=>{
-  setBusy('settings');setNotice('')
-  try{await api.saveLeakMonitorSettings(thresholdDraft);setNotice('Leak thresholds updated.');setSettingsOpen(false);await load()}
-  catch(e:any){setNotice(e?.message||'Leak thresholds could not be saved.')}
-  finally{setBusy('')}
- }
- const stats=data.stats||{}
- const formatAge=(m:number)=>m>=1440?Math.floor(m/1440)+'d '+Math.floor((m%1440)/60)+'h':m>=60?Math.floor(m/60)+'h '+(m%60)+'m':m+'m'
- const stageLabel=(s:string)=>String(s||'lead').replaceAll('_',' ')
- return <><PageHead crumb="Tracking / Funnel" title="Funnel leak monitor" sub="Detect stalled handoffs across lead stages from persisted CRM, routing, follow-up and meeting evidence, then queue a recovery action before the lead goes cold." action="Configure thresholds" onAction={()=>setSettingsOpen(true)}/>
- {notice&&<div className={'delivery-notice '+(notice.toLowerCase().includes('could not')?'error':'ok')}><AlertTriangle/><span>{notice}</span></div>}
- <div className="stats-grid"><Stat label="Open leaks" value={String(stats.total||0)} sub="Stalled or missing-handoff leads" Icon={AlertTriangle}/><Stat label="Critical" value={String(stats.critical||0)} sub="Severe leak evidence" Icon={ShieldCheck}/><Stat label="High priority" value={String(stats.high||0)} sub="Past 2× stage threshold" Icon={Activity}/><Stat label="Recovery queued" value={String(stats.recoveryQueued||0)} sub="Follow-up tasks created from leaks" Icon={MessageCircle}/></div>
- <div className="leak-monitor-hero app-panel"><div><AlertTriangle/><div><span>STEP-BY-STEP FUNNEL MONITORING</span><h3>Stage evidence → stall detection → recovery action</h3><p>Leak detection uses each lead's current CRM stage, latest persisted activity, routing evidence, open follow-ups and future meetings. Converted/customer stages are excluded from the leak queue.</p></div></div><div className="data-flow-steps">{['Lead enters','Stage advances','Handoff expected','Stall detected','Recovery queued'].map((x,i)=><span key={x}><b>{i+1}</b>{x}{i<4&&<ArrowRight/>}</span>)}</div></div>
- <div className="leak-stage-grid">{Object.entries(stats.stageCounts||{}).length?Object.entries(stats.stageCounts||{}).map(([stage,count]:any)=><article key={stage}><span>{stageLabel(stage)}</span><b>{String(count)}</b><small>open leak{Number(count)===1?'':'s'}</small></article>):<article><span>No stalled stages</span><b>0</b><small>current evidence is within configured thresholds</small></article>}</div>
- <section className="app-panel"><div className="panel-head"><div><h3>Leak queue</h3><p>Sorted by severity and time stalled</p></div><button onClick={load}>Refresh</button></div>{(data.items||[]).length?<div className="leak-list">{(data.items||[]).map((x:any)=><article key={x.id} className={'leak-item '+x.severity}><span className="leak-severity"><AlertTriangle/></span><div className="leak-primary"><b>{x.name}</b><small>{x.crmStage} · {x.source}{x.campaign?' · '+x.campaign:''}</small><p>{x.reason}</p></div><div className="leak-evidence"><span>Stalled</span><b>{formatAge(x.ageMinutes)}</b><small>threshold {formatAge(x.thresholdMinutes)}</small></div><div className="leak-evidence"><span>Lead quality</span><b>{x.grade||'—'} · {x.score||0}</b><small>{x.evidence?.hasRoute?'Routed':'No route'} · {x.evidence?.openFollowUps||0} follow-up · {x.evidence?.futureMeetings||0} meeting</small></div><span className={'leak-status '+(x.recoveryQueued?'recovered':x.severity)}>{x.recoveryQueued?'Recovery queued':x.severity}</span><button disabled={busy===x.leadRef||x.recoveryQueued} onClick={()=>recover(x,'call')}>{busy===x.leadRef?'Queueing…':x.recoveryQueued?'Queued':'Queue recovery'}</button></article>)}</div>:<div className="empty-delivery-state"><CheckCircle2/><div><b>No current funnel leaks</b><small>All persisted active leads are within the configured stage thresholds or have the expected handoff evidence.</small></div></div>}</section>
- <div className="two-col"><section className="app-panel"><div className="panel-head"><div><h3>Leak thresholds</h3><p>Maximum inactivity before each stage is flagged</p></div></div><div className="site-detail-grid">{Object.entries(data.thresholds||{}).map(([k,v]:any)=><div key={k}><span>{stageLabel(k)}</span><b>{formatAge(Number(v))}</b></div>)}</div></section><section className="app-panel"><div className="panel-head"><div><h3>Recent recoveries</h3><p>Persisted actions created from the leak queue</p></div></div>{(data.recoveries||[]).length?(data.recoveries||[]).slice(0,8).map((x:any)=><div className="agent-run" key={x.id}><MessageCircle/><div><b>{x.leadRef}</b><small>{x.channel} · {x.reason}</small></div><span>{x.createdAt?new Date(x.createdAt).toLocaleString():'—'}</span><em className={x.status}>{x.status}</em></div>):<div className="empty-delivery-state"><MessageCircle/><div><b>No recovery actions yet</b><small>Queue a recovery from an open leak to create a real follow-up task.</small></div></div>}</section></div>
- {settingsOpen&&<div className="connector-modal"><div className="connector-card leak-settings-card"><div className="connector-modal-head"><div><AlertTriangle/><div><b>Configure leak thresholds</b><small>Minutes without meaningful stage activity before a lead becomes a leak.</small></div></div><button onClick={()=>setSettingsOpen(false)}><X/></button></div><div className="leak-threshold-form">{['new','lead','qualified','routed','contacted','consultation'].map(key=><label key={key}><span>{stageLabel(key)}</span><input type="number" min="5" max="43200" value={thresholdDraft[key]??''} onChange={e=>setThresholdDraft({...thresholdDraft,[key]:Number(e.target.value)})}/><small>minutes</small></label>)}</div><div className="source-conflict-note"><ShieldCheck/><div><b>Detection only</b><p>Changing thresholds does not delete or modify lead records. Recovery actions remain explicit operator actions.</p></div></div><button className="app-primary" disabled={busy==='settings'} onClick={saveSettings}>{busy==='settings'?'Saving…':'Save thresholds'}</button></div></div>}
- </> 
-}
-
 function Events(){
  const emptyDraft={name:'High-value Purchase',sourceEvent:'purchase',outputEvent:'high_value_purchase',field:'value',operator:'gte',value:'4000',destinations:['Google Ads','Meta Ads'],valueMode:'copy',fixedValue:'',currency:'INR'}
  const [data,setData]=useState<any>({items:[],runs:[],stats:{},templates:[]})
