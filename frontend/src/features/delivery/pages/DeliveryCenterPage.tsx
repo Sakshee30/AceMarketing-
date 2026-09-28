@@ -38,7 +38,7 @@ export default function DeliveryCenterPage(){
    const result:any=await api.dispatchSignal({event:'lead.qualified',destination:'Meta Ads',externalId:'ace_test_'+Date.now(),occurredAt:new Date().toISOString(),data:{source:'delivery_center_test'}})
    setNotice({kind:'ok',text:result?.duplicate?'Matching test signal already exists.':'Test signal accepted by the durable delivery queue.'})
    await load()
-  }catch(error:any){const cause=String(error?.details?.cause||'');setNotice({kind:cause==='timeout'||cause==='network'?'unknown':'error',text:cause==='timeout'||cause==='network'?'Test-signal queue acceptance was not confirmed. Refresh the delivery queue before sending another test signal.':error?.message||'Test signal could not be queued. Check DATABASE_URL and connector configuration.'})}
+  }catch(error:any){const cause=String(error?.details?.cause||'');setNotice({kind:cause==='timeout'||cause==='network'?'unknown':'error',text:cause==='timeout'||cause==='network'?'Test-signal queue acceptance was not confirmed. Refresh the delivery queue before sending another test signal.':error?.message||'Test signal could not be queued. Check backend persistence and connector configuration.'})}
   finally{setBusy('')}
  }
  const delivered=items.filter(x=>x.status==='delivered').length
