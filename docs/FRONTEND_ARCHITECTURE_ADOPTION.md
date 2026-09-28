@@ -319,3 +319,12 @@ A frontend feature is not considered complete because the screen renders. Comple
 - Timeout/network loss during alert creation is shown as an unknown outcome that requires authoritative reconciliation before retry.
 - Recent activity rendering is bounded to the most recent 100 rows in the UI while canonical backend history remains unchanged.
 - CI rejects reintroduction of the legacy Live Sync implementation into `AcePlatform.tsx`.
+
+
+### Data Hub feature extraction and canonical-state hardening
+- Data Hub is now a feature-owned lazy chunk instead of an inline workspace implementation.
+- Existing source registry, canonical data model, schema-health, identity, attribution, lineage, recent source activity, Integrations navigation and canonical rebuild behavior are preserved.
+- Data reads expose explicit loading and retry states while retaining previously visible source evidence during transient failures.
+- Canonical rebuild distinguishes confirmed backend success from timeout/network uncertainty; unknown outcomes require authoritative refresh before another rebuild is attempted.
+- Recent source activity rendering is bounded to 100 rows in the browser without changing backend retention.
+- CI rejects reintroduction of the legacy Data Hub implementation into `AcePlatform.tsx`.
