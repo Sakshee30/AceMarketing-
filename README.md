@@ -6116,3 +6116,14 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Added architecture checks preventing customer feature imports and workspace implementation from drifting back into the public/root composition.
 - Added direct-route E2E protection for the extracted customer application shell.
 - This is an incremental migration: the public website composition remains the next frontend boundary to separate before declaring frontend completion or beginning backend restructuring.
+
+
+### Frontend architecture: public website composition boundary — 2026-09-28
+
+- Extracted the public marketing/product website from `frontend/src/AcePlatform.tsx` into the canonical `website/public-site/src/PublicSite.tsx` boundary.
+- Preserved home, pricing, demo, company, resources, case studies, legal, solutions, industries, agents and integrations routes without duplicating implementations.
+- The root frontend composition now lazy-loads the public website and authenticated customer application independently.
+- Moved the shared AceMarketing brand primitive into `packages/design-system/src/Brand.tsx` so public and authenticated/auth surfaces share presentation without sharing customer state.
+- Repaired an accidental stale dirty-work hook inside the public Demo page that referenced an undefined builder variable; no customer-facing feature was removed.
+- Added architecture checks preventing public pages from drifting back into the root composition and direct-route E2E coverage for the extracted public site.
+- Remaining frontend gates before backend restructuring: standalone public build/deployment identity, public SEO/cache policy, auth composition isolation, performance/accessibility evidence and release-gate verification.

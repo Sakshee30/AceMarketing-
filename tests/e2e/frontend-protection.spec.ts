@@ -436,3 +436,15 @@ test('customer workspace composition remains direct-linkable after app-shell ext
   await expect(page.getByRole('navigation',{name:'Workspace navigation'})).toBeVisible()
   await expect(page.getByRole('button',{name:'Open monitoring center'})).toBeVisible()
 })
+
+
+test('public website routes remain direct-linkable after public-site extraction',async({page})=>{
+  await page.goto('/#/pricing')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/pricing/)
+  await expect(page.getByRole('heading').first()).toBeVisible()
+
+  await page.goto('/#/industries')
+  await expect(page).toHaveURL(/#\/industries/)
+  await expect(page.getByText('INDUSTRIES',{exact:true}).first()).toBeVisible()
+})

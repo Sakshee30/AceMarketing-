@@ -40,6 +40,11 @@ for(const file of walk(frontend)){
 const acePlatform=path.join(frontend,'AcePlatform.tsx')
 if(fs.existsSync(acePlatform)){
   const source=fs.readFileSync(acePlatform,'utf8')
+  for(const legacyPublicName of ['Header','Marketing','PublicFooter','PublicPageFrame','IndustriesPublicPage','AgentsPublicPage','IntegrationsPublicPage','DemoPage','CompanyPage','SolutionsPage','CaseStudiesPage','ResourcesPage','LegalPage','Pricing','DemoSection']){
+    if(new RegExp('function\\s+'+legacyPublicName+'\\s*\\(').test(source)){
+      failures.push('frontend/src/AcePlatform.tsx still contains public website implementation '+legacyPublicName+' after website/public-site extraction.')
+    }
+  }
   if(/function\s+Product\s*\(/.test(source)||source.includes("const appTabs=")){
     failures.push('frontend/src/AcePlatform.tsx must not contain authenticated customer-workspace composition after extraction.')
   }
@@ -332,6 +337,17 @@ if(fs.existsSync(acePlatform)){
     }
   }
 
+  const publicSitePath=path.join(root,'website','public-site','src','PublicSite.tsx')
+  if(fs.existsSync(publicSitePath)){
+    const publicSite=fs.readFileSync(publicSitePath,'utf8')
+    if(publicSite.includes("customer-app")||publicSite.includes("features/workspace")){
+      failures.push('Public website composition must not depend on authenticated customer-app internals.')
+    }
+    if(!publicSite.includes("PublicSiteView")||!publicSite.includes("PublicPageFrame")){
+      failures.push('Public website must preserve its owned route/composition boundary.')
+    }
+  }
+
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
@@ -361,6 +377,9 @@ const required=[
   'frontend/src/features/meetings/pages/MeetingsPage.tsx',
   'frontend/src/features/meetings/public.ts',
   'frontend/src/features/meetings/feature.manifest.ts',
+  'website/public-site/src/PublicSite.tsx',
+  'website/public-site/src/public.ts',
+  'packages/design-system/src/Brand.tsx',
   'frontend/src/customer-app/CustomerWorkspace.tsx',
   'frontend/src/customer-app/public.ts',
   'frontend/src/features/feedback/data/feedback.api.ts',
