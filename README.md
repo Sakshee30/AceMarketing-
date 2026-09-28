@@ -6048,3 +6048,15 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Added explicit **unknown outcome** handling for timeout/network ambiguity so a write is never presented as successful before authoritative backend confirmation.
 - Extended architecture enforcement and direct-route E2E coverage for the extracted Feed feature.
 - Backend restructuring remains deferred until frontend completion.
+
+
+### Frontend architecture: Agents feature boundary — 2026-09-28
+
+- Extracted **Agent operations** from the workspace monolith into a feature-owned lazy chunk without removing built-in agents, custom agents, approval handoff, test execution, trigger inspection or run history.
+- Corrected the legacy monolith's implicit loading/notice state assumptions inside the owned feature boundary.
+- Added explicit loading/retry behavior while preserving already-loaded agent evidence on transient refresh failures.
+- Moved custom-agent build, test and trigger overlays onto the shared accessible dialog boundary.
+- Protected custom-agent and test drafts from accidental workspace navigation.
+- Added explicit **unknown outcome** handling for agent creation and test execution when timeout/network ambiguity prevents authoritative confirmation.
+- Extended architecture enforcement and direct-route E2E coverage for Agents.
+- Backend restructuring remains deferred until frontend completion.

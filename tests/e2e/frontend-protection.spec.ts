@@ -328,3 +328,19 @@ test('loads extracted Feed feature and accessible builders from its direct works
   await page.keyboard.press('Escape')
   await expect(mappingDialog).toHaveCount(0)
 })
+
+
+test('loads extracted Agents feature and protects accessible mutation surfaces',async({page})=>{
+  await page.goto('/#/workspace?tab=Agents')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Agents/)
+  await expect(page.getByRole('heading',{name:'Agent operations'})).toBeVisible()
+  await expect(page.getByText('Agent library',{exact:true})).toBeVisible()
+
+  await page.getByRole('button',{name:'Build custom agent'}).click()
+  const builder=page.getByRole('dialog',{name:'Custom Agent Builder'})
+  await expect(builder).toBeVisible()
+  await expect(builder.getByLabel('Agent name')).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(builder).toHaveCount(0)
+})

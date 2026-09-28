@@ -46,6 +46,9 @@ if(fs.existsSync(acePlatform)){
   if(/function\s+OfflineAttribution\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Offline Attribution implementation after feature extraction.')
   }
+  if(/function\s+Agents\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Agents implementation after feature extraction.')
+  }
   if(/function\s+Feed\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Feed implementation after feature extraction.')
   }
@@ -230,6 +233,20 @@ if(fs.existsSync(acePlatform)){
     }
   }
 
+  const agentsPath=path.join(frontend,'features','agents','pages','AgentsPage.tsx')
+  if(fs.existsSync(agentsPath)){
+    const agents=fs.readFileSync(agentsPath,'utf8')
+    if(!agents.includes('AccessibleDialog ariaLabel="Custom Agent Builder"')||!agents.includes('AccessibleDialog ariaLabel="Test custom agent"')){
+      failures.push('Agents mutation surfaces must use the shared accessible dialog boundary.')
+    }
+    if(!agents.includes("custom-agent-draft")||!agents.includes("custom-agent-test-draft")){
+      failures.push('Agents builder and test surfaces must participate in dirty-work protection.')
+    }
+    if(!agents.includes("kind:'unknown'")){
+      failures.push('Agents writes must preserve explicit unknown-outcome handling for timeout/network ambiguity.')
+    }
+  }
+
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
@@ -247,6 +264,10 @@ const required=[
   'frontend/src/features/offline-attribution/pages/OfflineAttributionPage.tsx',
   'frontend/src/features/offline-attribution/public.ts',
   'frontend/src/features/offline-attribution/feature.manifest.ts',
+  'frontend/src/features/agents/data/agents.api.ts',
+  'frontend/src/features/agents/pages/AgentsPage.tsx',
+  'frontend/src/features/agents/public.ts',
+  'frontend/src/features/agents/feature.manifest.ts',
   'frontend/src/features/feed/data/feed.api.ts',
   'frontend/src/features/feed/pages/FeedPage.tsx',
   'frontend/src/features/feed/public.ts',
