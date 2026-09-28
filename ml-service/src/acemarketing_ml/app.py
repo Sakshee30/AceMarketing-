@@ -28,7 +28,6 @@ from .pipelines import (
     train_regression,
 )
 
-
 app = FastAPI(title="AceMarketing ML Service", version=__version__)
 
 
