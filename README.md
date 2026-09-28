@@ -5980,3 +5980,13 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Bounded recent identity rendering and graph node rendering to protect long-lived/high-cardinality browser sessions.
 - Added architecture enforcement and E2E coverage for the extracted feature.
 - Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
+
+
+### Frontend architecture: Attribution feature boundary — 2026-09-28
+
+- Extracted **Full-path Attribution** into a feature-owned lazy chunk while preserving period switching, channel/campaign/outcome/match-evidence views, Journeys navigation and Matchback navigation.
+- Added explicit loading and retryable error states while preserving already-loaded attribution evidence during transient failures.
+- Added request sequencing so stale period responses cannot replace newer attribution state.
+- Bounded large evidence collections to protect long-running browser sessions without changing backend history.
+- Added architecture enforcement and E2E coverage for the extracted feature.
+- Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
