@@ -2460,3 +2460,20 @@ test('Matchback feature chunk preserves reconciliation and accessible dialogs',a
   await expect(dialog).toHaveCount(0)
   await expect(page).toHaveURL(/#\/workspace\?tab=Matchback/)
 })
+
+
+test('POS Stores feature chunk preserves offline imports and accessible builder',async({page})=>{
+  await page.goto('/#/workspace?tab=POS%20%26%20Stores')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'POS, walk-in & store-sale attribution'})).toBeVisible()
+  const response=await page.request.get('/api/pos-stores')
+  expect(response.ok()).toBeTruthy()
+  const payload=await response.json()
+  expect(Array.isArray(payload.locations)).toBeTruthy()
+  await page.getByRole('button',{name:'Import POS batch'}).first().click()
+  const dialog=page.getByRole('dialog',{name:'Import POS transactions'})
+  await expect(dialog).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+  await expect(page).toHaveURL(/#\/workspace\?tab=POS%20%26%20Stores/)
+})
