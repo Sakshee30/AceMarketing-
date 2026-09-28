@@ -1332,6 +1332,19 @@ function DeepLinkResolver(){
  return <div className="login-shell"><div className="login-card"><Brand/><div className="login-title"><h1>Continue your journey</h1><p>{loading?'Resolving destination…':error||link?.name}</p></div>{!loading&&!error&&link&&<><div className="site-detail-grid"><div><span>Route</span><b>{link.slug}</b></div><div><span>Status</span><b>Active</b></div></div><div className="approval-actions"><button onClick={openWeb}>Continue on web</button><button className="approve" onClick={openApp}>Open app</button></div></>}{error&&<div className="delivery-notice error"><X/><span>{error}</span></div>}<button className="login-back" onClick={()=>window.location.hash='#/'}><ArrowRight/>Back to AceMarketing</button></div></div>
 }
 
+class WorkspaceSectionBoundary extends Component<any,{error:Error|null}>{
+ constructor(props:any){super(props);this.state={error:null}}
+ static getDerivedStateFromError(error:Error){return {error}}
+ componentDidCatch(error:Error,info:any){
+  try{console.error('workspace section failed',this.props?.tab,error,info?.componentStack||'')}catch{}
+ }
+ componentDidUpdate(prevProps:any){if(prevProps?.tab!==this.props?.tab&&this.state.error)this.setState({error:null})}
+ render(){
+  if(!this.state.error)return this.props.children
+  return <div className="app-panel workspace-section-error" role="alert"><AlertTriangle/><div><h2>{String(this.props?.tab||'Workspace section')} could not render</h2><p>{this.state.error.message||'An unexpected rendering error occurred.'}</p><small>The rest of the dashboard is still available. Retry this section or use the dashboard navigator to continue working.</small></div><button onClick={()=>this.setState({error:null})}><RefreshCw/>Retry section</button></div>
+ }
+}
+
 const viewHash:Record<View,string>={
  site:'#/',app:'#/workspace',login:'#/login',pricing:'#/pricing',demo:'#/demo',company:'#/company',resources:'#/resources','case-studies':'#/case-studies',privacy:'#/privacy',terms:'#/terms',security:'#/security',solutions:'#/solutions',industries:'#/industries','agents-public':'#/agents', 'integrations-public':'#/integrations'
 }

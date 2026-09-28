@@ -90,15 +90,3 @@ export default function DevelopersPage(){
  {keyBuilder&&<div className="connector-modal"><div className="connector-card"><div className="connector-modal-head"><div><Code2/><div><b>Create API key</b><small>The secret is revealed once and only its fingerprint is stored.</small></div></div><button onClick={()=>setKeyBuilder(false)}><X/></button></div><div className="connector-step"><label>Credential name<input value={keyName} maxLength={80} onChange={e=>setKeyName(e.target.value)} placeholder="Production ingestion"/></label><button disabled={busy==='key'||keyName.trim().length<2} onClick={createKey}>{busy==='key'?'Creating…':'Create key'}</button></div></div></div>}
  {builder&&<div className="connector-modal"><div className="connector-card"><div className="connector-modal-head"><div><Cable/><div><b>Add outbound webhook</b><small>Subscribe one HTTPS endpoint to one workspace event.</small></div></div><button onClick={()=>setBuilder(false)}><X/></button></div><div className="connector-step"><label>Event<input value={endpointDraft.event} onChange={e=>setEndpointDraft({...endpointDraft,event:e.target.value})}/></label><label>HTTPS endpoint<input placeholder="https://example.com/webhooks/ace" value={endpointDraft.url} onChange={e=>setEndpointDraft({...endpointDraft,url:e.target.value})}/></label><button disabled={busy==='endpoint'||!endpointDraft.event.trim()||!endpointDraft.url.trim()} onClick={addEndpoint}>{busy==='endpoint'?'Creating…':'Create endpoint'}</button></div></div></div>}</>
 }
-class WorkspaceSectionBoundary extends Component<any,{error:Error|null}>{
- constructor(props:any){super(props);this.state={error:null}}
- static getDerivedStateFromError(error:Error){return {error}}
- componentDidCatch(error:Error,info:any){
-  try{console.error('workspace section failed',this.props?.tab,error,info?.componentStack||'')}catch{}
- }
- componentDidUpdate(prevProps:any){if(prevProps?.tab!==this.props?.tab&&this.state.error)this.setState({error:null})}
- render(){
-  if(!this.state.error)return this.props.children
-  return <div className="app-panel workspace-section-error" role="alert"><AlertTriangle/><div><h2>{String(this.props?.tab||'Workspace section')} could not render</h2><p>{this.state.error.message||'An unexpected rendering error occurred.'}</p><small>The rest of the dashboard is still available. Retry this section or use the dashboard navigator to continue working.</small></div><button onClick={()=>this.setState({error:null})}><RefreshCw/>Retry section</button></div>
- }
-}

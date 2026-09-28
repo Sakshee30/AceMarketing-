@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react'
-import {ArrowRight,CheckCircle2,ChevronRight,Plus,ShieldCheck,Sparkles,UsersRound,X,Zap} from 'lucide-react'
+import {Activity,ArrowRight,CheckCircle2,ChevronRight,Plus,ShieldCheck,Sparkles,Target,UsersRound,X,Zap} from 'lucide-react'
 import {audiencesApi as api} from '../data/audiences.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
 import {useDirtyWork} from '../../../lib/dirty-work'

@@ -34,7 +34,7 @@ export function AccessibleDialog({
     const root=rootRef.current
     const first=root?.querySelector<HTMLElement>(focusableSelector)
     requestAnimationFrame(()=>first?.focus())
-    return()=>requestAnimationFrame(()=>restoreRef.current?.focus?.())
+    return()=>{requestAnimationFrame(()=>restoreRef.current?.focus?.())}
   },[])
 
   const onKeyDown=(event:KeyboardEvent<HTMLDivElement>)=>{
