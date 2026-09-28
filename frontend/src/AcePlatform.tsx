@@ -735,60 +735,6 @@ const dashboardSections=[
 const tabMeta=Object.fromEntries(appTabs.map(([name,Icon])=>[name,{Icon}])) as Record<string,{Icon:any}>
 function Stat({label,value,sub,Icon}:{label:string,value:string,sub:string,Icon:any}){return <article className="stat"><div><span>{label}</span><Icon/></div><strong>{value}</strong><small>{sub}</small></article>}
 function PageHead({crumb,title,sub,action,onAction}:{crumb:string,title:string,sub:string,action?:string,onAction?:()=>void}){return <div className="page-head"><div><span>{crumb}</span><h1 tabIndex={-1}>{title}</h1><p>{sub}</p></div>{action&&<button className="app-primary" onClick={onAction}><Sparkles/>{action}</button>}</div>}
-function ChatGPTAds(){
- const [data,setData]=useState<any>({configured:false,deliveries:{recent:[]},matching:{},supportedEventTypes:[]})
- const [busy,setBusy]=useState('')
- const [notice,setNotice]=useState('')
- const [validation,setValidation]=useState<any>(null)
- const [draft,setDraft]=useState<any>({
-  event:'lead_created',
-  openaiEventType:'lead_created',
-  actionSource:'web',
-  eventSourceUrl:'https://example.com/thank-you',
-  customerId:'',
-  externalEventId:'',
-  oppref:'',
-  obref:'',
-  openaiAmountMinor:'',
-  currency:'INR',
-  optOut:false
- })
- const load=async()=>{try{setData(await api.chatgptAds())}catch(e:any){setNotice(e?.message||'ChatGPT Ads status could not be loaded.')}}
- useEffect(()=>{load()},[])
- const payload=()=>{
-  const now=new Date().toISOString()
-  const raw:any={...draft,occurredAt:now,externalEventId:draft.externalEventId||('ace_'+Date.now())}
-  if(raw.openaiAmountMinor==='')delete raw.openaiAmountMinor
-  else raw.openaiAmountMinor=Number(raw.openaiAmountMinor)
-  if(!raw.customerId)delete raw.customerId
-  if(!raw.oppref)delete raw.oppref
-  if(!raw.obref)delete raw.obref
-  return raw
- }
- const validate=async()=>{
-  setBusy('validate');setNotice('');setValidation(null)
-  try{const r:any=await api.validateChatgptAds(payload());setValidation(r);setNotice(r.configured?'Payload is valid and provider credentials are configured.':'Payload is valid. Configure OPENAI_CONVERSIONS_API_KEY and OPENAI_ADS_PIXEL_ID before live delivery.')}
-  catch(e:any){setValidation({valid:false,error:e?.message||'Validation failed'});setNotice(e?.message||'Validation failed.')}
-  finally{setBusy('')}
- }
- const send=async()=>{
-  setBusy('send');setNotice('')
-  try{const r:any=await api.sendChatgptAds(payload());setNotice(r.duplicate?'Matching ChatGPT Ads conversion already exists; duplicate was not queued.':'ChatGPT Ads conversion queued through the durable delivery worker.');await load()}
-  catch(e:any){setNotice(e?.message||'ChatGPT Ads conversion could not be queued.')}
-  finally{setBusy('')}
- }
- const d=data.deliveries||{},m=data.matching||{}
- const typeLabel=(x:string)=>x.replaceAll('_',' ')
- return <><PageHead crumb="Tracking / ChatGPT Ads" title="ChatGPT Ads conversion measurement" sub="Capture OpenAI click references and send consent-aware server-side conversion events through the official ChatGPT Ads Conversions API." action="Refresh" onAction={load}/>
- {notice&&<div className={'delivery-notice '+(notice.toLowerCase().includes('failed')||notice.toLowerCase().includes('could not')?'error':'ok')}><Bot/><span>{notice}</span></div>}
- <div className="stats-grid"><Stat label="Provider setup" value={data.configured?'Ready':'Needs setup'} sub={data.pixelConfigured&&data.conversionsKeyConfigured?'Pixel ID + Conversions API key configured':'Server-side credentials stay in environment secrets'} Icon={ShieldCheck}/><Stat label="oppref coverage" value={String(m.opprefCoverage||0)+'%'} sub={String(m.opprefEvents||0)+' of '+String(m.recentEvents||0)+' recent events preserve oppref'} Icon={MousePointer2}/><Stat label="CAPI deliveries" value={String(d.total||0)} sub={String(d.queued||0)+' queued · '+String(d.failed||0)+' failed'} Icon={RadioTower}/><Stat label="Delivery rate" value={d.deliveryRate==null?'—':String(d.deliveryRate)+'%'} sub="Terminal AceMarketing delivery records" Icon={Activity}/></div>
- <div className="chatgpt-ads-hero app-panel"><div><Bot/><div><span>SERVER-SIDE CONVERSION MEASUREMENT</span><h3>Ad click → oppref → first-party conversion → ChatGPT Ads CAPI</h3><p>AceMarketing preserves the OpenAI click reference when your site sends it, keeps conversion credentials server-side, and reuses stable event IDs for retries and deduplication.</p></div></div><div className="data-flow-steps">{['Capture oppref','Persist event','Check consent','Map event','Queue CAPI','Monitor delivery'].map((x,i)=><span key={x}><b>{i+1}</b>{x}{i<5&&<ArrowRight/>}</span>)}</div></div>
- <div className="chatgpt-ads-layout"><section className="app-panel"><div className="panel-head"><div><h3>Conversion payload builder</h3><p>Validate the event locally, then queue it through the same durable worker used for Meta and Google.</p></div><span className={data.configured?'healthy':'status'}>{data.configured?'Configured':'Environment setup required'}</span></div><div className="setup-form-grid"><label><span>Event type</span><select value={draft.openaiEventType} onChange={e=>setDraft({...draft,openaiEventType:e.target.value,event:e.target.value})}>{(data.supportedEventTypes||['lead_created','order_created','appointment_scheduled']).map((x:string)=><option key={x} value={x}>{typeLabel(x)}</option>)}</select></label><label><span>Action source</span><select value={draft.actionSource} onChange={e=>setDraft({...draft,actionSource:e.target.value})}><option value="web">Web</option><option value="mobile_app">Mobile app</option><option value="offline">Offline</option><option value="physical_store">Physical store</option><option value="phone_call">Phone call</option><option value="email">Email</option><option value="other">Other</option></select></label><label><span>Source URL</span><input value={draft.eventSourceUrl} onChange={e=>setDraft({...draft,eventSourceUrl:e.target.value})} placeholder="https://example.com/thank-you"/></label><label><span>Customer ID</span><input value={draft.customerId} onChange={e=>setDraft({...draft,customerId:e.target.value})} placeholder="customer_123"/></label><label><span>OpenAI click reference (oppref)</span><input value={draft.oppref} onChange={e=>setDraft({...draft,oppref:e.target.value})} placeholder="Opaque value from landing-page URL"/></label><label><span>Browser reference (obref)</span><input value={draft.obref} onChange={e=>setDraft({...draft,obref:e.target.value})} placeholder="Optional __obref cookie value"/></label><label><span>Event ID</span><input value={draft.externalEventId} onChange={e=>setDraft({...draft,externalEventId:e.target.value})} placeholder="Stable order/lead/event ID"/></label><label><span>Amount in minor units</span><input type="number" min="0" value={draft.openaiAmountMinor} onChange={e=>setDraft({...draft,openaiAmountMinor:e.target.value})} placeholder="2599"/></label><label><span>Currency</span><input value={draft.currency} onChange={e=>setDraft({...draft,currency:e.target.value.toUpperCase()})} maxLength={3}/></label><label><span>Future personalization opt-out</span><select value={draft.optOut?'true':'false'} onChange={e=>setDraft({...draft,optOut:e.target.value==='true'})}><option value="false">Default</option><option value="true">Opt out</option></select></label></div><div className="source-conflict-note"><ShieldCheck/><div><b>Secrets stay server-side</b><p>Set OPENAI_CONVERSIONS_API_KEY and OPENAI_ADS_PIXEL_ID in the backend environment. The dashboard never exposes either secret.</p></div></div><div className="approval-actions"><button disabled={busy==='validate'} onClick={validate}>{busy==='validate'?'Validating…':'Validate payload'}</button><button className="approve" disabled={busy==='send'||!data.configured} onClick={send}>{busy==='send'?'Queueing…':'Queue live conversion'}</button></div>{validation&&<div className={'activation-test-result '+(validation.valid?'matched':'not-matched')}><ShieldCheck/><div><b>{validation.valid?'Payload valid':'Payload invalid'}</b><small>{validation.notice||validation.error||'Local validation completed.'}</small></div></div>}</section>
- <section className="app-panel"><div className="panel-head"><div><h3>Measurement readiness</h3><p>Official ChatGPT Ads requirements reflected in AceMarketing setup</p></div></div><div className="chatgpt-readiness">{[['Conversions API key',data.conversionsKeyConfigured],['Pixel ID',data.pixelConfigured],['oppref preservation',Number(m.opprefEvents||0)>0],['Durable delivery queue',true],['Marketing-consent guard',true],['Stable event-ID replay',true]].map(([label,ok]:any)=><article key={label}><span className={ok?'ready':'attention'}>{ok?<Check/>:<AlertTriangle/>}</span><div><b>{label}</b><small>{ok?'Ready':'Needs setup / evidence'}</small></div></article>)}</div><div className="agent-section"><h4>Supported events</h4><div className="context-chips">{(data.supportedEventTypes||[]).map((x:string)=><span key={x}>{typeLabel(x)}</span>)}</div></div><div className="source-conflict-note"><MousePointer2/><div><b>Click matching</b><p>Capture <code>oppref</code> from the landing-page URL and forward it unchanged with server events. When using the Pixel too, reuse the same event ID for deduplication.</p></div></div></section></div>
- <section className="app-panel"><div className="panel-head"><div><h3>Recent ChatGPT Ads deliveries</h3><p>Durable queue state and provider results</p></div><button onClick={()=>window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:'Delivery'}))}>Open full delivery center</button></div>{(d.recent||[]).length?<div className="chatgpt-deliveries">{(d.recent||[]).map((x:any)=><article key={x.id}><span className={'delivery-state '+x.status}><RadioTower/></span><div><b>{x.event}</b><small>{x.externalEventId||x.id} · {x.replayPayload?.oppref?'oppref captured':'no oppref'}</small></div><strong>{x.status}</strong><time>{x.updatedAt||x.createdAt?new Date(x.updatedAt||x.createdAt).toLocaleString():'—'}</time></article>)}</div>:<div className="empty-delivery-state"><Bot/><div><b>No ChatGPT Ads deliveries yet</b><small>Validate your setup, then queue a consented conversion when credentials are configured.</small></div></div>}</section>
- </> 
-}
-
 function Funnel(){
  const [data,setData]=useState<any>({stages:{},stageRates:{},campaigns:[],filters:{channels:[],accounts:[]}})
  const [channel,setChannel]=useState('All channels')
