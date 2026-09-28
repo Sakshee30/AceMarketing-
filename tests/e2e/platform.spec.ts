@@ -2429,3 +2429,17 @@ test('Live Sync feature chunk preserves activity and accessible alert creation',
   await expect(dialog).toHaveCount(0)
   await expect(page).toHaveURL(/#\/workspace\?tab=Live%20Sync/)
 })
+
+
+test('Data Hub feature chunk preserves source registry and canonical rebuild surface',async({page})=>{
+  await page.goto('/#/workspace?tab=Data%20Hub')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Unified customer data hub'})).toBeVisible()
+  const response=await page.request.get('/api/data-hub')
+  expect(response.ok()).toBeTruthy()
+  const payload=await response.json()
+  expect(Array.isArray(payload.sources)).toBeTruthy()
+  await expect(page.getByText('Canonical data model',{exact:true})).toBeVisible()
+  await expect(page.getByText('Data quality controls',{exact:true})).toBeVisible()
+  await expect(page).toHaveURL(/#\/workspace\?tab=Data%20Hub/)
+})
