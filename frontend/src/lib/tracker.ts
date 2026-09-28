@@ -27,7 +27,10 @@ export const saveLocalConsent=async(consent:Omit<AceConsent,'essential'>)=>{
   const visitorId=getVisitorId()
   try{await fetch('/api/consent',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subjectType:'visitor',subjectId:visitorId,...full,source:'web'})})}catch{}
   if(full.marketing)persistClickIds()
-  else{['gclid','gbraid','wbraid','fbclid','msclkid','ttclid'].forEach(key=>localStorage.removeItem('ace:'+key))}
+  else{
+    MARKETING_CLICK_IDS.forEach(key=>localStorage.removeItem('ace:'+key))
+    document.cookie='_twclid=; Path=/; Max-Age=0; SameSite=Strict'
+  }
   if(full.analytics)track({event:'consent_updated',eventCategory:'essential',properties:{analytics:full.analytics,marketing:full.marketing,personalization:full.personalization}})
   window.dispatchEvent(new CustomEvent('ace-consent-changed',{detail:full}))
   return full
@@ -57,6 +60,11 @@ export const persistClickIds=()=>{
   for(const key of MARKETING_CLICK_IDS){
     const value=params.get(key)
     if(value)localStorage.setItem('ace:'+key,value)
+  }
+  const twclid=params.get('twclid')
+  if(twclid){
+    const value=encodeURIComponent(JSON.stringify({twclid,pixelVersion:'ace_web_1_0',timestamp:String(Date.now()),source:1}))
+    document.cookie='_twclid='+value+'; Path=/; Max-Age=33696000; SameSite=Strict'+(location.protocol==='https:'?'; Secure':'')
   }
 }
 export const track=async(payload:AceTrackPayload)=>{
