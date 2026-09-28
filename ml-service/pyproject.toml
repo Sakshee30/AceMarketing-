@@ -1,0 +1,49 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "acemarketing-ml-service"
+version = "0.1.0"
+description = "Tenant-scoped specialist ML service for AceMarketing"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+  "fastapi>=0.116,<1",
+  "uvicorn[standard]>=0.35,<1",
+  "pydantic>=2.11,<3",
+  "numpy>=2.0,<3",
+  "pandas>=2.2,<4",
+  "scikit-learn>=1.6,<2",
+  "catboost>=1.2,<2",
+  "lightgbm>=4.5,<5",
+  "joblib>=1.4,<2"
+]
+
+[project.optional-dependencies]
+forecasting = [
+  "chronos-forecasting==2.3.2"
+]
+causal = [
+  "econml>=0.16,<1"
+]
+mmm = [
+  "google-meridian==2.1.0"
+]
+objectstore = [
+  "boto3>=1.35,<2"
+]
+test = [
+  "pytest>=8,<9",
+  "httpx>=0.28,<1",
+  "ruff>=0.8,<1",
+  "mypy>=1.13,<2"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/acemarketing_ml"]
+
+[tool.ruff]
+line-length = 119
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
