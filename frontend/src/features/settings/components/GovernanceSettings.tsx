@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react'
-import {Activity,CheckCircle2,ShieldCheck} from 'lucide-react'
+import {Activity,CheckCircle2,ShieldCheck,Target,X} from 'lucide-react'
 import {settingsApi as api} from '../data/settings.api'
 import {SettingsStat as Stat} from '../ui/SettingsPrimitives'
 
