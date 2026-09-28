@@ -429,3 +429,13 @@ A frontend feature is not considered complete because the screen renders. Comple
 - Signal collections are bounded to 150 rows, matching activity to 20 rows, and the latest sequence to 20 records in the browser while backend data remains authoritative.
 - Refresh interaction is disabled while loading so duplicate foreground reads are not emitted.
 - CI rejects reintroduction of the legacy Behavior implementation into `AcePlatform.tsx`.
+
+
+### Models feature state and evidence hardening
+- Models continues to use the existing `/models`, `/models/run` and `/models/validation` pipeline; no alternate AI/model frontend or duplicate runtime was introduced.
+- Model catalog and validation reads are now cancellable and request-sequence guarded so stale responses cannot overwrite newer workspace state.
+- The feature owns typed catalog, run and validation contracts instead of passing backend payloads through the page as unbounded `any`.
+- Initial loading, empty, retryable read failure, conflict and outcome-unknown states are explicit while confirmed backend evidence remains visible.
+- Successful runtime scoring is no longer presented as statistical model qualification. Runtime readiness and evaluation evidence are separate UI concepts.
+- Optional provider/model governance metadata is displayed only when returned by the backend; the frontend does not invent provider access, model availability or evaluation status.
+- Existing custom weighted scoring creation, dirty-work protection, validation dialog and scoring-run behavior are preserved.
