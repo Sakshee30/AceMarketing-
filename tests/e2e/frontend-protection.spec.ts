@@ -370,3 +370,24 @@ test('loads extracted Ask Ace feature with grounded assistant controls',async({p
   await expect(page.getByLabel('Ask Ace question')).toBeVisible()
   await expect(page.getByText('No fabricated metrics',{exact:true})).toBeVisible()
 })
+
+
+test('loads extracted Feedback feature with accessible mutation forms',async({page})=>{
+  await page.goto('/#/workspace?tab=Feedback')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Feedback/)
+  await expect(page.getByRole('heading',{name:'Feedback agent'})).toBeVisible()
+
+  await page.getByRole('button',{name:'Record response'}).click()
+  const recordDialog=page.getByRole('dialog',{name:'Record feedback'})
+  await expect(recordDialog).toBeVisible()
+  await expect(recordDialog.getByLabel('Lead')).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(recordDialog).toHaveCount(0)
+
+  await page.getByRole('button',{name:'Request feedback'}).click()
+  const requestDialog=page.getByRole('dialog',{name:'Request feedback'})
+  await expect(requestDialog).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(requestDialog).toHaveCount(0)
+})

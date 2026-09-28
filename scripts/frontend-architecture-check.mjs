@@ -46,6 +46,9 @@ if(fs.existsSync(acePlatform)){
   if(/function\s+OfflineAttribution\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Offline Attribution implementation after feature extraction.')
   }
+  if(/function\s+Feedback\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Feedback implementation after feature extraction.')
+  }
   if(/function\s+AskAce\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Ask Ace implementation after feature extraction.')
   }
@@ -278,6 +281,20 @@ if(fs.existsSync(acePlatform)){
     }
   }
 
+  const feedbackPath=path.join(frontend,'features','feedback','pages','FeedbackPage.tsx')
+  if(fs.existsSync(feedbackPath)){
+    const feedback=fs.readFileSync(feedbackPath,'utf8')
+    if(!feedback.includes('AccessibleDialog ariaLabel="Record feedback"')||!feedback.includes('AccessibleDialog ariaLabel="Request feedback"')){
+      failures.push('Feedback mutation forms must use the shared accessible dialog boundary.')
+    }
+    if(!feedback.includes("feedback-record-draft")||!feedback.includes("feedback-request-draft")){
+      failures.push('Feedback forms must participate in dirty-work protection.')
+    }
+    if(!feedback.includes("kind:'unknown'")){
+      failures.push('Feedback writes must preserve explicit unknown-outcome handling for timeout/network ambiguity.')
+    }
+  }
+
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
@@ -295,6 +312,10 @@ const required=[
   'frontend/src/features/offline-attribution/pages/OfflineAttributionPage.tsx',
   'frontend/src/features/offline-attribution/public.ts',
   'frontend/src/features/offline-attribution/feature.manifest.ts',
+  'frontend/src/features/feedback/data/feedback.api.ts',
+  'frontend/src/features/feedback/pages/FeedbackPage.tsx',
+  'frontend/src/features/feedback/public.ts',
+  'frontend/src/features/feedback/feature.manifest.ts',
   'frontend/src/features/ask-ace/data/ask-ace.api.ts',
   'frontend/src/features/ask-ace/pages/AskAcePage.tsx',
   'frontend/src/features/ask-ace/public.ts',

@@ -6082,3 +6082,15 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Added accessible input/send labels, live assistant status and an explicit busy state.
 - Extended architecture enforcement and direct-route E2E coverage for Ask Ace.
 - Backend restructuring remains deferred until frontend completion.
+
+
+### Frontend architecture: Feedback feature boundary — 2026-09-28
+
+- Extracted **Feedback agent** from the workspace monolith into a feature-owned lazy chunk without removing response capture, feedback outreach, theme analysis, journey context or follow-up routing.
+- Added explicit loading/retry behavior that preserves existing feedback evidence during transient refresh failures.
+- Moved response capture, feedback request and journey context onto the shared accessible dialog boundary.
+- Protected open feedback response/request drafts from accidental workspace navigation.
+- Added explicit **unknown outcome** handling for recording responses, requesting feedback and routing insights when timeout/network ambiguity prevents authoritative confirmation.
+- Bounded customer-facing feedback and theme rendering for long-running workspaces while preserving backend statistics.
+- Extended architecture enforcement and direct-route E2E coverage for Feedback.
+- Backend restructuring remains deferred until frontend completion.
