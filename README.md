@@ -5813,3 +5813,15 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Added Playwright coverage that verifies the skip link, heading focus, and route-specific document titles across multiple workspace sections.
 - Added `docs/FRONTEND_ARCHITECTURE_ADOPTION.md` to govern incremental migration. The repository will not be destructively reorganized or duplicated merely to match the architecture diagram.
 - Implemented directly on `main`; no separate branch was created.
+
+
+### Workspace-scope frontend isolation — 2026-09-28
+
+- Implemented confirm-before-commit workspace switching from the uploaded architecture standard.
+- The active workspace label no longer changes before the target workspace is verified through the backend.
+- Previous workspace content is deliberately hidden during the transition so stale tenant data cannot be presented under the target workspace name.
+- Failed target verification restores the previous `ace_workspace_id` and exposes **Stay** / **Retry** recovery actions.
+- Successful switching advances a frontend workspace generation and remounts the active feature section so component state from the previous workspace is not reused.
+- Workspace-level summary polling now restarts on the new scope generation.
+- Added Playwright coverage for neutral transition state, stale-content hiding, confirmed remount, title update, and final workspace identity.
+- No existing feature was removed or duplicated; implemented directly on `main`.
