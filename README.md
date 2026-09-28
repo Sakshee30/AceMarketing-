@@ -5743,3 +5743,14 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Added Playwright recovery coverage for both sections with forced backend failures followed by successful refreshes.
 - No external provider credentials are required for these workflows; they are fully internal AceMarketing frontend/backend operations.
 - Implemented directly on `main`; no separate branch was created.
+
+
+### Integration workspace reliability hardening — 2026-09-28
+
+- **Integrations** now loads built-in connector state, custom integrations, connector requests, and WhatsApp activity as one explicit workspace refresh instead of independently swallowing failures.
+- Added **Refresh integrations**, loading feedback, retryable backend errors, and preservation of the last known connector state during transient failures.
+- Connector-request failures now render as errors instead of using the same success styling as completed requests.
+- WhatsApp activity refresh failures are now visible to the operator instead of silently leaving stale activity.
+- This remains credential-deferred: connector configuration and internal persistence work now, while final third-party authorization can be completed later with real credentials.
+- Added Playwright coverage that forces `GET /api/integrations` to fail, verifies the visible error, restores the backend, refreshes, and confirms recovery.
+- Implemented directly on `main`; no separate branch was created.
