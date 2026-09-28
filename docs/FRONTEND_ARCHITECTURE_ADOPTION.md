@@ -13,6 +13,13 @@ AceMarketing keeps the current product pipeline and all existing product feature
 - Existing workspace-section boundary remains in place for feature containment.
 - A failed workspace feature cannot remove sidebar navigation or the rest of the customer shell.
 - Recovery UI provides retry and full-application reload paths without claiming backend data was changed.
+- The pre-JavaScript HTML now contains a useful startup state so bundle/bootstrap failure does not leave a blank page.
+
+### Public runtime configuration safety
+- The browser validates public runtime configuration before mounting the customer application.
+- Only same-origin relative API base paths are accepted by the public configuration helper.
+- Release ID and environment are exposed as public root metadata for support/telemetry correlation.
+- Request timeout values are bounded to prevent accidental zero/unbounded browser deadlines.
 
 ### Accessible navigation
 - Workspace exposes a keyboard-accessible skip link.
@@ -21,24 +28,15 @@ AceMarketing keeps the current product pipeline and all existing product feature
 - Focus moves to the active page heading after intentional section navigation.
 - Page headings accept programmatic focus and retain visible focus styling.
 
-### Existing integrity controls preserved
-AceMarketing already contains backend-confirmed state handling for critical approvals, alerts, reporting, routing, billing, consent, meetings, integrations and activation workflows. Those controls remain intact.
+### Reusable customer-state primitives
+- Shared loading, empty, error, forbidden, degraded and stale states now exist as owned frontend primitives.
+- State primitives preserve honest language and expose a consistent accessible action affordance.
+- Feature teams can adopt these incrementally without replacing existing feature behavior.
 
-## Next incremental frontend work
-
-1. Extract lightweight route/feature manifests from the monolithic composition without moving feature behavior.
-2. Add reusable design-system state primitives for loading, empty, error, degraded, forbidden and stale states.
-3. Introduce an owned transport error model and request cancellation support without changing endpoint semantics.
-4. Add feature-owned mutation-state helpers for IDLE / VALIDATING / SUBMITTING / CONFIRMED / REJECTED / CONFLICT / UNKNOWN.
-5. Split expensive sections behind lazy feature loaders after bundle evidence identifies the highest-value chunks.
-6. Introduce draft/dirty-work protection for long builders and forms before route/workspace changes.
-7. Add automated accessibility coverage for keyboard flow, dialogs, focus recovery and mobile navigation.
-8. Add bundle-budget reporting and long-session memory evidence to CI.
-
-## Completion rule
-
-A frontend feature is not considered complete because the screen renders. Completion requires the happy path, validation/denied path, failure path, recovery path, compatibility/migration behavior and release evidence appropriate to that feature.
-
+### Mutation lifecycle contract
+- A reusable lifecycle helper now models IDLE, VALIDATING, SUBMITTING, CONFIRMED_SUCCESS, CONFIRMED_REJECTION, CONFLICT and OUTCOME_UNKNOWN.
+- Operation IDs are generated independently from button state so feature mutations can reconcile lost acknowledgements without treating a timeout as confirmed failure.
+- Existing critical mutations remain unchanged until each feature is migrated and verified.
 
 ### Workspace scope isolation
 - Workspace switching now uses confirm-before-commit behavior.
@@ -48,10 +46,31 @@ A frontend feature is not considered complete because the screen renders. Comple
 - A successful workspace switch increments a scope generation and remounts the active feature so old feature state cannot be reused under the new workspace.
 - Dashboard summary polling is generation-scoped and restarts after confirmed workspace changes.
 
-
 ### Shared transport and request budgets
 - The shared browser transport now owns a bounded request deadline.
 - Every request has a client correlation ID and an internal AbortController.
 - Transport cancellation produces a normalized aborted state; deadline expiry produces a distinct timeout/unknown-confirmation state.
 - Workspace switching cancels in-flight old-scope browser requests before resolving the new scope.
 - Existing endpoint semantics are unchanged; the transport tightening is additive.
+
+### Bundle-budget evidence
+- Vite now emits a build manifest.
+- CI calculates gzip size for each entry and all of its static dependencies.
+- The architecture targets are recorded as <=250 KiB gzip initial JavaScript, 350 KiB review gate and <=60 KiB initial CSS.
+- During the non-destructive migration the CI job is evidence/report mode so existing oversized composition is surfaced without blocking unrelated fixes.
+- The gate will move to strict mode after high-value feature splitting/lazy loading reduces the startup graph below the review threshold.
+
+## Frontend completion sequence before backend architecture changes
+
+1. Extract lightweight route/feature manifests from the monolithic composition without moving feature behavior.
+2. Adopt shared state primitives across the highest-traffic workspace surfaces.
+3. Migrate critical writes to the explicit mutation lifecycle one feature at a time.
+4. Add dirty-work/draft protection to long forms and builders.
+5. Split expensive sections behind lazy feature loaders according to measured bundle evidence.
+6. Add automated accessibility coverage for keyboard flow, dialogs, focus recovery and mobile navigation.
+7. Add long-session memory evidence and convert bundle-budget CI from report to strict review-gate mode.
+8. Only after the frontend acceptance evidence is green begin the backend architecture tightening phase.
+
+## Completion rule
+
+A frontend feature is not considered complete because the screen renders. Completion requires the happy path, validation/denied path, failure path, recovery path, compatibility/migration behavior and release evidence appropriate to that feature.
