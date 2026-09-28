@@ -40,6 +40,9 @@ for(const file of walk(frontend)){
 const acePlatform=path.join(frontend,'AcePlatform.tsx')
 if(fs.existsSync(acePlatform)){
   const source=fs.readFileSync(acePlatform,'utf8')
+  if(/function\s+Funnel\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Funnel implementation after feature extraction.')
+  }
   if(/function\s+ChatGPTAds\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy ChatGPT Ads implementation after feature extraction.')
   }
@@ -123,6 +126,10 @@ if(fs.existsSync(acePlatform)){
 }
 
 const required=[
+  'frontend/src/features/funnel/data/funnel.api.ts',
+  'frontend/src/features/funnel/pages/FunnelPage.tsx',
+  'frontend/src/features/funnel/public.ts',
+  'frontend/src/features/funnel/feature.manifest.ts',
   'frontend/src/features/chatgpt-ads/data/chatgpt-ads.api.ts',
   'frontend/src/features/chatgpt-ads/pages/ChatGPTAdsPage.tsx',
   'frontend/src/features/chatgpt-ads/public.ts',
