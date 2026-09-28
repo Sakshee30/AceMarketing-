@@ -840,6 +840,21 @@ test('dashboard keeps section navigation visible on workspace', async ({ page })
 })
 
 
+test('integrations exposes backend load failures and recovers on refresh', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  await page.route('**/api/integrations',route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'CI integrations unavailable'})}))
+  await openWorkspaceTab(page,'Integrations')
+  await expect(page.getByRole('heading',{name:'Platform-agnostic connectivity'})).toBeVisible()
+  await expect(page.getByRole('alert')).toContainText('CI integrations unavailable')
+  await page.unroute('**/api/integrations')
+  const responsePromise=page.waitForResponse(r=>r.url().includes('/api/integrations')&&r.request().method()==='GET'&&r.status()===200)
+  await page.getByRole('button',{name:'Refresh integrations'}).click()
+  await responsePromise
+  await expect(page.getByRole('alert')).toHaveCount(0)
+  await expect(page.getByRole('heading',{name:'Integration catalog'})).toBeVisible()
+})
+
 test('manual integration cards open the custom adapter builder', async ({ page }) => {
   await page.goto('/#/workspace')
   await dismissConsent(page)
