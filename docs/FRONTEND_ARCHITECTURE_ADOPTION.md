@@ -230,6 +230,14 @@ AceMarketing keeps the current product pipeline and all existing product feature
 - Diagnostic configuration guidance now uses the shared accessible dialog primitive.
 - CI rejects reintroduction of the legacy `Adjustments` and `Diagnostics` functions and Playwright verifies both direct routes.
 
+### Twentieth through twenty-second feature extractions
+- Match Quality, Reconciliation and Fraud are now feature-owned lazy chunks rather than inline implementations inside `AcePlatform.tsx`.
+- Match Quality preserves the existing first-party identity-coverage evidence and provider-score boundary while moving its reads behind a feature-owned data adapter.
+- Reconciliation repair commands now use the shared mutation lifecycle with confirmed, rejected, conflict and unknown-outcome handling.
+- Fraud review/block commands use the same authoritative lifecycle and continue to require explicit human action; no silent auto-blocking was introduced.
+- Existing routes, CSS classes, endpoint contracts and customer-visible workflow semantics are preserved.
+- CI rejects reintroduction of the three legacy functions and Playwright verifies all three direct workspace routes.
+
 ### Bundle-budget evidence
 - Vite now emits a build manifest.
 - CI calculates gzip size for each entry and all of its static dependencies.
