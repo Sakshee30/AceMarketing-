@@ -222,6 +222,14 @@ AceMarketing keeps the current product pipeline and all existing product feature
 - CI rejects reintroduction of the three legacy implementations and Playwright verifies their direct workspace routes.
 - The malformed conversion-adjustment dialog closing tag that caused the local Vite JSX parser failure was corrected before continuing the extraction sequence.
 
+### Eighteenth and nineteenth feature extractions
+- Adjustments and Diagnostics are now feature-owned lazy chunks rather than inline implementations inside `AcePlatform.tsx`.
+- Existing adjustment creation/preview/application, diagnostics issue inspection, replay, scan behavior, CSS classes and direct routes are preserved.
+- Adjustment creation remains draft-protected and create/apply operations now surface timeout/network ambiguity as an explicit reconciliation state.
+- Diagnostic replay and full-scan commands also require authoritative refresh before repeat submission after an uncertain outcome.
+- Diagnostic configuration guidance now uses the shared accessible dialog primitive.
+- CI rejects reintroduction of the legacy `Adjustments` and `Diagnostics` functions and Playwright verifies both direct routes.
+
 ### Bundle-budget evidence
 - Vite now emits a build manifest.
 - CI calculates gzip size for each entry and all of its static dependencies.
