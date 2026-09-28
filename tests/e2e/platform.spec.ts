@@ -2312,3 +2312,19 @@ test('AdSync feature chunk preserves signal pipelines and accessible builder',as
   await expect(dialog).toHaveCount(0)
   await expect(page).toHaveURL(/#\/workspace\?tab=AdSync/)
 })
+
+
+test('ChatGPT Ads feature chunk preserves measurement and validation workflow',async({page})=>{
+  await page.goto('/#/workspace?tab=ChatGPT%20Ads')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'ChatGPT Ads conversion measurement'})).toBeVisible()
+  const status=await page.request.get('/api/chatgpt-ads')
+  expect(status.ok()).toBeTruthy()
+  const payload=await status.json()
+  expect(Array.isArray(payload.supportedEventTypes)).toBeTruthy()
+  await page.getByRole('button',{name:'Validate payload'}).click()
+  await expect(page.locator('.activation-test-result')).toBeVisible()
+  await expect(page.getByText('Measurement readiness',{exact:true})).toBeVisible()
+  await expect(page.getByText('Recent ChatGPT Ads deliveries',{exact:true})).toBeVisible()
+  await expect(page).toHaveURL(/#\/workspace\?tab=ChatGPT%20Ads/)
+})
