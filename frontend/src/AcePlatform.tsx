@@ -2287,8 +2287,9 @@ function Integrations(){
  const [integrationRequests,setIntegrationRequests]=useState<any[]>([])
  const [requestOpen,setRequestOpen]=useState(false)
  const [requestBusy,setRequestBusy]=useState(false)
- const [requestNotice,setRequestNotice]=useState('')
+ const [requestNotice,setRequestNotice]=useState<{kind:'ok'|'error'|'',text:string}>({kind:'',text:''})
  const [connectionNotice,setConnectionNotice]=useState<any>(null)
+ const [integrationLoading,setIntegrationLoading]=useState(true)
  const [secretConnector,setSecretConnector]=useState<any>(null)
  const [secretValues,setSecretValues]=useState<Record<string,string>>({})
  const [secretBusy,setSecretBusy]=useState(false)
@@ -2308,7 +2309,20 @@ function Integrations(){
   }
   setConnector(name);setStep(1)
  }
- useEffect(()=>{api.integrations().then((r:any)=>{setIntegrationItems(r.items||[]);setIntegrationRequests(r.requests||[]);setConnected((r.items||[]).filter((x:any)=>x.status==='connected').map((x:any)=>x.name))}).catch(()=>null);api.customIntegrations().then((r:any)=>setCustomConnectors(r.items||[])).catch(()=>null);api.whatsappMessages().then((r:any)=>setWaEvents(r.items||[])).catch(()=>null)},[])
+ const loadIntegrations=async()=>{
+  setIntegrationLoading(true);setConnectionNotice(null)
+  try{
+   const [r,custom,wa]:any=await Promise.all([api.integrations(),api.customIntegrations(),api.whatsappMessages()])
+   setIntegrationItems(r.items||[])
+   setIntegrationRequests(r.requests||[])
+   setConnected((r.items||[]).filter((x:any)=>x.status==='connected').map((x:any)=>x.name))
+   setCustomConnectors(custom.items||[])
+   setWaEvents(wa.items||[])
+  }catch(e:any){
+   setConnectionNotice({type:'error',text:e?.message||'Integration workspace could not be loaded. Existing connector state was preserved.'})
+  }finally{setIntegrationLoading(false)}
+ }
+ useEffect(()=>{loadIntegrations()},[])
  const finish=async()=>{
   setConnectionNotice(null)
   try{
@@ -2353,7 +2367,11 @@ function Integrations(){
  }
  const testCustom=async()=>{try{const r:any=await api.testCustomIntegration(draft);setTestResult(r)}catch(e:any){setTestResult({ok:false,error:e?.message||'Connection test failed'})};setBuilderStep(3)}
  const saveCustom=async()=>{try{await api.createCustomIntegration(draft);const r:any=await api.customIntegrations();setCustomConnectors(r.items||[]);setBuilder(false);setBuilderStep(1);setTestResult(null);setDraft((x:any)=>({...x,secret:'',username:''}))}catch(e:any){setTestResult({ok:false,error:e?.message||'Could not create integration'})}}
- const reloadWhatsApp=()=>api.whatsappMessages().then((r:any)=>setWaEvents(r.items||[])).catch(()=>null)
+ const reloadWhatsApp=async()=>{
+  setWaNotice('')
+  try{const r:any=await api.whatsappMessages();setWaEvents(r.items||[])}
+  catch(e:any){setWaNotice(e?.message||'WhatsApp activity could not be refreshed.')}
+ }
  const sendWhatsApp=async()=>{
   if(!waTo.trim()||!waText.trim())return
   setWaBusy(true);setWaNotice('')
@@ -2365,19 +2383,19 @@ function Integrations(){
   finally{setWaBusy(false)}
  }
  const submitIntegrationRequest=async(e:any)=>{
-  e.preventDefault();const fd=new FormData(e.currentTarget);setRequestBusy(true);setRequestNotice('')
+  e.preventDefault();const fd=new FormData(e.currentTarget);setRequestBusy(true);setRequestNotice({kind:'',text:''})
   try{
    const r:any=await api.requestIntegration({connector:String(fd.get('connector')||''),businessNeed:String(fd.get('businessNeed')||''),direction:String(fd.get('direction')||'Bidirectional'),priority:String(fd.get('priority')||'Normal')})
-   setIntegrationRequests(xs=>[r.item,...xs]);setRequestOpen(false);setRequestNotice('Connector request submitted and tracked in this workspace.')
-  }catch(err:any){setRequestNotice(err?.message||'Connector request could not be submitted.')}finally{setRequestBusy(false)}
+   setIntegrationRequests(xs=>[r.item,...xs]);setRequestOpen(false);setRequestNotice({kind:'ok',text:'Connector request submitted and tracked in this workspace.'})
+  }catch(err:any){setRequestNotice({kind:'error',text:err?.message||'Connector request could not be submitted.'})}finally{setRequestBusy(false)}
  }
  const filteredGroups=groups.map(([label,items]:any)=>[label,(items as string[]).filter((name:string)=>!integrationSearch.trim()||name.toLowerCase().includes(integrationSearch.trim().toLowerCase())||String(label).toLowerCase().includes(integrationSearch.trim().toLowerCase()))]).filter(([,items]:any)=>items.length)
- return <><PageHead crumb="Workspace / Integrations" title="Platform-agnostic connectivity" sub="Connect the systems you already use without rebuilding your stack."/>
+ return <><PageHead crumb="Workspace / Integrations" title="Platform-agnostic connectivity" sub="Connect the systems you already use without rebuilding your stack." action={integrationLoading?'Refreshing…':'Refresh integrations'} onAction={loadIntegrations}/>
  <div className="integration-summary"><div><strong>{builtInCount}+</strong><span>catalogued connector paths</span></div><div><strong>{connected.length+customConnectors.length}</strong><span>connected in this workspace</span></div><div><strong>{integrationRequests.filter((x:any)=>x.status==='requested').length}</strong><span>requested connectors</span></div><div><strong>Native + Custom</strong><span>explicit capability status</span></div></div>
- {requestNotice&&<div className="delivery-notice ok"><CheckCircle2/><span>{requestNotice}</span></div>}
+ {requestNotice.text&&<div className={'delivery-notice '+(requestNotice.kind==='error'?'error':'ok')} role={requestNotice.kind==='error'?'alert':'status'}>{requestNotice.kind==='error'?<ShieldCheck/>:<CheckCircle2/>}<span>{requestNotice.text}</span></div>}
  {connectionNotice&&<div className={'delivery-notice '+(connectionNotice.type==='error'?'error':'ok')}>{connectionNotice.type==='error'?<ShieldCheck/>:<CheckCircle2/>}<span>{connectionNotice.text}</span></div>}
  <div className="app-panel custom-integration-hero"><div><Cable/><div><span>Custom integration</span><h3>Connect proprietary systems without changing your stack</h3><p>Define authentication, endpoint, identity fields and business mappings, then validate the connection before enabling sync.</p></div></div><div className="panel-actions"><button onClick={()=>setRequestOpen(true)}>Request connector</button><button className="app-primary" onClick={()=>{setBuilder(true);setBuilderStep(1);setTestResult(null)}}><Plus/>Build custom integration</button></div></div>
- <div className="app-panel"><div className="panel-head"><div><h3>Integration catalog</h3><p>Native OAuth connectors are labelled separately from configurable adapters.</p></div><div className="integration-catalog-search"><Search/><input aria-label="Search integration catalog" value={integrationSearch} onChange={e=>setIntegrationSearch(e.target.value)} placeholder="Search CRM, warehouse, ads, messaging..."/></div></div></div>
+ <div className="app-panel"><div className="panel-head"><div><h3>Integration catalog</h3><p>Native OAuth connectors are labelled separately from configurable adapters.</p></div><div className="integration-catalog-search"><Search/><input aria-label="Search integration catalog" value={integrationSearch} onChange={e=>setIntegrationSearch(e.target.value)} placeholder="Search CRM, warehouse, ads, messaging..."/></div></div>{integrationLoading&&<div className="empty-state"><Activity/><b>Refreshing integration state</b><small>Loading connector capability, workspace credentials, custom adapters and WhatsApp activity.</small></div>}</div>
  <div className="app-panel whatsapp-ops"><div className="panel-head"><div><h3>WhatsApp Cloud API operations</h3><p>Send a provider-backed message and inspect real inbound/outbound webhook activity.</p></div><span className={connected.includes('WhatsApp')?'healthy':'warning'}>{connected.includes('WhatsApp')?'Connected':'Connect WhatsApp first'}</span></div>
  <div className="whatsapp-ops-grid"><div className="whatsapp-send-box"><label>Recipient phone<input value={waTo} onChange={e=>setWaTo(e.target.value)} placeholder="919876543210"/></label><label>Message<textarea value={waText} onChange={e=>setWaText(e.target.value)} rows={4}/></label><button className="app-primary" disabled={waBusy||!waTo.trim()||!waText.trim()} onClick={sendWhatsApp}>{waBusy?'Sending…':'Send test message'}</button>{waNotice&&<small className="whatsapp-notice">{waNotice}</small>}</div>
  <div className="whatsapp-event-list"><div className="panel-head"><div><h4>Recent WhatsApp activity</h4><p>Cloud API messages and delivery receipts</p></div><button onClick={reloadWhatsApp}>Refresh</button></div>{waEvents.length?waEvents.slice(0,8).map((x:any)=><div className="whatsapp-event-row" key={(x.kind||'event')+':'+(x.id||x.timestamp)}><span className={'wa-kind '+String(x.kind||'event')}>{x.kind||'event'}</span><div><b>{x.kind==='message'?(x.contactName||x.from||'Inbound message'):x.kind==='outbound'?(x.recipientId||'Outbound message'):(x.status||'Delivery status')}</b><small>{x.text||x.messageType||x.status||'WhatsApp event'} · {x.timestamp?new Date(x.timestamp).toLocaleString():'now'}</small></div></div>):<div className="empty-delivery-state"><MessageCircle/><div><b>No WhatsApp events yet</b><small>Verified webhook events and messages will appear here.</small></div></div>}</div></div></div>
