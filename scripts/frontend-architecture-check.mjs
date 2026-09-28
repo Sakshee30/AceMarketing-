@@ -40,6 +40,9 @@ for(const file of walk(frontend)){
 const acePlatform=path.join(frontend,'AcePlatform.tsx')
 if(fs.existsSync(acePlatform)){
   const source=fs.readFileSync(acePlatform,'utf8')
+  if(/function\s+AdSync\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy AdSync implementation after feature extraction.')
+  }
   if(/function\s+Overview\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Overview implementation after feature extraction.')
   }
@@ -117,6 +120,10 @@ if(fs.existsSync(acePlatform)){
 }
 
 const required=[
+  'frontend/src/features/adsync/data/adsync.api.ts',
+  'frontend/src/features/adsync/pages/AdSyncPage.tsx',
+  'frontend/src/features/adsync/public.ts',
+  'frontend/src/features/adsync/feature.manifest.ts',
   'frontend/src/features/overview/data/overview.api.ts',
   'frontend/src/features/overview/pages/OverviewPage.tsx',
   'frontend/src/features/overview/public.ts',
