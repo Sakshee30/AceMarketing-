@@ -353,3 +353,13 @@ A frontend feature is not considered complete because the screen renders. Comple
 - Suggested templates hydrate controlled React state instead of mutating DOM form elements after render.
 - Unmatched-record rendering is bounded to the newest 100 records in the browser while backend data remains authoritative.
 - CI rejects reintroduction of the legacy Matchback implementation into `AcePlatform.tsx`.
+
+
+### POS & Stores feature extraction and import hardening
+- POS & Stores is now a feature-owned lazy chunk instead of an inline workspace implementation.
+- Existing location summaries, offline revenue, identity match coverage, CSV template download, transaction import and import-history behavior are preserved.
+- The import builder uses the shared accessible dialog and participates in dirty-work protection.
+- CSV parsing validates required columns, numeric revenue and timestamps before submission.
+- Import writes distinguish confirmed backend success from timeout/network uncertainty; uncertain outcomes require authoritative refresh before retrying the same batch.
+- Recent import rendering is bounded to the newest 100 batches in the browser without changing backend retention.
+- CI rejects reintroduction of the legacy POS & Stores implementation into `AcePlatform.tsx`.
