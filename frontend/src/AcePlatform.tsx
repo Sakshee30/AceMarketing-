@@ -861,43 +861,6 @@ function OfflineAttribution(){
  <div className="app-panel"><div className="panel-head"><div><h3>WhatsApp identity bridge</h3><p>Cloud API events connected to the stitched journey</p></div><span className={waMessages?'healthy':'warning'}>{waMessages?waMessages+' messages':'No events yet'}</span></div><div className="freshness-card"><MessageCircle/><div><b>Verified inbound event</b><p>Meta signature verification, phone-number workspace routing, lead upsert and assisted attribution are handled before the event becomes workspace truth.</p></div></div><div className="freshness-card"><CircleDollarSign/><div><b>Revenue handoff</b><p>Downstream CRM or billing outcomes can reuse the same customer identity before Google/Meta signal return.</p></div></div></div></div>
  {builder&&<AccessibleDialog ariaLabel="New offline attribution rule" onClose={()=>setBuilder(false)}><form className="connector-card offline-builder" onSubmit={create}><div className="connector-modal-head"><div><RadioTower/><div><b>New offline attribution rule</b><small>Define a real source-to-identity-to-destination matching rule.</small></div></div><button type="button" aria-label="Close offline attribution rule" onClick={()=>setBuilder(false)}><X/></button></div><label>Conversion<input name="conversion" required defaultValue={draft.conversion} placeholder="Inbound Call"/></label><label>Source<input name="source" required defaultValue={draft.source} placeholder="Telephony"/></label><label>Matching method<input name="match" required defaultValue={draft.match} placeholder="phone + click/session reconciliation"/></label><label>Identifier<input name="identifier" required defaultValue={draft.identifier} placeholder="Phone / GCLID / FBCLID"/></label><fieldset><legend>Destinations</legend><label><input type="checkbox" name="destination" value="Google Ads" defaultChecked/>Google Ads</label><label><input type="checkbox" name="destination" value="Meta Ads" defaultChecked/>Meta Ads</label></fieldset><button disabled={busy==='create'}>{busy==='create'?'Creating…':'Create offline rule'}</button></form></AccessibleDialog>}</>
 }
-function GroupedPerformance(){
- const [dimension,setDimension]=useState('category')
- const [data,setData]=useState<any>({available:false,items:[],totals:{},conversionEvents:[]})
- const [busy,setBusy]=useState('')
- const [notice,setNotice]=useState('')
- const [costDrafts,setCostDrafts]=useState<Record<string,string>>({})
- const load=async(next=dimension)=>{
-  try{
-   const r:any=await api.groupedPerformance(next,6)
-   setData(r)
-   setCostDrafts(Object.fromEntries((r.items||[]).map((x:any)=>[x.key,x.cost==null?'':String(x.cost)])))
-  }catch(e:any){setNotice(e?.message||'Grouped performance could not be loaded.')}
- }
- useEffect(()=>{load(dimension)},[dimension])
- const money=(n:any)=>'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:0})
- const saveCost=async(key:string)=>{
-  setBusy(key);setNotice('')
-  const raw=costDrafts[key]??''
-  try{
-   await api.saveGroupedPerformanceCost(dimension,key,raw.trim()===''?null:Number(raw))
-   setNotice(raw.trim()===''?'Cost basis cleared for '+key+'.':'Cost basis saved for '+key+'.')
-   await load(dimension)
-  }catch(e:any){setNotice(e?.message||'Cost basis could not be saved.')}
-  finally{setBusy('')}
- }
- const dims=[['category','Category'],['productCategory','Product category'],['product','Product / SKU'],['brand','Brand'],['source','Acquisition source'],['campaign','Campaign']]
- const t=data.totals||{}
- return <><PageHead crumb="Measurement / Grouped Performance" title="Grouped performance" sub="Group first-party conversion evidence by product, category, brand, source or campaign, and add optional cost inputs to calculate contribution without inventing margin." action="Refresh" onAction={()=>load(dimension)}/>
- {notice&&<div className={'delivery-notice '+(notice.toLowerCase().includes('could not')?'error':'ok')}><Table2/><span>{notice}</span></div>}
- <div className="stats-grid"><Stat label="Groups" value={String((data.items||[]).length)} sub={dims.find(x=>x[0]===dimension)?.[1]||dimension} Icon={Table2}/><Stat label="Conversions" value={String(t.conversions||0)} sub={(t.conversionRate||0)+'% conversion rate'} Icon={Target}/><Stat label="Attributed revenue" value={money(t.revenue)} sub="Configured conversion-event value only" Icon={CircleDollarSign}/><Stat label="Contribution" value={t.contribution==null?'—':money(t.contribution)} sub={t.costedGroups?String(t.costedGroups)+' groups with explicit cost basis':'Enter costs to calculate contribution'} Icon={Activity}/></div>
- <div className="grouped-performance-hero app-panel"><div><Table2/><div><span>EVIDENCE-BASED GROUPING</span><h3>First-party events → grouped conversion evidence → optional contribution view</h3><p>Revenue is counted only from configured conversion events. Contribution and margin appear only for groups where an operator explicitly supplies cost.</p></div></div><div className="grouped-dimension-picker">{dims.map(([key,label])=><button key={key} className={dimension===key?'selected':''} onClick={()=>setDimension(key)}>{label}</button>)}</div></div>
- <div className="app-panel"><div className="panel-head"><div><h3>Grouped performance table</h3><p>{data.available?'Built from persisted first-party events':'Waiting for persisted event evidence'}</p></div><span className="status">{(data.conversionEvents||[]).length} configured conversion events</span></div>
- <div className="grouped-performance-table"><table><thead><tr><th>Group</th><th>Subjects</th><th>Events</th><th>Conversions</th><th>Conv. rate</th><th>Revenue</th><th>Cost basis</th><th>Contribution</th><th>Margin</th></tr></thead><tbody>{(data.items||[]).length?(data.items||[]).map((x:any)=><tr key={x.key}><td><b>{x.key}</b></td><td>{Number(x.subjects||0).toLocaleString('en-IN')}</td><td>{Number(x.events||0).toLocaleString('en-IN')}</td><td>{Number(x.conversions||0).toLocaleString('en-IN')}</td><td>{x.conversionRate||0}%</td><td>{money(x.revenue)}</td><td><div className="grouped-cost-editor"><input aria-label={'Cost basis for '+x.key} type="number" min="0" step="0.01" value={costDrafts[x.key]??''} onChange={e=>setCostDrafts({...costDrafts,[x.key]:e.target.value})} placeholder="Optional"/><button disabled={busy===x.key} onClick={()=>saveCost(x.key)}>{busy===x.key?'Saving…':'Save'}</button></div></td><td>{x.contribution==null?'—':money(x.contribution)}</td><td>{x.marginRate==null?'—':x.marginRate+'%'}</td></tr>):<tr><td colSpan={9}>No grouped evidence yet. Track events with category, product, brand, source or campaign fields to populate this view.</td></tr>}</tbody></table></div></div>
- <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Conversion event contract</h3><p>Only these events count as conversions and attributed revenue</p></div></div><div className="context-chips">{(data.conversionEvents||[]).length?(data.conversionEvents||[]).map((x:string)=><span key={x}>{x}</span>):<span>No conversion event contract available</span>}</div></div><div className="app-panel"><div className="panel-head"><div><h3>Cost & margin boundary</h3><p>What this workspace will and will not calculate</p></div></div>{[['Revenue','Observed value on configured conversion events'],['Cost','Only operator-entered cost basis'],['Contribution','Revenue minus explicit cost'],['Margin %','Only when revenue and cost are both available'],['Missing P&L data','Shown as —, never inferred']].map(x=><div className="mapping-rule" key={x[0]}><span>{x[0]}</span><ArrowRight/><b>{x[1]}</b></div>)}</div></div>
- </> 
-}
-
 function Enrich(){
  const [live,setLive]=useState<any>({items:[],stats:null,writebacks:[]})
  const [selected,setSelected]=useState('')
