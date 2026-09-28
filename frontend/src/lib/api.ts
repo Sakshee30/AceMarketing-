@@ -1,3 +1,5 @@
+import {getPublicRuntimeConfig} from './runtime-config'
+
 export type DemoRequest = Record<string, FormDataEntryValue>
 
 const getToken = () => typeof window !== 'undefined' ? window.localStorage.getItem('ace_token') : null
@@ -30,7 +32,10 @@ export const cancelWorkspaceRequests=(reason='workspace_scope_changed')=>{
 const request = async <T>(path: string, init?: AceRequestInit): Promise<T> => {
   const token=getToken()
   const controller=new AbortController()
-  const timeoutMs=Math.max(1000,Number(init?.timeoutMs||((init?.method||'GET').toUpperCase()==='GET'?15000:25000)))
+  const runtime=getPublicRuntimeConfig()
+  const method=(init?.method||'GET').toUpperCase()
+  const defaultTimeout=method==='GET'?runtime.requestTimeouts.readMs:runtime.requestTimeouts.writeMs
+  const timeoutMs=Math.max(1000,Number(init?.timeoutMs||defaultTimeout))
   const clientRequestId=globalThis.crypto?.randomUUID?.()||('ace_'+Date.now()+'_'+Math.random().toString(36).slice(2))
   const externalSignal=init?.signal
   const abortFromExternal=()=>{try{controller.abort((externalSignal as any)?.reason||'caller_cancelled')}catch{}}
@@ -44,7 +49,7 @@ const request = async <T>(path: string, init?: AceRequestInit): Promise<T> => {
   let response:Response
   try{
     const {timeoutMs:_timeoutMs,signal:_signal,...fetchInit}=init||{}
-    response = await fetch(`/api${path}`, {
+    response = await fetch(`${runtime.apiBasePath}${path}`, {
       ...fetchInit,
       signal:controller.signal,
       headers: {
