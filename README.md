@@ -5939,3 +5939,4 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Preserved previously loaded source evidence during transient failures and bounded recent activity rendering to protect long-running browser sessions.
 - Added architecture enforcement and E2E coverage for the extracted feature.
 - Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
+
