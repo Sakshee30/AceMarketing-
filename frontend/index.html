@@ -8,7 +8,15 @@
     <title>AceMarketing</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <main class="ace-preboot" aria-live="polite" aria-busy="true">
+        <section class="ace-preboot-card">
+          <strong>Loading AceMarketing…</strong>
+          <p>Preparing your secure workspace. If this screen remains, reload the page or contact your workspace administrator.</p>
+        </section>
+      </main>
+    </div>
+    <noscript>AceMarketing requires JavaScript to run the authenticated workspace.</noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
