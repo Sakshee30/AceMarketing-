@@ -2504,3 +2504,17 @@ test('Identity feature chunk preserves identity graph and review export surface'
   await expect(page.getByRole('button',{name:'Review match rules'})).toBeVisible()
   await expect(page).toHaveURL(/#\/workspace\?tab=Identity/)
 })
+
+
+test('Attribution feature chunk preserves full-path evidence and period controls',async({page})=>{
+  await page.goto('/#/workspace?tab=Attribution')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Full-path attribution'})).toBeVisible()
+  const response=await page.request.get('/api/attribution-identity/stats?periodDays=30')
+  expect(response.ok()).toBeTruthy()
+  const payload=await response.json()
+  expect(Array.isArray(payload.channels)).toBeTruthy()
+  expect(Array.isArray(payload.campaigns)).toBeTruthy()
+  await expect(page.getByRole('button',{name:'Last 30 days'})).toBeVisible()
+  await expect(page).toHaveURL(/#\/workspace\?tab=Attribution/)
+})
