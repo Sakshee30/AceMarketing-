@@ -79,6 +79,11 @@ if(fs.existsSync(acePlatform)){
   if(/function\s+DeliveryCenter\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy DeliveryCenter implementation after feature extraction.')
   }
+  for(const legacyName of ['RealTimeActivation','Personalization','Exclusions']){
+    if(new RegExp('function\\s+'+legacyName+'\\s*\\(').test(source)){
+      failures.push('frontend/src/AcePlatform.tsx still contains the legacy '+legacyName+' implementation after feature extraction.')
+    }
+  }
   for(const legacyName of ['Settings','UsersRolesSettings','GovernanceSettings','BillingUsageSettings']){
     if(new RegExp('function\\s+'+legacyName+'\\s*\\(').test(source)){
       failures.push('frontend/src/AcePlatform.tsx still contains the legacy '+legacyName+' implementation after Settings feature extraction.')
@@ -94,6 +99,18 @@ if(fs.existsSync(acePlatform)){
 
 const required=[
   'frontend/src/features/workspace/manifest.ts',
+  'frontend/src/features/exclusions/data/exclusions.api.ts',
+  'frontend/src/features/exclusions/pages/ExclusionsPage.tsx',
+  'frontend/src/features/exclusions/public.ts',
+  'frontend/src/features/exclusions/feature.manifest.ts',
+  'frontend/src/features/personalization/data/personalization.api.ts',
+  'frontend/src/features/personalization/pages/PersonalizationPage.tsx',
+  'frontend/src/features/personalization/public.ts',
+  'frontend/src/features/personalization/feature.manifest.ts',
+  'frontend/src/features/real-time-activation/data/real-time-activation.api.ts',
+  'frontend/src/features/real-time-activation/pages/RealTimeActivationPage.tsx',
+  'frontend/src/features/real-time-activation/public.ts',
+  'frontend/src/features/real-time-activation/feature.manifest.ts',
   'frontend/src/features/delivery/data/delivery.api.ts',
   'frontend/src/features/delivery/pages/DeliveryCenterPage.tsx',
   'frontend/src/features/delivery/public.ts',
