@@ -2443,3 +2443,20 @@ test('Data Hub feature chunk preserves source registry and canonical rebuild sur
   await expect(page.getByText('Data quality controls',{exact:true})).toBeVisible()
   await expect(page).toHaveURL(/#\/workspace\?tab=Data%20Hub/)
 })
+
+
+test('Matchback feature chunk preserves reconciliation and accessible dialogs',async({page})=>{
+  await page.goto('/#/workspace?tab=Matchback')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Closure matchback & revenue reconciliation'})).toBeVisible()
+  const response=await page.request.get('/api/matchback')
+  expect(response.ok()).toBeTruthy()
+  const payload=await response.json()
+  expect(Array.isArray(payload.rules)).toBeTruthy()
+  await page.getByRole('button',{name:'New matchback rule'}).click()
+  const dialog=page.getByRole('dialog',{name:'New matchback rule'})
+  await expect(dialog).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Matchback/)
+})
