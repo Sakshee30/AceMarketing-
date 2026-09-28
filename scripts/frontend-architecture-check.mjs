@@ -52,6 +52,9 @@ if(fs.existsSync(acePlatform)){
   if(/function\s+Reports\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Reports implementation after feature extraction.')
   }
+  if(/function\s+ExecutiveBriefs\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy ExecutiveBriefs implementation after feature extraction.')
+  }
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
@@ -62,6 +65,10 @@ if(fs.existsSync(acePlatform)){
 
 const required=[
   'frontend/src/features/workspace/manifest.ts',
+  'frontend/src/features/executive-briefs/data/executive-briefs.api.ts',
+  'frontend/src/features/executive-briefs/pages/ExecutiveBriefsPage.tsx',
+  'frontend/src/features/executive-briefs/public.ts',
+  'frontend/src/features/executive-briefs/feature.manifest.ts',
   'frontend/src/features/reports/data/reports.api.ts',
   'frontend/src/features/reports/pages/ReportsPage.tsx',
   'frontend/src/features/reports/public.ts',
