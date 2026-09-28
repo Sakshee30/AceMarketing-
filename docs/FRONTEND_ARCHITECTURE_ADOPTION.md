@@ -214,6 +214,14 @@ AceMarketing keeps the current product pipeline and all existing product feature
 - Delivery retry, dead-letter replay and test-signal admission use an explicit reconciliation state when backend acceptance cannot be confirmed.
 - CI rejects reintroduction of the legacy `Developers` and `DeliveryCenter` functions and Playwright verifies both direct routes.
 
+### Fifteenth through seventeenth feature extractions
+- Real-Time Activation, Personalization and Exclusions are now feature-owned lazy chunks rather than inline implementations inside `AcePlatform.tsx`.
+- Existing rule catalogs, consent-aware decisioning, dry-run behavior, suppression materialization, provider synchronization, CSS classes and direct routes are preserved.
+- Activation and Personalization builders now use the shared accessible dialog primitive and register with the dirty-work registry.
+- Rule creation/toggle, personalization feedback, exclusion creation and exclusion sync surface timeout/network ambiguity as an explicit reconciliation state before repeat submission.
+- CI rejects reintroduction of the three legacy implementations and Playwright verifies their direct workspace routes.
+- The malformed conversion-adjustment dialog closing tag that caused the local Vite JSX parser failure was corrected before continuing the extraction sequence.
+
 ### Bundle-budget evidence
 - Vite now emits a build manifest.
 - CI calculates gzip size for each entry and all of its static dependencies.
