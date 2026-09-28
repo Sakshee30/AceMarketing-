@@ -46,6 +46,9 @@ if(fs.existsSync(acePlatform)){
   if(/function\s+OfflineAttribution\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Offline Attribution implementation after feature extraction.')
   }
+  if(/function\s+Feed\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Feed implementation after feature extraction.')
+  }
   if(/function\s+Behavior\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Behavior implementation after feature extraction.')
   }
@@ -213,6 +216,20 @@ if(fs.existsSync(acePlatform)){
     }
   }
 
+  const feedPath=path.join(frontend,'features','feed','pages','FeedPage.tsx')
+  if(fs.existsSync(feedPath)){
+    const feed=fs.readFileSync(feedPath,'utf8')
+    if(!feed.includes('AccessibleDialog ariaLabel="Add feed attribute"')||!feed.includes('AccessibleDialog ariaLabel="New feed mapping"')){
+      failures.push('Feed mutation builders must use the shared accessible dialog boundary.')
+    }
+    if(!feed.includes("feed-attribute-draft")||!feed.includes("feed-mapping-draft")){
+      failures.push('Feed builders must participate in dirty-work protection.')
+    }
+    if(!feed.includes("kind:'unknown'")){
+      failures.push('Feed writes must preserve explicit unknown-outcome handling for timeout/network ambiguity.')
+    }
+  }
+
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
@@ -230,6 +247,10 @@ const required=[
   'frontend/src/features/offline-attribution/pages/OfflineAttributionPage.tsx',
   'frontend/src/features/offline-attribution/public.ts',
   'frontend/src/features/offline-attribution/feature.manifest.ts',
+  'frontend/src/features/feed/data/feed.api.ts',
+  'frontend/src/features/feed/pages/FeedPage.tsx',
+  'frontend/src/features/feed/public.ts',
+  'frontend/src/features/feed/feature.manifest.ts',
   'frontend/src/features/behavior/data/behavior.api.ts',
   'frontend/src/features/behavior/pages/BehaviorPage.tsx',
   'frontend/src/features/behavior/public.ts',

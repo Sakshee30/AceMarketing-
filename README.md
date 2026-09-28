@@ -6037,3 +6037,14 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Preserved Offline Attribution dirty-draft protection, shared accessible dialog behavior and explicit unknown-outcome handling for network/timeout write ambiguity.
 - Extended frontend architecture enforcement and direct-route E2E coverage so these features cannot silently regress back into the monolith.
 - Backend restructuring remains deferred until frontend completion, in line with the frontend-first implementation pipeline.
+
+
+### Frontend architecture: Feed feature boundary — 2026-09-28
+
+- Extracted **Feed & payload enhancement** from the workspace monolith into a feature-owned lazy chunk without removing attribute, mapping, schema or preview functionality.
+- Added explicit load/retry behavior that preserves already-loaded evidence during transient failures.
+- Moved attribute, mapping, schema and preview overlays onto the shared accessible dialog boundary with keyboard focus management.
+- Protected open attribute and mapping drafts from accidental workspace navigation.
+- Added explicit **unknown outcome** handling for timeout/network ambiguity so a write is never presented as successful before authoritative backend confirmation.
+- Extended architecture enforcement and direct-route E2E coverage for the extracted Feed feature.
+- Backend restructuring remains deferred until frontend completion.

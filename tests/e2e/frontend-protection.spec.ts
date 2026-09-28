@@ -306,3 +306,25 @@ test('loads extracted Offline Attribution feature and accessible rule builder',a
   await page.keyboard.press('Escape')
   await expect(dialog).toHaveCount(0)
 })
+
+
+test('loads extracted Feed feature and accessible builders from its direct workspace route',async({page})=>{
+  await page.goto('/#/workspace?tab=Feed')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Feed/)
+  await expect(page.getByRole('heading',{name:'Feed & payload enhancement'})).toBeVisible()
+  await expect(page.getByText('Destination field mappings',{exact:true})).toBeVisible()
+
+  await page.getByRole('button',{name:'Add attribute'}).first().click()
+  const attributeDialog=page.getByRole('dialog',{name:'Add feed attribute'})
+  await expect(attributeDialog).toBeVisible()
+  await expect(attributeDialog.getByLabel('Key')).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(attributeDialog).toHaveCount(0)
+
+  await page.getByRole('button',{name:'New mapping'}).click()
+  const mappingDialog=page.getByRole('dialog',{name:'New feed mapping'})
+  await expect(mappingDialog).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(mappingDialog).toHaveCount(0)
+})
