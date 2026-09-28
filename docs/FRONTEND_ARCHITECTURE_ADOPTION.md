@@ -139,6 +139,14 @@ AceMarketing keeps the current product pipeline and all existing product feature
 - CI rejects reintroduction of a legacy `Monitoring` function in the monolith and verifies the extracted feature structure.
 - Playwright verifies the existing direct route `#/workspace?tab=Monitoring` resolves to the extracted feature.
 
+### Third feature extraction: Alerts
+- Alert Center is now the third workspace surface extracted from `AcePlatform.tsx` into a feature-owned lazy chunk.
+- It owns its manifest, public entry point, page implementation, browser data adapter and ownership README.
+- Existing alert list/resolve endpoints, CSS classes and investigation navigation are preserved.
+- Alert resolution now uses the shared mutation lifecycle so network loss or timeout becomes an explicit unknown outcome instead of a false confirmed failure.
+- Conflict responses remain distinct from rejection, and the operator is instructed to refresh authoritative state before repeating an uncertain resolution.
+- CI rejects reintroduction of the legacy `Alerts` function and Playwright verifies the existing direct route.
+
 ### Bundle-budget evidence
 - Vite now emits a build manifest.
 - CI calculates gzip size for each entry and all of its static dependencies.
