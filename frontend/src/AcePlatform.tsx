@@ -8,7 +8,7 @@ import {
   Sparkles,Smartphone,Table2,Target,UsersRound,Video,WandSparkles,X,Zap
 } from 'lucide-react'
 import './ace-platform.css'
-import { api } from './lib/api'
+import { api,cancelWorkspaceRequests } from './lib/api'
 import {getLocalConsent,saveLocalConsent} from './lib/tracker'
 import {RouteAnnouncer} from './components/system/FrontendFoundation'
 
@@ -3257,6 +3257,7 @@ function Product({back}:{back:()=>void}){
   }
   const previousId=window.localStorage.getItem('ace_workspace_id')
   setWorkspaceTransition({state:'resolving',item:x,message:'Verifying workspace access and loading a clean scope…'})
+  cancelWorkspaceRequests('workspace_scope_changed')
   window.localStorage.setItem('ace_workspace_id',x.id)
   try{
    const summary:any=await api.dashboardSummary()
