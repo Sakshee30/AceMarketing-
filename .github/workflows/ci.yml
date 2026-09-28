@@ -84,6 +84,7 @@ jobs:
           test -f frontend/src/components/system/FrontendFoundation.tsx
           test -f frontend/src/components/system/FrontendStates.tsx
           test -f frontend/src/components/system/AccessibleDialog.tsx
+          test -f frontend/src/components/system/ConnectionStatus.tsx
           test -f frontend/src/features/workspace/manifest.ts
           test -f scripts/frontend-budget.mjs
           test -f scripts/frontend-architecture-check.mjs
