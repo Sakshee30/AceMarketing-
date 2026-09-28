@@ -56,6 +56,8 @@ jobs:
         env:
           FRONTEND_BUDGET_MODE: report
         run: npm run frontend:budget
+      - name: Verify frontend release asset integrity
+        run: npm run frontend:release
       - name: Run database migrations
         run: npm run migrate
       - name: Install Playwright browser
@@ -89,9 +91,11 @@ jobs:
           test -f frontend/src/components/system/FrontendStates.tsx
           test -f frontend/src/components/system/AccessibleDialog.tsx
           test -f frontend/src/components/system/ConnectionStatus.tsx
+          test -f frontend/src/components/system/ChunkRecoveryNotice.tsx
           test -f frontend/src/features/workspace/manifest.ts
           test -f scripts/frontend-budget.mjs
           test -f scripts/frontend-architecture-check.mjs
+          test -f scripts/frontend-release-check.mjs
           test -f backend/src/index.mjs
           test -f backend/src/security.mjs
           test -f backend/src/store.mjs
