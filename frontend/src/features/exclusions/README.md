@@ -1,0 +1,1 @@
+Exclusions owns first-party suppression presets, materialized exclusion audiences and governed provider sync. Existing endpoints, CSS classes and route behavior are preserved. Create/sync ambiguity is surfaced as an unknown outcome requiring refresh before retry.
