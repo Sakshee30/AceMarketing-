@@ -6237,3 +6237,13 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - The public API client now enforces a 16 KiB write-payload ceiling and blocks duplicate in-flight writes per endpoint before they reach the network.
 - Existing backend rate limiting remains authoritative; these client controls are additive and are not represented as a substitute for server-side abuse protection.
 - Added standalone E2E coverage for dialog focus behavior and field limits.
+
+
+### Public mutation integrity states — 2026-09-28
+
+- Public connector requests, demo requests, demo booking confirmation and pricing quote capture now distinguish **confirmed success**, **confirmed failure** and **unknown outcome**.
+- Timeout/network ambiguity no longer tells the customer that a write definitely failed; the UI preserves the uncertainty and warns against duplicate submission before authoritative reconciliation.
+- Unknown public-write states carry the client request ID when available so backend/support evidence can be correlated.
+- Pricing quote capture can no longer render the saved state after a network-ambiguous response.
+- Added standalone E2E coverage that deliberately aborts public demo and quote writes to prove unknown-outcome behavior.
+- No existing public lead-capture, booking, pricing or connector feature was removed.

@@ -147,3 +147,30 @@ test('public connector request dialog is focus-managed and input-bounded',async(
   await page.keyboard.press('Escape')
   await expect(dialog).toHaveCount(0)
 })
+
+
+test('public demo submission distinguishes unknown outcome from confirmed failure',async({page},testInfo)=>{
+  test.skip(!testInfo.project.name.startsWith('public-'),'public deployment project only')
+  await page.route('**/api/demo-requests',route=>route.abort('failed'))
+  await page.goto('/demo')
+  const consent=page.getByRole('dialog',{name:'Privacy choices'})
+  if(await consent.isVisible().catch(()=>false))await consent.getByRole('button',{name:'Essential only'}).click()
+  await page.getByLabel('Work email').fill('qa@example.com')
+  await page.getByLabel('Company').fill('QA Company')
+  await page.getByLabel('Monthly digital marketing budget').selectOption({label:'₹5L – ₹25L'})
+  await page.getByLabel('Burning pain point').selectOption({label:'Attribution'})
+  await page.getByRole('button',{name:/Continue to scheduling/}).click()
+  await expect(page.getByText(/submission outcome is unknown/i)).toBeVisible()
+  await expect(page.getByRole('heading',{name:'Select a date & time'})).toHaveCount(0)
+})
+
+test('public quote submission keeps network ambiguity distinct from saved state',async({page},testInfo)=>{
+  test.skip(!testInfo.project.name.startsWith('public-'),'public deployment project only')
+  await page.route('**/api/pricing/quote',route=>route.abort('failed'))
+  await page.goto('/pricing')
+  const consent=page.getByRole('dialog',{name:'Privacy choices'})
+  if(await consent.isVisible().catch(()=>false))await consent.getByRole('button',{name:'Essential only'}).click()
+  await page.getByRole('button',{name:'Request quote'}).click()
+  await expect(page.getByText(/quote-request outcome is unknown/i)).toBeVisible()
+  await expect(page.getByText(/configuration was captured by the backend/i)).toHaveCount(0)
+})

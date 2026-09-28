@@ -442,6 +442,14 @@ if(fs.existsSync(acePlatform)){
     if(!publicSiteUi.includes('AccessibleDialog ariaLabel="Request a connector"'))failures.push('Public connector request must use the shared accessible dialog boundary.')
   }
 
+  const publicSiteMutationPath=path.join(root,'website','public-site','src','PublicSite.tsx')
+  if(fs.existsSync(publicSiteMutationPath)){
+    const publicSiteMutations=fs.readFileSync(publicSiteMutationPath,'utf8')
+    if(!publicSiteMutations.includes('isUnknownPublicOutcome'))failures.push('Public-site writes must distinguish timeout/network ambiguity from confirmed failure.')
+    if(!publicSiteMutations.includes("'unknown'"))failures.push('Public-site mutation UI must preserve an explicit unknown-outcome state.')
+    if(!publicSiteMutations.includes('Do not submit the same request again'))failures.push('Public-site unknown outcomes must discourage duplicate writes before reconciliation.')
+  }
+
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
