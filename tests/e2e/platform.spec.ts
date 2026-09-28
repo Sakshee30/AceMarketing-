@@ -2398,3 +2398,16 @@ test('Sites feature chunk preserves site operations and accessible dialogs',asyn
   await expect(dialog).toHaveCount(0)
   await expect(page).toHaveURL(/#\/workspace\?tab=Sites/)
 })
+
+
+test('Fingerprinting feature chunk preserves continuity evidence and accessible match log',async({page})=>{
+  await page.goto('/#/workspace?tab=Fingerprinting')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Cross-domain journey continuity'})).toBeVisible()
+  const response=await page.request.get('/api/fingerprinting')
+  expect(response.ok()).toBeTruthy()
+  const payload=await response.json()
+  expect(Array.isArray(payload.scenarios)).toBeTruthy()
+  await expect(page.getByText('Continuity scenarios',{exact:true})).toBeVisible()
+  await expect(page).toHaveURL(/#\/workspace\?tab=Fingerprinting/)
+})
