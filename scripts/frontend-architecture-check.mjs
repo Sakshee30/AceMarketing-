@@ -40,6 +40,9 @@ for(const file of walk(frontend)){
 const acePlatform=path.join(frontend,'AcePlatform.tsx')
 if(fs.existsSync(acePlatform)){
   const source=fs.readFileSync(acePlatform,'utf8')
+  if(/function\s+GroupedPerformance\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Grouped Performance implementation after feature extraction.')
+  }
   if(/function\s+Attribution\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Attribution implementation after feature extraction.')
   }
@@ -180,6 +183,10 @@ if(fs.existsSync(acePlatform)){
 }
 
 const required=[
+  'frontend/src/features/grouped-performance/data/grouped-performance.api.ts',
+  'frontend/src/features/grouped-performance/pages/GroupedPerformancePage.tsx',
+  'frontend/src/features/grouped-performance/public.ts',
+  'frontend/src/features/grouped-performance/feature.manifest.ts',
   'frontend/src/features/attribution/data/attribution.api.ts',
   'frontend/src/features/attribution/pages/AttributionPage.tsx',
   'frontend/src/features/attribution/public.ts',
