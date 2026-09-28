@@ -25,6 +25,8 @@ const Alerts=lazy(()=>import('./features/alerts/public'))
 const Reports=lazy(()=>import('./features/reports/public'))
 const ExecutiveBriefs=lazy(()=>import('./features/executive-briefs/public'))
 const Integrations=lazy(()=>import('./features/integrations/public'))
+const DataFlows=lazy(()=>import('./features/data-flows/public'))
+const Audiences=lazy(()=>import('./features/audiences/public'))
 
 const agents=[
  ['Meta Advanced CAPI','Return qualified outcomes to Meta server-side with deduplication.','Lead Quality','+25–40% ROAS'],
@@ -2162,53 +2164,6 @@ function AskAce(){
  <div className="app-panel ask-context"><div className="panel-head"><div><h3>Grounded analysis context</h3><p>Ask Ace queries live workspace stores rather than fixed demo metrics</p></div><span className="healthy">Evidence-backed</span></div>{[['Funnel handoffs','Lead, routing, qualification, meeting and feedback coverage'],['Lead operations','Scores, grades, source and campaign quality'],['Attribution store','Matched/unmatched assisted events and value'],['Connector state','Connection and health records'],['Audience store','Activation, suppression and sync state'],['Activation runs','Succeeded, failed and queued external actions'],['Observability','Current API and operational health']].map(x=><div className="ask-context-row" key={x[0]}><Check/><div><b>{x[0]}</b><small>{x[1]}</small></div></div>)}<div className="source-conflict-note"><ShieldCheck/><div><b>No fabricated metrics</b><p>If a workspace does not have enough connected data, Ask Ace reports that limitation instead of substituting sample numbers.</p></div></div></div></div></>
 }
 
-function DataFlows(){
- const [data,setData]=useState<any>({items:[],stats:{}})
- const [integrations,setIntegrations]=useState<any[]>([])
- const [builder,setBuilder]=useState(false)
- const [busy,setBusy]=useState('')
- const [loading,setLoading]=useState(true)
- const [notice,setNotice]=useState<{kind:'ok'|'error'|'',text:string}>({kind:'',text:''})
- const [draft,setDraft]=useState<any>({name:'CRM qualified lead → Google Ads',source:'Zoho CRM',destination:'Google Ads',object:'Qualified lead',trigger:'On lifecycle stage change',identityField:'email / phone / gclid',mode:'Real-time'})
- useDirtyWork({key:'data-flow-builder',label:'Data flow draft',dirty:builder,scope:'feature'})
- const load=async()=>{
-  setLoading(true)
-  try{
-   const [flows,connectors]:any=await Promise.all([api.integrationFlows(),api.integrations()])
-   setData(flows);setIntegrations(connectors.items||[])
-  }catch(e:any){setNotice({kind:'error',text:e?.message||'Data flows could not be loaded. Existing flow state was preserved.'})}
-  finally{setLoading(false)}
- }
- useEffect(()=>{load()},[])
- const connectorNames=integrations.map((x:any)=>x.name)
- const create=async(e:any)=>{
-  e.preventDefault();setBusy('create');setNotice({kind:'',text:''})
-  try{await api.createIntegrationFlow(draft);setBuilder(false);setNotice({kind:'ok',text:'Data flow created and persisted. Run the readiness test before activation.'});await load()}
-  catch(e:any){setNotice({kind:'error',text:e?.message||'Data flow could not be created.'})}
-  finally{setBusy('')}
- }
- const testFlow=async(id:string)=>{
-  setBusy('test:'+id);setNotice({kind:'',text:''})
-  try{const r:any=await api.testIntegrationFlow(id);setNotice({kind:r?.ok===false||r?.status==='needs_attention'?'error':'ok',text:r.detail||'Readiness test completed.'});await load()}
-  catch(e:any){setNotice({kind:'error',text:e?.message||'Readiness test failed.'})}
-  finally{setBusy('')}
- }
- const toggle=async(item:any)=>{
-  setBusy('toggle:'+item.id);setNotice({kind:'',text:''})
-  try{const r:any=await api.toggleIntegrationFlow(item.id,item.status!=='active');setNotice({kind:'ok',text:item.status==='active'?'Flow paused and persisted.':'Flow activated after backend readiness validation.'});await load()}
-  catch(e:any){setNotice({kind:'error',text:e?.message||'Flow status could not be changed.'})}
-  finally{setBusy('')}
- }
- const stats=data.stats||{}
- return <><PageHead crumb="Activation / Data Flows" title="Data flows" sub="Define governed source-to-destination sync recipes, verify connector readiness, and activate only flows that pass their checks." action={loading?'Refreshing…':'Refresh flows'} onAction={load}/>
- <div className="stats-grid"><Stat label="Configured flows" value={String(stats.total||0)} sub="Persisted workspace recipes" Icon={Network}/><Stat label="Active" value={String(stats.active||0)} sub="Enabled synchronization paths" Icon={Activity}/><Stat label="Healthy" value={String(stats.healthy||0)} sub="Last readiness test passed" Icon={CheckCircle2}/><Stat label="Needs attention" value={String(stats.needsAttention||0)} sub="Connection or test work required" Icon={ShieldCheck}/></div>
- {notice.text&&<div className={'delivery-notice '+(notice.kind==='error'?'error':'ok')} role={notice.kind==='error'?'alert':'status'}>{notice.kind==='error'?<ShieldCheck/>:<CheckCircle2/>}<span>{notice.text}</span></div>}
- <div className="app-panel data-flow-explainer"><div><Network/><div><span>HOW IT WORKS</span><h3>Source → map → verify → activate</h3><p>Flows do not pretend an unsupported connector is live. Both ends must be connected and the readiness test must pass before the backend allows activation.</p></div></div><div className="data-flow-steps">{['Choose source','Choose destination','Map business signal','Test readiness','Activate flow'].map((x,i)=><span key={x}><b>{i+1}</b>{x}{i<4&&<ArrowRight/>}</span>)}</div></div>
- <div className="data-flow-grid">{loading&&!(data.items||[]).length?<div className="app-panel empty-delivery-state"><Activity/><div><b>Loading data flows</b><small>Reading persisted flow recipes, connector state and readiness evidence.</small></div></div>:(data.items||[]).length?(data.items||[]).map((x:any)=><article className={'data-flow-card '+(x.status==='active'?'active':'')} key={x.id}><div className="data-flow-card-head"><div><span className="integration-logo c0">{String(x.source||'S').slice(0,2).toUpperCase()}</span><ArrowRight/><span className="integration-logo c4">{String(x.destination||'D').slice(0,2).toUpperCase()}</span></div><span className={x.status==='active'?'healthy':'status'}>{x.status}</span></div><h3>{x.name}</h3><p>{x.source} → {x.destination}</p><div className="data-flow-meta"><span><b>Object</b>{x.object}</span><span><b>Trigger</b>{x.trigger}</span><span><b>Identity</b>{x.identityField}</span><span><b>Cadence</b>{x.mode}</span></div><div className={'data-flow-test '+String(x.lastTestStatus||'not_tested')}><ShieldCheck/><div><b>{x.lastTestStatus==='passed'?'Readiness passed':x.lastTestStatus==='needs_attention'?'Needs attention':'Not tested'}</b><small>{x.lastTestDetail||'Run a readiness test before activation.'}</small></div></div><footer><button disabled={busy==='test:'+x.id} onClick={()=>testFlow(x.id)}>{busy==='test:'+x.id?'Testing…':'Test readiness'}</button><button className={x.status==='active'?'':'app-primary'} disabled={busy==='toggle:'+x.id} onClick={()=>toggle(x)}>{busy==='toggle:'+x.id?'Updating…':x.status==='active'?'Pause':'Activate'}</button></footer></article>):<div className="app-panel empty-delivery-state"><Network/><div><b>No data flows configured</b><small>Create a source-to-destination recipe after connecting the systems you want to synchronize.</small></div><button className="app-primary" onClick={()=>setBuilder(true)}><Plus/>Create first flow</button></div>}</div>
- {builder&&<AccessibleDialog ariaLabel="Create data flow" onClose={()=>setBuilder(false)}><form className="connector-card data-flow-builder" onSubmit={create}><div className="connector-modal-head"><div><Network/><div><b>Create data flow</b><small>Configure a governed synchronization recipe.</small></div></div><button type="button" onClick={()=>setBuilder(false)}><X/></button></div><label>Flow name<input required value={draft.name} onChange={e=>setDraft({...draft,name:e.target.value})}/></label><div className="two-col"><label>Source<select value={draft.source} onChange={e=>setDraft({...draft,source:e.target.value})}>{connectorNames.map((x:string)=><option key={x}>{x}</option>)}</select></label><label>Destination<select value={draft.destination} onChange={e=>setDraft({...draft,destination:e.target.value})}>{connectorNames.map((x:string)=><option key={x}>{x}</option>)}</select></label></div><label>Business object / event<input required value={draft.object} onChange={e=>setDraft({...draft,object:e.target.value})}/></label><label>Trigger<input required value={draft.trigger} onChange={e=>setDraft({...draft,trigger:e.target.value})}/></label><div className="two-col"><label>Identity mapping<input required value={draft.identityField} onChange={e=>setDraft({...draft,identityField:e.target.value})}/></label><label>Cadence<select value={draft.mode} onChange={e=>setDraft({...draft,mode:e.target.value})}><option>Real-time</option><option>Every 15 minutes</option><option>Hourly</option><option>Daily</option></select></label></div><div className="ai-note"><ShieldCheck/><div><b>Activation guardrail</b><p>The backend requires a passed readiness test before a flow can be activated.</p></div></div><button disabled={busy==='create'}>{busy==='create'?'Creating…':'Create flow'}</button></form></AccessibleDialog>}
- </>
-}
-
 function RealTimeActivation(){
  const [data,setData]=useState<any>({items:[],runs:[],stats:{}})
  const [builder,setBuilder]=useState(false)
@@ -2403,80 +2358,6 @@ function Exclusions(){
  </> 
 }
 
-function Audiences(){
- const [segments,setSegments]=useState<any[]>([])
- const [stats,setStats]=useState<any>(null)
- const [builder,setBuilder]=useState(false)
- const [preset,setPreset]=useState<any>(null)
- const [preview,setPreview]=useState<any>(null)
- const [saving,setSaving]=useState(false)
- const [syncing,setSyncing]=useState('')
- const [scheduling,setScheduling]=useState('')
- const [notice,setNotice]=useState('')
- useDirtyWork({key:'audience-builder',label:'Audience builder draft',dirty:builder,scope:'feature'})
- const normalize=(r:any)=>{
-  setSegments((r.items||[]).map((x:any)=>({...x,size:String(x.size??x.matchedSize??0),cadence:x.cadence||'Manual'})))
-  setStats(r.stats||null)
- }
- const reloadAudiences=async()=>{const r:any=await api.audiences();normalize(r)}
- useEffect(()=>{reloadAudiences().catch((e:any)=>setNotice(e?.message||'Audiences could not be loaded.'))},[])
- const previewAudience=async(e:any)=>{
-  e.preventDefault();setNotice('')
-  const f=new FormData(e.currentTarget)
-  const payload={
-    name:String(f.get('name')||''),
-    condition:String(f.get('condition')||''),
-    operator:String(f.get('operator')||''),
-    value:String(f.get('value')||''),
-    destination:String(f.get('destination')||''),
-    mode:String(f.get('mode')||'Activate'),
-    identityMode:String(f.get('identityMode')||'auto')
-  }
-  try{const r:any=await api.previewAudience(payload);setPreview({...payload,...r});setPreset(payload)}
-  catch(e:any){setPreview(null);setNotice(e?.message||'Audience preview failed.')}
- }
- const openPreset=async(payload:any)=>{
-  setNotice('');setPreset(payload);setPreview(null);setBuilder(true)
-  try{const r:any=await api.previewAudience(payload);setPreview({...payload,...r})}
-  catch(e:any){setNotice(e?.message||'Audience preview failed.')}
- }
- const openCustom=()=>{setPreset(null);setPreview(null);setBuilder(true)}
- const syncAudience=async(id:string)=>{setSyncing(id);setNotice('');try{await api.syncAudience(id);setNotice('Audience sync queued.');await reloadAudiences()}catch(e:any){setNotice(e?.message||'Audience sync failed.')}finally{setSyncing('')}}
- const setCadence=async(id:string,cadence:string)=>{setScheduling(id);setNotice('');try{await api.saveAudienceSchedule(id,cadence,cadence!=='Manual');await reloadAudiences()}catch(e:any){setNotice(e?.message||'Schedule could not be updated.')}finally{setScheduling('')}}
- const saveAudience=async()=>{if(!preview)return;setSaving(true);setNotice('');try{await api.createAudience(preview);await reloadAudiences();setBuilder(false);setPreset(null);setPreview(null);setNotice('Audience created and materialized.')}catch(e:any){setNotice(e?.message||'Audience could not be created.')}finally{setSaving(false)}}
- const exportAudiences=()=>{const rows=[['name','destination','identity_mode','size','cadence','mode','status'],...segments.map((x:any)=>[x.name,x.destination,x.identityMode||'auto',x.size,x.cadence,x.mode,x.status||''])];const csv=rows.map(r=>r.map((v:any)=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ace-audiences.csv';a.click();URL.revokeObjectURL(a.href)}
- const a=stats?.audiences||{}
- const lifecycle=stats?.lifecycle||{}
- const exclusions=stats?.exclusions||{}
- const latency=a.medianSyncLatencySeconds==null?'—':a.medianSyncLatencySeconds<60?a.medianSyncLatencySeconds+'s':Math.round(a.medianSyncLatencySeconds/60)+'m'
- const lifecycleRows=[
-  {label:'Acquisition',detail:'New / active prospects',count:lifecycle.acquisition||0,preset:{name:'Acquisition prospects',condition:'CRM stage',operator:'is one of',value:'lead,new,active',destination:'Google Ads · Meta Ads',mode:'Retarget',identityMode:'auto'}},
-  {label:'Nurture',detail:'Lead / contacted / connected',count:lifecycle.nurture||0,preset:{name:'Nurture-stage prospects',condition:'CRM stage',operator:'is one of',value:'lead,new,contacted,connected',destination:'Google Ads · Meta Ads',mode:'Retarget',identityMode:'auto'}},
-  {label:'Decision',detail:'Qualified / consultation / opportunity',count:lifecycle.decision||0,preset:{name:'Decision-stage prospects',condition:'CRM stage',operator:'is one of',value:'qualified,consultation,opportunity',destination:'Google Ads · Meta Ads',mode:'Lookalike seed',identityMode:'auto'}},
-  {label:'Post-purchase',detail:'Converted / enrolled / closed won',count:lifecycle.postPurchase||0,preset:{name:'Converted customer suppression',condition:'CRM stage',operator:'is one of',value:'converted,enrolled,closed_won,customer',destination:'Google Ads · Meta Ads',mode:'Suppress',identityMode:'auto'}}
- ]
- const exclusionRows=[
-  {label:'Converted customers',detail:'Customer ID + hashed PII',count:exclusions.converted||0,preset:{name:'Converted customer suppression',condition:'CRM stage',operator:'is one of',value:'converted,enrolled,closed_won,customer',destination:'Google Ads · Meta Ads',mode:'Suppress',identityMode:'contact'}},
-  {label:'Device-ID identities',detail:'First-party mobile advertising IDs',count:exclusions.deviceIds||0,preset:{name:'Device identity retargeting',condition:'Device ID present',operator:'is',value:'yes',destination:'Meta Ads',mode:'Retarget',identityMode:'device'}},
-  {label:'Low-quality leads',detail:'Lead grade C / D',count:exclusions.lowQuality||0,preset:{name:'Low-quality lead suppression',condition:'Lead grade',operator:'is one of',value:'C,D',destination:'Google Ads · Meta Ads',mode:'Suppress',identityMode:'auto'}}
- ]
- return <><PageHead crumb="Activation / Audiences" title="Audience management" sub="Activate high-intent first-party segments and suppress converted, low-quality or device-identified users."/>
- {notice&&<div className="delivery-notice ok"><CheckCircle2/><span>{notice}</span></div>}
- <div className="stats-grid"><Stat label="Audience records" value={stats?.available?String(a.total||0):'—'} sub={(a.active||0)+' provider-active'} Icon={UsersRound}/><Stat label="Activated identities" value={stats?.available?Number(a.activatedIdentities||0).toLocaleString('en-IN'):'—'} sub="Materialized non-suppression members" Icon={Target}/><Stat label="Suppressed identities" value={stats?.available?Number(a.suppressedIdentities||0).toLocaleString('en-IN'):'—'} sub="Materialized suppression members" Icon={ShieldCheck}/><Stat label="Observed sync latency" value={latency} sub="From persisted successful sync timestamps" Icon={Activity}/></div>
- <div className="app-panel"><div className="panel-head"><div><h3>Active segments</h3><p>Materialized from persisted lead/device profiles; provider sync state is explicit</p></div><div className="panel-actions"><button onClick={exportAudiences}>Export</button><button className="app-primary" onClick={openCustom}><Plus/>New audience</button></div></div>{segments.length?segments.map((x:any)=><div className="audience-row" key={x.id||x.name}><UsersRound/><div><b>{x.name}</b><small>{x.destination} · {x.identityMode||'auto'} identity{x.lastSyncError?' · '+x.lastSyncError:''}{x.schedule?.last_added||x.schedule?.last_removed?` · Δ +${x.schedule?.last_added||0}/-${x.schedule?.last_removed||0}`:''}</small></div><strong>{x.size}</strong>{x.id?<select aria-label={'Cadence for '+x.name} disabled={scheduling===x.id} value={x.cadence||'Manual'} onChange={e=>setCadence(x.id,e.target.value)}><option>Manual</option><option>Real time</option><option>Every 5 min</option><option>Every 15 min</option><option>Hourly</option><option>Every 6 hours</option><option>Daily</option></select>:<span>{x.cadence}</span>}<em className={String(x.mode).toLowerCase()}>{x.mode}</em>{x.status&&<small>{String(x.status).replaceAll('_',' ')}</small>}{x.id&&['ready_for_sync','error','materialized'].includes(x.status)&&<button disabled={syncing===x.id} onClick={()=>syncAudience(x.id)}>{syncing===x.id?'Queueing…':'Sync now'}</button>}<ChevronRight/></div>):<div className="empty-delivery-state"><UsersRound/><div><b>No audiences yet</b><small>Create a first-party audience from persisted lead, journey or device identity.</small></div></div>}</div>
- <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Lifecycle audiences</h3><p>Derived from persisted CRM/lead stages · click a row to preview the real segment</p></div></div>{lifecycleRows.map((x:any)=><button className="lifecycle-row audience-preset-row" key={x.label} onClick={()=>openPreset(x.preset)}><span>{x.label}</span><div><b>{x.detail}</b><small>{Number(x.count).toLocaleString('en-IN')} identities</small></div><em>{x.preset.mode}</em><ChevronRight/></button>)}</div>
- <div className="app-panel"><div className="panel-head"><div><h3>Waste-control identity pool</h3><p>Turn observed waste pools into persisted suppression/retargeting audiences</p></div></div>{exclusionRows.map((x:any)=><button className="exclusion-row audience-preset-row" key={x.label} onClick={()=>openPreset(x.preset)}><ShieldCheck/><div><b>{x.label}</b><small>{x.detail}</small></div><strong>{Number(x.count).toLocaleString('en-IN')}</strong><span>{x.preset.mode}</span></button>)}</div></div>
- <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Audience signals</h3><p>First-party attributes available to the builder</p></div></div><div className="context-chips">{['Lead grade','CRM stage','Conversion propensity','Pricing-page views','LTV tier','Last activity','Device ID present','Device platform','App ID'].map(x=><span key={x}>{x}</span>)}</div></div><div className="app-panel"><div className="panel-head"><div><h3>Activation guardrails</h3><p>Provider sync checks consent again before data leaves AceMarketing</p></div></div>{[['Marketing consent','Required for every member'],['Device audience','Mobile advertising ID + app context'],['Converted customer','Suppress acquisition'],['Low quality / invalid','Suppress optimization'],['High-value prospect','Seed / optimize']].map(x=><div className="mapping-rule" key={x[0]}><span>{x[0]}</span><ArrowRight/><b>{x[1]}</b></div>)}</div></div>
- {builder&&<AccessibleDialog ariaLabel={preset?'Audience preset':'Audience Builder'} onClose={()=>{setBuilder(false);setPreset(null);setPreview(null)}}><form key={preset?.name||'custom-audience'} className="connector-card audience-builder" onSubmit={previewAudience}><div className="connector-modal-head"><div><UsersRound/><div><b>{preset?'Audience preset':'Audience Builder'}</b><small>{preset?'Review the persisted rule before materializing this audience.':'Create a first-party segment from journey, CRM or device evidence'}</small></div></div><button type="button" onClick={()=>{setBuilder(false);setPreset(null);setPreview(null)}}><X/></button></div>
- {preset&&<div className="audience-preset-banner"><Zap/><div><b>{preset.name}</b><span>{preset.condition} {preset.operator} {preset.value} → {preset.mode}</span></div></div>}
- <label>Audience name<input name="name" required defaultValue={preset?.name||'High-intent prospects'}/></label>
- <div className="audience-rule-grid"><label>Condition<select name="condition" defaultValue={preset?.condition||'Lead grade'}><option>Lead grade</option><option>Conversion propensity</option><option>CRM stage</option><option>Pricing-page views</option><option>LTV tier</option><option>Last activity</option><option>Device ID present</option><option>Device platform</option><option>App ID</option></select></label><label>Operator<select name="operator" defaultValue={preset?.operator||'is'}><option>is</option><option>is one of</option><option>is greater than</option><option>is less than</option><option>contains</option></select></label><label>Value<input name="value" defaultValue={preset?.value||'A'}/></label></div>
- <label>Identity key<select name="identityMode" defaultValue={preset?.identityMode||'auto'}><option value="auto">Auto · contact first, device fallback</option><option value="contact">Contact info · hashed email / phone</option><option value="device">Mobile advertising ID</option></select></label>
- <label>Destination<select name="destination" defaultValue={preset?.destination||'Google Ads · Meta Ads'}><option>Google Ads · Meta Ads</option><option>Google Ads</option><option>Meta Ads</option></select></label>
- <label>Mode<select name="mode" defaultValue={preset?.mode||'Activate'}><option>Activate</option><option>Suppress</option><option>Retarget</option><option>Lookalike seed</option></select></label>
- {preview&&<div className="audience-preview"><div><span>Estimated audience</span><strong>{Number(preview.estimatedSize||0).toLocaleString()}</strong></div><div><span>Workspace coverage</span><strong>{preview.matchedPercent||0}%</strong></div><p>{preview.condition} {preview.operator} {preview.value} → {preview.destination} · {preview.identityMode} identity</p></div>}
- <div className="audience-builder-actions"><button type="button" onClick={()=>{setBuilder(false);setPreset(null);setPreview(null)}}>Cancel</button>{preview?<button type="button" className="app-primary" disabled={saving} onClick={saveAudience}>{saving?'Saving…':'Create & materialize audience'}</button>:<button type="submit" className="app-primary">Preview audience</button>}</div></form></AccessibleDialog>}</>
-}
 function DeliveryCenter(){
  const [items,setItems]=useState<any[]>([])
  const [health,setHealth]=useState<any[]>([])
@@ -2975,7 +2856,7 @@ function Product({back}:{back:()=>void}){
  const searchMatches=search.trim()?appTabs.filter(([name])=>name.toLowerCase().includes(search.trim().toLowerCase())).slice(0,8):[]
  const runSearch=(name?:string)=>{const target=(name||searchMatches[0]?.[0]) as AppTab|undefined;if(target&&navigateToTab(target))setSearch('')}
  const currentWorkspace=workspaces.find(x=>x.name===workspace)||workspaces[0]
- const view=useMemo(()=>({Launchpad:<Launchpad/>,Overview:<Overview/>,AdSync:<AdSync/>,"ChatGPT Ads":<ChatGPTAds/>,Funnel:<Funnel/>,"Leak Monitor":<LeakMonitor/>,Events:<Events/>,Adjustments:<Adjustments/>,Diagnostics:<Diagnostics/>,"Match Quality":<MatchQuality/>,Reconciliation:<Reconciliation/>,Fraud:<Fraud/>,"Deep Links":<DeepLinks/>,Sites:<Sites/>,Fingerprinting:<Fingerprinting/>,"Live Sync":<LiveSync/>,"Data Hub":<DataHub/>,"Customer 360":<Customer360/>,"Offline Attribution":<OfflineAttribution/>,Matchback:<Matchback/>,"POS & Stores":<POSAndStores/>,Journeys:<Journeys/>,Identity:<Identity/>,Models:<Models/>,Attribution:<Attribution/>,Planner:<Planner/>,Reports:<Suspense fallback={<LoadingState compact title="Loading reports" description="Loading the Reports feature."/>}><Reports/></Suspense>,"Grouped Performance":<GroupedPerformance/>,"Executive Briefs":<Suspense fallback={<LoadingState compact title="Loading executive briefs" description="Loading the Executive Briefs feature."/>}><ExecutiveBriefs/></Suspense>,Enrich:<Enrich/>,"Lead Grading":<LeadGrading/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Routing:<Routing/>,"Follow-ups":<FollowUps/>,Calls:<Calls/>,Meetings:<Meetings/>,Feedback:<Feedback/>,Approvals:<Suspense fallback={<LoadingState compact title="Loading approvals" description="Loading the approvals feature."/>}><Approvals/></Suspense>,"Ask Ace":<AskAce/>,Integrations:<Suspense fallback={<LoadingState compact title="Loading integrations" description="Loading the Integrations feature."/>}><Integrations/></Suspense>,"Data Flows":<DataFlows/>,"Real-Time Activation":<RealTimeActivation/>,Personalization:<Personalization/>,Exclusions:<Exclusions/>,Audiences:<Audiences/>,Delivery:<DeliveryCenter/>,Monitoring:<Suspense fallback={<LoadingState compact title="Loading monitoring" description="Loading the monitoring feature."/>}><Monitoring/></Suspense>,Alerts:<Suspense fallback={<LoadingState compact title="Loading alerts" description="Loading the Alert Center."/>}><Alerts/></Suspense>,Compliance:<Compliance/>,Developers:<Developers/>,Settings:<Settings/>}[tab]),[tab,workspaceGeneration])
+ const view=useMemo(()=>({Launchpad:<Launchpad/>,Overview:<Overview/>,AdSync:<AdSync/>,"ChatGPT Ads":<ChatGPTAds/>,Funnel:<Funnel/>,"Leak Monitor":<LeakMonitor/>,Events:<Events/>,Adjustments:<Adjustments/>,Diagnostics:<Diagnostics/>,"Match Quality":<MatchQuality/>,Reconciliation:<Reconciliation/>,Fraud:<Fraud/>,"Deep Links":<DeepLinks/>,Sites:<Sites/>,Fingerprinting:<Fingerprinting/>,"Live Sync":<LiveSync/>,"Data Hub":<DataHub/>,"Customer 360":<Customer360/>,"Offline Attribution":<OfflineAttribution/>,Matchback:<Matchback/>,"POS & Stores":<POSAndStores/>,Journeys:<Journeys/>,Identity:<Identity/>,Models:<Models/>,Attribution:<Attribution/>,Planner:<Planner/>,Reports:<Suspense fallback={<LoadingState compact title="Loading reports" description="Loading the Reports feature."/>}><Reports/></Suspense>,"Grouped Performance":<GroupedPerformance/>,"Executive Briefs":<Suspense fallback={<LoadingState compact title="Loading executive briefs" description="Loading the Executive Briefs feature."/>}><ExecutiveBriefs/></Suspense>,Enrich:<Enrich/>,"Lead Grading":<LeadGrading/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Routing:<Routing/>,"Follow-ups":<FollowUps/>,Calls:<Calls/>,Meetings:<Meetings/>,Feedback:<Feedback/>,Approvals:<Suspense fallback={<LoadingState compact title="Loading approvals" description="Loading the approvals feature."/>}><Approvals/></Suspense>,"Ask Ace":<AskAce/>,Integrations:<Suspense fallback={<LoadingState compact title="Loading integrations" description="Loading the Integrations feature."/>}><Integrations/></Suspense>,"Data Flows":<Suspense fallback={<LoadingState compact title="Loading data flows" description="Loading the Data Flows feature."/>}><DataFlows/></Suspense>,"Real-Time Activation":<RealTimeActivation/>,Personalization:<Personalization/>,Exclusions:<Exclusions/>,Audiences:<Suspense fallback={<LoadingState compact title="Loading audiences" description="Loading the Audiences feature."/>}><Audiences/></Suspense>,Delivery:<DeliveryCenter/>,Monitoring:<Suspense fallback={<LoadingState compact title="Loading monitoring" description="Loading the monitoring feature."/>}><Monitoring/></Suspense>,Alerts:<Suspense fallback={<LoadingState compact title="Loading alerts" description="Loading the Alert Center."/>}><Alerts/></Suspense>,Compliance:<Compliance/>,Developers:<Developers/>,Settings:<Settings/>}[tab]),[tab,workspaceGeneration])
  return <div className={'product '+(mobileNavOpen?'mobile-nav-open':'')}><a className="skip-link" href="#ace-workspace-main">Skip to workspace content</a><RouteAnnouncer label={tab+' · '+workspace} focusSelector=".product-body .page-head h1"/><aside className="product-sidebar" aria-label="Workspace navigation"><Brand/><div className="workspace-wrap"><button className="workspace" onClick={()=>setWorkspaceOpen(!workspaceOpen)}><span>{currentWorkspace?.initials||'AM'}</span><div><b>{workspace}</b><small>{currentWorkspace?.environment||'Production'} workspace</small></div><ChevronDown/></button>{workspaceOpen&&<div className="workspace-menu">{workspaces.map((x:any)=><button key={x.id||x.name} onClick={()=>void chooseWorkspace(x)} className={workspace===x.name?'active':''}><span>{x.initials||String(x.name).split(/\s+/).map((s:string)=>s[0]).join('').slice(0,3)}</span><div><b>{x.name}</b><small>{x.environment||'Production'}</small></div>{workspace===x.name&&<Check/>}</button>)}<button className="new-workspace" onClick={()=>{setWorkspaceOpen(false);setCreateOpen(true)}}><Plus/>Create workspace</button></div>}</div><nav className="product-nav">
  <div className="product-nav-filter"><Search/><input value={navFilter} onChange={e=>setNavFilter(e.target.value)} placeholder="Find feature..."/></div>
  {dashboardSections.map(section=>{
