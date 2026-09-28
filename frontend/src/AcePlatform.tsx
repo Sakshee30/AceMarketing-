@@ -21,6 +21,7 @@ type AppTab='Launchpad'|'Overview'|'AdSync'|'ChatGPT Ads'|'Funnel'|'Leak Monitor
 
 const Approvals=lazy(()=>import('./features/approvals/public'))
 const Monitoring=lazy(()=>import('./features/monitoring/public'))
+const Alerts=lazy(()=>import('./features/alerts/public'))
 
 const agents=[
  ['Meta Advanced CAPI','Return qualified outcomes to Meta server-side with deduplication.','Lead Quality','+25–40% ROAS'],
@@ -2786,43 +2787,6 @@ function DeliveryCenter(){
  <div className="app-panel"><div className="panel-head"><div><h3>Delivery guarantees</h3><p>Controls used before a signal leaves the platform</p></div></div>{[['Idempotency','SHA-256 delivery key prevents duplicate external writes'],['Retry policy','Failed deliveries use exponential backoff and retain the replay payload'],['Dead-letter queue','Exhausted failures stay visible and are actually re-enqueued on replay'],['Audit trail','Dispatch, retry and replay actions create immutable-style audit entries'],['PII boundary','Retry payloads retain hashed email/phone identifiers rather than raw PII']].map(x=><div className="mapping-rule" key={x[0]}><span>{x[0]}</span><ArrowRight/><b>{x[1]}</b></div>)}</div></div></>
 }
 
-function Alerts(){
- const [items,setItems]=useState<any[]>([])
- const [selected,setSelected]=useState('')
- const [loading,setLoading]=useState(true)
- const [busy,setBusy]=useState('')
- const [notice,setNotice]=useState<{kind:'ok'|'error'|'',text:string}>({kind:'',text:''})
- const mapItems=(r:any)=>(r.items||[]).map((x:any)=>({...x,severity:String(x.severity||'info').replace(/^./,(m:string)=>m.toUpperCase()),source:x.source||'Platform monitoring',age:new Date(x.detected_at||Date.now()).toLocaleString(),detail:x.detail||'',status:x.status||'open'}))
- const load=async()=>{
-  setLoading(true)
-  try{
-   const r:any=await api.alerts()
-   const mapped=mapItems(r)
-   setItems(mapped)
-   setSelected((current:string)=>current&&mapped.some((x:any)=>x.id===current)?current:(mapped[0]?.id||''))
-  }catch(e:any){
-   setNotice({kind:'error',text:e?.message||'Alert Center could not be loaded.'})
-  }finally{setLoading(false)}
- }
- useEffect(()=>{load()},[])
- const current=items.find(x=>x.id===selected)||items[0]
- const resolve=async(id:string)=>{
-  setBusy(id);setNotice({kind:'',text:''})
-  try{
-   const resolved:any=await api.resolveAlert(id)
-   if(String(resolved?.status||'').toLowerCase()!=='resolved')throw new Error('Backend did not confirm alert resolution.')
-   setItems(xs=>xs.map(x=>x.id===id?{...x,...resolved,severity:String(resolved.severity||x.severity||'info').replace(/^./,(m:string)=>m.toUpperCase()),status:'resolved'}:x))
-   setNotice({kind:'ok',text:'Alert resolved and confirmed by the backend.'})
-  }catch(e:any){
-   setNotice({kind:'error',text:e?.message||'Alert could not be resolved. Its open status has been preserved.'})
-  }finally{setBusy('')}
- }
- return <><PageHead crumb="Operations / Alerts" title="Alert Center" sub="Triage incidents generated from real workspace telemetry and operational thresholds." action="Manage rules" onAction={()=>window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:'Monitoring'}))}/>
- {notice.text&&<div className={'delivery-notice '+(notice.kind==='error'?'error':'ok')} role={notice.kind==='error'?'alert':'status'}>{notice.kind==='error'?<ShieldCheck/>:<CheckCircle2/>}<span>{notice.text}</span></div>}
- <div className="stats-grid"><Stat label="Open alerts" value={loading?'—':String(items.filter(x=>x.status==='open').length)} sub="Live operational incidents" Icon={Bell}/><Stat label="Critical" value={loading?'—':String(items.filter(x=>x.status==='open'&&String(x.severity).toLowerCase()==='critical').length)} sub="Needs immediate review" Icon={Activity}/><Stat label="Warnings" value={loading?'—':String(items.filter(x=>x.status==='open'&&String(x.severity).toLowerCase()==='warning').length)} sub="Threshold breaches" Icon={Check}/><Stat label="Resolved" value={loading?'—':String(items.filter(x=>x.status==='resolved').length)} sub="Incident history" Icon={MessageCircle}/></div>
- <div className="alert-center-layout"><div className="app-panel alert-center-list"><div className="panel-head"><div><h3>Operational incidents</h3><p>Newest telemetry-generated incidents first</p></div><button disabled={loading} onClick={load}>{loading?'Loading…':'Refresh'}</button></div>{loading?<div className="empty-state"><Activity/><b>Loading incidents</b><small>Reading persisted monitoring alerts.</small></div>:items.length?items.map(x=><button key={x.id} className={selected===x.id?'selected':''} onClick={()=>setSelected(x.id)}><Bell/><div><b>{x.title}</b><small>{x.source} · {x.age}</small></div><span className={String(x.severity).toLowerCase()}>{x.severity}</span><em className={x.status}>{x.status}</em></button>):<div className="empty-state"><Check/><b>No incidents</b><small>Monitoring rules have not detected a breach.</small></div>}</div>
- {current&&<div className="app-panel alert-center-detail"><div className="panel-head"><div><h3>{current.title}</h3><p>{current.source}</p></div><span className={'diag-severity '+String(current.severity).toLowerCase()}>{current.severity}</span></div><p className="alert-detail-copy">{current.detail}</p><div className="diagnostic-evidence">{[['Alert ID',current.id],['Detected',current.age],['Affected period',current.affectedPeriod||'—'],['Owner',current.owner||'Workspace operations'],['Metric',current.metric||'—'],['Threshold',current.threshold??'—'],['Observed',current.metric_value??'—'],['Status',current.status]].map(x=><article key={x[0]}><span>{x[0]}</span><b>{String(x[1])}</b></article>)}</div><div className="alert-runbook"><ShieldCheck/><div><b>Recommended investigation</b><p>{current.recommendation||'Inspect the source evidence and recent changes before resolving the incident.'}</p></div></div>{current.status==='open'?<div className="approval-actions"><button className="approve" disabled={busy===current.id} onClick={()=>resolve(current.id)}><Check/>{busy===current.id?'Resolving…':'Mark resolved'}</button><button disabled={Boolean(busy)} onClick={()=>window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:current.metric==='dead_letter_jobs'||current.metric==='signal_delivery_backlog_minutes'?'Delivery':current.metric==='audience_sync_errors'?'Audiences':'Diagnostics'}))}><ArrowRight/>Open investigation workspace</button></div>:<div className="approval-final approved"><Check/><b>Resolved</b></div>}</div>}</div></>
-}
 function Developers(){
  const [secret,setSecret]=useState('Hidden until rotated')
  const [delivery,setDelivery]=useState<any[]>([])
@@ -3271,7 +3235,7 @@ function Product({back}:{back:()=>void}){
  const searchMatches=search.trim()?appTabs.filter(([name])=>name.toLowerCase().includes(search.trim().toLowerCase())).slice(0,8):[]
  const runSearch=(name?:string)=>{const target=(name||searchMatches[0]?.[0]) as AppTab|undefined;if(target&&navigateToTab(target))setSearch('')}
  const currentWorkspace=workspaces.find(x=>x.name===workspace)||workspaces[0]
- const view=useMemo(()=>({Launchpad:<Launchpad/>,Overview:<Overview/>,AdSync:<AdSync/>,"ChatGPT Ads":<ChatGPTAds/>,Funnel:<Funnel/>,"Leak Monitor":<LeakMonitor/>,Events:<Events/>,Adjustments:<Adjustments/>,Diagnostics:<Diagnostics/>,"Match Quality":<MatchQuality/>,Reconciliation:<Reconciliation/>,Fraud:<Fraud/>,"Deep Links":<DeepLinks/>,Sites:<Sites/>,Fingerprinting:<Fingerprinting/>,"Live Sync":<LiveSync/>,"Data Hub":<DataHub/>,"Customer 360":<Customer360/>,"Offline Attribution":<OfflineAttribution/>,Matchback:<Matchback/>,"POS & Stores":<POSAndStores/>,Journeys:<Journeys/>,Identity:<Identity/>,Models:<Models/>,Attribution:<Attribution/>,Planner:<Planner/>,Reports:<Reports/>,"Grouped Performance":<GroupedPerformance/>,"Executive Briefs":<ExecutiveBriefs/>,Enrich:<Enrich/>,"Lead Grading":<LeadGrading/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Routing:<Routing/>,"Follow-ups":<FollowUps/>,Calls:<Calls/>,Meetings:<Meetings/>,Feedback:<Feedback/>,Approvals:<Suspense fallback={<LoadingState compact title="Loading approvals" description="Loading the approvals feature."/>}><Approvals/></Suspense>,"Ask Ace":<AskAce/>,Integrations:<Integrations/>,"Data Flows":<DataFlows/>,"Real-Time Activation":<RealTimeActivation/>,Personalization:<Personalization/>,Exclusions:<Exclusions/>,Audiences:<Audiences/>,Delivery:<DeliveryCenter/>,Monitoring:<Suspense fallback={<LoadingState compact title="Loading monitoring" description="Loading the monitoring feature."/>}><Monitoring/></Suspense>,Alerts:<Alerts/>,Compliance:<Compliance/>,Developers:<Developers/>,Settings:<Settings/>}[tab]),[tab,workspaceGeneration])
+ const view=useMemo(()=>({Launchpad:<Launchpad/>,Overview:<Overview/>,AdSync:<AdSync/>,"ChatGPT Ads":<ChatGPTAds/>,Funnel:<Funnel/>,"Leak Monitor":<LeakMonitor/>,Events:<Events/>,Adjustments:<Adjustments/>,Diagnostics:<Diagnostics/>,"Match Quality":<MatchQuality/>,Reconciliation:<Reconciliation/>,Fraud:<Fraud/>,"Deep Links":<DeepLinks/>,Sites:<Sites/>,Fingerprinting:<Fingerprinting/>,"Live Sync":<LiveSync/>,"Data Hub":<DataHub/>,"Customer 360":<Customer360/>,"Offline Attribution":<OfflineAttribution/>,Matchback:<Matchback/>,"POS & Stores":<POSAndStores/>,Journeys:<Journeys/>,Identity:<Identity/>,Models:<Models/>,Attribution:<Attribution/>,Planner:<Planner/>,Reports:<Reports/>,"Grouped Performance":<GroupedPerformance/>,"Executive Briefs":<ExecutiveBriefs/>,Enrich:<Enrich/>,"Lead Grading":<LeadGrading/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Routing:<Routing/>,"Follow-ups":<FollowUps/>,Calls:<Calls/>,Meetings:<Meetings/>,Feedback:<Feedback/>,Approvals:<Suspense fallback={<LoadingState compact title="Loading approvals" description="Loading the approvals feature."/>}><Approvals/></Suspense>,"Ask Ace":<AskAce/>,Integrations:<Integrations/>,"Data Flows":<DataFlows/>,"Real-Time Activation":<RealTimeActivation/>,Personalization:<Personalization/>,Exclusions:<Exclusions/>,Audiences:<Audiences/>,Delivery:<DeliveryCenter/>,Monitoring:<Suspense fallback={<LoadingState compact title="Loading monitoring" description="Loading the monitoring feature."/>}><Monitoring/></Suspense>,Alerts:<Suspense fallback={<LoadingState compact title="Loading alerts" description="Loading the Alert Center."/>}><Alerts/></Suspense>,Compliance:<Compliance/>,Developers:<Developers/>,Settings:<Settings/>}[tab]),[tab,workspaceGeneration])
  return <div className={'product '+(mobileNavOpen?'mobile-nav-open':'')}><a className="skip-link" href="#ace-workspace-main">Skip to workspace content</a><RouteAnnouncer label={tab+' · '+workspace} focusSelector=".product-body .page-head h1"/><aside className="product-sidebar" aria-label="Workspace navigation"><Brand/><div className="workspace-wrap"><button className="workspace" onClick={()=>setWorkspaceOpen(!workspaceOpen)}><span>{currentWorkspace?.initials||'AM'}</span><div><b>{workspace}</b><small>{currentWorkspace?.environment||'Production'} workspace</small></div><ChevronDown/></button>{workspaceOpen&&<div className="workspace-menu">{workspaces.map((x:any)=><button key={x.id||x.name} onClick={()=>void chooseWorkspace(x)} className={workspace===x.name?'active':''}><span>{x.initials||String(x.name).split(/\s+/).map((s:string)=>s[0]).join('').slice(0,3)}</span><div><b>{x.name}</b><small>{x.environment||'Production'}</small></div>{workspace===x.name&&<Check/>}</button>)}<button className="new-workspace" onClick={()=>{setWorkspaceOpen(false);setCreateOpen(true)}}><Plus/>Create workspace</button></div>}</div><nav className="product-nav">
  <div className="product-nav-filter"><Search/><input value={navFilter} onChange={e=>setNavFilter(e.target.value)} placeholder="Find feature..."/></div>
  {dashboardSections.map(section=>{
