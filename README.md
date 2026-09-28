@@ -6028,3 +6028,12 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Bounded high-cardinality behavior collections to protect long-running browser sessions and disabled duplicate refreshes while loading.
 - Added architecture enforcement and E2E coverage for the extracted feature.
 - Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
+
+
+### Frontend architecture: Customer 360 + Offline Attribution boundaries — 2026-09-28
+
+- Extracted **Customer 360** and **Offline Attribution** from the remaining workspace monolith into feature-owned lazy chunks without removing any customer capability.
+- Preserved Customer 360 stale-request protection, stitched identity/operations/audience evidence and timeline behavior; bounded directory rendering to 200 matches and the activity timeline to 150 entries for long-lived workspaces.
+- Preserved Offline Attribution dirty-draft protection, shared accessible dialog behavior and explicit unknown-outcome handling for network/timeout write ambiguity.
+- Extended frontend architecture enforcement and direct-route E2E coverage so these features cannot silently regress back into the monolith.
+- Backend restructuring remains deferred until frontend completion, in line with the frontend-first implementation pipeline.

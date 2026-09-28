@@ -40,6 +40,12 @@ for(const file of walk(frontend)){
 const acePlatform=path.join(frontend,'AcePlatform.tsx')
 if(fs.existsSync(acePlatform)){
   const source=fs.readFileSync(acePlatform,'utf8')
+  if(/function\s+Customer360\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Customer 360 implementation after feature extraction.')
+  }
+  if(/function\s+OfflineAttribution\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Offline Attribution implementation after feature extraction.')
+  }
   if(/function\s+Behavior\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Behavior implementation after feature extraction.')
   }
@@ -183,6 +189,30 @@ if(fs.existsSync(acePlatform)){
     failures.push('Offline Attribution writes must preserve an explicit unknown-outcome state.')
   }
 
+  const customer360Path=path.join(frontend,'features','customer-360','pages','Customer360Page.tsx')
+  if(fs.existsSync(customer360Path)){
+    const customer360=fs.readFileSync(customer360Path,'utf8')
+    if(!customer360.includes('requestSequence=useRef(0)')){
+      failures.push('Customer 360 must sequence profile requests so stale responses cannot replace the active selection.')
+    }
+    if(!customer360.includes('.slice(0,150)')||!customer360.includes('.slice(0,200)')){
+      failures.push('Customer 360 timeline and directory rendering must remain bounded for long-lived workspaces.')
+    }
+  }
+  const offlineAttributionPath=path.join(frontend,'features','offline-attribution','pages','OfflineAttributionPage.tsx')
+  if(fs.existsSync(offlineAttributionPath)){
+    const offlineAttribution=fs.readFileSync(offlineAttributionPath,'utf8')
+    if(!offlineAttribution.includes('AccessibleDialog ariaLabel="New offline attribution rule"')){
+      failures.push('Offline Attribution builder must use the shared accessible dialog.')
+    }
+    if(!offlineAttribution.includes("offline-attribution-rule-draft")){
+      failures.push('Offline Attribution builder must participate in dirty-work protection.')
+    }
+    if(!offlineAttribution.includes("kind:'unknown'")){
+      failures.push('Offline Attribution writes must preserve an explicit unknown-outcome state.')
+    }
+  }
+
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
@@ -192,6 +222,14 @@ if(fs.existsSync(acePlatform)){
 }
 
 const required=[
+  'frontend/src/features/customer-360/data/customer-360.api.ts',
+  'frontend/src/features/customer-360/pages/Customer360Page.tsx',
+  'frontend/src/features/customer-360/public.ts',
+  'frontend/src/features/customer-360/feature.manifest.ts',
+  'frontend/src/features/offline-attribution/data/offline-attribution.api.ts',
+  'frontend/src/features/offline-attribution/pages/OfflineAttributionPage.tsx',
+  'frontend/src/features/offline-attribution/public.ts',
+  'frontend/src/features/offline-attribution/feature.manifest.ts',
   'frontend/src/features/behavior/data/behavior.api.ts',
   'frontend/src/features/behavior/pages/BehaviorPage.tsx',
   'frontend/src/features/behavior/public.ts',

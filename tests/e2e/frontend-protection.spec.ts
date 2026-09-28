@@ -285,3 +285,24 @@ test('loads extracted fraud feature from its direct workspace route',async({page
   await expect(page.getByRole('heading',{name:'Fraud & noise detection'})).toBeVisible()
   await expect(page.getByText(/Detected patterns/i)).toBeVisible()
 })
+
+
+test('loads extracted Customer 360 feature from its direct workspace route',async({page})=>{
+  await page.goto('/#/workspace?tab=Customer%20360')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Customer%20360/)
+  await expect(page.getByRole('heading',{name:'Customer 360'})).toBeVisible()
+  await expect(page.getByText(/Customer directory/i)).toBeVisible()
+})
+
+test('loads extracted Offline Attribution feature and accessible rule builder',async({page})=>{
+  await page.goto('/#/workspace?tab=Offline%20Attribution')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Offline%20Attribution/)
+  await expect(page.getByRole('heading',{name:'Calls, WhatsApp & offline revenue'})).toBeVisible()
+  await page.getByRole('button',{name:'New offline rule'}).click()
+  const dialog=page.getByRole('dialog',{name:'New offline attribution rule'})
+  await expect(dialog).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+})
