@@ -420,3 +420,12 @@ A frontend feature is not considered complete because the screen renders. Comple
 - Duplicate override/activation submissions are blocked while a mutation is running.
 - Lead and score-driver rendering are bounded in the browser for large grading populations while backend data remains authoritative.
 - CI rejects reintroduction of the legacy Lead Grading implementation into `AcePlatform.tsx`.
+
+
+### Behavior feature extraction and evidence hardening
+- Behavior is now a feature-owned lazy chunk instead of an inline workspace implementation.
+- Existing event/source/campaign/device analysis, signal selection, related activity and latest first-party sequence are preserved.
+- Reads expose explicit loading and retry states while retaining previously visible evidence during transient failures.
+- Signal collections are bounded to 150 rows, matching activity to 20 rows, and the latest sequence to 20 records in the browser while backend data remains authoritative.
+- Refresh interaction is disabled while loading so duplicate foreground reads are not emitted.
+- CI rejects reintroduction of the legacy Behavior implementation into `AcePlatform.tsx`.
