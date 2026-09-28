@@ -35,7 +35,11 @@ export default function LaunchpadPage(){
     },
     onError:(error:any)=>{
       const classified=classifyMutationFailure(error,'Test event failed. No successful delivery is being claimed.')
-      setMutationState({phase:classified.phase,text:classified.message,requestId:classified.requestId})
+      if(classified.phase==='OUTCOME_UNKNOWN'){
+        setMutationState({phase:'OUTCOME_UNKNOWN',text:classified.message,requestId:classified.requestId})
+      }else{
+        setMutationState({phase:classified.phase,text:classified.message,requestId:classified.requestId})
+      }
     }
   })
 
