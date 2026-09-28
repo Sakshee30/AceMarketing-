@@ -155,6 +155,14 @@ AceMarketing keeps the current product pipeline and all existing product feature
 - Schedule creation also distinguishes an uncertain network outcome from a confirmed rejection and instructs the operator to refresh before resubmitting.
 - CI rejects reintroduction of the legacy `Reports` function and Playwright verifies the existing direct route.
 
+### Fifth feature extraction: Executive Briefs
+- Executive Briefs is now the fifth workspace feature extracted from `AcePlatform.tsx` into a feature-owned lazy chunk.
+- It owns its manifest, public entry point, page implementation, browser data adapter and ownership README.
+- Existing cohort/report endpoints, metric definitions, preview behavior, schedule history, email transport status and direct route are preserved.
+- The executive schedule form now registers unsaved work with the shared dirty-work registry, so route/workspace changes and browser unload cannot silently discard an edited brief.
+- Schedule creation and send-now delivery distinguish timeout/network uncertainty from confirmed rejection; an uncertain outcome requires authoritative refresh before repeat submission.
+- CI rejects reintroduction of the legacy `ExecutiveBriefs` function and Playwright verifies the existing direct route.
+
 ### Bundle-budget evidence
 - Vite now emits a build manifest.
 - CI calculates gzip size for each entry and all of its static dependencies.
