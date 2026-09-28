@@ -33,14 +33,22 @@ export const saveLocalConsent=async(consent:Omit<AceConsent,'essential'>)=>{
   return full
 }
 
-const MARKETING_CLICK_IDS=['gclid','gbraid','wbraid','fbclid','msclkid','ttclid'] as const
+const MARKETING_CLICK_IDS=['gclid','gbraid','wbraid','fbclid','msclkid','ttclid','twclid'] as const
 const cookieValue=(name:string)=>document.cookie.split(';').map(x=>x.trim()).find(x=>x.startsWith(name+'='))?.slice(name.length+1)||null
+const xClickCookie=()=>{
+  const raw=cookieValue('_twclid')
+  if(!raw)return null
+  try{
+    const parsed=JSON.parse(decodeURIComponent(raw))
+    return parsed?.twclid?String(parsed.twclid):null
+  }catch{return null}
+}
 const readClickIds=()=>{
   const consent=getLocalConsent()
-  if(!consent?.marketing)return {gclid:null,gbraid:null,wbraid:null,fbclid:null,msclkid:null,ttclid:null,ttp:null}
+  if(!consent?.marketing)return {gclid:null,gbraid:null,wbraid:null,fbclid:null,msclkid:null,ttclid:null,ttp:null,twclid:null,twpid:null}
   const params=new URLSearchParams(window.location.search)
   const ids=Object.fromEntries(MARKETING_CLICK_IDS.map(key=>[key,params.get(key)||localStorage.getItem('ace:'+key)]))
-  return {...ids,ttp:cookieValue('_ttp')}
+  return {...ids,twclid:ids.twclid||xClickCookie(),ttp:cookieValue('_ttp'),twpid:cookieValue('_twpid')}
 }
 export const persistClickIds=()=>{
   const consent=getLocalConsent()
