@@ -131,6 +131,14 @@ AceMarketing keeps the current product pipeline and all existing product feature
 - CI now fails if the legacy Approvals function is reintroduced into the monolith and verifies the extracted files exist.
 - Playwright verifies `#/workspace?tab=Approvals` still resolves to the extracted feature.
 
+### Second feature extraction: Monitoring
+- Monitoring is now the second workspace surface moved out of `AcePlatform.tsx` into a feature-owned lazy chunk.
+- It has its own manifest, public entry point, page implementation, browser data adapter and ownership README.
+- The existing monitoring summary/rules endpoints, CSS classes, usage meters and Alert Center navigation behavior are unchanged.
+- The extraction is intentionally read-only first, which keeps operational observation separate from later write-control hardening.
+- CI rejects reintroduction of a legacy `Monitoring` function in the monolith and verifies the extracted feature structure.
+- Playwright verifies the existing direct route `#/workspace?tab=Monitoring` resolves to the extracted feature.
+
 ### Bundle-budget evidence
 - Vite now emits a build manifest.
 - CI calculates gzip size for each entry and all of its static dependencies.
