@@ -5950,3 +5950,14 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Bounded unmatched-record rendering to protect long-running browser sessions.
 - Added architecture enforcement and E2E coverage for the extracted feature.
 - Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
+
+
+### Frontend architecture: POS & Stores feature boundary — 2026-09-28
+
+- Extracted **POS, Walk-in & Store-sale Attribution** into a feature-owned lazy chunk while preserving location summaries, offline revenue, match coverage, CSV template download, transaction import and import history.
+- Added accessible import dialog behavior and dirty-work protection.
+- Added CSV validation for required fields, revenue values and timestamps before submission.
+- Added explicit loading/error handling and unknown-outcome reconciliation for imports.
+- Bounded recent import rendering to protect long-running browser sessions.
+- Added architecture enforcement and E2E coverage for the extracted feature.
+- Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
