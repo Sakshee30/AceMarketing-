@@ -2294,3 +2294,21 @@ test('Overview feature chunk preserves command-center backend evidence',async({p
   await expect(page.getByText('Workspace health',{exact:true})).toBeVisible()
   await expect(page).toHaveURL(/#\/workspace\?tab=Overview/)
 })
+
+
+test('AdSync feature chunk preserves signal pipelines and accessible builder',async({page})=>{
+  await page.goto('/#/workspace?tab=AdSync')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Server-side signal activation'})).toBeVisible()
+  const events=await page.request.get('/api/events')
+  expect(events.ok()).toBeTruthy()
+  const deliveries=await page.request.get('/api/signal-deliveries')
+  expect(deliveries.ok()).toBeTruthy()
+  await page.getByRole('button',{name:'Add pipeline'}).click()
+  const dialog=page.getByRole('dialog',{name:'New conversion pipeline'})
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByLabel('Pipeline name')).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+  await expect(page).toHaveURL(/#\/workspace\?tab=AdSync/)
+})
