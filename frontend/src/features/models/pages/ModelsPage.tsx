@@ -1,8 +1,14 @@
-import {useEffect,useState} from 'react'
+import {useEffect,useMemo,useRef,useState,type FormEvent} from 'react'
 import {Activity,CheckCircle2,ChevronRight,ShieldCheck,Sparkles,Target,X} from 'lucide-react'
-import {modelsApi} from '../data/models.api'
+import {
+  modelsApi,
+  type ModelCatalogItem,
+  type ModelRun,
+  type ModelsResponse,
+  type ModelValidation
+} from '../data/models.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
-import {StaleState} from '../../../components/system/FrontendStates'
+import {EmptyState,ErrorState,LoadingState,StaleState} from '../../../components/system/FrontendStates'
 import {initialMutationLifecycle,mutationLifecycle} from '../../../lib/mutation-lifecycle'
 import {useDirtyWork} from '../../../lib/dirty-work'
 
@@ -10,34 +16,78 @@ function PageHead({crumb,title,sub,action,onAction}:{crumb:string;title:string;s
   return <div className="page-head"><div><span>{crumb}</span><h1 tabIndex={-1}>{title}</h1><p>{sub}</p></div>{action&&<button className="app-primary" onClick={onAction}><Sparkles/>{action}</button>}</div>
 }
 
+const formatDate=(value?:string)=>value?new Date(value).toLocaleString():'—'
+
+const runtimeLabel=(model:ModelCatalogItem)=>{
+  const readiness=model.governance?.readiness
+  if(readiness)return readiness.replaceAll('_',' ')
+  if(model.status==='active')return 'runtime active'
+  if(model.status==='ready')return 'runtime ready'
+  return model.status||'unknown'
+}
+
+const validationBoundary=(model:ModelCatalogItem)=>{
+  if(model.governance?.evaluationStatus)return model.governance.evaluationStatus
+  return 'No statistical qualification evidence published'
+}
+
 export default function ModelsPage(){
-  const [data,setData]=useState<any>({items:[],runs:[]})
+  const [data,setData]=useState<ModelsResponse>({items:[],runs:[]})
   const [selected,setSelected]=useState('')
   const [busy,setBusy]=useState('')
-  const [validation,setValidation]=useState<any>(null)
+  const [loading,setLoading]=useState(true)
+  const [loadError,setLoadError]=useState('')
+  const [validation,setValidation]=useState<ModelValidation|null>(null)
+  const [validationLoading,setValidationLoading]=useState(false)
+  const [validationError,setValidationError]=useState('')
   const [validationOpen,setValidationOpen]=useState(false)
   const [builder,setBuilder]=useState(false)
   const [notice,setNotice]=useState<{kind:'ok'|'error'|'unknown'|'',text:string}>({kind:'',text:''})
-  const [runState,setRunState]=useState(()=>initialMutationLifecycle<any>())
-  const [createState,setCreateState]=useState(()=>initialMutationLifecycle<any>())
+  const [runState,setRunState]=useState(()=>initialMutationLifecycle<ModelRun>())
+  const [createState,setCreateState]=useState(()=>initialMutationLifecycle<{item:ModelCatalogItem}>())
+  const loadSequence=useRef(0)
+  const loadAbort=useRef<AbortController|null>(null)
+  const validationSequence=useRef(0)
+  const validationAbort=useRef<AbortController|null>(null)
 
   useDirtyWork({key:'custom-model-draft',label:'Custom model draft',dirty:builder,scope:'feature'})
 
   const load=async()=>{
+    const sequence=++loadSequence.current
+    loadAbort.current?.abort('superseded_model_catalog_read')
+    const controller=new AbortController()
+    loadAbort.current=controller
+    setLoading(true)
+    setLoadError('')
     try{
-      const response:any=await modelsApi.list()
-      setData(response)
-      if(response.items?.length){
-        setSelected((current:string)=>current&&response.items.some((model:any)=>model.name===current)?current:response.items[0].name)
+      const response=await modelsApi.list({signal:controller.signal})
+      if(sequence!==loadSequence.current)return
+      const next:ModelsResponse={
+        items:Array.isArray(response?.items)?response.items:[],
+        runs:Array.isArray(response?.runs)?response.runs:[]
       }
+      setData(next)
+      setSelected(current=>current&&next.items.some(model=>model.name===current)?current:(next.items[0]?.name||''))
     }catch(error:any){
-      setNotice({kind:'error',text:error?.message||'Model services could not be loaded.'})
+      if(sequence!==loadSequence.current||String(error?.details?.cause||'')==='aborted')return
+      setLoadError(error?.message||'Model services could not be loaded.')
+    }finally{
+      if(sequence===loadSequence.current)setLoading(false)
     }
   }
 
-  useEffect(()=>{void load()},[])
+  useEffect(()=>{
+    void load()
+    return ()=>{
+      loadAbort.current?.abort('models_feature_unmounted')
+      validationAbort.current?.abort('models_feature_unmounted')
+    }
+  },[])
 
-  const current=(data.items||[]).find((item:any)=>item.name===selected)||data.items?.[0]
+  const current=useMemo(
+    ()=>data.items.find(item=>item.name===selected)||data.items[0]||null,
+    [data.items,selected]
+  )
 
   const run=async()=>{
     if(!current)return
@@ -48,9 +98,13 @@ export default function ModelsPage(){
     setBusy('run')
     setNotice({kind:'',text:''})
     try{
-      const response:any=await modelsApi.run(current.name)
+      const response=await modelsApi.run(current.name)
       setRunState(mutationLifecycle.confirmed(lifecycle,response))
-      setNotice({kind:'ok',text:'Model run completed for '+response.rowsScored+' profile(s), average score '+response.averageScore+'.'})
+      if(response.status==='no_data'){
+        setNotice({kind:'error',text:'The backend confirmed the run, but no eligible profiles were available. No predictive quality claim can be made from this run.'})
+      }else{
+        setNotice({kind:'ok',text:'Model run completed for '+Number(response.rowsScored||0).toLocaleString('en-IN')+' profile(s), average score '+String(response.averageScore??'—')+'.'})
+      }
       await load()
     }catch(error:any){
       const cause=String(error?.details?.cause||'')
@@ -75,12 +129,28 @@ export default function ModelsPage(){
 
   const viewValidation=async()=>{
     if(!current)return
-    const response:any=await modelsApi.validation(current.name).catch(()=>null)
-    setValidation(response)
+    const modelName=current.name
+    const sequence=++validationSequence.current
+    validationAbort.current?.abort('superseded_model_validation_read')
+    const controller=new AbortController()
+    validationAbort.current=controller
+    setValidation(null)
+    setValidationError('')
+    setValidationLoading(true)
     setValidationOpen(true)
+    try{
+      const response=await modelsApi.validation(modelName,{signal:controller.signal})
+      if(sequence!==validationSequence.current)return
+      setValidation(response)
+    }catch(error:any){
+      if(sequence!==validationSequence.current||String(error?.details?.cause||'')==='aborted')return
+      setValidationError(error?.message||'Validation evidence could not be loaded.')
+    }finally{
+      if(sequence===validationSequence.current)setValidationLoading(false)
+    }
   }
 
-  const create=async(event:any)=>{
+  const create=async(event:FormEvent<HTMLFormElement>)=>{
     event.preventDefault()
     const form=new FormData(event.currentTarget)
     let lifecycle=mutationLifecycle.validating(createState)
@@ -91,7 +161,7 @@ export default function ModelsPage(){
     setNotice({kind:'',text:''})
 
     try{
-      const response:any=await modelsApi.create({
+      const response=await modelsApi.create({
         name:String(form.get('name')||''),
         description:String(form.get('description')||''),
         weights:{
@@ -104,7 +174,7 @@ export default function ModelsPage(){
       })
       setCreateState(mutationLifecycle.confirmed(lifecycle,response))
       setBuilder(false)
-      setNotice({kind:'ok',text:'Custom model created and confirmed.'})
+      setNotice({kind:'ok',text:'Custom scoring definition created. Statistical qualification still requires labelled evaluation evidence.'})
       await load()
       if(response?.item?.name)setSelected(response.item.name)
     }catch(error:any){
@@ -141,17 +211,24 @@ export default function ModelsPage(){
       </div>
     }
 
-    <div className="model-ops-layout">
+    {loading&&!data.items.length&&
+      <LoadingState title="Loading model catalog" description="Reading workspace-scoped model definitions and recent scoring evidence."/>
+    }
+    {loadError&&
+      <ErrorState title="Model catalog unavailable" description={loadError} action={{label:'Retry',onClick:load}}/>
+    }
+    {!loading&&!loadError&&!data.items.length&&
+      <EmptyState title="No model services available" description="No model definitions were returned for this workspace." action={{label:'Refresh',onClick:load}}/>
+    }
+
+    {!!data.items.length&&<div className="model-ops-layout">
       <div className="app-panel model-list">
         <div className="panel-head"><div><h3>Model catalog</h3><p>Built-in runtime models plus persisted workspace-defined scoring models</p></div></div>
-        {(data.items||[]).length
-          ?(data.items||[]).map((item:any)=>
-            <button key={item.id||item.name} className={selected===item.name?'selected':''} onClick={()=>setSelected(item.name)}>
-              <Target/><div><b>{item.name}</b><small>{item.type} · {item.version}</small></div><span className={String(item.status||'ready').toLowerCase()}>{item.status}</span><ChevronRight/>
-            </button>
-          )
-          :<div className="empty-delivery-state"><Target/><div><b>No model services available</b></div></div>
-        }
+        {data.items.map(item=>
+          <button key={item.id||item.name} className={selected===item.name?'selected':''} onClick={()=>setSelected(item.name)}>
+            <Target/><div><b>{item.name}</b><small>{item.type} · {item.version}</small></div><span className={String(item.status||'ready').toLowerCase()}>{item.status}</span><ChevronRight/>
+          </button>
+        )}
       </div>
 
       <div className="app-panel model-detail">
@@ -161,11 +238,28 @@ export default function ModelsPage(){
             <div className="model-metrics">
               {[
                 ['Version',current.version],
-                ['Primary metric',current.metric],
-                ['Current value',current.value],
-                ['Serving','Workspace scoring runtime']
-              ].map(row=><div key={row[0]}><span>{row[0]}</span><b>{String(row[1]??'—')}</b></div>)}
+                ['Primary metric',current.metric||'—'],
+                ['Current value',current.value??'—'],
+                ['Serving',runtimeLabel(current)],
+                ['Evaluation',validationBoundary(current)]
+              ].map(row=><div key={row[0]}><span>{row[0]}</span><b>{String(row[1])}</b></div>)}
             </div>
+
+            {current.governance&&
+              <div className="agent-section">
+                <h4>Model governance</h4>
+                <div className="site-detail-grid">
+                  <div><span>Task</span><b>{current.governance.task||'—'}</b></div>
+                  <div><span>Provider</span><b>{current.governance.provider||'—'}</b></div>
+                  <div><span>Requested model</span><b>{current.governance.requestedModel||'—'}</b></div>
+                  <div><span>Resolved model</span><b>{current.governance.resolvedModel||'Not resolved'}</b></div>
+                </div>
+                {!!current.governance.warnings?.length&&
+                  <div className="source-conflict-note"><ShieldCheck/><div><b>Readiness warnings</b><p>{current.governance.warnings.join(' ')}</p></div></div>
+                }
+              </div>
+            }
+
             {!current.builtIn&&
               <div className="agent-section">
                 <h4>Explainable feature weights</h4>
@@ -173,20 +267,20 @@ export default function ModelsPage(){
               </div>
             }
             <div className="approval-actions">
-              <button onClick={viewValidation}>View validation</button>
+              <button onClick={viewValidation} disabled={validationLoading}>View validation</button>
               <button className="approve" disabled={busy==='run'} onClick={run}><Target/>{busy==='run'?'Running…':'Run scoring snapshot'}</button>
             </div>
           </>
-          :<div className="empty-delivery-state"><Target/><div><b>No model selected</b></div></div>
+          :<EmptyState title="No model selected" description="Choose a model from the workspace catalog." compact/>
         }
       </div>
-    </div>
+    </div>}
 
     <div className="app-panel">
       <div className="panel-head"><div><h3>Recent model runs</h3><p>Persisted scoring snapshots</p></div></div>
-      {(data.runs||[]).length
-        ?(data.runs||[]).slice(0,10).map((item:any)=><div className="developer-event-row" key={item.id}><b>{item.name}</b><span>{item.status} · {Number(item.rowsScored||0).toLocaleString('en-IN')} rows · avg {item.averageScore??'—'}</span><strong>{item.completedAt?new Date(item.completedAt).toLocaleString():'—'}</strong></div>)
-        :<div className="empty-delivery-state"><Activity/><div><b>No model runs yet</b></div></div>
+      {data.runs.length
+        ?data.runs.slice(0,10).map(item=><div className="developer-event-row" key={item.id}><b>{item.name}</b><span>{item.status} · {Number(item.rowsScored||0).toLocaleString('en-IN')} rows · avg {item.averageScore??'—'}</span><strong>{formatDate(item.completedAt)}</strong></div>)
+        :<EmptyState title="No model runs yet" description="Run a scoring snapshot to create persisted execution evidence." compact/>
       }
     </div>
 
@@ -206,7 +300,7 @@ export default function ModelsPage(){
             <label>WhatsApp engaged weight<input name="whatsapp_engaged" type="number" min="-100" max="100" defaultValue="10"/></label>
             <label>Meeting present weight<input name="meeting_present" type="number" min="-100" max="100" defaultValue="10"/></label>
           </div>
-          <div className="source-conflict-note"><ShieldCheck/><div><b>Explainability boundary</b><p>Scores use only the visible feature weights above. AceMarketing does not claim predictive accuracy until you validate the model against your own labelled outcomes.</p></div></div>
+          <div className="source-conflict-note"><ShieldCheck/><div><b>Explainability boundary</b><p>Scores use only the visible feature weights above. AceMarketing does not claim predictive accuracy until the model has labelled holdout evaluation evidence.</p></div></div>
           <button disabled={busy==='create'}>{busy==='create'?'Creating…':'Create custom model'}</button>
         </form>
       </AccessibleDialog>
@@ -219,19 +313,23 @@ export default function ModelsPage(){
             <div><Target/><div><b>Model validation evidence</b><small>{selected}</small></div></div>
             <button onClick={()=>setValidationOpen(false)}><X/></button>
           </div>
-          {validation
+          {validationLoading&&<LoadingState title="Loading validation evidence" description="Reading the latest workspace-scoped validation record." compact/>}
+          {!validationLoading&&validationError&&<ErrorState title="Validation evidence unavailable" description={validationError} action={{label:'Retry',onClick:viewValidation}} compact/>}
+          {!validationLoading&&!validationError&&validation
             ?<>
               <div className="site-detail-grid">
                 {[
                   ['Lead population',validation.leadPopulation??0],
                   ['Average lead score',validation.averageLeadScore??0],
                   ['Persisted model runs',validation.runs?.length||0],
-                  ['Generated',validation.generatedAt?new Date(validation.generatedAt).toLocaleString():'—']
+                  ['Evaluation status',validation.evaluationStatus||'Not statistically qualified'],
+                  ['Generated',formatDate(validation.generatedAt)]
                 ].map(row=><div key={row[0]}><span>{row[0]}</span><b>{String(row[1])}</b></div>)}
               </div>
-              <div className="source-conflict-note"><ShieldCheck/><div><b>Validation boundary</b><p>{validation.notice}</p></div></div>
+              <div className="source-conflict-note"><ShieldCheck/><div><b>Validation boundary</b><p>{validation.notice||'Runtime scoring evidence is available, but offline statistical qualification has not been published.'}</p></div></div>
+              {!!validation.warnings?.length&&<StaleState title="Validation warnings" description={validation.warnings.join(' ')} compact/>}
             </>
-            :<div className="empty-delivery-state"><Target/><div><b>No validation evidence available</b></div></div>
+            :!validationLoading&&!validationError&&<EmptyState title="No validation evidence available" description="No validation record was returned for this model." compact/>
           }
         </div>
       </AccessibleDialog>
