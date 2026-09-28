@@ -1,0 +1,1 @@
+Planner owns evidence-backed budget scenarios, persisted scenario history and the existing workspace route. It preserves current endpoints and CSS behavior while using dirty-work protection and explicit unknown-outcome handling for scenario saves.
