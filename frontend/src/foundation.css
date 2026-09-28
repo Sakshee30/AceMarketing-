@@ -166,3 +166,36 @@
 @media (max-width:640px){
   .ace-connection-status{top:8px;width:calc(100vw - 16px);padding:10px 12px}
 }
+
+
+.ace-widget-recovery{
+  position:fixed;
+  right:18px;
+  bottom:18px;
+  z-index:1100;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  max-width:min(420px,calc(100vw - 36px));
+  padding:10px 12px;
+  border:1px solid rgba(180,83,9,.24);
+  border-radius:12px;
+  background:rgba(255,251,235,.98);
+  color:#431407;
+  box-shadow:0 14px 38px rgba(42,20,67,.12);
+  font:600 12px/1.4 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+.ace-widget-recovery button{
+  min-height:34px;
+  border:1px solid rgba(67,20,7,.18);
+  border-radius:8px;
+  background:#fff;
+  color:#431407;
+  padding:0 10px;
+  font:inherit;
+  cursor:pointer;
+}
+.ace-widget-recovery button:focus-visible{
+  outline:3px solid var(--ace-focus);
+  outline-offset:2px;
+}
