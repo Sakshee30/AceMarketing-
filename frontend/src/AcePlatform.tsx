@@ -432,17 +432,65 @@ function IntegrationsPublicPage(props:any){
  </main></PublicPageFrame>
 }
 function DemoPage({back,openApp}:{back:()=>void,openApp:()=>void}){
- const [step,setStep]=useState(1); const [slot,setSlot]=useState('')
- const submit=async(e:any)=>{e.preventDefault();const payload=Object.fromEntries(new FormData(e.currentTarget).entries());await api.submitDemo(payload).catch(()=>null);setStep(2)}
+ const [step,setStep]=useState(1)
+ const [selectedDay,setSelectedDay]=useState('')
+ const [selectedTime,setSelectedTime]=useState('11:00 AM')
+ const [demoRequestId,setDemoRequestId]=useState('')
+ const [busy,setBusy]=useState('')
+ const [notice,setNotice]=useState('')
+ const [booking,setBooking]=useState<any>(null)
+ const days=useMemo(()=>{
+  const out:{key:string;label:string;date:string}[]=[]
+  const d=new Date()
+  d.setHours(12,0,0,0)
+  while(out.length<5){
+   d.setDate(d.getDate()+1)
+   if(d.getDay()===0||d.getDay()===6)continue
+   const key=d.toISOString().slice(0,10)
+   out.push({key,label:d.toLocaleDateString(undefined,{weekday:'short',day:'2-digit',month:'short'}),date:key})
+  }
+  return out
+ },[])
+ useEffect(()=>{if(!selectedDay&&days[0])setSelectedDay(days[0].date)},[days,selectedDay])
+ const submit=async(e:any)=>{
+  e.preventDefault();setBusy('lead');setNotice('')
+  const payload=Object.fromEntries(new FormData(e.currentTarget).entries())
+  try{
+   const r:any=await api.submitDemo(payload)
+   setDemoRequestId(r.id);setStep(2)
+  }catch(err:any){setNotice(err?.message||'Demo request could not be saved.')}
+  finally{setBusy('')}
+ }
+ const startsAt=()=>{
+  if(!selectedDay||!selectedTime)return ''
+  const [time,period]=selectedTime.split(' ')
+  let [hour,minute]=time.split(':').map(Number)
+  if(period==='PM'&&hour!==12)hour+=12
+  if(period==='AM'&&hour===12)hour=0
+  const [year,month,day]=selectedDay.split('-').map(Number)
+  return new Date(year,month-1,day,hour,minute||0,0,0).toISOString()
+ }
+ const confirm=async()=>{
+  if(!demoRequestId||!selectedDay||!selectedTime){setNotice('Choose a date and time before confirming.');return}
+  setBusy('booking');setNotice('')
+  try{
+   const r:any=await api.confirmDemoBooking({demoRequestId,startsAt:startsAt()})
+   setBooking(r);setStep(3);setNotice('Your product walkthrough is confirmed.')
+  }catch(err:any){setNotice(err?.message||'The demo slot could not be confirmed.')}
+  finally{setBusy('')}
+ }
  return <div className="standalone-page demo-page">
   <div className="standalone-top"><Brand/><button onClick={back}>Back to website</button></div>
   <section className="standalone-hero demo-hero"><div><span className="kicker">BOOK A DEMO</span><h1>Stop wasting ad spend on junk leads.</h1><p>See how a stitched customer journey, cleaner conversion signals and funnel agents can improve lead quality, conversion and attribution.</p><div className="demo-benefits">{[['01','Cleaner data','Connect ad platforms, CRM, calls and messaging into one journey.'],['02','Quality over volume','Optimize campaigns for qualified and closed outcomes, not raw form fills.'],['03','Fast setup path','Use connector and agent patterns instead of rebuilding your whole martech stack.']].map(x=><article key={x[0]}><span>{x[0]}</span><h3>{x[1]}</h3><p>{x[2]}</p></article>)}</div></div>
-  <div className="demo-booking-card">{step===1?<form onSubmit={submit}><h2>Tell us about your funnel</h2><label>Work email<input name="email" required type="email" placeholder="name@company.com"/></label><label>Company<input name="company" required placeholder="Company name"/></label><label>Monthly digital marketing budget<select name="budget" required defaultValue=""><option value="" disabled>Select budget</option><option>Under ₹5L</option><option>₹5L – ₹25L</option><option>₹25L – ₹1Cr</option><option>₹1Cr – ₹5Cr</option><option>₹5Cr+</option></select></label><label>Burning pain point<select name="painPoint" required defaultValue=""><option value="" disabled>Select pain point</option><option>Junk / low-quality leads</option><option>Conversion leakage</option><option>Offline attribution</option><option>CRM context</option><option>Cross-platform reporting</option></select></label><button type="submit">Continue to scheduling <ArrowRight/></button></form>:<div className="calendar-step"><h2>Select a date & time</h2><p>Calendar UI is implemented locally and ready to replace with Calendly or your scheduler API.</p><div className="calendar-days">{['Mon 28','Tue 29','Wed 30','Thu 01','Fri 02'].map(x=><button key={x} className={slot.startsWith(x)?'active':''} onClick={()=>setSlot(x+' · 11:00 AM')}>{x}</button>)}</div><div className="calendar-slots">{['10:00 AM','11:00 AM','2:00 PM','3:30 PM','5:00 PM'].map(x=><button key={x} className={slot.endsWith(x)?'active':''} onClick={()=>setSlot((slot.split(' · ')[0]||'Tue 29')+' · '+x)}>{x}</button>)}</div>{slot&&<div className="slot-confirm"><Check/><div><b>{slot}</b><span>45-minute product walkthrough</span></div><button onClick={openApp}>Confirm & open product</button></div>}</div>}</div></section>
+  <div className="demo-booking-card">
+   {step===1?<form onSubmit={submit}><h2>Tell us about your funnel</h2><label>Work email<input name="email" required type="email" placeholder="name@company.com"/></label><label>Company<input name="company" required placeholder="Company name"/></label><label>Monthly digital marketing budget<select name="budget" required defaultValue=""><option value="" disabled>Select budget</option><option>Under ₹5L</option><option>₹5L – ₹25L</option><option>₹25L – ₹1Cr</option><option>₹1Cr – ₹5Cr</option><option>₹5Cr+</option></select></label><label>Burning pain point<select name="painPoint" required defaultValue=""><option value="" disabled>Select pain point</option><option>Junk / low-quality leads</option><option>Conversion leakage</option><option>Offline attribution</option><option>CRM context</option><option>Cross-platform reporting</option></select></label><button type="submit" disabled={busy==='lead'}>{busy==='lead'?'Saving…':'Continue to scheduling'} <ArrowRight/></button>{notice&&<small className="login-error" role="status">{notice}</small>}</form>
+   :step===2?<div className="calendar-step"><h2>Select a date & time</h2><p>Choose a live future slot. Confirmation is persisted by the AceMarketing backend before success is shown.</p><div className="calendar-days">{days.map(x=><button key={x.key} className={selectedDay===x.date?'active':''} onClick={()=>setSelectedDay(x.date)}>{x.label}</button>)}</div><div className="calendar-slots">{['10:00 AM','11:00 AM','2:00 PM','3:30 PM','5:00 PM'].map(x=><button key={x} className={selectedTime===x?'active':''} onClick={()=>setSelectedTime(x)}>{x}</button>)}</div>{selectedDay&&selectedTime&&<div className="slot-confirm"><Check/><div><b>{days.find(x=>x.date===selectedDay)?.label} · {selectedTime}</b><span>45-minute product walkthrough</span></div><button disabled={busy==='booking'} onClick={confirm}>{busy==='booking'?'Confirming…':'Confirm demo booking'}</button></div>}{notice&&<small className="login-error" role="status">{notice}</small>}</div>
+   :<div className="calendar-step demo-booking-success"><CheckCircle2/><h2>Demo booked</h2><p role="status">{notice}</p><div className="slot-confirm"><Check/><div><b>{booking?.startsAt?new Date(booking.startsAt).toLocaleString():'Confirmed slot'}</b><span>{booking?.durationMinutes||45}-minute product walkthrough · booking {booking?.id}</span></div></div><button onClick={openApp}>Open interactive product <ArrowRight/></button></div>}
+  </div></section>
   <section className="demo-proof-band"><article><Sparkles/><h3>Simple & intuitive</h3><p>Designed to shorten the time from disconnected data to actionable funnel insight.</p></article><article><Cable/><h3>Connect existing tools</h3><p>Keep the CRM, calling, messaging and advertising systems your teams already use.</p></article><article><BarChart3/><h3>Usage-aware deployment</h3><p>Architecture supports usage metering and scalable packaging without inventing fixed public prices.</p></article></section>
   <section className="source-conflict-note"><ShieldCheck/><div><b>Connector availability boundary</b><p>Integration cards clearly distinguish native OAuth connectors from configurable adapters. Shopify remains available through the connector/adaptor framework without implying unsupported native capabilities.</p></div></section>
  </div>
 }
-
 function CompanyPage({back,openDemo}:{back:()=>void,openDemo:()=>void}){
  return <div className="standalone-page company-page"><div className="standalone-top"><Brand/><button onClick={back}>Back to website</button></div>
   <section className="standalone-hero company-hero"><span className="kicker">COMPANY</span><h1>Built around the reality of complex performance marketing funnels.</h1><p>AceMarketing is being developed as a SaaS operating layer for teams that need attribution, signal activation, funnel automation and first-party data workflows without rebuilding every system in-house.</p><button onClick={openDemo}>Talk to the product team <ArrowRight/></button></section>
