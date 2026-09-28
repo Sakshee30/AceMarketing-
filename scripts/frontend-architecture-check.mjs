@@ -502,6 +502,16 @@ if(fs.existsSync(acePlatform)){
     if(!customerScope.includes("buildWorkspaceHash(tab,String(x.id))"))failures.push('Authorized workspace switches must update route-owned workspace identity.')
   }
 
+  const customerBootstrapPath=path.join(frontend,'customer-app','CustomerBootstrap.tsx')
+  if(fs.existsSync(customerBootstrapPath)){
+    const bootstrap=fs.readFileSync(customerBootstrapPath,'utf8')
+    if(!bootstrap.includes("'session-resolving'")||!bootstrap.includes("'recoverable-error'")||!bootstrap.includes("'signed-out'")){
+      failures.push('Customer bootstrap must preserve explicit resolving, signed-out and recoverable-error states.')
+    }
+    if(!bootstrap.includes('event.persisted'))failures.push('Protected customer access must revalidate after bfcache restoration.')
+    if(!bootstrap.includes('status===401||status===403'))failures.push('Signed-out state must require authoritative authentication/authorization denial.')
+  }
+
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
@@ -565,6 +575,7 @@ const required=[
   'deploy/nginx.customer-app.conf',
   'deploy/nginx.public-site.conf',
   'frontend/src/customer-app/CustomerWorkspace.tsx',
+  'frontend/src/customer-app/CustomerBootstrap.tsx',
   'frontend/src/customer-app/public.ts',
   'frontend/src/features/feedback/data/feedback.api.ts',
   'frontend/src/features/feedback/pages/FeedbackPage.tsx',

@@ -136,6 +136,7 @@ jobs:
           test -f deploy/nginx.customer-app.conf
           test -f deploy/nginx.public-site.conf
           test -f frontend/src/customer-app/CustomerWorkspace.tsx
+          test -f frontend/src/customer-app/CustomerBootstrap.tsx
           test -f frontend/src/auth/LoginPage.tsx
           test -f frontend/src/deep-link/DeepLinkResolver.tsx
           test -f frontend/src/components/system/ConsentBanner.tsx

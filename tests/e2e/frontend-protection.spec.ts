@@ -521,3 +521,31 @@ test('logout session-state event clears private customer query cache boundary',a
   await page.evaluate(()=>window.dispatchEvent(new CustomEvent('ace-session-state',{detail:{state:'anonymous'}})))
   await expect(page.getByRole('navigation',{name:'Workspace navigation'})).toBeVisible()
 })
+
+
+test('customer bootstrap does not convert session network failure into logout',async({page})=>{
+  await page.route('**/api/auth/me',route=>route.abort('failed'))
+  await page.goto('/#/workspace?tab=Overview')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Workspace access could not be verified'})).toBeVisible()
+  await expect(page.getByText(/session has not been treated as signed out/i)).toBeVisible()
+  await expect(page.getByRole('button',{name:/Retry verification/})).toBeVisible()
+})
+
+test('customer bootstrap shows confirmed signed-out state only after authoritative denial',async({page})=>{
+  await page.route('**/api/auth/me',route=>route.fulfill({status:401,contentType:'application/json',body:JSON.stringify({error:'unauthorized'})}))
+  await page.goto('/#/workspace?tab=Overview')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Sign in required'})).toBeVisible()
+  await expect(page.getByRole('button',{name:'Go to login'})).toBeVisible()
+})
+
+test('customer bootstrap revalidates protected access after bfcache restoration',async({page})=>{
+  let calls=0
+  await page.route('**/api/auth/me',route=>{calls+=1;return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({id:'u1',email:'qa@example.com',role:'owner'})})})
+  await page.goto('/#/workspace?tab=Overview')
+  await dismissConsent(page)
+  await expect(page.getByRole('navigation',{name:'Workspace navigation'})).toBeVisible()
+  await page.evaluate(()=>window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true})))
+  await expect.poll(()=>calls).toBeGreaterThan(1)
+})

@@ -6289,3 +6289,14 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Browser back/forward can request a different persisted workspace and reuses the same guarded workspace-switch flow instead of silently retargeting active mutations.
 - The customer QueryClient now cancels and clears private cache data when session authority becomes anonymous.
 - No customer feature, tab, API call or compatibility route was removed.
+
+
+### Customer bootstrap state machine — 2026-09-28
+
+- Added `frontend/src/customer-app/CustomerBootstrap.tsx` as the guarded entry to the authenticated workspace while preserving the existing workspace implementation and compatibility import.
+- Customer startup now has explicit session-resolving, signed-out, access-ready and recoverable-error states before private workspace content mounts.
+- A network/timeout failure during `/auth/me` no longer becomes a false logout. Only an authoritative 401/403 transitions to signed-out state and clears tab-scoped session authority.
+- Protected access is revalidated when a page is restored from the browser back-forward cache.
+- Session verification has a bounded 12-second frontend deadline and a customer-visible retry path with request correlation when available.
+- Added E2E coverage for network ambiguity, authoritative denial and bfcache revalidation.
+- Workspace resolution remains owned by the existing customer workspace composition and its scoped QueryClient; no duplicate server-state store was introduced.
