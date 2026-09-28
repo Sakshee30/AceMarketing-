@@ -75,6 +75,37 @@ class ArtifactStore:
         self._metadata_path(artifact_id).write_text(json.dumps(record, sort_keys=True), encoding="utf-8")
         return record
 
+    def save_file(self, artifact_id: str, source_path: Path, suffix: str, metadata: dict[str, Any]) -> dict[str, Any]:
+        if self.production and not self.bucket:
+            raise RuntimeError("production artifact durability requires ML_ARTIFACT_S3_BUCKET")
+        destination = self.root / f"{artifact_id}{suffix}"
+        if source_path.resolve() != destination.resolve():
+            destination.write_bytes(source_path.read_bytes())
+        digest = hashlib.sha256(destination.read_bytes()).hexdigest()
+        object_key = None
+        storage = "local-development"
+        if self.bucket:
+            object_key = f"{self.prefix}/{artifact_id}{suffix}" if self.prefix else f"{artifact_id}{suffix}"
+            self._s3().upload_file(
+                str(destination),
+                self.bucket,
+                object_key,
+                ExtraArgs={"ServerSideEncryption": os.getenv("ML_ARTIFACT_S3_SSE", "AES256")},
+            )
+            storage = "s3"
+        record = {
+            **metadata,
+            "artifactId": artifact_id,
+            "sha256": digest,
+            "storage": storage,
+            "bucket": self.bucket or None,
+            "objectKey": object_key,
+            "path": str(destination) if not self.production else None,
+            "suffix": suffix,
+        }
+        self._metadata_path(artifact_id).write_text(json.dumps(record, sort_keys=True), encoding="utf-8")
+        return record
+
     def _load_metadata(self, artifact_id: str) -> dict[str, Any]:
         metadata_path = self._metadata_path(artifact_id)
         if not metadata_path.exists():
