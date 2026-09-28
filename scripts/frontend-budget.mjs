@@ -69,9 +69,6 @@ for(const entryKey of entryKeys){
   }
 }
 
-if(strictFailure)fail('Strict frontend bundle budget failed.')
-
-
 for(const [key,item] of Object.entries(manifest)){
   if(item?.isEntry||!item?.file?.endsWith('.js'))continue
   const size=gzipKb(item.file)
@@ -80,3 +77,6 @@ for(const [key,item] of Object.entries(manifest)){
     if(mode==='strict')strictFailure=true
   }
 }
+
+
+if(strictFailure)fail('Strict frontend bundle budget failed.')
