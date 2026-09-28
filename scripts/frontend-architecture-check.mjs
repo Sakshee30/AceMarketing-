@@ -79,6 +79,11 @@ if(fs.existsSync(acePlatform)){
   if(/function\s+DeliveryCenter\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy DeliveryCenter implementation after feature extraction.')
   }
+  for(const legacyName of ['Adjustments','Diagnostics']){
+    if(new RegExp('function\\s+'+legacyName+'\\s*\\(').test(source)){
+      failures.push('frontend/src/AcePlatform.tsx still contains the legacy '+legacyName+' implementation after feature extraction.')
+    }
+  }
   for(const legacyName of ['RealTimeActivation','Personalization','Exclusions']){
     if(new RegExp('function\\s+'+legacyName+'\\s*\\(').test(source)){
       failures.push('frontend/src/AcePlatform.tsx still contains the legacy '+legacyName+' implementation after feature extraction.')
@@ -99,6 +104,14 @@ if(fs.existsSync(acePlatform)){
 
 const required=[
   'frontend/src/features/workspace/manifest.ts',
+  'frontend/src/features/diagnostics/data/diagnostics.api.ts',
+  'frontend/src/features/diagnostics/pages/DiagnosticsPage.tsx',
+  'frontend/src/features/diagnostics/public.ts',
+  'frontend/src/features/diagnostics/feature.manifest.ts',
+  'frontend/src/features/adjustments/data/adjustments.api.ts',
+  'frontend/src/features/adjustments/pages/AdjustmentsPage.tsx',
+  'frontend/src/features/adjustments/public.ts',
+  'frontend/src/features/adjustments/feature.manifest.ts',
   'frontend/src/features/exclusions/data/exclusions.api.ts',
   'frontend/src/features/exclusions/pages/ExclusionsPage.tsx',
   'frontend/src/features/exclusions/public.ts',
