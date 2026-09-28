@@ -8,6 +8,7 @@ import { installAceTracking } from './lib/tracker'
 import { FrontendAppBoundary } from './components/system/FrontendFoundation'
 import { getPublicRuntimeConfig } from './lib/runtime-config'
 import { installBeforeUnloadDirtyWorkGuard } from './lib/dirty-work'
+import { ConnectionStatus } from './components/system/ConnectionStatus'
 
 const root=document.getElementById('root')
 if(!root)throw new Error('AceMarketing root element is missing.')
@@ -29,6 +30,7 @@ installBeforeUnloadDirtyWorkGuard()
 ReactDOM.createRoot(root).render(
   <React.StrictMode>
     <FrontendAppBoundary label="AceMarketing application">
+      <ConnectionStatus />
       <AcePlatform />
       <DashboardQuickNav />
     </FrontendAppBoundary>
