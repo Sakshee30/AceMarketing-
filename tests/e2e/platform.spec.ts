@@ -637,6 +637,25 @@ test.describe('workspace critical flows',()=>{
     await expect(page.getByRole('button',{name:/Save approval policy/i})).toBeVisible()
   })
 
+  test('billing usage surfaces backend failures and recovers without payment credentials',async({page})=>{
+    await page.goto('/#/workspace')
+    await dismissConsent(page)
+    await page.route('**/api/billing/usage',route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'CI usage unavailable'})}))
+    await openWorkspaceTab(page,'Settings')
+    await page.getByRole('button',{name:'Billing & usage',exact:true}).click()
+    await expect(page.getByRole('heading',{name:'Billing & usage'})).toBeVisible()
+    await expect(page.getByRole('alert')).toContainText('CI usage unavailable')
+    await expect(page.locator('.settings-detail')).toContainText('Usage unavailable')
+
+    await page.unroute('**/api/billing/usage')
+    const responsePromise=page.waitForResponse(r=>r.url().includes('/api/billing/usage')&&r.request().method()==='GET'&&r.status()===200)
+    await page.getByRole('button',{name:'Refresh usage'}).click()
+    await responsePromise
+    await expect(page.getByRole('alert')).toHaveCount(0)
+    await expect(page.locator('.settings-detail')).toContainText(/Tracked events/i)
+    await expect(page.locator('.settings-detail')).toContainText(/Credentials deferred|Provider connected|Provider configured/i)
+  })
+
   test('billing usage settings render live entitlement surface',async({page})=>{
     await openWorkspaceTab(page,'Settings')
     await page.getByRole('button',{name:'Billing & usage',exact:true}).click()
