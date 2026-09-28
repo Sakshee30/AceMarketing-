@@ -868,6 +868,25 @@ test('manual integration cards open the custom adapter builder', async ({ page }
 })
 
 
+test('agents and approvals expose backend failures and recover on refresh', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+
+  await page.route('**/api/agents',route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'CI agents unavailable'})}))
+  await openWorkspaceTab(page,'Agents')
+  await expect(page.getByRole('alert')).toContainText('CI agents unavailable')
+  await page.unroute('**/api/agents')
+  await page.getByRole('button',{name:'Refresh',exact:true}).first().click()
+  await expect(page.getByRole('alert')).toHaveCount(0)
+
+  await page.route('**/api/approvals',route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'CI approvals unavailable'})}))
+  await openWorkspaceTab(page,'Approvals')
+  await expect(page.getByRole('alert')).toContainText('CI approvals unavailable')
+  await page.unroute('**/api/approvals')
+  await page.getByRole('button',{name:'Refresh approvals'}).click()
+  await expect(page.getByRole('alert')).toHaveCount(0)
+})
+
 test('built-in agent opens its live operational module', async ({ page }) => {
   await page.goto('/#/workspace')
   await dismissConsent(page)
