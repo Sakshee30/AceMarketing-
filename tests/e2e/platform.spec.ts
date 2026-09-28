@@ -2279,3 +2279,18 @@ test('Launchpad feature chunk preserves readiness and direct workspace navigatio
   expect(typeof payload.readiness).toBe('number')
   await expect(page).toHaveURL(/#\/workspace\?tab=Launchpad/)
 })
+
+
+test('Overview feature chunk preserves command-center backend evidence',async({page})=>{
+  await page.goto('/#/workspace?tab=Overview')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Acquisition command center'})).toBeVisible()
+  const response=await page.request.get('/api/dashboard-summary')
+  expect(response.ok()).toBeTruthy()
+  const payload=await response.json()
+  expect(typeof payload.readiness).toBe('number')
+  expect(payload.totals).toBeTruthy()
+  await expect(page.getByText('WORKSPACE READINESS',{exact:true})).toBeVisible()
+  await expect(page.getByText('Workspace health',{exact:true})).toBeVisible()
+  await expect(page).toHaveURL(/#\/workspace\?tab=Overview/)
+})
