@@ -53,6 +53,18 @@ AceMarketing keeps the current product pipeline and all existing product feature
 - Workspace switching cancels in-flight old-scope browser requests before resolving the new scope.
 - Existing endpoint semantics are unchanged; the transport tightening is additive.
 
+### Lightweight workspace feature manifest
+- A canonical lightweight manifest now inventories every existing workspace surface without moving or deleting feature implementations.
+- Stable feature IDs and route IDs are separated from labels so later route extraction can happen incrementally.
+- The manifest marks long-form surfaces that require dirty-work protection before navigation behavior is migrated.
+- Existing `AcePlatform.tsx` composition remains authoritative until each feature slice is extracted and verified.
+
+### First critical mutation migration
+- Human Approvals is the first critical write surface migrated to the explicit frontend mutation lifecycle.
+- Confirmed backend decisions are distinct from rejection, conflict and outcome-unknown states.
+- Network loss or request timeout no longer gets presented as a confirmed failure; the UI instructs the operator to refresh authoritative state before repeating the decision.
+- Existing approval endpoint semantics remain unchanged; end-to-end idempotency will require the later backend contract phase and is not claimed as complete yet.
+
 ### Bundle-budget evidence
 - Vite now emits a build manifest.
 - CI calculates gzip size for each entry and all of its static dependencies.
