@@ -26,6 +26,7 @@ import { authMailConfigured, sendPasswordReset } from './auth-mailer.mjs'
 import { modelCatalogItems, registrySummary } from './ai-registry.mjs'
 import { closeAiRuntime, listAiResults, submitHostedAiJob } from './ai-runtime.mjs'
 import { getMlCapabilities, mlServiceConfigured } from './ml-client.mjs'
+import { closeKnowledge, ingestKnowledgeText, listKnowledgeSources, revokeKnowledgeSource } from './knowledge.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -442,6 +443,8 @@ const permissionForRequest=(method,path)=>{
   }
   if(path.startsWith('/api/members')||path.startsWith('/api/invitations')) return 'members.write'
   if(path.startsWith('/api/integrations')||path.startsWith('/api/custom-integrations')) return 'integrations.write'
+  if(path==='/api/ai/knowledge/search') return 'ai.analysis.run'
+  if(path.startsWith('/api/ai/knowledge')) return req.method==='GET'?'workspace.read':'ai.knowledge.write'
   if(path==='/api/ai/analysis') return 'ai.analysis.run'
   if(path.startsWith('/api/ai/ml/train/')||path==='/api/ai/ml/rank') return 'ai.training.run'
   if(path==='/api/ai/ml/forecast/seasonal-naive'||path==='/api/ai/ml/forecast/chronos-2'||path==='/api/ai/ml/incrementality'||path==='/api/ai/ml/marketing-mix'||path==='/api/ai/ml/anomalies'||path==='/api/ai/ml/segments') return 'ai.analysis.run'
@@ -4554,6 +4557,51 @@ const server = http.createServer(async (req,res)=>{
     if (req.method === 'GET' && url.pathname === '/api/ai/registry') {
       return send(req,res,200,registrySummary())
     }
+    if (req.method === 'GET' && url.pathname === '/api/ai/knowledge') {
+      const items=await listKnowledgeSources({workspaceId,role:authenticatedUser?.role||'viewer'})
+      return send(req,res,200,{items,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/ai/knowledge') {
+      const body=await readBody(req)
+      const text=String(body.text||'')
+      const name=String(body.name||'').trim()
+      if(!name)return send(req,res,400,{error:'name required'})
+      if(!text.trim())return send(req,res,400,{error:'text required'})
+      const result=await ingestKnowledgeText({
+        workspaceId,
+        name,
+        text,
+        sourceLocation:body.sourceLocation?String(body.sourceLocation):null,
+        documentVersion:String(body.documentVersion||'v1'),
+        accessPolicy:body.accessPolicy&&typeof body.accessPolicy==='object'?body.accessPolicy:{},
+        actor:authenticatedUser
+      })
+      return send(req,res,201,result)
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/knowledge\/[^/]+\/revoke$/.test(url.pathname)) {
+      const parts=url.pathname.split('/')
+      const id=decodeURIComponent(parts[4]||'')
+      const result=await revokeKnowledgeSource({workspaceId,id})
+      return result?send(req,res,200,result):send(req,res,404,{error:'knowledge source not found'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/ai/knowledge/search') {
+      const body=await readBody(req)
+      const query=String(body.query||'').trim()
+      if(!query)return send(req,res,400,{error:'query required'})
+      if(query.length>1000)return send(req,res,400,{error:'query exceeds 1000 characters'})
+      const job=await enqueueJob({
+        workspaceId,
+        kind:'knowledge_search',
+        payload:{query,role:authenticatedUser?.role||'viewer',limit:Math.max(1,Math.min(Number(body.limit||10),20))},
+        idempotencyKey:'knowledge-search:'+String(req.headers['idempotency-key']||req.requestId||randomUUID()),
+        maxAttempts:Number(process.env.AI_JOB_MAX_ATTEMPTS||2),
+        deadlineAt:new Date(Date.now()+Number(process.env.KNOWLEDGE_SEARCH_DEADLINE_MS||120000)).toISOString(),
+        inputSnapshot:{schemaVersion:'knowledge-search.v1',query,capturedAt:new Date().toISOString(),role:authenticatedUser?.role||'viewer'},
+        resultSchemaVersion:'knowledge-search-result.v1'
+      })
+      if(!job)return send(req,res,503,{error:'durable queue requires DATABASE_URL'})
+      return send(req,res,202,{jobId:job.id,status:job.status,resultSchemaVersion:'knowledge-search-result.v1'})
+    }
     if (req.method === 'GET' && url.pathname === '/api/ai/ml/capabilities') {
       if(!mlServiceConfigured()){
         return send(req,res,200,{
@@ -5269,6 +5317,6 @@ server.keepAliveTimeout=65_000
 server.headersTimeout=66_000
 server.requestTimeout=30_000
 server.listen(PORT,()=>console.log(`AceMarketing API listening on http://localhost:${PORT}`))
-const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations(),closeObservability(),closeEntitlements(),closeBillingProvider(),closeConsentStore(),closePrivacyOps(),closeAudienceScheduler(),closeCohortAnalytics(),closeEventRules(),closeAiRuntime()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
+const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations(),closeObservability(),closeEntitlements(),closeBillingProvider(),closeConsentStore(),closePrivacyOps(),closeAudienceScheduler(),closeCohortAnalytics(),closeEventRules(),closeAiRuntime(),closeKnowledge()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
 process.on('SIGTERM',()=>shutdown('SIGTERM'))
 process.on('SIGINT',()=>shutdown('SIGINT'))
