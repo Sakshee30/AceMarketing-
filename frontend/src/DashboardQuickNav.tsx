@@ -159,7 +159,21 @@ export default function DashboardQuickNav(){
   useEffect(()=>{
     if(!visible)return
     let active=true
+    let timer:number|undefined
+    let loading=false
+
+    const schedule=()=>{
+      if(!active)return
+      const jitter=Math.round(30000*(0.85+Math.random()*0.3))
+      timer=window.setTimeout(load,jitter)
+    }
+
     const load=async()=>{
+      if(!active||document.hidden||loading){
+        schedule()
+        return
+      }
+      loading=true
       try{
         const next=await api.dashboardSummary()
         if(!active)return
@@ -169,13 +183,24 @@ export default function DashboardQuickNav(){
       }catch(error){
         if(!active)return
         setStatusError(error instanceof Error?error.message:'Unable to refresh workspace status')
+      }finally{
+        loading=false
+        schedule()
       }
     }
+
+    const onVisibility=()=>{
+      if(!active||document.hidden)return
+      if(timer)window.clearTimeout(timer)
+      load()
+    }
+
     load()
-    const timer=window.setInterval(load,30000)
+    document.addEventListener('visibilitychange',onVisibility)
     return()=>{
       active=false
-      window.clearInterval(timer)
+      if(timer)window.clearTimeout(timer)
+      document.removeEventListener('visibilitychange',onVisibility)
     }
   },[visible])
 
@@ -271,7 +296,7 @@ export default function DashboardQuickNav(){
       </div>
       <div className="ace-quick-nav-footer">
         <span>
-          Live readiness and operational counts refresh every 30 seconds.
+          Live readiness and operational counts refresh about every 30 seconds while this tab is visible.
           {lastUpdated&&<small> Last updated {lastUpdated.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}.</small>}
         </span>
         <div className="ace-quick-nav-footer-actions">
