@@ -33,24 +33,25 @@ const identifiers=body=>({
   wbraid:text(body.wbraid),
   fbclid:text(body.fbclid),
   msclkid:text(body.msclkid),
-  ttclid:text(body.ttclid||body.data?.ttclid)
+  ttclid:text(body.ttclid||body.data?.ttclid),
+  twclid:text(body.twclid||body.data?.twclid)
 })
 
 export const captureClickSession=async(workspaceId,body={})=>{
   if(!pool) return null
   const ids=identifiers(body)
-  const hasAttribution=Boolean(ids.gclid||ids.gbraid||ids.wbraid||ids.fbclid||ids.msclkid||ids.ttclid||body.utm_source||body.utm_campaign)
+  const hasAttribution=Boolean(ids.gclid||ids.gbraid||ids.wbraid||ids.fbclid||ids.msclkid||ids.ttclid||ids.twclid||body.utm_source||body.utm_campaign)
   if(!hasAttribution&&!ids.visitorId&&!ids.customerId&&!ids.emailSha256&&!ids.phoneSha256) return null
   const now=new Date(body.occurredAt||body.timestamp||Date.now())
   const expiresAt=new Date(now.getTime()+retentionDays*24*60*60*1000)
   const id='clk_'+randomUUID()
   const {rows}=await pool.query(
     `INSERT INTO ace_click_sessions
-      (id,workspace_id,visitor_id,customer_id,email_sha256,phone_sha256,gclid,gbraid,wbraid,fbclid,msclkid,ttclid,
+      (id,workspace_id,visitor_id,customer_id,email_sha256,phone_sha256,gclid,gbraid,wbraid,fbclid,msclkid,ttclid,twclid,
        utm_source,utm_medium,utm_campaign,utm_term,utm_content,landing_url,referrer,first_seen_at,last_seen_at,expires_at,metadata)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$20,$21,$22::jsonb)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$21,$22,$23::jsonb)
      RETURNING *`,
-    [id,workspaceId,ids.visitorId,ids.customerId,ids.emailSha256,ids.phoneSha256,ids.gclid,ids.gbraid,ids.wbraid,ids.fbclid,ids.msclkid,ids.ttclid,
+    [id,workspaceId,ids.visitorId,ids.customerId,ids.emailSha256,ids.phoneSha256,ids.gclid,ids.gbraid,ids.wbraid,ids.fbclid,ids.msclkid,ids.ttclid,ids.twclid,
      text(body.utm_source),text(body.utm_medium),text(body.utm_campaign),text(body.utm_term),text(body.utm_content),
      text(body.landingUrl||body.url),text(body.referrer),now.toISOString(),expiresAt.toISOString(),
      safeJson({event:body.event||body.eventType||null,userAgent:text(body.userAgent),ipCountry:text(body.ipCountry)})]
@@ -63,7 +64,7 @@ const candidateFor=async(workspaceId,event)=>{
   const occurredAt=new Date(event.occurredAt||event.timestamp||Date.now()).toISOString()
   const values=[
     workspaceId,occurredAt,
-    ids.customerId,ids.gclid,ids.gbraid,ids.wbraid,ids.fbclid,ids.msclkid,ids.ttclid,
+    ids.customerId,ids.gclid,ids.gbraid,ids.wbraid,ids.fbclid,ids.msclkid,ids.ttclid,ids.twclid,
     ids.phoneSha256,ids.emailSha256,ids.visitorId,callWindowMinutes
   ]
   const {rows}=await pool.query(
@@ -76,15 +77,16 @@ const candidateFor=async(workspaceId,event)=>{
         WHEN $7::text IS NOT NULL AND fbclid=$7 THEN 98
         WHEN $8::text IS NOT NULL AND msclkid=$8 THEN 98
         WHEN $9::text IS NOT NULL AND ttclid=$9 THEN 98
-        WHEN $10::text IS NOT NULL AND phone_sha256=$10 THEN 96
-        WHEN $11::text IS NOT NULL AND email_sha256=$11 THEN 95
-        WHEN $12::text IS NOT NULL AND visitor_id=$12 THEN 92
+        WHEN $10::text IS NOT NULL AND twclid=$10 THEN 98
+        WHEN $11::text IS NOT NULL AND phone_sha256=$11 THEN 96
+        WHEN $12::text IS NOT NULL AND email_sha256=$12 THEN 95
+        WHEN $13::text IS NOT NULL AND visitor_id=$13 THEN 92
         WHEN source_hint IS NULL THEN 0
         ELSE 0
       END AS score
      FROM (
        SELECT s.*,
-         CASE WHEN s.last_seen_at BETWEEN ($2::timestamptz-($13*interval '1 minute')) AND ($2::timestamptz+interval '5 minute')
+         CASE WHEN s.last_seen_at BETWEEN ($2::timestamptz-($14*interval '1 minute')) AND ($2::timestamptz+interval '5 minute')
               THEN 'time_window' ELSE NULL END source_hint
        FROM ace_click_sessions s
        WHERE workspace_id=$1
@@ -99,9 +101,10 @@ const candidateFor=async(workspaceId,event)=>{
        ($7::text IS NOT NULL AND fbclid=$7) OR
        ($8::text IS NOT NULL AND msclkid=$8) OR
        ($9::text IS NOT NULL AND ttclid=$9) OR
-       ($10::text IS NOT NULL AND phone_sha256=$10) OR
-       ($11::text IS NOT NULL AND email_sha256=$11) OR
-       ($12::text IS NOT NULL AND visitor_id=$12)
+       ($10::text IS NOT NULL AND twclid=$10) OR
+       ($11::text IS NOT NULL AND phone_sha256=$11) OR
+       ($12::text IS NOT NULL AND email_sha256=$12) OR
+       ($13::text IS NOT NULL AND visitor_id=$13)
      ORDER BY score DESC,last_seen_at DESC
      LIMIT 1`,
     values
@@ -119,6 +122,7 @@ const methodFor=(candidate,event)=>{
   if(ids.fbclid&&candidate.fbclid===ids.fbclid) return {method:'fbclid',confidence:98}
   if(ids.msclkid&&candidate.msclkid===ids.msclkid) return {method:'msclkid',confidence:98}
   if(ids.ttclid&&candidate.ttclid===ids.ttclid) return {method:'ttclid',confidence:98}
+  if(ids.twclid&&candidate.twclid===ids.twclid) return {method:'twclid',confidence:98}
   if(ids.phoneSha256&&candidate.phone_sha256===ids.phoneSha256) return {method:'hashed_phone',confidence:96}
   if(ids.emailSha256&&candidate.email_sha256===ids.emailSha256) return {method:'hashed_email',confidence:95}
   if(ids.visitorId&&candidate.visitor_id===ids.visitorId) return {method:'visitor_id',confidence:92}
@@ -139,13 +143,13 @@ export const recordAssistedEvent=async(workspaceId,body={})=>{
   const {rows}=await pool.query(
     `INSERT INTO ace_assisted_events
       (id,workspace_id,idempotency_key,event_type,source,occurred_at,customer_id,visitor_id,email_sha256,phone_sha256,
-       gclid,gbraid,wbraid,fbclid,msclkid,ttclid,value,currency,payload,matched_session_id,match_method,match_confidence,status)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20,$21,$22,$23)
+       gclid,gbraid,wbraid,fbclid,msclkid,ttclid,twclid,value,currency,payload,matched_session_id,match_method,match_confidence,status)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20::jsonb,$21,$22,$23,$24)
      ON CONFLICT (workspace_id,idempotency_key)
      DO UPDATE SET updated_at=ace_assisted_events.updated_at
      RETURNING *`,
     [id,workspaceId,key,eventType,source,occurredAt.toISOString(),ids.customerId,ids.visitorId,ids.emailSha256,ids.phoneSha256,
-     ids.gclid,ids.gbraid,ids.wbraid,ids.fbclid,ids.msclkid,ids.ttclid,
+     ids.gclid,ids.gbraid,ids.wbraid,ids.fbclid,ids.msclkid,ids.ttclid,ids.twclid,
      body.value==null?null:Number(body.value),text(body.currency),safeJson(body.data||body.payload||{}),
      candidate?.id||null,match.method,match.confidence,candidate?'matched':'unmatched']
   )
@@ -185,7 +189,8 @@ export const attributionStats=async(workspaceId,{periodDays=null}={})=>{
       COUNT(*) FILTER (WHERE gclid IS NOT NULL)::int gclid,
       COUNT(*) FILTER (WHERE fbclid IS NOT NULL)::int fbclid,
       COUNT(*) FILTER (WHERE gbraid IS NOT NULL OR wbraid IS NOT NULL)::int braid,
-      COUNT(*) FILTER (WHERE ttclid IS NOT NULL)::int tiktok
+      COUNT(*) FILTER (WHERE ttclid IS NOT NULL)::int tiktok,
+      COUNT(*) FILTER (WHERE twclid IS NOT NULL)::int x
       FROM ace_click_sessions
       WHERE workspace_id=$1 AND expires_at>=now()
         AND ($2::int IS NULL OR first_seen_at>=now()-($2*interval '1 day'))`,[workspaceId,days]),
@@ -269,7 +274,7 @@ export const attributionStats=async(workspaceId,{periodDays=null}={})=>{
   return {
     available:true,
     activeClickSessions:s.total,
-    clickIdCoverage:{gclid:s.gclid,fbclid:s.fbclid,braid:s.braid,tiktok:s.tiktok},
+    clickIdCoverage:{gclid:s.gclid,fbclid:s.fbclid,braid:s.braid,tiktok:s.tiktok,x:s.x},
     assistedEvents:e.total,
     matchedEvents:e.matched,
     unmatchedEvents:e.unmatched,
