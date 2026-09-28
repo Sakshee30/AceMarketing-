@@ -5732,3 +5732,14 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - The UI labels unconfigured payments as **Credentials deferred**, matching the current implementation scope.
 - Added Playwright coverage that forces the usage API to fail, verifies a visible failure state, restores the backend, refreshes, and confirms recovery without Stripe credentials.
 - Implemented directly on `main`; no separate branch was created.
+
+
+### Settings workflow hardening — 2026-09-28
+
+- **Users & roles** now exposes load, invite, role-change, and deactivation failures instead of silently clearing or leaving stale state.
+- Added **Refresh members**, explicit loading/empty states, backend-confirmed success messages, and retryable failure messages.
+- **Governance** now loads consent statistics and privacy history as one confirmed snapshot, exposes failures, and supports **Refresh governance** without reloading the workspace.
+- Privacy export, deletion, and retention-preview operations now surface backend errors and explicit success states instead of silently resetting busy state.
+- Added Playwright recovery coverage for both sections with forced backend failures followed by successful refreshes.
+- No external provider credentials are required for these workflows; they are fully internal AceMarketing frontend/backend operations.
+- Implemented directly on `main`; no separate branch was created.
