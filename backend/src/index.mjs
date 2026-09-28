@@ -78,6 +78,15 @@ const SERVER_SECRET_CONNECTORS={
       {key:'tag_id',label:'Microsoft UET tag ID',secret:false},
       {key:'access_token',label:'Conversions API token',secret:true}
     ]
+  },
+  'X':{
+    provider:'x_ads',
+    authType:'server_secret',
+    capability:'native_server_capi',
+    fields:[
+      {key:'pixel_id',label:'X Pixel ID',secret:false},
+      {key:'access_token',label:'Conversion API access token',secret:true}
+    ]
   }
 }
 const connectorTokenHealth=async(workspaceId)=>{
@@ -286,6 +295,8 @@ const buildSignalReplayPayload=(body,item={})=>{
     epik:body.epik||body.data?.epik||body.data?.click_id||null,
     ttclid:body.ttclid||body.data?.ttclid||null,
     ttp:body.ttp||body.data?.ttp||null,
+    twclid:body.twclid||body.data?.twclid||null,
+    twpid:body.twpid||body.data?.twpid||null,
     fbc:body.fbc||null,
     fbp:body.fbp||null,
     oppref:body.oppref||body.openaiClickRef||null,
@@ -312,6 +323,9 @@ const buildSignalReplayPayload=(body,item={})=>{
     pinterestAdvertiserId:body.pinterestAdvertiserId||body.data?.pinterestAdvertiserId||null,
     tiktokPixelId:body.tiktokPixelId||body.data?.tiktokPixelId||null,
     tiktokEventSource:body.tiktokEventSource||body.data?.tiktokEventSource||null,
+    xPixelId:body.xPixelId||body.data?.xPixelId||null,
+    xEventId:body.xEventId||body.data?.xEventId||null,
+    xEventName:body.xEventName||body.data?.xEventName||null,
     openaiPixelId:body.openaiPixelId||null,
     validateOnly:body.validateOnly===true,
     emailSha256:body.emailSha256||body.email_sha256||(body.email?sha256Normalized(body.email):null),
@@ -330,7 +344,8 @@ const buildSignalReplayPayload=(body,item={})=>{
 const validateSignalDispatch=body=>{
   const destination=String(body.destination||'').toLowerCase()
   if(!body.event||!destination) return 'event and destination required'
-  if(!destination.includes('meta')&&!destination.includes('google')&&!destination.includes('linkedin')&&!destination.includes('microsoft')&&!destination.includes('bing')&&!destination.includes('pinterest')&&!destination.includes('tiktok')&&!destination.includes('webhook')&&!destination.includes('chatgpt')&&!destination.includes('openai')) return 'unsupported delivery destination'
+  const isX=destination==='x'||destination.includes('x ads')||destination.includes('twitter')
+  if(!destination.includes('meta')&&!destination.includes('google')&&!destination.includes('linkedin')&&!destination.includes('microsoft')&&!destination.includes('bing')&&!destination.includes('pinterest')&&!destination.includes('tiktok')&&!isX&&!destination.includes('webhook')&&!destination.includes('chatgpt')&&!destination.includes('openai')) return 'unsupported delivery destination'
   if(destination.includes('google')){
     const hasIdentity=Boolean(body.gclid||body.gbraid||body.wbraid||body.email||body.emailSha256||body.email_sha256||body.phone||body.phoneSha256||body.phone_sha256)
     if(!hasIdentity) return 'Google delivery requires gclid, gbraid, wbraid, or a user identifier'
@@ -356,6 +371,10 @@ const validateSignalDispatch=body=>{
   if(destination.includes('tiktok')){
     const hasIdentity=Boolean(body.ttclid||body.ttp||body.email||body.emailSha256||body.email_sha256||body.phone||body.phoneSha256||body.phone_sha256||body.externalId||body.customerId||body.ipAddress||body.userAgent||body.data?.ttclid||body.data?.ttp)
     if(!hasIdentity) return 'TikTok delivery requires a click/cookie identifier, customer identifier, hashed contact, or request context'
+  }
+  if(isX){
+    const hasIdentity=Boolean(body.twclid||body.twpid||body.email||body.emailSha256||body.email_sha256||body.phone||body.phoneSha256||body.phone_sha256||body.ipAddress||body.userAgent||body.data?.twclid||body.data?.twpid)
+    if(!hasIdentity) return 'X delivery requires twclid/twpid, hashed contact, IP, or user agent'
   }
   if(destination.includes('chatgpt')||destination.includes('openai')){
     const actionSource=String(body.actionSource||'web').toLowerCase()
