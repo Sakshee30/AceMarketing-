@@ -5600,3 +5600,34 @@ The advertised Voice Scheduler is now a distinct durable agent workflow rather t
 - Playwright coverage verifies the queue path end-to-end and explicitly checks that a queued call does not pretend a meeting already exists before provider confirmation.
 
 This closes the gap between the public Voice Scheduler capability and the backend agent execution model.
+
+
+## X Ads Conversion API + Voice Scheduler stabilization — 2026-09-28
+
+### X Ads Conversion API
+AceMarketing now implements the server-side X Ads conversion contract from X's official `twitter/x-ads-conversion-api-gtm-template`.
+
+- AdSync exposes an **X Ads Conversion API** quick-start targeting `X`.
+- Delivery sends `POST https://ads-api.x.com/12/measurement/conversions/{pixelId}` with the `X-Pixel-Token` header.
+- X is a native encrypted `server_secret` connector in Workspace → Integrations with **X Pixel ID** and **Conversion API access token** fields.
+- Workspace-scoped vault credentials are preferred; `X_PIXEL_ID` and `X_CONVERSION_TOKEN` remain deployment fallbacks.
+- Conversion timestamps use milliseconds, matching X's server-side contract.
+- Matching evidence supports `twclid`, `twpid`, SHA-256 email, SHA-256 phone, IP address and user agent.
+- A configured X Event ID is sent as `event_id`; otherwise AceMarketing emits a normalized `ace_<event>` `event_name`.
+- AceMarketing's stable external/idempotency/delivery ID is sent as `conversion_id` for deduplication.
+- Value, currency, event-source URL, commerce contents and item count are included when available.
+- The consent-aware browser tracker persists URL `twclid`, can read the first-party `_twclid` cookie format used by X's official server template, and forwards `_twpid` when present.
+- Migration `020_x_click_identity.sql` persists/indexes `twclid` in click sessions and assisted events.
+- Offline/assisted attribution can reconcile outcomes directly by `twclid`, and Matchback surfaces **X TWCLID** live coverage.
+- Durable queued signal replay retains X click IDs and X event configuration through retries.
+- Playwright coverage verifies X quick-start persistence, consent-gated click capture, X attribution coverage and native server-secret connector metadata.
+
+### Voice Scheduler runtime stabilization
+The Voice Scheduler backend remains provider-backed and governed: it queues a durable agent action and only creates a persisted meeting when the configured provider returns a confirmed start time. This pass also repairs the UI ownership regressions introduced while adding the scheduler:
+
+- Voice Scheduler state now belongs to the Meetings workspace instead of Calls.
+- The Voice Scheduler modal now renders in Meetings instead of leaking into Conversion Adjustments.
+- Conversion Adjustments is again isolated to adjustment creation/preview/application.
+- The late Google Fonts import was merged into the leading import so production CSS no longer emits the import-order warning.
+
+As with every release pass, production promotion requires the complete GitHub Actions workflow—not only the TypeScript/build stages—to be green.
