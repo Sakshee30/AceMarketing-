@@ -2265,3 +2265,17 @@ test('developer API keys can be created used and revoked end to end', async ({ p
   })
   expect(rejected.status()).toBe(401)
 })
+
+
+test('Launchpad feature chunk preserves readiness and direct workspace navigation',async({page})=>{
+  await page.goto('/#/workspace?tab=Launchpad')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Launchpad',exact:true})).toBeVisible()
+  await expect(page.getByText('Workspace readiness',{exact:true})).toBeVisible()
+  const response=await page.request.get('/api/launchpad')
+  expect(response.ok()).toBeTruthy()
+  const payload=await response.json()
+  expect(Array.isArray(payload.steps)).toBeTruthy()
+  expect(typeof payload.readiness).toBe('number')
+  await expect(page).toHaveURL(/#\/workspace\?tab=Launchpad/)
+})
