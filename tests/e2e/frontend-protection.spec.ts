@@ -131,3 +131,12 @@ test('loads extracted reports feature from its direct workspace route',async({pa
   await expect(page.getByRole('heading',{name:'Cohort & automated reports'})).toBeVisible()
   await expect(page.getByText(/Automated email reports/i)).toBeVisible()
 })
+
+
+test('loads extracted executive briefs feature from its direct workspace route',async({page})=>{
+  await page.goto('/#/workspace?tab=Executive%20Briefs')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Executive%20Briefs/)
+  await expect(page.getByRole('heading',{name:'Executive data snippets'})).toBeVisible()
+  await expect(page.getByText(/Schedule executive brief/i)).toBeVisible()
+})
