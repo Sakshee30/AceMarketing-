@@ -439,3 +439,13 @@ A frontend feature is not considered complete because the screen renders. Comple
 - Successful runtime scoring is no longer presented as statistical model qualification. Runtime readiness and evaluation evidence are separate UI concepts.
 - Optional provider/model governance metadata is displayed only when returned by the backend; the frontend does not invent provider access, model availability or evaluation status.
 - Existing custom weighted scoring creation, dirty-work protection, validation dialog and scoring-run behavior are preserved.
+
+
+### Ask Ace evidence-boundary hardening
+- Ask Ace continues to use the existing `/ask-ace` route and current grounded workspace-analysis behavior; no parallel hosted-model frontend was introduced.
+- The feature now owns typed answer, insight, journey, evidence, warning and engine contracts instead of accepting unbounded assistant payloads.
+- In-flight analysis is cancellable when the feature unmounts, preserving route/workspace lifecycle hygiene.
+- Conversation and journey rendering remain bounded for long-running sessions.
+- Evidence IDs, evidence-kind labels and limitations are rendered only when returned by the backend.
+- Analysis failures remain explicit and do not substitute sample or fabricated metrics.
+- The UI labels the current implementation as the grounded deterministic/workspace baseline and will not present hosted analyst/reviewer routes as active until backend registry, access, evaluation and policy evidence exists.
