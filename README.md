@@ -5961,3 +5961,13 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Bounded recent import rendering to protect long-running browser sessions.
 - Added architecture enforcement and E2E coverage for the extracted feature.
 - Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
+
+
+### Frontend architecture: Journeys feature boundary — 2026-09-28
+
+- Extracted **Customer Journey Explorer** into a feature-owned lazy chunk while preserving source/stage filtering, search, lead selection, customer metadata and stitched chronology.
+- Added explicit loading and retryable error states while preserving already-loaded journey evidence during transient failures.
+- Added request sequencing to prevent stale refreshes from replacing newer journey data.
+- Bounded chronology rendering to the newest 150 records to protect long-lived browser sessions.
+- Added architecture enforcement and E2E coverage for the extracted feature.
+- Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
