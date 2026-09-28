@@ -72,9 +72,9 @@ export const resolveCorsOrigin = (origin, allowedOrigins) => {
 
 const rolePermissions={
   owner:['*'],
-  admin:['workspace.read','workspace.write','members.read','members.write','integrations.write','agents.write','audiences.write','reports.write','developer.write'],
-  analyst:['workspace.read','members.read','reports.read','journeys.read','attribution.read','audiences.read','monitoring.read'],
-  operator:['workspace.read','integrations.read','agents.run','approvals.write','followups.write','calls.write','meetings.write','delivery.write','monitoring.read']
+  admin:['workspace.read','workspace.write','members.read','members.write','integrations.write','agents.write','audiences.write','reports.write','developer.write','ai.analysis.run','ai.training.run','ai.evaluation.write','ai.promotion.write','ai.providers.manage'],
+  analyst:['workspace.read','members.read','reports.read','journeys.read','attribution.read','audiences.read','monitoring.read','ai.analysis.run'],
+  operator:['workspace.read','integrations.read','agents.run','approvals.write','followups.write','calls.write','meetings.write','delivery.write','monitoring.read','ai.analysis.run']
 }
 
 export const permissionsForRole=role=>rolePermissions[role]||[]
