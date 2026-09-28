@@ -5884,3 +5884,12 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Added request sequencing so stale funnel responses cannot overwrite newer filter selections during rapid interaction.
 - Added architecture enforcement preventing Funnel from drifting back into the legacy workspace composition.
 - Implemented directly on `main`; no current customer feature or backend endpoint was removed, and backend restructuring remains deferred until frontend completion.
+
+
+### Frontend architecture: Events feature boundary — 2026-09-28
+
+- Extracted **Conversion Event Manager** into a feature-owned lazy chunk while preserving existing rules, templates, rule runs, activation destinations and enable/pause workflows.
+- Added accessible event-rule creation with dirty-work protection.
+- Added explicit loading, retryable error and unknown-outcome reconciliation states for rule creation and status changes.
+- Added architecture enforcement and E2E coverage for the extracted feature.
+- Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
