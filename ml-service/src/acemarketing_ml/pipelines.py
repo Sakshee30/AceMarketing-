@@ -414,3 +414,153 @@ def dependency_capabilities() -> list[dict[str, Any]]:
             }
         )
     return result
+
+
+def chronos2_forecast(request) -> dict[str, Any]:
+    import hashlib
+    import json
+    import os
+    from pathlib import Path
+
+    import pandas as pd
+
+    revision = os.getenv("CHRONOS2_REVISION", "").strip()
+    if not revision:
+        raise ValueError("CHRONOS2_REVISION must pin the amazon/chronos-2 snapshot before inference")
+
+    try:
+        from chronos import Chronos2Pipeline
+        from huggingface_hub import snapshot_download
+    except ImportError as exc:
+        raise ValueError("chronos-forecasting optional dependency is not installed") from exc
+
+    history = sorted(request.history, key=lambda point: point.timestamp)
+    if any(point.value is None for point in history):
+        raise ValueError("history contains unknown observations; unknown values must not be treated as zero")
+
+    local_snapshot = snapshot_download(repo_id="amazon/chronos-2", revision=revision)
+    root = Path(local_snapshot)
+    digest = hashlib.sha256()
+    for path in sorted(p for p in root.rglob("*") if p.is_file()):
+        digest.update(str(path.relative_to(root)).encode("utf-8"))
+        digest.update(path.read_bytes())
+    snapshot_hash = digest.hexdigest()
+
+    context_df = pd.DataFrame(
+        {
+            "id": [request.series_id] * len(history),
+            "timestamp": [point.timestamp for point in history],
+            "target": [float(point.value) for point in history],
+        }
+    )
+
+    future_df = None
+    if request.known_future_covariates:
+        future_df = pd.DataFrame(request.known_future_covariates)
+        required = {"id", "timestamp"}
+        if not required.issubset(set(future_df.columns)):
+            raise ValueError("known_future_covariates require id and timestamp columns")
+        if len(future_df) != request.horizon:
+            raise ValueError("known_future_covariates must contain exactly one row per forecast step")
+
+    device = os.getenv("CHRONOS2_DEVICE", "cpu")
+    pipeline = Chronos2Pipeline.from_pretrained(str(root), device_map=device)
+    prediction = pipeline.predict_df(
+        context_df,
+        future_df=future_df,
+        prediction_length=request.horizon,
+        quantile_levels=[0.1, 0.5, 0.9],
+        id_column="id",
+        timestamp_column="timestamp",
+        target="target",
+        freq=request.frequency,
+    )
+    records = json.loads(prediction.to_json(orient="records", date_format="iso"))
+    return {
+        "task": "forecast_primary",
+        "status": "modelled_not_promoted",
+        "model": "amazon/chronos-2",
+        "revision": revision,
+        "snapshotSha256": snapshot_hash,
+        "device": device,
+        "seriesId": request.series_id,
+        "horizon": request.horizon,
+        "frequency": request.frequency,
+        "timezone": request.timezone,
+        "forecasts": records,
+        "quantileLevels": [0.1, 0.5, 0.9],
+        "warning": "Chronos-2 output is a probabilistic forecast, not evidence that changing spend causes the predicted outcome.",
+        "promotion": {"approved": False, "reason": "Rolling-origin comparison against baseline and challenger is still required."},
+    }
+
+
+def causal_forest_estimate(request) -> dict[str, Any]:
+    import numpy as np
+    import pandas as pd
+
+    try:
+        from econml.dml import CausalForestDML
+        from sklearn.ensemble import RandomForestRegressor
+    except ImportError as exc:
+        raise ValueError("econml optional dependency is not installed") from exc
+
+    rows = sorted(request.rows, key=lambda row: row.observed_at)
+    names = sorted({key for row in rows for key in row.covariates})
+    if not names:
+        raise ValueError("causal estimation requires documented covariates")
+
+    x = pd.DataFrame([{name: row.covariates.get(name, 0.0) for name in names} for row in rows]).fillna(0.0)
+    treatment = np.asarray([float(row.treatment) for row in rows], dtype=float)
+    outcome = np.asarray([float(row.outcome) for row in rows], dtype=float)
+
+    unique_treatment = np.unique(treatment)
+    if unique_treatment.size < 2:
+        raise ValueError("insufficient_evidence: treatment has no variation")
+
+    if set(unique_treatment).issubset({0.0, 1.0}):
+        treated_rate = float(treatment.mean())
+        if treated_rate < request.minimum_overlap or treated_rate > 1.0 - request.minimum_overlap:
+            raise ValueError("insufficient_evidence: treatment overlap is below the configured minimum")
+
+    split = max(50, int(len(rows) * 0.8))
+    if split >= len(rows):
+        split = len(rows) - 20
+    x_train, x_test = x.iloc[:split], x.iloc[split:]
+    t_train, t_test = treatment[:split], treatment[split:]
+    y_train, y_test = outcome[:split], outcome[split:]
+    if len(x_test) < 20:
+        raise ValueError("insufficient_evidence: holdout population is too small")
+
+    model = CausalForestDML(
+        model_y=RandomForestRegressor(n_estimators=150, min_samples_leaf=5, random_state=request.random_seed),
+        model_t=RandomForestRegressor(n_estimators=150, min_samples_leaf=5, random_state=request.random_seed),
+        n_estimators=400,
+        min_samples_leaf=10,
+        max_depth=None,
+        discrete_treatment=False,
+        random_state=request.random_seed,
+    )
+    model.fit(y_train, t_train, X=x_train)
+    effects = np.asarray(model.effect(x_test), dtype=float)
+    ate = float(effects.mean())
+    stderr = float(effects.std(ddof=1) / np.sqrt(max(1, len(effects))))
+    interval = [ate - 1.96 * stderr, ate + 1.96 * stderr]
+
+    return {
+        "task": "incrementality",
+        "status": "evaluated_not_promoted",
+        "estimand": request.estimand,
+        "treatment": request.treatment_name,
+        "outcome": request.outcome_name,
+        "sampleSize": len(rows),
+        "holdoutSize": len(x_test),
+        "averageTreatmentEffect": ate,
+        "approximateInterval95": interval,
+        "overlap": {
+            "treatmentMin": float(treatment.min()),
+            "treatmentMax": float(treatment.max()),
+            "binaryTreatedRate": float(treatment.mean()) if set(unique_treatment).issubset({0.0, 1.0}) else None,
+        },
+        "warning": "This observational estimate depends on documented no-unmeasured-confounding and overlap assumptions; it is not a randomized experiment.",
+        "promotion": {"approved": False, "reason": "Assumption review, sensitivity checks and experiment comparison are required before action."},
+    }
