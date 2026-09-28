@@ -40,6 +40,9 @@ for(const file of walk(frontend)){
 const acePlatform=path.join(frontend,'AcePlatform.tsx')
 if(fs.existsSync(acePlatform)){
   const source=fs.readFileSync(acePlatform,'utf8')
+  if(/function\s+Journeys\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Journeys implementation after feature extraction.')
+  }
   if(/function\s+POSAndStores\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy POS & Stores implementation after feature extraction.')
   }
@@ -171,6 +174,10 @@ if(fs.existsSync(acePlatform)){
 }
 
 const required=[
+  'frontend/src/features/journeys/data/journeys.api.ts',
+  'frontend/src/features/journeys/pages/JourneysPage.tsx',
+  'frontend/src/features/journeys/public.ts',
+  'frontend/src/features/journeys/feature.manifest.ts',
   'frontend/src/features/pos-stores/data/pos-stores.api.ts',
   'frontend/src/features/pos-stores/pages/POSAndStoresPage.tsx',
   'frontend/src/features/pos-stores/public.ts',
