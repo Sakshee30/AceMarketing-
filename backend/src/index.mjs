@@ -444,7 +444,7 @@ const permissionForRequest=(method,path)=>{
   if(path.startsWith('/api/integrations')||path.startsWith('/api/custom-integrations')) return 'integrations.write'
   if(path==='/api/ai/analysis') return 'ai.analysis.run'
   if(path.startsWith('/api/ai/ml/train/')||path==='/api/ai/ml/rank') return 'ai.training.run'
-  if(path==='/api/ai/ml/forecast/seasonal-naive'||path==='/api/ai/ml/forecast/chronos-2'||path==='/api/ai/ml/incrementality'||path==='/api/ai/ml/anomalies'||path==='/api/ai/ml/segments') return 'ai.analysis.run'
+  if(path==='/api/ai/ml/forecast/seasonal-naive'||path==='/api/ai/ml/forecast/chronos-2'||path==='/api/ai/ml/incrementality'||path==='/api/ai/ml/marketing-mix'||path==='/api/ai/ml/anomalies'||path==='/api/ai/ml/segments') return 'ai.analysis.run'
   if(path.includes('/api/ai/jobs/')) return 'ai.analysis.run'
   if(path.startsWith('/api/agents')||path.startsWith('/api/models/run')) return 'agents.write'
   if(path.startsWith('/api/audiences')) return 'audiences.write'
@@ -4575,6 +4575,7 @@ const server = http.createServer(async (req,res)=>{
       '/api/ai/ml/forecast/seasonal-naive':{operation:'forecast_baseline',task:'forecast_baseline'},
       '/api/ai/ml/forecast/chronos-2':{operation:'forecast_chronos',task:'forecast_primary'},
       '/api/ai/ml/incrementality':{operation:'incrementality',task:'incrementality'},
+      '/api/ai/ml/marketing-mix':{operation:'marketing_mix',task:'marketing_mix'},
       '/api/ai/ml/anomalies':{operation:'anomaly_detection',task:'anomaly_detection'},
       '/api/ai/ml/segments':{operation:'behavioral_segments',task:'behavioral_segments'},
       '/api/ai/ml/rank':{operation:'offer_ranking',task:'offer_ranking'}
@@ -4585,7 +4586,7 @@ const server = http.createServer(async (req,res)=>{
       const body=await readBody(req)
       const task=spec.taskFromBody?String(body.task||''):spec.task
       if(!task)return send(req,res,400,{error:'task required'})
-      const allowedTasks=new Set(['lead_qualification','paid_conversion','customer_churn','future_customer_value','forecast_baseline','forecast_primary','incrementality','anomaly_detection','behavioral_segments','offer_ranking'])
+      const allowedTasks=new Set(['lead_qualification','paid_conversion','customer_churn','future_customer_value','forecast_baseline','forecast_primary','incrementality','marketing_mix','anomaly_detection','behavioral_segments','offer_ranking'])
       if(!allowedTasks.has(task))return send(req,res,400,{error:'unsupported ML task'})
       const requestKey=String(req.headers['idempotency-key']||req.requestId||randomUUID())
       const deadlineAt=new Date(Date.now()+Number(process.env.ML_JOB_DEADLINE_MS||15*60*1000)).toISOString()
