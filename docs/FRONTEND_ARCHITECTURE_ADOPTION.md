@@ -205,6 +205,15 @@ AceMarketing keeps the current product pipeline and all existing product feature
 - The customer-facing Compliance feature remains tenant-scoped and does not introduce privileged platform-control responsibilities.
 - CI rejects reintroduction of the legacy `Compliance` function and Playwright verifies the existing direct route.
 
+### Thirteenth and fourteenth feature extractions: Developers and Delivery
+- Developers and Delivery are now feature-owned lazy chunks rather than inline implementations inside `AcePlatform.tsx`.
+- Developers owns API-key management, signed webhooks, endpoint setup, delivery inspection and server-to-server quick starts through a feature-owned browser data adapter.
+- Delivery owns durable signal-delivery visibility, connector health, retry admission, dead-letter replay and test-signal admission through its own data adapter.
+- Open developer credential/endpoint builders register with the shared dirty-work registry.
+- API-key creation/revocation, webhook secret rotation and endpoint creation now warn on timeout/network ambiguity rather than encouraging duplicate irreversible actions.
+- Delivery retry, dead-letter replay and test-signal admission use an explicit reconciliation state when backend acceptance cannot be confirmed.
+- CI rejects reintroduction of the legacy `Developers` and `DeliveryCenter` functions and Playwright verifies both direct routes.
+
 ### Bundle-budget evidence
 - Vite now emits a build manifest.
 - CI calculates gzip size for each entry and all of its static dependencies.
