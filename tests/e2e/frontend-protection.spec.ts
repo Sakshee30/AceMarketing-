@@ -391,3 +391,38 @@ test('loads extracted Feedback feature with accessible mutation forms',async({pa
   await page.keyboard.press('Escape')
   await expect(requestDialog).toHaveCount(0)
 })
+
+
+test('loads extracted Follow-ups feature with accessible builder',async({page})=>{
+  await page.goto('/#/workspace?tab=Follow-ups')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Follow-up operations'})).toBeVisible()
+  await page.getByRole('button',{name:'Create follow-up'}).click()
+  const dialog=page.getByRole('dialog',{name:'Create follow-up'})
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByLabel('Lead reference')).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+})
+
+test('loads extracted Calls feature with accessible qualification builder',async({page})=>{
+  await page.goto('/#/workspace?tab=Calls')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Voice qualification & call tracking'})).toBeVisible()
+  await page.getByRole('button',{name:/Start voice qualification/}).click()
+  const dialog=page.getByRole('dialog',{name:'Start voice qualification'})
+  await expect(dialog).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+})
+
+test('loads extracted Meetings feature with accessible schedulers',async({page})=>{
+  await page.goto('/#/workspace?tab=Meetings')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Scheduler & meeting reminders'})).toBeVisible()
+  await page.getByRole('button',{name:'Start voice scheduler'}).click()
+  const scheduler=page.getByRole('dialog',{name:'Start Voice Scheduler'})
+  await expect(scheduler).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(scheduler).toHaveCount(0)
+})

@@ -46,6 +46,9 @@ if(fs.existsSync(acePlatform)){
   if(/function\s+OfflineAttribution\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Offline Attribution implementation after feature extraction.')
   }
+  if(/function\s+FollowUps\s*\(/.test(source)||/function\s+Calls\s*\(/.test(source)||/function\s+Meetings\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains extracted conversion-operation feature implementations.')
+  }
   if(/function\s+Feedback\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Feedback implementation after feature extraction.')
   }
@@ -295,6 +298,20 @@ if(fs.existsSync(acePlatform)){
     }
   }
 
+  const followUpsPath=path.join(frontend,'features','follow-ups','pages','FollowUpsPage.tsx')
+  const callsPath=path.join(frontend,'features','calls','pages','CallsPage.tsx')
+  const meetingsPath=path.join(frontend,'features','meetings','pages','MeetingsPage.tsx')
+  for(const [label,file] of [['Follow-ups',followUpsPath],['Calls',callsPath],['Meetings',meetingsPath]]){
+    if(!fs.existsSync(file))continue
+    const feature=fs.readFileSync(file,'utf8')
+    if(!feature.includes('AccessibleDialog')){
+      failures.push(label+' mutation surfaces must use the shared accessible dialog boundary.')
+    }
+    if(!feature.includes("kind:'unknown'")){
+      failures.push(label+' writes must preserve explicit unknown-outcome handling for timeout/network ambiguity.')
+    }
+  }
+
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
@@ -312,6 +329,18 @@ const required=[
   'frontend/src/features/offline-attribution/pages/OfflineAttributionPage.tsx',
   'frontend/src/features/offline-attribution/public.ts',
   'frontend/src/features/offline-attribution/feature.manifest.ts',
+  'frontend/src/features/follow-ups/data/follow-ups.api.ts',
+  'frontend/src/features/follow-ups/pages/FollowUpsPage.tsx',
+  'frontend/src/features/follow-ups/public.ts',
+  'frontend/src/features/follow-ups/feature.manifest.ts',
+  'frontend/src/features/calls/data/calls.api.ts',
+  'frontend/src/features/calls/pages/CallsPage.tsx',
+  'frontend/src/features/calls/public.ts',
+  'frontend/src/features/calls/feature.manifest.ts',
+  'frontend/src/features/meetings/data/meetings.api.ts',
+  'frontend/src/features/meetings/pages/MeetingsPage.tsx',
+  'frontend/src/features/meetings/public.ts',
+  'frontend/src/features/meetings/feature.manifest.ts',
   'frontend/src/features/feedback/data/feedback.api.ts',
   'frontend/src/features/feedback/pages/FeedbackPage.tsx',
   'frontend/src/features/feedback/public.ts',

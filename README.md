@@ -6094,3 +6094,15 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Bounded customer-facing feedback and theme rendering for long-running workspaces while preserving backend statistics.
 - Extended architecture enforcement and direct-route E2E coverage for Feedback.
 - Backend restructuring remains deferred until frontend completion.
+
+
+### Frontend architecture: conversion operations completion pass — 2026-09-28
+
+- Extracted **Follow-ups**, **Calls**, and **Meetings** from the remaining customer-workspace monolith into feature-owned lazy chunks without removing any existing customer workflow.
+- Preserved manual follow-ups, completion, journey context and lead-reactivation operations; voice qualification, tracked telephony evidence, retry and consultation handoff; meeting scheduling, Voice Scheduler, calendar connection, reminders and rescheduling.
+- Added shared accessible-dialog boundaries and dirty-work protection for all remaining customer mutation builders.
+- Added explicit **unknown outcome** states for timeout/network ambiguity so successful saves, admissions, completions, reminders or scheduling are never claimed without authoritative confirmation.
+- Preserved already-loaded evidence during transient read failures and bounded high-cardinality lists for long-running customer sessions.
+- Extended architecture enforcement and direct-route E2E coverage across all three features.
+- The remaining AcePlatform file is now focused on public composition, authentication and workspace shell orchestration rather than customer feature implementations.
+- Backend restructuring remains deferred until frontend verification and release gates are complete.
