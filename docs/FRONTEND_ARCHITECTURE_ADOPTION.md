@@ -171,6 +171,14 @@ AceMarketing keeps the current product pipeline and all existing product feature
 - The browser data adapter is feature-owned while the shared transport remains the only browser network boundary.
 - CI rejects reintroduction of the legacy `Integrations` function and Playwright verifies the existing direct route.
 
+### Seventh and eighth feature extractions: Data Flows and Audiences
+- Data Flows and Audiences are now feature-owned lazy chunks rather than inline implementations inside `AcePlatform.tsx`.
+- Each owns a manifest, public entry point, page implementation, browser data adapter and ownership README.
+- Existing endpoints, CSS classes, direct routes, builder behavior, readiness checks, audience preview/materialization, provider sync, scheduling and CSV export are preserved.
+- Both builders continue using the shared dirty-work registry so navigation and workspace changes cannot silently discard in-progress configuration.
+- CI rejects reintroduction of the legacy `DataFlows` and `Audiences` functions and verifies the extracted structures.
+- Playwright verifies the existing direct routes for both features.
+
 ### Bundle-budget evidence
 - Vite now emits a build manifest.
 - CI calculates gzip size for each entry and all of its static dependencies.
