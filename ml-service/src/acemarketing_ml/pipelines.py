@@ -137,7 +137,7 @@ def train_classification(request) -> dict[str, Any]:
         "positiveRate": float(sum(y_test) / len(y_test)),
     }
 
-    artifact_id = f"{request.task}_{uuid4().hex}"
+    artifact_id = request.run_id or f"{request.task}_{uuid4().hex}"
     artifact = ArtifactStore().save_joblib(
         artifact_id,
         {
@@ -213,7 +213,7 @@ def train_regression(request) -> dict[str, Any]:
         "bias": float(residual.mean()),
         "testRows": int(len(y_test)),
     }
-    artifact_id = f"{request.task}_{request.horizon}_{uuid4().hex}"
+    artifact_id = request.run_id or f"{request.task}_{request.horizon}_{uuid4().hex}"
     artifact = ArtifactStore().save_joblib(
         artifact_id,
         {"task": request.task, "horizon": request.horizon, "model": model, "features": names, "categoricalFeatures": categorical},
@@ -365,7 +365,7 @@ def train_ranker(request) -> dict[str, Any]:
         ndcgs.append(float(ndcg_score(truth, score)))
         offset += size
 
-    artifact_id = f"offer_ranking_{uuid4().hex}"
+    artifact_id = request.run_id or f"offer_ranking_{uuid4().hex}"
     artifact = ArtifactStore().save_joblib(
         artifact_id,
         {"task": "offer_ranking", "model": model, "features": names},
