@@ -53,7 +53,7 @@ function FunnelPanel(){
   const error=funnelQuery.error as any
 
   const stages=data?.stages||{}
-  const steps=[
+  const steps:Array<[string,number,number]>=[
     ['All Leads',Number(stages.leads||0),100],
     ['Qualified',Number(stages.qualified||0),stages.leads?Math.round(Number(stages.qualified||0)/Number(stages.leads)*100):0],
     ['Appointments',Number(stages.appointments||0),stages.leads?Math.round(Number(stages.appointments||0)/Number(stages.leads)*100):0],
