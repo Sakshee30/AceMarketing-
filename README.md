@@ -5999,3 +5999,13 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Added numeric validation for cost inputs and bounded group rendering for large workspaces.
 - Added architecture enforcement and E2E coverage for the extracted feature.
 - Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
+
+
+### Frontend architecture: Enrich feature boundary — 2026-09-28
+
+- Extracted **CRM Enrichment** into a feature-owned lazy chunk while preserving enriched lead search, score evidence, journey/call/WhatsApp context, grade distribution and CRM writeback workflows.
+- Added explicit loading/retry states while preserving already-loaded lead evidence during transient failures.
+- Added unknown-outcome reconciliation for CRM writebacks so timeout/network loss is never reported as a definite success or failure.
+- Bounded large lead/writeback collections to protect long-running browser sessions.
+- Added architecture enforcement and E2E coverage for the extracted feature.
+- Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
