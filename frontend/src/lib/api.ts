@@ -16,20 +16,58 @@ export class AceApiError extends Error {
   }
 }
 
-const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
+type AceRequestInit = RequestInit & { timeoutMs?: number }
+
+const activeRequests=new Set<AbortController>()
+
+export const cancelWorkspaceRequests=(reason='workspace_scope_changed')=>{
+  for(const controller of [...activeRequests]){
+    try{controller.abort(reason)}catch{}
+  }
+  activeRequests.clear()
+}
+
+const request = async <T>(path: string, init?: AceRequestInit): Promise<T> => {
   const token=getToken()
+  const controller=new AbortController()
+  const timeoutMs=Math.max(1000,Number(init?.timeoutMs||((init?.method||'GET').toUpperCase()==='GET'?15000:25000)))
+  const clientRequestId=globalThis.crypto?.randomUUID?.()||('ace_'+Date.now()+'_'+Math.random().toString(36).slice(2))
+  const externalSignal=init?.signal
+  const abortFromExternal=()=>{try{controller.abort((externalSignal as any)?.reason||'caller_cancelled')}catch{}}
+  if(externalSignal){
+    if(externalSignal.aborted)abortFromExternal()
+    else externalSignal.addEventListener('abort',abortFromExternal,{once:true})
+  }
+  const timer=window.setTimeout(()=>{try{controller.abort('request_deadline_exceeded')}catch{}},timeoutMs)
+  activeRequests.add(controller)
+
   let response:Response
   try{
+    const {timeoutMs:_timeoutMs,signal:_signal,...fetchInit}=init||{}
     response = await fetch(`/api${path}`, {
-      headers: { 'Content-Type': 'application/json', 'X-Workspace-ID': getWorkspace(), ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(init?.headers || {}) },
-      ...init,
+      ...fetchInit,
+      signal:controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Workspace-ID': getWorkspace(),
+        'X-Ace-Client-Request-ID':clientRequestId,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(init?.headers || {})
+      },
     })
   }catch(error){
-    const message=error instanceof Error?error.message:'Network request failed'
-    throw new AceApiError(message,0,'',{cause:'network',path})
+    const aborted=controller.signal.aborted
+    const reason=String((controller.signal as any).reason||'')
+    const cause=aborted?(reason==='request_deadline_exceeded'?'timeout':'aborted'):'network'
+    const message=cause==='timeout'?'Request timed out before the backend confirmed an outcome.':cause==='aborted'?'Request cancelled because the application scope changed.':error instanceof Error?error.message:'Network request failed'
+    throw new AceApiError(message,0,clientRequestId,{cause,path,clientRequestId,timeoutMs})
+  }finally{
+    window.clearTimeout(timer)
+    activeRequests.delete(controller)
+    if(externalSignal)externalSignal.removeEventListener('abort',abortFromExternal)
   }
 
-  const requestId=response.headers.get('x-request-id')||''
+  const requestId=response.headers.get('x-request-id')||clientRequestId
   if(response.status===204) return undefined as T
 
   const raw=await response.text()
@@ -40,7 +78,7 @@ const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
 
   if(!response.ok){
     const message=payload?.error||payload?.message||`API request failed: ${response.status}`
-    throw new AceApiError(message,response.status,requestId,payload)
+    throw new AceApiError(message,response.status,requestId,{...payload,clientRequestId})
   }
 
   return payload as T
