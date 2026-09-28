@@ -5776,3 +5776,16 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Added Playwright recovery coverage for forced cohort/report and routing API failures followed by successful refreshes.
 - These workflows are credential-independent; reporting data, schedules, routing rules, decisions, and internal worker queue state function before external provider credentials are added.
 - Implemented directly on `main`; no separate branch was created.
+
+
+### Feedback and call-operations reliability hardening — 2026-09-28
+
+- **Feedback** now preserves existing responses during transient backend failures instead of replacing the dashboard with an unexplained empty state.
+- Added **Refresh feedback**, explicit loading/error/success states, and visible journey-context failures for **Open journey**.
+- Feedback recording, feedback-agent requests, and **Route insight** now distinguish persisted success from backend failure.
+- **Calls** now loads voice-qualification runs and signed telephony events as one confirmed snapshot instead of independently swallowing either API failure.
+- Added **Refresh calls**, loading/error/success states, and preservation of the last visible call state during transient failures.
+- Qualification retry, consultation scheduling, and manual qualification creation now render backend errors with error styling rather than looking successful.
+- Added Playwright recovery coverage for forced feedback and qualification-call API failures followed by successful refreshes.
+- External calling credentials remain deferred; internal agent runs, call-event storage, attribution context, scheduling requests, failure evidence, and retry workflows are functional now.
+- Implemented directly on `main`; no separate branch was created.
