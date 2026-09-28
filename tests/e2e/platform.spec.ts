@@ -968,7 +968,7 @@ test('POS import computes match coverage from transaction rows', async ({ page }
   await page.getByLabel('Store ID').fill(storeId)
   await page.getByLabel('Store name').fill(storeName)
   const saleAt=new Date(clickAt.getTime()+1000).toISOString()
-  await page.getByLabel('CSV transactions').fill('transaction_id,customer_id,email,phone,net_revenue,currency,occurred_at,gclid,fbclid,msclkid,ttclid,twclid\nCI-TXN-'+suffix+',,,,,12500,INR,'+saleAt+',,,,,'+twclid)
+  await page.getByLabel('CSV transactions').fill('transaction_id,customer_id,email,phone,net_revenue,currency,occurred_at,gclid,fbclid,msclkid,ttclid,twclid\nCI-TXN-'+suffix+',,,,12500,INR,'+saleAt+',,,,,'+twclid)
   await page.getByRole('button', { name: 'Process transaction batch' }).click()
   await expect(page.getByText(/POS batch processed: 1 matched, 0 unmatched/)).toBeVisible()
   await expect(page.locator('.pos-list').getByText(storeName, { exact: true }).first()).toBeVisible()
