@@ -70,6 +70,27 @@ test.describe('public product surface',()=>{
     await expect(page).toHaveURL(/#\/integrations/)
     await expect(page.locator('body')).toContainText(/Google Ads/i)
   })
+
+  test('public integration page submits connector requests through the backend',async({page},testInfo)=>{
+    const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()+'_'+Date.now()
+    await page.goto('/#/integrations')
+    await dismissConsent(page)
+    await page.getByRole('button',{name:'Request a connector',exact:true}).click()
+    const form=page.locator('form.integration-request-form')
+    await expect(form).toBeVisible()
+    await form.getByLabel('Connector name').fill('CI Connector '+suffix)
+    await form.getByLabel('Business email').fill('ci+'+suffix+'@example.com')
+    await form.getByLabel('Company').fill('CI Company')
+    await form.getByLabel('How should the data move?').fill('Send qualified lead and revenue outcomes bidirectionally for CI verification.')
+    const responsePromise=page.waitForResponse(r=>r.url().includes('/api/public/connector-requests')&&r.request().method()==='POST')
+    await form.getByRole('button',{name:'Submit connector request'}).click()
+    const response=await responsePromise
+    expect(response.status()).toBe(201)
+    const payload=await response.json()
+    expect(payload.status).toBe('captured')
+    expect(payload.connector).toContain('CI Connector')
+    await expect(page.getByRole('status')).toContainText('Request captured')
+  })
 })
 
 test.describe('workspace critical flows',()=>{
