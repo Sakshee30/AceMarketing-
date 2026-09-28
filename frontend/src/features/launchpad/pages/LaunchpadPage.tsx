@@ -3,7 +3,7 @@ import {useMutation,useQuery,useQueryClient} from '@tanstack/react-query'
 import {ArrowRight,Check,CheckCircle2,ChevronRight,Sparkles,WandSparkles,Zap} from 'lucide-react'
 import {launchpadApi} from '../data/launchpad.api'
 import {launchpadKeys} from '../data/launchpad.keys'
-import {classifyMutationFailure,type MutationLifecycle} from '../../../../../packages/client-core/src/mutation-lifecycle'
+import {classifyMutationFailure,type MutationPhase} from '../../../../../packages/client-core/src/mutation-lifecycle'
 import {ErrorState,LoadingState} from '../../../components/system/FrontendStates'
 
 function LaunchpadPageHead({
@@ -18,7 +18,7 @@ function LaunchpadPageHead({
 export default function LaunchpadPage(){
   const queryClient=useQueryClient()
   const [active,setActive]=useState(0)
-  const [mutationState,setMutationState]=useState<{phase:MutationLifecycle;text:string;requestId?:string}>({phase:'IDLE',text:''})
+  const [mutationState,setMutationState]=useState<{phase:MutationPhase;text:string;requestId?:string}>({phase:'IDLE',text:''})
 
   const readinessQuery=useQuery({
     queryKey:launchpadKeys.readiness(),
