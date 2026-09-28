@@ -6072,3 +6072,13 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Bounded the recent routing match dialog to 100 rendered decisions while keeping the persisted statistics authoritative.
 - Extended architecture enforcement and direct-route E2E coverage for Routing.
 - Backend restructuring remains deferred until frontend completion.
+
+
+### Frontend architecture: Ask Ace feature boundary — 2026-09-28
+
+- Extracted **Ask Ace** from the workspace monolith into a feature-owned lazy chunk without removing starter prompts, grounded answers, evidence cards, journey timelines or follow-up questions.
+- Kept the assistant explicitly grounded in workspace evidence and preserved the visible no-fabricated-metrics boundary.
+- Bounded conversation history to 100 messages, journey rendering to 100 events, insight cards to 20 and follow-up suggestions to 8 to protect long-running browser sessions.
+- Added accessible input/send labels, live assistant status and an explicit busy state.
+- Extended architecture enforcement and direct-route E2E coverage for Ask Ace.
+- Backend restructuring remains deferred until frontend completion.

@@ -360,3 +360,13 @@ test('loads extracted Routing feature and accessible rule builder',async({page})
   await page.keyboard.press('Escape')
   await expect(dialog).toHaveCount(0)
 })
+
+
+test('loads extracted Ask Ace feature with grounded assistant controls',async({page})=>{
+  await page.goto('/#/workspace?tab=Ask%20Ace')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Ask%20Ace/)
+  await expect(page.getByRole('heading',{name:'Journey & attribution assistant'})).toBeVisible()
+  await expect(page.getByLabel('Ask Ace question')).toBeVisible()
+  await expect(page.getByText('No fabricated metrics',{exact:true})).toBeVisible()
+})

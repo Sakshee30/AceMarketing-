@@ -46,6 +46,9 @@ if(fs.existsSync(acePlatform)){
   if(/function\s+OfflineAttribution\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Offline Attribution implementation after feature extraction.')
   }
+  if(/function\s+AskAce\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Ask Ace implementation after feature extraction.')
+  }
   if(/function\s+Routing\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Routing implementation after feature extraction.')
   }
@@ -264,6 +267,17 @@ if(fs.existsSync(acePlatform)){
     }
   }
 
+  const askAcePath=path.join(frontend,'features','ask-ace','pages','AskAcePage.tsx')
+  if(fs.existsSync(askAcePath)){
+    const askAce=fs.readFileSync(askAcePath,'utf8')
+    if(!askAce.includes('MAX_MESSAGES=100')||!askAce.includes('MAX_JOURNEY_EVENTS=100')){
+      failures.push('Ask Ace conversation and journey rendering must remain bounded for long-running browser sessions.')
+    }
+    if(!askAce.includes('No fabricated metrics')){
+      failures.push('Ask Ace must keep the explicit grounded-evidence boundary visible to customers.')
+    }
+  }
+
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
@@ -281,6 +295,10 @@ const required=[
   'frontend/src/features/offline-attribution/pages/OfflineAttributionPage.tsx',
   'frontend/src/features/offline-attribution/public.ts',
   'frontend/src/features/offline-attribution/feature.manifest.ts',
+  'frontend/src/features/ask-ace/data/ask-ace.api.ts',
+  'frontend/src/features/ask-ace/pages/AskAcePage.tsx',
+  'frontend/src/features/ask-ace/public.ts',
+  'frontend/src/features/ask-ace/feature.manifest.ts',
   'frontend/src/features/routing/data/routing.api.ts',
   'frontend/src/features/routing/pages/RoutingPage.tsx',
   'frontend/src/features/routing/public.ts',
