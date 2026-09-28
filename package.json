@@ -30,7 +30,8 @@
     "security:audit": "npm audit --omit=dev --audit-level=high",
     "frontend:budget": "node scripts/frontend-budget.mjs",
     "frontend:architecture": "node scripts/frontend-architecture-check.mjs",
-    "frontend:verify": "npm run frontend:architecture && npm run check:frontend && npm run build:frontend && npm run frontend:budget"
+    "frontend:verify": "npm run frontend:architecture && npm run check:frontend && npm run build:frontend && npm run frontend:budget && npm run frontend:release",
+    "frontend:release": "node scripts/frontend-release-check.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
