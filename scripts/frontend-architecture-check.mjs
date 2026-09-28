@@ -40,6 +40,9 @@ for(const file of walk(frontend)){
 const acePlatform=path.join(frontend,'AcePlatform.tsx')
 if(fs.existsSync(acePlatform)){
   const source=fs.readFileSync(acePlatform,'utf8')
+  if(/function\s+Matchback\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Matchback implementation after feature extraction.')
+  }
   if(/function\s+DataHub\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Data Hub implementation after feature extraction.')
   }
@@ -165,6 +168,10 @@ if(fs.existsSync(acePlatform)){
 }
 
 const required=[
+  'frontend/src/features/matchback/data/matchback.api.ts',
+  'frontend/src/features/matchback/pages/MatchbackPage.tsx',
+  'frontend/src/features/matchback/public.ts',
+  'frontend/src/features/matchback/feature.manifest.ts',
   'frontend/src/features/data-hub/data/data-hub.api.ts',
   'frontend/src/features/data-hub/pages/DataHubPage.tsx',
   'frontend/src/features/data-hub/public.ts',
