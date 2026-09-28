@@ -74,3 +74,42 @@ export function RouteAnnouncer({
 
   return <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">{label}</div>
 }
+
+
+type WidgetBoundaryProps={
+  children:any
+  label:string
+}
+
+type WidgetBoundaryState={
+  failed:boolean
+}
+
+export class FrontendWidgetBoundary extends Component<WidgetBoundaryProps,WidgetBoundaryState>{
+  constructor(props:WidgetBoundaryProps){
+    super(props)
+    this.state={failed:false}
+  }
+
+  static getDerivedStateFromError(){
+    return {failed:true}
+  }
+
+  componentDidCatch(error:Error,info:any){
+    try{
+      console.error('ace frontend widget boundary',this.props.label,error,info?.componentStack||'')
+    }catch{}
+  }
+
+  private retry=()=>{
+    this.setState({failed:false})
+  }
+
+  render(){
+    if(!this.state.failed)return this.props.children
+    return <div className="ace-widget-recovery" role="status" aria-live="polite">
+      <span>{this.props.label} is temporarily unavailable.</span>
+      <button type="button" onClick={this.retry}>Retry</button>
+    </div>
+  }
+}
