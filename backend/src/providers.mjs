@@ -108,6 +108,66 @@ const deliverGoogle=async(workspaceId,signal)=>{
   return {provider:'google',...result}
 }
 
+const xEventName=event=>('ace_'+String(event||'conversion')
+  .trim()
+  .toLowerCase()
+  .replace(/[^a-z0-9_]+/g,'_')
+  .replace(/^_+|_+$/g,'')
+  .slice(0,90))||'ace_conversion'
+
+const deliverXAds=async(workspaceId,signal)=>{
+  const credential=await credentialFor(workspaceId,'X').catch(()=>({}))
+  const pixelId=String(signal.xPixelId||signal.data?.xPixelId||credential.pixel_id||process.env.X_PIXEL_ID||'').trim()
+  const token=String(signal.xConversionToken||signal.data?.xConversionToken||credential.access_token||process.env.X_CONVERSION_TOKEN||'').trim()
+  if(!pixelId||!token) throw new Error('X_PIXEL_ID and X_CONVERSION_TOKEN are required')
+  const occurred=new Date(signal.occurredAt||Date.now())
+  const conversionTimestamp=Number.isNaN(occurred.getTime())?Date.now():occurred.getTime()
+  const identifiers={}
+  const twclid=signal.twclid||signal.data?.twclid
+  if(twclid) identifiers.twclid=String(twclid)
+  const twpid=signal.twpid||signal.data?.twpid
+  if(twpid) identifiers.twpid=String(twpid)
+  const emailHash=signal.emailSha256||signal.data?.emailSha256||(signal.email?sha(signal.email):'')
+  if(emailHash) identifiers.hashed_email=String(emailHash).toLowerCase()
+  const phoneHash=signal.phoneSha256||signal.data?.phoneSha256||(signal.phone?sha(String(signal.phone).replace(/\D/g,'')):'')
+  if(phoneHash) identifiers.hashed_phone_number=String(phoneHash).toLowerCase()
+  if(signal.ipAddress||signal.data?.ipAddress) identifiers.ip_address=String(signal.ipAddress||signal.data.ipAddress)
+  if(signal.userAgent||signal.data?.userAgent) identifiers.user_agent=String(signal.userAgent||signal.data.userAgent)
+  if(!Object.keys(identifiers).length) throw new Error('X conversion requires twclid/twpid, hashed contact data, IP, or user agent')
+  const conversion={
+    conversion_timestamp:conversionTimestamp,
+    identifiers:[identifiers]
+  }
+  const configuredEventId=String(signal.xEventId||signal.data?.xEventId||'').trim()
+  if(configuredEventId) conversion.event_id=configuredEventId
+  else conversion.event_name=String(signal.xEventName||signal.data?.xEventName||xEventName(signal.event)).trim()
+  if(signal.eventSourceUrl) conversion.event_source_url=String(signal.eventSourceUrl)
+  const conversionId=String(signal.externalEventId||signal.idempotencyKey||signal.deliveryId||'').trim()
+  if(conversionId) conversion.conversion_id=conversionId
+  if(signal.value!=null) conversion.value=Number(signal.value)
+  if(signal.currency) conversion.price_currency=String(signal.currency).toUpperCase()
+  const sourceContents=signal.contents||signal.data?.contents
+  if(Array.isArray(sourceContents)&&sourceContents.length){
+    conversion.contents=sourceContents.slice(0,100).map(item=>{
+      const content={}
+      if(item?.content_id!=null||item?.item_id!=null||item?.id!=null) content.content_id=String(item.content_id??item.item_id??item.id)
+      if(item?.content_name||item?.item_name||item?.name) content.content_name=String(item.content_name||item.item_name||item.name)
+      if(item?.content_price!=null||item?.price!=null) content.content_price=Number(item.content_price??item.price)
+      if(item?.num_items!=null||item?.quantity!=null) content.num_items=Number(item.num_items??item.quantity)
+      return content
+    })
+    const numberItems=conversion.contents.reduce((total,item)=>total+Number(item.num_items||0),0)
+    if(numberItems) conversion.number_items=numberItems
+  }
+  const endpoint='https://ads-api.x.com/12/measurement/conversions/'+encodeURIComponent(pixelId)
+  const result=await requestJson(endpoint,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-Pixel-Token':token},
+    body:JSON.stringify({conversions:[conversion]})
+  })
+  return {provider:'x_ads',...result}
+}
+
 const tiktokEventName=event=>{
   const raw=String(event||'').trim().toLowerCase().replace(/[.\s-]+/g,'_')
   const mapped={
@@ -493,6 +553,7 @@ export const deliverSignal=async(workspaceId,signal)=>{
   if(destination.includes('microsoft')||destination.includes('bing')) return deliverMicrosoft(workspaceId,signal)
   if(destination.includes('pinterest')) return deliverPinterest(workspaceId,signal)
   if(destination.includes('tiktok')) return deliverTikTok(workspaceId,signal)
+  if(destination==='x'||destination.includes('x ads')||destination.includes('twitter')) return deliverXAds(workspaceId,signal)
   if(destination.includes('webhook')) return deliverWebhook(signal)
   throw new Error('unsupported delivery destination: '+signal.destination)
 }
