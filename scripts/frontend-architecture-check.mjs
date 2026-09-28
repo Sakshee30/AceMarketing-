@@ -40,6 +40,9 @@ for(const file of walk(frontend)){
 const acePlatform=path.join(frontend,'AcePlatform.tsx')
 if(fs.existsSync(acePlatform)){
   const source=fs.readFileSync(acePlatform,'utf8')
+  if(/function\s+POSAndStores\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy POS & Stores implementation after feature extraction.')
+  }
   if(/function\s+Matchback\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Matchback implementation after feature extraction.')
   }
@@ -168,6 +171,10 @@ if(fs.existsSync(acePlatform)){
 }
 
 const required=[
+  'frontend/src/features/pos-stores/data/pos-stores.api.ts',
+  'frontend/src/features/pos-stores/pages/POSAndStoresPage.tsx',
+  'frontend/src/features/pos-stores/public.ts',
+  'frontend/src/features/pos-stores/feature.manifest.ts',
   'frontend/src/features/matchback/data/matchback.api.ts',
   'frontend/src/features/matchback/pages/MatchbackPage.tsx',
   'frontend/src/features/matchback/public.ts',
