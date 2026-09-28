@@ -48,6 +48,8 @@ const operationPaths={
   classification_train:'/v1/train/classification',
   regression_train:'/v1/train/regression',
   forecast_baseline:'/v1/forecast/seasonal-naive',
+  forecast_chronos:'/v1/forecast/chronos-2',
+  incrementality:'/v1/causal/forest-dml',
   anomaly_detection:'/v1/anomalies/isolation-forest',
   behavioral_segments:'/v1/segments/hdbscan',
   offer_ranking:'/v1/rank/lgbm'
