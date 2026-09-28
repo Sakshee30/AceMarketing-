@@ -149,3 +149,20 @@ test('loads extracted integrations feature from its direct workspace route',asyn
   await expect(page.getByRole('heading',{name:'Platform-agnostic connectivity'})).toBeVisible()
   await expect(page.getByText(/Integration catalog/i)).toBeVisible()
 })
+
+
+test('loads extracted data flows feature from its direct workspace route',async({page})=>{
+  await page.goto('/#/workspace?tab=Data%20Flows')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Data%20Flows/)
+  await expect(page.getByRole('heading',{name:'Data flows'})).toBeVisible()
+  await expect(page.getByText(/Source → map → verify → activate/i)).toBeVisible()
+})
+
+test('loads extracted audiences feature from its direct workspace route',async({page})=>{
+  await page.goto('/#/workspace?tab=Audiences')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Audiences/)
+  await expect(page.getByRole('heading',{name:'Audience management'})).toBeVisible()
+  await expect(page.getByText(/Active segments/i)).toBeVisible()
+})
