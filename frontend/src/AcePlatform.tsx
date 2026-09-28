@@ -33,6 +33,9 @@ const Settings=lazy(()=>import('./features/settings/public'))
 const Compliance=lazy(()=>import('./features/compliance/public'))
 const Developers=lazy(()=>import('./features/developers/public'))
 const DeliveryCenter=lazy(()=>import('./features/delivery/public'))
+const RealTimeActivation=lazy(()=>import('./features/real-time-activation/public'))
+const Personalization=lazy(()=>import('./features/personalization/public'))
+const Exclusions=lazy(()=>import('./features/exclusions/public'))
 
 const agents=[
  ['Meta Advanced CAPI','Return qualified outcomes to Meta server-side with deduplication.','Lead Quality','+25–40% ROAS'],
@@ -2121,200 +2124,6 @@ function AskAce(){
  <div className="app-panel ask-context"><div className="panel-head"><div><h3>Grounded analysis context</h3><p>Ask Ace queries live workspace stores rather than fixed demo metrics</p></div><span className="healthy">Evidence-backed</span></div>{[['Funnel handoffs','Lead, routing, qualification, meeting and feedback coverage'],['Lead operations','Scores, grades, source and campaign quality'],['Attribution store','Matched/unmatched assisted events and value'],['Connector state','Connection and health records'],['Audience store','Activation, suppression and sync state'],['Activation runs','Succeeded, failed and queued external actions'],['Observability','Current API and operational health']].map(x=><div className="ask-context-row" key={x[0]}><Check/><div><b>{x[0]}</b><small>{x[1]}</small></div></div>)}<div className="source-conflict-note"><ShieldCheck/><div><b>No fabricated metrics</b><p>If a workspace does not have enough connected data, Ask Ace reports that limitation instead of substituting sample numbers.</p></div></div></div></div></>
 }
 
-function RealTimeActivation(){
- const [data,setData]=useState<any>({items:[],runs:[],stats:{}})
- const [builder,setBuilder]=useState(false)
- const [selected,setSelected]=useState('')
- const [busy,setBusy]=useState('')
- const [notice,setNotice]=useState('')
- const [testResult,setTestResult]=useState<any>(null)
- const load=async()=>{
-  try{
-   const r:any=await api.activationRules()
-   setData(r)
-   if(r.items?.length)setSelected((x:string)=>x&&r.items.some((i:any)=>i.id===x)?x:r.items[0].id)
-  }catch(e:any){setNotice(e?.message||'Real-time activation rules could not be loaded.')}
- }
- useEffect(()=>{load()},[])
- const current=(data.items||[]).find((x:any)=>x.id===selected)||data.items?.[0]
- const create=async(e:any)=>{
-  e.preventDefault();setBusy('create');setNotice('')
-  const fd=new FormData(e.currentTarget)
-  const conditionField=String(fd.get('conditionField')||'').trim()
-  const payload:any={
-   name:String(fd.get('name')||''),
-   triggerEvent:String(fd.get('triggerEvent')||''),
-   actionType:String(fd.get('actionType')||'signal'),
-   destination:String(fd.get('destination')||''),
-   outputEvent:String(fd.get('outputEvent')||''),
-   channel:String(fd.get('channel')||'whatsapp'),
-   owner:String(fd.get('owner')||'Marketing automation'),
-   priority:String(fd.get('priority')||'medium'),
-   delayMinutes:Number(fd.get('delayMinutes')||0),
-   reason:String(fd.get('reason')||''),
-   requiresMarketingConsent:true,
-   conditions:conditionField?[{field:conditionField,operator:String(fd.get('operator')||'equals'),value:String(fd.get('conditionValue')||'')}]:[]
-  }
-  try{
-   const r:any=await api.createActivationRule(payload)
-   setBuilder(false);setNotice('Activation rule created and enabled.');await load();if(r?.item?.id)setSelected(r.item.id)
-  }catch(e:any){setNotice(e?.message||'Activation rule could not be created.')}
-  finally{setBusy('')}
- }
- const toggle=async()=>{
-  if(!current)return
-  setBusy('toggle');setNotice('')
-  try{await api.toggleActivationRule(current.id,current.status!=='active');setNotice(current.status==='active'?'Activation rule paused.':'Activation rule enabled.');await load()}
-  catch(e:any){setNotice(e?.message||'Activation rule status could not be changed.')}
-  finally{setBusy('')}
- }
- const test=async()=>{
-  if(!current)return
-  setBusy('test');setNotice('');setTestResult(null)
-  try{
-   const sample:any={event:current.triggerEvent,customerId:'activation_test_customer',value:5000,source:'workspace_test'}
-   for(const condition of current.conditions||[]){
-    sample[condition.field]=condition.operator==='greater_than'?Number(condition.value||0)+1:condition.value||'test'
-   }
-   const r:any=await api.testActivationRule(current.id,sample)
-   setTestResult(r);setNotice(r.matched?'Test event matches this rule.':'Test event does not match this rule.')
-  }catch(e:any){setNotice(e?.message||'Activation rule test failed.')}
-  finally{setBusy('')}
- }
- const stats=data.stats||{}
- const runs=(data.runs||[]).filter((x:any)=>!current||x.ruleId===current.id)
- const actionLabel=(x:any)=>x.actionType==='signal'?('Send '+(x.outputEvent||x.triggerEvent)+' → '+(x.destination||'destination')):x.actionType==='route'?('Route → '+(x.destination||'queue')):('Create '+(x.channel||'follow-up')+' follow-up')
- return <><PageHead crumb="Activation / Real-Time Activation" title="Real-time activation" sub="Turn fresh first-party behavior into governed signals, routing, and follow-up actions as soon as events arrive." action="Create activation rule" onAction={()=>setBuilder(true)}/>
- {notice&&<div className={'delivery-notice '+(notice.toLowerCase().includes('could not')||notice.toLowerCase().includes('failed')?'error':'ok')}>{notice.toLowerCase().includes('could not')||notice.toLowerCase().includes('failed')?<ShieldCheck/>:<CheckCircle2/>}<span>{notice}</span></div>}
- <div className="stats-grid"><Stat label="Rules" value={String(stats.total||0)} sub="Persisted activation policies" Icon={Zap}/><Stat label="Active" value={String(stats.active||0)} sub="Evaluated on event ingestion" Icon={Activity}/><Stat label="Recent runs" value={String(stats.runs||0)} sub="Persisted rule executions" Icon={RadioTower}/><Stat label="Succeeded" value={String(stats.succeeded||0)} sub="Actions completed or queued" Icon={CheckCircle2}/></div>
- <div className="activation-rule-explainer app-panel"><div><Zap/><div><span>EVENT-DRIVEN AUTOMATION</span><h3>Event → condition → consent → action</h3><p>Every incoming first-party event is evaluated against active rules. Marketing actions are skipped when marketing consent is unavailable.</p></div></div><div className="data-flow-steps">{['Receive event','Evaluate conditions','Check consent','Run action','Persist result'].map((x,i)=><span key={x}><b>{i+1}</b>{x}{i<4&&<ArrowRight/>}</span>)}</div></div>
- <div className="activation-rule-layout"><div className="app-panel activation-rule-list"><div className="panel-head"><div><h3>Activation rules</h3><p>Active and paused real-time automations</p></div><button onClick={load}>Refresh</button></div>{(data.items||[]).length?(data.items||[]).map((x:any)=><button key={x.id} className={selected===x.id?'selected':''} onClick={()=>{setSelected(x.id);setTestResult(null)}}><Zap/><div><b>{x.name}</b><small>{x.triggerEvent} · {x.actionType.replace('_',' ')}</small></div><span className={x.status==='active'?'healthy':'status'}>{x.status}</span><ChevronRight/></button>):<div className="empty-delivery-state"><Zap/><div><b>No activation rules yet</b><small>Create a rule to react to tracked customer behavior in real time.</small></div></div>}</div>
- <div className="app-panel activation-rule-detail">{current?<><div className="panel-head"><div><h3>{current.name}</h3><p>{actionLabel(current)}</p></div><span className={current.status==='active'?'healthy':'status'}>{current.status}</span></div><div className="site-detail-grid">{[['Trigger event',current.triggerEvent],['Action',current.actionType],['Destination',current.destination||current.channel||'—'],['Consent','Marketing consent required'],['Priority',current.priority||'medium'],['Delay',Number(current.delayMinutes||0)+' min']].map(x=><div key={x[0]}><span>{x[0]}</span><b>{String(x[1])}</b></div>)}</div>
- <div className="agent-section"><h4>Conditions</h4>{(current.conditions||[]).length?<div className="context-chips">{current.conditions.map((x:any,i:number)=><span key={i}>{x.field} {String(x.operator).replaceAll('_',' ')} {String(x.value)}</span>)}</div>:<div className="context-chips"><span>Any {current.triggerEvent} event</span></div>}</div>
- <div className="approval-actions"><button disabled={busy==='test'} onClick={test}><Activity/>{busy==='test'?'Testing…':'Test rule'}</button><button className={current.status==='active'?'':'approve'} disabled={busy==='toggle'} onClick={toggle}>{busy==='toggle'?'Saving…':current.status==='active'?'Pause rule':'Enable rule'}</button></div>
- {testResult&&<div className={'activation-test-result '+(testResult.matched?'matched':'not-matched')}><ShieldCheck/><div><b>{testResult.matched?'Rule matched':'Rule did not match'}</b><small>Dry-run only · no external action was executed</small></div></div>}
- <div className="agent-section"><h4>Recent executions</h4>{runs.length?runs.slice(0,10).map((x:any)=><div className="agent-run" key={x.id}><Activity/><div><b>{x.eventId||'Tracked event'}</b><small>{x.detail||x.actionType}</small></div><span>{x.createdAt?new Date(x.createdAt).toLocaleString():'—'}</span><em className={x.status}>{x.status}</em></div>):<div className="empty-delivery-state"><Activity/><div><b>No executions for this rule</b><small>Matching live events will appear here after ingestion.</small></div></div>}</div></>:<div className="empty-delivery-state"><Zap/><div><b>Select an activation rule</b></div></div>}</div></div>
- {builder&&<div className="connector-modal"><form className="connector-card activation-rule-builder" onSubmit={create}><div className="connector-modal-head"><div><Zap/><div><b>Create real-time activation rule</b><small>Persist a governed event-to-action policy.</small></div></div><button type="button" onClick={()=>setBuilder(false)}><X/></button></div><label>Rule name<input name="name" required placeholder="High-value checkout → Meta signal"/></label><label>Trigger event<input name="triggerEvent" required defaultValue="checkout_initiated" placeholder="checkout_initiated"/></label><div className="two-col"><label>Condition field<input name="conditionField" placeholder="value"/></label><label>Operator<select name="operator"><option value="equals">Equals</option><option value="contains">Contains</option><option value="greater_than">Greater than</option><option value="less_than">Less than</option><option value="one_of">One of</option><option value="exists">Exists</option></select></label></div><label>Condition value<input name="conditionValue" placeholder="4000"/></label><label>Action type<select name="actionType" defaultValue="signal"><option value="signal">Send conversion signal</option><option value="follow_up">Create follow-up</option><option value="route">Route lead</option></select></label><label>Destination / queue<input name="destination" defaultValue="Meta Ads" placeholder="Meta Ads or Priority sales queue"/></label><label>Output event<input name="outputEvent" defaultValue="high_value_checkout" placeholder="high_value_checkout"/></label><div className="two-col"><label>Follow-up channel<select name="channel"><option value="whatsapp">WhatsApp</option><option value="email">Email</option><option value="call">Call</option></select></label><label>Delay minutes<input name="delayMinutes" type="number" min="0" defaultValue="0"/></label></div><div className="two-col"><label>Owner<input name="owner" defaultValue="Marketing automation"/></label><label>Priority<select name="priority"><option value="medium">Medium</option><option value="high">High</option><option value="low">Low</option></select></label></div><label>Reason<textarea name="reason" rows={3} defaultValue="Triggered by real-time first-party behavior."/></label><div className="source-conflict-note"><ShieldCheck/><div><b>Consent-aware execution</b><p>Marketing actions are evaluated only after the incoming event passes consent checks, and rules requiring marketing consent are skipped when that consent is unavailable.</p></div></div><button disabled={busy==='create'}>{busy==='create'?'Creating…':'Create & enable rule'}</button></form></div>}
- </> 
-}
-
-function Personalization(){
- const [data,setData]=useState<any>({items:[],performance:[],recentDecisions:[],stats:{}})
- const [builder,setBuilder]=useState(false)
- const [selected,setSelected]=useState('')
- const [busy,setBusy]=useState('')
- const [notice,setNotice]=useState('')
- const [decision,setDecision]=useState<any>(null)
- const [testCustomer,setTestCustomer]=useState('')
- const load=async()=>{
-  try{
-   const r:any=await api.personalizationRules()
-   setData(r)
-   if(r.items?.length)setSelected((x:string)=>x&&r.items.some((i:any)=>i.id===x)?x:r.items[0].id)
-  }catch(e:any){setNotice(e?.message||'Personalization rules could not be loaded.')}
- }
- useEffect(()=>{load()},[])
- const current=(data.items||[]).find((x:any)=>x.id===selected)||data.items?.[0]
- const perf=(data.performance||[]).find((x:any)=>x.ruleId===current?.id)||{}
- const create=async(e:any)=>{
-  e.preventDefault();setBusy('create');setNotice('')
-  const fd=new FormData(e.currentTarget)
-  const field=String(fd.get('conditionField')||'').trim()
-  const payload:any={
-   name:String(fd.get('name')||''),
-   surface:String(fd.get('surface')||'website'),
-   variant:String(fd.get('variant')||''),
-   message:String(fd.get('message')||''),
-   cta:String(fd.get('cta')||''),
-   destination:String(fd.get('destination')||''),
-   priority:Number(fd.get('priority')||100),
-   requiresPersonalizationConsent:true,
-   conditions:field?[{field,operator:String(fd.get('operator')||'equals'),value:String(fd.get('conditionValue')||'')}]:[]
-  }
-  try{const r:any=await api.createPersonalizationRule(payload);setBuilder(false);setNotice('Personalization rule created and enabled.');await load();if(r?.item?.id)setSelected(r.item.id)}
-  catch(e:any){setNotice(e?.message||'Personalization rule could not be created.')}
-  finally{setBusy('')}
- }
- const toggle=async()=>{
-  if(!current)return
-  setBusy('toggle');setNotice('')
-  try{await api.togglePersonalizationRule(current.id,current.status!=='active');setNotice(current.status==='active'?'Personalization rule paused.':'Personalization rule enabled.');await load()}
-  catch(e:any){setNotice(e?.message||'Personalization rule status could not be changed.')}
-  finally{setBusy('')}
- }
- const test=async()=>{
-  if(!testCustomer.trim()){setNotice('Enter a customer, lead, visitor, or device ID to test.');return}
-  setBusy('test');setNotice('');setDecision(null)
-  try{
-   const r:any=await api.decidePersonalization({customerId:testCustomer.trim(),surface:current?.surface||'website'})
-   setDecision(r)
-   setNotice(r.decision?.status==='decided'?'Personalized variant selected.':r.decision?.status==='consent_blocked'?'Decision blocked because personalization consent is unavailable.':'No personalization rule matched this customer.')
-  }catch(e:any){setNotice(e?.message||'Personalization decision failed.')}
-  finally{setBusy('')}
- }
- const recordFeedback=async(kind:string)=>{
-  if(!decision?.decision?.id)return
-  setBusy('feedback:'+kind)
-  try{await api.personalizationFeedback({decisionId:decision.decision.id,kind});setNotice(kind+' recorded for this personalization decision.');await load()}
-  catch(e:any){setNotice(e?.message||'Personalization feedback could not be recorded.')}
-  finally{setBusy('')}
- }
- const openDestination=()=>{
-  const destination=String(current?.destination||'').trim()
-  if(!destination){setNotice('Add a destination before using this personalization CTA.');return}
-  if(/^javascript:|^data:/i.test(destination)){setNotice('This personalization destination is blocked for safety.');return}
-  if(destination.startsWith('#')){window.location.hash=destination.slice(1);return}
-  if(destination.startsWith('/')){window.location.assign(destination);return}
-  try{
-   const target=new URL(destination)
-   if(!['http:','https:'].includes(target.protocol)){setNotice('Only HTTP(S), relative paths, and app hash destinations are supported.');return}
-   window.location.assign(target.toString())
-  }catch{setNotice('Configure a valid personalization destination before using this CTA.')}
- }
- const stats=data.stats||{}
- return <><PageHead crumb="Activation / Personalization" title="Personalization studio" sub="Use first-party customer context to select consent-aware content, offers and experiences, then measure impressions, clicks and conversions." action="Create personalization rule" onAction={()=>setBuilder(true)}/>
- {notice&&<div className={'delivery-notice '+(notice.toLowerCase().includes('failed')||notice.toLowerCase().includes('could not')?'error':'ok')}><Sparkles/><span>{notice}</span></div>}
- <div className="stats-grid"><Stat label="Rules" value={String(stats.total||0)} sub="Persisted experience policies" Icon={Sparkles}/><Stat label="Active" value={String(stats.active||0)} sub="Eligible for decisions" Icon={Activity}/><Stat label="Decisions" value={String(stats.decisions||0)} sub="Persisted personalization results" Icon={Target}/><Stat label="Conversions" value={String(stats.conversions||0)} sub="Measured personalization conversions" Icon={CheckCircle2}/></div>
- <div className="personalization-hero app-panel"><div><Sparkles/><div><span>CONSENT-AWARE DECISIONING</span><h3>Customer context → rule match → experience variant</h3><p>Rules use persisted Customer 360 attributes and journey context. No personalized variant is returned when the matching rule requires personalization consent and that consent is unavailable.</p></div></div><div className="data-flow-steps">{['Resolve customer','Load profile','Match rule','Check consent','Return variant'].map((x,i)=><span key={x}><b>{i+1}</b>{x}{i<4&&<ArrowRight/>}</span>)}</div></div>
- <div className="personalization-layout"><div className="app-panel personalization-list"><div className="panel-head"><div><h3>Experience rules</h3><p>Priority-ordered personalization policies</p></div><button onClick={load}>Refresh</button></div>{(data.items||[]).length?(data.items||[]).map((x:any)=><button key={x.id} className={selected===x.id?'selected':''} onClick={()=>{setSelected(x.id);setDecision(null)}}><Sparkles/><div><b>{x.name}</b><small>{x.surface} · {x.variant}</small></div><span className={x.status==='active'?'healthy':'status'}>{x.status}</span><ChevronRight/></button>):<div className="empty-delivery-state"><Sparkles/><div><b>No personalization rules yet</b><small>Create a first-party experience rule for a website, app, CRM or messaging surface.</small></div></div>}</div>
- <div className="app-panel personalization-detail">{current?<><div className="panel-head"><div><h3>{current.name}</h3><p>{current.surface} · priority {current.priority}</p></div><span className={current.status==='active'?'healthy':'status'}>{current.status}</span></div><div className="personalization-preview"><span>VARIANT</span><h2>{current.variant}</h2><p>{current.message||'No message copy configured.'}</p>{current.cta&&<button onClick={openDestination} aria-label={'Open personalization destination: '+current.cta}>{current.cta}</button>}<small>{current.destination||'No destination configured'}</small></div><div className="site-detail-grid">{[['Surface',current.surface],['Priority',current.priority],['Consent','Personalization consent required'],['Decisions',perf.decisions||0],['CTR',(perf.ctr||0)+'%'],['Conversion rate',(perf.conversionRate||0)+'%']].map(x=><div key={x[0]}><span>{x[0]}</span><b>{String(x[1])}</b></div>)}</div><div className="agent-section"><h4>Audience/context condition</h4><div className="context-chips">{(current.conditions||[]).length?current.conditions.map((x:any,i:number)=><span key={i}>{x.field} {String(x.operator).replaceAll('_',' ')} {String(x.value)}</span>):<span>All customers with consent</span>}</div></div><div className="approval-actions"><button disabled={busy==='toggle'} onClick={toggle}>{busy==='toggle'?'Saving…':current.status==='active'?'Pause rule':'Enable rule'}</button></div>
- <div className="personalization-test"><div className="panel-head"><div><h3>Test decision</h3><p>Resolve a real customer/profile ID through the backend decision endpoint.</p></div></div><div className="personalization-test-controls"><input aria-label="Personalization test customer" value={testCustomer} onChange={e=>setTestCustomer(e.target.value)} placeholder="customer_123 / lead ID / device ID"/><button className="approve" disabled={busy==='test'} onClick={test}>{busy==='test'?'Deciding…':'Run decision'}</button></div>{decision?.decision&&<div className={'personalization-decision '+decision.decision.status}><div><span>{decision.decision.status}</span><b>{decision.decision.variant||'No variant returned'}</b><p>{decision.decision.message||decision.consent?.reason||'No matching rule.'}</p></div>{decision.decision.status==='decided'&&<div className="personalization-feedback"><button disabled={busy==='feedback:impression'} onClick={()=>recordFeedback('impression')}>Record impression</button><button disabled={busy==='feedback:click'} onClick={()=>recordFeedback('click')}>Record click</button><button disabled={busy==='feedback:conversion'} onClick={()=>recordFeedback('conversion')}>Record conversion</button></div>}</div>}</div>
- </>:<div className="empty-delivery-state"><Sparkles/><div><b>Select a personalization rule</b></div></div>}</div></div>
- {builder&&<div className="connector-modal"><form className="connector-card personalization-builder" onSubmit={create}><div className="connector-modal-head"><div><Sparkles/><div><b>Create personalization rule</b><small>Define the audience/context condition and experience variant.</small></div></div><button type="button" onClick={()=>setBuilder(false)}><X/></button></div><label>Rule name<input name="name" required placeholder="High-value returning customer offer"/></label><div className="two-col"><label>Surface<select name="surface"><option value="website">Website</option><option value="app">App</option><option value="crm">CRM</option><option value="whatsapp">WhatsApp</option><option value="email">Email</option></select></label><label>Priority<input name="priority" type="number" min="0" max="1000" defaultValue="100"/></label></div><label>Variant name<input name="variant" required placeholder="VIP loyalty offer"/></label><label>Message<textarea name="message" rows={3} placeholder="Welcome back — unlock a loyalty benefit selected for you."/></label><div className="two-col"><label>CTA<input name="cta" placeholder="View your offer"/></label><label>Destination<input name="destination" placeholder="/offers/vip"/></label></div><div className="two-col"><label>Condition field<input name="conditionField" placeholder="grade / stage / ltvTier / score"/></label><label>Operator<select name="operator"><option value="equals">Equals</option><option value="contains">Contains</option><option value="greater_than">Greater than</option><option value="less_than">Less than</option><option value="one_of">One of</option><option value="exists">Exists</option></select></label></div><label>Condition value<input name="conditionValue" placeholder="A / customer / premium / 80"/></label><div className="source-conflict-note"><ShieldCheck/><div><b>Personalization consent required</b><p>The decision service resolves the customer, evaluates rules, then blocks the personalized variant when consent is not available.</p></div></div><button disabled={busy==='create'}>{busy==='create'?'Creating…':'Create & enable rule'}</button></form></div>}
- </> 
-}
-
-function Exclusions(){
- const [data,setData]=useState<any>({items:[],presets:[],stats:{}})
- const [busy,setBusy]=useState('')
- const [notice,setNotice]=useState('')
- const load=async()=>{try{setData(await api.exclusions())}catch(e:any){setNotice(e?.message||'Exclusion audiences could not be loaded.')}}
- useEffect(()=>{load()},[])
- const createPreset=async(preset:any,destination:string)=>{
-  setBusy('create:'+preset.key+':'+destination);setNotice('')
-  try{
-   const r:any=await api.createExclusion(preset.key,destination)
-   setNotice(r.duplicate?'Matching exclusion audience already exists.':'Exclusion audience created and materialized.')
-   await load()
-  }catch(e:any){setNotice(e?.message||'Exclusion audience could not be created.')}
-  finally{setBusy('')}
- }
- const sync=async(item:any)=>{
-  setBusy('sync:'+item.id);setNotice('')
-  try{await api.syncAudience(item.id);setNotice('Exclusion audience sync queued for '+item.destination+'.');await load()}
-  catch(e:any){setNotice(e?.message||'Exclusion audience sync failed.')}
-  finally{setBusy('')}
- }
- const stats=data.stats||{}
- return <><PageHead crumb="Activation / Exclusions" title="Audience suppression & exclusions" sub="Stop wasting impressions on converted customers, low-quality leads and known devices by materializing first-party suppression audiences and syncing them to ad platforms." action="Refresh" onAction={load}/>
- {notice&&<div className={'delivery-notice '+(notice.toLowerCase().includes('failed')||notice.toLowerCase().includes('could not')?'error':'ok')}><ShieldCheck/><span>{notice}</span></div>}
- <div className="stats-grid"><Stat label="Suppression audiences" value={String(stats.total||0)} sub="Persisted exclusion segments" Icon={ShieldCheck}/><Stat label="Suppressed identities" value={String(stats.suppressedIdentities||0)} sub="Materialized first-party identities" Icon={UsersRound}/><Stat label="Converted profiles" value={String(stats.converted||0)} sub="Eligible for customer suppression" Icon={CheckCircle2}/><Stat label="Known devices" value={String(stats.deviceIds||0)} sub="Eligible device-ID exclusions" Icon={Smartphone}/></div>
- <div className="exclusion-hero app-panel"><div><ShieldCheck/><div><span>ACQUISITION WASTE CONTROL</span><h3>First-party state → suppression segment → ad-platform exclusion</h3><p>Use deterministic customer and device evidence to keep existing customers or irrelevant leads out of prospecting audiences. Sync uses the same governed audience queue as the main Audience Builder.</p></div></div><div className="data-flow-steps">{['Identify','Materialize','Review size','Sync audience','Exclude from ads'].map((x,i)=><span key={x}><b>{i+1}</b>{x}{i<4&&<ArrowRight/>}</span>)}</div></div>
- <div className="exclusion-preset-grid">{(data.presets||[]).map((p:any)=><article className="app-panel exclusion-preset" key={p.key}><div className="exclusion-preset-head"><span><ShieldCheck/></span><div><b>{p.name}</b><p>{p.description}</p></div></div><div className="exclusion-preview"><strong>{Number(p.preview?.estimatedSize||0).toLocaleString('en-IN')}</strong><span>estimated matches</span><small>{Number(p.preview?.matchedPercent||0)}% of active profiles</small></div><div className="context-chips"><span>{p.condition}</span><span>{String(p.operator).replaceAll('_',' ')}</span><span>{p.identityMode==='device'?'Device identity':'Auto identity'}</span></div><div className="approval-actions"><button disabled={busy.startsWith('create:'+p.key)} onClick={()=>createPreset(p,'Meta Ads')}>{busy==='create:'+p.key+':Meta Ads'?'Creating…':'Create Meta exclusion'}</button><button className="approve" disabled={busy.startsWith('create:'+p.key)} onClick={()=>createPreset(p,'Google Ads')}>{busy==='create:'+p.key+':Google Ads'?'Creating…':'Create Google exclusion'}</button></div></article>)}</div>
- <div className="app-panel"><div className="panel-head"><div><h3>Materialized exclusions</h3><p>Persisted suppression audiences and provider sync state</p></div><span className={(data.items||[]).length?'healthy':'status'}>{(data.items||[]).length} configured</span></div>{(data.items||[]).length?<div className="exclusion-table">{(data.items||[]).map((x:any)=><article key={x.id}><div className="exclusion-icon"><X/></div><div><b>{x.name}</b><small>{x.destination} · {x.identityMode||'auto'} identity</small></div><strong>{Number(x.size||0).toLocaleString('en-IN')}<small> identities</small></strong><span className={x.status==='active'||x.status==='ready_for_sync'?'healthy':'status'}>{x.status}</span><button disabled={busy==='sync:'+x.id} onClick={()=>sync(x)}>{busy==='sync:'+x.id?'Queueing…':'Sync exclusion'}</button></article>)}</div>:<div className="empty-delivery-state"><ShieldCheck/><div><b>No suppression audiences yet</b><small>Create one of the recommended exclusions above. No example audience is inserted into an empty workspace.</small></div></div>}</div>
- </> 
-}
-
 function Product({back}:{back:()=>void}){
  const [tab,setTab]=useState<AppTab>(()=>{const routed=parseWorkspaceTabFromHash(window.location.hash) as AppTab|null;const saved=window.localStorage.getItem('ace_active_tab') as AppTab|null;return routed||(saved&&appTabs.some(([name])=>name===saved)?saved:'Overview')})
  const [workspaceOpen,setWorkspaceOpen]=useState(false)
@@ -2399,7 +2208,7 @@ function Product({back}:{back:()=>void}){
  const searchMatches=search.trim()?appTabs.filter(([name])=>name.toLowerCase().includes(search.trim().toLowerCase())).slice(0,8):[]
  const runSearch=(name?:string)=>{const target=(name||searchMatches[0]?.[0]) as AppTab|undefined;if(target&&navigateToTab(target))setSearch('')}
  const currentWorkspace=workspaces.find(x=>x.name===workspace)||workspaces[0]
- const view=useMemo(()=>({Launchpad:<Launchpad/>,Overview:<Overview/>,AdSync:<AdSync/>,"ChatGPT Ads":<ChatGPTAds/>,Funnel:<Funnel/>,"Leak Monitor":<LeakMonitor/>,Events:<Events/>,Adjustments:<Adjustments/>,Diagnostics:<Diagnostics/>,"Match Quality":<MatchQuality/>,Reconciliation:<Reconciliation/>,Fraud:<Fraud/>,"Deep Links":<DeepLinks/>,Sites:<Sites/>,Fingerprinting:<Fingerprinting/>,"Live Sync":<LiveSync/>,"Data Hub":<DataHub/>,"Customer 360":<Customer360/>,"Offline Attribution":<OfflineAttribution/>,Matchback:<Matchback/>,"POS & Stores":<POSAndStores/>,Journeys:<Journeys/>,Identity:<Identity/>,Models:<Suspense fallback={<LoadingState compact title="Loading models" description="Loading the Models feature."/>}><Models/></Suspense>,Attribution:<Attribution/>,Planner:<Suspense fallback={<LoadingState compact title="Loading planner" description="Loading the Planner feature."/>}><Planner/></Suspense>,Reports:<Suspense fallback={<LoadingState compact title="Loading reports" description="Loading the Reports feature."/>}><Reports/></Suspense>,"Grouped Performance":<GroupedPerformance/>,"Executive Briefs":<Suspense fallback={<LoadingState compact title="Loading executive briefs" description="Loading the Executive Briefs feature."/>}><ExecutiveBriefs/></Suspense>,Enrich:<Enrich/>,"Lead Grading":<LeadGrading/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Routing:<Routing/>,"Follow-ups":<FollowUps/>,Calls:<Calls/>,Meetings:<Meetings/>,Feedback:<Feedback/>,Approvals:<Suspense fallback={<LoadingState compact title="Loading approvals" description="Loading the approvals feature."/>}><Approvals/></Suspense>,"Ask Ace":<AskAce/>,Integrations:<Suspense fallback={<LoadingState compact title="Loading integrations" description="Loading the Integrations feature."/>}><Integrations/></Suspense>,"Data Flows":<Suspense fallback={<LoadingState compact title="Loading data flows" description="Loading the Data Flows feature."/>}><DataFlows/></Suspense>,"Real-Time Activation":<RealTimeActivation/>,Personalization:<Personalization/>,Exclusions:<Exclusions/>,Audiences:<Suspense fallback={<LoadingState compact title="Loading audiences" description="Loading the Audiences feature."/>}><Audiences/></Suspense>,Delivery:<Suspense fallback={<LoadingState compact title="Loading delivery" description="Loading the Delivery Center."/>}><DeliveryCenter/></Suspense>,Monitoring:<Suspense fallback={<LoadingState compact title="Loading monitoring" description="Loading the monitoring feature."/>}><Monitoring/></Suspense>,Alerts:<Suspense fallback={<LoadingState compact title="Loading alerts" description="Loading the Alert Center."/>}><Alerts/></Suspense>,Compliance:<Suspense fallback={<LoadingState compact title="Loading compliance" description="Loading the Compliance feature."/>}><Compliance/></Suspense>,Developers:<Suspense fallback={<LoadingState compact title="Loading developers" description="Loading the Developer console."/>}><Developers/></Suspense>,Settings:<Suspense fallback={<LoadingState compact title="Loading settings" description="Loading workspace settings."/>}><Settings/></Suspense>}[tab]),[tab,workspaceGeneration])
+ const view=useMemo(()=>({Launchpad:<Launchpad/>,Overview:<Overview/>,AdSync:<AdSync/>,"ChatGPT Ads":<ChatGPTAds/>,Funnel:<Funnel/>,"Leak Monitor":<LeakMonitor/>,Events:<Events/>,Adjustments:<Adjustments/>,Diagnostics:<Diagnostics/>,"Match Quality":<MatchQuality/>,Reconciliation:<Reconciliation/>,Fraud:<Fraud/>,"Deep Links":<DeepLinks/>,Sites:<Sites/>,Fingerprinting:<Fingerprinting/>,"Live Sync":<LiveSync/>,"Data Hub":<DataHub/>,"Customer 360":<Customer360/>,"Offline Attribution":<OfflineAttribution/>,Matchback:<Matchback/>,"POS & Stores":<POSAndStores/>,Journeys:<Journeys/>,Identity:<Identity/>,Models:<Suspense fallback={<LoadingState compact title="Loading models" description="Loading the Models feature."/>}><Models/></Suspense>,Attribution:<Attribution/>,Planner:<Suspense fallback={<LoadingState compact title="Loading planner" description="Loading the Planner feature."/>}><Planner/></Suspense>,Reports:<Suspense fallback={<LoadingState compact title="Loading reports" description="Loading the Reports feature."/>}><Reports/></Suspense>,"Grouped Performance":<GroupedPerformance/>,"Executive Briefs":<Suspense fallback={<LoadingState compact title="Loading executive briefs" description="Loading the Executive Briefs feature."/>}><ExecutiveBriefs/></Suspense>,Enrich:<Enrich/>,"Lead Grading":<LeadGrading/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Routing:<Routing/>,"Follow-ups":<FollowUps/>,Calls:<Calls/>,Meetings:<Meetings/>,Feedback:<Feedback/>,Approvals:<Suspense fallback={<LoadingState compact title="Loading approvals" description="Loading the approvals feature."/>}><Approvals/></Suspense>,"Ask Ace":<AskAce/>,Integrations:<Suspense fallback={<LoadingState compact title="Loading integrations" description="Loading the Integrations feature."/>}><Integrations/></Suspense>,"Data Flows":<Suspense fallback={<LoadingState compact title="Loading data flows" description="Loading the Data Flows feature."/>}><DataFlows/></Suspense>,"Real-Time Activation":<Suspense fallback={<LoadingState compact title="Loading real-time activation" description="Loading the Real-Time Activation feature."/>}><RealTimeActivation/></Suspense>,Personalization:<Suspense fallback={<LoadingState compact title="Loading personalization" description="Loading the Personalization feature."/>}><Personalization/></Suspense>,Exclusions:<Suspense fallback={<LoadingState compact title="Loading exclusions" description="Loading the Exclusions feature."/>}><Exclusions/></Suspense>,Audiences:<Suspense fallback={<LoadingState compact title="Loading audiences" description="Loading the Audiences feature."/>}><Audiences/></Suspense>,Delivery:<Suspense fallback={<LoadingState compact title="Loading delivery" description="Loading the Delivery Center."/>}><DeliveryCenter/></Suspense>,Monitoring:<Suspense fallback={<LoadingState compact title="Loading monitoring" description="Loading the monitoring feature."/>}><Monitoring/></Suspense>,Alerts:<Suspense fallback={<LoadingState compact title="Loading alerts" description="Loading the Alert Center."/>}><Alerts/></Suspense>,Compliance:<Suspense fallback={<LoadingState compact title="Loading compliance" description="Loading the Compliance feature."/>}><Compliance/></Suspense>,Developers:<Suspense fallback={<LoadingState compact title="Loading developers" description="Loading the Developer console."/>}><Developers/></Suspense>,Settings:<Suspense fallback={<LoadingState compact title="Loading settings" description="Loading workspace settings."/>}><Settings/></Suspense>}[tab]),[tab,workspaceGeneration])
  return <div className={'product '+(mobileNavOpen?'mobile-nav-open':'')}><a className="skip-link" href="#ace-workspace-main">Skip to workspace content</a><RouteAnnouncer label={tab+' · '+workspace} focusSelector=".product-body .page-head h1"/><aside className="product-sidebar" aria-label="Workspace navigation"><Brand/><div className="workspace-wrap"><button className="workspace" onClick={()=>setWorkspaceOpen(!workspaceOpen)}><span>{currentWorkspace?.initials||'AM'}</span><div><b>{workspace}</b><small>{currentWorkspace?.environment||'Production'} workspace</small></div><ChevronDown/></button>{workspaceOpen&&<div className="workspace-menu">{workspaces.map((x:any)=><button key={x.id||x.name} onClick={()=>void chooseWorkspace(x)} className={workspace===x.name?'active':''}><span>{x.initials||String(x.name).split(/\s+/).map((s:string)=>s[0]).join('').slice(0,3)}</span><div><b>{x.name}</b><small>{x.environment||'Production'}</small></div>{workspace===x.name&&<Check/>}</button>)}<button className="new-workspace" onClick={()=>{setWorkspaceOpen(false);setCreateOpen(true)}}><Plus/>Create workspace</button></div>}</div><nav className="product-nav">
  <div className="product-nav-filter"><Search/><input value={navFilter} onChange={e=>setNavFilter(e.target.value)} placeholder="Find feature..."/></div>
  {dashboardSections.map(section=>{
