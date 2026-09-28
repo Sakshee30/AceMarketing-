@@ -40,6 +40,9 @@ for(const file of walk(frontend)){
 const acePlatform=path.join(frontend,'AcePlatform.tsx')
 if(fs.existsSync(acePlatform)){
   const source=fs.readFileSync(acePlatform,'utf8')
+  if(/function\s+Launchpad\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Launchpad implementation after feature extraction.')
+  }
   if(/function\s+Approvals\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Approvals implementation after feature extraction.')
   }
@@ -108,6 +111,10 @@ if(fs.existsSync(acePlatform)){
 }
 
 const required=[
+  'frontend/src/features/launchpad/data/launchpad.api.ts',
+  'frontend/src/features/launchpad/pages/LaunchpadPage.tsx',
+  'frontend/src/features/launchpad/public.ts',
+  'frontend/src/features/launchpad/feature.manifest.ts',
   'frontend/src/features/workspace/manifest.ts',
   'frontend/src/features/fraud/data/fraud.api.ts',
   'frontend/src/features/fraud/pages/FraudPage.tsx',
