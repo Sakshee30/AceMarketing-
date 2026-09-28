@@ -5,7 +5,6 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-
 ClassificationTask = Literal["lead_qualification", "paid_conversion", "customer_churn"]
 RegressionTask = Literal["future_customer_value"]
 
