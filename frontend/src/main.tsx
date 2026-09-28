@@ -3,12 +3,28 @@ import ReactDOM from 'react-dom/client'
 import AcePlatform from './AcePlatform'
 import DashboardQuickNav from './DashboardQuickNav'
 import './dashboard-quick-nav.css'
+import './foundation.css'
 import { installAceTracking } from './lib/tracker'
 import { FrontendAppBoundary } from './components/system/FrontendFoundation'
+import { getPublicRuntimeConfig } from './lib/runtime-config'
+
+const root=document.getElementById('root')
+if(!root)throw new Error('AceMarketing root element is missing.')
+
+let runtimeConfig
+try{
+  runtimeConfig=getPublicRuntimeConfig()
+  root.dataset.releaseId=runtimeConfig.releaseId
+  root.dataset.environment=runtimeConfig.environment
+}catch(error){
+  const message=error instanceof Error?error.message:'Invalid public runtime configuration.'
+  root.innerHTML='<main class="ace-preboot" role="alert"><section class="ace-preboot-card"><strong>AceMarketing cannot start safely.</strong><p>'+message.replace(/[<>&"']/g,(char)=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[char]||char))+'</p></section></main>'
+  throw error
+}
 
 installAceTracking()
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+ReactDOM.createRoot(root).render(
   <React.StrictMode>
     <FrontendAppBoundary label="AceMarketing application">
       <AcePlatform />
