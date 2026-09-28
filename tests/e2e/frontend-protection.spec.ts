@@ -549,3 +549,13 @@ test('customer bootstrap revalidates protected access after bfcache restoration'
   await page.evaluate(()=>window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true})))
   await expect.poll(()=>calls).toBeGreaterThan(1)
 })
+
+
+test('overview server state is query-backed and survives a transient live-activity failure',async({page})=>{
+  await page.route('**/api/live-sync',route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({message:'live sync temporarily unavailable'})}))
+  await page.goto('/#/workspace?tab=Overview')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Acquisition command center'})).toBeVisible()
+  await expect(page.getByText(/Live activity is temporarily unavailable/i)).toBeVisible()
+  await expect(page.getByText('WORKSPACE READINESS')).toBeVisible()
+})

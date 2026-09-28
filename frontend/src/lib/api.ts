@@ -187,18 +187,18 @@ export const api = {
   testSite: (domain: string) => request('/sites/test', { method: 'POST', body: JSON.stringify({ domain }) }),
   siteDebug: (domain: string) => request('/sites/debug?domain=' + encodeURIComponent(domain)),
   replayDiagnostic: (issue: string) => request('/diagnostics/replay', { method: 'POST', body: JSON.stringify({ issue }) }),
-  funnel: (filters?: { channel?: string; account?: string; disposition?: string; periodDays?: number }) => {
+  funnel: (filters?: { channel?: string; account?: string; disposition?: string; periodDays?: number }, options?:{signal?:AbortSignal}) => {
     const params=new URLSearchParams()
     if(filters?.channel&&filters.channel!=='All channels')params.set('channel',filters.channel)
     if(filters?.account&&filters.account!=='All accounts')params.set('account',filters.account)
     if(filters?.disposition&&filters.disposition!=='All dispositions')params.set('disposition',filters.disposition)
     if(filters?.periodDays)params.set('periodDays',String(filters.periodDays))
-    return request('/funnel'+(params.toString()?'?'+params.toString():''))
+    return request('/funnel'+(params.toString()?'?'+params.toString():''),{signal:options?.signal})
   },
   leakMonitor: () => request('/leak-monitor'),
   saveLeakMonitorSettings: (payload: Record<string,unknown>) => request('/leak-monitor/settings',{method:'POST',body:JSON.stringify(payload)}),
   recoverLeak: (payload: Record<string,unknown>) => request('/leak-monitor/recover',{method:'POST',body:JSON.stringify(payload)}),
-  liveSync: () => request('/live-sync'),
+  liveSync: (options?:{signal?:AbortSignal}) => request('/live-sync',{signal:options?.signal}),
   dataHub: () => request('/data-hub'),
   rebuildDataHub: () => request('/data-hub/rebuild', { method: 'POST', body: JSON.stringify({}) }),
   offlineAttribution: () => request('/offline-attribution'),

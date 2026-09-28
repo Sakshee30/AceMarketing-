@@ -512,6 +512,21 @@ if(fs.existsSync(acePlatform)){
     if(!bootstrap.includes('status===401||status===403'))failures.push('Signed-out state must require authoritative authentication/authorization denial.')
   }
 
+  const overviewPagePath=path.join(frontend,'features','overview','pages','OverviewPage.tsx')
+  const overviewManifestPath=path.join(frontend,'features','overview','feature.manifest.ts')
+  if(fs.existsSync(overviewPagePath)){
+    const overviewPage=fs.readFileSync(overviewPagePath,'utf8')
+    if(!overviewPage.includes('useQuery({'))failures.push('Overview feature must use the canonical TanStack Query server-state cache.')
+    if(overviewPage.includes('useEffect('))failures.push('Overview feature must not maintain a second manual remote-data lifecycle.')
+    if(!overviewPage.includes('overviewKeys.summary()')||!overviewPage.includes('overviewKeys.liveSync()')||!overviewPage.includes('overviewKeys.funnel()')){
+      failures.push('Overview feature must use feature-owned scope-aware query keys.')
+    }
+  }
+  if(fs.existsSync(overviewManifestPath)){
+    const overviewManifest=fs.readFileSync(overviewManifestPath,'utf8')
+    if(!overviewManifest.includes('requestBudget'))failures.push('Overview route must declare its request budget.')
+  }
+
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')

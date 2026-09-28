@@ -6300,3 +6300,15 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Session verification has a bounded 12-second frontend deadline and a customer-visible retry path with request correlation when available.
 - Added E2E coverage for network ambiguity, authoritative denial and bfcache revalidation.
 - Workspace resolution remains owned by the existing customer workspace composition and its scoped QueryClient; no duplicate server-state store was introduced.
+
+
+### Golden read-path migration: Overview — 2026-09-28
+
+- Migrated the Overview feature from manual `useEffect` remote state into the canonical customer TanStack Query cache.
+- Added feature-owned scope-aware keys in `frontend/src/features/overview/data/overview.keys.ts`.
+- Summary, live activity and funnel reads now propagate TanStack Query AbortSignals into the shared transport.
+- Overview declares a route request budget: three initial bounded reads, 30-second background refresh, zero streams and at most two transient read retries.
+- Summary and live-activity failures are isolated: last confirmed summary data remains visible while live activity can degrade independently.
+- Removed ad-hoc Overview locale formatting and reused the owned localization package for number and date-time presentation.
+- Added E2E coverage proving Overview remains usable when live activity is temporarily unavailable.
+- This is the first complete feature-owned read-path migration pattern; other features remain compatible and will move incrementally rather than through a destructive rewrite.

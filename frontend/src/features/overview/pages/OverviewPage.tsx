@@ -1,9 +1,12 @@
-import {useEffect,useState} from 'react'
+import {useState} from 'react'
+import {useQuery} from '@tanstack/react-query'
 import {
   Activity,ArrowRight,BarChart3,Bot,Cable,ChevronRight,DatabaseZap,Gauge,Network,PieChart,
   RadioTower,Sparkles,Target,UsersRound,Zap
 } from 'lucide-react'
 import {overviewApi} from '../data/overview.api'
+import {overviewKeys} from '../data/overview.keys'
+import {formatDateTime,formatNumber} from '../../../../../packages/localization/src/index'
 import {ErrorState,LoadingState,StaleState} from '../../../components/system/FrontendStates'
 
 const dashboardSections=[
@@ -39,17 +42,15 @@ function OverviewPageHead({
 }
 
 function FunnelPanel(){
-  const [data,setData]=useState<any>(null)
   const [mode,setMode]=useState<'funnel'|'campaign'>('funnel')
-  const [error,setError]=useState('')
-
-  useEffect(()=>{
-    let active=true
-    overviewApi.funnel()
-      .then((response:any)=>{if(active){setData(response);setError('')}})
-      .catch((failure:any)=>{if(active)setError(failure?.message||'Funnel evidence is unavailable.')})
-    return()=>{active=false}
-  },[])
+  const funnelQuery=useQuery({
+    queryKey:overviewKeys.funnel(),
+    queryFn:({signal})=>overviewApi.funnel(signal),
+    staleTime:60_000,
+    refetchOnWindowFocus:true
+  })
+  const data:any=funnelQuery.data
+  const error=funnelQuery.error as any
 
   const stages=data?.stages||{}
   const steps=[
@@ -65,11 +66,11 @@ function FunnelPanel(){
       <div><h3>{mode==='funnel'?'Complete funnel':'Campaign view'}</h3><p>Backend funnel endpoint · current workspace</p></div>
       <button onClick={()=>setMode(current=>current==='funnel'?'campaign':'funnel')}>{mode==='funnel'?'Campaign view':'Funnel view'}</button>
     </div>
-    {error&&<StaleState title="Funnel data unavailable" description={error}/>}
-    {!data&&!error&&<LoadingState compact title="Loading funnel" description="Reading current workspace funnel evidence."/>}
+    {error&&<StaleState title="Funnel data unavailable" description={error?.message||'Funnel evidence is unavailable.'}/>}
+    {funnelQuery.isPending&&<LoadingState compact title="Loading funnel" description="Reading current workspace funnel evidence."/>}
     {data&&mode==='funnel'&&steps.map((item:any,index:number)=>
       <div className="funnel-row" key={item[0]}>
-        <div><span>{item[0]}</span><b>{item[1].toLocaleString()}</b></div>
+        <div><span>{item[0]}</span><b>{formatNumber(item[1])}</b></div>
         <div className="progress"><i style={{width:item[2]+'%'}}/></div>
         {index<steps.length-1&&item[1]>0&&<small>{Math.round((steps[index+1][1]/item[1])*100)}% progression</small>}
       </div>
@@ -77,54 +78,43 @@ function FunnelPanel(){
     {data&&mode==='campaign'&&(data.campaigns||[]).map((item:any)=>
       <div className="developer-event-row" key={item.name}>
         <b>{item.name}</b>
-        <span>{item.channel} · {Number(item.qualified||0).toLocaleString()} qualified</span>
-        <strong>{Number(item.bookings||0).toLocaleString()} bookings</strong>
+        <span>{item.channel} · {formatNumber(Number(item.qualified||0))} qualified</span>
+        <strong>{formatNumber(Number(item.bookings||0))} bookings</strong>
       </div>
     )}
   </div>
 }
 
 export default function OverviewPage(){
-  const [summary,setSummary]=useState<any>(null)
-  const [events,setEvents]=useState<any[]>([])
   const [expanded,setExpanded]=useState(false)
-  const [loading,setLoading]=useState(true)
-  const [error,setError]=useState('')
+
+  const summaryQuery=useQuery({
+    queryKey:overviewKeys.summary(),
+    queryFn:({signal})=>overviewApi.summary(signal),
+    staleTime:15_000,
+    refetchInterval:30_000,
+    refetchIntervalInBackground:false,
+    refetchOnWindowFocus:true
+  })
+  const liveSyncQuery=useQuery({
+    queryKey:overviewKeys.liveSync(),
+    queryFn:({signal})=>overviewApi.liveSync(signal),
+    staleTime:15_000,
+    refetchInterval:30_000,
+    refetchIntervalInBackground:false,
+    refetchOnWindowFocus:true
+  })
+
+  const summary:any=summaryQuery.data
+  const events:any[]=((liveSyncQuery.data as any)?.recent||[])
+  const loading=summaryQuery.isFetching||liveSyncQuery.isFetching
+  const error=(summaryQuery.error as any)?.message||''
 
   const navigate=(tab:string)=>window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:tab}))
 
   const load=async()=>{
-    setLoading(true)
-    try{
-      const [summaryResult,liveResult]:any=await Promise.all([
-        overviewApi.summary(),
-        overviewApi.liveSync().catch(()=>({recent:[]}))
-      ])
-      setSummary(summaryResult)
-      setEvents(liveResult.recent||[])
-      setError('')
-    }catch(failure:any){
-      setError(failure?.message||'Workspace overview could not be refreshed. Existing dashboard evidence was preserved.')
-    }finally{
-      setLoading(false)
-    }
+    await Promise.all([summaryQuery.refetch(),liveSyncQuery.refetch()])
   }
-
-  useEffect(()=>{
-    let disposed=false
-    const refresh=()=>{if(!disposed)void load()}
-    refresh()
-    const id=window.setInterval(()=>{
-      if(document.visibilityState==='visible')refresh()
-    },30000)
-    const onVisibility=()=>{if(document.visibilityState==='visible')refresh()}
-    document.addEventListener('visibilitychange',onVisibility)
-    return()=>{
-      disposed=true
-      window.clearInterval(id)
-      document.removeEventListener('visibilitychange',onVisibility)
-    }
-  },[])
 
   const totals=summary?.totals||{}
   const shown=expanded?events:events.slice(0,5)
@@ -148,7 +138,7 @@ export default function OverviewPage(){
 
     {error&&
       <ErrorState
-        title="Workspace overview refresh failed"
+        title={summary?'Workspace overview is showing last confirmed data':'Workspace overview refresh failed'}
         description={error}
         action={{label:'Retry overview',onClick:load}}
       />
@@ -168,10 +158,10 @@ export default function OverviewPage(){
         <p>{summary?.readiness===100?'Core operating areas have workspace evidence.':'Connect data and activate the incomplete areas below.'}</p>
       </div>
       <div className="dashboard-hero-metrics">
-        <article><b>{summary?Number(totals.profiles||0).toLocaleString('en-IN'):'—'}</b><span>Known profiles</span></article>
+        <article><b>{summary?formatNumber(Number(totals.profiles||0)):'—'}</b><span>Known profiles</span></article>
         <article><b>{totals.deliveryRate==null?'—':totals.deliveryRate+'%'}</b><span>Delivery success</span></article>
         <article><b>{summary?Number(totals.connectedConnectors||0):'—'}</b><span>Connected systems</span></article>
-        <article><b>{summary?Number(totals.matchedEvents||0).toLocaleString('en-IN'):'—'}</b><span>Matched attribution</span></article>
+        <article><b>{summary?formatNumber(Number(totals.matchedEvents||0)):'—'}</b><span>Matched attribution</span></article>
       </div>
     </section>
 
@@ -182,7 +172,7 @@ export default function OverviewPage(){
         return <button key={item.key} className={'dashboard-area-card '+(item.ready?'ready':'needs')} onClick={()=>navigate(item.tab)}>
           <div><span><Icon/></span><em>{item.ready?'Ready':'Needs setup'}</em></div>
           <h3>{item.title}</h3>
-          <strong>{Number(item.primary||0).toLocaleString('en-IN')}</strong>
+          <strong>{formatNumber(Number(item.primary||0))}</strong>
           <p>{item.detail}</p>
           <footer>Open {item.tab}<ArrowRight/></footer>
         </button>
@@ -215,7 +205,7 @@ export default function OverviewPage(){
           ['Dead-letter jobs',totals.queueDeadLetter||0,'Delivery']
         ].map(([label,value,tab]:any)=>
           <button className="dashboard-health-row" key={label} onClick={()=>navigate(tab)}>
-            <span>{label}</span><b>{Number(value).toLocaleString('en-IN')}</b><ChevronRight/>
+            <span>{label}</span><b>{formatNumber(Number(value))}</b><ChevronRight/>
           </button>
         )}
       </div>
@@ -229,13 +219,14 @@ export default function OverviewPage(){
           <button onClick={()=>navigate('Live Sync')}>Live Sync</button>
         </div>
       </div>
+      {liveSyncQuery.isError&&<StaleState title="Live activity is temporarily unavailable" description={(liveSyncQuery.error as any)?.message||'Recent activity could not be refreshed.'}/>}
       {(summary?.recent||shown||[]).length
         ?<div className="dashboard-activity-list">
           {(summary?.recent||shown).slice(0,expanded?12:6).map((item:any)=>
             <button key={item.id} onClick={()=>navigate(item.tab||'Live Sync')}>
               <span className={'activity-kind '+item.kind}>{item.kind==='delivery'?<RadioTower/>:item.kind==='agent'?<Bot/>:<Activity/>}</span>
               <div><b>{item.title}</b><small>{item.meta}</small></div>
-              <time>{item.time?new Date(item.time).toLocaleString():'—'}</time>
+              <time>{item.time?formatDateTime(item.time):'—'}</time>
               <ChevronRight/>
             </button>
           )}
