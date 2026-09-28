@@ -197,6 +197,14 @@ AceMarketing keeps the current product pipeline and all existing product feature
 - Settings saves and API-key creation now explicitly warn when timeout/network loss leaves the authoritative outcome unknown instead of implying a confirmed failure.
 - CI rejects reintroduction of legacy Settings/member/governance/billing settings functions into `AcePlatform.tsx`, and Playwright verifies the direct Settings route.
 
+### Twelfth feature extraction: Compliance
+- Compliance is now a feature-owned lazy chunk rather than depending on the legacy `AcePlatform.tsx` composition.
+- It owns its manifest, public entry point, page implementation, browser data adapter and ownership README.
+- Existing consent coverage, privacy export/deletion, retention preview/application, operational readiness checks, audit history, CSS classes and direct route are preserved.
+- Destructive subject deletion and retention purge now surface timeout/network ambiguity as an explicit reconciliation state; the UI instructs operators to refresh authoritative compliance history before repeating the action.
+- The customer-facing Compliance feature remains tenant-scoped and does not introduce privileged platform-control responsibilities.
+- CI rejects reintroduction of the legacy `Compliance` function and Playwright verifies the existing direct route.
+
 ### Bundle-budget evidence
 - Vite now emits a build manifest.
 - CI calculates gzip size for each entry and all of its static dependencies.
