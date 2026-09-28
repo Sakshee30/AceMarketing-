@@ -8,6 +8,7 @@ import { FrontendAppBoundary,FrontendWidgetBoundary } from './components/system/
 import { getPublicRuntimeConfig } from './lib/runtime-config'
 import { installBeforeUnloadDirtyWorkGuard } from './lib/dirty-work'
 import { ConnectionStatus } from './components/system/ConnectionStatus'
+import { ChunkRecoveryNotice } from './components/system/ChunkRecoveryNotice'
 
 const DashboardQuickNav=lazy(()=>import('./DashboardQuickNav'))
 
@@ -32,6 +33,7 @@ ReactDOM.createRoot(root).render(
   <React.StrictMode>
     <FrontendAppBoundary label="AceMarketing application">
       <ConnectionStatus />
+      <ChunkRecoveryNotice />
       <AcePlatform />
       <FrontendWidgetBoundary label="Dashboard navigator">
         <Suspense fallback={null}>
