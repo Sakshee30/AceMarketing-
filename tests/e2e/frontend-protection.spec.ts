@@ -113,3 +113,12 @@ test('loads extracted monitoring feature from its direct workspace route',async(
   await expect(page.getByRole('heading',{name:'Platform monitoring'})).toBeVisible()
   await expect(page.getByText(/24-hour API health/i)).toBeVisible()
 })
+
+
+test('loads extracted alerts feature from its direct workspace route',async({page})=>{
+  await page.goto('/#/workspace?tab=Alerts')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Alerts/)
+  await expect(page.getByRole('heading',{name:'Alert Center'})).toBeVisible()
+  await expect(page.getByText(/Operational incidents/i)).toBeVisible()
+})
