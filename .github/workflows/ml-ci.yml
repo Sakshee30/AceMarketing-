@@ -1,0 +1,35 @@
+name: ML CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ml-service/**"
+      - "deploy/Dockerfile.ml"
+      - ".github/workflows/ml-ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "ml-service/**"
+      - "deploy/Dockerfile.ml"
+      - ".github/workflows/ml-ci.yml"
+
+jobs:
+  ml:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - name: Install ML service and test tools
+        run: python -m pip install -e "ml-service[test]"
+      - name: Ruff
+        run: ruff check ml-service/src ml-service/tests
+      - name: Compile
+        run: python -m compileall -q ml-service/src
+      - name: Tests
+        run: pytest -q ml-service/tests
+      - name: Build ML container
+        run: docker build -f deploy/Dockerfile.ml -t ace-ml:ci .
