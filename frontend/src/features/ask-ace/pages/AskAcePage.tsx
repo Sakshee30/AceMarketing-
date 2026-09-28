@@ -180,7 +180,7 @@ export default function AskAcePage(){
       <div className="app-panel ask-context">
         <div className="panel-head"><div><h3>Grounded analysis context</h3><p>Ask Ace queries live workspace stores rather than fixed demo metrics</p></div><span className="healthy">Evidence-backed</span></div>
         {[['Funnel handoffs','Lead, routing, qualification, meeting and feedback coverage'],['Lead operations','Scores, grades, source and campaign quality'],['Attribution store','Matched/unmatched assisted events and value'],['Connector state','Connection and health records'],['Audience store','Activation, suppression and sync state'],['Activation runs','Succeeded, failed and queued external actions'],['Observability','Current API and operational health']].map(item=><div className="ask-context-row" key={item[0]}><Check/><div><b>{item[0]}</b><small>{item[1]}</small></div></div>)}
-        <div className="source-conflict-note"><ShieldCheck/><div><b>Current baseline boundary</b><p>Ask Ace remains a grounded workspace-analysis baseline. Hosted analyst/reviewer models will not be presented as active until the backend registry, provider access, evaluation and policy gates provide real evidence.</p></div></div>
+        <div className="source-conflict-note"><ShieldCheck/><div><b>No fabricated metrics</b><p>Ask Ace remains a grounded workspace-analysis baseline. Hosted analyst/reviewer models will not be presented as active until the backend registry, provider access, evaluation and policy gates provide real evidence.</p></div></div>
       </div>
     </div>
   </>
