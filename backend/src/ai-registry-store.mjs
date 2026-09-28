@@ -132,10 +132,12 @@ const evaluationMetrics=result=>{
 
 export const recordMlExecution=async({workspaceId,job,result})=>{
   if(!pool)return null
+  await syncTenantRegistry(workspaceId)
   const task=String(result?.task||job.payload?.task||'')
   if(!task)throw new Error('ML result task is required')
   const payload=result?.result||result
   const artifact=payload?.artifact||null
+  const warnings=[].concat(Array.isArray(payload?.warnings)?payload.warnings:[],payload?.warning||[]).filter(Boolean)
   const evaluated=String(payload?.status||'').includes('evaluated')||Boolean(payload?.metrics)||Boolean(payload?.backtest)||Boolean(payload?.healthStatus)
   const blocked=String(payload?.status||'').includes('blocked')
   const evalId=evaluated?'eval_'+randomUUID():null
@@ -151,7 +153,7 @@ export const recordMlExecution=async({workspaceId,job,result})=>{
       [
         resultId,workspaceId,job.id,task,blocked?'blocked':'completed',resultTypeForTask(task),
         null,null,artifact?.artifactId||null,JSON.stringify(job.input_snapshot||{}),
-        payload?.target||null,payload?.horizon||null,JSON.stringify(payload?.warnings||payload?.warning?[].concat(payload.warnings||[],payload.warning||[]):[]),
+        payload?.target||null,payload?.horizon||null,JSON.stringify(warnings),
         JSON.stringify(payload)
       ]
     )
@@ -166,7 +168,7 @@ export const recordMlExecution=async({workspaceId,job,result})=>{
           JSON.stringify({source:'service-reported',promotionGate:'not_evaluated_against_predeclared_thresholds'}),
           JSON.stringify(metrics),Number(metrics?.testRows||payload?.sampleSize||0)||null,
           blocked?'blocked':'evidence_recorded',
-          JSON.stringify([].concat(payload?.warnings||[],payload?.warning||[]).filter(Boolean))
+          JSON.stringify(warnings)
         ]
       )
     }
