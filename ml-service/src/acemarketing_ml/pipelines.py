@@ -526,8 +526,8 @@ def causal_forest_estimate(request) -> dict[str, Any]:
     if split >= len(rows):
         split = len(rows) - 20
     x_train, x_test = x.iloc[:split], x.iloc[split:]
-    t_train, t_test = treatment[:split], treatment[split:]
-    y_train, y_test = outcome[:split], outcome[split:]
+    t_train = treatment[:split]
+    y_train = outcome[:split]
     if len(x_test) < 20:
         raise ValueError("insufficient_evidence: holdout population is too small")
 
