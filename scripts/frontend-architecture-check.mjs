@@ -213,14 +213,14 @@ if(fs.existsSync(acePlatform)){
       failures.push('frontend/src/AcePlatform.tsx still contains the legacy '+legacyName+' implementation after Settings feature extraction.')
     }
   }
-  const customer360=source.match(/function\\s+Customer360\\s*\\(\\)[\\s\\S]*?function\\s+OfflineAttribution\\s*\\(/)?.[0]||''
+  const customer360=source.match(/function\s+Customer360\s*\(\)[\s\S]*?function\s+OfflineAttribution\s*\(/)?.[0]||''
   if(customer360&&!customer360.includes('requestSequence=useRef(0)')){
     failures.push('Customer 360 must sequence profile requests so stale responses cannot replace the active selection.')
   }
   if(customer360&&!customer360.includes('.slice(0,150)')){
     failures.push('Customer 360 timeline rendering must remain bounded for long-lived customer profiles.')
   }
-  const offlineAttribution=source.match(/function\\s+OfflineAttribution\\s*\\(\\)[\\s\\S]*?function\\s+Matchback\\s*\\(/)?.[0]||''
+  const offlineAttribution=source.match(/function\s+OfflineAttribution\s*\(\)[\s\S]*?function\s+Matchback\s*\(/)?.[0]||''
   if(offlineAttribution&&!offlineAttribution.includes('AccessibleDialog ariaLabel="New offline attribution rule"')){
     failures.push('Offline Attribution builder must use the shared accessible dialog.')
   }
