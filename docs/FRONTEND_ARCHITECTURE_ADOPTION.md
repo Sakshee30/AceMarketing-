@@ -163,6 +163,14 @@ AceMarketing keeps the current product pipeline and all existing product feature
 - Schedule creation and send-now delivery distinguish timeout/network uncertainty from confirmed rejection; an uncertain outcome requires authoritative refresh before repeat submission.
 - CI rejects reintroduction of the legacy `ExecutiveBriefs` function and Playwright verifies the existing direct route.
 
+### Sixth feature extraction: Integrations
+- Integrations is now the sixth workspace feature extracted from `AcePlatform.tsx` into a feature-owned lazy chunk.
+- It owns its manifest, public entry point, page implementation, browser data adapter and ownership README.
+- Existing connector catalog behavior, OAuth redirects, server-secret setup, custom integration builder, WhatsApp operations, connector requests, CSS classes and direct route are preserved.
+- Open connector configuration, server-secret setup and connector-request workflows now register with the shared dirty-work registry so navigation/workspace changes cannot silently discard in-progress setup.
+- The browser data adapter is feature-owned while the shared transport remains the only browser network boundary.
+- CI rejects reintroduction of the legacy `Integrations` function and Playwright verifies the existing direct route.
+
 ### Bundle-budget evidence
 - Vite now emits a build manifest.
 - CI calculates gzip size for each entry and all of its static dependencies.
