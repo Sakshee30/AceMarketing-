@@ -56,6 +56,14 @@ jobs:
         run: npm run frontend:budget:customer
       - name: Verify standalone customer application release assets
         run: npm run frontend:release:customer
+      - name: Build standalone platform control application
+        run: npm run build:platform-admin
+      - name: Verify platform control budget
+        env:
+          FRONTEND_BUDGET_MODE: report
+        run: npm run frontend:budget:control
+      - name: Verify platform control release assets
+        run: npm run frontend:release:control
       - name: Build standalone public website
         env:
           PUBLIC_SITE_ORIGIN: https://acemarketing.example.test
@@ -108,9 +116,17 @@ jobs:
           docker build -f deploy/Dockerfile.frontend -t ace-web:ci .
           docker build -f deploy/Dockerfile.customer-app -t ace-customer-app:ci .
           docker build -f deploy/Dockerfile.public-site -t ace-public-site:ci .
+          docker build -f deploy/Dockerfile.platform-admin -t ace-platform-admin:ci .
       - name: Verify canonical project structure
         run: |
           test -f frontend/src/AcePlatform.tsx
+          test -f frontend/platform-admin/src/main.tsx
+          test -f frontend/platform-admin/src/ControlCenterApp.tsx
+          test -f frontend/platform-admin/src/features/manifest.ts
+          test -f frontend/platform-admin/src/lib/control-api.ts
+          test -f vite.platform-admin.config.ts
+          test -f deploy/Dockerfile.platform-admin
+          test -f deploy/nginx.platform-admin.conf
           test -f frontend/customer-app/main.tsx
           test -f frontend/customer-app/index.html
           test -f vite.customer-app.config.ts

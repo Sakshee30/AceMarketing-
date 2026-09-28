@@ -1,0 +1,1 @@
+export const ProvidersFeatureManifest={key:'providers',label:"Providers",responsibility:"Provider catalog, contract compatibility, health and capacity.",readOnly:true,sessionAudience:'platform-control'} as const

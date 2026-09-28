@@ -44,10 +44,16 @@
     "frontend:budget:customer": "node scripts/frontend-budget.mjs --dist=dist/customer-app",
     "frontend:release:customer": "node scripts/frontend-release-check.mjs --dist=dist/customer-app",
     "customer-app:verify": "npm run check:frontend && npm run build:customer-app && npm run frontend:budget:customer && npm run frontend:release:customer",
-    "frontends:verify": "npm run frontend:verify && npm run customer-app:verify && npm run public-site:verify && npm run frontend:evidence",
+    "frontends:verify": "npm run frontend:verify && npm run customer-app:verify && npm run public-site:verify && npm run platform-admin:verify && npm run frontend:evidence",
     "e2e:standalone": "playwright test --config=playwright.standalone.config.ts",
     "e2e:matrix": "playwright test --config=playwright.matrix.config.ts",
-    "frontend:evidence": "node scripts/frontend-evidence.mjs"
+    "frontend:evidence": "node scripts/frontend-evidence.mjs",
+    "dev:platform-admin": "vite --config vite.platform-admin.config.ts",
+    "build:platform-admin": "vite build --config vite.platform-admin.config.ts",
+    "preview:platform-admin": "vite preview --config vite.platform-admin.config.ts",
+    "frontend:budget:control": "node scripts/frontend-budget.mjs --dist=dist/platform-admin",
+    "frontend:release:control": "node scripts/frontend-release-check.mjs --dist=dist/platform-admin",
+    "platform-admin:verify": "npm run check:frontend && npm run build:platform-admin && npm run frontend:budget:control && npm run frontend:release:control"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",

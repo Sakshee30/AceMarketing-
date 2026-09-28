@@ -1,0 +1,1 @@
+export const OverviewFeatureManifest={key:'overview',label:"Overview",responsibility:"Platform/cell health, active release, configuration version and critical alerts.",readOnly:true,sessionAudience:'platform-control'} as const

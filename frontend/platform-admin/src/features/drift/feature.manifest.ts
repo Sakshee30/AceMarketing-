@@ -1,0 +1,1 @@
+export const DriftFeatureManifest={key:'drift',label:"Drift",responsibility:"Versioned desired state versus observed cloud/deployment state.",readOnly:true,sessionAudience:'platform-control'} as const

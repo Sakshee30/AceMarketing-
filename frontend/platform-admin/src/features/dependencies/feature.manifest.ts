@@ -1,0 +1,1 @@
+export const DependenciesFeatureManifest={key:'dependencies',label:"Dependencies",responsibility:"Validated dependency graph and impact analysis.",readOnly:true,sessionAudience:'platform-control'} as const

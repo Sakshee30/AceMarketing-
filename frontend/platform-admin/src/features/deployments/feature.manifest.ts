@@ -1,0 +1,1 @@
+export const DeploymentsFeatureManifest={key:'deployments',label:"Deployments",responsibility:"Artifact, configuration and migration versions with rollout state.",readOnly:true,sessionAudience:'platform-control'} as const

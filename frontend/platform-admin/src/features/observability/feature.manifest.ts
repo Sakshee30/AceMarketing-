@@ -1,0 +1,1 @@
+export const ObservabilityFeatureManifest={key:'observability',label:"Observability",responsibility:"SLOs, dashboards, traces and incident correlation.",readOnly:true,sessionAudience:'platform-control'} as const

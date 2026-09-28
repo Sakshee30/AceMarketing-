@@ -1,0 +1,1 @@
+export const EmergencyFeatureManifest={key:'emergency',label:"Emergency",responsibility:"Scoped freeze, read-only and maintenance controls with explicit policy boundaries.",readOnly:true,sessionAudience:'platform-control'} as const

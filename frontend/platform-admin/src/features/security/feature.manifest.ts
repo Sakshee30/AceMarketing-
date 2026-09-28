@@ -1,0 +1,1 @@
+export const SecurityFeatureManifest={key:'security',label:"Security",responsibility:"Findings, access reviews, policy checks and locked controls.",readOnly:true,sessionAudience:'platform-control'} as const

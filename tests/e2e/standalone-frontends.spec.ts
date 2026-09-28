@@ -52,3 +52,24 @@ test('standalone customer login stays available without loading public-site comp
   await expect(page.getByRole('heading',{name:'Log in to your workspace'})).toBeVisible()
   await expect(page.getByRole('button',{name:'Continue with Google'})).toBeVisible()
 })
+
+
+test('standalone platform control deployment is isolated and fails honestly without a control API',async({page},testInfo)=>{
+  test.skip(!testInfo.project.name.startsWith('control-'),'platform control project only')
+  await page.goto('/#/overview')
+  await expect(page.getByRole('heading',{name:'Overview'})).toBeVisible()
+  await expect(page.getByRole('navigation',{name:'Platform control navigation'})).toBeVisible()
+  await expect(page.getByText('Separate trust boundary',{exact:true})).toBeVisible()
+  await expect(page.getByText('Read-only frontend phase',{exact:true})).toBeVisible()
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content','noindex,nofollow,noarchive')
+  await expect(page.getByText(/Control plane unavailable|Access denied/i)).toBeVisible()
+})
+
+test('platform control exposes required operational page ownership without write controls',async({page},testInfo)=>{
+  test.skip(!testInfo.project.name.startsWith('control-'),'platform control project only')
+  await page.goto('/#/changes')
+  await expect(page.getByRole('heading',{name:'Changes'})).toBeVisible()
+  await expect(page.getByText(/Operational change requests, validation, approvals, execution and verification/i)).toBeVisible()
+  await expect(page.getByText(/Write controls remain intentionally absent/i)).toBeVisible()
+  await expect(page.getByRole('button',{name:/Apply|Execute|Delete|Rollback/i})).toHaveCount(0)
+})

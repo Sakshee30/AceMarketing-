@@ -15,10 +15,13 @@ export default defineConfig({
     {name:'public-desktop',use:{...devices['Desktop Chrome'],baseURL:'http://127.0.0.1:5175'}},
     {name:'public-mobile',use:{...devices['Pixel 7'],baseURL:'http://127.0.0.1:5175'}},
     {name:'customer-desktop',use:{...devices['Desktop Chrome'],baseURL:'http://127.0.0.1:5174'}},
-    {name:'customer-mobile',use:{...devices['Pixel 7'],baseURL:'http://127.0.0.1:5174'}}
+    {name:'customer-mobile',use:{...devices['Pixel 7'],baseURL:'http://127.0.0.1:5174'}},
+    {name:'control-desktop',use:{...devices['Desktop Chrome'],baseURL:'http://127.0.0.1:5176'}},
+    {name:'control-mobile',use:{...devices['Pixel 7'],baseURL:'http://127.0.0.1:5176'}}
   ],
   webServer:[
     {command:'npm run dev:public-site -- --host 127.0.0.1',url:'http://127.0.0.1:5175',reuseExistingServer:!process.env.CI,timeout:120_000,stdout:'pipe',stderr:'pipe'},
-    {command:'npm run dev:customer-app -- --host 127.0.0.1',url:'http://127.0.0.1:5174',reuseExistingServer:!process.env.CI,timeout:120_000,stdout:'pipe',stderr:'pipe'}
+    {command:'npm run dev:customer-app -- --host 127.0.0.1',url:'http://127.0.0.1:5174',reuseExistingServer:!process.env.CI,timeout:120_000,stdout:'pipe',stderr:'pipe'},
+    {command:'npm run dev:platform-admin -- --host 127.0.0.1',url:'http://127.0.0.1:5176',reuseExistingServer:!process.env.CI,timeout:120_000,stdout:'pipe',stderr:'pipe'}
   ]
 })

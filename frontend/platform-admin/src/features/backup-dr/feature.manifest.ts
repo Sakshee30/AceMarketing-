@@ -1,0 +1,1 @@
+export const BackupDrFeatureManifest={key:'backup-dr',label:"Backup & DR",responsibility:"Backup status, restore evidence and declared RPO/RTO.",readOnly:true,sessionAudience:'platform-control'} as const

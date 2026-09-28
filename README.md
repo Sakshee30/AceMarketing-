@@ -6185,3 +6185,13 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Added an explicit frontend evidence register distinguishing automated controls from still-required field performance, long-session memory and assistive-technology evidence.
 - Main CI now runs standalone deployment tests and uploads the generated frontend release evidence artifact.
 - Backend restructuring remains deferred until these frontend release gates have actual passing evidence.
+
+
+### Frontend architecture: privileged platform control boundary — 2026-09-28
+
+- Added the third required frontend composition under `frontend/platform-admin` with an independent Vite build, deployment identity, CSP/cache policy and noindex boundary.
+- Added all architecture-required control-center page ownership areas: overview, capabilities, features, providers, environments, dependencies, infrastructure, deployments, changes, health, observability, security, secrets, costs, backup/DR, drift, audit and emergency.
+- The control frontend is deliberately **read-only** until the backend control API exists. It never fabricates operational state, never reuses customer local-storage/session authority, never exposes plaintext secrets and never exposes arbitrary shell/destructive controls.
+- Missing or unauthorized control API responses render explicit unavailable/forbidden state rather than fake success.
+- Standalone E2E coverage now verifies platform-control isolation on desktop and mobile profiles.
+- Backend restructuring still has not started; the next phase is to finish frontend evidence, then implement the privileged control API contract in the backend phase before enabling any operational write control.

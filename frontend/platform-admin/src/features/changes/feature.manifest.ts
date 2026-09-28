@@ -1,0 +1,1 @@
+export const ChangesFeatureManifest={key:'changes',label:"Changes",responsibility:"Operational change requests, validation, approvals, execution and verification.",readOnly:true,sessionAudience:'platform-control'} as const

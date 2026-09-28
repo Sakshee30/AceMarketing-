@@ -31,7 +31,8 @@ const clientRoots=[
   frontend,
   path.join(root,'website','public-site','src'),
   path.join(root,'packages','design-system','src'),
-  path.join(root,'packages','client-core','src')
+  path.join(root,'packages','client-core','src'),
+  path.join(root,'frontend','platform-admin','src')
 ].filter(fs.existsSync)
 for(const clientRoot of clientRoots)for(const file of walk(clientRoot)){
   const content=fs.readFileSync(file,'utf8')
@@ -401,6 +402,21 @@ if(fs.existsSync(acePlatform)){
     }
   }
 
+  const controlApiPath=path.join(root,'frontend','platform-admin','src','lib','control-api.ts')
+  if(fs.existsSync(controlApiPath)){
+    const controlApiSource=fs.readFileSync(controlApiPath,'utf8')
+    if(controlApiSource.includes('ace_token')||controlApiSource.includes('ace_workspace_id')||controlApiSource.includes('Authorization:')){
+      failures.push('Platform control frontend must not reuse customer token/workspace authority.')
+    }
+  }
+  const controlAppPath=path.join(root,'frontend','platform-admin','src','ControlCenterApp.tsx')
+  if(fs.existsSync(controlAppPath)){
+    const controlAppSource=fs.readFileSync(controlAppPath,'utf8')
+    if(/apply|execute|rollback|delete/i.test(controlAppSource)&&!controlAppSource.includes('Write controls remain intentionally absent')){
+      failures.push('Platform control frontend must remain read-only until control backend write contracts exist.')
+    }
+  }
+
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
@@ -436,6 +452,12 @@ const required=[
   'website/public-site/src/PublicSite.tsx',
   'website/public-site/src/public.ts',
   'packages/design-system/src/Brand.tsx',
+  'frontend/platform-admin/src/main.tsx',
+  'frontend/platform-admin/src/ControlCenterApp.tsx',
+  'frontend/platform-admin/src/features/manifest.ts',
+  'frontend/platform-admin/src/lib/control-api.ts',
+  'vite.platform-admin.config.ts',
+  'deploy/nginx.platform-admin.conf',
   'playwright.standalone.config.ts',
   'playwright.matrix.config.ts',
   'tests/e2e/standalone-frontends.spec.ts',

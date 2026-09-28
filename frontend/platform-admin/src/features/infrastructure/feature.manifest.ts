@@ -1,0 +1,1 @@
+export const InfrastructureFeatureManifest={key:'infrastructure',label:"Infrastructure",responsibility:"Desired and observed resources, ownership and safe lifecycle status.",readOnly:true,sessionAudience:'platform-control'} as const

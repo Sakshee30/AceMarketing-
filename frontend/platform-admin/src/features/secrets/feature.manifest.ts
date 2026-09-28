@@ -1,0 +1,1 @@
+export const SecretsFeatureManifest={key:'secrets',label:"Secrets",responsibility:"Secret metadata, rotation and configuration health; never plaintext values.",readOnly:true,sessionAudience:'platform-control'} as const

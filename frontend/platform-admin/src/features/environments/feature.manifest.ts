@@ -1,0 +1,1 @@
+export const EnvironmentsFeatureManifest={key:'environments',label:"Environments",responsibility:"Development, test, staging, production and recovery scope.",readOnly:true,sessionAudience:'platform-control'} as const

@@ -1,0 +1,1 @@
+export const HealthFeatureManifest={key:'health',label:"Health",responsibility:"Services, workers, queues, dead-letter queues, integrations and partial degradation.",readOnly:true,sessionAudience:'platform-control'} as const

@@ -1,0 +1,1 @@
+export const CapabilitiesFeatureManifest={key:'capabilities',label:"Capabilities",responsibility:"Desired and observed capability state, provider, criticality, fallback and migration risk.",readOnly:true,sessionAudience:'platform-control'} as const
