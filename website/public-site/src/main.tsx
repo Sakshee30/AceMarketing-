@@ -6,6 +6,7 @@ import {applyPublicSeo} from './seo'
 import {installAceTracking} from '../../../packages/client-core/src/tracking'
 import {installFrontendPerformanceMonitoring} from '../../../packages/client-core/src/frontend-performance'
 import {ConsentBanner} from '../../../frontend/src/components/system/ConsentBanner'
+import {SkipLink,AccessibilityRoot} from '../../../packages/design-system/src/Accessibility'
 import '../../../frontend/src/foundation.css'
 import '../../../frontend/src/ace-platform.css'
 
@@ -42,7 +43,7 @@ function PublicSiteApp(){
     window.scrollTo({top:0,behavior:'smooth'})
   }
 
-  return <><PublicSite view={policy.view} navigate={navigate}/><ConsentBanner/></>
+  return <><SkipLink href="#public-main-content"/><AccessibilityRoot id="public-main-content"><PublicSite view={policy.view} navigate={navigate}/></AccessibilityRoot><ConsentBanner/></>
 }
 
 installAceTracking()

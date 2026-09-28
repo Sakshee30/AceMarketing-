@@ -2,6 +2,7 @@ import {useEffect,useMemo,useState} from 'react'
 import {controlPages,type ControlPageKey} from './features/manifest'
 import {controlApi,type ControlReadResult} from './lib/control-api'
 import './control.css'
+import {SkipLink} from '../../../packages/design-system/src/Accessibility'
 
 const keyFromHash=():ControlPageKey=>{
   const raw=(window.location.hash.replace(/^#\/?/,'').split('?')[0]||'overview') as ControlPageKey
@@ -33,14 +34,14 @@ export default function ControlCenterApp(){
     setActive(key)
   }
 
-  return <div className="control-shell">
+  return <><SkipLink href="#control-main-content"/><div className="control-shell">
     <aside className="control-nav">
       <div className="control-brand"><span>ACE</span><b>Platform Control</b><small>Privileged operations</small></div>
       <nav aria-label="Platform control navigation">
-        {controlPages.map(item=><button key={item.key} className={active===item.key?'active':''} onClick={()=>navigate(item.key)}><span>{item.label}</span></button>)}
+        {controlPages.map(item=><button key={item.key} aria-current={active===item.key?'page':undefined} className={active===item.key?'active':''} onClick={()=>navigate(item.key)}><span>{item.label}</span></button>)}
       </nav>
     </aside>
-    <main className="control-main">
+    <main id="control-main-content" tabIndex={-1} className="control-main ace-a11y-root">
       <div className="control-trust-banner"><strong>Separate trust boundary</strong><span>No customer token, workspace local-storage authority, plaintext secrets or arbitrary shell execution.</span></div>
       <section className="control-page" aria-busy={loading?'true':undefined}>
         <header className="control-page-head"><div><span>PLATFORM CONTROL CENTER</span><h1>{page.label}</h1><p>{page.responsibility}</p></div><button type="button" onClick={()=>void refresh()} disabled={loading}>{loading?'Refreshing…':'Refresh observed state'}</button></header>
@@ -51,5 +52,5 @@ export default function ControlCenterApp(){
         <aside className="control-integrity-note"><strong>Read-only frontend phase</strong><p>Write controls remain intentionally absent until backend authorization, impact analysis, approval, orchestration, idempotency, verification and recovery contracts exist.</p></aside>
       </section>
     </main>
-  </div>
+  </div></>
 }

@@ -249,3 +249,47 @@
   .ace-chunk-recovery-actions{width:100%}
   .ace-chunk-recovery-actions button{flex:1}
 }
+
+
+/* Shared WCAG-oriented interaction foundation. */
+.ace-skip-link{
+  position:fixed;
+  z-index:3000;
+  top:8px;
+  left:8px;
+  transform:translateY(-160%);
+  padding:10px 14px;
+  border:2px solid #fff;
+  border-radius:10px;
+  background:#24123a;
+  color:#fff;
+  font:700 14px/1.2 Inter,ui-sans-serif,system-ui,sans-serif;
+  text-decoration:none;
+  box-shadow:0 8px 24px rgba(0,0,0,.22);
+}
+.ace-skip-link:focus{transform:translateY(0)}
+.ace-a11y-root{min-width:0}
+.ace-a11y-root:focus{outline:none}
+.ace-a11y-root :is(a,button,input,select,textarea,[tabindex]):focus-visible{
+  outline:3px solid var(--ace-focus);
+  outline-offset:3px;
+}
+@media (pointer:coarse){
+  .ace-a11y-root :is(button,input,select,textarea,[role="button"]){min-height:44px}
+  .ace-a11y-root a{min-height:44px}
+}
+@media (prefers-reduced-motion:reduce){
+  .ace-a11y-root *, .ace-a11y-root *::before, .ace-a11y-root *::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+    scroll-behavior:auto!important;
+  }
+}
+@media (forced-colors:active){
+  .ace-skip-link,
+  .ace-a11y-root :is(a,button,input,select,textarea,[tabindex]):focus-visible{
+    outline:2px solid CanvasText;
+    outline-offset:3px;
+  }
+}

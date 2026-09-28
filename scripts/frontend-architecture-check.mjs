@@ -424,6 +424,12 @@ if(fs.existsSync(acePlatform)){
     if(/token|password|secret/i.test(perf))failures.push('Frontend performance telemetry must not collect credential-shaped fields.')
   }
 
+  const accessibilityPath=path.join(root,'packages','design-system','src','Accessibility.tsx')
+  if(fs.existsSync(accessibilityPath)){
+    const accessibility=fs.readFileSync(accessibilityPath,'utf8')
+    if(!accessibility.includes('ace-skip-link'))failures.push('Shared accessibility package must preserve the skip-link primitive.')
+  }
+
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
@@ -459,6 +465,7 @@ const required=[
   'website/public-site/src/PublicSite.tsx',
   'website/public-site/src/public.ts',
   'packages/design-system/src/Brand.tsx',
+  'packages/design-system/src/Accessibility.tsx',
   'frontend/platform-admin/src/main.tsx',
   'frontend/platform-admin/src/ControlCenterApp.tsx',
   'frontend/platform-admin/src/features/manifest.ts',

@@ -112,3 +112,20 @@ test('platform control records performance telemetry without exposing secrets',a
   expect(values.length).toBeGreaterThan(0)
   expect(JSON.stringify(values)).not.toMatch(/token|password|secret/i)
 })
+
+
+test('standalone surfaces expose a keyboard skip path to their owned content',async({page},testInfo)=>{
+  const project=testInfo.project.name
+  if(project.startsWith('public-'))await page.goto('/')
+  else if(project.startsWith('customer-'))await page.goto('/#/workspace?tab=Overview')
+  else if(project.startsWith('control-'))await page.goto('/#/overview')
+  else test.skip(true,'standalone surface only')
+
+  const consent=page.getByRole('dialog',{name:'Privacy choices'})
+  if(await consent.isVisible().catch(()=>false))await consent.getByRole('button',{name:'Essential only'}).click()
+
+  await page.keyboard.press('Tab')
+  const skip=page.getByRole('link',{name:'Skip to main content'})
+  await expect(skip).toBeVisible()
+  await expect(skip).toBeFocused()
+})

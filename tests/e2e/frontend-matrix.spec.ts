@@ -30,3 +30,24 @@ test('keyboard-only login controls remain reachable',async({page})=>{
   const focused=page.locator(':focus')
   await expect(focused).toBeVisible()
 })
+
+
+test('skip link and visible focus are available across the compatibility shell',async({page})=>{
+  await page.goto('/#/workspace?tab=Overview')
+  await dismissConsent(page)
+  await page.keyboard.press('Tab')
+  const skip=page.getByRole('link',{name:'Skip to main content'})
+  await expect(skip).toBeVisible()
+  await expect(skip).toBeFocused()
+  await page.keyboard.press('Enter')
+  await expect(page.locator('#ace-main-content')).toBeFocused()
+})
+
+test('reduced-motion preference preserves core customer navigation',async({page})=>{
+  await page.emulateMedia({reducedMotion:'reduce'})
+  await page.goto('/#/workspace?tab=Overview')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:/Acquisition command center/i})).toBeVisible()
+  const duration=await page.locator('.ace-a11y-root').evaluate(el=>getComputedStyle(el.querySelector('button')||el).transitionDuration)
+  expect(duration==='0s'||duration==='0.01ms'||duration==='0.001s').toBeTruthy()
+})

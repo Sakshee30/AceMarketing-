@@ -10,6 +10,7 @@ import {getPublicRuntimeConfig} from '../../packages/client-core/src/runtime-con
 import {installAceTracking} from '../../packages/client-core/src/tracking'
 import {installFrontendPerformanceMonitoring} from '../../packages/client-core/src/frontend-performance'
 import {installBeforeUnloadDirtyWorkGuard} from '../src/lib/dirty-work'
+import {SkipLink,AccessibilityRoot} from '../../packages/design-system/src/Accessibility'
 import '../src/foundation.css'
 import '../src/ace-platform.css'
 
@@ -56,7 +57,8 @@ ReactDOM.createRoot(root).render(
     <FrontendAppBoundary label="AceMarketing customer application">
       <ConnectionStatus/>
       <ChunkRecoveryNotice/>
-      <CustomerApp/>
+      <SkipLink href="#customer-main-content"/>
+      <AccessibilityRoot id="customer-main-content"><CustomerApp/></AccessibilityRoot>
     </FrontendAppBoundary>
   </React.StrictMode>
 )

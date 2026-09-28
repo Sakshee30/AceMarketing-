@@ -9,6 +9,7 @@ import { getPublicRuntimeConfig } from './lib/runtime-config'
 import { installBeforeUnloadDirtyWorkGuard } from './lib/dirty-work'
 import { ConnectionStatus } from './components/system/ConnectionStatus'
 import { ChunkRecoveryNotice } from './components/system/ChunkRecoveryNotice'
+import {SkipLink,AccessibilityRoot} from '../../packages/design-system/src/Accessibility'
 import { installFrontendPerformanceMonitoring } from './lib/frontend-performance'
 
 const DashboardQuickNav=lazy(()=>import('./DashboardQuickNav'))
@@ -36,7 +37,8 @@ ReactDOM.createRoot(root).render(
     <FrontendAppBoundary label="AceMarketing application">
       <ConnectionStatus />
       <ChunkRecoveryNotice />
-      <AcePlatform />
+      <SkipLink href="#ace-main-content"/>
+      <AccessibilityRoot id="ace-main-content"><AcePlatform /></AccessibilityRoot>
       <FrontendWidgetBoundary label="Dashboard navigator">
         <Suspense fallback={null}>
           <DashboardQuickNav />

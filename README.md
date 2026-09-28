@@ -6218,3 +6218,12 @@ As with every release pass, production promotion requires the complete GitHub Ac
 
 - Updated the platform-control container build context to include shared `packages/` after performance instrumentation moved into `packages/client-core`.
 - No UI or product behavior changed; this prevents the isolated control frontend container from failing to resolve its shared client-core import.
+
+
+### Frontend accessibility foundation — 2026-09-28
+
+- Added a shared design-system `SkipLink` and `AccessibilityRoot` and wired them into the compatibility shell, standalone customer app, standalone public site and privileged control app.
+- Added consistent visible focus treatment, coarse-pointer target sizing, reduced-motion handling and forced-colors focus fallback without removing or replacing existing feature UI.
+- Platform-control navigation now exposes the active page through `aria-current`.
+- Added browser-matrix and standalone E2E coverage for keyboard skip navigation and reduced-motion behavior.
+- This is an incremental WCAG 2.2 AA tightening pass; manual VoiceOver/NVDA, zoom/reflow and contrast evidence remain release gates rather than being falsely marked complete.
