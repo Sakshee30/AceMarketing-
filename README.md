@@ -5845,3 +5845,13 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Added explicit loading, retryable backend-error and confirmed test-event success states so readiness failures are not displayed as successful outcomes.
 - Added architecture enforcement preventing the Launchpad implementation from being copied back into the monolith.
 - Implemented directly on `main`; no current feature, backend behavior or pipeline stage was removed.
+
+
+### Frontend architecture: Overview command center — 2026-09-28
+
+- Extracted **Overview / Acquisition command center** into a feature-owned lazy chunk while keeping all existing dashboard behavior and navigation.
+- Preserved dashboard summary, live-sync, funnel, workspace-health, quick-action and recent-activity workflows.
+- Added explicit loading/error/degraded behavior and retry instead of silently swallowing command-center failures.
+- Paused Overview polling while the document is hidden to reduce unnecessary background request pressure at large session counts.
+- Added architecture enforcement so Overview and its funnel panel cannot drift back into the legacy composition.
+- Implemented directly on `main`; no existing feature or backend endpoint was removed.
