@@ -58,6 +58,12 @@ if(fs.existsSync(acePlatform)){
   if(/function\s+Integrations\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Integrations implementation after feature extraction.')
   }
+  if(/function\s+DataFlows\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy DataFlows implementation after feature extraction.')
+  }
+  if(/function\s+Audiences\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Audiences implementation after feature extraction.')
+  }
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
@@ -68,6 +74,14 @@ if(fs.existsSync(acePlatform)){
 
 const required=[
   'frontend/src/features/workspace/manifest.ts',
+  'frontend/src/features/audiences/data/audiences.api.ts',
+  'frontend/src/features/audiences/pages/AudiencesPage.tsx',
+  'frontend/src/features/audiences/public.ts',
+  'frontend/src/features/audiences/feature.manifest.ts',
+  'frontend/src/features/data-flows/data/data-flows.api.ts',
+  'frontend/src/features/data-flows/pages/DataFlowsPage.tsx',
+  'frontend/src/features/data-flows/public.ts',
+  'frontend/src/features/data-flows/feature.manifest.ts',
   'frontend/src/features/integrations/data/integrations.api.ts',
   'frontend/src/features/integrations/pages/IntegrationsPage.tsx',
   'frontend/src/features/integrations/public.ts',
