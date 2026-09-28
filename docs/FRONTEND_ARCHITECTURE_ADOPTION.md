@@ -114,6 +114,14 @@ AceMarketing keeps the current product pipeline and all existing product feature
 - Overlapping dashboard-summary refreshes are prevented inside the navigator.
 - This keeps the existing navigator feature and backend endpoint intact while reducing startup and background request pressure.
 
+### Chunk and release recovery
+- AceMarketing now listens for Vite preload/chunk failures and surfaces a bounded recovery notice instead of automatically reloading.
+- The recovery path explicitly preserves dirty-work protection; reload occurs only after the operator accepts leaving unsaved work.
+- There is no automatic reload loop.
+- CI now verifies that every Vite manifest asset exists and that emitted JavaScript/CSS assets use content-hashed names.
+- Nginx now serves the entry document with no-store/revalidation semantics while Vite's hashed /assets/ files receive a one-year immutable cache policy and missing asset requests return 404 rather than application HTML.
+- Old-asset retention across deployments still depends on deployment strategy and is not claimed complete until release infrastructure preserves the declared open-tab compatibility window.
+
 ### Bundle-budget evidence
 - Vite now emits a build manifest.
 - CI calculates gzip size for each entry and all of its static dependencies.
