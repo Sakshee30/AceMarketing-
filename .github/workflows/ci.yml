@@ -93,6 +93,18 @@ jobs:
           test -f frontend/src/components/system/ConnectionStatus.tsx
           test -f frontend/src/components/system/ChunkRecoveryNotice.tsx
           test -f frontend/src/features/workspace/manifest.ts
+          test -f frontend/src/features/fraud/data/fraud.api.ts
+          test -f frontend/src/features/fraud/pages/FraudPage.tsx
+          test -f frontend/src/features/fraud/public.ts
+          test -f frontend/src/features/fraud/feature.manifest.ts
+          test -f frontend/src/features/reconciliation/data/reconciliation.api.ts
+          test -f frontend/src/features/reconciliation/pages/ReconciliationPage.tsx
+          test -f frontend/src/features/reconciliation/public.ts
+          test -f frontend/src/features/reconciliation/feature.manifest.ts
+          test -f frontend/src/features/match-quality/data/match-quality.api.ts
+          test -f frontend/src/features/match-quality/pages/MatchQualityPage.tsx
+          test -f frontend/src/features/match-quality/public.ts
+          test -f frontend/src/features/match-quality/feature.manifest.ts
           test -f frontend/src/features/diagnostics/data/diagnostics.api.ts
           test -f frontend/src/features/diagnostics/pages/DiagnosticsPage.tsx
           test -f frontend/src/features/diagnostics/public.ts
