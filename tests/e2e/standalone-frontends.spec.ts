@@ -73,3 +73,42 @@ test('platform control exposes required operational page ownership without write
   await expect(page.getByText(/Write controls remain intentionally absent/i)).toBeVisible()
   await expect(page.getByRole('button',{name:/Apply|Execute|Delete|Rollback/i})).toHaveCount(0)
 })
+
+import {expect,test} from '@playwright/test'
+
+const metrics=async(page:any)=>page.evaluate(()=>((window as any).__ACE_FRONTEND_METRICS__||[]))
+
+test('public-site lab metrics stay within declared good thresholds where measurable',async({page},testInfo)=>{
+  test.skip(!testInfo.project.name.startsWith('public-'),'public deployment only')
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  await page.getByRole('heading').first().click().catch(()=>{})
+  await page.waitForTimeout(300)
+  const values:any[]=await metrics(page)
+  const latest=(name:string)=>[...values].reverse().find(item=>item.name===name)
+  const lcp=latest('LCP')
+  const cls=latest('CLS')
+  if(lcp)expect(lcp.value).toBeLessThanOrEqual(4000)
+  if(cls)expect(cls.value).toBeLessThanOrEqual(0.25)
+  expect(values.length).toBeGreaterThan(0)
+})
+
+test('customer app records bounded frontend performance telemetry',async({page},testInfo)=>{
+  test.skip(!testInfo.project.name.startsWith('customer-'),'customer deployment only')
+  await page.goto('/#/workspace?tab=Overview')
+  await page.waitForLoadState('networkidle')
+  await page.waitForTimeout(300)
+  const values:any[]=await metrics(page)
+  expect(values.length).toBeGreaterThan(0)
+  expect(values.length).toBeLessThanOrEqual(200)
+  expect(values.every(item=>['customer-app'].includes(item.surface))).toBeTruthy()
+})
+
+test('platform control records performance telemetry without exposing secrets',async({page},testInfo)=>{
+  test.skip(!testInfo.project.name.startsWith('control-'),'platform control deployment only')
+  await page.goto('/#/overview')
+  await page.waitForTimeout(300)
+  const values:any[]=await metrics(page)
+  expect(values.length).toBeGreaterThan(0)
+  expect(JSON.stringify(values)).not.toMatch(/token|password|secret/i)
+})

@@ -9,6 +9,7 @@ import { getPublicRuntimeConfig } from './lib/runtime-config'
 import { installBeforeUnloadDirtyWorkGuard } from './lib/dirty-work'
 import { ConnectionStatus } from './components/system/ConnectionStatus'
 import { ChunkRecoveryNotice } from './components/system/ChunkRecoveryNotice'
+import { installFrontendPerformanceMonitoring } from './lib/frontend-performance'
 
 const DashboardQuickNav=lazy(()=>import('./DashboardQuickNav'))
 
@@ -27,6 +28,7 @@ try{
 }
 
 installAceTracking()
+installFrontendPerformanceMonitoring('compatibility-shell')
 installBeforeUnloadDirtyWorkGuard()
 
 ReactDOM.createRoot(root).render(

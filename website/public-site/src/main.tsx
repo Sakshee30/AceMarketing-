@@ -4,6 +4,7 @@ import PublicSite,{type PublicSiteView} from './public'
 import {policyForPath} from './route-policy'
 import {applyPublicSeo} from './seo'
 import {installAceTracking} from '../../../packages/client-core/src/tracking'
+import {installFrontendPerformanceMonitoring} from '../../../packages/client-core/src/frontend-performance'
 import {ConsentBanner} from '../../../frontend/src/components/system/ConsentBanner'
 import '../../../frontend/src/foundation.css'
 import '../../../frontend/src/ace-platform.css'
@@ -45,4 +46,5 @@ function PublicSiteApp(){
 }
 
 installAceTracking()
+installFrontendPerformanceMonitoring('public-site')
 ReactDOM.createRoot(root).render(<React.StrictMode><PublicSiteApp/></React.StrictMode>)

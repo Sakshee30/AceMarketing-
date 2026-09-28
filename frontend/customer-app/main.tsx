@@ -8,6 +8,7 @@ import {ChunkRecoveryNotice} from '../src/components/system/ChunkRecoveryNotice'
 import {LoadingState} from '../src/components/system/FrontendStates'
 import {getPublicRuntimeConfig} from '../../packages/client-core/src/runtime-config'
 import {installAceTracking} from '../../packages/client-core/src/tracking'
+import {installFrontendPerformanceMonitoring} from '../../packages/client-core/src/frontend-performance'
 import {installBeforeUnloadDirtyWorkGuard} from '../src/lib/dirty-work'
 import '../src/foundation.css'
 import '../src/ace-platform.css'
@@ -47,6 +48,7 @@ try{
 }
 
 installAceTracking()
+installFrontendPerformanceMonitoring('customer-app')
 installBeforeUnloadDirtyWorkGuard()
 
 ReactDOM.createRoot(root).render(

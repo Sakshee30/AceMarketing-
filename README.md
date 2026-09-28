@@ -6202,3 +6202,13 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Added `frontend/platform-admin` to TypeScript validation.
 - Added the privileged control-app build to generated frontend bundle/release evidence.
 - No product behavior changed; this closes the verification gap introduced by the new third frontend composition.
+
+
+### Frontend performance telemetry + long-session evidence harness — 2026-09-28
+
+- Added reusable client-core performance instrumentation for LCP, CLS, FCP, TTFB, observed interaction latency, long tasks and resource count across compatibility, customer, public and platform-control frontends.
+- Metrics are bounded to the latest 200 observations in memory and contain no customer identifiers, tokens, secrets or business payloads.
+- Added standalone lab regression checks for public/customer/control frontends while keeping field Core Web Vitals explicitly distinct from local lab evidence.
+- Added a scheduled Chromium long-session soak harness that repeatedly exercises customer workspace navigation and samples JS heap/event-listener growth.
+- Added a frontend support/project annex covering browser policy, mobile/touch, keyboard, assistive-technology review, network profiles and performance qualification.
+- Backend code remains untouched; frontend field/assistive-technology evidence is still required before declaring production qualification.

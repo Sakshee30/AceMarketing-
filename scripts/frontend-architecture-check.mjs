@@ -417,6 +417,13 @@ if(fs.existsSync(acePlatform)){
     }
   }
 
+  const perfPath=path.join(root,'packages','client-core','src','frontend-performance.ts')
+  if(fs.existsSync(perfPath)){
+    const perf=fs.readFileSync(perfPath,'utf8')
+    if(!perf.includes("slice(-200)"))failures.push('Frontend performance telemetry must keep a bounded browser buffer.')
+    if(/token|password|secret/i.test(perf))failures.push('Frontend performance telemetry must not collect credential-shaped fields.')
+  }
+
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
@@ -458,6 +465,10 @@ const required=[
   'frontend/platform-admin/src/lib/control-api.ts',
   'vite.platform-admin.config.ts',
   'deploy/nginx.platform-admin.conf',
+  'packages/client-core/src/frontend-performance.ts',
+  'playwright.soak.config.ts',
+  'tests/e2e/frontend-soak.spec.ts',
+  'docs/project-annex/FRONTEND_SUPPORT_MATRIX.md',
   'playwright.standalone.config.ts',
   'playwright.matrix.config.ts',
   'tests/e2e/standalone-frontends.spec.ts',

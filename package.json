@@ -53,7 +53,9 @@
     "preview:platform-admin": "vite preview --config vite.platform-admin.config.ts",
     "frontend:budget:control": "node scripts/frontend-budget.mjs --dist=dist/platform-admin",
     "frontend:release:control": "node scripts/frontend-release-check.mjs --dist=dist/platform-admin",
-    "platform-admin:verify": "npm run check:frontend && npm run build:platform-admin && npm run frontend:budget:control && npm run frontend:release:control"
+    "platform-admin:verify": "npm run check:frontend && npm run build:platform-admin && npm run frontend:budget:control && npm run frontend:release:control",
+    "e2e:soak": "playwright test --config=playwright.soak.config.ts",
+    "frontend:telemetry:check": "playwright test --config=playwright.standalone.config.ts --grep 'performance telemetry|lab metrics'"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
