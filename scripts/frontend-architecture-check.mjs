@@ -475,7 +475,7 @@ if(fs.existsSync(acePlatform)){
   const customerApiPath=path.join(frontend,'lib','api.ts')
   if(fs.existsSync(customerApiPath)){
     const customerApi=fs.readFileSync(customerApiPath,'utf8')
-    if(customerApi.includes("localStorage.getItem('ace_token')")||customerApi.includes("localStorage.setItem('ace_token'"))){
+    if(customerApi.includes("localStorage.getItem('ace_token')")||customerApi.includes("localStorage.setItem('ace_token')")){
       failures.push('Customer API client must not persist bearer credentials in localStorage.')
     }
   }
