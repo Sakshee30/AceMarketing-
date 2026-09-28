@@ -2363,3 +2363,21 @@ test('Events feature chunk preserves conversion rules and accessible builder',as
   await expect(dialog).toHaveCount(0)
   await expect(page).toHaveURL(/#\/workspace\?tab=Events/)
 })
+
+
+test('Deep Links feature chunk preserves routing and accessible builder',async({page})=>{
+  await page.goto('/#/workspace?tab=Deep%20Links')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Deep linking'})).toBeVisible()
+  const response=await page.request.get('/api/deep-links')
+  expect(response.ok()).toBeTruthy()
+  const payload=await response.json()
+  expect(Array.isArray(payload.items)).toBeTruthy()
+  expect(payload.stats).toBeTruthy()
+  await page.getByRole('button',{name:'Create deep link'}).click()
+  const dialog=page.getByRole('dialog',{name:'Create deep link'})
+  await expect(dialog).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Deep%20Links/)
+})
