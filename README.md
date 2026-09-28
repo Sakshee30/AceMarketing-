@@ -6019,3 +6019,12 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Bounded lead and score-driver rendering for large workspaces.
 - Added architecture enforcement and E2E coverage for the extracted feature.
 - Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
+
+
+### Frontend architecture: Behavior feature boundary — 2026-09-28
+
+- Extracted **Website & App Behavior** into a feature-owned lazy chunk while preserving event/source/campaign/device analysis, signal selection, related activity and latest first-party sequence.
+- Added explicit loading/retry states while preserving existing evidence during transient read failures.
+- Bounded high-cardinality behavior collections to protect long-running browser sessions and disabled duplicate refreshes while loading.
+- Added architecture enforcement and E2E coverage for the extracted feature.
+- Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
