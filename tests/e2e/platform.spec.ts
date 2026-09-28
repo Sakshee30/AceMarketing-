@@ -2411,3 +2411,21 @@ test('Fingerprinting feature chunk preserves continuity evidence and accessible 
   await expect(page.getByText('Continuity scenarios',{exact:true})).toBeVisible()
   await expect(page).toHaveURL(/#\/workspace\?tab=Fingerprinting/)
 })
+
+
+test('Live Sync feature chunk preserves activity and accessible alert creation',async({page})=>{
+  await page.goto('/#/workspace?tab=Live%20Sync')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'24×7 event transfer'})).toBeVisible()
+  const response=await page.request.get('/api/live-sync')
+  expect(response.ok()).toBeTruthy()
+  const payload=await response.json()
+  expect(Array.isArray(payload.recent)).toBeTruthy()
+  expect(Array.isArray(payload.destinations)).toBeTruthy()
+  await page.getByRole('button',{name:'Create alert'}).click()
+  const dialog=page.getByRole('dialog',{name:'Create monitoring alert'})
+  await expect(dialog).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Live%20Sync/)
+})
