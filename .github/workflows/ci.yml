@@ -93,6 +93,10 @@ jobs:
           test -f frontend/src/components/system/ConnectionStatus.tsx
           test -f frontend/src/components/system/ChunkRecoveryNotice.tsx
           test -f frontend/src/features/workspace/manifest.ts
+          test -f frontend/src/features/monitoring/data/monitoring.api.ts
+          test -f frontend/src/features/monitoring/pages/MonitoringPage.tsx
+          test -f frontend/src/features/monitoring/public.ts
+          test -f frontend/src/features/monitoring/feature.manifest.ts
           test -f frontend/src/features/approvals/data/approvals.api.ts
           test -f frontend/src/features/approvals/pages/ApprovalPage.tsx
           test -f frontend/src/features/approvals/public.ts
