@@ -289,3 +289,13 @@ A frontend feature is not considered complete because the screen renders. Comple
 - The pipeline builder now uses the shared accessible dialog and participates in the dirty-work registry so route/workspace changes cannot silently discard an open builder.
 - Load failures preserve previously visible AdSync evidence and expose a retryable error state.
 - CI rejects reintroduction of the legacy AdSync implementation into the workspace monolith.
+
+
+### ChatGPT Ads feature extraction and customer-work protection
+- ChatGPT Ads is now a feature-owned lazy chunk instead of an inline workspace implementation.
+- It owns its page, browser data adapter, manifest, public entry point and ownership README.
+- Existing status, validation and conversion-submission APIs, CSS classes, delivery evidence and Delivery Center navigation are preserved.
+- Edited conversion payloads now participate in the shared dirty-work registry so workspace/route changes cannot silently discard customer input.
+- Live submission distinguishes confirmed backend acceptance from timeout/network uncertainty; uncertain outcomes direct the customer to refresh authoritative delivery state before retrying.
+- Load failures preserve already-visible provider and delivery evidence and expose an explicit retry path.
+- CI rejects reintroduction of the legacy ChatGPT Ads implementation into `AcePlatform.tsx`.
