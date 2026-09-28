@@ -363,3 +363,12 @@ A frontend feature is not considered complete because the screen renders. Comple
 - Import writes distinguish confirmed backend success from timeout/network uncertainty; uncertain outcomes require authoritative refresh before retrying the same batch.
 - Recent import rendering is bounded to the newest 100 batches in the browser without changing backend retention.
 - CI rejects reintroduction of the legacy POS & Stores implementation into `AcePlatform.tsx`.
+
+
+### Journeys feature extraction and chronology hardening
+- Journeys is now a feature-owned lazy chunk instead of an inline workspace implementation.
+- Existing source/stage filters, search, lead selection, metadata and stitched chronology are preserved.
+- Journey reads use request sequencing so a slower prior refresh cannot replace newer data.
+- Transient failures preserve previously loaded journey evidence and expose an explicit retry path.
+- Chronology rendering is bounded to the newest 150 records in the browser while backend history remains authoritative.
+- CI rejects reintroduction of the legacy Journeys implementation into `AcePlatform.tsx`.
