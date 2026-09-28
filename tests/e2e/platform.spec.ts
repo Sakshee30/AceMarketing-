@@ -2477,3 +2477,16 @@ test('POS Stores feature chunk preserves offline imports and accessible builder'
   await expect(dialog).toHaveCount(0)
   await expect(page).toHaveURL(/#\/workspace\?tab=POS%20%26%20Stores/)
 })
+
+
+test('Journeys feature chunk preserves stitched chronology and filters',async({page})=>{
+  await page.goto('/#/workspace?tab=Journeys')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Customer journey explorer'})).toBeVisible()
+  const response=await page.request.get('/api/journeys')
+  expect(response.ok()).toBeTruthy()
+  const payload=await response.json()
+  expect(Array.isArray(payload.items)).toBeTruthy()
+  await expect(page.getByLabel('Search journeys')).toBeVisible()
+  await expect(page).toHaveURL(/#\/workspace\?tab=Journeys/)
+})
