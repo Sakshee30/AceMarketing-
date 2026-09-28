@@ -40,6 +40,9 @@ for(const file of walk(frontend)){
 const acePlatform=path.join(frontend,'AcePlatform.tsx')
 if(fs.existsSync(acePlatform)){
   const source=fs.readFileSync(acePlatform,'utf8')
+  if(/function\s+DataHub\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Data Hub implementation after feature extraction.')
+  }
   if(/function\s+LiveSync\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Live Sync implementation after feature extraction.')
   }
@@ -144,6 +147,10 @@ if(fs.existsSync(acePlatform)){
 }
 
 const required=[
+  'frontend/src/features/data-hub/data/data-hub.api.ts',
+  'frontend/src/features/data-hub/pages/DataHubPage.tsx',
+  'frontend/src/features/data-hub/public.ts',
+  'frontend/src/features/data-hub/feature.manifest.ts',
   'frontend/src/features/live-sync/data/live-sync.api.ts',
   'frontend/src/features/live-sync/pages/LiveSyncPage.tsx',
   'frontend/src/features/live-sync/public.ts',
