@@ -27,7 +27,8 @@
     "e2e:desktop": "playwright test --project=chromium-desktop",
     "e2e:mobile": "playwright test --project=chromium-mobile",
     "privacy:retention": "node backend/scripts/privacy-retention.mjs",
-    "security:audit": "npm audit --omit=dev --audit-level=high"
+    "security:audit": "npm audit --omit=dev --audit-level=high",
+    "frontend:budget": "node scripts/frontend-budget.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
