@@ -1357,7 +1357,10 @@ function POSAndStores(){
     currency:row.currency||'INR',
     occurredAt:row.occurred_at,
     gclid:row.gclid||'',
-    fbclid:row.fbclid||''
+    fbclid:row.fbclid||'',
+    msclkid:row.msclkid||'',
+    ttclid:row.ttclid||'',
+    twclid:row.twclid||''
    }
   })
  }
@@ -1369,7 +1372,7 @@ function POSAndStores(){
    setBuilder(false);setNotice('POS batch processed: '+r.matched+' matched, '+r.unmatched+' unmatched from '+r.records+' transaction(s).');await load()
   }catch(err:any){setNotice(err?.message||'POS import failed.')}finally{setBusy(false)}
  }
- const downloadTemplate=()=>{const csv='transaction_id,customer_id,email,phone,net_revenue,currency,occurred_at,gclid,fbclid\nTXN-001,cust_001,,,84000,INR,2026-09-25T10:00:00Z,,\n';const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ace-pos-import-template.csv';a.click();URL.revokeObjectURL(a.href)}
+ const downloadTemplate=()=>{const csv='transaction_id,customer_id,email,phone,net_revenue,currency,occurred_at,gclid,fbclid,msclkid,ttclid,twclid\nTXN-001,cust_001,,,84000,INR,2026-09-25T10:00:00Z,,,,,\n';const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ace-pos-import-template.csv';a.click();URL.revokeObjectURL(a.href)}
  const totals=data.totals||{}
  const matchRate=Number(totals.transactions||0)?Number(totals.matched||0)/Number(totals.transactions||0)*100:null
  return <><PageHead crumb="Offline / POS & Stores" title="POS, walk-in & store-sale attribution" sub="Import transaction-level offline sales and compute match coverage from actual first-party identity reconciliation." action="Import POS batch" onAction={()=>setBuilder(true)}/>
