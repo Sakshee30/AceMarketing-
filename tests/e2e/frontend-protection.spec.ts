@@ -67,3 +67,17 @@ test('audience builder traps focus, closes with Escape, and protects an open dra
   await expect(dialog).toHaveCount(0)
   await expect(page.getByRole('button',{name:/New audience/i})).toBeFocused()
 })
+
+
+test('reports browser offline state without polling or hiding current UI',async({page,context})=>{
+  await page.goto('/#/workspace?tab=Overview')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:/Acquisition command center/i})).toBeVisible()
+  await context.setOffline(true)
+  await page.evaluate(()=>window.dispatchEvent(new Event('offline')))
+  const status=page.getByTestId('connection-status')
+  await expect(status).toBeVisible()
+  await expect(status).toContainText(/appear to be offline/i)
+  await expect(page.getByRole('heading',{name:/Acquisition command center/i})).toBeVisible()
+  await context.setOffline(false)
+})
