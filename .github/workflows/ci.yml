@@ -83,6 +83,13 @@ jobs:
       - name: Verify canonical project structure
         run: |
           test -f frontend/src/AcePlatform.tsx
+          test -f frontend/src/customer-app/CustomerWorkspace.tsx
+          test -f frontend/src/auth/LoginPage.tsx
+          test -f frontend/src/deep-link/DeepLinkResolver.tsx
+          test -f frontend/src/components/system/ConsentBanner.tsx
+          test -f website/public-site/src/PublicSite.tsx
+          test -f website/public-site/src/public.ts
+          test -f packages/design-system/src/Brand.tsx
           test -f frontend/src/lib/api.ts
           test -f frontend/src/lib/runtime-config.ts
           test -f frontend/src/lib/mutation-lifecycle.ts

@@ -27,7 +27,12 @@ const walk=(dir)=>{
 }
 
 const failures=[]
-for(const file of walk(frontend)){
+const clientRoots=[
+  frontend,
+  path.join(root,'website','public-site','src'),
+  path.join(root,'packages','design-system','src')
+].filter(fs.existsSync)
+for(const clientRoot of clientRoots)for(const file of walk(clientRoot)){
   const content=fs.readFileSync(file,'utf8')
   for(const pattern of forbiddenImportPatterns){
     if(pattern.test(content))failures.push(path.relative(root,file)+': forbidden server/backend import '+pattern)

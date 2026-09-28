@@ -6143,3 +6143,11 @@ As with every release pass, production promotion requires the complete GitHub Ac
 
 - Removed duplicate `CustomerWorkspace` and `PublicSite` lazy declarations introduced while slimming the root composition.
 - No feature or route behavior changed; this is a compile-safety repair before continuing frontend completion work.
+
+
+### Frontend verification coverage expansion — 2026-09-28
+
+- TypeScript validation now includes the extracted public website and shared design-system source instead of checking only `frontend/src`.
+- Frontend architecture scanning now covers customer frontend, public website and shared design-system client code for server-only imports and credential patterns.
+- CI canonical-structure verification now asserts the new customer-app, public-site, auth, deep-link, consent and shared-brand boundaries.
+- This closes a verification gap created by the incremental boundary migration without changing product behavior.
