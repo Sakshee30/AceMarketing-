@@ -2381,3 +2381,20 @@ test('Deep Links feature chunk preserves routing and accessible builder',async({
   await expect(dialog).toHaveCount(0)
   await expect(page).toHaveURL(/#\/workspace\?tab=Deep%20Links/)
 })
+
+
+test('Sites feature chunk preserves site operations and accessible dialogs',async({page})=>{
+  await page.goto('/#/workspace?tab=Sites')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Site & pixel operations'})).toBeVisible()
+  const response=await page.request.get('/api/sites')
+  expect(response.ok()).toBeTruthy()
+  const payload=await response.json()
+  expect(Array.isArray(payload.items)).toBeTruthy()
+  await page.getByRole('button',{name:'Add site'}).click()
+  const dialog=page.getByRole('dialog',{name:'Add tracked site'})
+  await expect(dialog).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Sites/)
+})
