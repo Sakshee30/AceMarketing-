@@ -2546,3 +2546,17 @@ test('Enrich feature chunk preserves CRM enrichment and writeback surface',async
   await expect(page.getByRole('button',{name:'Write to HubSpot'})).toBeVisible()
   await expect(page).toHaveURL(/#\/workspace\?tab=Enrich/)
 })
+
+
+test('Lead Grading feature chunk preserves scoring and activation surface',async({page})=>{
+  await page.goto('/#/workspace?tab=Lead%20Grading')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Lead grading'})).toBeVisible()
+  const response=await page.request.get('/api/lead-grading')
+  expect(response.ok()).toBeTruthy()
+  const payload=await response.json()
+  expect(Array.isArray(payload.items)).toBeTruthy()
+  await expect(page.getByText('Manual grade override',{exact:true})).toBeVisible()
+  await expect(page.getByRole('button',{name:'Use grade in activation'})).toBeVisible()
+  await expect(page).toHaveURL(/#\/workspace\?tab=Lead%20Grading/)
+})
