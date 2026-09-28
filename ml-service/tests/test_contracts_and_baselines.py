@@ -1,13 +1,10 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from pydantic import ValidationError
 
 from acemarketing_ml.contracts import ForecastRequest, MetricPoint, PointInTimeRow
 from acemarketing_ml.pipelines import seasonal_naive_forecast
-
-
-UTC = timezone.utc
 
 
 def test_point_in_time_contract_rejects_future_feature():
