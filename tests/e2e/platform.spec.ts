@@ -734,6 +734,29 @@ test.describe('privacy consent runtime',()=>{
 })
 
 
+test('cookie preferences close only after backend-confirmed persistence', async ({ page }) => {
+  await page.goto('/#/')
+  const banner=page.getByRole('dialog',{name:'Cookie preferences'})
+  await expect(banner).toBeVisible()
+
+  await page.route('**/api/consent-preferences',route=>route.fulfill({status:500,contentType:'application/json',body:JSON.stringify({error:'CI forced consent failure'})}))
+  await banner.getByRole('button',{name:'Accept all'}).click()
+  await expect(page.getByRole('alert')).toContainText('CI forced consent failure')
+  await expect(banner).toBeVisible()
+  await page.unroute('**/api/consent-preferences')
+
+  const responsePromise=page.waitForResponse(r=>r.url().includes('/api/consent-preferences')&&r.request().method()==='POST')
+  await banner.getByRole('button',{name:'Accept all'}).click()
+  const response=await responsePromise
+  expect(response.ok()).toBeTruthy()
+  const payload=await response.json()
+  expect(payload.saved).toBeTruthy()
+  expect(payload.preferences.analytics).toBeTruthy()
+  expect(payload.preferences.advertising).toBeTruthy()
+  expect(payload.preferences.functionality).toBeTruthy()
+  await expect(banner).toHaveCount(0)
+})
+
 test('dashboard navigator opens primary operating sections', async ({ page }) => {
   await page.goto('/#/workspace')
   await dismissConsent(page)
