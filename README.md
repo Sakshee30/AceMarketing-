@@ -5710,3 +5710,14 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Added busy/disabled states to prevent duplicate consent submissions while a save is in flight.
 - Added Playwright coverage that forces the consent API to fail, verifies the banner stays open, then confirms a successful retry persists all selected categories before dismissal.
 - Implemented directly on `main`; no separate branch was created.
+
+
+### Monitoring reliability hardening — 2026-09-28
+
+- Replaced silent Monitoring API failures with an explicit, retryable operational error state.
+- Monitoring now loads telemetry and persisted monitoring rules as one backend-confirmed snapshot instead of independently swallowing failures.
+- Added **Refresh monitoring** and a direct **Open Alert Center** action so operators can recover without reloading the whole workspace.
+- Unavailable telemetry now renders as unavailable/unknown instead of misleading zero values or an indefinite loading state.
+- Existing monitoring values are preserved if a refresh fails, preventing a transient API outage from erasing the last visible operational evidence.
+- Added Playwright coverage that forces `GET /api/monitoring` to return 503, verifies the visible failure state, restores the API, refreshes, and confirms recovery.
+- Implemented directly on `main`; no separate branch was created.
