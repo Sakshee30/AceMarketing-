@@ -12,6 +12,7 @@ from .contracts import (
     CausalForestRequest,
     ClassificationTrainRequest,
     ForecastRequest,
+    MeridianFitRequest,
     RankingTrainRequest,
     RegressionTrainRequest,
     SegmentationRequest,
@@ -22,6 +23,7 @@ from .pipelines import (
     causal_forest_estimate,
     chronos2_forecast,
     dependency_capabilities,
+    fit_meridian,
     seasonal_naive_forecast,
     train_classification,
     train_ranker,
@@ -91,6 +93,14 @@ def forecast_chronos_endpoint(request: ForecastRequest):
 def causal_forest_endpoint(request: CausalForestRequest):
     try:
         return causal_forest_estimate(request)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.post("/v1/mmm/meridian", dependencies=[Depends(require_internal_token)])
+def meridian_endpoint(request: MeridianFitRequest):
+    try:
+        return fit_meridian(request)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
