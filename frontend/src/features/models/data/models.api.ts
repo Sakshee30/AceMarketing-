@@ -28,6 +28,8 @@ export type ModelCatalogItem={
   lastRunAt?:string
   lastAverageScore?:number
   lastRowsScored?:number
+  runnable?:boolean
+  blockedReason?:string|null
   governance?:ModelGovernance
 }
 
