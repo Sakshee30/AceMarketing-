@@ -40,6 +40,9 @@ for(const file of walk(frontend)){
 const acePlatform=path.join(frontend,'AcePlatform.tsx')
 if(fs.existsSync(acePlatform)){
   const source=fs.readFileSync(acePlatform,'utf8')
+  if(/function\s+Sites\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Sites implementation after feature extraction.')
+  }
   if(/function\s+DeepLinks\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Deep Links implementation after feature extraction.')
   }
@@ -135,6 +138,10 @@ if(fs.existsSync(acePlatform)){
 }
 
 const required=[
+  'frontend/src/features/sites/data/sites.api.ts',
+  'frontend/src/features/sites/pages/SitesPage.tsx',
+  'frontend/src/features/sites/public.ts',
+  'frontend/src/features/sites/feature.manifest.ts',
   'frontend/src/features/deep-links/data/deep-links.api.ts',
   'frontend/src/features/deep-links/pages/DeepLinksPage.tsx',
   'frontend/src/features/deep-links/public.ts',
