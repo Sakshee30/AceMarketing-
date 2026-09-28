@@ -1074,6 +1074,30 @@ test('native server-side ad connectors persist encrypted workspace credentials',
   const after=await page.request.get('/api/integrations')
   const afterPayload=await after.json()
   expect((afterPayload.items||[]).find((x:any)=>x.name==='TikTok Ads')?.status).toBe('disconnected')
+
+  await search.fill('X')
+  const xCard=page.locator('.integration-app-grid article').filter({has:page.getByText('X',{exact:true})}).first()
+  await expect(xCard).toContainText('Native server-side connector')
+  await xCard.getByRole('button',{name:'Configure'}).click()
+  const xModal=page.locator('.server-secret-connector')
+  await expect(xModal.getByText('Configure X',{exact:true})).toBeVisible()
+  const xToken='ci_x_conversion_token_'+Date.now()
+  await xModal.getByLabel('X Pixel ID').fill('ci_x_pixel_'+testInfo.project.name.replace(/[^a-z0-9]+/gi,'_'))
+  await xModal.getByLabel('Conversion API access token').fill(xToken)
+  await xModal.getByRole('button',{name:'Save & connect'}).click()
+  await expect(page.getByText('X credentials saved securely and connector marked connected.',{exact:true})).toBeVisible()
+  await expect(xCard.getByRole('button',{name:'Manage'})).toBeVisible()
+
+  const xIntegrations=await page.request.get('/api/integrations')
+  const xPayload=await xIntegrations.json()
+  const xItem=(xPayload.items||[]).find((x:any)=>x.name==='X')
+  expect(xItem?.status).toBe('connected')
+  expect(xItem?.authType).toBe('server_secret')
+  expect(JSON.stringify(xPayload)).not.toContain(xToken)
+
+  await xCard.getByRole('button',{name:'Disconnect'}).click()
+  await expect(page.getByText('X disconnected and stored workspace credentials removed.',{exact:true})).toBeVisible()
+  await expect(xCard.getByRole('button',{name:'Configure'})).toBeVisible()
 })
 
 
