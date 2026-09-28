@@ -6256,3 +6256,14 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Added an explicit project annex documenting the current English-copy boundary, UTC transport rule, display locale/timezone behavior and prerequisites for future translated/RTL releases.
 - CI and architecture checks now prevent public-site formatting from drifting back to ad-hoc locale calls.
 - Full multilingual copy is not falsely marked complete; translation-key migration and RTL journey evidence remain future frontend work.
+
+
+### Frontend session-authority hardening — 2026-09-28
+
+- Added `packages/client-core/src/session-authority.ts` as the owned customer-session compatibility boundary.
+- Bearer tokens are no longer read from or written to persistent `localStorage` by the customer API client. They are kept in memory plus tab-scoped `sessionStorage` while the current backend still requires bearer-token compatibility.
+- Existing legacy `ace_token` values are migrated once into tab-scoped session authority and removed from persistent storage, preserving working sessions during the incremental migration.
+- The login remember option now remembers only the email address; it does not persist authentication authority.
+- Logout clears tab-scoped session authority and legacy persistent token state.
+- Added E2E coverage proving legacy-token migration and email-only remembering.
+- This is a frontend compatibility improvement, not the final session architecture. Host-only HttpOnly cookie authority still requires the backend/session phase and is not falsely claimed complete.

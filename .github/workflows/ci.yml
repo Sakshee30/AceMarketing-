@@ -147,6 +147,7 @@ jobs:
           test -f packages/client-core/src/runtime-config.ts
           test -f packages/client-core/src/tracking.ts
           test -f packages/client-core/src/frontend-performance.ts
+          test -f packages/client-core/src/session-authority.ts
           test -f playwright.soak.config.ts
           test -f tests/e2e/frontend-soak.spec.ts
           test -f docs/project-annex/FRONTEND_SUPPORT_MATRIX.md

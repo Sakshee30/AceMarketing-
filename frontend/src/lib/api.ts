@@ -1,8 +1,9 @@
 import {getPublicRuntimeConfig} from './runtime-config'
+import {clearSessionToken,getSessionToken,setSessionToken} from '../../../packages/client-core/src/session-authority'
 
 export type DemoRequest = Record<string, FormDataEntryValue>
 
-const getToken = () => typeof window !== 'undefined' ? window.localStorage.getItem('ace_token') : null
+const getToken = () => getSessionToken()
 const getWorkspace = () => typeof window !== 'undefined' ? (window.localStorage.getItem('ace_workspace_id') || 'ws_default') : 'ws_default'
 
 export class AceApiError extends Error {
@@ -116,7 +117,7 @@ export const api = {
       body: JSON.stringify({ code, workspaceId })
     })
     if (typeof window !== 'undefined') {
-      window.localStorage.setItem('ace_token', result.token)
+      setSessionToken(result.token)
       if (result.workspaceId) window.localStorage.setItem('ace_workspace_id', result.workspaceId)
     }
     return result
@@ -129,14 +130,14 @@ export const api = {
       body: JSON.stringify({ email, password }),
     })
     if (typeof window !== 'undefined') {
-      window.localStorage.setItem('ace_token', result.token)
+      setSessionToken(result.token)
       if (result.workspaceId) window.localStorage.setItem('ace_workspace_id', result.workspaceId)
     }
     return result
   },
   logout: async () => {
     try { await request('/auth/logout', { method: 'POST', body: JSON.stringify({}) }) } catch {}
-    if (typeof window !== 'undefined') window.localStorage.removeItem('ace_token')
+    clearSessionToken()
   },
   pricingRecommendation: (payload: Record<string, unknown>) => request<{ recommended: string[] }>('/pricing/recommend', { method: 'POST', body: JSON.stringify(payload) }),
   submitQuote: (payload: Record<string, unknown>) => request<{ id: string; status: string }>('/pricing/quote', { method: 'POST', body: JSON.stringify(payload) }),

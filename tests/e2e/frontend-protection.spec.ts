@@ -459,3 +459,29 @@ test('auth and deep-link boundaries remain direct-linkable after root-shell slim
   await page.goto('/#/deep/nonexistent-test-link')
   await expect(page.getByRole('heading',{name:'Continue your journey'})).toBeVisible()
 })
+
+
+test('auth migrates legacy persistent token into tab-scoped session authority',async({page})=>{
+  await page.addInitScript(()=>{localStorage.setItem('ace_token','legacy-test-token')})
+  await page.goto('/#/login')
+  await dismissConsent(page)
+  await page.waitForFunction(()=>localStorage.getItem('ace_token')===null)
+  const state=await page.evaluate(()=>({legacy:localStorage.getItem('ace_token'),scoped:sessionStorage.getItem('ace_session_token')}))
+  expect(state.legacy).toBeNull()
+  expect(state.scoped).toBe('legacy-test-token')
+})
+
+test('remember option persists email only and never creates a persistent auth token',async({page})=>{
+  await page.goto('/#/login')
+  await dismissConsent(page)
+  await page.getByLabel('Email').fill('remember@example.com')
+  await page.getByLabel('Remember email').check()
+  await page.route('**/api/auth/login',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({token:'tab-token',user:{email:'remember@example.com',role:'member'},workspaceId:'ws_default',expiresIn:3600})}))
+  await page.getByLabel('Password').fill('example-password')
+  await page.getByRole('button',{name:/Log in/}).click()
+  await page.waitForTimeout(100)
+  const state=await page.evaluate(()=>({persistentToken:localStorage.getItem('ace_token'),rememberedEmail:localStorage.getItem('ace_remembered_email'),sessionToken:sessionStorage.getItem('ace_session_token')}))
+  expect(state.persistentToken).toBeNull()
+  expect(state.rememberedEmail).toBe('remember@example.com')
+  expect(state.sessionToken).toBe('tab-token')
+})

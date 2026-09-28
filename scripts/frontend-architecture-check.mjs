@@ -466,6 +466,20 @@ if(fs.existsSync(acePlatform)){
     }
   }
 
+  const sessionAuthorityPath=path.join(root,'packages','client-core','src','session-authority.ts')
+  if(fs.existsSync(sessionAuthorityPath)){
+    const authority=fs.readFileSync(sessionAuthorityPath,'utf8')
+    if(!authority.includes("sessionTokenKey='ace_session_token'"))failures.push('Customer session authority must keep bearer authority tab-scoped during compatibility migration.')
+    if(!authority.includes('removeItem(legacyPersistentTokenKey)'))failures.push('Legacy persistent bearer tokens must be removed after migration.')
+  }
+  const customerApiPath=path.join(frontend,'lib','api.ts')
+  if(fs.existsSync(customerApiPath)){
+    const customerApi=fs.readFileSync(customerApiPath,'utf8')
+    if(customerApi.includes("localStorage.getItem('ace_token')")||customerApi.includes("localStorage.setItem('ace_token'"))){
+      failures.push('Customer API client must not persist bearer credentials in localStorage.')
+    }
+  }
+
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
@@ -512,6 +526,7 @@ const required=[
   'vite.platform-admin.config.ts',
   'deploy/nginx.platform-admin.conf',
   'packages/client-core/src/frontend-performance.ts',
+  'packages/client-core/src/session-authority.ts',
   'playwright.soak.config.ts',
   'tests/e2e/frontend-soak.spec.ts',
   'docs/project-annex/FRONTEND_SUPPORT_MATRIX.md',
