@@ -64,6 +64,22 @@ services:
         condition: service_completed_successfully
     networks: [ace_internal]
 
+  ml-service:
+    profiles: ["ai"]
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.ml
+    restart: unless-stopped
+    environment:
+      ML_ENV: production
+      ML_SERVICE_AUTH_TOKEN: ${ML_SERVICE_AUTH_TOKEN:-}
+      ML_ARTIFACT_DIR: /var/lib/acemarketing-ml/artifacts
+      ML_ARTIFACT_S3_BUCKET: ${ML_ARTIFACT_S3_BUCKET:-}
+    volumes:
+      - ml_artifacts:/var/lib/acemarketing-ml/artifacts
+    networks: [ace_internal]
+    expose: ["8000"]
+
   web:
     build:
       context: .
@@ -78,6 +94,7 @@ services:
 
 volumes:
   postgres_data:
+  ml_artifacts:
 
 networks:
   ace_internal:
