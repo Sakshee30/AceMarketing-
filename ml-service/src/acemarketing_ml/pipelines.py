@@ -53,7 +53,7 @@ def _frame(rows, feature_names, categorical_features):
 
 
 def _feature_names(rows):
-    names = sorted({str(key) for row in rows for key in row.features.keys()})
+    names = sorted({str(key) for row in rows for key in row.features})
     if not names:
         raise ValueError("no features supplied")
     if len(names) > 500:
@@ -211,7 +211,7 @@ def train_regression(request) -> dict[str, Any]:
         "mae": float(mean_absolute_error(y_test, prediction)),
         "rmse": float(math.sqrt(mean_squared_error(y_test, prediction))),
         "bias": float(residual.mean()),
-        "testRows": int(len(y_test)),
+        "testRows": len(y_test),
     }
     artifact_id = request.run_id or f"{request.task}_{request.horizon}_{uuid4().hex}"
     artifact = ArtifactStore().save_joblib(
