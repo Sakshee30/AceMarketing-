@@ -415,7 +415,7 @@ test.describe('workspace critical flows',()=>{
       variant:'CI VIP offer',
       message:'Welcome back with a personalized experience.',
       cta:'View offer',
-      destination:'/offers/ci',
+      destination:'#/resources?tab=roas',
       priority:999,
       conditions:[],
       requiresPersonalizationConsent:true
@@ -440,7 +440,14 @@ test.describe('workspace critical flows',()=>{
 
     await openWorkspaceTab(page,'Personalization')
     await expect(page.getByRole('heading',{name:'Personalization studio'})).toBeVisible()
-    await expect(page.getByText('CI personalization '+suffix,{exact:true}).first()).toBeVisible()
+    const ruleButton=page.locator('.personalization-list button').filter({hasText:'CI personalization '+suffix}).first()
+    await expect(ruleButton).toBeVisible()
+    await ruleButton.click()
+    const cta=page.getByRole('button',{name:'Open personalization destination: View offer'})
+    await expect(cta).toBeVisible()
+    await cta.click()
+    await expect(page).toHaveURL(/#\/resources\?tab=roas/)
+    await expect(page.getByText('ROAS Calculator',{exact:true})).toBeVisible()
   })
 
   test('real-time activation persists rules and executes on matching consented events',async({page},testInfo)=>{
