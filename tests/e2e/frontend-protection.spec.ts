@@ -192,3 +192,12 @@ test('loads extracted settings feature from its direct workspace route',async({p
   await expect(page.getByRole('heading',{name:'Workspace settings'})).toBeVisible()
   await expect(page.getByText(/Workspace profile/i)).toBeVisible()
 })
+
+
+test('loads extracted compliance feature from its direct workspace route',async({page})=>{
+  await page.goto('/#/workspace?tab=Compliance')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Compliance/)
+  await expect(page.getByRole('heading',{name:'Privacy, consent & compliance center'})).toBeVisible()
+  await expect(page.getByText(/Subject rights operations/i)).toBeVisible()
+})
