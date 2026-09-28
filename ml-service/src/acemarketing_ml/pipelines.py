@@ -564,3 +564,134 @@ def causal_forest_estimate(request) -> dict[str, Any]:
         "warning": "This observational estimate depends on documented no-unmeasured-confounding and overlap assumptions; it is not a randomized experiment.",
         "promotion": {"approved": False, "reason": "Assumption review, sensitivity checks and experiment comparison are required before action."},
     }
+
+
+def fit_meridian(request) -> dict[str, Any]:
+    import tempfile
+    from pathlib import Path
+
+    import numpy as np
+    import xarray as xr
+
+    try:
+        from meridian.data import input_data
+        from meridian.model import model, spec
+    except ImportError as exc:
+        raise ValueError("google-meridian optional dependency is not installed") from exc
+
+    geos = list(request.geos)
+    times = list(request.times)
+    channels = list(request.media_channels)
+    kpi = np.asarray(request.kpi, dtype=float)
+    population = np.asarray(request.population, dtype=float)
+    media = np.asarray(request.media, dtype=float)
+    spend = np.asarray(request.media_spend, dtype=float)
+
+    if kpi.shape != (len(geos), len(times)):
+        raise ValueError("kpi must have shape (n_geos, n_times)")
+    if population.shape != (len(geos),):
+        raise ValueError("population must have shape (n_geos,)")
+    if media.shape != (len(geos), len(times), len(channels)):
+        raise ValueError("media must have shape (n_geos, n_times, n_media_channels)")
+    if spend.shape != (len(channels),):
+        raise ValueError("media_spend must have one aggregate value per media channel")
+    if np.any(kpi < 0) or np.any(population <= 0) or np.any(media < 0) or np.any(spend < 0):
+        raise ValueError("Meridian KPI/media/spend inputs must satisfy non-negative data requirements")
+
+    coords = {"geo": geos, "time": times}
+    kpi_da = xr.DataArray(kpi, dims=("geo", "time"), coords=coords)
+    population_da = xr.DataArray(population, dims=("geo",), coords={"geo": geos})
+    media_da = xr.DataArray(
+        media,
+        dims=("geo", "media_time", "media_channel"),
+        coords={"geo": geos, "media_time": times, "media_channel": channels},
+    )
+    spend_da = xr.DataArray(spend, dims=("media_channel",), coords={"media_channel": channels})
+
+    controls_da = None
+    if request.controls is not None:
+        controls = np.asarray(request.controls, dtype=float)
+        if controls.shape != (len(geos), len(times), len(request.control_names)):
+            raise ValueError("controls must have shape (n_geos, n_times, n_controls)")
+        controls_da = xr.DataArray(
+            controls,
+            dims=("geo", "time", "control_variable"),
+            coords={**coords, "control_variable": request.control_names},
+        )
+
+    data = input_data.InputData(
+        kpi=kpi_da,
+        kpi_type=request.kpi_type,
+        population=population_da,
+        controls=controls_da,
+        media=media_da,
+        media_spend=spend_da,
+        currency_code=request.currency_code,
+    )
+    model_spec = spec.ModelSpec(max_lag=request.max_lag)
+    mmm = model.Meridian(input_data=data, model_spec=model_spec)
+    mmm.sample_prior(request.prior_draws, seed=request.random_seed)
+    mmm.sample_posterior_and_review(
+        n_chains=request.n_chains,
+        n_adapt=request.n_adapt,
+        n_burnin=request.n_burnin,
+        n_keep=request.n_keep,
+        seed=request.random_seed,
+    )
+
+    health = mmm.health_summary
+    health_results = getattr(health, "results", None)
+    overall = getattr(health_results, "overall_status", None)
+    health_status = str(overall) if overall is not None else "unknown"
+    eda = [str(item)[:1500] for item in getattr(mmm, "eda_outcomes", [])]
+
+    artifact_id = request.run_id or f"marketing_mix_{uuid4().hex}"
+    with tempfile.NamedTemporaryFile(prefix="ace-meridian-", suffix=".nc", delete=False) as handle:
+        artifact_path = Path(handle.name)
+    try:
+        mmm.inference_data.to_netcdf(str(artifact_path))
+        artifact = ArtifactStore().save_file(
+            artifact_id,
+            artifact_path,
+            ".nc",
+            {
+                "task": "marketing_mix",
+                "kind": "meridian_inference_data",
+                "geos": len(geos),
+                "times": len(times),
+                "mediaChannels": channels,
+                "currencyCode": request.currency_code,
+                "maxLag": request.max_lag,
+                "nChains": request.n_chains,
+                "nKeep": request.n_keep,
+                "randomSeed": request.random_seed,
+                "healthStatus": health_status,
+            },
+        )
+    finally:
+        artifact_path.unlink(missing_ok=True)
+
+    health_failed = "FAIL" in health_status.upper()
+    return {
+        "task": "marketing_mix",
+        "status": "blocked_by_diagnostics" if health_failed else "evaluated_not_promoted",
+        "artifact": artifact,
+        "healthStatus": health_status,
+        "edaOutcomes": eda,
+        "sampling": {
+            "priorDraws": request.prior_draws,
+            "chains": request.n_chains,
+            "adapt": request.n_adapt,
+            "burnin": request.n_burnin,
+            "keep": request.n_keep,
+        },
+        "promotion": {
+            "approved": False,
+            "reason": (
+                "Meridian health checks failed; scenarios and recommendations are blocked."
+                if health_failed
+                else "Holdout/model-fit review and explicit tenant approval are required before promotion."
+            ),
+        },
+        "warning": "MMM estimates depend on model specification, priors, controls and identification assumptions; attribution is not relabelled as causal incrementality.",
+    }
