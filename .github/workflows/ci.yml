@@ -80,6 +80,7 @@ jobs:
           test -f frontend/src/lib/mutation-lifecycle.ts
           test -f frontend/src/components/system/FrontendFoundation.tsx
           test -f frontend/src/components/system/FrontendStates.tsx
+          test -f frontend/src/features/workspace/manifest.ts
           test -f scripts/frontend-budget.mjs
           test -f backend/src/index.mjs
           test -f backend/src/security.mjs
