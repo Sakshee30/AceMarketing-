@@ -279,3 +279,13 @@ A frontend feature is not considered complete because the screen renders. Comple
 - Background refresh pauses while the browser tab is hidden and resumes when visible, reducing unnecessary polling pressure.
 - The embedded funnel surface now exposes loading and degraded states rather than silently appearing empty on backend failure.
 - CI rejects reintroduction of the legacy Overview/FunnelPanel implementation into the workspace monolith.
+
+
+### AdSync feature extraction and mutation-safety hardening
+- AdSync is now a feature-owned lazy chunk rather than an inline implementation inside `AcePlatform.tsx`.
+- It owns its page, browser data adapter, manifest, public entry point and ownership README.
+- Existing event-rule, tracking and signal-delivery APIs, quick-agent workflows, visual classes and cross-feature navigation are preserved.
+- Pipeline creation, enable/pause and test-event actions now separate confirmed success from timeout/network uncertainty; uncertain outcomes require an authoritative refresh before repetition.
+- The pipeline builder now uses the shared accessible dialog and participates in the dirty-work registry so route/workspace changes cannot silently discard an open builder.
+- Load failures preserve previously visible AdSync evidence and expose a retryable error state.
+- CI rejects reintroduction of the legacy AdSync implementation into the workspace monolith.
