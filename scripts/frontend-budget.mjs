@@ -10,7 +10,8 @@ const mode=String(process.env.FRONTEND_BUDGET_MODE||'report').toLowerCase()
 const limits={
   jsTargetKb:Number(process.env.FRONTEND_JS_TARGET_KB||250),
   jsReviewKb:Number(process.env.FRONTEND_JS_REVIEW_KB||350),
-  cssTargetKb:Number(process.env.FRONTEND_CSS_TARGET_KB||60)
+  cssTargetKb:Number(process.env.FRONTEND_CSS_TARGET_KB||60),
+  featureReviewKb:Number(process.env.FRONTEND_FEATURE_REVIEW_KB||180)
 }
 
 const fail=(message)=>{
@@ -69,3 +70,13 @@ for(const entryKey of entryKeys){
 }
 
 if(strictFailure)fail('Strict frontend bundle budget failed.')
+
+
+for(const [key,item] of Object.entries(manifest)){
+  if(item?.isEntry||!item?.file?.endsWith('.js'))continue
+  const size=gzipKb(item.file)
+  if(size>limits.featureReviewKb){
+    console.warn('[frontend-budget] feature chunk '+key+' is '+size.toFixed(1)+'KiB gzip; review against '+limits.featureReviewKb+'KiB.')
+    if(mode==='strict')strictFailure=true
+  }
+}
