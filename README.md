@@ -5669,3 +5669,13 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - The UI only shows **Demo booked** after the backend confirms persistence; the previous fake-success **Confirm & open product** path was removed.
 - Added Playwright coverage for lead capture → slot selection → booking API response → confirmed UI state.
 - Implemented directly on `main`; no separate branch was created.
+
+
+### Landing demo conversion hardening — 2026-09-28
+
+- Removed the landing-page demo form's fake-success behavior. The UI now shows success only after `POST /api/demo-requests` returns successfully.
+- Backend failures now remain visible to the visitor instead of being swallowed.
+- Successful inline requests expose a **Choose date & time** action that routes into the persisted demo scheduler added in the previous implementation pass.
+- The old placeholder copy saying the flow was merely “ready to connect” to scheduling was removed.
+- Added Playwright coverage for landing-form submission and backend-confirmed success state.
+- Implemented directly on `main`; no additional branch was created.
