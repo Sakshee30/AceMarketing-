@@ -406,15 +406,29 @@ function IntegrationsPublicPage(props:any){
  ]
  const [groups,setGroups]=useState<any[]>(fallback)
  const [query,setQuery]=useState('')
+ const [requestOpen,setRequestOpen]=useState(false)
+ const [requestBusy,setRequestBusy]=useState(false)
+ const [requestNotice,setRequestNotice]=useState('')
  useEffect(()=>{api.publicIntegrations().then((r:any)=>r?.groups&&setGroups(r.groups)).catch(()=>null)},[])
  const shown=groups.map((g:any)=>({...g,items:(g.items||[]).filter((x:string)=>!query.trim()||x.toLowerCase().includes(query.trim().toLowerCase())||String(g.group).toLowerCase().includes(query.trim().toLowerCase()))})).filter((g:any)=>g.items.length)
  const total=groups.reduce((n:number,g:any)=>n+(g.items||[]).length,0)
+ const submitRequest=async(e:any)=>{
+  e.preventDefault();setRequestBusy(true);setRequestNotice('')
+  const fd=new FormData(e.currentTarget)
+  try{
+   const r:any=await api.submitPublicConnectorRequest({connector:String(fd.get('connector')||''),email:String(fd.get('email')||''),company:String(fd.get('company')||''),businessNeed:String(fd.get('businessNeed')||'')})
+   setRequestNotice('Request captured for '+r.connector+'. Our team can follow up using the business email you provided.')
+   e.currentTarget.reset()
+  }catch(err:any){setRequestNotice(err?.message||'Connector request could not be submitted.')}
+  finally{setRequestBusy(false)}
+ }
  return <PublicPageFrame {...props}><main className="public-detail-page">
   <section className="public-detail-hero"><span>INTEGRATIONS</span><h1>Connect the systems your teams already depend on.</h1><p>Use native connectors where available and configurable adapters for the rest, while keeping identity, lifecycle, and revenue fields normalized.</p><button onClick={props.openApp}>Open integration workspace <ArrowRight/></button></section>
   <section className="app-panel public-integration-search"><div><Search/><input aria-label="Search public integrations" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search CRM, warehouse, ads, messaging..."/></div><span>{total}+ catalogued connector paths</span></section>
   <section className="integration-public-groups">{shown.map((g:any,i:number)=><article key={g.group}><div><span>{String(i+1).padStart(2,'0')}</span><h2>{g.group}</h2></div><div>{(g.items||[]).map((x:string)=><button key={x} onClick={props.openApp}><Cable/><span>{x}</span><ChevronRight/></button>)}</div></article>)}</section>
-  {!shown.length&&<section className="public-route-cta"><span>NO MATCH FOUND</span><h2>Request the connector you need or configure a custom adapter.</h2><button onClick={props.openApp}>Open integration workspace</button></section>}
-  <section className="public-route-cta"><span>CUSTOM SYSTEM?</span><h2>Map your own API, webhook, file, warehouse, or database interface.</h2><div className="panel-actions"><button onClick={props.openApp}>Request a connector</button><button onClick={props.openApp}>Build a custom integration</button></div></section>
+  {!shown.length&&<section className="public-route-cta"><span>NO MATCH FOUND</span><h2>Request the connector you need or configure a custom adapter.</h2><button onClick={()=>setRequestOpen(true)}>Request this connector</button></section>}
+  <section className="public-route-cta"><span>CUSTOM SYSTEM?</span><h2>Map your own API, webhook, file, warehouse, or database interface.</h2><div className="panel-actions"><button onClick={()=>setRequestOpen(true)}>Request a connector</button><button onClick={props.openApp}>Build a custom integration</button></div>{requestNotice&&<p className="public-request-notice" role="status">{requestNotice}</p>}</section>
+  {requestOpen&&<div className="connector-modal"><form className="connector-card integration-request-form" onSubmit={submitRequest}><div className="connector-modal-head"><div><Cable/><div><b>Request a connector</b><small>Tell us which system you need. This request is stored by the backend even before you have a workspace.</small></div></div><button type="button" onClick={()=>setRequestOpen(false)}><X/></button></div><label>Connector name<input name="connector" required defaultValue={query} placeholder="ERP, ad platform, warehouse, CRM..."/></label><label>Business email<input name="email" required type="email" placeholder="name@company.com"/></label><label>Company<input name="company" placeholder="Company name"/></label><label>How should the data move?<textarea name="businessNeed" rows={4} placeholder="What data do you need to ingest, enrich, activate, or send?"/></label><button disabled={requestBusy}>{requestBusy?'Submitting…':'Submit connector request'}</button></form></div>}
  </main></PublicPageFrame>
 }
 function DemoPage({back,openApp}:{back:()=>void,openApp:()=>void}){
