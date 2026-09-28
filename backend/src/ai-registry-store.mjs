@@ -251,4 +251,141 @@ export const promoteModel=async({workspaceId,task,actor,evaluationId})=>{
   }
 }
 
+
+export const upsertEvaluationPolicy=async({workspaceId,task,version,thresholds,notes=null,actor=null})=>{
+  if(!pool)throw new Error('DATABASE_URL is required for evaluation policy')
+  const clean=thresholds&&typeof thresholds==='object'&&!Array.isArray(thresholds)?thresholds:{}
+  if(!Object.keys(clean).length)throw new Error('at least one evaluation threshold is required')
+  const client=await pool.connect()
+  try{
+    await client.query('BEGIN')
+    await client.query(
+      `UPDATE ace_ai_evaluation_policies SET active=false
+       WHERE workspace_id=$1 AND task=$2 AND active=true AND version<>$3`,
+      [workspaceId,task,version]
+    )
+    const {rows}=await client.query(
+      `INSERT INTO ace_ai_evaluation_policies
+        (workspace_id,task,version,thresholds,notes,active,created_by)
+       VALUES ($1,$2,$3,$4::jsonb,$5,true,$6)
+       ON CONFLICT (workspace_id,task,version)
+       DO UPDATE SET thresholds=EXCLUDED.thresholds,notes=EXCLUDED.notes,active=true
+       RETURNING *`,
+      [workspaceId,task,version,JSON.stringify(clean),notes,actor?.userId||null]
+    )
+    await client.query('COMMIT')
+    return rows[0]
+  }catch(error){
+    await client.query('ROLLBACK').catch(()=>{})
+    throw error
+  }finally{
+    client.release()
+  }
+}
+
+export const getEvaluationPolicy=async({workspaceId,task})=>{
+  if(!pool)return null
+  const {rows}=await pool.query(
+    `SELECT workspace_id,task,version,thresholds,notes,active,created_by,created_at
+     FROM ace_ai_evaluation_policies
+     WHERE workspace_id=$1 AND task=$2 AND active=true
+     ORDER BY created_at DESC LIMIT 1`,
+    [workspaceId,task]
+  )
+  return rows[0]||null
+}
+
+const thresholdPass=(actual,rule)=>{
+  if(actual===null||actual===undefined||!Number.isFinite(Number(actual)))return {pass:false,reason:'metric missing'}
+  const value=Number(actual)
+  if(typeof rule==='number')return {pass:value>=rule,reason:'minimum '+rule}
+  if(!rule||typeof rule!=='object')return {pass:false,reason:'invalid threshold'}
+  if(rule.min!==undefined&&value<Number(rule.min))return {pass:false,reason:'below minimum '+rule.min}
+  if(rule.max!==undefined&&value>Number(rule.max))return {pass:false,reason:'above maximum '+rule.max}
+  return {pass:true,reason:'within threshold'}
+}
+
+export const qualifyEvaluation=async({workspaceId,evaluationId,actor=null})=>{
+  if(!pool)throw new Error('DATABASE_URL is required for qualification')
+  const client=await pool.connect()
+  try{
+    await client.query('BEGIN')
+    const evalResult=await client.query(
+      `SELECT * FROM ace_ai_evaluations WHERE id=$1 AND workspace_id=$2 FOR UPDATE`,
+      [evaluationId,workspaceId]
+    )
+    const evaluation=evalResult.rows[0]
+    if(!evaluation)throw new Error('evaluation not found')
+    const policyResult=await client.query(
+      `SELECT * FROM ace_ai_evaluation_policies
+       WHERE workspace_id=$1 AND task=$2 AND active=true
+       ORDER BY created_at DESC LIMIT 1 FOR UPDATE`,
+      [workspaceId,evaluation.task]
+    )
+    const policy=policyResult.rows[0]
+    if(!policy)throw new Error('no predeclared active evaluation policy exists for this task')
+    const details={}
+    let qualified=true
+    for(const [metric,rule] of Object.entries(policy.thresholds||{})){
+      const checked=thresholdPass(evaluation.metrics?.[metric],rule)
+      details[metric]={actual:evaluation.metrics?.[metric]??null,rule,...checked}
+      if(!checked.pass)qualified=false
+    }
+    const {rows}=await client.query(
+      `UPDATE ace_ai_evaluations
+       SET thresholds=$3::jsonb,policy_version=$4,qualified=$5,status=$6,
+           qualification_details=$7::jsonb,completed_at=COALESCE(completed_at,now())
+       WHERE id=$1 AND workspace_id=$2
+       RETURNING *`,
+      [
+        evaluationId,workspaceId,JSON.stringify(policy.thresholds||{}),policy.version,qualified,
+        qualified?'qualified':'failed_gate',JSON.stringify(details)
+      ]
+    )
+    await client.query(
+      `UPDATE ace_ai_model_registry
+       SET evaluation_status=$3,evaluation_reference=$4,updated_at=now()
+       WHERE workspace_id=$1 AND task=$2`,
+      [workspaceId,evaluation.task,qualified?'qualified':'failed_gate',evaluationId]
+    )
+    await client.query('COMMIT')
+    return {...rows[0],qualificationActor:actor?.userId||null}
+  }catch(error){
+    await client.query('ROLLBACK').catch(()=>{})
+    throw error
+  }finally{
+    client.release()
+  }
+}
+
+export const rollbackModel=async({workspaceId,task,actor=null})=>{
+  if(!pool)throw new Error('DATABASE_URL is required for rollback')
+  const client=await pool.connect()
+  try{
+    await client.query('BEGIN')
+    const {rows}=await client.query(
+      `SELECT * FROM ace_ai_model_registry WHERE workspace_id=$1 AND task=$2 FOR UPDATE`,
+      [workspaceId,task]
+    )
+    const current=rows[0]
+    if(!current)throw new Error('model registry entry not found')
+    if(!current.rollback_predecessor)throw new Error('no rollback predecessor recorded')
+    const {rows:updated}=await client.query(
+      `UPDATE ace_ai_model_registry
+       SET artifact_revision=$3,approval_status='approved',deployment_status='not_deployed',
+           rollback_predecessor=$4,promoted_by=$5,promoted_at=now(),updated_at=now()
+       WHERE workspace_id=$1 AND task=$2
+       RETURNING *`,
+      [workspaceId,task,current.rollback_predecessor,current.artifact_revision,actor?.userId||null]
+    )
+    await client.query('COMMIT')
+    return updated[0]
+  }catch(error){
+    await client.query('ROLLBACK').catch(()=>{})
+    throw error
+  }finally{
+    client.release()
+  }
+}
+
 export const closeRegistryStore=async()=>{if(pool)await pool.end()}
