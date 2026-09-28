@@ -12,7 +12,7 @@ COPY ml-service/pyproject.toml /app/pyproject.toml
 COPY ml-service/src /app/src
 
 RUN python -m pip install --no-cache-dir --upgrade pip \
-    && python -m pip install --no-cache-dir .
+    && python -m pip install --no-cache-dir ".[objectstore]"
 
 USER ace
 
