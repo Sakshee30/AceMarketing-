@@ -71,6 +71,23 @@ test.describe('public product surface',()=>{
     await expect(page.locator('body')).toContainText(/Google Ads/i)
   })
 
+  test('landing demo form only shows success after backend persistence',async({page},testInfo)=>{
+    const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()+'_'+Date.now()
+    await page.goto('/#/')
+    await dismissConsent(page)
+    const form=page.locator('form.demo-form')
+    await form.getByLabel('Work email').fill('landing+'+suffix+'@example.com')
+    await form.getByLabel('Company').fill('Landing CI Company')
+    await form.getByLabel('Monthly ad spend').selectOption({label:'₹5L – ₹25L'})
+    await form.getByLabel('Primary challenge').selectOption({label:'Attribution'})
+    const responsePromise=page.waitForResponse(r=>r.url().includes('/api/demo-requests')&&r.request().method()==='POST')
+    await form.getByRole('button',{name:/Request demo/}).click()
+    const response=await responsePromise
+    expect(response.status()).toBe(201)
+    await expect(form.getByText('Demo request captured',{exact:true})).toBeVisible()
+    await expect(form.getByRole('button',{name:/Choose date & time/})).toBeVisible()
+  })
+
   test('public demo form persists a selected meeting slot before showing success',async({page},testInfo)=>{
     const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()+'_'+Date.now()
     await page.goto('/#/demo')
