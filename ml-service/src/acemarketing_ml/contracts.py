@@ -126,3 +126,25 @@ class CausalForestRequest(BaseModel):
     estimand: str = Field(min_length=1, max_length=256)
     random_seed: int = 42
     minimum_overlap: float = Field(default=0.05, gt=0, lt=0.5)
+
+
+class MeridianFitRequest(BaseModel):
+    run_id: str | None = Field(default=None, max_length=256)
+    geos: list[str] = Field(min_length=1, max_length=500)
+    times: list[datetime] = Field(min_length=8, max_length=10_000)
+    kpi: list[list[float]]
+    kpi_type: Literal["revenue", "non-revenue"]
+    population: list[float]
+    media_channels: list[str] = Field(min_length=1, max_length=200)
+    media: list[list[list[float]]]
+    media_spend: list[float]
+    control_names: list[str] = Field(default_factory=list, max_length=200)
+    controls: list[list[list[float]]] | None = None
+    currency_code: str | None = Field(default=None, min_length=3, max_length=3)
+    max_lag: int = Field(default=8, ge=0, le=52)
+    prior_draws: int = Field(default=250, ge=50, le=2_000)
+    n_chains: int = Field(default=4, ge=2, le=8)
+    n_adapt: int = Field(default=500, ge=100, le=5_000)
+    n_burnin: int = Field(default=250, ge=50, le=2_500)
+    n_keep: int = Field(default=500, ge=100, le=5_000)
+    random_seed: int = 42
