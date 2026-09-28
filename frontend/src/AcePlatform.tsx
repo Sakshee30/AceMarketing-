@@ -1,5 +1,5 @@
 // @ts-nocheck
-import {Component,Fragment,useEffect,useMemo,useState} from 'react'
+import {Component,Fragment,lazy,Suspense,useEffect,useMemo,useState} from 'react'
 import {createPortal} from 'react-dom'
 import {
   Activity,AlertTriangle,ArrowRight,BarChart3,Bell,BookOpen,Bot,Building2,Cable,CalendarDays,Check,CheckCircle2,ChevronDown,ChevronRight,
@@ -11,14 +11,15 @@ import './ace-platform.css'
 import { api,cancelWorkspaceRequests } from './lib/api'
 import {getLocalConsent,saveLocalConsent} from './lib/tracker'
 import {RouteAnnouncer} from './components/system/FrontendFoundation'
-import {EmptyState,ErrorState,LoadingState,StaleState} from './components/system/FrontendStates'
-import {initialMutationLifecycle,mutationLifecycle} from './lib/mutation-lifecycle'
+import {LoadingState} from './components/system/FrontendStates'
 import {confirmDiscardDirtyWork,useDirtyWork} from './lib/dirty-work'
 import {parseWorkspaceTabFromHash,workspaceFeatureByLabel} from './features/workspace/manifest'
 import {AccessibleDialog} from './components/system/AccessibleDialog'
 
 type View='site'|'app'|'login'|'pricing'|'demo'|'company'|'resources'|'case-studies'|'privacy'|'terms'|'security'|'solutions'|'industries'|'agents-public'|'integrations-public'
 type AppTab='Launchpad'|'Overview'|'AdSync'|'ChatGPT Ads'|'Funnel'|'Leak Monitor'|'Events'|'Adjustments'|'Diagnostics'|'Match Quality'|'Reconciliation'|'Fraud'|'Deep Links'|'Sites'|'Fingerprinting'|'Live Sync'|'Data Hub'|'Customer 360'|'Offline Attribution'|'Matchback'|'POS & Stores'|'Journeys'|'Identity'|'Models'|'Attribution'|'Planner'|'Reports'|'Grouped Performance'|'Executive Briefs'|'Enrich'|'Lead Grading'|'Behavior'|'Feed'|'Agents'|'Routing'|'Follow-ups'|'Calls'|'Meetings'|'Feedback'|'Approvals'|'Ask Ace'|'Integrations'|'Data Flows'|'Real-Time Activation'|'Personalization'|'Exclusions'|'Audiences'|'Delivery'|'Monitoring'|'Alerts'|'Compliance'|'Developers'|'Settings'
+
+const Approvals=lazy(()=>import('./features/approvals/public'))
 
 const agents=[
  ['Meta Advanced CAPI','Return qualified outcomes to Meta server-side with deduplication.','Lead Quality','+25–40% ROAS'],
@@ -2245,78 +2246,6 @@ function Feedback(){
  {requestOpen&&<div className="connector-modal"><form className="connector-card" onSubmit={request}><div className="connector-modal-head"><div><PhoneOutgoing/><div><b>Request feedback</b><small>Queue provider-backed outreach through the agent worker.</small></div></div><button type="button" onClick={()=>setRequestOpen(false)}><X/></button></div><label>Lead reference<input name="lead" required placeholder="lead_123"/></label><div className="two-col"><label>Phone<input name="phone" placeholder="+91..."/></label><label>Email<input name="email" type="email" placeholder="lead@example.com"/></label></div><label>Channel<select name="channel"><option value="voice">Voice</option><option value="whatsapp">WhatsApp</option><option value="email">Email</option></select></label><label>Prompt<textarea name="prompt" rows={3} defaultValue="Please share feedback about your recent interaction."/></label><div className="source-conflict-note"><ShieldCheck/><div><b>Provider-backed execution</b><p>The request is queued as an agent action. Delivery only succeeds when the configured feedback transport/provider is available.</p></div></div><button disabled={busy==='request'}>{busy==='request'?'Queuing…':'Queue feedback request'}</button></form></div>}
  {journeyOpen&&<div className="connector-modal"><div className="connector-card"><div className="connector-modal-head"><div><Network/><div><b>Journey context</b><small>{journeyRecord?.lead||'Feedback respondent'}</small></div></div><button onClick={()=>setJourneyOpen(false)}><X/></button></div>{journeyRecord?<div className="site-detail-grid">{[['Lead',journeyRecord.lead],['Source',journeyRecord.source],['Stage',journeyRecord.stage],['Touchpoints',journeyRecord.touchpoints],['Duration',journeyRecord.duration]].map(x=><div key={x[0]}><span>{x[0]}</span><b>{String(x[1]??'—')}</b></div>)}</div>:<div className="empty-delivery-state"><Network/><div><b>No persisted journey found</b><small>The feedback record exists, but the journey endpoint has no matching lead row.</small></div></div>}</div></div>}</>
 }
-function Approvals(){
- const [items,setItems]=useState<any[]>([])
- const [selected,setSelected]=useState('')
- const [loading,setLoading]=useState(true)
- const [loadError,setLoadError]=useState('')
- const [notice,setNotice]=useState<{kind:'ok'|'error'|'unknown'|'',text:string}>({kind:'',text:''})
- const [decisionState,setDecisionState]=useState(()=>initialMutationLifecycle<any>())
-
- const load=async()=>{
-  setLoading(true)
-  setLoadError('')
-  try{
-   const r:any=await api.approvals()
-   const list=r.items||[]
-   setItems(list)
-   if(list.length)setSelected((x:string)=>x&&list.some((i:any)=>i.id===x)?x:list[0].id)
-   else setSelected('')
-  }catch(e:any){
-   setLoadError(e?.message||'Approval queue could not be loaded. Existing decisions were preserved.')
-  }finally{setLoading(false)}
- }
- useEffect(()=>{load()},[])
-
- const current=items.find(x=>x.id===selected)
- const busy=decisionState.phase==='VALIDATING'||decisionState.phase==='SUBMITTING'
-
- const decide=async(decision:'approved'|'rejected')=>{
-  if(!current||busy)return
-  let lifecycle=mutationLifecycle.validating(decisionState)
-  setDecisionState(lifecycle)
-  setNotice({kind:'',text:''})
-  lifecycle=mutationLifecycle.submitting(lifecycle)
-  setDecisionState(lifecycle)
-  try{
-   const r:any=await api.decideApproval(current.id,decision)
-   const confirmed=String(r?.item?.status||r?.status||'').toLowerCase()
-   if(confirmed!==decision)throw new Error('Backend did not confirm the approval decision.')
-   setDecisionState(mutationLifecycle.confirmed(lifecycle,r))
-   setNotice({kind:'ok',text:decision==='approved'?'Approval confirmed and persisted.':'Rejection confirmed and persisted.'})
-   await load()
-  }catch(e:any){
-   const requestId=e?.requestId||null
-   const cause=String(e?.details?.cause||'')
-   if(cause==='timeout'||cause==='network'){
-    const message='Backend confirmation was not received. The outcome may be unknown. Refresh the approval queue before repeating this decision.'
-    setDecisionState(mutationLifecycle.unknown(lifecycle,message,requestId))
-    setNotice({kind:'unknown',text:message})
-   }else if(Number(e?.status)===409){
-    const message=e?.message||'This approval changed elsewhere. Refresh before deciding again.'
-    setDecisionState(mutationLifecycle.conflict(lifecycle,message,requestId))
-    setNotice({kind:'error',text:message})
-   }else{
-    const message=e?.message||'Approval decision was rejected or could not be confirmed.'
-    setDecisionState(mutationLifecycle.rejected(lifecycle,message,requestId))
-    setNotice({kind:'error',text:message})
-   }
-  }
- }
-
- const pending=items.filter(x=>x.status==='pending').length
- const approved=items.filter(x=>x.status==='approved').length
- const rejected=items.filter(x=>x.status==='rejected').length
- const operationLabel=decisionState.operationId?' Operation '+decisionState.operationId.slice(0,8)+'.':''
-
- return <><PageHead crumb="Governance / Approvals" title="Human approval center" sub="Review sensitive agent actions before customer contact, spend-impacting changes or external mutations." action={loading?'Refreshing…':'Refresh approvals'} onAction={load}/>
- {notice.text&&notice.kind==='unknown'&&<StaleState title="Approval outcome needs reconciliation" description={notice.text+operationLabel} action={{label:'Refresh before retrying',onClick:load}}/>}
- {notice.text&&notice.kind!=='unknown'&&<div className={'delivery-notice '+(notice.kind==='error'?'error':'ok')} role={notice.kind==='error'?'alert':'status'}>{notice.kind==='error'?<ShieldCheck/>:<CheckCircle2/>}<span>{notice.text}</span></div>}
- {loadError&&<ErrorState title="Approval queue could not refresh" description={loadError} action={{label:'Retry refresh',onClick:load}}/>}
- <div className="stats-grid"><Stat label="Pending" value={loading&&!items.length?'—':String(pending)} sub="Awaiting human decision" Icon={CheckCircle2}/><Stat label="Approved" value={loading&&!items.length?'—':String(approved)} sub="Persisted approval decisions" Icon={ShieldCheck}/><Stat label="Rejected" value={loading&&!items.length?'—':String(rejected)} sub="Blocked by human review" Icon={X}/><Stat label="Total requests" value={loading&&!items.length?'—':String(items.length)} sub="Current retained approval history" Icon={Activity}/></div>
- <div className="approval-layout"><div className="app-panel approval-list"><div className="panel-head"><div><h3>Approval queue</h3><p>Persisted agent and automation requests</p></div><button disabled={loading} onClick={load}>{loading?'Refreshing…':'Refresh'}</button></div>{loading&&!items.length?<LoadingState compact title="Loading approval queue" description="Reading persisted human-review requests."/>:items.length?items.map((x:any)=><button key={x.id} className={selected===x.id?'selected':''} onClick={()=>setSelected(x.id)}><ShieldCheck/><div><b>{x.title||x.subject||x.kind}</b><small>{x.kind||x.agent||'Automation'} · {x.risk||'risk not set'}</small></div><span className={String(x.status||'pending').toLowerCase()}>{x.status}</span><ChevronRight/></button>):<EmptyState compact title="No approval requests" description="Sensitive actions that require human approval will appear here."/>}</div>
- <div className="app-panel approval-detail">{current?<><div className="panel-head"><div><h3>{current.title||current.subject||current.kind}</h3><p>{current.detail||current.kind||'Automation request'}</p></div><span className={String(current.status||'pending').toLowerCase()}>{current.status}</span></div><div className="site-detail-grid">{[['Request ID',current.id],['Kind',current.kind||'—'],['Risk',current.risk||'—'],['Agent',current.agentId||current.agent||'—'],['Created',current.createdAt?new Date(current.createdAt).toLocaleString():'—'],['Status',current.status||'pending']].map(x=><div key={x[0]}><span>{x[0]}</span><b>{String(x[1])}</b></div>)}</div>{current.status==='pending'?<div className="approval-actions"><button disabled={busy} onClick={()=>decide('rejected')}>{busy?'Working…':'Reject'}</button><button className="approve" disabled={busy} onClick={()=>decide('approved')}><Check/>{busy?'Working…':'Approve'}</button></div>:<div className={'approval-final '+current.status}><Check/><b>{current.status}</b></div>}</>:<EmptyState compact title="No approval selected" description="Choose a request from the queue to review its authoritative state."/>}</div></div></>
-}
 function AskAce(){
  const starters=['Where is the funnel dropping between lead and revenue?','Which campaign is producing the best-quality leads?','Show the journey for a specific lead or customer','How much matched revenue is currently attributed?','Where is attribution breaking?','Which audience should we suppress?','Are any connectors or activation runs unhealthy?']
  const [messages,setMessages]=useState<any[]>([{role:'assistant',text:'Ask me about journeys, attribution, lead quality, campaign performance, audiences, or signal health. I will only answer from data available in this workspace.',confidence:'grounded'}])
@@ -3367,7 +3296,7 @@ function Product({back}:{back:()=>void}){
  const searchMatches=search.trim()?appTabs.filter(([name])=>name.toLowerCase().includes(search.trim().toLowerCase())).slice(0,8):[]
  const runSearch=(name?:string)=>{const target=(name||searchMatches[0]?.[0]) as AppTab|undefined;if(target&&navigateToTab(target))setSearch('')}
  const currentWorkspace=workspaces.find(x=>x.name===workspace)||workspaces[0]
- const view=useMemo(()=>({Launchpad:<Launchpad/>,Overview:<Overview/>,AdSync:<AdSync/>,"ChatGPT Ads":<ChatGPTAds/>,Funnel:<Funnel/>,"Leak Monitor":<LeakMonitor/>,Events:<Events/>,Adjustments:<Adjustments/>,Diagnostics:<Diagnostics/>,"Match Quality":<MatchQuality/>,Reconciliation:<Reconciliation/>,Fraud:<Fraud/>,"Deep Links":<DeepLinks/>,Sites:<Sites/>,Fingerprinting:<Fingerprinting/>,"Live Sync":<LiveSync/>,"Data Hub":<DataHub/>,"Customer 360":<Customer360/>,"Offline Attribution":<OfflineAttribution/>,Matchback:<Matchback/>,"POS & Stores":<POSAndStores/>,Journeys:<Journeys/>,Identity:<Identity/>,Models:<Models/>,Attribution:<Attribution/>,Planner:<Planner/>,Reports:<Reports/>,"Grouped Performance":<GroupedPerformance/>,"Executive Briefs":<ExecutiveBriefs/>,Enrich:<Enrich/>,"Lead Grading":<LeadGrading/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Routing:<Routing/>,"Follow-ups":<FollowUps/>,Calls:<Calls/>,Meetings:<Meetings/>,Feedback:<Feedback/>,Approvals:<Approvals/>,"Ask Ace":<AskAce/>,Integrations:<Integrations/>,"Data Flows":<DataFlows/>,"Real-Time Activation":<RealTimeActivation/>,Personalization:<Personalization/>,Exclusions:<Exclusions/>,Audiences:<Audiences/>,Delivery:<DeliveryCenter/>,Monitoring:<Monitoring/>,Alerts:<Alerts/>,Compliance:<Compliance/>,Developers:<Developers/>,Settings:<Settings/>}[tab]),[tab,workspaceGeneration])
+ const view=useMemo(()=>({Launchpad:<Launchpad/>,Overview:<Overview/>,AdSync:<AdSync/>,"ChatGPT Ads":<ChatGPTAds/>,Funnel:<Funnel/>,"Leak Monitor":<LeakMonitor/>,Events:<Events/>,Adjustments:<Adjustments/>,Diagnostics:<Diagnostics/>,"Match Quality":<MatchQuality/>,Reconciliation:<Reconciliation/>,Fraud:<Fraud/>,"Deep Links":<DeepLinks/>,Sites:<Sites/>,Fingerprinting:<Fingerprinting/>,"Live Sync":<LiveSync/>,"Data Hub":<DataHub/>,"Customer 360":<Customer360/>,"Offline Attribution":<OfflineAttribution/>,Matchback:<Matchback/>,"POS & Stores":<POSAndStores/>,Journeys:<Journeys/>,Identity:<Identity/>,Models:<Models/>,Attribution:<Attribution/>,Planner:<Planner/>,Reports:<Reports/>,"Grouped Performance":<GroupedPerformance/>,"Executive Briefs":<ExecutiveBriefs/>,Enrich:<Enrich/>,"Lead Grading":<LeadGrading/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Routing:<Routing/>,"Follow-ups":<FollowUps/>,Calls:<Calls/>,Meetings:<Meetings/>,Feedback:<Feedback/>,Approvals:<Suspense fallback={<LoadingState compact title="Loading approvals" description="Loading the approvals feature."/>}><Approvals/></Suspense>,"Ask Ace":<AskAce/>,Integrations:<Integrations/>,"Data Flows":<DataFlows/>,"Real-Time Activation":<RealTimeActivation/>,Personalization:<Personalization/>,Exclusions:<Exclusions/>,Audiences:<Audiences/>,Delivery:<DeliveryCenter/>,Monitoring:<Monitoring/>,Alerts:<Alerts/>,Compliance:<Compliance/>,Developers:<Developers/>,Settings:<Settings/>}[tab]),[tab,workspaceGeneration])
  return <div className={'product '+(mobileNavOpen?'mobile-nav-open':'')}><a className="skip-link" href="#ace-workspace-main">Skip to workspace content</a><RouteAnnouncer label={tab+' · '+workspace} focusSelector=".product-body .page-head h1"/><aside className="product-sidebar" aria-label="Workspace navigation"><Brand/><div className="workspace-wrap"><button className="workspace" onClick={()=>setWorkspaceOpen(!workspaceOpen)}><span>{currentWorkspace?.initials||'AM'}</span><div><b>{workspace}</b><small>{currentWorkspace?.environment||'Production'} workspace</small></div><ChevronDown/></button>{workspaceOpen&&<div className="workspace-menu">{workspaces.map((x:any)=><button key={x.id||x.name} onClick={()=>void chooseWorkspace(x)} className={workspace===x.name?'active':''}><span>{x.initials||String(x.name).split(/\s+/).map((s:string)=>s[0]).join('').slice(0,3)}</span><div><b>{x.name}</b><small>{x.environment||'Production'}</small></div>{workspace===x.name&&<Check/>}</button>)}<button className="new-workspace" onClick={()=>{setWorkspaceOpen(false);setCreateOpen(true)}}><Plus/>Create workspace</button></div>}</div><nav className="product-nav">
  <div className="product-nav-filter"><Search/><input value={navFilter} onChange={e=>setNavFilter(e.target.value)} placeholder="Find feature..."/></div>
  {dashboardSections.map(section=>{
