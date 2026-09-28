@@ -199,3 +199,53 @@
   outline:3px solid var(--ace-focus);
   outline-offset:2px;
 }
+
+
+.ace-chunk-recovery{
+  position:fixed;
+  z-index:1250;
+  left:50%;
+  top:14px;
+  width:min(760px,calc(100vw - 28px));
+  transform:translateX(-50%);
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  padding:14px 16px;
+  border:1px solid rgba(126,34,206,.24);
+  border-radius:14px;
+  background:rgba(250,245,255,.98);
+  color:#2e1065;
+  box-shadow:0 20px 52px rgba(42,20,67,.16);
+  font:500 13px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+.ace-chunk-recovery strong{display:block;font-size:14px}
+.ace-chunk-recovery p{margin:3px 0 5px;color:inherit;opacity:.9}
+.ace-chunk-recovery small{display:block;color:inherit;opacity:.72}
+.ace-chunk-recovery-actions{display:flex;gap:8px;flex:0 0 auto}
+.ace-chunk-recovery button{
+  min-height:36px;
+  border:1px solid rgba(46,16,101,.2);
+  border-radius:9px;
+  background:#fff;
+  color:#2e1065;
+  padding:0 11px;
+  font:inherit;
+  font-weight:700;
+  cursor:pointer;
+}
+.ace-chunk-recovery button:last-child{
+  border-color:#3b0764;
+  background:#3b0764;
+  color:#fff;
+}
+.ace-chunk-recovery button:focus-visible{
+  outline:3px solid var(--ace-focus);
+  outline-offset:2px;
+}
+@media (max-width:640px){
+  .ace-chunk-recovery{top:8px;width:calc(100vw - 16px);flex-direction:column}
+  .ace-chunk-recovery-actions{width:100%}
+  .ace-chunk-recovery-actions button{flex:1}
+}
