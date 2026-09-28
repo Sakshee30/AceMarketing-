@@ -309,7 +309,7 @@ function Marketing({openHome,openApp,openLogin,openPricing,openDemo,openCompany,
    <button onClick={openDemo}>Book a demo <ArrowRight/></button>
   </section>
 
-  <DemoSection openApp={openApp}/>
+  <DemoSection openApp={openApp} openDemo={openDemo}/>
   <PublicFooter openHome={openHome} openApp={openApp} openDemo={openDemo} openCompany={openCompany} openResources={openResources} openSolutions={openSolutions} openIntegrations={openIntegrations}/>
   {cookieOpen&&<div className="cookie-banner"><div><b>Cookie preferences</b><p>Necessary storage is always on. Optional analytics, advertising and functionality categories can be enabled independently.</p><div className="cookie-toggles">{Object.entries(cookiePrefs).map(([k,v])=><label key={k}><input type="checkbox" checked={v} onChange={()=>setCookiePrefs({...cookiePrefs,[k]:!v})}/>{k}</label>)}</div></div><div className="cookie-actions"><button onClick={()=>{setCookiePrefs({analytics:false,advertising:false,functionality:false});setCookieOpen(false)}}>Necessary only</button><button onClick={()=>{setCookiePrefs({analytics:true,advertising:true,functionality:true});setCookieOpen(false)}}>Accept all</button><button className="primary-cookie" onClick={async()=>{await api.saveConsent(cookiePrefs).catch(()=>null);setCookieOpen(false)}}>Save preferences</button></div></div>}
  </div>
@@ -628,12 +628,22 @@ function Pricing({back,openApp,openDemo}:{back:()=>void,openApp:()=>void,openDem
  </div>
 }
 
-function DemoSection({openApp}:{openApp:()=>void}){
- const [sent,setSent]=useState(false); const [sending,setSending]=useState(false)
- const submit=async(e:any)=>{e.preventDefault();setSending(true);const form=new FormData(e.currentTarget);await api.submitDemo(Object.fromEntries(form.entries())).catch(()=>null);setSending(false);setSent(true)}
- return <section className="demo-cta" id="demo"><div className="demo-copy"><span className="kicker">SEE THE PRODUCT FLOW</span><h2>Operate the entire paid funnel from one workspace.</h2><p>Connect → observe → enrich → qualify → activate → attribute → learn.</p><button onClick={openApp}>Open interactive workspace <ArrowRight/></button></div><form className="demo-form" onSubmit={submit}>{sent?<div className="demo-success"><Check/><h3>Demo request captured</h3><p>This frontend flow is ready to connect to your CRM or scheduling backend.</p></div>:<><h3>Book a product walkthrough</h3><label>Work email<input name="email" required type="email" placeholder="name@company.com"/></label><label>Company<input name="company" required placeholder="Company name"/></label><label>Monthly ad spend<select name="monthlyAdSpend" defaultValue=""><option value="" disabled>Select range</option><option>Under ₹5L</option><option>₹5L – ₹25L</option><option>₹25L – ₹1Cr</option><option>₹1Cr+</option></select></label><label>Primary challenge<select name="primaryChallenge" defaultValue=""><option value="" disabled>Select challenge</option><option>Lead quality</option><option>Conversion leakage</option><option>Attribution</option><option>Tracking/data quality</option></select></label><button type="submit" disabled={sending}>{sending?'Sending…':'Request demo'} <ArrowRight/></button></>}</form></section>
+function DemoSection({openApp,openDemo}:{openApp:()=>void,openDemo:()=>void}){
+ const [sent,setSent]=useState(false)
+ const [sending,setSending]=useState(false)
+ const [error,setError]=useState('')
+ const [requestId,setRequestId]=useState('')
+ const submit=async(e:any)=>{
+  e.preventDefault();setSending(true);setError('')
+  const form=new FormData(e.currentTarget)
+  try{
+   const r:any=await api.submitDemo(Object.fromEntries(form.entries()))
+   setRequestId(r.id||'');setSent(true)
+  }catch(err:any){setError(err?.message||'Demo request could not be saved. Please try again.')}
+  finally{setSending(false)}
+ }
+ return <section className="demo-cta" id="demo"><div className="demo-copy"><span className="kicker">SEE THE PRODUCT FLOW</span><h2>Operate the entire paid funnel from one workspace.</h2><p>Connect → observe → enrich → qualify → activate → attribute → learn.</p><button onClick={openApp}>Open interactive workspace <ArrowRight/></button></div><form className="demo-form" onSubmit={submit}>{sent?<div className="demo-success"><Check/><h3>Demo request captured</h3><p>Your request is stored. Continue to scheduling to choose a persisted 45-minute walkthrough slot.</p>{requestId&&<small>Request ID: {requestId}</small>}<button type="button" onClick={openDemo}>Choose date & time <ArrowRight/></button></div>:<><h3>Book a product walkthrough</h3><label>Work email<input name="email" required type="email" placeholder="name@company.com"/></label><label>Company<input name="company" required placeholder="Company name"/></label><label>Monthly ad spend<select name="monthlyAdSpend" defaultValue=""><option value="" disabled>Select range</option><option>Under ₹5L</option><option>₹5L – ₹25L</option><option>₹25L – ₹1Cr</option><option>₹1Cr+</option></select></label><label>Primary challenge<select name="primaryChallenge" defaultValue=""><option value="" disabled>Select challenge</option><option>Lead quality</option><option>Conversion leakage</option><option>Attribution</option><option>Tracking/data quality</option></select></label><button type="submit" disabled={sending}>{sending?'Sending…':'Request demo'} <ArrowRight/></button>{error&&<small className="pricing-error" role="alert">{error}</small>}</>}</form></section>
 }
-
 function Login({back,openApp}:{back:()=>void,openApp:()=>void}){
  const [email,setEmail]=useState('')
  const [password,setPassword]=useState('')
