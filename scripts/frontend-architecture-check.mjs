@@ -40,6 +40,12 @@ for(const file of walk(frontend)){
 const acePlatform=path.join(frontend,'AcePlatform.tsx')
 if(fs.existsSync(acePlatform)){
   const source=fs.readFileSync(acePlatform,'utf8')
+  if(/function\s+Overview\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Overview implementation after feature extraction.')
+  }
+  if(/function\s+FunnelPanel\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Overview FunnelPanel implementation after feature extraction.')
+  }
   if(/function\s+Launchpad\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Launchpad implementation after feature extraction.')
   }
@@ -111,6 +117,10 @@ if(fs.existsSync(acePlatform)){
 }
 
 const required=[
+  'frontend/src/features/overview/data/overview.api.ts',
+  'frontend/src/features/overview/pages/OverviewPage.tsx',
+  'frontend/src/features/overview/public.ts',
+  'frontend/src/features/overview/feature.manifest.ts',
   'frontend/src/features/launchpad/data/launchpad.api.ts',
   'frontend/src/features/launchpad/pages/LaunchpadPage.tsx',
   'frontend/src/features/launchpad/public.ts',
