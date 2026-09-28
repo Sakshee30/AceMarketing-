@@ -260,6 +260,10 @@ export default function ModelsPage(){
               </div>
             }
 
+            {current.runnable===false&&current.blockedReason&&
+              <StaleState title="Specialist route is gated" description={current.blockedReason} compact/>
+            }
+
             {!current.builtIn&&
               <div className="agent-section">
                 <h4>Explainable feature weights</h4>
@@ -268,7 +272,7 @@ export default function ModelsPage(){
             }
             <div className="approval-actions">
               <button onClick={viewValidation} disabled={validationLoading}>View validation</button>
-              <button className="approve" disabled={busy==='run'} onClick={run}><Target/>{busy==='run'?'Running…':'Run scoring snapshot'}</button>
+              <button className="approve" disabled={busy==='run'||current.runnable===false} onClick={run}><Target/>{busy==='run'?'Running…':current.runnable===false?'Task-specific execution':'Run scoring snapshot'}</button>
             </div>
           </>
           :<EmptyState title="No model selected" description="Choose a model from the workspace catalog." compact/>
