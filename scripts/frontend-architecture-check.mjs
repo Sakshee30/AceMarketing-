@@ -488,6 +488,20 @@ if(fs.existsSync(acePlatform)){
     if(!customerWorkspaceQuery.includes('customerQueryKeys.dashboard'))failures.push('Workspace shell remote state must use scope-aware query keys.')
   }
 
+  const workspaceManifestPath=path.join(frontend,'features','workspace','manifest.ts')
+  if(fs.existsSync(workspaceManifestPath)){
+    const workspaceManifest=fs.readFileSync(workspaceManifestPath,'utf8')
+    if(!workspaceManifest.includes('parseWorkspaceIdFromHash')||!workspaceManifest.includes('buildWorkspaceHash')){
+      failures.push('Workspace route contract must own workspace identity parsing and scoped URL construction.')
+    }
+  }
+  const customerScopePath=path.join(frontend,'customer-app','CustomerWorkspace.tsx')
+  if(fs.existsSync(customerScopePath)){
+    const customerScope=fs.readFileSync(customerScopePath,'utf8')
+    if(!customerScope.includes("window.addEventListener('ace-session-state'"))failures.push('Customer query cache must react to session authority changes.')
+    if(!customerScope.includes("buildWorkspaceHash(tab,String(x.id))"))failures.push('Authorized workspace switches must update route-owned workspace identity.')
+  }
+
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')

@@ -6278,3 +6278,14 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Workspace changes cancel old queries, clear old-scope cached data, cancel underlying transport, switch the workspace identity and only then reveal confirmed target data.
 - Existing feature-owned raw reads remain compatible and will migrate incrementally rather than being rewritten in one unsafe commit.
 - Retry policy excludes authentication, authorization, not-found, conflict and validation failures and permits at most two transient read retries.
+
+
+### Route-owned workspace identity + session cache disposal — 2026-09-28
+
+- Added workspace identity to the existing hash route contract through an optional `workspace` parameter while preserving every existing `#/workspace?tab=...` route.
+- Added owned parsing/building helpers in the workspace manifest so navigation and workspace scope share one route contract.
+- Customer startup now resolves the route workspace ID before remote reads and aligns the compatibility workspace header with that route scope.
+- Successful workspace switches update the route only after target data is authoritatively verified; failed switches restore the previous scope.
+- Browser back/forward can request a different persisted workspace and reuses the same guarded workspace-switch flow instead of silently retargeting active mutations.
+- The customer QueryClient now cancels and clears private cache data when session authority becomes anonymous.
+- No customer feature, tab, API call or compatibility route was removed.

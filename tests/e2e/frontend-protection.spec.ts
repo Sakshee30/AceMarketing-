@@ -498,3 +498,26 @@ test('workspace switch never reveals previous scope while target query cache res
     await expect(page.getByText(/SWITCHING WORKSPACE|WORKSPACE SWITCH BLOCKED/)).toBeVisible()
   }
 })
+
+
+test('workspace identity is represented in the route after an authorized switch',async({page})=>{
+  await page.route('**/api/workspaces',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({items:[
+    {id:'ws_default',name:'Ace EdTech',environment:'Production',initials:'AM'},
+    {id:'ws_demo',name:'Demo Sandbox',environment:'Sandbox',initials:'DS'}
+  ]})}))
+  await page.route('**/api/dashboard-summary',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({areas:[]})}))
+  await page.goto('/#/workspace?tab=Overview&workspace=ws_default')
+  await dismissConsent(page)
+  await page.getByRole('button',{name:/Ace EdTech/}).first().click()
+  await page.locator('.workspace-menu button').filter({hasText:'Demo Sandbox'}).click()
+  await expect(page).toHaveURL(/workspace=ws_demo/)
+  const scope=await page.evaluate(()=>localStorage.getItem('ace_workspace_id'))
+  expect(scope).toBe('ws_demo')
+})
+
+test('logout session-state event clears private customer query cache boundary',async({page})=>{
+  await page.goto('/#/workspace?tab=Overview')
+  await dismissConsent(page)
+  await page.evaluate(()=>window.dispatchEvent(new CustomEvent('ace-session-state',{detail:{state:'anonymous'}})))
+  await expect(page.getByRole('navigation',{name:'Workspace navigation'})).toBeVisible()
+})

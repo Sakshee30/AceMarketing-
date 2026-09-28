@@ -127,3 +127,20 @@ export const assertWorkspaceFeatureManifest=()=>{
   }
   return true
 }
+
+
+export const parseWorkspaceIdFromHash=(hash:string)=>{
+  if(!hash.startsWith('#/workspace'))return null
+  const query=hash.split('?')[1]||''
+  const value=new URLSearchParams(query).get('workspace')
+  return value&&value.trim()?value.trim():null
+}
+
+export const buildWorkspaceHash=(label:string,workspaceId?:string|null)=>{
+  const feature=workspaceFeatureByLabel.get(label)
+  if(!feature)return '#/workspace'
+  const params=new URLSearchParams()
+  params.set('tab',feature.label)
+  if(workspaceId)params.set('workspace',workspaceId)
+  return '#/workspace?'+params.toString()
+}

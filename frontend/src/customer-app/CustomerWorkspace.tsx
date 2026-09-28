@@ -12,7 +12,7 @@ import {api,cancelWorkspaceRequests} from '../lib/api'
 import {RouteAnnouncer} from '../components/system/FrontendFoundation'
 import {LoadingState} from '../components/system/FrontendStates'
 import {confirmDiscardDirtyWork} from '../lib/dirty-work'
-import {parseWorkspaceTabFromHash,workspaceFeatureByLabel} from '../features/workspace/manifest'
+import {buildWorkspaceHash,parseWorkspaceIdFromHash,parseWorkspaceTabFromHash,workspaceFeatureByLabel} from '../features/workspace/manifest'
 import {AccessibleDialog} from '../components/system/AccessibleDialog'
 import {getSessionGeneration} from '../../../packages/client-core/src/session-authority'
 import {customerQueryKeys,currentWorkspaceScopeId,customerRetryDelay,shouldRetryCustomerRead} from '../../../packages/client-core/src/query-scope'
@@ -106,10 +106,26 @@ export default function CustomerWorkspace({back}:{back:()=>void}){
   }
  }))
  useEffect(()=>()=>queryClient.clear(),[queryClient])
+ useEffect(()=>{
+  const onSessionState=async(event:any)=>{
+   if(event?.detail?.state!=='anonymous')return
+   await queryClient.cancelQueries()
+   queryClient.clear()
+  }
+  window.addEventListener('ace-session-state',onSessionState as EventListener)
+  return()=>window.removeEventListener('ace-session-state',onSessionState as EventListener)
+ },[queryClient])
  return <QueryClientProvider client={queryClient}><CustomerWorkspaceShell back={back} queryClient={queryClient}/></QueryClientProvider>
 }
 
 function CustomerWorkspaceShell({back,queryClient}:{back:()=>void;queryClient:QueryClient}){
+ const [workspaceScopeId,setWorkspaceScopeId]=useState(()=>{
+  const routed=parseWorkspaceIdFromHash(window.location.hash)
+  const existing=window.localStorage.getItem('ace_workspace_id')||'ws_default'
+  const resolved=routed||existing
+  window.localStorage.setItem('ace_workspace_id',resolved)
+  return resolved
+ })
  const [tab,setTab]=useState<AppTab>(()=>{const routed=parseWorkspaceTabFromHash(window.location.hash) as AppTab|null;const saved=window.localStorage.getItem('ace_active_tab') as AppTab|null;return routed||(saved&&appTabs.some(([name])=>name===saved)?saved:'Overview')})
  const [workspaceOpen,setWorkspaceOpen]=useState(false)
  const [mobileNavOpen,setMobileNavOpen]=useState(false)
@@ -134,8 +150,9 @@ function CustomerWorkspaceShell({back,queryClient}:{back:()=>void;queryClient:Qu
  const syncTabRoute=(next:AppTab,replace=false)=>{
   const feature=workspaceFeatureByLabel.get(next)
   if(!feature)return
-  if(replace)window.history.replaceState(null,'',feature.canonicalHash)
-  else window.history.pushState(null,'',feature.canonicalHash)
+  const scopedHash=buildWorkspaceHash(feature.label,workspaceScopeId)
+  if(replace)window.history.replaceState(null,'',scopedHash)
+  else window.history.pushState(null,'',scopedHash)
  }
  const navigateToTab=(next:AppTab,replace=false)=>{
   if(next===tab){setMobileNavOpen(false);return true}
@@ -175,7 +192,7 @@ function CustomerWorkspaceShell({back,queryClient}:{back:()=>void;queryClient:Qu
  useEffect(()=>{window.localStorage.setItem('ace_nav_sections',JSON.stringify(navOpen))},[navOpen])
  useEffect(()=>{const section=dashboardSections.find(s=>s.tabs.includes(tab as any));if(section&&!navOpen[section.id])setNavOpen(x=>({...x,[section.id]:true}))},[tab])
  useEffect(()=>{const openTab=(event:any)=>{const next=event?.detail as AppTab;if(appTabs.some(([name])=>name===next))navigateToTab(next)};window.addEventListener('ace-app-tab',openTab as EventListener);return()=>window.removeEventListener('ace-app-tab',openTab as EventListener)},[tab])
- useEffect(()=>{const syncFromHistory=()=>{const next=parseWorkspaceTabFromHash(window.location.hash) as AppTab|null;if(!next||next===tab)return;if(confirmDiscardDirtyWork(next))setTab(next);else syncTabRoute(tab,true)};window.addEventListener('popstate',syncFromHistory);window.addEventListener('hashchange',syncFromHistory);return()=>{window.removeEventListener('popstate',syncFromHistory);window.removeEventListener('hashchange',syncFromHistory)}},[tab])
+
  const chooseWorkspace=async(x:any)=>{
   if(!x||x.name===workspace){setWorkspaceOpen(false);return}
   if(!confirmDiscardDirtyWork('workspace '+String(x.name||'')))return
@@ -198,10 +215,12 @@ function CustomerWorkspaceShell({back,queryClient}:{back:()=>void;queryClient:Qu
    })
    setSectionSummary(summary)
    setWorkspace(x.name)
+   setWorkspaceScopeId(String(x.id))
    setWorkspaceGeneration(g=>g+1)
+   window.history.replaceState(null,'',buildWorkspaceHash(tab,String(x.id)))
    setWorkspaceTransition(null)
   }catch(e:any){
-   if(previousId)window.localStorage.setItem('ace_workspace_id',previousId)
+   if(previousId){window.localStorage.setItem('ace_workspace_id',previousId);setWorkspaceScopeId(previousId)}
    else window.localStorage.removeItem('ace_workspace_id')
    queryClient.clear()
    setWorkspaceTransition({state:'error',item:x,message:e?.message||'The target workspace could not be verified. Your previous workspace remains active.'})
@@ -217,6 +236,22 @@ function CustomerWorkspaceShell({back,queryClient}:{back:()=>void;queryClient:Qu
    await chooseWorkspace(item)
   }finally{setWorkspaceBusy(false)}
  }
+ useEffect(()=>{
+  const syncFromHistory=()=>{
+   const nextTab=parseWorkspaceTabFromHash(window.location.hash) as AppTab|null
+   const nextWorkspaceId=parseWorkspaceIdFromHash(window.location.hash)
+   if(nextWorkspaceId&&nextWorkspaceId!==workspaceScopeId){
+    const target=workspaces.find((item:any)=>String(item.id||'')===nextWorkspaceId)
+    if(target){void chooseWorkspace(target);return}
+   }
+   if(!nextTab||nextTab===tab)return
+   if(confirmDiscardDirtyWork(nextTab))setTab(nextTab)
+   else syncTabRoute(tab,true)
+  }
+  window.addEventListener('popstate',syncFromHistory)
+  window.addEventListener('hashchange',syncFromHistory)
+  return()=>{window.removeEventListener('popstate',syncFromHistory);window.removeEventListener('hashchange',syncFromHistory)}
+ },[tab,workspaceScopeId,workspaces])
  const retryWorkspace=()=>workspaceTransition?.item&&chooseWorkspace(workspaceTransition.item)
  const searchMatches=search.trim()?appTabs.filter(([name])=>name.toLowerCase().includes(search.trim().toLowerCase())).slice(0,8):[]
  const runSearch=(name?:string)=>{const target=(name||searchMatches[0]?.[0]) as AppTab|undefined;if(target&&navigateToTab(target))setSearch('')}
