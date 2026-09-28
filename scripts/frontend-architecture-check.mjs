@@ -527,6 +527,12 @@ if(fs.existsSync(acePlatform)){
     if(!overviewManifest.includes('requestBudget'))failures.push('Overview route must declare its request budget.')
   }
 
+  const launchpadManifestPath=path.join(frontend,'features','launchpad','feature.manifest.ts')
+  if(fs.existsSync(launchpadManifestPath)){
+    const launchpadManifest=fs.readFileSync(launchpadManifestPath,'utf8')
+    if(!launchpadManifest.includes('requestBudget'))failures.push('Launchpad route must declare its request budget.')
+  }
+
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')

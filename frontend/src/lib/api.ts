@@ -108,7 +108,7 @@ export const api = {
   publicCaseStudies: () => request('/public/case-studies'),
   publicResources: () => request('/public/resources'),
   publicResourceCenter: () => request('/public/resource-center'),
-  launchpad: () => request('/launchpad'),
+  launchpad: (options?:{signal?:AbortSignal}) => request('/launchpad',{signal:options?.signal}),
   saveLaunchpad: (payload: Record<string, unknown>) => request('/launchpad', { method: 'POST', body: JSON.stringify(payload) }),
   googleLoginStart: () => request('/auth/google/start'),
   googleLoginExchange: async (code: string, workspaceId: string) => {
@@ -216,7 +216,7 @@ export const api = {
   recordAssistedEvent: (payload: Record<string, unknown>) => request('/assisted-events', { method: 'POST', body: JSON.stringify(payload) }),
   posStores: () => request('/pos-stores'),
   importPosBatch: (payload: Record<string, unknown>) => request('/pos-stores/import', { method: 'POST', body: JSON.stringify(payload) }),
-  track: (payload: Record<string, unknown>) => request('/track', { method: 'POST', body: JSON.stringify(payload) }),
+  track: (payload: Record<string, unknown>, options?:{signal?:AbortSignal;operationId?:string}) => request('/track', { method: 'POST', signal:options?.signal, headers:options?.operationId?{'Idempotency-Key':options.operationId}:undefined, body: JSON.stringify(payload) }),
   journeys: () => request('/journeys'),
   customer360: (id?: string) => request('/customer-360'+(id?'?id='+encodeURIComponent(id):'')),
   identity: () => request('/identity'),

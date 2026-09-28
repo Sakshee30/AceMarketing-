@@ -6312,3 +6312,12 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Removed ad-hoc Overview locale formatting and reused the owned localization package for number and date-time presentation.
 - Added E2E coverage proving Overview remains usable when live activity is temporarily unavailable.
 - This is the first complete feature-owned read-path migration pattern; other features remain compatible and will move incrementally rather than through a destructive rewrite.
+
+
+### Launchpad query/mutation contracts — 2026-09-28
+
+- Added a reusable frontend mutation lifecycle primitive with explicit IDLE, VALIDATING, SUBMITTING, CONFIRMED_SUCCESS, CONFIRMED_REJECTION, CONFLICT and OUTCOME_UNKNOWN states.
+- Added feature-owned Launchpad query keys scoped to session and workspace.
+- Launchpad read transport now accepts cancellation signals and the test-event transport accepts a stable operation identifier.
+- The client sends that operation identifier as an idempotency request header. Backend enforcement/status reconciliation remains a backend-phase requirement and is not claimed complete.
+- Launchpad now declares an explicit route request budget.

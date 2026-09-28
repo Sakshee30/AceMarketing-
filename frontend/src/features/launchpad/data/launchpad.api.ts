@@ -1,10 +1,10 @@
 import {api} from '../../../lib/api'
 
 export const launchpadApi={
-  load:()=>api.launchpad(),
-  sendTest:()=>api.track({
+  load:(signal?:AbortSignal)=>api.launchpad({signal}),
+  sendTest:(operationId:string,signal?:AbortSignal)=>api.track({
     event:'launchpad_test',
     source:'launchpad',
-    visitorId:'launchpad_'+Date.now()
-  })
+    visitorId:'launchpad_'+operationId
+  },{signal,operationId})
 }
