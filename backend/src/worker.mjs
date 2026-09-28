@@ -12,6 +12,7 @@ import { closeAiRuntime, executeHostedAiJob } from './ai-runtime.mjs'
 import { ProviderExecutionError } from './ai-providers.mjs'
 import { executeMlJob } from './ml-client.mjs'
 import { closeKnowledge, embedKnowledgeSourceJob, searchKnowledgeJob } from './knowledge.mjs'
+import { closeRegistryStore, recordMlExecution, syncTenantRegistry } from './ai-registry-store.mjs'
 
 if(!queueAvailable()) throw new Error('DATABASE_URL is required for the worker runtime')
 
@@ -39,7 +40,10 @@ const handle=async job=>{
     return searchKnowledgeJob(job)
   }
   if(job.kind==='ml_task'){
-    return executeMlJob(job)
+    await syncTenantRegistry(job.workspace_id)
+    const result=await executeMlJob(job)
+    const lifecycle=await recordMlExecution({workspaceId:job.workspace_id,job,result})
+    return {...result,lifecycle}
   }
   if(job.kind==='ai_hosted_task'){
     return executeHostedAiJob(job)
@@ -200,7 +204,7 @@ const shutdown=async signal=>{
   if(stopping) return
   stopping=true
   console.log(`${signal} received; stopping worker`)
-  await Promise.allSettled([closeQueue(),closeAiRuntime(),closeKnowledge(),closeStore(),closeLeadOps(),closeAudienceScheduler(),closeReportScheduler()])
+  await Promise.allSettled([closeQueue(),closeAiRuntime(),closeKnowledge(),closeRegistryStore(),closeStore(),closeLeadOps(),closeAudienceScheduler(),closeReportScheduler()])
   process.exit(0)
 }
 process.on('SIGTERM',()=>shutdown('SIGTERM'))
