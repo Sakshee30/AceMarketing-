@@ -1,14 +1,15 @@
-import React from 'react'
+import React,{lazy,Suspense} from 'react'
 import ReactDOM from 'react-dom/client'
 import AcePlatform from './AcePlatform'
-import DashboardQuickNav from './DashboardQuickNav'
 import './dashboard-quick-nav.css'
 import './foundation.css'
 import { installAceTracking } from './lib/tracker'
-import { FrontendAppBoundary } from './components/system/FrontendFoundation'
+import { FrontendAppBoundary,FrontendWidgetBoundary } from './components/system/FrontendFoundation'
 import { getPublicRuntimeConfig } from './lib/runtime-config'
 import { installBeforeUnloadDirtyWorkGuard } from './lib/dirty-work'
 import { ConnectionStatus } from './components/system/ConnectionStatus'
+
+const DashboardQuickNav=lazy(()=>import('./DashboardQuickNav'))
 
 const root=document.getElementById('root')
 if(!root)throw new Error('AceMarketing root element is missing.')
@@ -32,7 +33,11 @@ ReactDOM.createRoot(root).render(
     <FrontendAppBoundary label="AceMarketing application">
       <ConnectionStatus />
       <AcePlatform />
-      <DashboardQuickNav />
+      <FrontendWidgetBoundary label="Dashboard navigator">
+        <Suspense fallback={null}>
+          <DashboardQuickNav />
+        </Suspense>
+      </FrontendWidgetBoundary>
     </FrontendAppBoundary>
   </React.StrictMode>
 )
