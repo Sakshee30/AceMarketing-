@@ -140,3 +140,12 @@ test('loads extracted executive briefs feature from its direct workspace route',
   await expect(page.getByRole('heading',{name:'Executive data snippets'})).toBeVisible()
   await expect(page.getByText(/Schedule executive brief/i)).toBeVisible()
 })
+
+
+test('loads extracted integrations feature from its direct workspace route',async({page})=>{
+  await page.goto('/#/workspace?tab=Integrations')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Integrations/)
+  await expect(page.getByRole('heading',{name:'Platform-agnostic connectivity'})).toBeVisible()
+  await expect(page.getByText(/Integration catalog/i)).toBeVisible()
+})
