@@ -5825,3 +5825,14 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Workspace-level summary polling now restarts on the new scope generation.
 - Added Playwright coverage for neutral transition state, stale-content hiding, confirmed remount, title update, and final workspace identity.
 - No existing feature was removed or duplicated; implemented directly on `main`.
+
+
+### Frontend request budgets and cancellation — 2026-09-28
+
+- Tightened the shared browser API transport to follow the uploaded architecture standard without changing existing endpoint behavior.
+- Every frontend request now receives a bounded deadline, internal `AbortController`, and client correlation identifier.
+- Timeout, caller/scope cancellation, network failure, and backend HTTP failure are normalized as distinct transport outcomes instead of one ambiguous error.
+- Workspace switching cancels in-flight old-scope requests before verifying the target workspace, complementing the workspace-generation remount protection.
+- Existing API calls continue through the same `api` facade; no dashboard feature or backend route was removed.
+- The transport returns backend request IDs when available and retains the client request ID for correlation when the request never receives a backend response.
+- Implemented directly on `main`; no separate branch was created.
