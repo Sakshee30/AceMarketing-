@@ -6137,3 +6137,9 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Reduced the root `AcePlatform.tsx` to route composition and recovery orchestration instead of business/public/auth implementations.
 - Extended architecture enforcement and direct-link E2E protection for the new boundaries.
 - No customer-facing capability was removed; backend restructuring remains deferred until frontend release gates are complete.
+
+
+### Frontend repair: root lazy declaration cleanup — 2026-09-28
+
+- Removed duplicate `CustomerWorkspace` and `PublicSite` lazy declarations introduced while slimming the root composition.
+- No feature or route behavior changed; this is a compile-safety repair before continuing frontend completion work.

@@ -10,9 +10,6 @@ const LoginPage=lazy(()=>import('./auth/LoginPage'))
 const DeepLinkResolver=lazy(()=>import('./deep-link/DeepLinkResolver'))
 
 type View='site'|'app'|'login'|'pricing'|'demo'|'company'|'resources'|'case-studies'|'privacy'|'terms'|'security'|'solutions'|'industries'|'agents-public'|'integrations-public'
-
-const CustomerWorkspace=lazy(()=>import('./customer-app/public'))
-const PublicSite=lazy(()=>import('../../website/public-site/src/public'))
 const viewHash:Record<View,string>={
  site:'#/',app:'#/workspace',login:'#/login',pricing:'#/pricing',demo:'#/demo',company:'#/company',resources:'#/resources','case-studies':'#/case-studies',privacy:'#/privacy',terms:'#/terms',security:'#/security',solutions:'#/solutions',industries:'#/industries','agents-public':'#/agents', 'integrations-public':'#/integrations'
 }
