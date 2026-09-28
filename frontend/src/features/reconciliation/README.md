@@ -1,0 +1,1 @@
+Reconciliation owns issue repair, destination delivery comparison, evidence totals and persisted repair history. Existing contracts and route behavior are preserved. Repair commands use explicit confirmed/rejected/conflict/unknown-outcome handling before repeat submission.
