@@ -6345,3 +6345,16 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Approval timestamps now use the owned localization formatter.
 - Added browser tests for lost acknowledgement and idempotency identity.
 - Backend idempotency storage and operation-status reconciliation remain backend-phase work and are not claimed complete.
+
+
+### Integrations canonical state + connector mutation hardening — 2026-09-28
+
+- Migrated the integration workspace's connector catalog, custom-connector list and recent WhatsApp activity into the canonical TanStack Query cache under a session/workspace-scoped feature key.
+- The three existing initial network reads remain intact but now share one owned query lifecycle and real AbortSignal cancellation.
+- Connect, refresh and disconnect actions now use a canonical TanStack mutation boundary and stable client operation IDs sent as idempotency request headers.
+- Network/timeout ambiguity is represented as OUTCOME_UNKNOWN; connector writes are blocked until authoritative integration state is refreshed.
+- Server-secret connection now also sends an operation identity and refreshes the canonical integration query rather than duplicating remote state locally.
+- Existing OAuth redirects, configurable adapters, custom integration builder, WhatsApp operations and connector-request workflows remain available.
+- Replaced connector/request/builder modal wrappers with the shared focus-managed accessible dialog and added explicit request-field length limits.
+- WhatsApp event timestamps now use the owned localization formatter.
+- Backend idempotency enforcement remains a backend-phase requirement and is not claimed complete.

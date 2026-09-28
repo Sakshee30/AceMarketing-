@@ -601,3 +601,33 @@ test('approval decision sends a stable idempotency identity',async({page})=>{
   await expect.poll(()=>idempotency.length).toBeGreaterThan(8)
   await expect(page.getByText(/Approval confirmed and persisted/i)).toBeVisible()
 })
+
+
+test('integration connect keeps dropped acknowledgement as outcome unknown',async({page})=>{
+  await page.route('**/api/integrations',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({items:[{name:'Salesforce',status:'available',authType:'oauth'}],requests:[]})}))
+  await page.route('**/api/custom-integrations',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({items:[]})}))
+  await page.route('**/api/whatsapp/messages',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({items:[]})}))
+  await page.route('**/api/integrations/connect',route=>route.abort('failed'))
+  await page.goto('/#/workspace?tab=Integrations')
+  await dismissConsent(page)
+  await page.getByRole('button',{name:'Connect'}).first().click()
+  await page.getByRole('button',{name:/Continue/}).click()
+  await page.getByRole('button',{name:/Continue/}).click()
+  await page.getByRole('button',{name:/Connect Salesforce/}).click()
+  await expect(page.getByText(/operation outcome is unknown/i)).toBeVisible()
+  await expect(page.getByRole('button',{name:'Refresh authoritative state'})).toBeVisible()
+  await expect(page.getByText(/connected successfully/i)).toHaveCount(0)
+})
+
+test('integration request dialog is focus managed and bounded',async({page})=>{
+  await page.goto('/#/workspace?tab=Integrations')
+  await dismissConsent(page)
+  await page.getByRole('button',{name:'Request connector'}).click()
+  const dialog=page.getByRole('dialog',{name:'Request connector'})
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByLabel('Connector name')).toBeFocused()
+  await expect(dialog.getByLabel('Connector name')).toHaveAttribute('maxlength','120')
+  await expect(dialog.getByLabel('Business need')).toHaveAttribute('maxlength','2000')
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+})

@@ -8,5 +8,12 @@ export const integrationsFeatureManifest={
   authRequired:true,
   workspaceRequired:true,
   permission:'workspace.read',
-  releaseBoundary:'feature-chunk'
+  releaseBoundary:'feature-chunk',
+  requestBudget:{
+    initialRequests:3,
+    expectedPayload:'connector catalog, workspace custom connectors and recent WhatsApp activity',
+    backgroundRefreshSeconds:0,
+    streamSubscriptions:0,
+    maxReadRetries:2
+  }
 } as const

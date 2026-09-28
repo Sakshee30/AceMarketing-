@@ -551,6 +551,20 @@ if(fs.existsSync(acePlatform)){
     if(approvalPage.includes('new Date(current.createdAt).toLocaleString()'))failures.push('Approvals must use the owned localization package for date-time display.')
   }
 
+  const integrationsPagePath=path.join(frontend,'features','integrations','pages','IntegrationsPage.tsx')
+  const integrationsManifestPath=path.join(frontend,'features','integrations','feature.manifest.ts')
+  if(fs.existsSync(integrationsPagePath)){
+    const integrationsPage=fs.readFileSync(integrationsPagePath,'utf8')
+    if(!integrationsPage.includes('useQuery({')||!integrationsPage.includes('useMutation({'))failures.push('Integrations must use canonical query/mutation state for connector workspace operations.')
+    if(!integrationsPage.includes('integrationKeys.workspace()'))failures.push('Integrations must use feature-owned workspace/session query keys.')
+    if(!integrationsPage.includes('Refresh authoritative state'))failures.push('Unknown connector outcomes must reconcile before repeat.')
+    if(integrationsPage.includes('new Date(x.timestamp).toLocaleString()'))failures.push('Integrations must use the owned localization package.')
+  }
+  if(fs.existsSync(integrationsManifestPath)){
+    const integrationsManifest=fs.readFileSync(integrationsManifestPath,'utf8')
+    if(!integrationsManifest.includes('requestBudget'))failures.push('Integrations route must declare its request budget.')
+  }
+
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
