@@ -868,6 +868,29 @@ test('manual integration cards open the custom adapter builder', async ({ page }
 })
 
 
+test('feedback and calls expose backend failures and recover on refresh', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+
+  await page.route('**/api/feedback',route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'CI feedback unavailable'})}))
+  await openWorkspaceTab(page,'Feedback')
+  await expect(page.getByRole('alert')).toContainText('CI feedback unavailable')
+  await page.unroute('**/api/feedback')
+  const feedbackResponse=page.waitForResponse(r=>r.url().includes('/api/feedback')&&r.request().method()==='GET'&&r.status()===200)
+  await page.getByRole('button',{name:'Refresh feedback'}).click()
+  await feedbackResponse
+  await expect(page.getByRole('alert')).toHaveCount(0)
+
+  await page.route('**/api/qualification-calls',route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'CI calls unavailable'})}))
+  await openWorkspaceTab(page,'Calls')
+  await expect(page.getByRole('alert')).toContainText('CI calls unavailable')
+  await page.unroute('**/api/qualification-calls')
+  const callResponse=page.waitForResponse(r=>r.url().includes('/api/qualification-calls')&&r.request().method()==='GET'&&r.status()===200)
+  await page.getByRole('button',{name:'Refresh calls'}).click()
+  await callResponse
+  await expect(page.getByRole('alert')).toHaveCount(0)
+})
+
 test('reports and routing expose backend failures and recover on refresh', async ({ page }) => {
   await page.goto('/#/workspace')
   await dismissConsent(page)
