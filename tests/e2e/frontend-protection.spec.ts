@@ -43,3 +43,27 @@ test('workspace tab route is direct-linkable and dirty settings require explicit
   await expect(page.getByRole('heading',{name:/Monitoring/i})).toBeVisible()
   await expect(page).toHaveURL(/tab=Monitoring/)
 })
+
+
+test('audience builder traps focus, closes with Escape, and protects an open draft',async({page})=>{
+  await page.goto('/#/workspace?tab=Audiences')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Audience management'})).toBeVisible()
+
+  await page.getByRole('button',{name:/New audience/i}).click()
+  const dialog=page.getByRole('dialog',{name:'Audience Builder'})
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByLabel('Audience name')).toBeFocused()
+
+  page.once('dialog',async confirm=>{
+    expect(confirm.type()).toBe('confirm')
+    expect(confirm.message()).toContain('unsaved work')
+    await confirm.dismiss()
+  })
+  await page.getByRole('button',{name:'Open monitoring center'}).click()
+  await expect(dialog).toBeVisible()
+
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+  await expect(page.getByRole('button',{name:/New audience/i})).toBeFocused()
+})
