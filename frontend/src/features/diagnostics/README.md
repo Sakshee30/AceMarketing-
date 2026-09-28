@@ -1,0 +1,1 @@
+Diagnostics owns current workspace data-quality checks, scans, replay admission and configuration guidance. Existing endpoints, CSS classes and direct route are preserved. Replay/scan ambiguity is surfaced as an unknown outcome and configuration guidance uses the accessible dialog primitive.
