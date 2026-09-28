@@ -40,6 +40,9 @@ for(const file of walk(frontend)){
 const acePlatform=path.join(frontend,'AcePlatform.tsx')
 if(fs.existsSync(acePlatform)){
   const source=fs.readFileSync(acePlatform,'utf8')
+  if(/function\s+DeepLinks\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Deep Links implementation after feature extraction.')
+  }
   if(/function\s+Events\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Events implementation after feature extraction.')
   }
@@ -132,6 +135,10 @@ if(fs.existsSync(acePlatform)){
 }
 
 const required=[
+  'frontend/src/features/deep-links/data/deep-links.api.ts',
+  'frontend/src/features/deep-links/pages/DeepLinksPage.tsx',
+  'frontend/src/features/deep-links/public.ts',
+  'frontend/src/features/deep-links/feature.manifest.ts',
   'frontend/src/features/events/data/events.api.ts',
   'frontend/src/features/events/pages/EventsPage.tsx',
   'frontend/src/features/events/public.ts',
