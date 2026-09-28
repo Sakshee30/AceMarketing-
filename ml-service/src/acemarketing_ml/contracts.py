@@ -108,3 +108,22 @@ class CapabilityResponse(BaseModel):
     approved: bool = False
     deployed: bool = False
     reason: str | None = None
+
+
+class CausalRow(BaseModel):
+    entity_id: str = Field(min_length=1, max_length=256)
+    treatment: float
+    outcome: float
+    covariates: dict[str, float]
+    group_id: str | None = Field(default=None, max_length=256)
+    observed_at: datetime
+
+
+class CausalForestRequest(BaseModel):
+    run_id: str | None = Field(default=None, max_length=256)
+    rows: list[CausalRow] = Field(min_length=100, max_length=250_000)
+    treatment_name: str = Field(min_length=1, max_length=128)
+    outcome_name: str = Field(min_length=1, max_length=128)
+    estimand: str = Field(min_length=1, max_length=256)
+    random_seed: int = 42
+    minimum_overlap: float = Field(default=0.05, gt=0, lt=0.5)
