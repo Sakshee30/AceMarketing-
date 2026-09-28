@@ -6321,3 +6321,13 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Launchpad read transport now accepts cancellation signals and the test-event transport accepts a stable operation identifier.
 - The client sends that operation identifier as an idempotency request header. Backend enforcement/status reconciliation remains a backend-phase requirement and is not claimed complete.
 - Launchpad now declares an explicit route request budget.
+
+
+### Golden write-path migration: Launchpad test event — 2026-09-28
+
+- Migrated Launchpad readiness into the canonical TanStack Query cache and its feature-owned query key.
+- Migrated the Launchpad test-event write to TanStack Query mutation state without removing the existing test-event capability.
+- The test event now has explicit confirmed-success, confirmed-rejection, conflict and outcome-unknown presentation.
+- A timeout or network interruption blocks accidental resend and requires an authoritative readiness refresh before the action becomes available again.
+- The existing backend remains authoritative; client idempotency headers are a compatibility contract only until backend enforcement and operation-status reconciliation are implemented.
+- Added E2E coverage that deliberately drops the test-event request and verifies that success is never fabricated.

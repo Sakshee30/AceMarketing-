@@ -533,6 +533,15 @@ if(fs.existsSync(acePlatform)){
     if(!launchpadManifest.includes('requestBudget'))failures.push('Launchpad route must declare its request budget.')
   }
 
+  const launchpadPagePath=path.join(frontend,'features','launchpad','pages','LaunchpadPage.tsx')
+  if(fs.existsSync(launchpadPagePath)){
+    const launchpadPage=fs.readFileSync(launchpadPagePath,'utf8')
+    if(!launchpadPage.includes('useQuery({')||!launchpadPage.includes('useMutation({'))failures.push('Launchpad golden feature must use canonical query and mutation state.')
+    if(!launchpadPage.includes("phase:'OUTCOME_UNKNOWN'"))failures.push('Launchpad write must preserve explicit outcome-unknown reconciliation.')
+    if(!launchpadPage.includes('Refresh authoritative evidence'))failures.push('Unknown Launchpad writes must reconcile before repeat.')
+    if(launchpadPage.includes('useEffect('))failures.push('Launchpad must not keep a second manual remote-data lifecycle.')
+  }
+
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')

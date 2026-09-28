@@ -559,3 +559,18 @@ test('overview server state is query-backed and survives a transient live-activi
   await expect(page.getByText(/Live activity is temporarily unavailable/i)).toBeVisible()
   await expect(page.getByText('WORKSPACE READINESS')).toBeVisible()
 })
+
+
+test('launchpad write keeps timeout or network ambiguity as outcome unknown',async({page})=>{
+  await page.route('**/api/track',route=>route.abort('failed'))
+  await page.goto('/#/workspace?tab=Launchpad')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Launchpad'})).toBeVisible()
+  const button=page.getByRole('button',{name:'Send test event'})
+  if(await button.count()){
+    await button.click()
+    await expect(page.getByText(/operation outcome is unknown/i)).toBeVisible()
+    await expect(page.getByRole('button',{name:'Refresh authoritative evidence'})).toBeVisible()
+    await expect(page.getByText(/Test event accepted/i)).toHaveCount(0)
+  }
+})

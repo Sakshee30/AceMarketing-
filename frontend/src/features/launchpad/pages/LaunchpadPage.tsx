@@ -1,53 +1,45 @@
-import {useEffect,useState} from 'react'
+import {useState} from 'react'
+import {useMutation,useQuery,useQueryClient} from '@tanstack/react-query'
 import {ArrowRight,Check,CheckCircle2,ChevronRight,Sparkles,WandSparkles,Zap} from 'lucide-react'
 import {launchpadApi} from '../data/launchpad.api'
+import {launchpadKeys} from '../data/launchpad.keys'
+import {classifyMutationFailure,type MutationLifecycle} from '../../../../../packages/client-core/src/mutation-lifecycle'
 import {ErrorState,LoadingState} from '../../../components/system/FrontendStates'
 
 function LaunchpadPageHead({
-  crumb,
-  title,
-  sub,
-  action,
-  onAction
-}:{
-  crumb:string
-  title:string
-  sub:string
-  action?:string
-  onAction?:()=>void
-}){
+  crumb,title,sub,action,onAction
+}:{crumb:string;title:string;sub:string;action?:string;onAction?:()=>void}){
   return <div className="page-head">
-    <div>
-      <span>{crumb}</span>
-      <h1 tabIndex={-1}>{title}</h1>
-      <p>{sub}</p>
-    </div>
+    <div><span>{crumb}</span><h1 tabIndex={-1}>{title}</h1><p>{sub}</p></div>
     {action&&<button className="app-primary" onClick={onAction}><Sparkles/>{action}</button>}
   </div>
 }
 
 export default function LaunchpadPage(){
-  const [data,setData]=useState<any>({steps:[],readiness:0,evidence:{}})
+  const queryClient=useQueryClient()
   const [active,setActive]=useState(0)
-  const [busy,setBusy]=useState('')
-  const [loading,setLoading]=useState(true)
-  const [notice,setNotice]=useState<{kind:'ok'|'error'|'',text:string}>({kind:'',text:''})
+  const [mutationState,setMutationState]=useState<{phase:MutationLifecycle;text:string;requestId?:string}>({phase:'IDLE',text:''})
 
-  const load=async()=>{
-    setLoading(true)
-    try{
-      const response:any=await launchpadApi.load()
-      setData(response)
-      setNotice(current=>current.kind==='error'?{kind:'',text:''}:current)
-    }catch(error:any){
-      setNotice({kind:'error',text:error?.message||'Launchpad could not be loaded. Existing readiness evidence was preserved.'})
-    }finally{
-      setLoading(false)
+  const readinessQuery=useQuery({
+    queryKey:launchpadKeys.readiness(),
+    queryFn:({signal})=>launchpadApi.load(signal),
+    staleTime:30_000,
+    refetchOnWindowFocus:true
+  })
+
+  const testMutation=useMutation({
+    mutationFn:({operationId}:{operationId:string})=>launchpadApi.sendTest(operationId),
+    onSuccess:async(result:any)=>{
+      setMutationState({phase:'CONFIRMED_SUCCESS',text:'Test event accepted: '+(result?.eventId||'ok')})
+      await queryClient.invalidateQueries({queryKey:launchpadKeys.root()})
+    },
+    onError:(error:any)=>{
+      const classified=classifyMutationFailure(error,'Test event failed. No successful delivery is being claimed.')
+      setMutationState({phase:classified.phase,text:classified.message,requestId:classified.requestId})
     }
-  }
+  })
 
-  useEffect(()=>{void load()},[])
-
+  const data:any=readinessQuery.data||{steps:[],readiness:0,evidence:{}}
   const steps=(data.steps||[]) as any[]
   const safeActive=Math.min(active,Math.max(steps.length-1,0))
   const current=steps[safeActive]||steps[0]
@@ -57,21 +49,22 @@ export default function LaunchpadPage(){
     setActive(next>=0?next:0)
   }
 
-  const sendTest=async()=>{
-    setBusy('test')
-    setNotice({kind:'',text:''})
-    try{
-      const result:any=await launchpadApi.sendTest()
-      setNotice({kind:'ok',text:'Test event accepted: '+(result.eventId||'ok')})
-      await load()
-    }catch(error:any){
-      setNotice({kind:'error',text:error?.message||'Test event failed. No successful delivery is being claimed.'})
-    }finally{
-      setBusy('')
-    }
+  const sendTest=()=>{
+    const operationId=globalThis.crypto?.randomUUID?.()||('launchpad_'+Date.now()+'_'+Math.random().toString(36).slice(2))
+    setMutationState({phase:'VALIDATING',text:'Validating test event…'})
+    setMutationState({phase:'SUBMITTING',text:'Submitting test event…'})
+    testMutation.mutate({operationId})
+  }
+
+  const reconcileUnknown=async()=>{
+    await readinessQuery.refetch()
+    setMutationState(currentState=>currentState.phase==='OUTCOME_UNKNOWN'
+      ?{phase:'IDLE',text:'Readiness evidence refreshed. Resend only if the authoritative state confirms the original test did not complete.'}
+      :currentState)
   }
 
   const evidence=data.evidence||{}
+  const loading=readinessQuery.isPending||readinessQuery.isFetching
 
   return <>
     <LaunchpadPageHead
@@ -82,25 +75,33 @@ export default function LaunchpadPage(){
       onAction={runReadiness}
     />
 
-    {loading&&!steps.length&&
-      <LoadingState
-        title="Loading workspace readiness"
-        description="Reading backend-confirmed launchpad evidence for the active workspace."
-      />
-    }
+    {loading&&!steps.length&&<LoadingState title="Loading workspace readiness" description="Reading backend-confirmed launchpad evidence for the active workspace."/>}
 
-    {notice.text&&notice.kind==='error'&&
+    {readinessQuery.isError&&
       <ErrorState
-        title="Launchpad evidence unavailable"
-        description={notice.text}
-        action={{label:'Retry launchpad',onClick:load}}
+        title={readinessQuery.data?'Launchpad is showing last confirmed evidence':'Launchpad evidence unavailable'}
+        description={(readinessQuery.error as any)?.message||'Launchpad could not be loaded. Existing readiness evidence was preserved.'}
+        action={{label:'Retry launchpad',onClick:()=>void readinessQuery.refetch()}}
       />
     }
 
-    {notice.text&&notice.kind==='ok'&&
-      <div className="delivery-notice ok" role="status">
-        <CheckCircle2/><span>{notice.text}</span>
+    {mutationState.text&&mutationState.phase==='CONFIRMED_SUCCESS'&&
+      <div className="delivery-notice ok" role="status"><CheckCircle2/><span>{mutationState.text}</span></div>
+    }
+
+    {mutationState.text&&mutationState.phase==='OUTCOME_UNKNOWN'&&
+      <div className="delivery-notice status" role="status">
+        <Sparkles/>
+        <span>{mutationState.text}{mutationState.requestId&&<> Request ID: {mutationState.requestId}</>}</span>
+        <button type="button" onClick={()=>void reconcileUnknown()}>Refresh authoritative evidence</button>
       </div>
+    }
+
+    {mutationState.text&&(mutationState.phase==='CONFIRMED_REJECTION'||mutationState.phase==='CONFLICT')&&
+      <ErrorState
+        title={mutationState.phase==='CONFLICT'?'Launchpad test conflicted':'Launchpad test was rejected'}
+        description={mutationState.text}
+      />
     }
 
     <div className="launchpad-progress">
@@ -143,8 +144,8 @@ export default function LaunchpadPage(){
             <div className="launchpad-actions">
               <button onClick={()=>navigate(current.tab)}>Open {current.tab}<ArrowRight/></button>
               {current.key==='signal'&&
-                <button className="app-primary" disabled={busy==='test'} onClick={sendTest}>
-                  {busy==='test'?'Sending…':'Send test event'}<Zap/>
+                <button className="app-primary" disabled={testMutation.isPending||mutationState.phase==='OUTCOME_UNKNOWN'} onClick={sendTest}>
+                  {testMutation.isPending?'Sending…':mutationState.phase==='OUTCOME_UNKNOWN'?'Awaiting reconciliation':'Send test event'}<Zap/>
                 </button>
               }
             </div>
