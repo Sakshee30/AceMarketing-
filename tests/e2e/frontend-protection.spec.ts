@@ -183,3 +183,12 @@ test('loads extracted models feature from its direct workspace route',async({pag
   await expect(page.getByRole('heading',{name:'Custom models'})).toBeVisible()
   await expect(page.getByText(/Model catalog/i)).toBeVisible()
 })
+
+
+test('loads extracted settings feature from its direct workspace route',async({page})=>{
+  await page.goto('/#/workspace?tab=Settings')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Settings/)
+  await expect(page.getByRole('heading',{name:'Workspace settings'})).toBeVisible()
+  await expect(page.getByText(/Workspace profile/i)).toBeVisible()
+})
