@@ -584,7 +584,7 @@ const server = http.createServer(async (req,res)=>{
             whatsappEngaged:true,
             lastActivity:event.timestamp,
             whatsappSummary:event.text||event.messageType,
-            attributes:{whatsappMessageId:event.id,messageType:event.messageType,phoneNumberId:event.phoneNumberId}
+            attributes:{whatsappMessageId:event.id,messageType:event.messageType,phoneNumberId:event.phoneNumberId,ctwaClid:event.referral?.ctwaClid||null,ctwaSourceId:event.referral?.sourceId||null,ctwaSourceUrl:event.referral?.sourceUrl||null,ctwaHeadline:event.referral?.headline||null}
           }).catch(()=>null)
           await recordAssistedEvent(workspaceId,{
             event:'whatsapp.message_received',
@@ -592,9 +592,9 @@ const server = http.createServer(async (req,res)=>{
             eventId:event.id,
             customerId:'whatsapp:'+event.from,
             phone:event.from,
-            source:'whatsapp',
+            source:event.referral?.ctwaClid?'ctwa':'whatsapp',
             occurredAt:event.timestamp,
-            data:{messageType:event.messageType,phoneNumberId:event.phoneNumberId}
+            data:{messageType:event.messageType,phoneNumberId:event.phoneNumberId,ctwaClid:event.referral?.ctwaClid||null,sourceId:event.referral?.sourceId||null,sourceUrl:event.referral?.sourceUrl||null,headline:event.referral?.headline||null,sourceType:event.referral?.sourceType||null}
           }).catch(()=>null)
         }
       })
@@ -869,6 +869,44 @@ const server = http.createServer(async (req,res)=>{
     if (req.method === 'GET' && url.pathname === '/api/public/case-studies') return send(req,res,200,{items:publicCaseStudies})
     if (req.method === 'GET' && url.pathname === '/api/public/resources') return send(req,res,200,{items:publicResources})
     if (req.method === 'GET' && url.pathname === '/api/public/resource-center') return send(req,res,200,publicResourceCenter)
+    if (req.method === 'GET' && url.pathname === '/api/ctwa-attribution') {
+      const state=await getState()
+      const whatsapp=(state.whatsappEvents||[]).filter(x=>x.kind==='message'&&x.referral?.ctwaClid)
+      const tracked=(state.recentEvents||[]).filter(x=>x?.data?.ctwaClid||x?.ctwaClid)
+      const combined=[...whatsapp.map(x=>({
+        id:x.id,phone:x.from||'',at:x.timestamp||x.receivedAt||null,ctwaClid:x.referral?.ctwaClid||'',
+        sourceId:x.referral?.sourceId||'',sourceUrl:x.referral?.sourceUrl||'',headline:x.referral?.headline||'',
+        event:'whatsapp.message_received',value:0,currency:null
+      })),...tracked.map(x=>({
+        id:x.id||x.eventId||randomUUID(),phone:x.phone||'',at:x.occurredAt||x.receivedAt||x.timestamp||null,
+        ctwaClid:x.data?.ctwaClid||x.ctwaClid||'',sourceId:x.data?.sourceId||'',sourceUrl:x.data?.sourceUrl||'',
+        headline:x.data?.headline||'',event:x.event||x.eventType||x.name||'event',value:Number(x.value||x.data?.value||0),currency:x.currency||x.data?.currency||null
+      }))].filter(x=>x.ctwaClid)
+      const byClick=new Map()
+      for(const item of combined){
+        const row=byClick.get(item.ctwaClid)||{ctwaClid:item.ctwaClid,sourceId:item.sourceId||'',sourceUrl:item.sourceUrl||'',headline:item.headline||'',messages:0,events:0,conversionValue:0,contacts:new Set(),lastActivity:null}
+        if(item.event==='whatsapp.message_received')row.messages+=1
+        else row.events+=1
+        if(item.phone)row.contacts.add(String(item.phone))
+        if(Number.isFinite(item.value)&&item.value>0)row.conversionValue+=Number(item.value)
+        if(!row.sourceId&&item.sourceId)row.sourceId=item.sourceId
+        if(!row.sourceUrl&&item.sourceUrl)row.sourceUrl=item.sourceUrl
+        if(!row.headline&&item.headline)row.headline=item.headline
+        if(item.at&&(!row.lastActivity||Date.parse(item.at)>Date.parse(row.lastActivity)))row.lastActivity=item.at
+        byClick.set(item.ctwaClid,row)
+      }
+      const items=[...byClick.values()].map(x=>({...x,contacts:x.contacts.size})).sort((a,b)=>Date.parse(b.lastActivity||0)-Date.parse(a.lastActivity||0))
+      return send(req,res,200,{
+        available:true,
+        stats:{
+          referredMessages:whatsapp.length,
+          attributedClicks:items.length,
+          uniqueContacts:new Set(whatsapp.map(x=>x.from).filter(Boolean)).size,
+          conversionValue:items.reduce((sum,x)=>sum+Number(x.conversionValue||0),0)
+        },
+        items:items.slice(0,200)
+      })
+    }
     if (req.method === 'GET' && url.pathname === '/api/call-events') {
       const state=await getState()
       return send(req,res,200,{items:(state.callEvents||[]).slice(0,200)})
