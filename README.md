@@ -6331,3 +6331,17 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - A timeout or network interruption blocks accidental resend and requires an authoritative readiness refresh before the action becomes available again.
 - The existing backend remains authoritative; client idempotency headers are a compatibility contract only until backend enforcement and operation-status reconciliation are implemented.
 - Added E2E coverage that deliberately drops the test-event request and verifies that success is never fabricated.
+
+
+### High-risk golden feature: approval decisions — 2026-09-28
+
+- Migrated the human approval queue to the canonical TanStack Query cache with feature-owned session/workspace keys.
+- Migrated approve/reject commands to TanStack mutations and a shared mutation lifecycle contract.
+- Consolidated the previous frontend-local mutation lifecycle into `packages/client-core` while preserving the old import through a compatibility re-export.
+- Approval reads now propagate cancellation signals into the shared transport.
+- Approval decisions now send a stable client operation ID as an idempotency request header.
+- Lost acknowledgements/network ambiguity are rendered as OUTCOME_UNKNOWN; approve/reject controls remain blocked until authoritative queue state is refreshed.
+- Conflicts remain distinct from confirmed rejection, and confirmed success is shown only when the returned approval status matches the requested decision.
+- Approval timestamps now use the owned localization formatter.
+- Added browser tests for lost acknowledgement and idempotency identity.
+- Backend idempotency storage and operation-status reconciliation remain backend-phase work and are not claimed complete.

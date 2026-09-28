@@ -574,3 +574,30 @@ test('launchpad write keeps timeout or network ambiguity as outcome unknown',asy
     await expect(page.getByText(/Test event accepted/i)).toHaveCount(0)
   }
 })
+
+
+test('approval decision does not fabricate success when acknowledgement is lost',async({page})=>{
+  await page.route('**/api/approvals',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({items:[{id:'ap_1',title:'Pause campaign',kind:'ad-platform-write',risk:'high',status:'pending',createdAt:new Date().toISOString()}]})}))
+  await page.route('**/api/approvals/decision',route=>route.abort('failed'))
+  await page.goto('/#/workspace?tab=Approvals')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Human approval center'})).toBeVisible()
+  await page.getByRole('button',{name:'Approve'}).click()
+  await expect(page.getByText(/operation outcome is unknown/i)).toBeVisible()
+  await expect(page.getByRole('button',{name:'Refresh authoritative state'})).toBeVisible()
+  await expect(page.getByText(/Approval confirmed and persisted/i)).toHaveCount(0)
+})
+
+test('approval decision sends a stable idempotency identity',async({page})=>{
+  let idempotency=''
+  await page.route('**/api/approvals',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({items:[{id:'ap_2',title:'Suppress audience',kind:'audience-suppression',risk:'high',status:'pending',createdAt:new Date().toISOString()}]})}))
+  await page.route('**/api/approvals/decision',async route=>{
+    idempotency=route.request().headers()['idempotency-key']||''
+    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({item:{id:'ap_2',status:'approved'}})})
+  })
+  await page.goto('/#/workspace?tab=Approvals')
+  await dismissConsent(page)
+  await page.getByRole('button',{name:'Approve'}).click()
+  await expect.poll(()=>idempotency.length).toBeGreaterThan(8)
+  await expect(page.getByText(/Approval confirmed and persisted/i)).toBeVisible()
+})

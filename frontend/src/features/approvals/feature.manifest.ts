@@ -8,5 +8,12 @@ export const approvalsFeatureManifest={
   authRequired:true,
   workspaceRequired:true,
   permission:'workspace.read',
-  releaseBoundary:'feature-chunk'
+  releaseBoundary:'feature-chunk',
+  requestBudget:{
+    initialRequests:1,
+    expectedPayload:'bounded human approval queue and decision metadata',
+    backgroundRefreshSeconds:30,
+    streamSubscriptions:0,
+    maxReadRetries:2
+  }
 } as const

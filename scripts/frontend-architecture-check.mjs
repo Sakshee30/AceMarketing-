@@ -542,6 +542,15 @@ if(fs.existsSync(acePlatform)){
     if(launchpadPage.includes('useEffect('))failures.push('Launchpad must not keep a second manual remote-data lifecycle.')
   }
 
+  const approvalPagePath=path.join(frontend,'features','approvals','pages','ApprovalPage.tsx')
+  if(fs.existsSync(approvalPagePath)){
+    const approvalPage=fs.readFileSync(approvalPagePath,'utf8')
+    if(!approvalPage.includes('useQuery({')||!approvalPage.includes('useMutation({'))failures.push('Approvals must use the canonical query/mutation state boundary.')
+    if(!approvalPage.includes('approvalKeys.list()'))failures.push('Approvals must use a feature-owned workspace/session query key.')
+    if(!approvalPage.includes('Refresh authoritative state'))failures.push('Unknown approval outcomes must reconcile before repeat.')
+    if(approvalPage.includes('new Date(current.createdAt).toLocaleString()'))failures.push('Approvals must use the owned localization package for date-time display.')
+  }
+
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
