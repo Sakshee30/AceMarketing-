@@ -41,6 +41,7 @@ export const parseWhatsAppWebhook=payload=>{
         const from=String(message?.from||'')
         const contact=contactsByWaId.get(from)||{}
         const text=message?.text?.body||message?.button?.text||message?.interactive?.button_reply?.title||message?.interactive?.list_reply?.title||''
+        const referral=message?.referral||null
         events.push({
           kind:'message',
           id:String(message?.id||''),
@@ -52,6 +53,15 @@ export const parseWhatsAppWebhook=payload=>{
           text:String(text||'').slice(0,4000),
           timestamp:message?.timestamp?new Date(Number(message.timestamp)*1000).toISOString():new Date().toISOString(),
           contextMessageId:String(message?.context?.id||''),
+          referral:referral?{
+            sourceUrl:String(referral.source_url||''),
+            sourceType:String(referral.source_type||''),
+            sourceId:String(referral.source_id||''),
+            headline:String(referral.headline||'').slice(0,300),
+            body:String(referral.body||'').slice(0,1000),
+            mediaType:String(referral.media_type||''),
+            ctwaClid:String(referral.ctwa_clid||'')
+          }:null,
           raw:message
         })
       }
