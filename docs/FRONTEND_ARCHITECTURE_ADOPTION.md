@@ -391,3 +391,13 @@ A frontend feature is not considered complete because the screen renders. Comple
 - Transient failures preserve previously loaded attribution evidence and expose an explicit retry path.
 - Large channel, campaign, outcome, method and recent-evidence collections are bounded in browser rendering while backend history remains authoritative.
 - CI rejects reintroduction of the legacy Attribution implementation into `AcePlatform.tsx`.
+
+
+### Grouped Performance feature extraction and cost-basis hardening
+- Grouped Performance is now a feature-owned lazy chunk instead of an inline workspace implementation.
+- Existing dimension switching, grouped conversion evidence, conversion-event contract, operator-entered cost basis and contribution/margin calculations are preserved.
+- Dimension reads use request sequencing so stale responses cannot replace newer selections.
+- Dirty cost drafts participate in customer-work protection until authoritative values are reloaded after a confirmed save.
+- Cost saves distinguish confirmed success from timeout/network uncertainty; uncertain outcomes require authoritative refresh before repeating the same write.
+- Group rendering is bounded to 150 rows in the browser while backend data remains authoritative.
+- CI rejects reintroduction of the legacy Grouped Performance implementation into `AcePlatform.tsx`.
