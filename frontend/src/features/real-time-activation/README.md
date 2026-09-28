@@ -1,0 +1,1 @@
+Real-Time Activation owns consent-aware event-to-action rules, dry-run testing, activation history and enable/pause state. Existing endpoints and UI semantics are preserved. Builder drafts are navigation-protected and uncertain create/toggle outcomes require reconciliation before repeat submission.
