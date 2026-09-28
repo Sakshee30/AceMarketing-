@@ -343,3 +343,13 @@ A frontend feature is not considered complete because the screen renders. Comple
 - Offline Attribution now exposes an explicit loading state and separates confirmed success, confirmed error and timeout/network unknown outcomes for rule creation, enable/pause and reconciliation tests.
 - The Offline Attribution builder now uses the shared accessible dialog, participates in dirty-work protection, and template application uses React state rather than post-render DOM mutation.
 - Architecture checks protect these safety properties while both features remain in the current composition during the incremental migration.
+
+
+### Matchback feature extraction and reconciliation hardening
+- Matchback is now a feature-owned lazy chunk instead of an inline workspace implementation.
+- Existing rule reads, rule creation, enable/pause, reconciliation, suggested templates, live identity coverage and unmatched-record review are preserved.
+- Rule creation, rule-status changes and reconciliation now distinguish confirmed success from timeout/network uncertainty; uncertain outcomes require authoritative refresh before repetition.
+- The rule builder and unmatched-record review use shared accessible dialogs; the builder participates in dirty-work protection.
+- Suggested templates hydrate controlled React state instead of mutating DOM form elements after render.
+- Unmatched-record rendering is bounded to the newest 100 records in the browser while backend data remains authoritative.
+- CI rejects reintroduction of the legacy Matchback implementation into `AcePlatform.tsx`.
