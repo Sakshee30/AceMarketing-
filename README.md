@@ -5659,3 +5659,13 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - The authenticated workspace connector-request workflow remains unchanged for operators who are already signed in.
 - Added Playwright coverage that opens the public form, submits a request, verifies the backend `201` response, and confirms the user-visible success state.
 - Implemented directly on `main`; no feature route or existing connector workflow was removed.
+
+
+### Public demo booking hardening — 2026-09-28
+
+- Replaced the placeholder demo calendar behavior with a persisted end-to-end booking flow.
+- The first step still creates a backend demo-request record; the scheduling step now generates the next five business days dynamically instead of using hard-coded dates.
+- Added `POST /api/demo-bookings` to validate the demo request, reject past/out-of-range slots, persist a 45-minute booking, and write an audit event.
+- The UI only shows **Demo booked** after the backend confirms persistence; the previous fake-success **Confirm & open product** path was removed.
+- Added Playwright coverage for lead capture → slot selection → booking API response → confirmed UI state.
+- Implemented directly on `main`; no separate branch was created.
