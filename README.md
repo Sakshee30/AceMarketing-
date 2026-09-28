@@ -5616,7 +5616,7 @@ AceMarketing now implements the server-side X Ads conversion contract from X's o
 - A configured X Event ID is sent as `event_id`; otherwise AceMarketing emits a normalized `ace_<event>` `event_name`.
 - AceMarketing's stable external/idempotency/delivery ID is sent as `conversion_id` for deduplication.
 - Value, currency, event-source URL, commerce contents and item count are included when available.
-- The consent-aware browser tracker persists URL `twclid`, can read the first-party `_twclid` cookie format used by X's official server template, and forwards `_twpid` when present.
+- The consent-aware browser tracker persists URL `twclid` in AceMarketing storage and a first-party `_twclid` cookie compatible with X's official server template, reads that cookie as fallback, forwards `_twpid` when present, and removes AceMarketing's X click persistence when marketing consent is withdrawn.
 - Migration `020_x_click_identity.sql` persists/indexes `twclid` in click sessions and assisted events.
 - Offline/assisted attribution can reconcile outcomes directly by `twclid`, and Matchback surfaces **X TWCLID** live coverage.
 - Durable queued signal replay retains X click IDs and X event configuration through retries.
