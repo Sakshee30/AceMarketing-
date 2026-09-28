@@ -5690,3 +5690,13 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Added a dedicated **Click-to-WhatsApp attribution** panel inside **Offline Attribution** rather than creating a disconnected dashboard subsystem.
 - Added Playwright coverage that records CTWA evidence, validates the backend aggregation, opens Offline Attribution, and verifies the click reference is rendered.
 - Implemented directly on `main`; no separate branch was created.
+
+
+### Alert Center correctness hardening — 2026-09-28
+
+- Fixed a dashboard correctness bug where **Mark resolved** could update an alert locally even when the backend resolution request failed.
+- Alert status now changes to resolved only after `POST /api/alerts/resolve` returns a backend-confirmed resolved record.
+- Added explicit loading, refresh, busy, success, and error states to the Alert Center.
+- Failed resolution attempts preserve the alert's open state and keep the resolution action available for retry.
+- Added Playwright coverage that forces the resolution API to fail and verifies that the incident remains open instead of showing a false success state.
+- Implemented directly on `main`; no separate branch was created.
