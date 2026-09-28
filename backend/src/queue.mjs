@@ -56,6 +56,33 @@ export const leaseJobs=async({workerId,limit=10})=>{
   const client=await pool.connect()
   try{
     await client.query('BEGIN')
+    await client.query(
+      `UPDATE ace_jobs
+       SET status=CASE
+             WHEN cancel_requested_at IS NOT NULL THEN 'cancelled'
+             WHEN attempts>=max_attempts THEN 'dead_letter'
+             ELSE 'retry'
+           END,
+           last_error=CASE
+             WHEN cancel_requested_at IS NOT NULL THEN last_error
+             WHEN attempts>=max_attempts THEN COALESCE(last_error,'lease expired after final attempt')
+             ELSE COALESCE(last_error,'worker lease expired before finalization')
+           END,
+           available_at=CASE
+             WHEN cancel_requested_at IS NULL AND attempts<max_attempts
+               THEN now()+((LEAST(3600,POWER(2,GREATEST(0,attempts-1))*15)+random()*5)*interval '1 second')
+             ELSE available_at
+           END,
+           lease_owner=NULL,
+           leased_until=NULL,
+           heartbeat_at=COALESCE(heartbeat_at,now()),
+           completed_at=CASE
+             WHEN cancel_requested_at IS NOT NULL OR attempts>=max_attempts THEN COALESCE(completed_at,now())
+             ELSE completed_at
+           END,
+           updated_at=now()
+       WHERE status='leased' AND leased_until IS NOT NULL AND leased_until<now()`
+    )
     const {rows}=await client.query(
       `WITH picked AS (
          SELECT id FROM ace_jobs
@@ -148,7 +175,7 @@ export const completeJob=async(id,result={},guard=null)=>{
          heartbeat_at=now(),
          updated_at=now(),
          completed_at=now()
-     WHERE id=$1${extra}
+     WHERE id=$1 AND cancel_requested_at IS NULL${extra}
      RETURNING *`,
     values
   )
@@ -160,17 +187,21 @@ export const failJob=async(id,errorMessage,guard=null)=>{
   const extra=guardedWhere(guard)
   const {rows}=await pool.query(
     `UPDATE ace_jobs
-     SET status=CASE WHEN attempts>=max_attempts THEN 'dead_letter' ELSE 'retry' END,
+     SET status=CASE
+           WHEN cancel_requested_at IS NOT NULL THEN 'cancelled'
+           WHEN attempts>=max_attempts THEN 'dead_letter'
+           ELSE 'retry'
+         END,
          last_error=$2,
          available_at=CASE
-           WHEN attempts>=max_attempts THEN available_at
-           ELSE now()+(LEAST(3600,POWER(2,GREATEST(0,attempts-1))*15)*interval '1 second')
+           WHEN cancel_requested_at IS NOT NULL OR attempts>=max_attempts THEN available_at
+           ELSE now()+((LEAST(3600,POWER(2,GREATEST(0,attempts-1))*15)+random()*5)*interval '1 second')
          END,
          lease_owner=NULL,
          leased_until=NULL,
          heartbeat_at=now(),
          updated_at=now(),
-         completed_at=CASE WHEN attempts>=max_attempts THEN now() ELSE completed_at END
+         completed_at=CASE WHEN cancel_requested_at IS NOT NULL OR attempts>=max_attempts THEN now() ELSE completed_at END
      WHERE id=$1${extra}
      RETURNING *`,
     [id,String(errorMessage||'job failed').slice(0,4000),guard?.workerId||null,Number(guard?.fencingToken||0)]
