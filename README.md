@@ -5855,3 +5855,13 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Paused Overview polling while the document is hidden to reduce unnecessary background request pressure at large session counts.
 - Added architecture enforcement so Overview and its funnel panel cannot drift back into the legacy composition.
 - Implemented directly on `main`; no existing feature or backend endpoint was removed.
+
+
+### Frontend architecture: AdSync feature boundary — 2026-09-28
+
+- Extracted **AdSync / server-side signal activation** into a feature-owned lazy chunk without removing any pipeline, quick-agent, event-rule, tracking or Delivery workflow.
+- Added accessible focus-managed pipeline creation and dirty-work protection for in-progress configuration.
+- Added explicit loading, retryable failure and unknown-outcome states. Timeout/network loss no longer gets displayed as a confirmed failure or success for pipeline writes.
+- Preserved previously loaded signal evidence during transient refresh failures.
+- Added architecture enforcement preventing the AdSync implementation from drifting back into `AcePlatform.tsx`.
+- Implemented directly on `main`; backend hardening remains deferred until the frontend sequence is complete.
