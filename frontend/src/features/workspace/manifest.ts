@@ -58,7 +58,8 @@ const longFormFeatures=new Set([
   'Integrations',
   'Developers',
   'Real-Time Activation',
-  'Personalization'
+  'Personalization',
+  'Adjustments'
 ])
 
 export const workspaceFeatureManifest:readonly WorkspaceFeatureManifest[]=(Object.entries(groupTabs) as [WorkspaceFeatureGroupId,readonly string[]][])
@@ -77,7 +78,7 @@ export const workspaceFeatureManifest:readonly WorkspaceFeatureManifest[]=(Objec
       workspaceRequired:true as const,
       permission:'workspace.read' as const,
       unsavedWork:longFormFeatures.has(label)?'confirm' as const:'allow' as const,
-      implementation:((label==='Approvals'||label==='Monitoring'||label==='Alerts'||label==='Reports'||label==='Executive Briefs'||label==='Integrations'||label==='Data Flows'||label==='Audiences'||label==='Planner'||label==='Models'||label==='Settings'||label==='Compliance'||label==='Developers'||label==='Delivery'||label==='Real-Time Activation'||label==='Personalization'||label==='Exclusions')?'feature-chunk':'current-composition') as WorkspaceFeatureManifest['implementation'],
+      implementation:((label==='Approvals'||label==='Monitoring'||label==='Alerts'||label==='Reports'||label==='Executive Briefs'||label==='Integrations'||label==='Data Flows'||label==='Audiences'||label==='Planner'||label==='Models'||label==='Settings'||label==='Compliance'||label==='Developers'||label==='Delivery'||label==='Real-Time Activation'||label==='Personalization'||label==='Exclusions'||label==='Adjustments'||label==='Diagnostics')?'feature-chunk':'current-composition') as WorkspaceFeatureManifest['implementation'],
       errorBoundary:'workspace-section' as const
     }
   }))
