@@ -71,6 +71,30 @@ test.describe('public product surface',()=>{
     await expect(page.locator('body')).toContainText(/Google Ads/i)
   })
 
+  test('public demo form persists a selected meeting slot before showing success',async({page},testInfo)=>{
+    const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()+'_'+Date.now()
+    await page.goto('/#/demo')
+    await dismissConsent(page)
+    const form=page.locator('.demo-booking-card form')
+    await form.getByLabel('Work email').fill('demo+'+suffix+'@example.com')
+    await form.getByLabel('Company').fill('Demo CI Company')
+    await form.getByLabel('Monthly digital marketing budget').selectOption({label:'₹5L – ₹25L'})
+    await form.getByLabel('Burning pain point').selectOption({label:'Attribution'})
+    await form.getByRole('button',{name:/Continue to scheduling/}).click()
+    await expect(page.getByRole('heading',{name:'Select a date & time'})).toBeVisible()
+    await page.locator('.calendar-days button').first().click()
+    await page.getByRole('button',{name:'11:00 AM',exact:true}).click()
+    const responsePromise=page.waitForResponse(r=>r.url().includes('/api/demo-bookings')&&r.request().method()==='POST')
+    await page.getByRole('button',{name:'Confirm demo booking'}).click()
+    const response=await responsePromise
+    expect(response.status()).toBe(201)
+    const payload=await response.json()
+    expect(payload.status).toBe('confirmed')
+    expect(payload.durationMinutes).toBe(45)
+    await expect(page.getByRole('heading',{name:'Demo booked'})).toBeVisible()
+    await expect(page.getByRole('status')).toContainText('confirmed')
+  })
+
   test('public integration page submits connector requests through the backend',async({page},testInfo)=>{
     const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()+'_'+Date.now()
     await page.goto('/#/integrations')
