@@ -40,6 +40,9 @@ for(const file of walk(frontend)){
 const acePlatform=path.join(frontend,'AcePlatform.tsx')
 if(fs.existsSync(acePlatform)){
   const source=fs.readFileSync(acePlatform,'utf8')
+  if(/function\s+Behavior\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Behavior implementation after feature extraction.')
+  }
   if(/function\s+LeadGrading\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Lead Grading implementation after feature extraction.')
   }
@@ -189,6 +192,10 @@ if(fs.existsSync(acePlatform)){
 }
 
 const required=[
+  'frontend/src/features/behavior/data/behavior.api.ts',
+  'frontend/src/features/behavior/pages/BehaviorPage.tsx',
+  'frontend/src/features/behavior/public.ts',
+  'frontend/src/features/behavior/feature.manifest.ts',
   'frontend/src/features/lead-grading/data/lead-grading.api.ts',
   'frontend/src/features/lead-grading/pages/LeadGradingPage.tsx',
   'frontend/src/features/lead-grading/public.ts',
