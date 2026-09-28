@@ -11,6 +11,8 @@ import './ace-platform.css'
 import { api,cancelWorkspaceRequests } from './lib/api'
 import {getLocalConsent,saveLocalConsent} from './lib/tracker'
 import {RouteAnnouncer} from './components/system/FrontendFoundation'
+import {EmptyState,ErrorState,LoadingState,StaleState} from './components/system/FrontendStates'
+import {initialMutationLifecycle,mutationLifecycle} from './lib/mutation-lifecycle'
 
 type View='site'|'app'|'login'|'pricing'|'demo'|'company'|'resources'|'case-studies'|'privacy'|'terms'|'security'|'solutions'|'industries'|'agents-public'|'integrations-public'
 type AppTab='Launchpad'|'Overview'|'AdSync'|'ChatGPT Ads'|'Funnel'|'Leak Monitor'|'Events'|'Adjustments'|'Diagnostics'|'Match Quality'|'Reconciliation'|'Fraud'|'Deep Links'|'Sites'|'Fingerprinting'|'Live Sync'|'Data Hub'|'Customer 360'|'Offline Attribution'|'Matchback'|'POS & Stores'|'Journeys'|'Identity'|'Models'|'Attribution'|'Planner'|'Reports'|'Grouped Performance'|'Executive Briefs'|'Enrich'|'Lead Grading'|'Behavior'|'Feed'|'Agents'|'Routing'|'Follow-ups'|'Calls'|'Meetings'|'Feedback'|'Approvals'|'Ask Ace'|'Integrations'|'Data Flows'|'Real-Time Activation'|'Personalization'|'Exclusions'|'Audiences'|'Delivery'|'Monitoring'|'Alerts'|'Compliance'|'Developers'|'Settings'
@@ -2240,11 +2242,14 @@ function Feedback(){
 function Approvals(){
  const [items,setItems]=useState<any[]>([])
  const [selected,setSelected]=useState('')
- const [busy,setBusy]=useState('')
  const [loading,setLoading]=useState(true)
- const [notice,setNotice]=useState<{kind:'ok'|'error'|'',text:string}>({kind:'',text:''})
+ const [loadError,setLoadError]=useState('')
+ const [notice,setNotice]=useState<{kind:'ok'|'error'|'unknown'|'',text:string}>({kind:'',text:''})
+ const [decisionState,setDecisionState]=useState(()=>initialMutationLifecycle<any>())
+
  const load=async()=>{
   setLoading(true)
+  setLoadError('')
   try{
    const r:any=await api.approvals()
    const list=r.items||[]
@@ -2252,31 +2257,59 @@ function Approvals(){
    if(list.length)setSelected((x:string)=>x&&list.some((i:any)=>i.id===x)?x:list[0].id)
    else setSelected('')
   }catch(e:any){
-   setNotice({kind:'error',text:e?.message||'Approval queue could not be loaded. Existing decisions were preserved.'})
+   setLoadError(e?.message||'Approval queue could not be loaded. Existing decisions were preserved.')
   }finally{setLoading(false)}
  }
  useEffect(()=>{load()},[])
+
  const current=items.find(x=>x.id===selected)
+ const busy=decisionState.phase==='VALIDATING'||decisionState.phase==='SUBMITTING'
+
  const decide=async(decision:'approved'|'rejected')=>{
-  if(!current)return
-  setBusy(decision);setNotice({kind:'',text:''})
+  if(!current||busy)return
+  let lifecycle=mutationLifecycle.validating(decisionState)
+  setDecisionState(lifecycle)
+  setNotice({kind:'',text:''})
+  lifecycle=mutationLifecycle.submitting(lifecycle)
+  setDecisionState(lifecycle)
   try{
    const r:any=await api.decideApproval(current.id,decision)
-   const confirmed=String(r?.item?.status||r?.status||decision).toLowerCase()
+   const confirmed=String(r?.item?.status||r?.status||'').toLowerCase()
    if(confirmed!==decision)throw new Error('Backend did not confirm the approval decision.')
+   setDecisionState(mutationLifecycle.confirmed(lifecycle,r))
    setNotice({kind:'ok',text:decision==='approved'?'Approval confirmed and persisted.':'Rejection confirmed and persisted.'})
    await load()
-  }catch(e:any){setNotice({kind:'error',text:e?.message||'Approval decision could not be saved.'})}
-  finally{setBusy('')}
+  }catch(e:any){
+   const requestId=e?.requestId||null
+   const cause=String(e?.details?.cause||'')
+   if(cause==='timeout'||cause==='network'){
+    const message='Backend confirmation was not received. The outcome may be unknown. Refresh the approval queue before repeating this decision.'
+    setDecisionState(mutationLifecycle.unknown(lifecycle,message,requestId))
+    setNotice({kind:'unknown',text:message})
+   }else if(Number(e?.status)===409){
+    const message=e?.message||'This approval changed elsewhere. Refresh before deciding again.'
+    setDecisionState(mutationLifecycle.conflict(lifecycle,message,requestId))
+    setNotice({kind:'error',text:message})
+   }else{
+    const message=e?.message||'Approval decision was rejected or could not be confirmed.'
+    setDecisionState(mutationLifecycle.rejected(lifecycle,message,requestId))
+    setNotice({kind:'error',text:message})
+   }
+  }
  }
+
  const pending=items.filter(x=>x.status==='pending').length
  const approved=items.filter(x=>x.status==='approved').length
  const rejected=items.filter(x=>x.status==='rejected').length
+ const operationLabel=decisionState.operationId?' Operation '+decisionState.operationId.slice(0,8)+'.':''
+
  return <><PageHead crumb="Governance / Approvals" title="Human approval center" sub="Review sensitive agent actions before customer contact, spend-impacting changes or external mutations." action={loading?'Refreshing…':'Refresh approvals'} onAction={load}/>
- {notice.text&&<div className={'delivery-notice '+(notice.kind==='error'?'error':'ok')} role={notice.kind==='error'?'alert':'status'}>{notice.kind==='error'?<ShieldCheck/>:<CheckCircle2/>}<span>{notice.text}</span></div>}
+ {notice.text&&notice.kind==='unknown'&&<StaleState title="Approval outcome needs reconciliation" description={notice.text+operationLabel} action={{label:'Refresh before retrying',onClick:load}}/>}
+ {notice.text&&notice.kind!=='unknown'&&<div className={'delivery-notice '+(notice.kind==='error'?'error':'ok')} role={notice.kind==='error'?'alert':'status'}>{notice.kind==='error'?<ShieldCheck/>:<CheckCircle2/>}<span>{notice.text}</span></div>}
+ {loadError&&<ErrorState title="Approval queue could not refresh" description={loadError} action={{label:'Retry refresh',onClick:load}}/>}
  <div className="stats-grid"><Stat label="Pending" value={loading&&!items.length?'—':String(pending)} sub="Awaiting human decision" Icon={CheckCircle2}/><Stat label="Approved" value={loading&&!items.length?'—':String(approved)} sub="Persisted approval decisions" Icon={ShieldCheck}/><Stat label="Rejected" value={loading&&!items.length?'—':String(rejected)} sub="Blocked by human review" Icon={X}/><Stat label="Total requests" value={loading&&!items.length?'—':String(items.length)} sub="Current retained approval history" Icon={Activity}/></div>
- <div className="approval-layout"><div className="app-panel approval-list"><div className="panel-head"><div><h3>Approval queue</h3><p>Persisted agent and automation requests</p></div><button disabled={loading} onClick={load}>{loading?'Refreshing…':'Refresh'}</button></div>{loading&&!items.length?<div className="empty-delivery-state"><Activity/><div><b>Loading approval queue</b><small>Reading persisted human-review requests.</small></div></div>:items.length?items.map((x:any)=><button key={x.id} className={selected===x.id?'selected':''} onClick={()=>setSelected(x.id)}><ShieldCheck/><div><b>{x.title||x.subject||x.kind}</b><small>{x.kind||x.agent||'Automation'} · {x.risk||'risk not set'}</small></div><span className={String(x.status||'pending').toLowerCase()}>{x.status}</span><ChevronRight/></button>):<div className="empty-delivery-state"><CheckCircle2/><div><b>No approval requests</b><small>Sensitive actions that require human approval will appear here.</small></div></div>}</div>
- <div className="app-panel approval-detail">{current?<><div className="panel-head"><div><h3>{current.title||current.subject||current.kind}</h3><p>{current.detail||current.kind||'Automation request'}</p></div><span className={String(current.status||'pending').toLowerCase()}>{current.status}</span></div><div className="site-detail-grid">{[['Request ID',current.id],['Kind',current.kind||'—'],['Risk',current.risk||'—'],['Agent',current.agentId||current.agent||'—'],['Created',current.createdAt?new Date(current.createdAt).toLocaleString():'—'],['Status',current.status||'pending']].map(x=><div key={x[0]}><span>{x[0]}</span><b>{String(x[1])}</b></div>)}</div>{current.status==='pending'?<div className="approval-actions"><button disabled={!!busy} onClick={()=>decide('rejected')}>{busy==='rejected'?'Rejecting…':'Reject'}</button><button className="approve" disabled={!!busy} onClick={()=>decide('approved')}><Check/>{busy==='approved'?'Approving…':'Approve'}</button></div>:<div className={'approval-final '+current.status}><Check/><b>{current.status}</b></div>}</>:<div className="empty-delivery-state"><ShieldCheck/><div><b>No approval selected</b></div></div>}</div></div></>
+ <div className="approval-layout"><div className="app-panel approval-list"><div className="panel-head"><div><h3>Approval queue</h3><p>Persisted agent and automation requests</p></div><button disabled={loading} onClick={load}>{loading?'Refreshing…':'Refresh'}</button></div>{loading&&!items.length?<LoadingState compact title="Loading approval queue" description="Reading persisted human-review requests."/>:items.length?items.map((x:any)=><button key={x.id} className={selected===x.id?'selected':''} onClick={()=>setSelected(x.id)}><ShieldCheck/><div><b>{x.title||x.subject||x.kind}</b><small>{x.kind||x.agent||'Automation'} · {x.risk||'risk not set'}</small></div><span className={String(x.status||'pending').toLowerCase()}>{x.status}</span><ChevronRight/></button>):<EmptyState compact title="No approval requests" description="Sensitive actions that require human approval will appear here."/ >}</div>
+ <div className="app-panel approval-detail">{current?<><div className="panel-head"><div><h3>{current.title||current.subject||current.kind}</h3><p>{current.detail||current.kind||'Automation request'}</p></div><span className={String(current.status||'pending').toLowerCase()}>{current.status}</span></div><div className="site-detail-grid">{[['Request ID',current.id],['Kind',current.kind||'—'],['Risk',current.risk||'—'],['Agent',current.agentId||current.agent||'—'],['Created',current.createdAt?new Date(current.createdAt).toLocaleString():'—'],['Status',current.status||'pending']].map(x=><div key={x[0]}><span>{x[0]}</span><b>{String(x[1])}</b></div>)}</div>{current.status==='pending'?<div className="approval-actions"><button disabled={busy} onClick={()=>decide('rejected')}>{busy?'Working…':'Reject'}</button><button className="approve" disabled={busy} onClick={()=>decide('approved')}><Check/>{busy?'Working…':'Approve'}</button></div>:<div className={'approval-final '+current.status}><Check/><b>{current.status}</b></div>}</>:<EmptyState compact title="No approval selected" description="Choose a request from the queue to review its authoritative state."/ >}</div></div></>
 }
 function AskAce(){
  const starters=['Where is the funnel dropping between lead and revenue?','Which campaign is producing the best-quality leads?','Show the journey for a specific lead or customer','How much matched revenue is currently attributed?','Where is attribution breaking?','Which audience should we suppress?','Are any connectors or activation runs unhealthy?']
