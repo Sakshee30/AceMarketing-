@@ -64,6 +64,12 @@ if(fs.existsSync(acePlatform)){
   if(/function\s+Audiences\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Audiences implementation after feature extraction.')
   }
+  if(/function\s+Planner\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Planner implementation after feature extraction.')
+  }
+  if(/function\s+Models\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Models implementation after feature extraction.')
+  }
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
@@ -74,6 +80,14 @@ if(fs.existsSync(acePlatform)){
 
 const required=[
   'frontend/src/features/workspace/manifest.ts',
+  'frontend/src/features/models/data/models.api.ts',
+  'frontend/src/features/models/pages/ModelsPage.tsx',
+  'frontend/src/features/models/public.ts',
+  'frontend/src/features/models/feature.manifest.ts',
+  'frontend/src/features/planner/data/planner.api.ts',
+  'frontend/src/features/planner/pages/PlannerPage.tsx',
+  'frontend/src/features/planner/public.ts',
+  'frontend/src/features/planner/feature.manifest.ts',
   'frontend/src/features/audiences/data/audiences.api.ts',
   'frontend/src/features/audiences/pages/AudiencesPage.tsx',
   'frontend/src/features/audiences/public.ts',
