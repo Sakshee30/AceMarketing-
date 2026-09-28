@@ -5679,3 +5679,14 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - The old placeholder copy saying the flow was merely “ready to connect” to scheduling was removed.
 - Added Playwright coverage for landing-form submission and backend-confirmed success state.
 - Implemented directly on `main`; no additional branch was created.
+
+
+### Click-to-WhatsApp attribution parity — 2026-09-28
+
+- Added first-class CTWA attribution using the existing verified WhatsApp Cloud API and assisted-attribution pipeline.
+- WhatsApp webhook parsing now retains Meta referral fields including `ctwa_clid`, source ID, source URL, source type, and ad headline instead of discarding that acquisition evidence.
+- Referral metadata is written into lead context and assisted events so downstream journey and revenue events can keep the original click-to-WhatsApp reference.
+- Added `GET /api/ctwa-attribution` to aggregate referred messages, unique contacts, attributed CTWA clicks, observed conversion value, and per-click evidence rows.
+- Added a dedicated **Click-to-WhatsApp attribution** panel inside **Offline Attribution** rather than creating a disconnected dashboard subsystem.
+- Added Playwright coverage that records CTWA evidence, validates the backend aggregation, opens Offline Attribution, and verifies the click reference is rendered.
+- Implemented directly on `main`; no separate branch was created.
