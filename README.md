@@ -5649,3 +5649,13 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Blocks `javascript:` and `data:` destinations and surfaces an operator message for invalid destinations.
 - Added Playwright coverage that creates a persisted personalization rule, selects it in the workspace, clicks its CTA, and verifies navigation into the working ROAS Calculator resource.
 - Change was committed directly to `main` and preserves the existing personalization decision/feedback backend contracts.
+
+
+### Public connector request parity — 2026-09-28
+
+- Converted the public Integrations **Request a connector** CTA from a workspace redirect into a real public form.
+- Added `POST /api/public/connector-requests` with input validation, backend persistence, bounded retention, and audit logging.
+- Public requests accept connector name, business email, company, and an optional data-flow/business-need description.
+- The authenticated workspace connector-request workflow remains unchanged for operators who are already signed in.
+- Added Playwright coverage that opens the public form, submits a request, verifies the backend `201` response, and confirms the user-visible success state.
+- Implemented directly on `main`; no feature route or existing connector workflow was removed.
