@@ -632,28 +632,33 @@ test.describe('privacy consent runtime',()=>{
   })
 
   test('essential-only choice keeps marketing click IDs out of storage',async({page})=>{
-    await page.goto('/?gclid=test-gclid&gbraid=test-gbraid&wbraid=test-wbraid&fbclid=test-fbclid&msclkid=test-msclkid&ttclid=test-ttclid#/')
+    await page.goto('/?gclid=test-gclid&gbraid=test-gbraid&wbraid=test-wbraid&fbclid=test-fbclid&msclkid=test-msclkid&ttclid=test-ttclid&twclid=test-twclid#/')
     await page.getByRole('dialog',{name:'Privacy choices'}).getByRole('button',{name:'Essential only'}).click()
-    const stored=await page.evaluate(()=>Object.fromEntries(['gclid','gbraid','wbraid','fbclid','msclkid','ttclid'].map(key=>[key,localStorage.getItem('ace:'+key)])))
-    expect(stored).toEqual({gclid:null,gbraid:null,wbraid:null,fbclid:null,msclkid:null,ttclid:null})
+    const stored=await page.evaluate(()=>Object.fromEntries(['gclid','gbraid','wbraid','fbclid','msclkid','ttclid','twclid'].map(key=>[key,localStorage.getItem('ace:'+key)])))
+    expect(stored).toEqual({gclid:null,gbraid:null,wbraid:null,fbclid:null,msclkid:null,ttclid:null,twclid:null})
   })
 
-  test('marketing consent persists cross-platform click IDs and TikTok attribution evidence',async({page})=>{
+  test('marketing consent persists cross-platform click IDs and paid-social attribution evidence',async({page})=>{
     const suffix=Date.now()
     const ttclid='ci-ttclid-'+suffix
-    await page.goto('/?gclid=ci-gclid-'+suffix+'&gbraid=ci-gbraid-'+suffix+'&wbraid=ci-wbraid-'+suffix+'&fbclid=ci-fbclid-'+suffix+'&msclkid=ci-msclkid-'+suffix+'&ttclid='+ttclid+'#/')
+    const twclid='ci-twclid-'+suffix
+    await page.goto('/?gclid=ci-gclid-'+suffix+'&gbraid=ci-gbraid-'+suffix+'&wbraid=ci-wbraid-'+suffix+'&fbclid=ci-fbclid-'+suffix+'&msclkid=ci-msclkid-'+suffix+'&ttclid='+ttclid+'&twclid='+twclid+'#/')
     await page.getByRole('dialog',{name:'Privacy choices'}).getByRole('button',{name:'Allow all'}).click()
-    const stored=await page.evaluate(()=>Object.fromEntries(['gclid','gbraid','wbraid','fbclid','msclkid','ttclid'].map(key=>[key,localStorage.getItem('ace:'+key)])))
+    const stored=await page.evaluate(()=>Object.fromEntries(['gclid','gbraid','wbraid','fbclid','msclkid','ttclid','twclid'].map(key=>[key,localStorage.getItem('ace:'+key)])))
     expect(stored.ttclid).toBe(ttclid)
+    expect(stored.twclid).toBe(twclid)
     expect(stored.msclkid).toContain('ci-msclkid-')
     expect(stored.gbraid).toContain('ci-gbraid-')
 
-    const tracked=await page.request.post('/api/track',{data:{event:'ci_tiktok_click_capture',eventCategory:'essential',visitorId:'ci_tiktok_visitor_'+suffix,ttclid,utm_source:'TikTok Ads',occurredAt:new Date().toISOString()}})
-    expect(tracked.ok()).toBeTruthy()
+    const tiktok=await page.request.post('/api/track',{data:{event:'ci_tiktok_click_capture',eventCategory:'essential',visitorId:'ci_tiktok_visitor_'+suffix,ttclid,utm_source:'TikTok Ads',occurredAt:new Date().toISOString()}})
+    expect(tiktok.ok()).toBeTruthy()
+    const x=await page.request.post('/api/track',{data:{event:'ci_x_click_capture',eventCategory:'essential',visitorId:'ci_x_visitor_'+suffix,twclid,utm_source:'X Ads',occurredAt:new Date().toISOString()}})
+    expect(x.ok()).toBeTruthy()
     const attribution=await page.request.get('/api/attribution')
     expect(attribution.ok()).toBeTruthy()
     const payload=await attribution.json()
     expect(Number(payload.clickIdCoverage?.tiktok||0)).toBeGreaterThan(0)
+    expect(Number(payload.clickIdCoverage?.x||0)).toBeGreaterThan(0)
   })
 })
 
@@ -1052,6 +1057,10 @@ test('native server-side ad connectors persist encrypted workspace credentials',
   const integrations=await page.request.get('/api/integrations')
   expect(integrations.ok()).toBeTruthy()
   const payload=await integrations.json()
+  const xConnector=(payload.items||[]).find((x:any)=>x.name==='X')
+  expect(xConnector?.authType).toBe('server_secret')
+  expect(xConnector?.capability).toBe('native_server_capi')
+  expect((xConnector?.credentialFields||[]).map((field:any)=>field.key)).toEqual(['pixel_id','access_token'])
   const item=(payload.items||[]).find((x:any)=>x.name==='TikTok Ads')
   expect(item?.status).toBe('connected')
   expect(item?.authType).toBe('server_secret')
@@ -1631,6 +1640,13 @@ test('signal-return quick starts create real pipelines and open live modules', a
   await expect(page.getByText('TikTok Events API pipeline created. Connect provider credentials before expecting external delivery.',{exact:true})).toBeVisible()
   await expect(page.locator('.agent-selector').getByText('TikTok Events API · Qualified Lead',{exact:true}).first()).toBeVisible()
   await expect(page.locator('.agent-config')).toContainText('TikTok Ads')
+
+  const xCard=page.locator('.signal-agent-quickstarts article').filter({hasText:'X Ads Conversion API'}).first()
+  await expect(xCard).toBeVisible()
+  await xCard.getByRole('button',{name:'Install pipeline',exact:true}).click()
+  await expect(page.getByText('X Ads Conversion API pipeline created. Connect provider credentials before expecting external delivery.',{exact:true})).toBeVisible()
+  await expect(page.locator('.agent-selector').getByText('X Ads Conversion API · Qualified Lead',{exact:true}).first()).toBeVisible()
+  await expect(page.locator('.agent-config')).toContainText('X')
 
   const callCard=page.locator('.signal-agent-quickstarts article').filter({hasText:'Call Tracking Events'}).first()
   await callCard.getByRole('button',{name:'Open module',exact:true}).click()
