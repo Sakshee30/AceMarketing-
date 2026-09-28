@@ -5789,3 +5789,16 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Added Playwright recovery coverage for forced feedback and qualification-call API failures followed by successful refreshes.
 - External calling credentials remain deferred; internal agent runs, call-event storage, attribution context, scheduling requests, failure evidence, and retry workflows are functional now.
 - Implemented directly on `main`; no separate branch was created.
+
+
+### Meetings and data-flow reliability hardening — 2026-09-28
+
+- **Meetings** now loads persisted consultations and Voice Scheduler runs as one confirmed snapshot; scheduler failures no longer masquerade as “no scheduler history.”
+- Added **Refresh meetings**, loading/error/success states, and preserved existing meeting state during transient backend failures.
+- Meeting creation, Voice Scheduler queueing, reminders, calendar connection, and rescheduling now render explicit success/error states. Deferred calendar credentials are shown as a configuration boundary, not a fake success.
+- **Data Flows** now has explicit loading, refresh, success, and error states and preserves existing flow state during transient API failures.
+- Readiness-test failures and activation failures now render with error styling rather than using the same success appearance as completed operations.
+- Flow activation continues to require backend readiness validation; unsupported/unconfigured connectors are not reported as live.
+- Added Playwright recovery coverage for forced meeting and integration-flow API failures followed by successful refreshes.
+- External provider credentials remain deferred; persisted meetings, scheduler runs, flow recipes, readiness state, and activation guardrails function internally now.
+- Implemented directly on `main`; no separate branch was created.
