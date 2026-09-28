@@ -382,3 +382,12 @@ A frontend feature is not considered complete because the screen renders. Comple
 - Identity graph identifier nodes are bounded in the UI to avoid pathological browser layout expansion from unusually wide profiles.
 - CSV export releases its object URL immediately after download.
 - CI rejects reintroduction of the legacy Identity implementation into `AcePlatform.tsx`.
+
+
+### Attribution feature extraction and evidence hardening
+- Attribution is now a feature-owned lazy chunk instead of an inline workspace implementation.
+- Existing period switching, channel/campaign/outcome/match-evidence views, Journeys navigation and Matchback navigation are preserved.
+- Attribution reads use request sequencing so slower prior period responses cannot replace newer evidence.
+- Transient failures preserve previously loaded attribution evidence and expose an explicit retry path.
+- Large channel, campaign, outcome, method and recent-evidence collections are bounded in browser rendering while backend history remains authoritative.
+- CI rejects reintroduction of the legacy Attribution implementation into `AcePlatform.tsx`.
