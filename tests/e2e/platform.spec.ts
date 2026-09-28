@@ -868,6 +868,29 @@ test('manual integration cards open the custom adapter builder', async ({ page }
 })
 
 
+test('meetings and data flows expose backend failures and recover on refresh', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+
+  await page.route('**/api/meetings',route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'CI meetings unavailable'})}))
+  await openWorkspaceTab(page,'Meetings')
+  await expect(page.getByRole('alert')).toContainText('CI meetings unavailable')
+  await page.unroute('**/api/meetings')
+  const meetingResponse=page.waitForResponse(r=>r.url().includes('/api/meetings')&&r.request().method()==='GET'&&r.status()===200)
+  await page.getByRole('button',{name:'Refresh meetings'}).click()
+  await meetingResponse
+  await expect(page.getByRole('alert')).toHaveCount(0)
+
+  await page.route('**/api/integration-flows',route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'CI data flows unavailable'})}))
+  await openWorkspaceTab(page,'Data Flows')
+  await expect(page.getByRole('alert')).toContainText('CI data flows unavailable')
+  await page.unroute('**/api/integration-flows')
+  const flowResponse=page.waitForResponse(r=>r.url().includes('/api/integration-flows')&&r.request().method()==='GET'&&r.status()===200)
+  await page.getByRole('button',{name:'Refresh flows'}).click()
+  await flowResponse
+  await expect(page.getByRole('alert')).toHaveCount(0)
+})
+
 test('feedback and calls expose backend failures and recover on refresh', async ({ page }) => {
   await page.goto('/#/workspace')
   await dismissConsent(page)
