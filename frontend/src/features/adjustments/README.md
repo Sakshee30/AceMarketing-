@@ -1,0 +1,1 @@
+Adjustments owns conversion-correction creation, preview and application. Existing endpoints, CSS classes and direct route are preserved. Draft creation is navigation-protected and uncertain create/apply outcomes require authoritative refresh before repeat submission.
