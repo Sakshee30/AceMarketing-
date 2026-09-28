@@ -31,6 +31,8 @@ const Planner=lazy(()=>import('./features/planner/public'))
 const Models=lazy(()=>import('./features/models/public'))
 const Settings=lazy(()=>import('./features/settings/public'))
 const Compliance=lazy(()=>import('./features/compliance/public'))
+const Developers=lazy(()=>import('./features/developers/public'))
+const DeliveryCenter=lazy(()=>import('./features/delivery/public'))
 
 const agents=[
  ['Meta Advanced CAPI','Return qualified outcomes to Meta server-side with deduplication.','Lead Quality','+25–40% ROAS'],
@@ -2313,148 +2315,6 @@ function Exclusions(){
  </> 
 }
 
-function DeliveryCenter(){
- const [items,setItems]=useState<any[]>([])
- const [health,setHealth]=useState<any[]>([])
- const [busy,setBusy]=useState('')
- const [notice,setNotice]=useState<{kind:'ok'|'error'|'',text:string}>({kind:'',text:''})
- const load=async()=>{
-  try{
-   const [deliveryResult,healthResult]:any=await Promise.all([api.signalDeliveries(),api.connectorHealth()])
-   setItems(deliveryResult?.items||[])
-   setHealth(healthResult?.items||[])
-   setNotice(x=>x.kind==='error'?x:{kind:'',text:''})
-  }catch(error:any){
-   setNotice({kind:'error',text:error?.message||'Unable to load delivery operations.'})
-  }
- }
- useEffect(()=>{load()},[])
- const retry=async(id:string)=>{
-  setBusy(id);setNotice({kind:'',text:''})
-  try{await api.retrySignalDelivery(id);setNotice({kind:'ok',text:'Delivery re-queued with its persisted identifiers and conversion payload.'});await load()}
-  catch(error:any){setNotice({kind:'error',text:error?.message||'Retry could not be queued.'})}
-  finally{setBusy('')}
- }
- const replay=async()=>{
-  setBusy('dlq');setNotice({kind:'',text:''})
-  try{const result:any=await api.replaySignalDlq();setNotice({kind:'ok',text:`${result?.replayed||0} dead-letter deliver${result?.replayed===1?'y':'ies'} re-queued for the worker.`});await load()}
-  catch(error:any){setNotice({kind:'error',text:error?.message||'Dead-letter replay failed.'})}
-  finally{setBusy('')}
- }
- const queueTest=async()=>{
-  setBusy('test');setNotice({kind:'',text:''})
-  try{
-   const result:any=await api.dispatchSignal({event:'lead.qualified',destination:'Meta Ads',externalId:'ace_test_'+Date.now(),occurredAt:new Date().toISOString(),data:{source:'delivery_center_test'}})
-   setNotice({kind:'ok',text:result?.duplicate?'Matching test signal already exists.':'Test signal accepted by the durable delivery queue.'})
-   await load()
-  }catch(error:any){setNotice({kind:'error',text:error?.message||'Test signal could not be queued. Check DATABASE_URL and connector configuration.'})}
-  finally{setBusy('')}
- }
- const delivered=items.filter(x=>x.status==='delivered').length
- const retrying=items.filter(x=>x.status==='retrying'||x.status==='queued').length
- const dead=items.filter(x=>x.status==='dead_letter').length
- const deliveryRate=items.length?((delivered/items.length)*100).toFixed(1):'—'
- return <><PageHead crumb="Activation / Delivery" title="Signal delivery center" sub="Track every outbound conversion, audience and webhook signal with idempotency, retry state and dead-letter visibility."/>
- {notice.text&&<div className={'delivery-notice '+notice.kind}>{notice.kind==='ok'?<CheckCircle2/>:<ShieldCheck/>}<span>{notice.text}</span></div>}
- <div className="stats-grid"><Stat label="Delivery rate" value={deliveryRate==='—'?'—':deliveryRate+'%'} sub="Current persisted queue" Icon={RadioTower}/><Stat label="Queued / retrying" value={String(retrying)} sub="Automatic or manual retry" Icon={Activity}/><Stat label="Dead letter" value={String(dead)} sub="Needs replay or investigation" Icon={ShieldCheck}/><Stat label="Connectors" value={String(health.length)} sub="Health continuously observable" Icon={Cable}/></div>
- <div className="app-panel"><div className="panel-head"><div><h3>Outbound delivery queue</h3><p>One idempotent record per external signal</p></div><div className="panel-actions"><button disabled={busy==='dlq'||dead===0} onClick={replay}>{busy==='dlq'?'Replaying…':'Replay dead letter'}</button><button className="app-primary" disabled={busy==='test'} onClick={queueTest}>{busy==='test'?'Queuing…':'Queue test signal'}</button></div></div>
- {items.length?<table><thead><tr><th>Delivery</th><th>Event</th><th>Destination</th><th>Status</th><th>Attempts</th><th>HTTP</th><th>Latency</th><th></th></tr></thead><tbody>{items.map(x=><tr key={x.id}><td><code>{String(x.id).slice(0,18)}</code></td><td>{x.event}</td><td>{x.destination}</td><td><span className={String(x.status).replace('_','-')}>{x.status}</span></td><td>{x.attempts??0}</td><td>{x.httpStatus??'—'}</td><td>{x.latencyMs?x.latencyMs+'ms':'—'}</td><td>{x.status!=='delivered'&&<button disabled={busy===x.id} onClick={()=>retry(x.id)}>{busy===x.id?'Queuing…':'Retry'}</button>}</td></tr>)}</tbody></table>:<div className="empty-delivery-state"><RadioTower/><div><b>No persisted deliveries yet</b><small>Queue a test signal or allow an event rule to create the first outbound conversion.</small></div></div>}</div>
- <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Connector health</h3><p>Destination reliability and latency</p></div></div>{health.length?health.map(x=><div className="monitor-row" key={x.name}><span>{x.name}</span><div className="progress"><i style={{width:Math.max(0,Math.min(100,Number(x.successRate||0)))+'%'}}/></div><b>{x.successRate}%</b><small>{x.p95LatencyMs}ms p95</small><em className={x.status}>{x.status}</em></div>):<div className="empty-delivery-state"><Cable/><div><b>No delivery telemetry yet</b><small>Connector health becomes measurable after persisted worker deliveries are processed.</small></div></div>}</div>
- <div className="app-panel"><div className="panel-head"><div><h3>Delivery guarantees</h3><p>Controls used before a signal leaves the platform</p></div></div>{[['Idempotency','SHA-256 delivery key prevents duplicate external writes'],['Retry policy','Failed deliveries use exponential backoff and retain the replay payload'],['Dead-letter queue','Exhausted failures stay visible and are actually re-enqueued on replay'],['Audit trail','Dispatch, retry and replay actions create immutable-style audit entries'],['PII boundary','Retry payloads retain hashed email/phone identifiers rather than raw PII']].map(x=><div className="mapping-rule" key={x[0]}><span>{x[0]}</span><ArrowRight/><b>{x[1]}</b></div>)}</div></div></>
-}
-
-function Developers(){
- const [secret,setSecret]=useState('Hidden until rotated')
- const [delivery,setDelivery]=useState<any[]>([])
- const [endpoints,setEndpoints]=useState<any[]>([])
- const [apiKeys,setApiKeys]=useState<any[]>([])
- const [sdk,setSdk]=useState<'curl'|'node'|'python'>('curl')
- const [builder,setBuilder]=useState(false)
- const [keyBuilder,setKeyBuilder]=useState(false)
- const [createdKey,setCreatedKey]=useState<any>(null)
- const [keyName,setKeyName]=useState('Production ingestion')
- const [endpointDraft,setEndpointDraft]=useState({event:'lead.qualified',url:''})
- const [notice,setNotice]=useState('')
- const [busy,setBusy]=useState('')
- const load=async()=>{
-  try{
-   const [webhooks,keys]:any[]=await Promise.all([api.webhookDeliveries(),api.apiKeys()])
-   setDelivery(webhooks.items||[])
-   setEndpoints(webhooks.endpoints||[])
-   setApiKeys(keys.items||[])
-  }catch(e:any){setNotice(e?.message||'Developer data could not be loaded.')}
- }
- useEffect(()=>{load()},[])
- const rotate=async()=>{
-  setBusy('secret');setNotice('')
-  try{const r:any=await api.rotateWebhookSecret();setSecret(r.secret);setNotice('New signing secret generated. Copy it now; only its fingerprint is persisted.')}
-  catch(e:any){setNotice(e?.message||'Secret rotation failed.')}
-  finally{setBusy('')}
- }
- const retry=async(id:string)=>{
-  setBusy(id);setNotice('')
-  try{await api.retryWebhook(id);setNotice('Webhook delivery re-queued.');await load()}
-  catch(e:any){setNotice(e?.message||'Retry failed.')}
-  finally{setBusy('')}
- }
- const addEndpoint=async()=>{
-  if(!endpointDraft.event.trim()||!endpointDraft.url.trim())return
-  setBusy('endpoint');setNotice('')
-  try{await api.createWebhookEndpoint(endpointDraft);setBuilder(false);setEndpointDraft({event:'lead.qualified',url:''});setNotice('Webhook endpoint created.');await load()}
-  catch(e:any){setNotice(e?.message||'Endpoint could not be created.')}
-  finally{setBusy('')}
- }
- const createKey=async()=>{
-  if(keyName.trim().length<2)return
-  setBusy('key');setNotice('')
-  try{const r:any=await api.createApiKey({name:keyName.trim()});setCreatedKey(r);setKeyBuilder(false);setKeyName('Production ingestion');setNotice('API key created. Copy it now; the full secret will not be shown again.');await load()}
-  catch(e:any){setNotice(e?.message||'API key could not be created.')}
-  finally{setBusy('')}
- }
- const revokeKey=async(id:string)=>{
-  setBusy('revoke:'+id);setNotice('')
-  try{await api.revokeApiKey(id);setNotice('API key revoked. Requests using that key will be rejected.');await load()}
-  catch(e:any){setNotice(e?.message||'API key could not be revoked.')}
-  finally{setBusy('')}
- }
- const copy=async(text:string)=>{try{await navigator.clipboard.writeText(text);setNotice('Copied to clipboard.')}catch{setNotice('Clipboard access is unavailable in this browser.')}}
- const snippets:any={
-  curl:`curl -X POST "$ACE_API_BASE/api/track" \\\n  -H "Authorization: Bearer $ACE_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '{"event":"lead.qualified","customerId":"cust_18421","gclid":"gclid_example"}'`,
-  node:`await fetch(process.env.ACE_API_BASE + '/api/track', {\n  method: 'POST',\n  headers: { Authorization: 'Bearer ' + process.env.ACE_API_KEY, 'Content-Type': 'application/json' },\n  body: JSON.stringify({ event: 'lead.qualified', customerId: 'cust_18421', gclid: 'gclid_example' })\n})`,
-  python:`import os, requests\nrequests.post(os.environ["ACE_API_BASE"] + "/api/track", headers={"Authorization": "Bearer " + os.environ["ACE_API_KEY"]}, json={"event":"lead.qualified","customerId":"cust_18421","gclid":"gclid_example"})`
- }
- const delivered=delivery.filter((x:any)=>String(x.status).toLowerCase()==='delivered').length
- const failed=delivery.filter((x:any)=>String(x.status).toLowerCase()==='failed').length
- const successRate=delivery.length?((delivered/delivery.length)*100).toFixed(1):'—'
- const p95=delivery.length?Math.max(...delivery.map((x:any)=>Number(x.latencyMs||0))):0
- const activeKeys=apiKeys.filter((x:any)=>x.status==='active')
- return <><PageHead crumb="Platform / Developers" title="Developer & webhook console" sub="Integrate proprietary systems with managed API keys, signed webhooks and server-to-server event contracts." action="Open API reference" onAction={()=>document.getElementById('api-quick-start')?.scrollIntoView({behavior:'smooth'})}/>
- {notice&&<div className="delivery-notice ok"><CheckCircle2/><span>{notice}</span></div>}
- <div className="stats-grid"><Stat label="Active API keys" value={String(activeKeys.length)} sub={apiKeys.length-activeKeys.length+' revoked credentials'} Icon={Code2}/><Stat label="Webhook deliveries" value={String(delivery.length)} sub="Persisted delivery records" Icon={Activity}/><Stat label="Delivery success" value={successRate==='—'?'—':successRate+'%'} sub={failed+' failed deliveries'} Icon={RadioTower}/><Stat label="Active endpoints" value={String(endpoints.filter((x:any)=>x.status==='active').length)} sub="Persisted outbound endpoints" Icon={Cable}/></div>
- <div className="app-panel"><div className="panel-head"><div><h3>API keys</h3><p>Create revocable server credentials for ingestion and proprietary integrations.</p></div><button onClick={()=>setKeyBuilder(true)}><Plus/>Create API key</button></div>
- {activeKeys.length?activeKeys.map((x:any)=><div className="setting-line developer-key-row" key={x.id}><div><span>{x.name}</span><small>{x.prefix}•••• · created {x.createdAt?new Date(x.createdAt).toLocaleDateString():'—'}{x.lastUsedAt?' · last used '+new Date(x.lastUsedAt).toLocaleString():''}</small></div><b>Active</b><button disabled={busy==='revoke:'+x.id} onClick={()=>revokeKey(x.id)}>{busy==='revoke:'+x.id?'Revoking…':'Revoke'}</button></div>):<div className="empty-delivery-state"><Code2/><div><b>No active API keys</b><small>Create a credential before using authenticated server-to-server examples.</small></div></div>}
- {apiKeys.some((x:any)=>x.status==='revoked')&&<details className="developer-revoked-keys"><summary>{apiKeys.filter((x:any)=>x.status==='revoked').length} revoked key(s)</summary>{apiKeys.filter((x:any)=>x.status==='revoked').map((x:any)=><div className="setting-line" key={x.id}><code>{x.prefix}••••</code><b>{x.name}</b><span className="status">revoked</span></div>)}</details>}</div>
- {createdKey&&<div className="app-panel developer-secret-reveal"><div className="panel-head"><div><h3>Copy this key now</h3><p>The complete credential is returned only at creation time.</p></div><button onClick={()=>setCreatedKey(null)}><X/></button></div><div className="api-key-box"><div><span>{createdKey.name}</span><code>{createdKey.key}</code></div><button onClick={()=>copy(createdKey.key)}>Copy key</button></div></div>}
- <div className="two-col"><div className="app-panel" id="api-quick-start"><div className="panel-head"><div><h3>API quick start</h3><p>Authenticated server-to-server event ingestion</p></div><button onClick={()=>copy(snippets[sdk])}>Copy</button></div><div className="code-block"><code>{snippets[sdk]}</code></div><div className="sdk-tabs"><button className={sdk==='curl'?'active':''} onClick={()=>setSdk('curl')}>cURL</button><button className={sdk==='node'?'active':''} onClick={()=>setSdk('node')}>Node.js</button><button className={sdk==='python'?'active':''} onClick={()=>setSdk('python')}>Python</button></div></div>
- <div className="app-panel"><div className="panel-head"><div><h3>Webhook signing</h3><p>Verify outbound event authenticity</p></div></div><div className="api-key-box"><div><span>Signing secret</span><code>{secret}</code></div><button disabled={busy==='secret'} onClick={rotate}>{busy==='secret'?'Rotating…':'Rotate secret'}</button></div><div className="setting-line"><span>Signature header</span><b>X-Ace-Signature</b><span className="healthy">HMAC-SHA256</span></div><div className="setting-line"><span>Timestamp header</span><b>X-Ace-Timestamp</b><span className="healthy">Required</span></div><div className="setting-line"><span>Replay tolerance</span><b>5 minutes</b><span className="healthy">Enforced</span></div></div></div>
- <div className="app-panel"><div className="panel-head"><div><h3>Webhook endpoints</h3><p>Workspace-specific outbound subscriptions</p></div><button onClick={()=>setBuilder(true)}><Plus/>Add endpoint</button></div>{endpoints.length?endpoints.map((x:any)=><div className="setting-line" key={x.id}><code>{x.event}</code><b>{x.url}</b><span className={x.status==='active'?'healthy':'status'}>{x.status}</span></div>):<div className="empty-delivery-state"><Cable/><div><b>No webhook endpoints yet</b><small>Add an HTTPS endpoint to receive workspace events.</small></div></div>}</div>
- <div className="app-panel"><div className="panel-head"><div><h3>Webhook delivery log</h3><p>Inspect persisted status, latency and retry state</p></div><button onClick={load}>Refresh</button></div>{delivery.length?<table><thead><tr><th>Delivery ID</th><th>Event</th><th>HTTP</th><th>Latency</th><th>Status</th><th></th></tr></thead><tbody>{delivery.map((x:any)=><tr key={x.id}><td><code>{x.id}</code></td><td>{x.event}</td><td>{x.statusCode??'—'}</td><td>{x.latencyMs?x.latencyMs+'ms':'—'}</td><td><span className={String(x.status).toLowerCase().replace(' ','-')}>{x.status}</span></td><td>{String(x.status).toLowerCase()!=='delivered'&&<button disabled={busy===x.id} onClick={()=>retry(x.id)}>{busy===x.id?'Queuing…':'Retry'}</button>}</td></tr>)}</tbody></table>:<div className="empty-delivery-state"><RadioTower/><div><b>No webhook deliveries yet</b><small>Delivery history appears after an outbound endpoint receives an event.</small></div></div>}</div>
- <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Event catalog</h3><p>Stable contracts for connected systems</p></div></div>{[['lead.created','Lead entered CRM'],['lead.qualified','Qualified outcome'],['consultation.booked','Meeting scheduled'],['revenue.closed','Closed revenue'],['audience.updated','Activation segment changed'],['sync.failed','Connector delivery failure']].map(x=><button className="developer-event-row developer-event-button" key={x[0]} onClick={()=>{setEndpointDraft({event:x[0],url:''});setBuilder(true)}}><code>{x[0]}</code><span>{x[1]}</span><ChevronRight/></button>)}</div><div className="app-panel"><div className="panel-head"><div><h3>Reliability contract</h3><p>Delivery guarantees in the implementation design</p></div></div>{[['Idempotency','event_id required'],['Retries','Exponential backoff'],['Dead-letter queue','After retry exhaustion'],['Observability','Delivery history + alerting'],['Versioning','Stable event schema versions']].map(x=><div className="setting-line" key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><Check/></div>)}</div></div>
- {keyBuilder&&<div className="connector-modal"><div className="connector-card"><div className="connector-modal-head"><div><Code2/><div><b>Create API key</b><small>The secret is revealed once and only its fingerprint is stored.</small></div></div><button onClick={()=>setKeyBuilder(false)}><X/></button></div><div className="connector-step"><label>Credential name<input value={keyName} maxLength={80} onChange={e=>setKeyName(e.target.value)} placeholder="Production ingestion"/></label><button disabled={busy==='key'||keyName.trim().length<2} onClick={createKey}>{busy==='key'?'Creating…':'Create key'}</button></div></div></div>}
- {builder&&<div className="connector-modal"><div className="connector-card"><div className="connector-modal-head"><div><Cable/><div><b>Add outbound webhook</b><small>Subscribe one HTTPS endpoint to one workspace event.</small></div></div><button onClick={()=>setBuilder(false)}><X/></button></div><div className="connector-step"><label>Event<input value={endpointDraft.event} onChange={e=>setEndpointDraft({...endpointDraft,event:e.target.value})}/></label><label>HTTPS endpoint<input placeholder="https://example.com/webhooks/ace" value={endpointDraft.url} onChange={e=>setEndpointDraft({...endpointDraft,url:e.target.value})}/></label><button disabled={busy==='endpoint'||!endpointDraft.event.trim()||!endpointDraft.url.trim()} onClick={addEndpoint}>{busy==='endpoint'?'Creating…':'Create endpoint'}</button></div></div></div>}</>
-}
-class WorkspaceSectionBoundary extends Component<any,{error:Error|null}>{
- constructor(props:any){super(props);this.state={error:null}}
- static getDerivedStateFromError(error:Error){return {error}}
- componentDidCatch(error:Error,info:any){
-  try{console.error('workspace section failed',this.props?.tab,error,info?.componentStack||'')}catch{}
- }
- componentDidUpdate(prevProps:any){if(prevProps?.tab!==this.props?.tab&&this.state.error)this.setState({error:null})}
- render(){
-  if(!this.state.error)return this.props.children
-  return <div className="app-panel workspace-section-error" role="alert"><AlertTriangle/><div><h2>{String(this.props?.tab||'Workspace section')} could not render</h2><p>{this.state.error.message||'An unexpected rendering error occurred.'}</p><small>The rest of the dashboard is still available. Retry this section or use the dashboard navigator to continue working.</small></div><button onClick={()=>this.setState({error:null})}><RefreshCw/>Retry section</button></div>
- }
-}
 function Product({back}:{back:()=>void}){
  const [tab,setTab]=useState<AppTab>(()=>{const routed=parseWorkspaceTabFromHash(window.location.hash) as AppTab|null;const saved=window.localStorage.getItem('ace_active_tab') as AppTab|null;return routed||(saved&&appTabs.some(([name])=>name===saved)?saved:'Overview')})
  const [workspaceOpen,setWorkspaceOpen]=useState(false)
@@ -2539,7 +2399,7 @@ function Product({back}:{back:()=>void}){
  const searchMatches=search.trim()?appTabs.filter(([name])=>name.toLowerCase().includes(search.trim().toLowerCase())).slice(0,8):[]
  const runSearch=(name?:string)=>{const target=(name||searchMatches[0]?.[0]) as AppTab|undefined;if(target&&navigateToTab(target))setSearch('')}
  const currentWorkspace=workspaces.find(x=>x.name===workspace)||workspaces[0]
- const view=useMemo(()=>({Launchpad:<Launchpad/>,Overview:<Overview/>,AdSync:<AdSync/>,"ChatGPT Ads":<ChatGPTAds/>,Funnel:<Funnel/>,"Leak Monitor":<LeakMonitor/>,Events:<Events/>,Adjustments:<Adjustments/>,Diagnostics:<Diagnostics/>,"Match Quality":<MatchQuality/>,Reconciliation:<Reconciliation/>,Fraud:<Fraud/>,"Deep Links":<DeepLinks/>,Sites:<Sites/>,Fingerprinting:<Fingerprinting/>,"Live Sync":<LiveSync/>,"Data Hub":<DataHub/>,"Customer 360":<Customer360/>,"Offline Attribution":<OfflineAttribution/>,Matchback:<Matchback/>,"POS & Stores":<POSAndStores/>,Journeys:<Journeys/>,Identity:<Identity/>,Models:<Suspense fallback={<LoadingState compact title="Loading models" description="Loading the Models feature."/>}><Models/></Suspense>,Attribution:<Attribution/>,Planner:<Suspense fallback={<LoadingState compact title="Loading planner" description="Loading the Planner feature."/>}><Planner/></Suspense>,Reports:<Suspense fallback={<LoadingState compact title="Loading reports" description="Loading the Reports feature."/>}><Reports/></Suspense>,"Grouped Performance":<GroupedPerformance/>,"Executive Briefs":<Suspense fallback={<LoadingState compact title="Loading executive briefs" description="Loading the Executive Briefs feature."/>}><ExecutiveBriefs/></Suspense>,Enrich:<Enrich/>,"Lead Grading":<LeadGrading/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Routing:<Routing/>,"Follow-ups":<FollowUps/>,Calls:<Calls/>,Meetings:<Meetings/>,Feedback:<Feedback/>,Approvals:<Suspense fallback={<LoadingState compact title="Loading approvals" description="Loading the approvals feature."/>}><Approvals/></Suspense>,"Ask Ace":<AskAce/>,Integrations:<Suspense fallback={<LoadingState compact title="Loading integrations" description="Loading the Integrations feature."/>}><Integrations/></Suspense>,"Data Flows":<Suspense fallback={<LoadingState compact title="Loading data flows" description="Loading the Data Flows feature."/>}><DataFlows/></Suspense>,"Real-Time Activation":<RealTimeActivation/>,Personalization:<Personalization/>,Exclusions:<Exclusions/>,Audiences:<Suspense fallback={<LoadingState compact title="Loading audiences" description="Loading the Audiences feature."/>}><Audiences/></Suspense>,Delivery:<DeliveryCenter/>,Monitoring:<Suspense fallback={<LoadingState compact title="Loading monitoring" description="Loading the monitoring feature."/>}><Monitoring/></Suspense>,Alerts:<Suspense fallback={<LoadingState compact title="Loading alerts" description="Loading the Alert Center."/>}><Alerts/></Suspense>,Compliance:<Suspense fallback={<LoadingState compact title="Loading compliance" description="Loading the Compliance feature."/>}><Compliance/></Suspense>,Developers:<Developers/>,Settings:<Suspense fallback={<LoadingState compact title="Loading settings" description="Loading workspace settings."/>}><Settings/></Suspense>}[tab]),[tab,workspaceGeneration])
+ const view=useMemo(()=>({Launchpad:<Launchpad/>,Overview:<Overview/>,AdSync:<AdSync/>,"ChatGPT Ads":<ChatGPTAds/>,Funnel:<Funnel/>,"Leak Monitor":<LeakMonitor/>,Events:<Events/>,Adjustments:<Adjustments/>,Diagnostics:<Diagnostics/>,"Match Quality":<MatchQuality/>,Reconciliation:<Reconciliation/>,Fraud:<Fraud/>,"Deep Links":<DeepLinks/>,Sites:<Sites/>,Fingerprinting:<Fingerprinting/>,"Live Sync":<LiveSync/>,"Data Hub":<DataHub/>,"Customer 360":<Customer360/>,"Offline Attribution":<OfflineAttribution/>,Matchback:<Matchback/>,"POS & Stores":<POSAndStores/>,Journeys:<Journeys/>,Identity:<Identity/>,Models:<Suspense fallback={<LoadingState compact title="Loading models" description="Loading the Models feature."/>}><Models/></Suspense>,Attribution:<Attribution/>,Planner:<Suspense fallback={<LoadingState compact title="Loading planner" description="Loading the Planner feature."/>}><Planner/></Suspense>,Reports:<Suspense fallback={<LoadingState compact title="Loading reports" description="Loading the Reports feature."/>}><Reports/></Suspense>,"Grouped Performance":<GroupedPerformance/>,"Executive Briefs":<Suspense fallback={<LoadingState compact title="Loading executive briefs" description="Loading the Executive Briefs feature."/>}><ExecutiveBriefs/></Suspense>,Enrich:<Enrich/>,"Lead Grading":<LeadGrading/>,Behavior:<Behavior/>,Feed:<Feed/>,Agents:<Agents/>,Routing:<Routing/>,"Follow-ups":<FollowUps/>,Calls:<Calls/>,Meetings:<Meetings/>,Feedback:<Feedback/>,Approvals:<Suspense fallback={<LoadingState compact title="Loading approvals" description="Loading the approvals feature."/>}><Approvals/></Suspense>,"Ask Ace":<AskAce/>,Integrations:<Suspense fallback={<LoadingState compact title="Loading integrations" description="Loading the Integrations feature."/>}><Integrations/></Suspense>,"Data Flows":<Suspense fallback={<LoadingState compact title="Loading data flows" description="Loading the Data Flows feature."/>}><DataFlows/></Suspense>,"Real-Time Activation":<RealTimeActivation/>,Personalization:<Personalization/>,Exclusions:<Exclusions/>,Audiences:<Suspense fallback={<LoadingState compact title="Loading audiences" description="Loading the Audiences feature."/>}><Audiences/></Suspense>,Delivery:<Suspense fallback={<LoadingState compact title="Loading delivery" description="Loading the Delivery Center."/>}><DeliveryCenter/></Suspense>,Monitoring:<Suspense fallback={<LoadingState compact title="Loading monitoring" description="Loading the monitoring feature."/>}><Monitoring/></Suspense>,Alerts:<Suspense fallback={<LoadingState compact title="Loading alerts" description="Loading the Alert Center."/>}><Alerts/></Suspense>,Compliance:<Suspense fallback={<LoadingState compact title="Loading compliance" description="Loading the Compliance feature."/>}><Compliance/></Suspense>,Developers:<Suspense fallback={<LoadingState compact title="Loading developers" description="Loading the Developer console."/>}><Developers/></Suspense>,Settings:<Suspense fallback={<LoadingState compact title="Loading settings" description="Loading workspace settings."/>}><Settings/></Suspense>}[tab]),[tab,workspaceGeneration])
  return <div className={'product '+(mobileNavOpen?'mobile-nav-open':'')}><a className="skip-link" href="#ace-workspace-main">Skip to workspace content</a><RouteAnnouncer label={tab+' · '+workspace} focusSelector=".product-body .page-head h1"/><aside className="product-sidebar" aria-label="Workspace navigation"><Brand/><div className="workspace-wrap"><button className="workspace" onClick={()=>setWorkspaceOpen(!workspaceOpen)}><span>{currentWorkspace?.initials||'AM'}</span><div><b>{workspace}</b><small>{currentWorkspace?.environment||'Production'} workspace</small></div><ChevronDown/></button>{workspaceOpen&&<div className="workspace-menu">{workspaces.map((x:any)=><button key={x.id||x.name} onClick={()=>void chooseWorkspace(x)} className={workspace===x.name?'active':''}><span>{x.initials||String(x.name).split(/\s+/).map((s:string)=>s[0]).join('').slice(0,3)}</span><div><b>{x.name}</b><small>{x.environment||'Production'}</small></div>{workspace===x.name&&<Check/>}</button>)}<button className="new-workspace" onClick={()=>{setWorkspaceOpen(false);setCreateOpen(true)}}><Plus/>Create workspace</button></div>}</div><nav className="product-nav">
  <div className="product-nav-filter"><Search/><input value={navFilter} onChange={e=>setNavFilter(e.target.value)} placeholder="Find feature..."/></div>
  {dashboardSections.map(section=>{
