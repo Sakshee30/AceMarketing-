@@ -5875,3 +5875,12 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Kept provider secrets server-side and preserved all existing UI classes and Delivery Center navigation.
 - Added architecture enforcement preventing the feature from drifting back into the legacy workspace composition.
 - Implemented directly on `main`; backend restructuring remains deferred until the frontend sequence is complete.
+
+
+### Frontend architecture: Funnel feature boundary — 2026-09-28
+
+- Extracted **Channel, account & campaign funnel** into a feature-owned lazy chunk while preserving all current filters, stage calculations, campaign drill-down and CSV export behavior.
+- Added explicit loading and retryable error states that preserve already-visible evidence during transient backend failures.
+- Added request sequencing so stale funnel responses cannot overwrite newer filter selections during rapid interaction.
+- Added architecture enforcement preventing Funnel from drifting back into the legacy workspace composition.
+- Implemented directly on `main`; no current customer feature or backend endpoint was removed, and backend restructuring remains deferred until frontend completion.
