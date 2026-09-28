@@ -1,0 +1,1 @@
+Data Flows owns governed source-to-destination synchronization setup, readiness testing, activation state and its direct workspace route. Existing endpoints, CSS classes and customer behavior are preserved. The builder remains protected by the shared dirty-work registry.
