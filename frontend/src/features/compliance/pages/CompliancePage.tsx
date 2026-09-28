@@ -1,6 +1,7 @@
 import {useEffect,useState} from 'react'
 import {AlertTriangle,Check,CheckCircle2,DatabaseZap,RadioTower,ShieldCheck,Sparkles,UsersRound,X} from 'lucide-react'
 import {complianceApi as api} from '../data/compliance.api'
+import {StaleState} from '../../../components/system/FrontendStates'
 
 function PageHead({crumb,title,sub,action,onAction}:{crumb:string;title:string;sub:string;action?:string;onAction?:()=>void}){
   return <div className="page-head"><div><span>{crumb}</span><h1 tabIndex={-1}>{title}</h1><p>{sub}</p></div>{action&&<button className="app-primary" onClick={onAction}><Sparkles/>{action}</button>}</div>
@@ -19,7 +20,8 @@ export default function CompliancePage(){
  const [deleteConfirm,setDeleteConfirm]=useState('')
  const [exportResult,setExportResult]=useState<any>(null)
  const [retentionPreview,setRetentionPreview]=useState<any>(null)
- const load=async()=>{try{setData(await api.complianceCenter())}catch(e:any){setNotice(e?.message||'Compliance center could not be loaded.')}}
+ const [uncertain,setUncertain]=useState(false)
+ const load=async()=>{try{setData(await api.center());setUncertain(false)}catch(e:any){setNotice(e?.message||'Compliance center could not be loaded.')}}
  useEffect(()=>{load()},[])
  const exportSubject=async()=>{
   if(!selector.trim()){setNotice('Enter a subject selector first.');return}
@@ -29,9 +31,9 @@ export default function CompliancePage(){
  }
  const deleteSubject=async()=>{
   if(!selector.trim()||deleteConfirm!=='DELETE'){setNotice('Enter a subject selector and type DELETE to confirm.');return}
-  setBusy('delete');setNotice('')
+  setBusy('delete');setNotice('');setUncertain(false)
   try{const r:any=await api.privacyDelete(selectorType,selector.trim());setNotice('Subject deletion completed: '+Object.values(r.summary||{}).reduce((n:any,x:any)=>n+Number(x||0),0)+' records affected.');setDeleteConfirm('');setExportResult(null);await load()}
-  catch(e:any){setNotice(e?.message||'Privacy deletion failed.')}finally{setBusy('')}
+  catch(e:any){const cause=String(e?.details?.cause||'');if(cause==='timeout'||cause==='network'){setUncertain(true);setNotice('The backend did not confirm whether subject deletion completed. Refresh authoritative privacy history before attempting the deletion again.')}else setNotice(e?.message||'Privacy deletion failed.')}finally{setBusy('')}
  }
  const previewRetention=async()=>{
   setBusy('retention-preview');setNotice('')
@@ -40,14 +42,14 @@ export default function CompliancePage(){
  }
  const applyRetention=async()=>{
   if(!retentionPreview)return
-  setBusy('retention-apply');setNotice('')
+  setBusy('retention-apply');setNotice('');setUncertain(false)
   try{const r:any=await api.privacyRetentionPurge(false);setRetentionPreview(null);setNotice('Retention purge completed. Request '+r.requestId+' was audited.');await load()}
-  catch(e:any){setNotice(e?.message||'Retention purge failed.')}finally{setBusy('')}
+  catch(e:any){const cause=String(e?.details?.cause||'');if(cause==='timeout'||cause==='network'){setUncertain(true);setNotice('The backend did not confirm whether retention purge completed. Refresh compliance history before applying retention again.')}else setNotice(e?.message||'Retention purge failed.')}finally{setBusy('')}
  }
  const consent=data.consent||{},privacy=data.privacy||{},guards=data.guards||{},policy=data.policy||{}
  const policyRows=[['Click sessions',policy.clickSessions],['Assisted events',policy.assistedEvents],['Lead profiles',policy.leadProfiles],['Consent records',policy.consentRecords]]
  return <><PageHead crumb="Operations / Compliance" title="Privacy, consent & compliance center" sub="Operate consent, subject rights, retention and activation safeguards from one governed workspace." action="Refresh" onAction={load}/>
- {notice&&<div className={'delivery-notice '+(notice.toLowerCase().includes('failed')||notice.toLowerCase().includes('could not')?'error':'ok')}><ShieldCheck/><span>{notice}</span></div>}
+ {uncertain&&notice?<StaleState title="Compliance action needs reconciliation" description={notice} action={{label:'Refresh compliance state',onClick:load}}/>:notice&&<div className={'delivery-notice '+(notice.toLowerCase().includes('failed')||notice.toLowerCase().includes('could not')?'error':'ok')}><ShieldCheck/><span>{notice}</span></div>}
  <div className="stats-grid"><Stat label="Compliance readiness" value={String(data.readiness??'—')+(data.readiness!=null?'%':'')} sub="Operational checks, not legal certification" Icon={ShieldCheck}/><Stat label="Consent subjects" value={String(consent.total||0)} sub={String(consent.marketingRate||0)+'% marketing consent'} Icon={UsersRound}/><Stat label="Revoked" value={String(consent.revoked||0)} sub="Persisted consent revocations" Icon={X}/><Stat label="Privacy requests" value={String(privacy.totalRequests||0)} sub={String(privacy.deletions||0)+' deletes · '+String(privacy.exports||0)+' exports'} Icon={DatabaseZap}/></div>
  <div className="compliance-layout"><section className="app-panel"><div className="panel-head"><div><h3>Consent coverage</h3><p>Persisted first-party consent state used by tracking, activation and personalization</p></div><span className={consent.total?'healthy':'status'}>{consent.total||0} subjects</span></div><div className="compliance-consent-bars">{[['Analytics',consent.analyticsRate||0,consent.analytics||0],['Marketing',consent.marketingRate||0,consent.marketing||0],['Personalization',consent.personalizationRate||0,consent.personalization||0]].map(x=><div key={x[0]}><div><span>{x[0]}</span><b>{x[1]}% · {x[2]} subjects</b></div><div className="progress"><i style={{width:Math.min(100,Number(x[1]||0))+'%'}}/></div></div>)}</div><div className="compliance-guard-grid"><div><ShieldCheck/><span>Activation consent skips</span><b>{guards.skippedActivation||0}</b></div><div><Sparkles/><span>Personalization blocks</span><b>{guards.blockedPersonalization||0}</b></div><div><RadioTower/><span>Signal records guarded</span><b>{guards.signalDeliveries||0}</b></div></div></section>
  <section className="app-panel"><div className="panel-head"><div><h3>Operational readiness checks</h3><p>Controls that support privacy operations; this is not a legal-compliance certification.</p></div><strong>{data.readiness||0}%</strong></div><div className="compliance-checks">{(data.checks||[]).map((x:any)=><article key={x.key}><span className={x.ready?'ready':'attention'}>{x.ready?<Check/>:<AlertTriangle/>}</span><div><b>{x.label}</b><small>{x.detail}</small></div></article>)}</div></section></div>
