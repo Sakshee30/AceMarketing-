@@ -201,3 +201,20 @@ test('loads extracted compliance feature from its direct workspace route',async(
   await expect(page.getByRole('heading',{name:'Privacy, consent & compliance center'})).toBeVisible()
   await expect(page.getByText(/Subject rights operations/i)).toBeVisible()
 })
+
+
+test('loads extracted developers feature from its direct workspace route',async({page})=>{
+  await page.goto('/#/workspace?tab=Developers')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Developers/)
+  await expect(page.getByRole('heading',{name:'Developer & webhook console'})).toBeVisible()
+  await expect(page.getByText(/API keys/i)).toBeVisible()
+})
+
+test('loads extracted delivery feature from its direct workspace route',async({page})=>{
+  await page.goto('/#/workspace?tab=Delivery')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Delivery/)
+  await expect(page.getByRole('heading',{name:'Signal delivery center'})).toBeVisible()
+  await expect(page.getByText(/Outbound delivery queue/i)).toBeVisible()
+})
