@@ -114,3 +114,5 @@ export class FrontendWidgetBoundary extends Component<WidgetBoundaryProps,Widget
     </div>
   }
 }
+
+// workspace boundary module marker
