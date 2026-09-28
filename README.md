@@ -6009,3 +6009,13 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Bounded large lead/writeback collections to protect long-running browser sessions.
 - Added architecture enforcement and E2E coverage for the extracted feature.
 - Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
+
+
+### Frontend architecture: Lead Grading feature boundary — 2026-09-28
+
+- Extracted **Lead Grading** into a feature-owned lazy chunk while preserving scoring, grade overrides, explainable drivers, grade distribution and downstream activation workflows.
+- Added explicit loading/retry states and preserved existing evidence during transient failures.
+- Added unknown-outcome reconciliation for grade overrides and activation writes, plus duplicate-submission protection.
+- Bounded lead and score-driver rendering for large workspaces.
+- Added architecture enforcement and E2E coverage for the extracted feature.
+- Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
