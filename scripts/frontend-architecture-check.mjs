@@ -40,6 +40,9 @@ for(const file of walk(frontend)){
 const acePlatform=path.join(frontend,'AcePlatform.tsx')
 if(fs.existsSync(acePlatform)){
   const source=fs.readFileSync(acePlatform,'utf8')
+  if(/function\s+Enrich\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Enrich implementation after feature extraction.')
+  }
   if(/function\s+GroupedPerformance\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Grouped Performance implementation after feature extraction.')
   }
@@ -183,6 +186,10 @@ if(fs.existsSync(acePlatform)){
 }
 
 const required=[
+  'frontend/src/features/enrich/data/enrich.api.ts',
+  'frontend/src/features/enrich/pages/EnrichPage.tsx',
+  'frontend/src/features/enrich/public.ts',
+  'frontend/src/features/enrich/feature.manifest.ts',
   'frontend/src/features/grouped-performance/data/grouped-performance.api.ts',
   'frontend/src/features/grouped-performance/pages/GroupedPerformancePage.tsx',
   'frontend/src/features/grouped-performance/public.ts',
