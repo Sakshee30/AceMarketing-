@@ -5940,3 +5940,13 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Added architecture enforcement and E2E coverage for the extracted feature.
 - Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
 
+
+
+### Frontend architecture: Matchback feature boundary — 2026-09-28
+
+- Extracted **Closure Matchback & Revenue Reconciliation** into a feature-owned lazy chunk while preserving rule management, reconciliation, unmatched review, templates and live identity coverage.
+- Replaced DOM-based template form mutation with controlled React state.
+- Added accessible dialogs, dirty-work protection, explicit loading/error states and unknown-outcome reconciliation for writes.
+- Bounded unmatched-record rendering to protect long-running browser sessions.
+- Added architecture enforcement and E2E coverage for the extracted feature.
+- Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
