@@ -6247,3 +6247,12 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Pricing quote capture can no longer render the saved state after a network-ambiguous response.
 - Added standalone E2E coverage that deliberately aborts public demo and quote writes to prove unknown-outcome behavior.
 - No existing public lead-capture, booking, pricing or connector feature was removed.
+
+
+### Localization and timezone foundation — 2026-09-28
+
+- Added `packages/localization` as the owned frontend formatting boundary for locale-aware numbers, currencies, dates, date-times and relative time.
+- Replaced public-site ad-hoc `toLocaleString` / `toLocaleDateString` calls with the owned formatter without changing pricing, demo or scheduling features.
+- Added an explicit project annex documenting the current English-copy boundary, UTC transport rule, display locale/timezone behavior and prerequisites for future translated/RTL releases.
+- CI and architecture checks now prevent public-site formatting from drifting back to ad-hoc locale calls.
+- Full multilingual copy is not falsely marked complete; translation-key migration and RTL journey evidence remain future frontend work.

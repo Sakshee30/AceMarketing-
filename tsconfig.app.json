@@ -16,5 +16,5 @@
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": ["frontend/src", "frontend/customer-app", "frontend/platform-admin", "website/public-site/src", "packages/design-system/src", "packages/client-core/src"]
+  "include": ["frontend/src", "frontend/customer-app", "frontend/platform-admin", "website/public-site/src", "packages/design-system/src", "packages/client-core/src", "packages/localization/src"]
 }

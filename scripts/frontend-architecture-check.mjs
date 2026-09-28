@@ -32,6 +32,7 @@ const clientRoots=[
   path.join(root,'website','public-site','src'),
   path.join(root,'packages','design-system','src'),
   path.join(root,'packages','client-core','src'),
+  path.join(root,'packages','localization','src'),
   path.join(root,'frontend','platform-admin','src')
 ].filter(fs.existsSync)
 for(const clientRoot of clientRoots)for(const file of walk(clientRoot)){
@@ -450,6 +451,21 @@ if(fs.existsSync(acePlatform)){
     if(!publicSiteMutations.includes('Do not submit the same request again'))failures.push('Public-site unknown outcomes must discourage duplicate writes before reconciliation.')
   }
 
+  const localizationPath=path.join(root,'packages','localization','src','index.ts')
+  if(fs.existsSync(localizationPath)){
+    const localization=fs.readFileSync(localizationPath,'utf8')
+    if(!localization.includes('Intl.DateTimeFormat')||!localization.includes('Intl.NumberFormat')){
+      failures.push('Localization package must own locale-aware date and number formatting.')
+    }
+  }
+  const publicLocalizationPath=path.join(root,'website','public-site','src','PublicSite.tsx')
+  if(fs.existsSync(publicLocalizationPath)){
+    const publicLocalization=fs.readFileSync(publicLocalizationPath,'utf8')
+    if(publicLocalization.includes('.toLocaleString(')||publicLocalization.includes('.toLocaleDateString(')){
+      failures.push('Public site must use the owned localization package instead of ad-hoc locale formatting.')
+    }
+  }
+
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
@@ -487,6 +503,8 @@ const required=[
   'packages/design-system/src/Brand.tsx',
   'packages/design-system/src/Accessibility.tsx',
   'packages/design-system/src/AccessibleDialog.tsx',
+  'packages/localization/src/index.ts',
+  'docs/project-annex/LOCALIZATION_TIMEZONE.md',
   'frontend/platform-admin/src/main.tsx',
   'frontend/platform-admin/src/ControlCenterApp.tsx',
   'frontend/platform-admin/src/features/manifest.ts',
