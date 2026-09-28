@@ -6227,3 +6227,13 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Platform-control navigation now exposes the active page through `aria-current`.
 - Added browser-matrix and standalone E2E coverage for keyboard skip navigation and reduced-motion behavior.
 - This is an incremental WCAG 2.2 AA tightening pass; manual VoiceOver/NVDA, zoom/reflow and contrast evidence remain release gates rather than being falsely marked complete.
+
+
+### Public lead-capture hardening — 2026-09-28
+
+- Promoted the existing focus-managed dialog into the shared design-system package and kept the old frontend import as a compatibility re-export.
+- Public connector requests now use the shared accessible dialog with focus trapping, Escape close and focus restoration.
+- Added explicit input limits/autocomplete semantics to public connector/demo lead-capture fields and non-negative constraints to the ROAS calculator.
+- The public API client now enforces a 16 KiB write-payload ceiling and blocks duplicate in-flight writes per endpoint before they reach the network.
+- Existing backend rate limiting remains authoritative; these client controls are additive and are not represented as a substitute for server-side abuse protection.
+- Added standalone E2E coverage for dialog focus behavior and field limits.

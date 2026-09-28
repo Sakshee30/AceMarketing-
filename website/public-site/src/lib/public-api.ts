@@ -15,12 +15,24 @@ export class PublicApiError extends Error{
 
 type PublicRequestInit=RequestInit&{timeoutMs?:number}
 
+const maxPublicWriteBodyBytes=16*1024
+const activePublicWrites=new Set<string>()
+
 const request=async<T>(path:string,init?:PublicRequestInit):Promise<T>=>{
   const runtime=getPublicRuntimeConfig()
   const method=(init?.method||'GET').toUpperCase()
   const controller=new AbortController()
   const timeoutMs=Math.max(1000,Number(init?.timeoutMs||(method==='GET'?runtime.requestTimeouts.readMs:runtime.requestTimeouts.writeMs)))
   const requestId=globalThis.crypto?.randomUUID?.()||('ace_public_'+Date.now()+'_'+Math.random().toString(36).slice(2))
+  const isWrite=method!=='GET'&&method!=='HEAD'
+  const bodyBytes=typeof init?.body==='string'?new TextEncoder().encode(init.body).byteLength:0
+  if(isWrite&&bodyBytes>maxPublicWriteBodyBytes){
+    throw new PublicApiError('Please shorten the form before submitting.',400,requestId,{cause:'client_payload_limit'})
+  }
+  if(isWrite&&activePublicWrites.has(path)){
+    throw new PublicApiError('This form is already being submitted. Please wait for confirmation.',409,requestId,{cause:'duplicate_in_flight'})
+  }
+  if(isWrite)activePublicWrites.add(path)
   const timer=window.setTimeout(()=>controller.abort('request_deadline_exceeded'),timeoutMs)
   try{
     const {timeoutMs:_timeoutMs,...fetchInit}=init||{}
@@ -59,6 +71,7 @@ const request=async<T>(path:string,init?:PublicRequestInit):Promise<T>=>{
     )
   }finally{
     window.clearTimeout(timer)
+    if(isWrite)activePublicWrites.delete(path)
   }
 }
 

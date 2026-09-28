@@ -430,6 +430,18 @@ if(fs.existsSync(acePlatform)){
     if(!accessibility.includes('ace-skip-link'))failures.push('Shared accessibility package must preserve the skip-link primitive.')
   }
 
+  const publicApiClientPath=path.join(root,'website','public-site','src','lib','public-api.ts')
+  if(fs.existsSync(publicApiClientPath)){
+    const publicApiClient=fs.readFileSync(publicApiClientPath,'utf8')
+    if(!publicApiClient.includes('maxPublicWriteBodyBytes'))failures.push('Public form client must enforce a bounded request payload before submission.')
+    if(!publicApiClient.includes('activePublicWrites'))failures.push('Public form client must suppress duplicate in-flight writes.')
+  }
+  const publicSiteUiPath=path.join(root,'website','public-site','src','PublicSite.tsx')
+  if(fs.existsSync(publicSiteUiPath)){
+    const publicSiteUi=fs.readFileSync(publicSiteUiPath,'utf8')
+    if(!publicSiteUi.includes('AccessibleDialog ariaLabel="Request a connector"'))failures.push('Public connector request must use the shared accessible dialog boundary.')
+  }
+
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
@@ -466,6 +478,7 @@ const required=[
   'website/public-site/src/public.ts',
   'packages/design-system/src/Brand.tsx',
   'packages/design-system/src/Accessibility.tsx',
+  'packages/design-system/src/AccessibleDialog.tsx',
   'frontend/platform-admin/src/main.tsx',
   'frontend/platform-admin/src/ControlCenterApp.tsx',
   'frontend/platform-admin/src/features/manifest.ts',

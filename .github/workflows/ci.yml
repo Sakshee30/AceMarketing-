@@ -154,6 +154,7 @@ jobs:
           test -f website/public-site/src/public.ts
           test -f packages/design-system/src/Brand.tsx
           test -f packages/design-system/src/Accessibility.tsx
+          test -f packages/design-system/src/AccessibleDialog.tsx
           test -f frontend/src/lib/api.ts
           test -f frontend/src/lib/runtime-config.ts
           test -f frontend/src/lib/mutation-lifecycle.ts

@@ -129,3 +129,21 @@ test('standalone surfaces expose a keyboard skip path to their owned content',as
   await expect(skip).toBeVisible()
   await expect(skip).toBeFocused()
 })
+
+
+test('public connector request dialog is focus-managed and input-bounded',async({page},testInfo)=>{
+  test.skip(!testInfo.project.name.startsWith('public-'),'public deployment project only')
+  await page.goto('/integrations')
+  const consent=page.getByRole('dialog',{name:'Privacy choices'})
+  if(await consent.isVisible().catch(()=>false))await consent.getByRole('button',{name:'Essential only'}).click()
+  await page.getByRole('button',{name:'Request a connector'}).last().click()
+  const dialog=page.getByRole('dialog',{name:'Request a connector'})
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByLabel('Connector name')).toBeFocused()
+  await expect(dialog.getByLabel('Connector name')).toHaveAttribute('maxlength','120')
+  await expect(dialog.getByLabel('Business email')).toHaveAttribute('maxlength','254')
+  await expect(dialog.getByLabel('Company')).toHaveAttribute('maxlength','160')
+  await expect(dialog.getByLabel('How should the data move?')).toHaveAttribute('maxlength','2000')
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+})
