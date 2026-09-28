@@ -2532,3 +2532,17 @@ test('Grouped Performance feature chunk preserves grouped evidence and cost edit
   await expect(page.getByRole('button',{name:'Category'})).toBeVisible()
   await expect(page).toHaveURL(/#\/workspace\?tab=Grouped%20Performance/)
 })
+
+
+test('Enrich feature chunk preserves CRM enrichment and writeback surface',async({page})=>{
+  await page.goto('/#/workspace?tab=Enrich')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'CRM enrichment'})).toBeVisible()
+  const response=await page.request.get('/api/enrich')
+  expect(response.ok()).toBeTruthy()
+  const payload=await response.json()
+  expect(Array.isArray(payload.items)).toBeTruthy()
+  await expect(page.getByLabel('Search enriched leads')).toBeVisible()
+  await expect(page.getByRole('button',{name:'Write to HubSpot'})).toBeVisible()
+  await expect(page).toHaveURL(/#\/workspace\?tab=Enrich/)
+})
