@@ -5836,3 +5836,12 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Existing API calls continue through the same `api` facade; no dashboard feature or backend route was removed.
 - The transport returns backend request IDs when available and retains the client request ID for correlation when the request never receives a backend response.
 - Implemented directly on `main`; no separate branch was created.
+
+
+### Frontend architecture: Launchpad feature boundary — 2026-09-28
+
+- Extracted **Launchpad** from the legacy workspace composition into a feature-owned lazy chunk.
+- Preserved the current Launchpad route, backend readiness endpoint, test-event workflow, visual classes and navigation behavior.
+- Added explicit loading, retryable backend-error and confirmed test-event success states so readiness failures are not displayed as successful outcomes.
+- Added architecture enforcement preventing the Launchpad implementation from being copied back into the monolith.
+- Implemented directly on `main`; no current feature, backend behavior or pipeline stage was removed.
