@@ -5632,3 +5632,11 @@ The Voice Scheduler backend remains provider-backed and governed: it queues a du
 - The late Google Fonts import was merged into the leading import so production CSS no longer emits the import-order warning.
 
 As with every release pass, production promotion requires the complete GitHub Actions workflow—not only the TypeScript/build stages—to be green.
+
+
+### Dashboard navigation parity update — 2026-09-28
+
+- Added **Match Quality** to the primary **Tracking & Data** sidebar group so the feature is discoverable from both the persistent sidebar and the Ctrl/Cmd+K dashboard navigator.
+- Kept the implementation additive on `main`; no existing feature route or backend contract was removed.
+- Added Playwright regression coverage to verify that expanding **Tracking & Data** exposes **Match Quality**.
+- This is part of the ongoing EasyInsights capability-parity audit. Publicly documented EasyInsights capabilities are being implemented as original AceMarketing workflows rather than copying proprietary source code, wording, branding, or exact visual design.
