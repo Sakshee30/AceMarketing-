@@ -122,6 +122,15 @@ AceMarketing keeps the current product pipeline and all existing product feature
 - Nginx now serves the entry document with no-store/revalidation semantics while Vite's hashed /assets/ files receive a one-year immutable cache policy and missing asset requests return 404 rather than application HTML.
 - Old-asset retention across deployments still depends on deployment strategy and is not claimed complete until release infrastructure preserves the declared open-tab compatibility window.
 
+### First feature extraction from the legacy composition
+- Human Approvals is now the first complete workspace feature moved out of `AcePlatform.tsx` into an owned feature directory.
+- The feature has its own manifest, public entry point, page implementation, browser data adapter and ownership README.
+- `AcePlatform.tsx` no longer contains a second Approvals implementation; it lazy-loads the feature through its public entry point.
+- Existing route identity, CSS classes, backend endpoints, approval semantics and customer-visible recovery behavior remain unchanged.
+- Workspace route metadata now reports Approvals as a `feature-chunk` while all not-yet-extracted surfaces remain explicitly marked `current-composition`.
+- CI now fails if the legacy Approvals function is reintroduced into the monolith and verifies the extracted files exist.
+- Playwright verifies `#/workspace?tab=Approvals` still resolves to the extracted feature.
+
 ### Bundle-budget evidence
 - Vite now emits a build manifest.
 - CI calculates gzip size for each entry and all of its static dependencies.
