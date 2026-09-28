@@ -389,6 +389,18 @@ if(fs.existsSync(acePlatform)){
     }
   }
 
+  const customerEntryPath=path.join(root,'frontend','customer-app','main.tsx')
+  if(fs.existsSync(customerEntryPath)){
+    const customerEntry=fs.readFileSync(customerEntryPath,'utf8')
+    if(!customerEntry.includes("noindex")&&fs.existsSync(path.join(root,'frontend','customer-app','index.html'))){
+      const html=fs.readFileSync(path.join(root,'frontend','customer-app','index.html'),'utf8')
+      if(!html.includes('noindex,nofollow'))failures.push('Standalone customer app must remain excluded from public indexing.')
+    }
+    if(!customerEntry.includes('installBeforeUnloadDirtyWorkGuard')){
+      failures.push('Standalone customer app must preserve dirty-work protection at bootstrap.')
+    }
+  }
+
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
@@ -424,6 +436,11 @@ const required=[
   'website/public-site/src/PublicSite.tsx',
   'website/public-site/src/public.ts',
   'packages/design-system/src/Brand.tsx',
+  'frontend/customer-app/main.tsx',
+  'frontend/customer-app/index.html',
+  'vite.customer-app.config.ts',
+  'deploy/nginx.customer-app.conf',
+  'deploy/nginx.public-site.conf',
   'frontend/src/customer-app/CustomerWorkspace.tsx',
   'frontend/src/customer-app/public.ts',
   'frontend/src/features/feedback/data/feedback.api.ts',

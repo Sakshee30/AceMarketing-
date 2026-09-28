@@ -48,6 +48,14 @@ jobs:
         run: npm run check:all
       - name: Build production frontend
         run: npm run build
+      - name: Build standalone customer application
+        run: npm run build:customer-app
+      - name: Verify standalone customer application budget
+        env:
+          FRONTEND_BUDGET_MODE: report
+        run: npm run frontend:budget:customer
+      - name: Verify standalone customer application release assets
+        run: npm run frontend:release:customer
       - name: Build standalone public website
         env:
           PUBLIC_SITE_ORIGIN: https://acemarketing.example.test
@@ -90,9 +98,18 @@ jobs:
         run: |
           docker build -f deploy/Dockerfile.api -t ace-api:ci .
           docker build -f deploy/Dockerfile.frontend -t ace-web:ci .
+          docker build -f deploy/Dockerfile.customer-app -t ace-customer-app:ci .
+          docker build -f deploy/Dockerfile.public-site -t ace-public-site:ci .
       - name: Verify canonical project structure
         run: |
           test -f frontend/src/AcePlatform.tsx
+          test -f frontend/customer-app/main.tsx
+          test -f frontend/customer-app/index.html
+          test -f vite.customer-app.config.ts
+          test -f deploy/Dockerfile.customer-app
+          test -f deploy/Dockerfile.public-site
+          test -f deploy/nginx.customer-app.conf
+          test -f deploy/nginx.public-site.conf
           test -f frontend/src/customer-app/CustomerWorkspace.tsx
           test -f frontend/src/auth/LoginPage.tsx
           test -f frontend/src/deep-link/DeepLinkResolver.tsx

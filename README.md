@@ -6162,3 +6162,14 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Added a public-only API client that does not attach customer tokens or workspace IDs to public content/lead-capture requests.
 - CI now builds and release-checks the standalone public website in addition to the compatibility frontend.
 - Backend restructuring remains deferred until customer-app standalone build and final frontend release evidence are complete.
+
+
+### Frontend architecture: standalone customer application + deployment identities — 2026-09-28
+
+- Added a standalone customer-app Vite bootstrap under `frontend/customer-app` with its own `dist/customer-app` build output.
+- Customer bootstrap preserves runtime validation, privacy tracking, dirty-work protection, connection status, chunk recovery, login and authenticated workspace composition.
+- Added separate public-site and customer-app Nginx policies with independent CSP/cache behavior and immutable hashed-asset handling.
+- Added dedicated customer-app and public-site container build identities while preserving the existing compatibility frontend container.
+- Fixed the compatibility frontend Docker build context so it includes the newly extracted `website` and shared `packages` sources.
+- CI now builds, budget-checks, release-checks and containerizes the compatibility frontend, customer app and public website independently.
+- Backend restructuring remains deferred until final frontend test/release evidence is available.

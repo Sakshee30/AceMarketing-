@@ -4,6 +4,8 @@ COPY package.json ./
 RUN npm install
 COPY tsconfig.json tsconfig.app.json vite.config.ts ./
 COPY frontend ./frontend
+COPY website ./website
+COPY packages ./packages
 RUN npm run build
 
 FROM nginx:1.27-alpine

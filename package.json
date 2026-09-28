@@ -37,7 +37,14 @@
     "dev:public-site": "vite --config vite.public-site.config.ts",
     "frontend:budget:public": "node scripts/frontend-budget.mjs --dist=dist/public-site",
     "frontend:release:public": "node scripts/frontend-release-check.mjs --dist=dist/public-site",
-    "public-site:verify": "npm run check:frontend && npm run build:public-site && npm run frontend:budget:public && npm run frontend:release:public"
+    "public-site:verify": "npm run check:frontend && npm run build:public-site && npm run frontend:budget:public && npm run frontend:release:public",
+    "build:customer-app": "vite build --config vite.customer-app.config.ts",
+    "preview:customer-app": "vite preview --config vite.customer-app.config.ts",
+    "dev:customer-app": "vite --config vite.customer-app.config.ts",
+    "frontend:budget:customer": "node scripts/frontend-budget.mjs --dist=dist/customer-app",
+    "frontend:release:customer": "node scripts/frontend-release-check.mjs --dist=dist/customer-app",
+    "customer-app:verify": "npm run check:frontend && npm run build:customer-app && npm run frontend:budget:customer && npm run frontend:release:customer",
+    "frontends:verify": "npm run frontend:verify && npm run customer-app:verify && npm run public-site:verify"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
