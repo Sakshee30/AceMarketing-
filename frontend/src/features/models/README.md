@@ -1,0 +1,1 @@
+Models owns the scoring model catalog, transparent custom model builder, validation evidence and scoring runs. Existing endpoints and workspace behavior are preserved. Create/run actions use explicit mutation outcome states, and the custom model draft remains navigation-protected.
