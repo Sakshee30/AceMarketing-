@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap');
 :root{--ink:#1b102d;--purple:#6728ef;--purple2:#3b0b75;--deep:#17002c;--teal:#18e3bd;--muted:#766d80;--line:#eae5ef;--bg:#faf9fb;--white:#fff;--green:#10a980}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif}button,a{font:inherit}button{cursor:pointer}.ace-brand{display:flex;align-items:center;gap:9px;color:#fff;font:800 19px Manrope}.ace-brand.dark{color:var(--ink)}.ace-mark{height:20px;display:flex;align-items:end;gap:2px}.ace-mark i{display:block;width:4px;border-radius:4px;background:linear-gradient(#9b50ff,#18e3bd)}.ace-mark i:nth-child(1){height:8px}.ace-mark i:nth-child(2){height:13px}.ace-mark i:nth-child(3){height:20px}
 .hero-wrap{background:radial-gradient(circle at 76% 32%,#32147b 0,#19002f 42%,#10001f 100%);color:#fff;min-height:760px;overflow:hidden}.marketing-header{height:78px;max-width:1240px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:relative;z-index:5}.marketing-header nav{display:flex;align-items:center;gap:24px}.marketing-header a,.ghost-nav{color:#d9cbe8;text-decoration:none;font-size:13px;border:0;background:none}.marketing-header a:hover,.ghost-nav:hover{color:#fff}.header-cta{background:#fff!important;color:var(--ink)!important;padding:11px 16px;border-radius:7px;display:flex;align-items:center;gap:7px;font-weight:700}.menu-toggle{display:none;background:none;border:0;color:#fff}
@@ -154,7 +154,6 @@
 @media(max-width:700px){.sync-history-row{grid-template-columns:1fr 1fr}.sync-history-row em{justify-self:start}}
 
 /* EasyInsights-reference landing header/hero alignment pass */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 .marketing-page{font-family:'Inter','DM Sans',sans-serif;background:#fff}
 .ei-promo-bar{height:48px;background:linear-gradient(90deg,#5d0df0,#7a16f8 52%,#5f0ced);color:#fff;display:flex;align-items:center;justify-content:center;gap:52px;padding:0 24px;font-size:14px;letter-spacing:-.01em}
 .ei-promo-bar span{opacity:.98}.ei-promo-bar b{font-weight:700}.ei-promo-bar a{color:#fff;text-decoration:underline;text-underline-offset:2px;display:flex;align-items:center;gap:8px}.ei-promo-bar a svg{width:15px}
