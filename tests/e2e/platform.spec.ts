@@ -647,6 +647,8 @@ test.describe('privacy consent runtime',()=>{
     const stored=await page.evaluate(()=>Object.fromEntries(['gclid','gbraid','wbraid','fbclid','msclkid','ttclid','twclid'].map(key=>[key,localStorage.getItem('ace:'+key)])))
     expect(stored.ttclid).toBe(ttclid)
     expect(stored.twclid).toBe(twclid)
+    const cookies=await page.evaluate(()=>document.cookie)
+    expect(cookies).toContain('_twclid=')
     expect(stored.msclkid).toContain('ci-msclkid-')
     expect(stored.gbraid).toContain('ci-gbraid-')
 
