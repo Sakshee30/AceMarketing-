@@ -804,6 +804,38 @@ test('cookie preferences close only after backend-confirmed persistence', async 
   await expect(banner).toHaveCount(0)
 })
 
+test('workspace switching hides stale scope until the target backend scope is confirmed', async ({ page }, testInfo) => {
+  const name='Scope '+testInfo.project.name.replace(/[^a-z0-9]+/gi,' ').trim()+' '+Date.now()
+  const createdResponse=await page.request.post('/api/workspaces',{data:{name,environment:'Sandbox'}})
+  expect(createdResponse.status()).toBe(201)
+  const created=await createdResponse.json()
+
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Acquisition command center'})).toBeVisible()
+
+  await page.route('**/api/dashboard-summary',async route=>{
+    await new Promise(resolve=>setTimeout(resolve,250))
+    await route.continue()
+  })
+
+  await page.locator('.workspace').click()
+  await page.getByRole('button',{name:new RegExp(name)}).click()
+
+  await expect(page.getByText('SWITCHING WORKSPACE',{exact:true})).toBeVisible()
+  await expect(page.getByText('Previous workspace content is intentionally hidden until the target scope is confirmed.')).toBeVisible()
+  await expect(page.getByRole('heading',{name:'Acquisition command center'})).toHaveCount(0)
+
+  await expect(page.getByRole('heading',{name:'Acquisition command center'})).toBeVisible({timeout:5000})
+  const title=await page.title()
+  expect(title).toContain('Overview')
+  expect(title).toContain(name)
+  const activeWorkspace=await page.evaluate(()=>window.localStorage.getItem('ace_workspace_id'))
+  expect(activeWorkspace).toBe(created.id)
+
+  await page.unroute('**/api/dashboard-summary')
+})
+
 test('workspace navigation announces context and moves focus to the active heading', async ({ page }) => {
   await page.goto('/#/workspace')
   await dismissConsent(page)
