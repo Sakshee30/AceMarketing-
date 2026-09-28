@@ -166,3 +166,20 @@ test('loads extracted audiences feature from its direct workspace route',async({
   await expect(page.getByRole('heading',{name:'Audience management'})).toBeVisible()
   await expect(page.getByText(/Active segments/i)).toBeVisible()
 })
+
+
+test('loads extracted planner feature from its direct workspace route',async({page})=>{
+  await page.goto('/#/workspace?tab=Planner')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Planner/)
+  await expect(page.getByRole('heading',{name:'Strategic media planner'})).toBeVisible()
+  await expect(page.getByText(/Evidence-based allocation/i)).toBeVisible()
+})
+
+test('loads extracted models feature from its direct workspace route',async({page})=>{
+  await page.goto('/#/workspace?tab=Models')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Models/)
+  await expect(page.getByRole('heading',{name:'Custom models'})).toBeVisible()
+  await expect(page.getByText(/Model catalog/i)).toBeVisible()
+})
