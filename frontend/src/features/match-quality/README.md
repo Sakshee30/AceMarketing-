@@ -1,0 +1,1 @@
+Match Quality owns internal first-party identity coverage scoring, identifier coverage, event-type quality and recommendations. Existing backend contracts, CSS classes and direct route are preserved. Provider-specific quality scores remain explicitly out of scope unless supplied by the provider integration.
