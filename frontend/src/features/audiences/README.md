@@ -1,0 +1,1 @@
+Audiences owns first-party audience preview, materialization, provider sync, scheduling, CSV export and its direct workspace route. Existing endpoints, CSS classes and customer behavior are preserved. The audience builder remains protected by the shared dirty-work registry.
