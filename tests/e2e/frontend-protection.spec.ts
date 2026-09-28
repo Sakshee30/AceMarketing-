@@ -81,3 +81,17 @@ test('reports browser offline state without polling or hiding current UI',async(
   await expect(page.getByRole('heading',{name:/Acquisition command center/i})).toBeVisible()
   await context.setOffline(false)
 })
+
+
+test('shows controlled recovery for missing lazy chunks without automatic reload',async({page})=>{
+  await page.goto('/#/workspace?tab=Overview')
+  await dismissConsent(page)
+  await page.evaluate(()=>window.dispatchEvent(new Event('vite:preloadError',{cancelable:true})))
+  const notice=page.getByTestId('chunk-recovery')
+  await expect(notice).toBeVisible()
+  await expect(notice).toContainText(/controlled refresh/i)
+  await expect(notice).toContainText(/will not reload automatically/i)
+  await page.getByRole('button',{name:'Keep working'}).click()
+  await expect(notice).toHaveCount(0)
+  await expect(page.getByRole('heading',{name:/Acquisition command center/i})).toBeVisible()
+})
