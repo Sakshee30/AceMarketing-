@@ -2095,24 +2095,27 @@ function Meetings(){
  const [meetings,setMeetings]=useState<any[]>([])
  const [selected,setSelected]=useState('')
  const [busy,setBusy]=useState('')
- const [notice,setNotice]=useState('')
+ const [loading,setLoading]=useState(true)
+ const [notice,setNotice]=useState<{kind:'ok'|'error'|'',text:string}>({kind:'',text:''})
  const [newTime,setNewTime]=useState('')
  const [builder,setBuilder]=useState(false)
  const [voiceSchedulerOpen,setVoiceSchedulerOpen]=useState(false)
  const [schedulerRuns,setSchedulerRuns]=useState<any[]>([])
  const load=async()=>{
+  setLoading(true)
   try{
-   const [r,scheduler]:any=await Promise.all([api.meetings(),api.voiceScheduler().catch(()=>({items:[]}))])
+   const [r,scheduler]:any=await Promise.all([api.meetings(),api.voiceScheduler()])
    const mapped=(r.items||[]).map((x:any)=>({id:x.id,lead:x.lead_ref,time:new Date(x.starts_at).toLocaleString(),startsAt:x.starts_at,owner:x.owner,status:String(x.status||'confirmed').replace(/^./,(m:string)=>m.toUpperCase()),reminder:(x.reminder_plan||[]).join(' + ')||'Voice',risk:String(x.no_show_risk||'low').replace(/^./,(m:string)=>m.toUpperCase()),remindersSent:Number(x.reminders_sent||0),lastReminderAt:x.last_reminder_at,calendarId:x.external_calendar_id||'',meetingLink:x.meeting_link||'',calendarHtmlLink:x.calendar_html_link||'',attendeeEmail:x.attendee_email||'',attendeePhone:x.attendee_phone||''}))
    setMeetings(mapped)
    setSchedulerRuns(scheduler.items||[])
    setSelected(x=>x&&mapped.some((m:any)=>m.id===x)?x:(mapped[0]?.id||''))
-  }catch(e:any){setNotice(e?.message||'Meetings could not be loaded.')}
+  }catch(e:any){setNotice({kind:'error',text:e?.message||'Meeting operations could not be loaded. Existing meeting state was preserved.'})}
+  finally{setLoading(false)}
  }
  useEffect(()=>{load()},[])
  const current=meetings.find(x=>x.id===selected)||meetings[0]
  const create=async(e:any)=>{
-  e.preventDefault();const fd=new FormData(e.currentTarget);setBusy('create');setNotice('')
+  e.preventDefault();const fd=new FormData(e.currentTarget);setBusy('create');setNotice({kind:'',text:''})
   try{
    const startsAt=new Date(String(fd.get('startsAt')||'')).toISOString()
    const r:any=await api.createMeeting({
@@ -2124,11 +2127,11 @@ function Meetings(){
     risk:String(fd.get('risk')||'low'),
     syncCalendar:String(fd.get('syncCalendar')||'yes')==='yes'
    })
-   setBuilder(false);setNotice(r?.calendar?.externalId?'Meeting scheduled and synced to Google Calendar.':'Meeting scheduled.');await load();if(r?.id)setSelected(r.id)
-  }catch(err:any){setNotice(err?.message||'Meeting could not be scheduled.')}finally{setBusy('')}
+   setBuilder(false);setNotice({kind:'ok',text:r?.calendar?.externalId?'Meeting scheduled and synced to Google Calendar.':'Meeting scheduled and persisted.'});await load();if(r?.id)setSelected(r.id)
+  }catch(err:any){setNotice({kind:'error',text:err?.message||'Meeting could not be scheduled.'})}finally{setBusy('')}
  }
  const createVoiceSchedule=async(e:any)=>{
-  e.preventDefault();const fd=new FormData(e.currentTarget);setBusy('voice_scheduler');setNotice('')
+  e.preventDefault();const fd=new FormData(e.currentTarget);setBusy('voice_scheduler');setNotice({kind:'',text:''})
   try{
    const proposed=String(fd.get('proposedStartsAt')||'')
    const r:any=await api.createVoiceScheduler({
@@ -2142,43 +2145,43 @@ function Meetings(){
     syncCalendar:String(fd.get('syncCalendar')||'yes')==='yes'
    })
    setVoiceSchedulerOpen(false)
-   setNotice('Voice Scheduler queued for '+String(fd.get('leadRef')||'lead')+(r?.id?' · '+String(r.id).slice(0,18):'')+'. A meeting is persisted only after the provider confirms a time.')
+   setNotice({kind:'ok',text:'Voice Scheduler queued for '+String(fd.get('leadRef')||'lead')+(r?.id?' · '+String(r.id).slice(0,18):'')+'. A meeting is persisted only after the provider confirms a time.'})
    await load()
-  }catch(err:any){setNotice(err?.message||'Voice Scheduler could not be queued.')}
+  }catch(err:any){setNotice({kind:'error',text:err?.message||'Voice Scheduler could not be queued.'})}
   finally{setBusy('')}
  }
  const remind=async(id:string)=>{
-  setBusy('remind');setNotice('')
-  try{await api.sendMeetingReminder(id);setNotice('Reminder queued through the configured reminder provider.');await load()}
-  catch(e:any){setNotice(e?.message||'Reminder could not be queued.')}
+  setBusy('remind');setNotice({kind:'',text:''})
+  try{await api.sendMeetingReminder(id);setNotice({kind:'ok',text:'Reminder queued through the configured reminder provider.'});await load()}
+  catch(e:any){setNotice({kind:'error',text:e?.message||'Reminder could not be queued.'})}
   finally{setBusy('')}
  }
  const connectCalendar=async()=>{
-  setBusy('calendar');setNotice('')
+  setBusy('calendar');setNotice({kind:'',text:''})
   try{
    const r:any=await api.connectIntegration('Google Calendar')
    if(r.status==='authorization_required'&&r.authorizationUrl){window.location.assign(r.authorizationUrl);return}
-   if(r.status==='connected')setNotice('Google Calendar is connected.')
-   else setNotice('Google Calendar OAuth credentials need to be configured on the backend.')
-  }catch(e:any){setNotice(e?.message||'Google Calendar connection could not be started.')}
+   if(r.status==='connected')setNotice({kind:'ok',text:'Google Calendar is connected.'})
+   else setNotice({kind:'error',text:'Google Calendar OAuth credentials are deferred and not configured on the backend yet.'})
+  }catch(e:any){setNotice({kind:'error',text:e?.message||'Google Calendar connection could not be started.'})}
   finally{setBusy('')}
  }
  const reschedule=async()=>{
   if(!current||!newTime)return
-  setBusy('reschedule');setNotice('')
-  try{await api.rescheduleMeeting(current.id,new Date(newTime).toISOString());setNotice('Meeting rescheduled and calendar attendees updated.');setNewTime('');await load()}
-  catch(e:any){setNotice(e?.message||'Meeting could not be rescheduled.')}
+  setBusy('reschedule');setNotice({kind:'',text:''})
+  try{await api.rescheduleMeeting(current.id,new Date(newTime).toISOString());setNotice({kind:'ok',text:'Meeting rescheduled and persisted; connected calendar attendees were updated when available.'});setNewTime('');await load()}
+  catch(e:any){setNotice({kind:'error',text:e?.message||'Meeting could not be rescheduled.'})}
   finally{setBusy('')}
  }
  const upcoming=meetings.filter(x=>Date.parse(x.startsAt)>=Date.now()).length
  const withCalendar=meetings.filter(x=>x.calendarId).length
  const reminders=meetings.reduce((n,x)=>n+Number(x.remindersSent||0),0)
  const highRisk=meetings.filter(x=>['high','medium'].includes(String(x.risk).toLowerCase())).length
- return <><PageHead crumb="Conversion / Meetings" title="Scheduler & meeting reminders" sub="Book qualified leads, synchronize Google Calendar in real time and reduce no-shows with provider-backed reminders." action="Schedule meeting" onAction={()=>setBuilder(true)}/>
- {notice&&<div className="delivery-notice ok"><CheckCircle2/><span>{notice}</span></div>}
+ return <><PageHead crumb="Conversion / Meetings" title="Scheduler & meeting reminders" sub="Book qualified leads, synchronize Google Calendar in real time and reduce no-shows with provider-backed reminders." action={loading?'Refreshing…':'Refresh meetings'} onAction={load}/>
+ {notice.text&&<div className={'delivery-notice '+(notice.kind==='error'?'error':'ok')} role={notice.kind==='error'?'alert':'status'}>{notice.kind==='error'?<ShieldCheck/>:<CheckCircle2/>}<span>{notice.text}</span></div>}
  <div className="stats-grid"><Stat label="Upcoming meetings" value={String(upcoming)} sub="Persisted scheduled consultations" Icon={CalendarDays}/><Stat label="Voice scheduler runs" value={String(schedulerRuns.length)} sub="Provider-backed booking attempts" Icon={PhoneOutgoing}/><Stat label="Calendar synced" value={String(withCalendar)} sub="Meetings with external event IDs" Icon={CheckCircle2}/><Stat label="Reminders sent" value={String(reminders)} sub="Persisted reminder executions" Icon={MessageCircle}/></div>
- <div className="app-panel voice-scheduler-panel"><div className="panel-head"><div><h3>Voice Scheduler</h3><p>Call qualified leads to confirm a consultation slot. A meeting is created only when the provider returns a confirmed time.</p></div><button className="app-primary" onClick={()=>setVoiceSchedulerOpen(true)}><PhoneOutgoing/>Start voice scheduler</button></div>{schedulerRuns.length?<div className="voice-scheduler-runs">{schedulerRuns.slice(0,6).map((x:any)=><div className="voice-scheduler-run" key={x.id}><PhoneOutgoing/><div><b>{x.lead}</b><small>{x.phone||'No phone'} · {x.preferredWindow|| (x.proposedStartsAt?new Date(x.proposedStartsAt).toLocaleString():'No preferred window')}</small></div><span className={String(x.status||'queued').toLowerCase()}>{String(x.status||'queued').replaceAll('_',' ')}</span><em>{x.meetingId?'Meeting '+x.meetingId.slice(0,10):x.schedulerStatus||'Awaiting provider outcome'}</em></div>)}</div>:<div className="empty-delivery-state"><PhoneOutgoing/><div><b>No Voice Scheduler runs yet</b><small>Queue a booking call for a qualified lead to create the first scheduler run.</small></div></div>}</div>
- <div className="meeting-layout"><div className="app-panel meeting-list"><div className="panel-head"><div><h3>Upcoming consultations</h3><p>Persisted calendar + reminder state</p></div><div className="panel-actions"><button onClick={load}>Refresh</button><button onClick={connectCalendar} disabled={busy==='calendar'}>{busy==='calendar'?'Connecting…':'Connect Calendar'}</button></div></div>{meetings.length?meetings.map(x=><button key={x.id} className={selected===x.id?'selected':''} onClick={()=>setSelected(x.id)}><CalendarDays/><div><b>{x.lead}</b><small>{x.time} · {x.owner}</small></div><span className={x.risk.toLowerCase()}>{x.risk} risk</span><ChevronRight/></button>):<div className="empty-delivery-state"><CalendarDays/><div><b>No meetings scheduled yet</b><small>Schedule one from Calls or connect Google Calendar and create a consultation.</small></div></div>}</div>
+ <div className="app-panel voice-scheduler-panel"><div className="panel-head"><div><h3>Voice Scheduler</h3><p>Call qualified leads to confirm a consultation slot. A meeting is created only when the provider returns a confirmed time.</p></div><button className="app-primary" onClick={()=>setVoiceSchedulerOpen(true)}><PhoneOutgoing/>Start voice scheduler</button></div>{loading&&!schedulerRuns.length?<div className="empty-delivery-state"><Activity/><div><b>Loading scheduler activity</b><small>Reading persisted scheduling-agent runs and provider outcomes.</small></div></div>:schedulerRuns.length?<div className="voice-scheduler-runs">{schedulerRuns.slice(0,6).map((x:any)=><div className="voice-scheduler-run" key={x.id}><PhoneOutgoing/><div><b>{x.lead}</b><small>{x.phone||'No phone'} · {x.preferredWindow|| (x.proposedStartsAt?new Date(x.proposedStartsAt).toLocaleString():'No preferred window')}</small></div><span className={String(x.status||'queued').toLowerCase()}>{String(x.status||'queued').replaceAll('_',' ')}</span><em>{x.meetingId?'Meeting '+x.meetingId.slice(0,10):x.schedulerStatus||'Awaiting provider outcome'}</em></div>)}</div>:<div className="empty-delivery-state"><PhoneOutgoing/><div><b>No Voice Scheduler runs yet</b><small>Queue a booking call for a qualified lead to create the first scheduler run.</small></div></div>}</div>
+ <div className="meeting-layout"><div className="app-panel meeting-list"><div className="panel-head"><div><h3>Upcoming consultations</h3><p>Persisted calendar + reminder state</p></div><div className="panel-actions"><button disabled={loading} onClick={load}>{loading?'Refreshing…':'Refresh'}</button><button onClick={connectCalendar} disabled={busy==='calendar'}>{busy==='calendar'?'Connecting…':'Connect Calendar'}</button></div></div>{loading&&!meetings.length?<div className="empty-delivery-state"><Activity/><div><b>Loading meetings</b><small>Reading persisted consultations, reminder state and calendar evidence.</small></div></div>:meetings.length?meetings.map(x=><button key={x.id} className={selected===x.id?'selected':''} onClick={()=>setSelected(x.id)}><CalendarDays/><div><b>{x.lead}</b><small>{x.time} · {x.owner}</small></div><span className={x.risk.toLowerCase()}>{x.risk} risk</span><ChevronRight/></button>):<div className="empty-delivery-state"><CalendarDays/><div><b>No meetings scheduled yet</b><small>Schedule one from Calls or connect Google Calendar and create a consultation.</small></div></div>}</div>
  {current?<div className="app-panel meeting-detail"><div className="panel-head"><div><h3>{current.lead}</h3><p>{current.time}</p></div><span className="status">{current.status}</span></div><div className="meeting-info-grid">{[['Owner',current.owner],['Reminder plan',current.reminder],['No-show risk',current.risk],['Calendar',current.calendarId?'Google Calendar synced':'Not synced'],['Attendee',current.attendeeEmail||current.attendeePhone||'Not provided'],['Meeting link',current.meetingLink?'Available':'—'],['Reminders sent',String(current.remindersSent||0)],['Last reminder',current.lastReminderAt?new Date(current.lastReminderAt).toLocaleString():'—']].map(x=><div key={x[0]}><span>{x[0]}</span><b>{x[1]}</b></div>)}</div>
  <div className="meeting-reminder-flow">{[['T−24h','Primary reminder'],['T−3h','Follow-up reminder'],['T−30m','Final confirmation'],['T+15m','No-show recovery if needed']].map((x,i)=><div key={x[0]}><span>{i+1}</span><div><b>{x[0]}</b><small>{x[1]}</small></div></div>)}</div>
  <div className="call-schedule-box"><label>New meeting time<input type="datetime-local" value={newTime} onChange={e=>setNewTime(e.target.value)}/></label><button disabled={!newTime||busy==='reschedule'} onClick={reschedule}>{busy==='reschedule'?'Updating…':'Reschedule'}</button></div>
@@ -2300,38 +2303,43 @@ function DataFlows(){
  const [integrations,setIntegrations]=useState<any[]>([])
  const [builder,setBuilder]=useState(false)
  const [busy,setBusy]=useState('')
- const [notice,setNotice]=useState('')
+ const [loading,setLoading]=useState(true)
+ const [notice,setNotice]=useState<{kind:'ok'|'error'|'',text:string}>({kind:'',text:''})
  const [draft,setDraft]=useState<any>({name:'CRM qualified lead → Google Ads',source:'Zoho CRM',destination:'Google Ads',object:'Qualified lead',trigger:'On lifecycle stage change',identityField:'email / phone / gclid',mode:'Real-time'})
  const load=async()=>{
-  const [flows,connectors]:any=await Promise.all([api.integrationFlows(),api.integrations()])
-  setData(flows);setIntegrations(connectors.items||[])
+  setLoading(true)
+  try{
+   const [flows,connectors]:any=await Promise.all([api.integrationFlows(),api.integrations()])
+   setData(flows);setIntegrations(connectors.items||[])
+  }catch(e:any){setNotice({kind:'error',text:e?.message||'Data flows could not be loaded. Existing flow state was preserved.'})}
+  finally{setLoading(false)}
  }
- useEffect(()=>{load().catch((e:any)=>setNotice(e?.message||'Data flows could not be loaded.'))},[])
+ useEffect(()=>{load()},[])
  const connectorNames=integrations.map((x:any)=>x.name)
  const create=async(e:any)=>{
-  e.preventDefault();setBusy('create');setNotice('')
-  try{await api.createIntegrationFlow(draft);setBuilder(false);setNotice('Data flow created. Run the readiness test before activation.');await load()}
-  catch(e:any){setNotice(e?.message||'Data flow could not be created.')}
+  e.preventDefault();setBusy('create');setNotice({kind:'',text:''})
+  try{await api.createIntegrationFlow(draft);setBuilder(false);setNotice({kind:'ok',text:'Data flow created and persisted. Run the readiness test before activation.'});await load()}
+  catch(e:any){setNotice({kind:'error',text:e?.message||'Data flow could not be created.'})}
   finally{setBusy('')}
  }
  const testFlow=async(id:string)=>{
-  setBusy('test:'+id);setNotice('')
-  try{const r:any=await api.testIntegrationFlow(id);setNotice(r.detail||'Readiness test completed.');await load()}
-  catch(e:any){setNotice(e?.message||'Readiness test failed.')}
+  setBusy('test:'+id);setNotice({kind:'',text:''})
+  try{const r:any=await api.testIntegrationFlow(id);setNotice({kind:r?.ok===false||r?.status==='needs_attention'?'error':'ok',text:r.detail||'Readiness test completed.'});await load()}
+  catch(e:any){setNotice({kind:'error',text:e?.message||'Readiness test failed.'})}
   finally{setBusy('')}
  }
  const toggle=async(item:any)=>{
-  setBusy('toggle:'+item.id);setNotice('')
-  try{await api.toggleIntegrationFlow(item.id,item.status!=='active');setNotice(item.status==='active'?'Flow paused.':'Flow activated.');await load()}
-  catch(e:any){setNotice(e?.message||'Flow status could not be changed.')}
+  setBusy('toggle:'+item.id);setNotice({kind:'',text:''})
+  try{const r:any=await api.toggleIntegrationFlow(item.id,item.status!=='active');setNotice({kind:'ok',text:item.status==='active'?'Flow paused and persisted.':'Flow activated after backend readiness validation.'});await load()}
+  catch(e:any){setNotice({kind:'error',text:e?.message||'Flow status could not be changed.'})}
   finally{setBusy('')}
  }
  const stats=data.stats||{}
- return <><PageHead crumb="Activation / Data Flows" title="Data flows" sub="Define governed source-to-destination sync recipes, verify connector readiness, and activate only flows that pass their checks." action="Create flow" onAction={()=>setBuilder(true)}/>
+ return <><PageHead crumb="Activation / Data Flows" title="Data flows" sub="Define governed source-to-destination sync recipes, verify connector readiness, and activate only flows that pass their checks." action={loading?'Refreshing…':'Refresh flows'} onAction={load}/>
  <div className="stats-grid"><Stat label="Configured flows" value={String(stats.total||0)} sub="Persisted workspace recipes" Icon={Network}/><Stat label="Active" value={String(stats.active||0)} sub="Enabled synchronization paths" Icon={Activity}/><Stat label="Healthy" value={String(stats.healthy||0)} sub="Last readiness test passed" Icon={CheckCircle2}/><Stat label="Needs attention" value={String(stats.needsAttention||0)} sub="Connection or test work required" Icon={ShieldCheck}/></div>
- {notice&&<div className="delivery-notice ok"><CheckCircle2/><span>{notice}</span></div>}
+ {notice.text&&<div className={'delivery-notice '+(notice.kind==='error'?'error':'ok')} role={notice.kind==='error'?'alert':'status'}>{notice.kind==='error'?<ShieldCheck/>:<CheckCircle2/>}<span>{notice.text}</span></div>}
  <div className="app-panel data-flow-explainer"><div><Network/><div><span>HOW IT WORKS</span><h3>Source → map → verify → activate</h3><p>Flows do not pretend an unsupported connector is live. Both ends must be connected and the readiness test must pass before the backend allows activation.</p></div></div><div className="data-flow-steps">{['Choose source','Choose destination','Map business signal','Test readiness','Activate flow'].map((x,i)=><span key={x}><b>{i+1}</b>{x}{i<4&&<ArrowRight/>}</span>)}</div></div>
- <div className="data-flow-grid">{(data.items||[]).length?(data.items||[]).map((x:any)=><article className={'data-flow-card '+(x.status==='active'?'active':'')} key={x.id}><div className="data-flow-card-head"><div><span className="integration-logo c0">{String(x.source||'S').slice(0,2).toUpperCase()}</span><ArrowRight/><span className="integration-logo c4">{String(x.destination||'D').slice(0,2).toUpperCase()}</span></div><span className={x.status==='active'?'healthy':'status'}>{x.status}</span></div><h3>{x.name}</h3><p>{x.source} → {x.destination}</p><div className="data-flow-meta"><span><b>Object</b>{x.object}</span><span><b>Trigger</b>{x.trigger}</span><span><b>Identity</b>{x.identityField}</span><span><b>Cadence</b>{x.mode}</span></div><div className={'data-flow-test '+String(x.lastTestStatus||'not_tested')}><ShieldCheck/><div><b>{x.lastTestStatus==='passed'?'Readiness passed':x.lastTestStatus==='needs_attention'?'Needs attention':'Not tested'}</b><small>{x.lastTestDetail||'Run a readiness test before activation.'}</small></div></div><footer><button disabled={busy==='test:'+x.id} onClick={()=>testFlow(x.id)}>{busy==='test:'+x.id?'Testing…':'Test readiness'}</button><button className={x.status==='active'?'':'app-primary'} disabled={busy==='toggle:'+x.id} onClick={()=>toggle(x)}>{busy==='toggle:'+x.id?'Updating…':x.status==='active'?'Pause':'Activate'}</button></footer></article>):<div className="app-panel empty-delivery-state"><Network/><div><b>No data flows configured</b><small>Create a source-to-destination recipe after connecting the systems you want to synchronize.</small></div><button className="app-primary" onClick={()=>setBuilder(true)}><Plus/>Create first flow</button></div>}</div>
+ <div className="data-flow-grid">{loading&&!(data.items||[]).length?<div className="app-panel empty-delivery-state"><Activity/><div><b>Loading data flows</b><small>Reading persisted flow recipes, connector state and readiness evidence.</small></div></div>:(data.items||[]).length?(data.items||[]).map((x:any)=><article className={'data-flow-card '+(x.status==='active'?'active':'')} key={x.id}><div className="data-flow-card-head"><div><span className="integration-logo c0">{String(x.source||'S').slice(0,2).toUpperCase()}</span><ArrowRight/><span className="integration-logo c4">{String(x.destination||'D').slice(0,2).toUpperCase()}</span></div><span className={x.status==='active'?'healthy':'status'}>{x.status}</span></div><h3>{x.name}</h3><p>{x.source} → {x.destination}</p><div className="data-flow-meta"><span><b>Object</b>{x.object}</span><span><b>Trigger</b>{x.trigger}</span><span><b>Identity</b>{x.identityField}</span><span><b>Cadence</b>{x.mode}</span></div><div className={'data-flow-test '+String(x.lastTestStatus||'not_tested')}><ShieldCheck/><div><b>{x.lastTestStatus==='passed'?'Readiness passed':x.lastTestStatus==='needs_attention'?'Needs attention':'Not tested'}</b><small>{x.lastTestDetail||'Run a readiness test before activation.'}</small></div></div><footer><button disabled={busy==='test:'+x.id} onClick={()=>testFlow(x.id)}>{busy==='test:'+x.id?'Testing…':'Test readiness'}</button><button className={x.status==='active'?'':'app-primary'} disabled={busy==='toggle:'+x.id} onClick={()=>toggle(x)}>{busy==='toggle:'+x.id?'Updating…':x.status==='active'?'Pause':'Activate'}</button></footer></article>):<div className="app-panel empty-delivery-state"><Network/><div><b>No data flows configured</b><small>Create a source-to-destination recipe after connecting the systems you want to synchronize.</small></div><button className="app-primary" onClick={()=>setBuilder(true)}><Plus/>Create first flow</button></div>}</div>
  {builder&&<div className="connector-modal"><form className="connector-card data-flow-builder" onSubmit={create}><div className="connector-modal-head"><div><Network/><div><b>Create data flow</b><small>Configure a governed synchronization recipe.</small></div></div><button type="button" onClick={()=>setBuilder(false)}><X/></button></div><label>Flow name<input required value={draft.name} onChange={e=>setDraft({...draft,name:e.target.value})}/></label><div className="two-col"><label>Source<select value={draft.source} onChange={e=>setDraft({...draft,source:e.target.value})}>{connectorNames.map((x:string)=><option key={x}>{x}</option>)}</select></label><label>Destination<select value={draft.destination} onChange={e=>setDraft({...draft,destination:e.target.value})}>{connectorNames.map((x:string)=><option key={x}>{x}</option>)}</select></label></div><label>Business object / event<input required value={draft.object} onChange={e=>setDraft({...draft,object:e.target.value})}/></label><label>Trigger<input required value={draft.trigger} onChange={e=>setDraft({...draft,trigger:e.target.value})}/></label><div className="two-col"><label>Identity mapping<input required value={draft.identityField} onChange={e=>setDraft({...draft,identityField:e.target.value})}/></label><label>Cadence<select value={draft.mode} onChange={e=>setDraft({...draft,mode:e.target.value})}><option>Real-time</option><option>Every 15 minutes</option><option>Hourly</option><option>Daily</option></select></label></div><div className="ai-note"><ShieldCheck/><div><b>Activation guardrail</b><p>The backend requires a passed readiness test before a flow can be activated.</p></div></div><button disabled={busy==='create'}>{busy==='create'?'Creating…':'Create flow'}</button></form></div>}
  </>
 }
