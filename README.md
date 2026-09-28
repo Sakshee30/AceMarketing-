@@ -5920,3 +5920,13 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Added accessible match-log dialog and preserved previously loaded continuity evidence during transient backend failures.
 - Added architecture enforcement and E2E coverage for the extracted feature.
 - Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
+
+
+### Frontend architecture: Live Sync feature boundary — 2026-09-28
+
+- Extracted **Live Sync / 24×7 Event Transfer** into a feature-owned lazy chunk while preserving current ingestion, delivery, destination-throughput and monitoring-alert workflows.
+- Kept the current 15-second visible refresh cadence, but paused polling in hidden tabs and resumed it on visibility return to reduce waste at high session counts.
+- Added accessible alert creation, dirty-work protection, explicit loading/error states and unknown-outcome reconciliation for alert writes.
+- Bounded recent activity rendering to protect long-running browser sessions without changing backend retention.
+- Added architecture enforcement and E2E coverage for the extracted feature.
+- Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
