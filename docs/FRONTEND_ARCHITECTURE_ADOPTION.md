@@ -260,3 +260,12 @@ AceMarketing keeps the current product pipeline and all existing product feature
 ## Completion rule
 
 A frontend feature is not considered complete because the screen renders. Completion requires the happy path, validation/denied path, failure path, recovery path, compatibility/migration behavior and release evidence appropriate to that feature.
+
+
+### Launchpad feature extraction
+- Launchpad is now a feature-owned lazy chunk instead of an inline implementation inside `AcePlatform.tsx`.
+- It owns a manifest, public entry point, page implementation, browser data adapter and ownership README.
+- Existing launchpad evidence, readiness steps, test-event flow, CSS classes, direct route and cross-feature navigation are preserved.
+- Backend loading and test-event failures are now explicit and retryable; failed tests are not rendered with success styling.
+- CI rejects reintroduction of the legacy Launchpad function and verifies the extracted feature files exist.
+- This is an additive migration on `main`; no existing feature or backend route was removed.
