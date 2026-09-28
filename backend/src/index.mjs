@@ -4423,7 +4423,17 @@ const server = http.createServer(async (req,res)=>{
     if (req.method === 'GET' && url.pathname === '/api/event-templates') return send(req,res,200,{items:['Pricing-page Lead','High-value Purchase','Prepaid Order','Fulfilled Order','Returned Order','Partial Payment']})
     if (req.method === 'POST' && url.pathname === '/api/consent-preferences') {
       const body = await readBody(req)
-      return send(req,res,200,{saved:true,preferences:{necessary:true,analytics:Boolean(body.analytics),advertising:Boolean(body.advertising),functionality:Boolean(body.functionality)}})
+      const preferences={necessary:true,analytics:Boolean(body.analytics),advertising:Boolean(body.advertising),functionality:Boolean(body.functionality)}
+      const savedAt=new Date().toISOString()
+      await mutateState(s=>{
+        s.publicConsentPreferences=s.publicConsentPreferences||[]
+        s.publicConsentPreferences.unshift({id:randomUUID(),preferences,savedAt,source:'public_cookie_banner'})
+        s.publicConsentPreferences=s.publicConsentPreferences.slice(0,5000)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'public.consent_saved',entityId:'cookie_preferences',preferences,savedAt,at:savedAt})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,200,{saved:true,preferences,savedAt})
     }
     if (req.method === 'GET' && url.pathname === '/api/monitoring-rules') return send(req,res,200,{items:await listLiveMonitoringRules(workspaceId)})
     if (req.method === 'POST' && url.pathname === '/api/monitoring-rules') {
