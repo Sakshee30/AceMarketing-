@@ -11,6 +11,7 @@ import { closeStore, mutateState, withWorkspace } from './store.mjs'
 import { closeAiRuntime, executeHostedAiJob } from './ai-runtime.mjs'
 import { ProviderExecutionError } from './ai-providers.mjs'
 import { executeMlJob } from './ml-client.mjs'
+import { closeKnowledge, embedKnowledgeSourceJob, searchKnowledgeJob } from './knowledge.mjs'
 
 if(!queueAvailable()) throw new Error('DATABASE_URL is required for the worker runtime')
 
@@ -31,6 +32,12 @@ const updateDelivery=async(workspaceId,deliveryId,patch)=>withWorkspace(workspac
 }))
 
 const handle=async job=>{
+  if(job.kind==='knowledge_embedding'){
+    return embedKnowledgeSourceJob(job)
+  }
+  if(job.kind==='knowledge_search'){
+    return searchKnowledgeJob(job)
+  }
   if(job.kind==='ml_task'){
     return executeMlJob(job)
   }
@@ -193,7 +200,7 @@ const shutdown=async signal=>{
   if(stopping) return
   stopping=true
   console.log(`${signal} received; stopping worker`)
-  await Promise.allSettled([closeQueue(),closeAiRuntime(),closeStore(),closeLeadOps(),closeAudienceScheduler(),closeReportScheduler()])
+  await Promise.allSettled([closeQueue(),closeAiRuntime(),closeKnowledge(),closeStore(),closeLeadOps(),closeAudienceScheduler(),closeReportScheduler()])
   process.exit(0)
 }
 process.on('SIGTERM',()=>shutdown('SIGTERM'))
