@@ -9,6 +9,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException
 from . import __version__
 from .contracts import (
     AnomalyRequest,
+    CausalForestRequest,
     ClassificationTrainRequest,
     ForecastRequest,
     RankingTrainRequest,
@@ -18,6 +19,8 @@ from .contracts import (
 from .pipelines import (
     anomaly_detection,
     behavioral_segments,
+    causal_forest_estimate,
+    chronos2_forecast,
     dependency_capabilities,
     seasonal_naive_forecast,
     train_classification,
@@ -73,6 +76,22 @@ def train_regression_endpoint(request: RegressionTrainRequest):
 def forecast_baseline_endpoint(request: ForecastRequest):
     try:
         return seasonal_naive_forecast(request)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.post("/v1/forecast/chronos-2", dependencies=[Depends(require_internal_token)])
+def forecast_chronos_endpoint(request: ForecastRequest):
+    try:
+        return chronos2_forecast(request)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.post("/v1/causal/forest-dml", dependencies=[Depends(require_internal_token)])
+def causal_forest_endpoint(request: CausalForestRequest):
+    try:
+        return causal_forest_estimate(request)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
