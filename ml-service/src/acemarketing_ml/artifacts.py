@@ -91,9 +91,8 @@ class ArtifactStore:
         if metadata.get("storage") == "s3":
             if not self.bucket:
                 raise RuntimeError("artifact metadata requires object storage but ML_ARTIFACT_S3_BUCKET is not configured")
-            handle = tempfile.NamedTemporaryFile(prefix="ace-ml-", suffix=".joblib", delete=False)
-            handle.close()
-            cleanup_path = Path(handle.name)
+            with tempfile.NamedTemporaryFile(prefix="ace-ml-", suffix=".joblib", delete=False) as handle:
+                cleanup_path = Path(handle.name)
             self._s3().download_file(self.bucket, str(metadata.get("objectKey") or self._object_key(artifact_id)), str(cleanup_path))
             path = cleanup_path
         else:
