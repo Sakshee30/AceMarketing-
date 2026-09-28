@@ -7,6 +7,7 @@ import './foundation.css'
 import { installAceTracking } from './lib/tracker'
 import { FrontendAppBoundary } from './components/system/FrontendFoundation'
 import { getPublicRuntimeConfig } from './lib/runtime-config'
+import { installBeforeUnloadDirtyWorkGuard } from './lib/dirty-work'
 
 const root=document.getElementById('root')
 if(!root)throw new Error('AceMarketing root element is missing.')
@@ -23,6 +24,7 @@ try{
 }
 
 installAceTracking()
+installBeforeUnloadDirtyWorkGuard()
 
 ReactDOM.createRoot(root).render(
   <React.StrictMode>
