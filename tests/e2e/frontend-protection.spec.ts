@@ -448,3 +448,14 @@ test('public website routes remain direct-linkable after public-site extraction'
   await expect(page).toHaveURL(/#\/industries/)
   await expect(page.getByText('INDUSTRIES',{exact:true}).first()).toBeVisible()
 })
+
+
+test('auth and deep-link boundaries remain direct-linkable after root-shell slimming',async({page})=>{
+  await page.goto('/#/login')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Log in to your workspace'})).toBeVisible()
+  await expect(page.getByRole('button',{name:'Continue with Google'})).toBeVisible()
+
+  await page.goto('/#/deep/nonexistent-test-link')
+  await expect(page.getByRole('heading',{name:'Continue your journey'})).toBeVisible()
+})

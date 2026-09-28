@@ -6127,3 +6127,13 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Repaired an accidental stale dirty-work hook inside the public Demo page that referenced an undefined builder variable; no customer-facing feature was removed.
 - Added architecture checks preventing public pages from drifting back into the root composition and direct-route E2E coverage for the extracted public site.
 - Remaining frontend gates before backend restructuring: standalone public build/deployment identity, public SEO/cache policy, auth composition isolation, performance/accessibility evidence and release-gate verification.
+
+
+### Frontend architecture: auth, consent and deep-link boundaries — 2026-09-28
+
+- Extracted workspace sign-in/password-reset flows into `frontend/src/auth/LoginPage.tsx` and lazy-loaded that boundary.
+- Extracted deep-link resolution into `frontend/src/deep-link/DeepLinkResolver.tsx` and lazy-loaded it independently from customer/public application chunks.
+- Extracted the privacy consent surface into `frontend/src/components/system/ConsentBanner.tsx` while preserving Essential only / Analytics / Allow all behavior.
+- Reduced the root `AcePlatform.tsx` to route composition and recovery orchestration instead of business/public/auth implementations.
+- Extended architecture enforcement and direct-link E2E protection for the new boundaries.
+- No customer-facing capability was removed; backend restructuring remains deferred until frontend release gates are complete.

@@ -40,6 +40,11 @@ for(const file of walk(frontend)){
 const acePlatform=path.join(frontend,'AcePlatform.tsx')
 if(fs.existsSync(acePlatform)){
   const source=fs.readFileSync(acePlatform,'utf8')
+  for(const rootOwnedName of ['ConsentBanner','Login','DeepLinkResolver']){
+    if(new RegExp('function\\s+'+rootOwnedName+'\\s*\\(').test(source)){
+      failures.push('frontend/src/AcePlatform.tsx still owns '+rootOwnedName+' after boundary extraction.')
+    }
+  }
   for(const legacyPublicName of ['Header','Marketing','PublicFooter','PublicPageFrame','IndustriesPublicPage','AgentsPublicPage','IntegrationsPublicPage','DemoPage','CompanyPage','SolutionsPage','CaseStudiesPage','ResourcesPage','LegalPage','Pricing','DemoSection']){
     if(new RegExp('function\\s+'+legacyPublicName+'\\s*\\(').test(source)){
       failures.push('frontend/src/AcePlatform.tsx still contains public website implementation '+legacyPublicName+' after website/public-site extraction.')
@@ -348,6 +353,21 @@ if(fs.existsSync(acePlatform)){
     }
   }
 
+  const authPath=path.join(frontend,'auth','LoginPage.tsx')
+  if(fs.existsSync(authPath)){
+    const auth=fs.readFileSync(authPath,'utf8')
+    if(!auth.includes('googleLoginExchange')||!auth.includes('resetPassword')){
+      failures.push('Auth composition must preserve Google exchange and password-reset customer journeys.')
+    }
+  }
+  const consentPath=path.join(frontend,'components','system','ConsentBanner.tsx')
+  if(fs.existsSync(consentPath)){
+    const consent=fs.readFileSync(consentPath,'utf8')
+    if(!consent.includes('Essential only')||!consent.includes('Allow analytics')||!consent.includes('Allow all')){
+      failures.push('Consent boundary must preserve the existing three customer privacy choices.')
+    }
+  }
+
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
@@ -377,6 +397,9 @@ const required=[
   'frontend/src/features/meetings/pages/MeetingsPage.tsx',
   'frontend/src/features/meetings/public.ts',
   'frontend/src/features/meetings/feature.manifest.ts',
+  'frontend/src/auth/LoginPage.tsx',
+  'frontend/src/deep-link/DeepLinkResolver.tsx',
+  'frontend/src/components/system/ConsentBanner.tsx',
   'website/public-site/src/PublicSite.tsx',
   'website/public-site/src/public.ts',
   'packages/design-system/src/Brand.tsx',
