@@ -961,11 +961,16 @@ test('POS import computes match coverage from transaction rows', async ({ page }
   const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toUpperCase()
   const storeId='CI-STORE-'+suffix
   const storeName='CI Store '+testInfo.project.name
+  const twclid='ci_pos_twclid_'+suffix.toLowerCase()+'_'+Date.now()
+  const clickAt=new Date()
+  const click=await page.request.post('/api/track',{data:{event:'page_view',eventCategory:'essential',visitorId:'ci_pos_x_visitor_'+suffix.toLowerCase(),twclid,utm_source:'X Ads',occurredAt:clickAt.toISOString()}})
+  expect(click.ok()).toBeTruthy()
   await page.getByLabel('Store ID').fill(storeId)
   await page.getByLabel('Store name').fill(storeName)
-  await page.getByLabel('CSV transactions').fill('transaction_id,customer_id,email,phone,net_revenue,currency,occurred_at,gclid,fbclid\nCI-TXN-'+suffix+',ci_pos_'+suffix.toLowerCase()+',,,12500,INR,2026-09-26T10:00:00Z,,')
+  const saleAt=new Date(clickAt.getTime()+1000).toISOString()
+  await page.getByLabel('CSV transactions').fill('transaction_id,customer_id,email,phone,net_revenue,currency,occurred_at,gclid,fbclid,msclkid,ttclid,twclid\nCI-TXN-'+suffix+',,,,,12500,INR,'+saleAt+',,,,,'+twclid)
   await page.getByRole('button', { name: 'Process transaction batch' }).click()
-  await expect(page.getByText(/POS batch processed:/)).toBeVisible()
+  await expect(page.getByText(/POS batch processed: 1 matched, 0 unmatched/)).toBeVisible()
   await expect(page.locator('.pos-list').getByText(storeName, { exact: true }).first()).toBeVisible()
 })
 
