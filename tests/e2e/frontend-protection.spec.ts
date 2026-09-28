@@ -95,3 +95,12 @@ test('shows controlled recovery for missing lazy chunks without automatic reload
   await expect(notice).toHaveCount(0)
   await expect(page.getByRole('heading',{name:/Acquisition command center/i})).toBeVisible()
 })
+
+
+test('loads extracted approvals feature from its direct workspace route',async({page})=>{
+  await page.goto('/#/workspace?tab=Approvals')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Approvals/)
+  await expect(page.getByRole('heading',{name:'Human approval center'})).toBeVisible()
+  await expect(page.getByText(/Persisted agent and automation requests/i)).toBeVisible()
+})
