@@ -5619,6 +5619,7 @@ AceMarketing now implements the server-side X Ads conversion contract from X's o
 - The consent-aware browser tracker persists URL `twclid` in AceMarketing storage and a first-party `_twclid` cookie compatible with X's official server template, reads that cookie as fallback, forwards `_twpid` when present, and removes AceMarketing's X click persistence when marketing consent is withdrawn.
 - Migration `020_x_click_identity.sql` persists/indexes `twclid` in click sessions and assisted events.
 - Offline/assisted attribution can reconcile outcomes directly by `twclid`, and Matchback surfaces **X TWCLID** live coverage.
+- POS / walk-in CSV ingestion now carries `gclid`, `fbclid`, `msclkid`, `ttclid`, and `twclid` into the same attribution engine, so offline revenue can reconcile against the original cross-platform click evidence instead of dropping non-Google identifiers.
 - Durable queued signal replay retains X click IDs and X event configuration through retries.
 - Playwright coverage verifies X quick-start persistence, consent-gated click capture, X attribution coverage and native server-secret connector metadata.
 
