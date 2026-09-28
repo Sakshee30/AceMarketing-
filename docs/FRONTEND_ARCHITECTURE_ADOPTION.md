@@ -309,3 +309,13 @@ A frontend feature is not considered complete because the screen renders. Comple
 - Refresh failures preserve already-loaded campaign evidence and expose an explicit retry path rather than silently presenting an empty funnel.
 - CSV object URLs are explicitly released after export.
 - CI rejects reintroduction of the legacy Funnel implementation into `AcePlatform.tsx`.
+
+
+### Live Sync feature extraction and visibility-aware refresh
+- Live Sync is now a feature-owned lazy chunk instead of an inline workspace implementation.
+- Existing live-sync metrics, recent activity, destination throughput, alert creation, CSS classes and backend endpoints are preserved.
+- The 15-second refresh cadence remains while the tab is visible, but polling pauses while hidden and resumes on visibility return, reducing unnecessary background request pressure without removing live behavior.
+- Alert creation now uses the shared accessible dialog and dirty-work protection.
+- Timeout/network loss during alert creation is shown as an unknown outcome that requires authoritative reconciliation before retry.
+- Recent activity rendering is bounded to the most recent 100 rows in the UI while canonical backend history remains unchanged.
+- CI rejects reintroduction of the legacy Live Sync implementation into `AcePlatform.tsx`.
