@@ -49,6 +49,9 @@ if(fs.existsSync(acePlatform)){
   if(/function\s+Alerts\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Alerts implementation after feature extraction.')
   }
+  if(/function\s+Reports\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Reports implementation after feature extraction.')
+  }
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
@@ -59,6 +62,10 @@ if(fs.existsSync(acePlatform)){
 
 const required=[
   'frontend/src/features/workspace/manifest.ts',
+  'frontend/src/features/reports/data/reports.api.ts',
+  'frontend/src/features/reports/pages/ReportsPage.tsx',
+  'frontend/src/features/reports/public.ts',
+  'frontend/src/features/reports/feature.manifest.ts',
   'frontend/src/features/alerts/data/alerts.api.ts',
   'frontend/src/features/alerts/pages/AlertsPage.tsx',
   'frontend/src/features/alerts/public.ts',
