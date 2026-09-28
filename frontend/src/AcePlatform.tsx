@@ -1,5 +1,5 @@
 // @ts-nocheck
-import {Component,Fragment,lazy,Suspense,useEffect,useMemo,useState} from 'react'
+import {Component,Fragment,lazy,Suspense,useEffect,useMemo,useRef,useState} from 'react'
 import {createPortal} from 'react-dom'
 import {
   Activity,AlertTriangle,ArrowRight,BarChart3,Bell,BookOpen,Bot,Building2,Cable,CalendarDays,Check,CheckCircle2,ChevronDown,ChevronRight,
@@ -749,17 +749,23 @@ function Customer360(){
  const [query,setQuery]=useState('')
  const [loading,setLoading]=useState(true)
  const [notice,setNotice]=useState('')
+ const requestSequence=useRef(0)
  const load=async(id?:string)=>{
+  const requestId=++requestSequence.current
   setLoading(true);setNotice('')
   try{
    const r:any=await api.customer360(id)
+   if(requestId!==requestSequence.current)return
    setData(r)
    if(r.customer?.id)setSelected(r.customer.id)
-  }catch(e:any){setNotice(e?.message||'Customer 360 could not be loaded.')}
-  finally{setLoading(false)}
+  }catch(e:any){
+   if(requestId===requestSequence.current)setNotice(e?.message||'Customer 360 could not be loaded. Existing customer evidence was preserved.')
+  }finally{
+   if(requestId===requestSequence.current)setLoading(false)
+  }
  }
- useEffect(()=>{load()},[])
- const choose=(id:string)=>{setSelected(id);load(id)}
+ useEffect(()=>{void load();return()=>{requestSequence.current++}},[])
+ const choose=(id:string)=>{setSelected(id);void load(id)}
  const items=(data.items||[]).filter((x:any)=>{
   const q=query.trim().toLowerCase()
   return !q||[x.name,x.externalLeadId,x.source,x.campaign,x.stage,x.grade].some(v=>String(v||'').toLowerCase().includes(q))
@@ -767,7 +773,7 @@ function Customer360(){
  const customer=data.customer
  const identity=customer?.identity||{}
  const ops=customer?.operations||{}
- const timeline=customer?.timeline||[]
+ const timeline=(customer?.timeline||[]).slice(0,150)
  const attrs=Object.entries(customer?.attributes||{}).slice(0,12)
  const journey=Object.entries(customer?.journey||{}).filter(([,v])=>v!==null&&v!==''&&typeof v!=='object').slice(0,12)
  return <><PageHead crumb="Data / Customer 360" title="Customer 360" sub="One operator view for identity, acquisition, lifecycle, audiences, interactions and agent activity across the stitched customer journey." action={loading?'Refreshing…':'Refresh'} onAction={()=>load(selected||undefined)}/>
@@ -779,7 +785,7 @@ function Customer360(){
   <Stat label="Active audiences" value={customer?String((customer.audiences||[]).length):'—'} sub="Materialized audience memberships" Icon={RadioTower}/>
  </div>
  <div className="customer360-layout">
-  <div className="app-panel customer360-list">
+  <div className="app-panel customer360-list" aria-busy={loading?'true':undefined}>
    <div className="panel-head"><div><h3>Customer directory</h3><p>Search canonical profiles and open the stitched record</p></div><span className="healthy">{items.length}</span></div>
    <div className="customer360-search"><Search/><input aria-label="Search customer 360 profiles" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search name, lead ID, source, campaign..."/></div>
    <div className="customer360-list-scroll">{items.length?items.map((x:any)=><button key={x.id} className={selected===x.id?'selected':''} onClick={()=>choose(x.id)}>
