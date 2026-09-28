@@ -53,7 +53,8 @@ const longFormFeatures=new Set([
   'Models',
   'Planner',
   'Audiences',
-  'Settings'
+  'Settings',
+  'Executive Briefs'
 ])
 
 export const workspaceFeatureManifest:readonly WorkspaceFeatureManifest[]=(Object.entries(groupTabs) as [WorkspaceFeatureGroupId,readonly string[]][])
