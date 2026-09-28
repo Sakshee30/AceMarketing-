@@ -40,6 +40,9 @@ for(const file of walk(frontend)){
 const acePlatform=path.join(frontend,'AcePlatform.tsx')
 if(fs.existsSync(acePlatform)){
   const source=fs.readFileSync(acePlatform,'utf8')
+  if(/function\s+LeadGrading\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Lead Grading implementation after feature extraction.')
+  }
   if(/function\s+Enrich\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Enrich implementation after feature extraction.')
   }
@@ -186,6 +189,10 @@ if(fs.existsSync(acePlatform)){
 }
 
 const required=[
+  'frontend/src/features/lead-grading/data/lead-grading.api.ts',
+  'frontend/src/features/lead-grading/pages/LeadGradingPage.tsx',
+  'frontend/src/features/lead-grading/public.ts',
+  'frontend/src/features/lead-grading/feature.manifest.ts',
   'frontend/src/features/enrich/data/enrich.api.ts',
   'frontend/src/features/enrich/pages/EnrichPage.tsx',
   'frontend/src/features/enrich/public.ts',
