@@ -99,6 +99,13 @@ AceMarketing keeps the current product pipeline and all existing product feature
 - `npm run frontend:architecture` provides a fast dependency-boundary check.
 - `npm run frontend:verify` composes architecture, TypeScript, production build and bundle-budget evidence.
 
+### Passive connectivity truth
+- The shared transport now publishes health transitions from real application requests instead of adding a dedicated polling loop.
+- Browser offline state is shown explicitly while preserving the current page and unsaved work.
+- Network failure or timeout is shown as degraded connectivity rather than falsely claiming confirmed backend failure.
+- A later successful application request clears the degraded state; HTTP validation/auth/conflict responses still prove the transport itself is reachable.
+- Playwright coverage verifies that going offline surfaces the warning without destroying the active workspace view.
+
 ### Bundle-budget evidence
 - Vite now emits a build manifest.
 - CI calculates gzip size for each entry and all of its static dependencies.
