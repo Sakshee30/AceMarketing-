@@ -410,3 +410,13 @@ A frontend feature is not considered complete because the screen renders. Comple
 - CRM writeback mutations distinguish confirmed success from timeout/network uncertainty; uncertain outcomes require authoritative refresh before repeating the same writeback.
 - Lead-list and writeback rendering are bounded in the browser for long-running/high-cardinality workspaces while backend data remains authoritative.
 - CI rejects reintroduction of the legacy Enrich implementation into `AcePlatform.tsx`.
+
+
+### Lead Grading feature extraction and mutation hardening
+- Lead Grading is now a feature-owned lazy chunk instead of an inline workspace implementation.
+- Existing lead selection, explainable score evidence, manual grade override, grade distribution and downstream activation behavior are preserved.
+- Reads expose explicit loading and retry states while retaining previously visible evidence during transient failures.
+- Manual overrides and activation mutations distinguish confirmed success from timeout/network uncertainty; uncertain outcomes require authoritative refresh before repeating the same operation.
+- Duplicate override/activation submissions are blocked while a mutation is running.
+- Lead and score-driver rendering are bounded in the browser for large grading populations while backend data remains authoritative.
+- CI rejects reintroduction of the legacy Lead Grading implementation into `AcePlatform.tsx`.
