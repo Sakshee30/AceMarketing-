@@ -5930,3 +5930,12 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Bounded recent activity rendering to protect long-running browser sessions without changing backend retention.
 - Added architecture enforcement and E2E coverage for the extracted feature.
 - Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
+
+
+### Frontend architecture: Data Hub feature boundary — 2026-09-28
+
+- Extracted **Unified Customer Data Hub** into a feature-owned lazy chunk while preserving current source registry, canonical schema, lineage, quality controls, recent activity and canonical rebuild workflows.
+- Added explicit loading, retryable failure and unknown-outcome reconciliation for canonical rebuild writes.
+- Preserved previously loaded source evidence during transient failures and bounded recent activity rendering to protect long-running browser sessions.
+- Added architecture enforcement and E2E coverage for the extracted feature.
+- Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
