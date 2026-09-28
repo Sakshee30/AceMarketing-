@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { closeQueue, completeJob, failJob, leaseJobs, markUnknownOutcome, queueAvailable } from './queue.mjs'
+import { closeQueue, completeJob, failJob, heartbeatJob, leaseJobs, markUnknownOutcome, queueAvailable } from './queue.mjs'
 import { deliverSignal } from './providers.mjs'
 import { syncAudienceProvider, writebackLead } from './activation-adapters.mjs'
 import { closeLeadOps, updateActivationRun, updateAudienceSyncState } from './lead-ops.mjs'
@@ -122,7 +122,18 @@ const runBatch=async()=>{
   }
   const jobs=await leaseJobs({workerId,limit:batchSize})
   for(const job of jobs){
+    let heartbeatTimer=null
     try{
+      const heartbeatEvery=Math.max(1000,Math.floor(Number(process.env.WORKER_LEASE_MS||60000)/3))
+      heartbeatTimer=setInterval(()=>{
+        void heartbeatJob({
+          id:job.id,
+          workerId,
+          fencingToken:job.fencing_token,
+          extendMs:Number(process.env.WORKER_LEASE_MS||60000)
+        }).catch(error=>console.error('[worker] heartbeat failed',job.id,error instanceof Error?error.message:error))
+      },heartbeatEvery)
+      heartbeatTimer.unref?.()
       const result=await handle(job)
       await completeJob(job.id,result,{
         workerId,
@@ -160,6 +171,8 @@ const runBatch=async()=>{
       if(job.kind==='crm_writeback'&&job.payload?.activationRunId){
         await updateActivationRun(job.workspace_id,job.payload.activationRunId,{status:failed?.status==='dead_letter'?'failed':'retrying',error:message,attempts:job.attempts}).catch(()=>{})
       }
+    }finally{
+      if(heartbeatTimer)clearInterval(heartbeatTimer)
     }
   }
 }
