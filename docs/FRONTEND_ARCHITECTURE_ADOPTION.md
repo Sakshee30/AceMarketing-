@@ -147,6 +147,14 @@ AceMarketing keeps the current product pipeline and all existing product feature
 - Conflict responses remain distinct from rejection, and the operator is instructed to refresh authoritative state before repeating an uncertain resolution.
 - CI rejects reintroduction of the legacy `Alerts` function and Playwright verifies the existing direct route.
 
+### Fourth feature extraction: Reports
+- Reports is now the fourth workspace feature extracted from `AcePlatform.tsx` into a feature-owned lazy chunk.
+- It owns its manifest, public entry point, page implementation, browser data adapter and ownership README.
+- Existing cohort analytics, schedule creation, delivery history, source-quality presentation, CSS classes and direct route are preserved.
+- "Send now" now uses the shared mutation lifecycle so timeout/network loss produces an explicit unknown outcome instead of claiming that durable delivery definitely failed.
+- Schedule creation also distinguishes an uncertain network outcome from a confirmed rejection and instructs the operator to refresh before resubmitting.
+- CI rejects reintroduction of the legacy `Reports` function and Playwright verifies the existing direct route.
+
 ### Bundle-budget evidence
 - Vite now emits a build manifest.
 - CI calculates gzip size for each entry and all of its static dependencies.
