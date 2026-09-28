@@ -38,3 +38,12 @@ AceMarketing already contains backend-confirmed state handling for critical appr
 ## Completion rule
 
 A frontend feature is not considered complete because the screen renders. Completion requires the happy path, validation/denied path, failure path, recovery path, compatibility/migration behavior and release evidence appropriate to that feature.
+
+
+### Workspace scope isolation
+- Workspace switching now uses confirm-before-commit behavior.
+- The target workspace ID is verified through the backend before its label becomes active.
+- Previous workspace content is hidden during verification instead of being relabeled as the target workspace.
+- Failed verification restores the prior workspace identity and provides explicit retry/stay actions.
+- A successful workspace switch increments a scope generation and remounts the active feature so old feature state cannot be reused under the new workspace.
+- Dashboard summary polling is generation-scoped and restarts after confirmed workspace changes.
