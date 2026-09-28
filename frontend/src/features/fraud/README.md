@@ -1,0 +1,1 @@
+Fraud owns suspicious/noise pattern evidence, review admission and explicit optimization blocks. Existing endpoints and route behavior are preserved. Control actions use explicit confirmed/rejected/conflict/unknown-outcome states and never silently auto-block activity.
