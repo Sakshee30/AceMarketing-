@@ -5802,3 +5802,14 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Added Playwright recovery coverage for forced meeting and integration-flow API failures followed by successful refreshes.
 - External provider credentials remain deferred; persisted meetings, scheduler runs, flow recipes, readiness state, and activation guardrails function internally now.
 - Implemented directly on `main`; no separate branch was created.
+
+
+### Unified frontend architecture adoption — 2026-09-28
+
+- Adopted the uploaded **Unified SaaS Platform Architecture Standard v2.0** as the frontend tightening contract while preserving the existing AceMarketing pipeline and every existing product feature.
+- Added a reusable application-level React failure boundary while retaining the existing workspace section boundary, so a route/feature render failure cannot remove the entire customer navigation shell.
+- Added accessible workspace navigation behavior: keyboard skip link, ARIA route announcements, contextual document titles, and programmatic focus on the active page heading after section changes.
+- Added visible focus styling and reduced-motion-safe behavior for the new navigation affordances.
+- Added Playwright coverage that verifies the skip link, heading focus, and route-specific document titles across multiple workspace sections.
+- Added `docs/FRONTEND_ARCHITECTURE_ADOPTION.md` to govern incremental migration. The repository will not be destructively reorganized or duplicated merely to match the architecture diagram.
+- Implemented directly on `main`; no separate branch was created.
