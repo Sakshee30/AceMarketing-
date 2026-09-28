@@ -47,3 +47,11 @@ A frontend feature is not considered complete because the screen renders. Comple
 - Failed verification restores the prior workspace identity and provides explicit retry/stay actions.
 - A successful workspace switch increments a scope generation and remounts the active feature so old feature state cannot be reused under the new workspace.
 - Dashboard summary polling is generation-scoped and restarts after confirmed workspace changes.
+
+
+### Shared transport and request budgets
+- The shared browser transport now owns a bounded request deadline.
+- Every request has a client correlation ID and an internal AbortController.
+- Transport cancellation produces a normalized aborted state; deadline expiry produces a distinct timeout/unknown-confirmation state.
+- Workspace switching cancels in-flight old-scope browser requests before resolving the new scope.
+- Existing endpoint semantics are unchanged; the transport tightening is additive.
