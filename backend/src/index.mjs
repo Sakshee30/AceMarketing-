@@ -490,7 +490,7 @@ const send = (req,res,status,data,extra={}) => {
   res.end(status===204?'':JSON.stringify(data))
 }
 
-const publicPaths=new Set(['/api/health','/api/ready','/api/auth/login','/api/auth/google/start','/api/auth/google/exchange','/api/auth/password/forgot','/api/auth/password/reset','/api/invitations/activate','/api/demo-requests','/api/track','/api/pricing/recommend','/api/pricing/quote','/api/public/navigation','/api/public/industries','/api/public/agents','/api/public/integrations','/api/public/connector-requests','/api/public/challenges','/api/public/case-studies','/api/public/resources','/api/public/resource-center','/api/webhooks/whatsapp','/api/webhooks/calls'])
+const publicPaths=new Set(['/api/health','/api/ready','/api/auth/login','/api/auth/google/start','/api/auth/google/exchange','/api/auth/password/forgot','/api/auth/password/reset','/api/invitations/activate','/api/demo-requests','/api/demo-bookings','/api/track','/api/pricing/recommend','/api/pricing/quote','/api/public/navigation','/api/public/industries','/api/public/agents','/api/public/integrations','/api/public/connector-requests','/api/public/challenges','/api/public/case-studies','/api/public/resources','/api/public/resource-center','/api/webhooks/whatsapp','/api/webhooks/calls'])
 const isPublicRequest=(method,path)=>publicPaths.has(path)||(method==='GET'&&path==='/api/integrations/oauth/callback')||(method==='GET'&&path==='/api/auth/google/callback')||(method==='POST'&&path==='/api/billing/webhook')||path==='/api/consent'
 const meteredMetricFor=(method,path)=>{
   if(method!=='POST') return null
@@ -1206,6 +1206,35 @@ const server = http.createServer(async (req,res)=>{
       if (!body.email || !body.company) return send(req,res,400,{error:'email and company are required'})
       const item={id:randomUUID(),status:'captured',request:body,createdAt:new Date().toISOString()}
       await mutateState(s=>{s.demoRequests.unshift(item);s.demoRequests=s.demoRequests.slice(0,5000)})
+      return send(req,res,201,item)
+    }
+    if (req.method === 'POST' && url.pathname === '/api/demo-bookings') {
+      const body=await readBody(req)
+      const demoRequestId=String(body.demoRequestId||'').trim()
+      const startsAt=String(body.startsAt||'').trim()
+      if(!demoRequestId) return send(req,res,400,{error:'demoRequestId required'})
+      const startDate=new Date(startsAt)
+      if(!startsAt||Number.isNaN(startDate.getTime())) return send(req,res,400,{error:'valid startsAt required'})
+      if(startDate.getTime()<Date.now()-60000) return send(req,res,400,{error:'demo booking must be in the future'})
+      if(startDate.getTime()>Date.now()+90*24*60*60*1000) return send(req,res,400,{error:'demo booking must be within 90 days'})
+      const state=await getState()
+      const demoRequest=(state.demoRequests||[]).find(x=>x.id===demoRequestId)
+      if(!demoRequest) return send(req,res,404,{error:'demo request not found'})
+      const existing=(state.demoBookings||[]).find(x=>x.demoRequestId===demoRequestId&&x.status==='confirmed')
+      if(existing) return send(req,res,200,existing)
+      const item={
+        id:'demo_booking_'+randomUUID(),demoRequestId,status:'confirmed',startsAt:startDate.toISOString(),
+        durationMinutes:45,email:String(demoRequest.request?.email||''),company:String(demoRequest.request?.company||''),
+        createdAt:new Date().toISOString()
+      }
+      await mutateState(s=>{
+        s.demoBookings=s.demoBookings||[]
+        s.demoBookings.unshift(item)
+        s.demoBookings=s.demoBookings.slice(0,5000)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'demo.booking_confirmed',entityId:item.id,demoRequestId,startsAt:item.startsAt,at:item.createdAt})
+        s.audit=s.audit.slice(0,1000)
+      })
       return send(req,res,201,item)
     }
     if (req.method === 'GET' && url.pathname === '/api/workspace/overview') {
