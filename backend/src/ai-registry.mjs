@@ -186,8 +186,8 @@ export const modelCatalogItems=()=>modelRegistrySnapshot().map(entry=>({
   value:null,
   description:'Requested '+entry.task+' route. Serving readiness is separated from implementation, evaluation, approval and deployment evidence.',
   builtIn:true,
-  runnable:entry.readiness==='active',
-  blockedReason:entry.readiness==='active'?null:(entry.warnings[0]||'Route is not active.'),
+  runnable:false,
+  blockedReason:entry.readiness==='active'?'Use the task-specific execution endpoint; generic scoring is intentionally disabled.':(entry.warnings[0]||'Route is not active.'),
   governance:{
     task:entry.task,
     provider:entry.provider,
