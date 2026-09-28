@@ -5911,3 +5911,12 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Added explicit loading, retryable error and unknown-outcome reconciliation states for site creation and installation tests.
 - Added architecture enforcement and E2E coverage for the extracted feature.
 - Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
+
+
+### Frontend architecture: Fingerprinting feature boundary — 2026-09-28
+
+- Extracted **Cross-domain Journey Continuity / Fingerprinting** into a feature-owned lazy chunk while preserving continuity scenarios, deterministic match evidence, continuity testing and match-log inspection.
+- Added explicit loading, retryable error and unknown-outcome reconciliation states for continuity tests.
+- Added accessible match-log dialog and preserved previously loaded continuity evidence during transient backend failures.
+- Added architecture enforcement and E2E coverage for the extracted feature.
+- Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
