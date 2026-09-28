@@ -154,6 +154,7 @@ export const api = {
   createOfflineAttributionRule: (payload: Record<string, unknown>) => request('/offline-attribution/rules', { method: 'POST', body: JSON.stringify(payload) }),
   toggleOfflineAttributionRule: (id:string,enabled:boolean) => request('/offline-attribution/rules/toggle', { method: 'POST', body: JSON.stringify({id,enabled}) }),
   testOfflineAttributionRule: (payload: Record<string, unknown>) => request('/offline-attribution/test', { method: 'POST', body: JSON.stringify(payload) }),
+  ctwaAttribution: () => request('/ctwa-attribution'),
   callEvents: () => request('/call-events'),
   matchback: () => request('/matchback'),
   createMatchbackRule: (payload: Record<string, unknown>) => request('/matchback/rules', { method: 'POST', body: JSON.stringify(payload) }),
