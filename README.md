@@ -6195,3 +6195,10 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Missing or unauthorized control API responses render explicit unavailable/forbidden state rather than fake success.
 - Standalone E2E coverage now verifies platform-control isolation on desktop and mobile profiles.
 - Backend restructuring still has not started; the next phase is to finish frontend evidence, then implement the privileged control API contract in the backend phase before enabling any operational write control.
+
+
+### Frontend verification repair: platform-control coverage — 2026-09-28
+
+- Added `frontend/platform-admin` to TypeScript validation.
+- Added the privileged control-app build to generated frontend bundle/release evidence.
+- No product behavior changed; this closes the verification gap introduced by the new third frontend composition.

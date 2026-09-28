@@ -9,7 +9,8 @@ fs.mkdirSync(outDir,{recursive:true})
 const surfaces=[
   {name:'compatibility',dist:'dist/frontend'},
   {name:'customer-app',dist:'dist/customer-app'},
-  {name:'public-site',dist:'dist/public-site'}
+  {name:'public-site',dist:'dist/public-site'},
+  {name:'platform-admin',dist:'dist/platform-admin'}
 ]
 
 const gzipKb=file=>zlib.gzipSync(fs.readFileSync(file)).byteLength/1024
