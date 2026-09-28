@@ -328,3 +328,10 @@ A frontend feature is not considered complete because the screen renders. Comple
 - Canonical rebuild distinguishes confirmed backend success from timeout/network uncertainty; unknown outcomes require authoritative refresh before another rebuild is attempted.
 - Recent source activity rendering is bounded to 100 rows in the browser without changing backend retention.
 - CI rejects reintroduction of the legacy Data Hub implementation into `AcePlatform.tsx`.
+
+
+### Frontend feature-chunk budget gate
+- The existing startup budget remains 250 KiB gzip target / 350 KiB review gate for mandatory JavaScript and 60 KiB gzip for initial CSS.
+- The production Vite manifest is now also inspected for non-entry JavaScript chunks with a default 180 KiB gzip feature review threshold.
+- Report mode warns without blocking local work; strict mode fails when either the startup review gate or feature-chunk review threshold is exceeded.
+- This keeps feature extraction measurable instead of simply moving bytes out of the entry bundle.
