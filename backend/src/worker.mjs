@@ -10,6 +10,7 @@ import { createCalendarEvent } from './calendar-provider.mjs'
 import { closeStore, mutateState, withWorkspace } from './store.mjs'
 import { closeAiRuntime, executeHostedAiJob } from './ai-runtime.mjs'
 import { ProviderExecutionError } from './ai-providers.mjs'
+import { executeMlJob } from './ml-client.mjs'
 
 if(!queueAvailable()) throw new Error('DATABASE_URL is required for the worker runtime')
 
@@ -30,6 +31,9 @@ const updateDelivery=async(workspaceId,deliveryId,patch)=>withWorkspace(workspac
 }))
 
 const handle=async job=>{
+  if(job.kind==='ml_task'){
+    return executeMlJob(job)
+  }
   if(job.kind==='ai_hosted_task'){
     return executeHostedAiJob(job)
   }
