@@ -39,6 +39,10 @@ for(const file of walk(frontend)){
 
 const acePlatform=path.join(frontend,'AcePlatform.tsx')
 if(fs.existsSync(acePlatform)){
+  const source=fs.readFileSync(acePlatform,'utf8')
+  if(/function\s+Approvals\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Approvals implementation after feature extraction.')
+  }
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
@@ -49,6 +53,10 @@ if(fs.existsSync(acePlatform)){
 
 const required=[
   'frontend/src/features/workspace/manifest.ts',
+  'frontend/src/features/approvals/data/approvals.api.ts',
+  'frontend/src/features/approvals/pages/ApprovalPage.tsx',
+  'frontend/src/features/approvals/public.ts',
+  'frontend/src/features/approvals/feature.manifest.ts',
   'frontend/src/lib/runtime-config.ts',
   'frontend/src/lib/mutation-lifecycle.ts',
   'frontend/src/lib/dirty-work.ts',
