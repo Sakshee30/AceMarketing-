@@ -2518,3 +2518,17 @@ test('Attribution feature chunk preserves full-path evidence and period controls
   await expect(page.getByRole('button',{name:'Last 30 days'})).toBeVisible()
   await expect(page).toHaveURL(/#\/workspace\?tab=Attribution/)
 })
+
+
+test('Grouped Performance feature chunk preserves grouped evidence and cost editing',async({page})=>{
+  await page.goto('/#/workspace?tab=Grouped%20Performance')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Grouped performance'})).toBeVisible()
+  const response=await page.request.get('/api/grouped-performance?dimension=category&months=6')
+  expect(response.ok()).toBeTruthy()
+  const payload=await response.json()
+  expect(Array.isArray(payload.items)).toBeTruthy()
+  expect(Array.isArray(payload.conversionEvents)).toBeTruthy()
+  await expect(page.getByRole('button',{name:'Category'})).toBeVisible()
+  await expect(page).toHaveURL(/#\/workspace\?tab=Grouped%20Performance/)
+})
