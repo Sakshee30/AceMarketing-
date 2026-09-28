@@ -827,7 +827,10 @@ function OfflineAttribution(){
  const [selected,setSelected]=useState('')
  const [builder,setBuilder]=useState(false)
  const [busy,setBusy]=useState('')
- const [notice,setNotice]=useState('')
+ const [loading,setLoading]=useState(true)
+ const [notice,setNotice]=useState<{kind:'ok'|'error'|'unknown'|'',text:string}>({kind:'',text:''})
+ const [draft,setDraft]=useState<any>({conversion:'',source:'',match:'',identifier:''})
+ useDirtyWork({key:'offline-attribution-rule-draft',label:'Offline attribution rule',dirty:builder,scope:'feature'})
  const load=async()=>{setLoading(true);try{const [r,c]:any=await Promise.all([api.offlineAttribution(),api.ctwaAttribution().catch(()=>({available:false,stats:{},items:[]}))]);setData(r);setCtwa(c);const rules=r.rules||[];setSelected((x:string)=>x&&rules.some((i:any)=>i.id===x)?x:(rules[0]?.id||''));setNotice(n=>n.kind==='error'?{kind:'',text:''}:n)}catch(e:any){setNotice({kind:'error',text:e?.message||'Offline attribution could not be loaded. Existing attribution evidence was preserved.'})}finally{setLoading(false)}}
  useEffect(()=>{load()},[])
  const current=(data.rules||[]).find((x:any)=>x.id===selected)||data.rules?.[0]
