@@ -5893,3 +5893,12 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Added explicit loading, retryable error and unknown-outcome reconciliation states for rule creation and status changes.
 - Added architecture enforcement and E2E coverage for the extracted feature.
 - Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
+
+
+### Frontend architecture: Deep Links feature boundary — 2026-09-28
+
+- Extracted **Deep Linking** into a feature-owned lazy chunk while preserving existing route creation, activation, test-URL copying and performance metrics.
+- Added accessible builder behavior with dirty-work protection.
+- Added explicit loading, retryable error and unknown-outcome reconciliation states for create/activate mutations.
+- Added architecture enforcement and E2E coverage for the extracted feature.
+- Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
