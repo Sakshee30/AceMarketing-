@@ -490,7 +490,7 @@ const send = (req,res,status,data,extra={}) => {
   res.end(status===204?'':JSON.stringify(data))
 }
 
-const publicPaths=new Set(['/api/health','/api/ready','/api/auth/login','/api/auth/google/start','/api/auth/google/exchange','/api/auth/password/forgot','/api/auth/password/reset','/api/invitations/activate','/api/demo-requests','/api/track','/api/pricing/recommend','/api/pricing/quote','/api/public/navigation','/api/public/industries','/api/public/agents','/api/public/integrations','/api/public/challenges','/api/public/case-studies','/api/public/resources','/api/public/resource-center','/api/webhooks/whatsapp','/api/webhooks/calls'])
+const publicPaths=new Set(['/api/health','/api/ready','/api/auth/login','/api/auth/google/start','/api/auth/google/exchange','/api/auth/password/forgot','/api/auth/password/reset','/api/invitations/activate','/api/demo-requests','/api/track','/api/pricing/recommend','/api/pricing/quote','/api/public/navigation','/api/public/industries','/api/public/agents','/api/public/integrations','/api/public/connector-requests','/api/public/challenges','/api/public/case-studies','/api/public/resources','/api/public/resource-center','/api/webhooks/whatsapp','/api/webhooks/calls'])
 const isPublicRequest=(method,path)=>publicPaths.has(path)||(method==='GET'&&path==='/api/integrations/oauth/callback')||(method==='GET'&&path==='/api/auth/google/callback')||(method==='POST'&&path==='/api/billing/webhook')||path==='/api/consent'
 const meteredMetricFor=(method,path)=>{
   if(method!=='POST') return null
@@ -841,6 +841,30 @@ const server = http.createServer(async (req,res)=>{
     if (req.method === 'GET' && url.pathname === '/api/public/industries') return send(req,res,200,{items:publicIndustries})
     if (req.method === 'GET' && url.pathname === '/api/public/agents') return send(req,res,200,{items:publicAgents})
     if (req.method === 'GET' && url.pathname === '/api/public/integrations') return send(req,res,200,{groups:publicIntegrations})
+    if (req.method === 'POST' && url.pathname === '/api/public/connector-requests') {
+      const body=await readBody(req)
+      const connector=String(body.connector||'').trim()
+      const email=String(body.email||'').trim().toLowerCase()
+      const company=String(body.company||'').trim()
+      const businessNeed=String(body.businessNeed||body.message||'').trim()
+      if(connector.length<2||connector.length>120) return send(req,res,400,{error:'connector must be 2-120 characters'})
+      if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)||email.length>254) return send(req,res,400,{error:'valid business email required'})
+      if(company.length>160) return send(req,res,400,{error:'company must be 160 characters or fewer'})
+      if(businessNeed.length>1200) return send(req,res,400,{error:'businessNeed must be 1200 characters or fewer'})
+      const item={
+        id:'pub_ireq_'+randomUUID(),connector,email,company:company||null,businessNeed:businessNeed||null,
+        status:'captured',source:'public_integrations',createdAt:new Date().toISOString()
+      }
+      await mutateState(s=>{
+        s.publicConnectorRequests=s.publicConnectorRequests||[]
+        s.publicConnectorRequests.unshift(item)
+        s.publicConnectorRequests=s.publicConnectorRequests.slice(0,5000)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'public.integration_requested',entityId:item.id,connector:item.connector,at:item.createdAt})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,{id:item.id,status:item.status,connector:item.connector})
+    }
     if (req.method === 'GET' && url.pathname === '/api/public/challenges') return send(req,res,200,{items:publicChallenges})
     if (req.method === 'GET' && url.pathname === '/api/public/case-studies') return send(req,res,200,{items:publicCaseStudies})
     if (req.method === 'GET' && url.pathname === '/api/public/resources') return send(req,res,200,{items:publicResources})
