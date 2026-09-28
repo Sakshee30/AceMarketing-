@@ -987,6 +987,33 @@ test('journey explorer renders stitched chronology', async ({ page }, testInfo) 
 })
 
 
+test('CTWA attribution aggregates click-to-WhatsApp referral evidence', async ({ page }, testInfo) => {
+  const suffix=testInfo.project.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase()+'_'+Date.now()
+  const visitor='ctwa_'+suffix
+  const consent=await page.request.post('/api/consent',{data:{subjectType:'visitor',subjectId:visitor,analytics:true,marketing:false,personalization:false}})
+  expect(consent.ok()).toBeTruthy()
+  const tracked=await page.request.post('/api/track',{data:{
+    visitorId:visitor,
+    eventCategory:'analytics',
+    event:'whatsapp.message_received',
+    source:'ctwa',
+    occurredAt:new Date().toISOString(),
+    data:{ctwaClid:'ctwa_click_'+suffix,sourceId:'meta_ad_'+suffix,headline:'CI Click to WhatsApp ad',value:1250,currency:'INR'}
+  }})
+  expect(tracked.ok()).toBeTruthy()
+  const response=await page.request.get('/api/ctwa-attribution')
+  expect(response.ok()).toBeTruthy()
+  const payload=await response.json()
+  expect(payload.available).toBeTruthy()
+  expect(payload.items.some((x:any)=>x.ctwaClid==='ctwa_click_'+suffix)).toBeTruthy()
+
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  await openWorkspaceTab(page,'Offline Attribution')
+  await expect(page.getByRole('heading',{name:'Click-to-WhatsApp attribution'})).toBeVisible()
+  await expect(page.getByText('ctwa_click_'+suffix,{exact:true})).toBeVisible()
+})
+
 test('offline attribution rules persist and test through the attribution store', async ({ page }) => {
   await page.goto('/#/workspace')
   await dismissConsent(page)
