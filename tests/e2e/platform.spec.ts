@@ -1888,6 +1888,29 @@ test('alert center shows owner affected period and investigation runbook', async
 })
 
 
+test('alert resolution preserves open state when backend resolution fails', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  const rules=await page.request.get('/api/monitoring-rules')
+  expect(rules.ok()).toBeTruthy()
+  await page.request.post('/api/monitoring-rules',{data:{metric:'tracking_inactivity_minutes',operator:'gt',threshold:-1,severity:'warning',windowMinutes:30,enabled:true}})
+  await page.request.get('/api/alerts')
+
+  await openWorkspaceTab(page,'Alerts')
+  const alertButton=page.locator('.alert-center-list>button').filter({hasText:'Tracking activity has gone quiet'}).first()
+  await expect(alertButton).toBeVisible()
+  await alertButton.click()
+  const detail=page.locator('.alert-center-detail')
+  await expect(detail).toContainText('open')
+
+  await page.route('**/api/alerts/resolve',route=>route.fulfill({status:500,contentType:'application/json',body:JSON.stringify({error:'CI forced resolution failure'})}))
+  await detail.getByRole('button',{name:'Mark resolved'}).click()
+  await expect(page.getByRole('alert')).toContainText('CI forced resolution failure')
+  await expect(detail).toContainText('open')
+  await expect(detail.getByRole('button',{name:'Mark resolved'})).toBeVisible()
+  await page.unroute('**/api/alerts/resolve')
+})
+
 test('lead reactivation converts renewed intent into a governed follow-up', async ({ page }, testInfo) => {
   await page.goto('/#/workspace')
   await dismissConsent(page)
