@@ -1,5 +1,6 @@
 // @ts-nocheck
 import {Component,lazy,Suspense,useEffect,useMemo,useState} from 'react'
+import {QueryClient,QueryClientProvider} from '@tanstack/react-query'
 import {
   Activity,AlertTriangle,ArrowRight,BarChart3,Bell,Bot,Building2,Cable,CalendarDays,Check,CheckCircle2,ChevronDown,
   CircleDollarSign,Code2,DatabaseZap,Gauge,Globe2,Headphones,Layers3,Menu,MessageCircle,MessageSquareText,
@@ -13,6 +14,8 @@ import {LoadingState} from '../components/system/FrontendStates'
 import {confirmDiscardDirtyWork} from '../lib/dirty-work'
 import {parseWorkspaceTabFromHash,workspaceFeatureByLabel} from '../features/workspace/manifest'
 import {AccessibleDialog} from '../components/system/AccessibleDialog'
+import {getSessionGeneration} from '../../../packages/client-core/src/session-authority'
+import {customerQueryKeys,currentWorkspaceScopeId,customerRetryDelay,shouldRetryCustomerRead} from '../../../packages/client-core/src/query-scope'
 
 type AppTab='Launchpad'|'Overview'|'AdSync'|'ChatGPT Ads'|'Funnel'|'Leak Monitor'|'Events'|'Adjustments'|'Diagnostics'|'Match Quality'|'Reconciliation'|'Fraud'|'Deep Links'|'Sites'|'Fingerprinting'|'Live Sync'|'Data Hub'|'Customer 360'|'Offline Attribution'|'Matchback'|'POS & Stores'|'Journeys'|'Identity'|'Models'|'Attribution'|'Planner'|'Reports'|'Grouped Performance'|'Executive Briefs'|'Enrich'|'Lead Grading'|'Behavior'|'Feed'|'Agents'|'Routing'|'Follow-ups'|'Calls'|'Meetings'|'Feedback'|'Approvals'|'Ask Ace'|'Integrations'|'Data Flows'|'Real-Time Activation'|'Personalization'|'Exclusions'|'Audiences'|'Delivery'|'Monitoring'|'Alerts'|'Compliance'|'Developers'|'Settings'
 
@@ -91,6 +94,22 @@ function Stat({label,value,sub,Icon}:{label:string,value:string,sub:string,Icon:
 function PageHead({crumb,title,sub,action,onAction}:{crumb:string,title:string,sub:string,action?:string,onAction?:()=>void}){return <div className="page-head"><div><span>{crumb}</span><h1 tabIndex={-1}>{title}</h1><p>{sub}</p></div>{action&&<button className="app-primary" onClick={onAction}><Sparkles/>{action}</button>}</div>}
 
 export default function CustomerWorkspace({back}:{back:()=>void}){
+ const [queryClient]=useState(()=>new QueryClient({
+  defaultOptions:{
+   queries:{
+    retry:shouldRetryCustomerRead,
+    retryDelay:customerRetryDelay,
+    refetchOnWindowFocus:true,
+    refetchOnReconnect:true,
+    gcTime:5*60*1000
+   }
+  }
+ }))
+ useEffect(()=>()=>queryClient.clear(),[queryClient])
+ return <QueryClientProvider client={queryClient}><CustomerWorkspaceShell back={back} queryClient={queryClient}/></QueryClientProvider>
+}
+
+function CustomerWorkspaceShell({back,queryClient}:{back:()=>void;queryClient:QueryClient}){
  const [tab,setTab]=useState<AppTab>(()=>{const routed=parseWorkspaceTabFromHash(window.location.hash) as AppTab|null;const saved=window.localStorage.getItem('ace_active_tab') as AppTab|null;return routed||(saved&&appTabs.some(([name])=>name===saved)?saved:'Overview')})
  const [workspaceOpen,setWorkspaceOpen]=useState(false)
  const [mobileNavOpen,setMobileNavOpen]=useState(false)
@@ -129,8 +148,29 @@ export default function CustomerWorkspace({back}:{back:()=>void}){
  const leaveWorkspace=()=>{
   if(confirmDiscardDirtyWork('the public website'))back()
  }
- useEffect(()=>{api.workspaces().then((r:any)=>{if(r.items?.length){setWorkspaces(r.items);if(!r.items.some((x:any)=>x.name===workspace))setWorkspace(r.items[0].name)}}).catch(()=>null)},[])
- useEffect(()=>{const load=()=>api.dashboardSummary().then((r:any)=>setSectionSummary(r)).catch(()=>null);load();const id=setInterval(load,30000);return()=>clearInterval(id)},[workspaceGeneration])
+ useEffect(()=>{
+  let active=true
+  queryClient.fetchQuery({
+   queryKey:customerQueryKeys.workspaces(getSessionGeneration()),
+   queryFn:({signal})=>api.workspaces({signal}),
+   staleTime:60_000
+  }).then((r:any)=>{
+   if(!active)return
+   if(r.items?.length){setWorkspaces(r.items);if(!r.items.some((x:any)=>x.name===workspace))setWorkspace(r.items[0].name)}
+  }).catch(()=>null)
+  return()=>{active=false}
+ },[queryClient])
+ useEffect(()=>{
+  let active=true
+  const load=()=>queryClient.fetchQuery({
+   queryKey:customerQueryKeys.dashboard(getSessionGeneration(),currentWorkspaceScopeId(),workspaceGeneration),
+   queryFn:({signal})=>api.dashboardSummary({signal}),
+   staleTime:15_000
+  }).then((r:any)=>{if(active)setSectionSummary(r)}).catch(()=>null)
+  void load()
+  const id=window.setInterval(()=>void load(),30_000)
+  return()=>{active=false;window.clearInterval(id)}
+ },[workspaceGeneration,queryClient])
  useEffect(()=>{window.localStorage.setItem('ace_active_tab',tab)},[tab])
  useEffect(()=>{window.localStorage.setItem('ace_nav_sections',JSON.stringify(navOpen))},[navOpen])
  useEffect(()=>{const section=dashboardSections.find(s=>s.tabs.includes(tab as any));if(section&&!navOpen[section.id])setNavOpen(x=>({...x,[section.id]:true}))},[tab])
@@ -146,10 +186,16 @@ export default function CustomerWorkspace({back}:{back:()=>void}){
   }
   const previousId=window.localStorage.getItem('ace_workspace_id')
   setWorkspaceTransition({state:'resolving',item:x,message:'Verifying workspace access and loading a clean scope…'})
+  await queryClient.cancelQueries()
+  queryClient.clear()
   cancelWorkspaceRequests('workspace_scope_changed')
   window.localStorage.setItem('ace_workspace_id',x.id)
   try{
-   const summary:any=await api.dashboardSummary()
+   const summary:any=await queryClient.fetchQuery({
+    queryKey:customerQueryKeys.dashboard(getSessionGeneration(),String(x.id),workspaceGeneration+1),
+    queryFn:({signal})=>api.dashboardSummary({signal}),
+    staleTime:0
+   })
    setSectionSummary(summary)
    setWorkspace(x.name)
    setWorkspaceGeneration(g=>g+1)
@@ -157,6 +203,7 @@ export default function CustomerWorkspace({back}:{back:()=>void}){
   }catch(e:any){
    if(previousId)window.localStorage.setItem('ace_workspace_id',previousId)
    else window.localStorage.removeItem('ace_workspace_id')
+   queryClient.clear()
    setWorkspaceTransition({state:'error',item:x,message:e?.message||'The target workspace could not be verified. Your previous workspace remains active.'})
   }
  }

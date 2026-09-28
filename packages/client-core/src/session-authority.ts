@@ -4,6 +4,7 @@ const rememberedEmailKey='ace_remembered_email'
 
 let memoryToken:string|null=null
 let initialized=false
+let sessionGeneration=0
 
 const sessionStore=()=>typeof window!=='undefined'?window.sessionStorage:null
 const persistentStore=()=>typeof window!=='undefined'?window.localStorage:null
@@ -27,6 +28,8 @@ const initialize=()=>{
   }catch{}
 }
 
+export const getSessionGeneration=()=>sessionGeneration
+
 export const getSessionToken=()=>{
   initialize()
   return memoryToken
@@ -35,6 +38,7 @@ export const getSessionToken=()=>{
 export const setSessionToken=(token:string)=>{
   initialize()
   memoryToken=token||null
+  sessionGeneration+=1
   try{
     if(token)sessionStore()?.setItem(sessionTokenKey,token)
     else sessionStore()?.removeItem(sessionTokenKey)
@@ -46,6 +50,7 @@ export const setSessionToken=(token:string)=>{
 export const clearSessionToken=()=>{
   initialize()
   memoryToken=null
+  sessionGeneration+=1
   try{
     sessionStore()?.removeItem(sessionTokenKey)
     persistentStore()?.removeItem(legacyPersistentTokenKey)

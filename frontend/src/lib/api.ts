@@ -99,7 +99,7 @@ const request = async <T>(path: string, init?: AceRequestInit): Promise<T> => {
 
 export const api = {
   health: () => request<{ ok: boolean; service: string }>('/health'),
-  dashboardSummary: () => request('/dashboard-summary'),
+  dashboardSummary: (options?:{signal?:AbortSignal}) => request('/dashboard-summary',{signal:options?.signal}),
   publicNavigation: () => request('/public/navigation'),
   publicIndustries: () => request('/public/industries'),
   publicAgents: () => request('/public/agents'),
@@ -340,7 +340,7 @@ export const api = {
   deactivateMember: (memberId:string) => request('/members/deactivate', { method: 'POST', body: JSON.stringify({memberId}) }),
   activateInvitation: (inviteToken:string,name:string,password:string) => request('/invitations/activate', { method: 'POST', body: JSON.stringify({inviteToken,name,password}) }),
   settings: () => request('/settings'),
-  workspaces: () => request('/workspaces'),
+  workspaces: (options?:{signal?:AbortSignal}) => request('/workspaces',{signal:options?.signal}),
   createWorkspace: (payload: Record<string, unknown>) => request('/workspaces', { method: 'POST', body: JSON.stringify(payload) }),
   saveSettings: (payload: Record<string, unknown>) => request('/settings', { method: 'POST', body: JSON.stringify(payload) }),
   webhookDeliveries: () => request('/webhooks/deliveries'),

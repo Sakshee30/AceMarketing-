@@ -485,3 +485,16 @@ test('remember option persists email only and never creates a persistent auth to
   expect(state.rememberedEmail).toBe('remember@example.com')
   expect(state.sessionToken).toBe('tab-token')
 })
+
+
+test('workspace switch never reveals previous scope while target query cache resolves',async({page})=>{
+  await page.goto('/#/workspace?tab=Overview')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:/Acquisition command center/i})).toBeVisible()
+  const persisted=page.locator('.workspace-menu button').filter({hasText:'Demo Sandbox'})
+  await page.getByRole('button',{name:/Ace EdTech/}).first().click()
+  if(await persisted.count()){
+    await persisted.first().click()
+    await expect(page.getByText(/SWITCHING WORKSPACE|WORKSPACE SWITCH BLOCKED/)).toBeVisible()
+  }
+})

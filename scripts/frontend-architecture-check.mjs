@@ -480,6 +480,14 @@ if(fs.existsSync(acePlatform)){
     }
   }
 
+  const customerWorkspaceQueryPath=path.join(frontend,'customer-app','CustomerWorkspace.tsx')
+  if(fs.existsSync(customerWorkspaceQueryPath)){
+    const customerWorkspaceQuery=fs.readFileSync(customerWorkspaceQueryPath,'utf8')
+    if(!customerWorkspaceQuery.includes('QueryClientProvider'))failures.push('Customer application must expose one canonical TanStack Query cache for the active session scope.')
+    if(!customerWorkspaceQuery.includes('queryClient.cancelQueries()')||!customerWorkspaceQuery.includes('queryClient.clear()'))failures.push('Workspace transitions must cancel and clear old-scope query state.')
+    if(!customerWorkspaceQuery.includes('customerQueryKeys.dashboard'))failures.push('Workspace shell remote state must use scope-aware query keys.')
+  }
+
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
@@ -527,6 +535,7 @@ const required=[
   'deploy/nginx.platform-admin.conf',
   'packages/client-core/src/frontend-performance.ts',
   'packages/client-core/src/session-authority.ts',
+  'packages/client-core/src/query-scope.ts',
   'playwright.soak.config.ts',
   'tests/e2e/frontend-soak.spec.ts',
   'docs/project-annex/FRONTEND_SUPPORT_MATRIX.md',

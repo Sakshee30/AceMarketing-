@@ -6267,3 +6267,14 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Logout clears tab-scoped session authority and legacy persistent token state.
 - Added E2E coverage proving legacy-token migration and email-only remembering.
 - This is a frontend compatibility improvement, not the final session architecture. Host-only HttpOnly cookie authority still requires the backend/session phase and is not falsely claimed complete.
+
+
+### Customer server-state boundary + workspace query isolation — 2026-09-28
+
+- Added TanStack Query as the canonical customer-app server-state cache and mounted one QueryClient for the active customer session composition.
+- Added `packages/client-core/src/query-scope.ts` with session/workspace/generation-aware keys, bounded read retry policy and jittered backoff.
+- Migrated workspace-list and dashboard-summary shell reads to the canonical query cache while preserving every existing feature and route.
+- Query AbortSignals now reach the shared transport for these migrated reads.
+- Workspace changes cancel old queries, clear old-scope cached data, cancel underlying transport, switch the workspace identity and only then reveal confirmed target data.
+- Existing feature-owned raw reads remain compatible and will migrate incrementally rather than being rewritten in one unsafe commit.
+- Retry policy excludes authentication, authorization, not-found, conflict and validation failures and permits at most two transient read retries.
