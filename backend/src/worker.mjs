@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { closeQueue, completeJob, failJob, leaseJobs, queueAvailable } from './queue.mjs'
+import { closeQueue, completeJob, failJob, leaseJobs, markUnknownOutcome, queueAvailable } from './queue.mjs'
 import { deliverSignal } from './providers.mjs'
 import { syncAudienceProvider, writebackLead } from './activation-adapters.mjs'
 import { closeLeadOps, updateActivationRun, updateAudienceSyncState } from './lead-ops.mjs'
@@ -8,6 +8,8 @@ import { closeReportScheduler, deliverReport, markReportDeliveryFailure, runDueR
 import { createMeeting, dispatchAgentTransport, markMeetingReminder, updateAgentRun } from './agent-orchestrator.mjs'
 import { createCalendarEvent } from './calendar-provider.mjs'
 import { closeStore, mutateState, withWorkspace } from './store.mjs'
+import { closeAiRuntime, executeHostedAiJob } from './ai-runtime.mjs'
+import { ProviderExecutionError } from './ai-providers.mjs'
 
 if(!queueAvailable()) throw new Error('DATABASE_URL is required for the worker runtime')
 
@@ -28,6 +30,9 @@ const updateDelivery=async(workspaceId,deliveryId,patch)=>withWorkspace(workspac
 }))
 
 const handle=async job=>{
+  if(job.kind==='ai_hosted_task'){
+    return executeHostedAiJob(job)
+  }
   if(job.kind==='signal_delivery'){
     const signal={...(job.payload||{}),deliveryId:job.payload?.deliveryId}
     const result=await deliverSignal(job.workspace_id,signal)
@@ -115,9 +120,24 @@ const runBatch=async()=>{
   for(const job of jobs){
     try{
       const result=await handle(job)
-      await completeJob(job.id,result)
+      await completeJob(job.id,result,{
+        workerId,
+        fencingToken:job.fencing_token,
+        externalRequestId:result?.providerRequestId||null,
+        resultSchemaVersion:job.result_schema_version||null
+      })
     }catch(error){
-      const failed=await failJob(job.id,error instanceof Error?error.message:String(error))
+      if(error instanceof ProviderExecutionError&&error.unknownOutcome){
+        await markUnknownOutcome({
+          id:job.id,
+          workerId,
+          fencingToken:job.fencing_token,
+          externalRequestId:error.providerRequestId||null,
+          errorMessage:error.message
+        }).catch(()=>{})
+        continue
+      }
+      const failed=await failJob(job.id,error instanceof Error?error.message:String(error),{workerId,fencingToken:job.fencing_token})
       const message=error instanceof Error?error.message:String(error)
       if(job.payload?.deliveryId){
         await updateDelivery(job.workspace_id,job.payload.deliveryId,{status:failed?.status==='dead_letter'?'dead_letter':'retrying',attempts:job.attempts,lastError:message,nextAttemptAt:failed?.available_at||null}).catch(()=>{})
@@ -156,7 +176,7 @@ const shutdown=async signal=>{
   if(stopping) return
   stopping=true
   console.log(`${signal} received; stopping worker`)
-  await Promise.allSettled([closeQueue(),closeStore(),closeLeadOps(),closeAudienceScheduler(),closeReportScheduler()])
+  await Promise.allSettled([closeQueue(),closeAiRuntime(),closeStore(),closeLeadOps(),closeAudienceScheduler(),closeReportScheduler()])
   process.exit(0)
 }
 process.on('SIGTERM',()=>shutdown('SIGTERM'))
