@@ -372,3 +372,13 @@ A frontend feature is not considered complete because the screen renders. Comple
 - Transient failures preserve previously loaded journey evidence and expose an explicit retry path.
 - Chronology rendering is bounded to the newest 150 records in the browser while backend history remains authoritative.
 - CI rejects reintroduction of the legacy Journeys implementation into `AcePlatform.tsx`.
+
+
+### Identity feature extraction and graph hardening
+- Identity is now a feature-owned lazy chunk instead of an inline workspace implementation.
+- Existing identity metrics, stitched profile graph, deterministic match rules, review-queue export and Fingerprinting navigation are preserved.
+- Identity reads expose explicit loading and retry states while retaining previously visible evidence during transient failures.
+- Recent resolved-identity rendering is bounded to the newest 100 records in the browser without changing backend history.
+- Identity graph identifier nodes are bounded in the UI to avoid pathological browser layout expansion from unusually wide profiles.
+- CSV export releases its object URL immediately after download.
+- CI rejects reintroduction of the legacy Identity implementation into `AcePlatform.tsx`.
