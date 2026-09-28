@@ -2328,3 +2328,20 @@ test('ChatGPT Ads feature chunk preserves measurement and validation workflow',a
   await expect(page.getByText('Recent ChatGPT Ads deliveries',{exact:true})).toBeVisible()
   await expect(page).toHaveURL(/#\/workspace\?tab=ChatGPT%20Ads/)
 })
+
+
+test('Funnel feature chunk preserves filters, backend evidence and export',async({page})=>{
+  await page.goto('/#/workspace?tab=Funnel')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Channel, account & campaign funnel'})).toBeVisible()
+  const response=await page.request.get('/api/funnel?channel=All%20channels&account=All%20accounts&disposition=All%20dispositions&periodDays=30')
+  expect(response.ok()).toBeTruthy()
+  const payload=await response.json()
+  expect(payload.stages).toBeTruthy()
+  expect(Array.isArray(payload.campaigns)).toBeTruthy()
+  await expect(page.getByLabel('Funnel channel')).toBeVisible()
+  await expect(page.getByLabel('Funnel account')).toBeVisible()
+  await expect(page.getByLabel('Funnel disposition')).toBeVisible()
+  await expect(page.getByLabel('Funnel period')).toBeVisible()
+  await expect(page).toHaveURL(/#\/workspace\?tab=Funnel/)
+})
