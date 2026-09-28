@@ -2345,3 +2345,21 @@ test('Funnel feature chunk preserves filters, backend evidence and export',async
   await expect(page.getByLabel('Funnel period')).toBeVisible()
   await expect(page).toHaveURL(/#\/workspace\?tab=Funnel/)
 })
+
+
+test('Events feature chunk preserves conversion rules and accessible builder',async({page})=>{
+  await page.goto('/#/workspace?tab=Events')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Conversion event manager'})).toBeVisible()
+  const response=await page.request.get('/api/events')
+  expect(response.ok()).toBeTruthy()
+  const payload=await response.json()
+  expect(Array.isArray(payload.items)).toBeTruthy()
+  expect(Array.isArray(payload.templates)).toBeTruthy()
+  await page.getByRole('button',{name:'New event'}).click()
+  const dialog=page.getByRole('dialog',{name:'Business event rule'})
+  await expect(dialog).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Events/)
+})
