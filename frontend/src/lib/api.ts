@@ -95,6 +95,7 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+  submitPublicConnectorRequest: (payload: Record<string, unknown>) => request<{ id: string; status: string; connector: string }>('/public/connector-requests', { method:'POST', body:JSON.stringify(payload) }),
   overview: () => request('/workspace/overview'),
   integrations: () => request('/integrations'),
   requestIntegration: (payload: Record<string, unknown>) => request('/integration-requests',{method:'POST',body:JSON.stringify(payload)}),
