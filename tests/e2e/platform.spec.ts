@@ -804,6 +804,27 @@ test('cookie preferences close only after backend-confirmed persistence', async 
   await expect(banner).toHaveCount(0)
 })
 
+test('workspace navigation announces context and moves focus to the active heading', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+
+  const skip=page.getByRole('link',{name:'Skip to workspace content'})
+  await skip.focus()
+  await expect(skip).toBeFocused()
+
+  await openWorkspaceTab(page,'Reports')
+  const heading=page.getByRole('heading',{name:'Cohort & automated reports'})
+  await expect(heading).toBeVisible()
+  await expect(heading).toBeFocused()
+  await expect(page).toHaveTitle(/Reports · Ace EdTech · AceMarketing/)
+
+  await openWorkspaceTab(page,'Integrations')
+  const integrationsHeading=page.getByRole('heading',{name:'Platform-agnostic connectivity'})
+  await expect(integrationsHeading).toBeVisible()
+  await expect(integrationsHeading).toBeFocused()
+  await expect(page).toHaveTitle(/Integrations · Ace EdTech · AceMarketing/)
+})
+
 test('dashboard navigator opens primary operating sections', async ({ page }) => {
   await page.goto('/#/workspace')
   await dismissConsent(page)
