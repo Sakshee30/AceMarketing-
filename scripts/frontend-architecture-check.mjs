@@ -53,7 +53,8 @@ const required=[
   'frontend/src/lib/mutation-lifecycle.ts',
   'frontend/src/lib/dirty-work.ts',
   'frontend/src/components/system/FrontendFoundation.tsx',
-  'frontend/src/components/system/FrontendStates.tsx'
+  'frontend/src/components/system/FrontendStates.tsx',
+  'frontend/src/components/system/ConnectionStatus.tsx'
 ]
 for(const relative of required){
   if(!fs.existsSync(path.join(root,relative)))failures.push(relative+': required frontend architecture file missing')
