@@ -104,3 +104,12 @@ test('loads extracted approvals feature from its direct workspace route',async({
   await expect(page.getByRole('heading',{name:'Human approval center'})).toBeVisible()
   await expect(page.getByText(/Persisted agent and automation requests/i)).toBeVisible()
 })
+
+
+test('loads extracted monitoring feature from its direct workspace route',async({page})=>{
+  await page.goto('/#/workspace?tab=Monitoring')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Monitoring/)
+  await expect(page.getByRole('heading',{name:'Platform monitoring'})).toBeVisible()
+  await expect(page.getByText(/24-hour API health/i)).toBeVisible()
+})
