@@ -5865,3 +5865,13 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Preserved previously loaded signal evidence during transient refresh failures.
 - Added architecture enforcement preventing the AdSync implementation from drifting back into `AcePlatform.tsx`.
 - Implemented directly on `main`; backend hardening remains deferred until the frontend sequence is complete.
+
+
+### Frontend architecture: ChatGPT Ads feature boundary — 2026-09-28
+
+- Extracted **ChatGPT Ads conversion measurement** into a feature-owned lazy chunk while preserving the existing status, validation, conversion-submission and durable-delivery workflows.
+- Added dirty-work protection for edited conversion payloads.
+- Added explicit loading, retryable error and unknown-outcome reconciliation states so a lost acknowledgement cannot be presented as confirmed success or failure.
+- Kept provider secrets server-side and preserved all existing UI classes and Delivery Center navigation.
+- Added architecture enforcement preventing the feature from drifting back into the legacy workspace composition.
+- Implemented directly on `main`; backend restructuring remains deferred until the frontend sequence is complete.
