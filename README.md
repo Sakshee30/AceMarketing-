@@ -6212,3 +6212,9 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Added a scheduled Chromium long-session soak harness that repeatedly exercises customer workspace navigation and samples JS heap/event-listener growth.
 - Added a frontend support/project annex covering browser policy, mobile/touch, keyboard, assistive-technology review, network profiles and performance qualification.
 - Backend code remains untouched; frontend field/assistive-technology evidence is still required before declaring production qualification.
+
+
+### Frontend repair: platform-control container shared package context — 2026-09-28
+
+- Updated the platform-control container build context to include shared `packages/` after performance instrumentation moved into `packages/client-core`.
+- No UI or product behavior changed; this prevents the isolated control frontend container from failing to resolve its shared client-core import.
