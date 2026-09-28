@@ -243,3 +243,20 @@ test('loads extracted exclusions feature from its direct workspace route',async(
   await expect(page.getByRole('heading',{name:'Audience suppression & exclusions'})).toBeVisible()
   await expect(page.getByText(/Materialized exclusions/i)).toBeVisible()
 })
+
+
+test('loads extracted adjustments feature from its direct workspace route',async({page})=>{
+  await page.goto('/#/workspace?tab=Adjustments')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Adjustments/)
+  await expect(page.getByRole('heading',{name:'Conversion adjustments'})).toBeVisible()
+  await expect(page.getByText(/Conversion adjustments/i)).toBeVisible()
+})
+
+test('loads extracted diagnostics feature from its direct workspace route',async({page})=>{
+  await page.goto('/#/workspace?tab=Diagnostics')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Diagnostics/)
+  await expect(page.getByRole('heading',{name:'Tracking & data quality diagnostics'})).toBeVisible()
+  await expect(page.getByText(/Detected issues/i)).toBeVisible()
+})
