@@ -5971,3 +5971,12 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Bounded chronology rendering to the newest 150 records to protect long-lived browser sessions.
 - Added architecture enforcement and E2E coverage for the extracted feature.
 - Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
+
+
+### Frontend architecture: Identity feature boundary — 2026-09-28
+
+- Extracted **Identity Resolution** into a feature-owned lazy chunk while preserving identity metrics, stitched profile graph, deterministic match rules, CSV review export and Fingerprinting navigation.
+- Added explicit loading and retryable failure states while preserving already-loaded identity evidence during transient failures.
+- Bounded recent identity rendering and graph node rendering to protect long-lived/high-cardinality browser sessions.
+- Added architecture enforcement and E2E coverage for the extracted feature.
+- Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
