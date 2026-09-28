@@ -344,3 +344,19 @@ test('loads extracted Agents feature and protects accessible mutation surfaces',
   await page.keyboard.press('Escape')
   await expect(builder).toHaveCount(0)
 })
+
+
+test('loads extracted Routing feature and accessible rule builder',async({page})=>{
+  await page.goto('/#/workspace?tab=Routing')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Routing/)
+  await expect(page.getByRole('heading',{name:'Lead routing'})).toBeVisible()
+  await expect(page.getByText('Routing rules',{exact:true})).toBeVisible()
+
+  await page.getByRole('button',{name:/Add rule/}).click()
+  const dialog=page.getByRole('dialog',{name:'New routing rule'})
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByLabel('Rule name')).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+})

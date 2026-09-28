@@ -46,6 +46,9 @@ if(fs.existsSync(acePlatform)){
   if(/function\s+OfflineAttribution\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Offline Attribution implementation after feature extraction.')
   }
+  if(/function\s+Routing\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Routing implementation after feature extraction.')
+  }
   if(/function\s+Agents\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Agents implementation after feature extraction.')
   }
@@ -247,6 +250,20 @@ if(fs.existsSync(acePlatform)){
     }
   }
 
+  const routingPath=path.join(frontend,'features','routing','pages','RoutingPage.tsx')
+  if(fs.existsSync(routingPath)){
+    const routing=fs.readFileSync(routingPath,'utf8')
+    if(!routing.includes('AccessibleDialog ariaLabel="New routing rule"')){
+      failures.push('Routing builder must use the shared accessible dialog boundary.')
+    }
+    if(!routing.includes("routing-rule-draft")){
+      failures.push('Routing builder must participate in dirty-work protection.')
+    }
+    if(!routing.includes("kind:'unknown'")){
+      failures.push('Routing writes must preserve explicit unknown-outcome handling for timeout/network ambiguity.')
+    }
+  }
+
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
@@ -264,6 +281,10 @@ const required=[
   'frontend/src/features/offline-attribution/pages/OfflineAttributionPage.tsx',
   'frontend/src/features/offline-attribution/public.ts',
   'frontend/src/features/offline-attribution/feature.manifest.ts',
+  'frontend/src/features/routing/data/routing.api.ts',
+  'frontend/src/features/routing/pages/RoutingPage.tsx',
+  'frontend/src/features/routing/public.ts',
+  'frontend/src/features/routing/feature.manifest.ts',
   'frontend/src/features/agents/data/agents.api.ts',
   'frontend/src/features/agents/pages/AgentsPage.tsx',
   'frontend/src/features/agents/public.ts',

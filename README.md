@@ -6060,3 +6060,15 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Added explicit **unknown outcome** handling for agent creation and test execution when timeout/network ambiguity prevents authoritative confirmation.
 - Extended architecture enforcement and direct-route E2E coverage for Agents.
 - Backend restructuring remains deferred until frontend completion.
+
+
+### Frontend architecture: Routing feature boundary — 2026-09-28
+
+- Extracted **Lead routing** from the workspace monolith into a feature-owned lazy chunk without removing rules, tests, destination load, safeguards or decision history.
+- Added explicit loading/retry behavior that keeps previously loaded routing evidence visible when refreshes fail.
+- Moved the routing-rule builder and recent-match inspection onto the shared accessible dialog boundary.
+- Protected open routing-rule drafts from accidental workspace navigation.
+- Added explicit **unknown outcome** handling for rule creation, rule status changes and routing tests when timeout/network ambiguity prevents authoritative confirmation.
+- Bounded the recent routing match dialog to 100 rendered decisions while keeping the persisted statistics authoritative.
+- Extended architecture enforcement and direct-route E2E coverage for Routing.
+- Backend restructuring remains deferred until frontend completion.
