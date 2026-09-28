@@ -299,3 +299,13 @@ A frontend feature is not considered complete because the screen renders. Comple
 - Live submission distinguishes confirmed backend acceptance from timeout/network uncertainty; uncertain outcomes direct the customer to refresh authoritative delivery state before retrying.
 - Load failures preserve already-visible provider and delivery evidence and expose an explicit retry path.
 - CI rejects reintroduction of the legacy ChatGPT Ads implementation into `AcePlatform.tsx`.
+
+
+### Funnel feature extraction and request-order hardening
+- Funnel is now a feature-owned lazy chunk instead of an inline workspace implementation.
+- It owns its page, browser data adapter, manifest, public entry point and ownership README.
+- Existing funnel endpoint behavior, filters, stage metrics, campaign drill-down, CSV export, route and visual classes are preserved.
+- Funnel reads are sequence-guarded so a slower response from an older filter selection cannot overwrite a newer selection.
+- Refresh failures preserve already-loaded campaign evidence and expose an explicit retry path rather than silently presenting an empty funnel.
+- CSV object URLs are explicitly released after export.
+- CI rejects reintroduction of the legacy Funnel implementation into `AcePlatform.tsx`.
