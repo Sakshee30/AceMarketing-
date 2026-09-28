@@ -2560,3 +2560,18 @@ test('Lead Grading feature chunk preserves scoring and activation surface',async
   await expect(page.getByRole('button',{name:'Use grade in activation'})).toBeVisible()
   await expect(page).toHaveURL(/#\/workspace\?tab=Lead%20Grading/)
 })
+
+
+test('Behavior feature chunk preserves first-party analysis and signal navigation',async({page})=>{
+  await page.goto('/#/workspace?tab=Behavior')
+  await dismissConsent(page)
+  await expect(page.getByRole('heading',{name:'Website & app behavior'})).toBeVisible()
+  const response=await page.request.get('/api/behavior')
+  expect(response.ok()).toBeTruthy()
+  const payload=await response.json()
+  expect(Array.isArray(payload.events)).toBeTruthy()
+  expect(Array.isArray(payload.recent)).toBeTruthy()
+  await expect(page.getByRole('button',{name:'Events'})).toBeVisible()
+  await expect(page.getByRole('button',{name:'Sources'})).toBeVisible()
+  await expect(page).toHaveURL(/#\/workspace\?tab=Behavior/)
+})
