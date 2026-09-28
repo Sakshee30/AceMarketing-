@@ -65,6 +65,34 @@ AceMarketing keeps the current product pipeline and all existing product feature
 - Network loss or request timeout no longer gets presented as a confirmed failure; the UI instructs the operator to refresh authoritative state before repeating the decision.
 - Existing approval endpoint semantics remain unchanged; end-to-end idempotency will require the later backend contract phase and is not claimed as complete yet.
 
+### Route contract and direct-link hardening
+- Workspace features now declare stable route IDs, canonical hashes, titles, breadcrumbs, telemetry IDs, workspace/auth requirements, error-boundary policy and unsaved-work policy.
+- Direct links such as `#/workspace?tab=Settings` now resolve the requested workspace feature instead of relying only on browser-local active-tab state.
+- Workspace navigation writes canonical route state so links are shareable and browser history can reconcile feature selection.
+- The manifest remains lightweight and does not eagerly import the monolithic feature implementation.
+
+### Dirty-work and draft-loss protection
+- A shared dirty-work registry now protects route changes, workspace switches and browser/tab closure.
+- Workspace Settings tracks server-confirmed values separately from current edits and warns only when confirmed values differ from unsaved edits.
+- The media Planner marks changed scenario budgets as unsaved until the scenario is confirmed by the backend.
+- The custom model builder registers an in-progress draft while its creation surface is open.
+- The protection is additive: existing forms, endpoints and feature behavior remain in place.
+
+### Frontend dependency boundary enforcement
+- CI now scans frontend source for backend/server imports, Node-only modules, PostgreSQL imports and server-secret patterns.
+- The current monolithic `AcePlatform.tsx` has a temporary migration ceiling so new work cannot grow the legacy composition indefinitely.
+- The check warns above the current 500 KB extraction threshold and fails if the temporary 600 KB ceiling is crossed.
+- This is a migration control, not a claim that feature extraction is complete.
+
+### Runtime transport integration
+- The shared browser transport now consumes the already-validated runtime API base path and bounded read/write deadlines.
+- Existing endpoint semantics and request cancellation behavior are preserved.
+
+### New frontend verification
+- Playwright now verifies a direct workspace feature URL and confirms that unsaved Settings edits block accidental navigation until the operator explicitly accepts discard.
+- `npm run frontend:architecture` provides a fast dependency-boundary check.
+- `npm run frontend:verify` composes architecture, TypeScript, production build and bundle-budget evidence.
+
 ### Bundle-budget evidence
 - Vite now emits a build manifest.
 - CI calculates gzip size for each entry and all of its static dependencies.
@@ -74,14 +102,15 @@ AceMarketing keeps the current product pipeline and all existing product feature
 
 ## Frontend completion sequence before backend architecture changes
 
-1. Extract lightweight route/feature manifests from the monolithic composition without moving feature behavior.
-2. Adopt shared state primitives across the highest-traffic workspace surfaces.
-3. Migrate critical writes to the explicit mutation lifecycle one feature at a time.
-4. Add dirty-work/draft protection to long forms and builders.
+1. Continue extracting feature-owned page/data/form boundaries from the monolithic composition without moving or deleting working behavior.
+2. Adopt shared state primitives across the remaining high-traffic workspace surfaces.
+3. Migrate the remaining critical writes to the explicit mutation lifecycle one feature at a time.
+4. Extend dirty-work protection from Settings/Planner/model drafts to Data Flows, Audiences, Launchpad and other long-form builders.
 5. Split expensive sections behind lazy feature loaders according to measured bundle evidence.
-6. Add automated accessibility coverage for keyboard flow, dialogs, focus recovery and mobile navigation.
-7. Add long-session memory evidence and convert bundle-budget CI from report to strict review-gate mode.
-8. Only after the frontend acceptance evidence is green begin the backend architecture tightening phase.
+6. Add broader automated accessibility coverage for dialogs, keyboard alternatives, focus recovery, zoom/reflow and mobile navigation.
+7. Add long-session memory/listener/subscription evidence and convert bundle-budget CI from report to strict review-gate mode.
+8. Separate the public website into its own deployable composition without duplicating product behavior, preserving current URLs through compatibility routing during migration.
+9. Only after the frontend acceptance evidence is green begin the backend architecture tightening phase.
 
 ## Completion rule
 
