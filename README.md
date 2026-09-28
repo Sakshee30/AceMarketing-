@@ -5640,3 +5640,12 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Kept the implementation additive on `main`; no existing feature route or backend contract was removed.
 - Added Playwright regression coverage to verify that expanding **Tracking & Data** exposes **Match Quality**.
 - This is part of the ongoing EasyInsights capability-parity audit. Publicly documented EasyInsights capabilities are being implemented as original AceMarketing workflows rather than copying proprietary source code, wording, branding, or exact visual design.
+
+
+### Functional-control audit — Personalization CTA — 2026-09-28
+
+- Fixed the Personalization Studio preview CTA so configured buttons now navigate to their configured destination instead of rendering as dead controls.
+- Supports AceMarketing hash routes, relative application paths, and HTTP(S) destinations.
+- Blocks `javascript:` and `data:` destinations and surfaces an operator message for invalid destinations.
+- Added Playwright coverage that creates a persisted personalization rule, selects it in the workspace, clicks its CTA, and verifies navigation into the working ROAS Calculator resource.
+- Change was committed directly to `main` and preserves the existing personalization decision/feedback backend contracts.
