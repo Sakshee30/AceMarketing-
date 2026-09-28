@@ -626,6 +626,34 @@ test.describe('workspace critical flows',()=>{
     await expect(page.locator('.product-body')).toContainText(/Routed today|No routing load yet/i)
   })
 
+  test('users and roles exposes backend failures and recovers on refresh',async({page})=>{
+    await page.goto('/#/workspace')
+    await dismissConsent(page)
+    await page.route('**/api/members',route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'CI members unavailable'})}))
+    await openWorkspaceTab(page,'Settings')
+    await page.getByRole('button',{name:'Users & roles',exact:true}).click()
+    await expect(page.getByRole('heading',{name:'Users & roles'})).toBeVisible()
+    await expect(page.getByRole('alert')).toContainText('CI members unavailable')
+    await page.unroute('**/api/members')
+    const responsePromise=page.waitForResponse(r=>r.url().includes('/api/members')&&r.request().method()==='GET'&&r.status()===200)
+    await page.getByRole('button',{name:'Refresh members'}).click()
+    await responsePromise
+    await expect(page.getByRole('alert')).toHaveCount(0)
+  })
+
+  test('governance surfaces load failures and recovers without external credentials',async({page})=>{
+    await page.goto('/#/workspace')
+    await dismissConsent(page)
+    await page.route('**/api/consent/stats',route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'CI governance unavailable'})}))
+    await openWorkspaceTab(page,'Settings')
+    await page.getByRole('button',{name:'Governance',exact:true}).click()
+    await expect(page.getByRole('heading',{name:'Data governance & consent'})).toBeVisible()
+    await expect(page.getByRole('alert')).toContainText('CI governance unavailable')
+    await page.unroute('**/api/consent/stats')
+    await page.getByRole('button',{name:'Refresh governance'}).click()
+    await expect(page.getByRole('alert')).toHaveCount(0)
+  })
+
   test('notification and approval settings are editable',async({page})=>{
     await openWorkspaceTab(page,'Settings')
     await page.getByRole('button',{name:'Notifications',exact:true}).click()
