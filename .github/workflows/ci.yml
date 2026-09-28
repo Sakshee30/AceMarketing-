@@ -46,6 +46,10 @@ jobs:
         run: npm run check:all
       - name: Build production frontend
         run: npm run build
+      - name: Record frontend bundle budget evidence
+        env:
+          FRONTEND_BUDGET_MODE: report
+        run: npm run frontend:budget
       - name: Run database migrations
         run: npm run migrate
       - name: Install Playwright browser
@@ -72,6 +76,11 @@ jobs:
         run: |
           test -f frontend/src/AcePlatform.tsx
           test -f frontend/src/lib/api.ts
+          test -f frontend/src/lib/runtime-config.ts
+          test -f frontend/src/lib/mutation-lifecycle.ts
+          test -f frontend/src/components/system/FrontendFoundation.tsx
+          test -f frontend/src/components/system/FrontendStates.tsx
+          test -f scripts/frontend-budget.mjs
           test -f backend/src/index.mjs
           test -f backend/src/security.mjs
           test -f backend/src/store.mjs
