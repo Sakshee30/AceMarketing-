@@ -5902,3 +5902,12 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Added explicit loading, retryable error and unknown-outcome reconciliation states for create/activate mutations.
 - Added architecture enforcement and E2E coverage for the extracted feature.
 - Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
+
+
+### Frontend architecture: Sites feature boundary — 2026-09-28
+
+- Extracted **Site & Pixel Operations** into a feature-owned lazy chunk while preserving site inventory, browser/server evidence, consent readiness, installation testing, event debugging and tracked-site creation.
+- Added accessible site-builder and event-debugger dialogs plus dirty-work protection for in-progress site creation.
+- Added explicit loading, retryable error and unknown-outcome reconciliation states for site creation and installation tests.
+- Added architecture enforcement and E2E coverage for the extracted feature.
+- Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
