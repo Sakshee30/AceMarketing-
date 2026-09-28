@@ -48,6 +48,10 @@ jobs:
         run: npm run check:all
       - name: Build production frontend
         run: npm run build
+      - name: Verify optional workspace navigator remains lazy
+        run: |
+          grep -q "lazy(()=>import('./DashboardQuickNav'))" frontend/src/main.tsx
+          grep -q "visibilitychange" frontend/src/DashboardQuickNav.tsx
       - name: Record frontend bundle budget evidence
         env:
           FRONTEND_BUDGET_MODE: report
