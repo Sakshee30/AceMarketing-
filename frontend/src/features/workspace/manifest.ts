@@ -11,10 +11,16 @@ export type WorkspaceFeatureManifest = {
   label:string
   group:WorkspaceFeatureGroupId
   routeId:string
+  canonicalHash:string
+  title:string
+  breadcrumb:string
+  telemetryId:string
   authRequired:true
   workspaceRequired:true
+  permission:'workspace.read'
   unsavedWork:'allow'|'confirm'
-  releaseBoundary:'current-composition'
+  implementation:'current-composition'
+  errorBoundary:'workspace-section'
 }
 
 const groupTabs:Record<WorkspaceFeatureGroupId,readonly string[]>={
@@ -24,6 +30,15 @@ const groupTabs:Record<WorkspaceFeatureGroupId,readonly string[]>={
   conversion:['Enrich','Lead Grading','Behavior','Feed','Agents','Routing','Follow-ups','Calls','Meetings','Feedback','Approvals','Ask Ace'],
   activation:['Integrations','Data Flows','Real-Time Activation','Personalization','Exclusions','Audiences','Delivery'],
   operations:['Monitoring','Alerts','Compliance','Developers','Settings']
+}
+
+const groupTitles:Record<WorkspaceFeatureGroupId,string>={
+  workspace:'Workspace',
+  tracking:'Tracking & Data',
+  measurement:'Measurement & Intelligence',
+  conversion:'Lead & Conversion',
+  activation:'Activation & Integrations',
+  operations:'Operations & Developer'
 }
 
 const slugify=(value:string)=>value
@@ -41,31 +56,49 @@ const longFormFeatures=new Set([
   'Settings'
 ])
 
-export const workspaceFeatureManifest:readonly WorkspaceFeatureManifest[]=(
-  Object.entries(groupTabs) as [WorkspaceFeatureGroupId,readonly string[]][]
-).flatMap(([group,tabs])=>tabs.map(label=>({
-  id:slugify(label),
-  label,
-  group,
-  routeId:'workspace.'+slugify(label),
-  authRequired:true as const,
-  workspaceRequired:true as const,
-  unsavedWork:longFormFeatures.has(label)?'confirm' as const:'allow' as const,
-  releaseBoundary:'current-composition' as const
-})))
+export const workspaceFeatureManifest:readonly WorkspaceFeatureManifest[]=(Object.entries(groupTabs) as [WorkspaceFeatureGroupId,readonly string[]][])
+  .flatMap(([group,tabs])=>tabs.map(label=>{
+    const id=slugify(label)
+    return {
+      id,
+      label,
+      group,
+      routeId:'workspace.'+id,
+      canonicalHash:'#/workspace?tab='+encodeURIComponent(label),
+      title:label+' · AceMarketing',
+      breadcrumb:groupTitles[group]+' / '+label,
+      telemetryId:'workspace.'+id,
+      authRequired:true as const,
+      workspaceRequired:true as const,
+      permission:'workspace.read' as const,
+      unsavedWork:longFormFeatures.has(label)?'confirm' as const:'allow' as const,
+      implementation:'current-composition' as const,
+      errorBoundary:'workspace-section' as const
+    }
+  }))
 
-export const workspaceFeatureByLabel=new Map(
-  workspaceFeatureManifest.map(feature=>[feature.label,feature])
-)
+export const workspaceFeatureByLabel=new Map(workspaceFeatureManifest.map(feature=>[feature.label,feature]))
+export const workspaceFeatureByRouteId=new Map(workspaceFeatureManifest.map(feature=>[feature.routeId,feature]))
+
+export const parseWorkspaceTabFromHash=(hash:string)=>{
+  if(!hash.startsWith('#/workspace'))return null
+  const query=hash.split('?')[1]||''
+  const requested=new URLSearchParams(query).get('tab')
+  if(!requested)return null
+  return workspaceFeatureByLabel.has(requested)?requested:null
+}
 
 export const assertWorkspaceFeatureManifest=()=>{
   const ids=new Set<string>()
   const routeIds=new Set<string>()
+  const hashes=new Set<string>()
   for(const feature of workspaceFeatureManifest){
     if(ids.has(feature.id))throw new Error('Duplicate workspace feature id: '+feature.id)
     if(routeIds.has(feature.routeId))throw new Error('Duplicate workspace route id: '+feature.routeId)
+    if(hashes.has(feature.canonicalHash))throw new Error('Duplicate workspace canonical hash: '+feature.canonicalHash)
     ids.add(feature.id)
     routeIds.add(feature.routeId)
+    hashes.add(feature.canonicalHash)
   }
   return true
 }
