@@ -122,3 +122,12 @@ test('loads extracted alerts feature from its direct workspace route',async({pag
   await expect(page.getByRole('heading',{name:'Alert Center'})).toBeVisible()
   await expect(page.getByText(/Operational incidents/i)).toBeVisible()
 })
+
+
+test('loads extracted reports feature from its direct workspace route',async({page})=>{
+  await page.goto('/#/workspace?tab=Reports')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Reports/)
+  await expect(page.getByRole('heading',{name:'Cohort & automated reports'})).toBeVisible()
+  await expect(page.getByText(/Automated email reports/i)).toBeVisible()
+})
