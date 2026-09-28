@@ -5990,3 +5990,12 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Bounded large evidence collections to protect long-running browser sessions without changing backend history.
 - Added architecture enforcement and E2E coverage for the extracted feature.
 - Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
+
+
+### Frontend architecture: Grouped Performance feature boundary — 2026-09-28
+
+- Extracted **Grouped Performance** into a feature-owned lazy chunk while preserving dimension switching, conversion-event contracts, grouped evidence, cost basis and contribution/margin calculations.
+- Added request sequencing for dimension changes, explicit loading/retry states, customer-work protection for dirty cost drafts and unknown-outcome reconciliation for cost writes.
+- Added numeric validation for cost inputs and bounded group rendering for large workspaces.
+- Added architecture enforcement and E2E coverage for the extracted feature.
+- Implemented directly on `main`; backend restructuring remains deferred until frontend completion.
