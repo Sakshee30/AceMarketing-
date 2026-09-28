@@ -31,7 +31,13 @@
     "frontend:budget": "node scripts/frontend-budget.mjs",
     "frontend:architecture": "node scripts/frontend-architecture-check.mjs",
     "frontend:verify": "npm run frontend:architecture && npm run check:frontend && npm run build:frontend && npm run frontend:budget && npm run frontend:release",
-    "frontend:release": "node scripts/frontend-release-check.mjs"
+    "frontend:release": "node scripts/frontend-release-check.mjs",
+    "build:public-site": "vite build --config vite.public-site.config.ts",
+    "preview:public-site": "vite preview --config vite.public-site.config.ts",
+    "dev:public-site": "vite --config vite.public-site.config.ts",
+    "frontend:budget:public": "node scripts/frontend-budget.mjs --dist=dist/public-site",
+    "frontend:release:public": "node scripts/frontend-release-check.mjs --dist=dist/public-site",
+    "public-site:verify": "npm run check:frontend && npm run build:public-site && npm run frontend:budget:public && npm run frontend:release:public"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",

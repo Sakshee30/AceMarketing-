@@ -48,6 +48,16 @@ jobs:
         run: npm run check:all
       - name: Build production frontend
         run: npm run build
+      - name: Build standalone public website
+        env:
+          PUBLIC_SITE_ORIGIN: https://acemarketing.example.test
+        run: npm run build:public-site
+      - name: Verify standalone public website budget
+        env:
+          FRONTEND_BUDGET_MODE: report
+        run: npm run frontend:budget:public
+      - name: Verify standalone public website release assets
+        run: npm run frontend:release:public
       - name: Verify optional workspace navigator remains lazy
         run: |
           grep -q "lazy(()=>import('./DashboardQuickNav'))" frontend/src/main.tsx
@@ -88,6 +98,13 @@ jobs:
           test -f frontend/src/deep-link/DeepLinkResolver.tsx
           test -f frontend/src/components/system/ConsentBanner.tsx
           test -f website/public-site/src/PublicSite.tsx
+          test -f website/public-site/src/main.tsx
+          test -f website/public-site/src/lib/public-api.ts
+          test -f website/public-site/src/route-policy.ts
+          test -f website/public-site/src/seo.ts
+          test -f packages/client-core/src/runtime-config.ts
+          test -f packages/client-core/src/tracking.ts
+          test -f vite.public-site.config.ts
           test -f website/public-site/src/public.ts
           test -f packages/design-system/src/Brand.tsx
           test -f frontend/src/lib/api.ts

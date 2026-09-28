@@ -3,7 +3,8 @@ import path from 'node:path'
 import zlib from 'node:zlib'
 
 const root=process.cwd()
-const dist=path.join(root,'dist','frontend')
+const distArg=process.argv.find(arg=>arg.startsWith('--dist='))?.slice('--dist='.length)
+const dist=path.join(root,distArg||'dist/frontend')
 const manifestPath=path.join(dist,'.vite','manifest.json')
 const mode=String(process.env.FRONTEND_BUDGET_MODE||'report').toLowerCase()
 

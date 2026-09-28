@@ -6151,3 +6151,14 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Frontend architecture scanning now covers customer frontend, public website and shared design-system client code for server-only imports and credential patterns.
 - CI canonical-structure verification now asserts the new customer-app, public-site, auth, deep-link, consent and shared-brand boundaries.
 - This closes a verification gap created by the incremental boundary migration without changing product behavior.
+
+
+### Frontend architecture: standalone public-site build + public client isolation — 2026-09-28
+
+- Added a dedicated Vite build/deployment output for `website/public-site` at `dist/public-site`, while retaining the existing compatibility frontend build.
+- Added path-based public routing for the standalone website without removing the existing hash-route compatibility shell.
+- Added explicit public route SEO/cache policy, dynamic canonical/title/description/robots metadata and generated `sitemap.xml`, `robots.txt` and `route-policy.json` build assets.
+- Moved runtime configuration and privacy tracking primitives into `packages/client-core` with compatibility re-exports so existing customer imports remain stable.
+- Added a public-only API client that does not attach customer tokens or workspace IDs to public content/lead-capture requests.
+- CI now builds and release-checks the standalone public website in addition to the compatibility frontend.
+- Backend restructuring remains deferred until customer-app standalone build and final frontend release evidence are complete.

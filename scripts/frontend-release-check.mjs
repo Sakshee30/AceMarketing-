@@ -2,7 +2,8 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 const root=process.cwd()
-const dist=path.join(root,'dist','frontend')
+const distArg=process.argv.find(arg=>arg.startsWith('--dist='))?.slice('--dist='.length)
+const dist=path.join(root,distArg||'dist/frontend')
 const manifestPath=path.join(dist,'.vite','manifest.json')
 const indexPath=path.join(dist,'index.html')
 

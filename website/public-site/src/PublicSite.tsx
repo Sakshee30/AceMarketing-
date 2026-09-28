@@ -6,7 +6,7 @@ import {
   MousePointer2,Network,PhoneCall,PhoneIncoming,PhoneOutgoing,PieChart,Plane,Plus,RadioTower,RefreshCw,Search,Settings2,ShieldCheck,ShoppingCart,Store,
   Sparkles,Smartphone,Table2,Target,UsersRound,Video,WandSparkles,X,Zap
 } from 'lucide-react'
-import {api} from '../../../frontend/src/lib/api'
+import {publicApi as api} from './lib/public-api'
 import {Brand} from '../../../packages/design-system/src/Brand'
 
 export type PublicSiteView='site'|'pricing'|'demo'|'company'|'resources'|'case-studies'|'privacy'|'terms'|'security'|'solutions'|'industries'|'agents-public'|'integrations-public'

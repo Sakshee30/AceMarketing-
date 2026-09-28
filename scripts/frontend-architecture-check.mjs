@@ -30,7 +30,8 @@ const failures=[]
 const clientRoots=[
   frontend,
   path.join(root,'website','public-site','src'),
-  path.join(root,'packages','design-system','src')
+  path.join(root,'packages','design-system','src'),
+  path.join(root,'packages','client-core','src')
 ].filter(fs.existsSync)
 for(const clientRoot of clientRoots)for(const file of walk(clientRoot)){
   const content=fs.readFileSync(file,'utf8')
@@ -370,6 +371,21 @@ if(fs.existsSync(acePlatform)){
     const consent=fs.readFileSync(consentPath,'utf8')
     if(!consent.includes('Essential only')||!consent.includes('Allow analytics')||!consent.includes('Allow all')){
       failures.push('Consent boundary must preserve the existing three customer privacy choices.')
+    }
+  }
+
+  const publicApiPath=path.join(root,'website','public-site','src','lib','public-api.ts')
+  if(fs.existsSync(publicApiPath)){
+    const publicApi=fs.readFileSync(publicApiPath,'utf8')
+    if(publicApi.includes('ace_token')||publicApi.includes('ace_workspace_id')||publicApi.includes('Authorization')){
+      failures.push('Public-site API client must not inherit authenticated customer token/workspace authority.')
+    }
+  }
+  const publicSitePathForApi=path.join(root,'website','public-site','src','PublicSite.tsx')
+  if(fs.existsSync(publicSitePathForApi)){
+    const publicSite=fs.readFileSync(publicSitePathForApi,'utf8')
+    if(publicSite.includes("frontend/src/lib/api")){
+      failures.push('Public website must use its own public API boundary, not the authenticated customer API client.')
     }
   }
 
