@@ -106,6 +106,14 @@ AceMarketing keeps the current product pipeline and all existing product feature
 - A later successful application request clears the degraded state; HTTP validation/auth/conflict responses still prove the transport itself is reachable.
 - Playwright coverage verifies that going offline surfaces the warning without destroying the active workspace view.
 
+### Startup and polling pressure reduction
+- The optional dashboard navigator is now a lazy-loaded chunk rather than mandatory startup JavaScript.
+- Its failure is contained in a widget-level boundary, so a chunk/widget problem does not remove the application shell.
+- Dashboard readiness polling now pauses while the browser tab is hidden and resumes on visibility return.
+- The ~30-second refresh cadence is staggered with jitter to reduce synchronized browser refresh spikes.
+- Overlapping dashboard-summary refreshes are prevented inside the navigator.
+- This keeps the existing navigator feature and backend endpoint intact while reducing startup and background request pressure.
+
 ### Bundle-budget evidence
 - Vite now emits a build manifest.
 - CI calculates gzip size for each entry and all of its static dependencies.
