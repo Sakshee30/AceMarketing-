@@ -1,0 +1,1 @@
+Developers owns API keys, signed webhooks, endpoint setup, delivery inspection and server-to-server quick starts. Existing routes and endpoints are preserved. Credential and endpoint operations now surface timeout/network ambiguity rather than encouraging duplicate creation or rotation.
