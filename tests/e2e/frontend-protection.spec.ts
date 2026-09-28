@@ -218,3 +218,28 @@ test('loads extracted delivery feature from its direct workspace route',async({p
   await expect(page.getByRole('heading',{name:'Signal delivery center'})).toBeVisible()
   await expect(page.getByText(/Outbound delivery queue/i)).toBeVisible()
 })
+
+
+test('loads extracted real-time activation feature from its direct workspace route',async({page})=>{
+  await page.goto('/#/workspace?tab=Real-Time%20Activation')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Real-Time%20Activation/)
+  await expect(page.getByRole('heading',{name:'Real-time activation'})).toBeVisible()
+  await expect(page.getByText(/Event-driven automation/i)).toBeVisible()
+})
+
+test('loads extracted personalization feature from its direct workspace route',async({page})=>{
+  await page.goto('/#/workspace?tab=Personalization')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Personalization/)
+  await expect(page.getByRole('heading',{name:'Personalization studio'})).toBeVisible()
+  await expect(page.getByText(/Consent-aware decisioning/i)).toBeVisible()
+})
+
+test('loads extracted exclusions feature from its direct workspace route',async({page})=>{
+  await page.goto('/#/workspace?tab=Exclusions')
+  await dismissConsent(page)
+  await expect(page).toHaveURL(/#\/workspace\?tab=Exclusions/)
+  await expect(page.getByRole('heading',{name:'Audience suppression & exclusions'})).toBeVisible()
+  await expect(page.getByText(/Materialized exclusions/i)).toBeVisible()
+})
