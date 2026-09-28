@@ -335,3 +335,11 @@ A frontend feature is not considered complete because the screen renders. Comple
 - The production Vite manifest is now also inspected for non-entry JavaScript chunks with a default 180 KiB gzip feature review threshold.
 - Report mode warns without blocking local work; strict mode fails when either the startup review gate or feature-chunk review threshold is exceeded.
 - This keeps feature extraction measurable instead of simply moving bytes out of the entry bundle.
+
+
+### Customer 360 and Offline Attribution hardening
+- Customer 360 now sequence-guards profile reads so slower responses from an earlier profile selection cannot overwrite the currently selected customer.
+- Previously visible Customer 360 evidence is preserved on transient read failures, and timeline rendering is bounded to the newest 150 records for long-lived profiles.
+- Offline Attribution now exposes an explicit loading state and separates confirmed success, confirmed error and timeout/network unknown outcomes for rule creation, enable/pause and reconciliation tests.
+- The Offline Attribution builder now uses the shared accessible dialog, participates in dirty-work protection, and template application uses React state rather than post-render DOM mutation.
+- Architecture checks protect these safety properties while both features remain in the current composition during the incremental migration.
