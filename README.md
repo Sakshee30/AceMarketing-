@@ -5765,3 +5765,14 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Added Playwright recovery coverage for forced `/api/agents` and `/api/approvals` failures followed by successful refreshes.
 - These workflows require no external provider credentials; definitions, approval records, decisions, and test runs are fully internal frontend/backend behavior.
 - Implemented directly on `main`; no separate branch was created.
+
+
+### Reports and routing reliability hardening — 2026-09-28
+
+- **Reports** now loads cohort analytics and persisted delivery schedules as one confirmed snapshot and exposes backend failures instead of silently rendering zero/empty analytics.
+- Added **Refresh reports**, explicit loading/error/success states, backend-confirmed report-schedule creation, and visible durable-worker queue failures for **Send now**.
+- **Routing** now preserves existing rule/decision state during transient load failures instead of replacing the workspace with an unexplained empty rule list.
+- Added **Refresh routing**, loading feedback, and explicit success/error states for rule creation, enable/pause, and routing tests.
+- Added Playwright recovery coverage for forced cohort/report and routing API failures followed by successful refreshes.
+- These workflows are credential-independent; reporting data, schedules, routing rules, decisions, and internal worker queue state function before external provider credentials are added.
+- Implemented directly on `main`; no separate branch was created.
