@@ -158,6 +158,8 @@ function Marketing({openHome,openApp,openLogin,openPricing,openDemo,openCompany,
  const [problemTab,setProblemTab]=useState<'Lead Quality'|'Conversion'|'Attribution'>('Lead Quality')
  const [cookieOpen,setCookieOpen]=useState(true)
  const [cookiePrefs,setCookiePrefs]=useState({analytics:false,advertising:false,functionality:false})
+ const [cookieBusy,setCookieBusy]=useState(false)
+ const [cookieError,setCookieError]=useState('')
  const openProofCase=(name:string)=>{window.location.hash='#/case-studies?case='+encodeURIComponent(name)}
  const [heroSlide,setHeroSlide]=useState(0)
  const heroSlides=[
@@ -175,6 +177,16 @@ function Marketing({openHome,openApp,openLogin,openPricing,openDemo,openCompany,
  ]
  const [challengeItems,setChallengeItems]=useState<any[]>(fallbackChallenges)
  const [challengeIndex,setChallengeIndex]=useState(0)
+ const persistCookiePrefs=async(prefs:{analytics:boolean,advertising:boolean,functionality:boolean})=>{
+  setCookieBusy(true);setCookieError('')
+  try{
+   const r:any=await api.saveConsent(prefs)
+   if(!r?.saved)throw new Error('Consent service did not confirm the preference save.')
+   setCookiePrefs(prefs);setCookieOpen(false)
+  }catch(e:any){
+   setCookieError(e?.message||'Cookie preferences could not be saved. Please retry.')
+  }finally{setCookieBusy(false)}
+ }
  useEffect(()=>{api.publicChallenges().then((r:any)=>r?.items?.length&&setChallengeItems(r.items)).catch(()=>null)},[])
  const visibleAgents=agentFilter==='All'?agents:agents.filter(a=>a[2]===agentFilter)
  return <div className="marketing-page">
@@ -311,7 +323,7 @@ function Marketing({openHome,openApp,openLogin,openPricing,openDemo,openCompany,
 
   <DemoSection openApp={openApp} openDemo={openDemo}/>
   <PublicFooter openHome={openHome} openApp={openApp} openDemo={openDemo} openCompany={openCompany} openResources={openResources} openSolutions={openSolutions} openIntegrations={openIntegrations}/>
-  {cookieOpen&&<div className="cookie-banner"><div><b>Cookie preferences</b><p>Necessary storage is always on. Optional analytics, advertising and functionality categories can be enabled independently.</p><div className="cookie-toggles">{Object.entries(cookiePrefs).map(([k,v])=><label key={k}><input type="checkbox" checked={v} onChange={()=>setCookiePrefs({...cookiePrefs,[k]:!v})}/>{k}</label>)}</div></div><div className="cookie-actions"><button onClick={()=>{setCookiePrefs({analytics:false,advertising:false,functionality:false});setCookieOpen(false)}}>Necessary only</button><button onClick={()=>{setCookiePrefs({analytics:true,advertising:true,functionality:true});setCookieOpen(false)}}>Accept all</button><button className="primary-cookie" onClick={async()=>{await api.saveConsent(cookiePrefs).catch(()=>null);setCookieOpen(false)}}>Save preferences</button></div></div>}
+  {cookieOpen&&<div className="cookie-banner" role="dialog" aria-label="Cookie preferences"><div><b>Cookie preferences</b><p>Necessary storage is always on. Optional analytics, advertising and functionality categories can be enabled independently.</p><div className="cookie-toggles">{Object.entries(cookiePrefs).map(([k,v])=><label key={k}><input type="checkbox" checked={v} disabled={cookieBusy} onChange={()=>setCookiePrefs({...cookiePrefs,[k]:!v})}/>{k}</label>)}</div>{cookieError&&<small className="cookie-error" role="alert">{cookieError}</small>}</div><div className="cookie-actions"><button disabled={cookieBusy} onClick={()=>persistCookiePrefs({analytics:false,advertising:false,functionality:false})}>{cookieBusy?'Saving…':'Necessary only'}</button><button disabled={cookieBusy} onClick={()=>persistCookiePrefs({analytics:true,advertising:true,functionality:true})}>{cookieBusy?'Saving…':'Accept all'}</button><button className="primary-cookie" disabled={cookieBusy} onClick={()=>persistCookiePrefs(cookiePrefs)}>{cookieBusy?'Saving…':'Save preferences'}</button></div></div>}
  </div>
 }
 
