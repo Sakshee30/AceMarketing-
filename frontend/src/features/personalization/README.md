@@ -1,0 +1,1 @@
+Personalization owns consent-aware experience rules, customer decision testing, feedback measurement and safe CTA destinations. Existing endpoints, CSS classes and routes are preserved. Builder drafts are protected and uncertain create/toggle/feedback outcomes require authoritative refresh before repeat actions.
