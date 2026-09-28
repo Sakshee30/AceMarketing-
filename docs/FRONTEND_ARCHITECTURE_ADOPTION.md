@@ -78,6 +78,12 @@ AceMarketing keeps the current product pipeline and all existing product feature
 - The custom model builder registers an in-progress draft while its creation surface is open.
 - The protection is additive: existing forms, endpoints and feature behavior remain in place.
 
+### Accessible dialog and builder protection
+- A shared focus-managed dialog primitive now owns dialog semantics, initial focus, Escape handling, backdrop dismissal, focus trapping and focus restoration.
+- Data Flow creation, Audience Builder, custom-model creation/validation and workspace creation now use the shared dialog primitive without removing their existing workflows.
+- Data Flow and Audience Builder surfaces now register in-progress drafts with the shared dirty-work guard, so workspace/route changes cannot silently discard work.
+- Playwright coverage verifies Audience Builder dialog semantics, initial focus, explicit discard protection and focus restoration after Escape.
+
 ### Frontend dependency boundary enforcement
 - CI now scans frontend source for backend/server imports, Node-only modules, PostgreSQL imports and server-secret patterns.
 - The current monolithic `AcePlatform.tsx` has a temporary migration ceiling so new work cannot grow the legacy composition indefinitely.
