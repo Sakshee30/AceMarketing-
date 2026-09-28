@@ -1,0 +1,1 @@
+Delivery owns durable signal-delivery visibility, connector health, retries, dead-letter replay and test-signal admission. Existing backend contracts and UI behavior are preserved. Retry/replay/test admission now exposes unknown authoritative outcomes and requires refresh before repeating an uncertain command.
