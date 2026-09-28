@@ -25,6 +25,7 @@ import { createCalendarEvent, updateCalendarEvent } from './calendar-provider.mj
 import { authMailConfigured, sendPasswordReset } from './auth-mailer.mjs'
 import { modelCatalogItems, registrySummary } from './ai-registry.mjs'
 import { closeAiRuntime, listAiResults, submitHostedAiJob } from './ai-runtime.mjs'
+import { getMlCapabilities, mlServiceConfigured } from './ml-client.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -441,7 +442,7 @@ const permissionForRequest=(method,path)=>{
   }
   if(path.startsWith('/api/members')||path.startsWith('/api/invitations')) return 'members.write'
   if(path.startsWith('/api/integrations')||path.startsWith('/api/custom-integrations')) return 'integrations.write'
-  if(path.startsWith('/api/agents')||path.startsWith('/api/models/run')||path.startsWith('/api/ai/analysis')||path.includes('/api/ai/jobs/')) return 'agents.write'
+  if(path.startsWith('/api/agents')||path.startsWith('/api/models/run')||path.startsWith('/api/ai/analysis')||path.startsWith('/api/ai/ml/')||path.includes('/api/ai/jobs/')) return 'agents.write'
   if(path.startsWith('/api/audiences')) return 'audiences.write'
   if(path.startsWith('/api/approvals')) return 'approvals.write'
   if(path.startsWith('/api/follow-ups')) return 'followups.write'
@@ -4548,6 +4549,66 @@ const server = http.createServer(async (req,res)=>{
     }
     if (req.method === 'GET' && url.pathname === '/api/ai/registry') {
       return send(req,res,200,registrySummary())
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/ml/capabilities') {
+      if(!mlServiceConfigured()){
+        return send(req,res,200,{
+          configured:false,
+          items:registrySummary().items.filter(item=>item.provider==='local_ml'||item.kind==='deterministic_baseline'),
+          warning:'ML service URL/authentication are not configured; training and specialist inference remain blocked.'
+        })
+      }
+      try{
+        const capabilities=await getMlCapabilities()
+        return send(req,res,200,{configured:true,...capabilities})
+      }catch(error){
+        return send(req,res,503,{configured:true,error:error instanceof Error?error.message:'ML service unavailable'})
+      }
+    }
+    const mlOperationByPath={
+      '/api/ai/ml/train/classification':{operation:'classification_train',taskFromBody:true},
+      '/api/ai/ml/train/regression':{operation:'regression_train',taskFromBody:true},
+      '/api/ai/ml/forecast/seasonal-naive':{operation:'forecast_baseline',task:'forecast_baseline'},
+      '/api/ai/ml/anomalies':{operation:'anomaly_detection',task:'anomaly_detection'},
+      '/api/ai/ml/segments':{operation:'behavioral_segments',task:'behavioral_segments'},
+      '/api/ai/ml/rank':{operation:'offer_ranking',task:'offer_ranking'}
+    }
+    if(req.method==='POST'&&mlOperationByPath[url.pathname]){
+      if(!mlServiceConfigured()) return send(req,res,503,{error:'ML service is not configured'})
+      const spec=mlOperationByPath[url.pathname]
+      const body=await readBody(req)
+      const task=spec.taskFromBody?String(body.task||''):spec.task
+      if(!task)return send(req,res,400,{error:'task required'})
+      const allowedTasks=new Set(['lead_qualification','paid_conversion','customer_churn','future_customer_value','forecast_baseline','anomaly_detection','behavioral_segments','offer_ranking'])
+      if(!allowedTasks.has(task))return send(req,res,400,{error:'unsupported ML task'})
+      const requestKey=String(req.headers['idempotency-key']||req.requestId||randomUUID())
+      const deadlineAt=new Date(Date.now()+Number(process.env.ML_JOB_DEADLINE_MS||15*60*1000)).toISOString()
+      const job=await enqueueJob({
+        workspaceId,
+        kind:'ml_task',
+        payload:{operation:spec.operation,task,request:body},
+        idempotencyKey:'ml:'+spec.operation+':'+requestKey,
+        maxAttempts:Number(process.env.ML_JOB_MAX_ATTEMPTS||2),
+        deadlineAt,
+        inputSnapshot:{
+          schemaVersion:'ml-input.v1',
+          task,
+          operation:spec.operation,
+          capturedAt:new Date().toISOString(),
+          actor:authenticatedUser?{userId:authenticatedUser.userId||null,role:authenticatedUser.role||null}:null,
+          request:body
+        },
+        resultSchemaVersion:'ml-result.v1'
+      })
+      if(!job)return send(req,res,503,{error:'durable queue requires DATABASE_URL'})
+      return send(req,res,202,{
+        jobId:job.id,
+        status:job.status,
+        task,
+        operation:spec.operation,
+        deadlineAt:job.deadline_at||deadlineAt,
+        resultSchemaVersion:'ml-result.v1'
+      })
     }
     if (req.method === 'GET' && url.pathname === '/api/ai/results') {
       const task=String(url.searchParams.get('task')||'').trim()||null
