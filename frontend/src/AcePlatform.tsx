@@ -2027,38 +2027,43 @@ function Calls(){
  const [selected,setSelected]=useState('')
  const [scheduleAt,setScheduleAt]=useState('')
  const [busy,setBusy]=useState('')
- const [notice,setNotice]=useState('')
+ const [loading,setLoading]=useState(true)
+ const [notice,setNotice]=useState<{kind:'ok'|'error'|'',text:string}>({kind:'',text:''})
  const [builder,setBuilder]=useState(false)
  const load=async()=>{
-  const [runs,events]:any=await Promise.all([api.qualificationCalls().catch(()=>({items:[]})),api.callEvents().catch(()=>({items:[]}))])
+  setLoading(true)
+  try{
+   const [runs,events]:any=await Promise.all([api.qualificationCalls(),api.callEvents()])
   const mapped=(runs.items||[]).map((x:any)=>({id:x.id,kind:'agent',lead:x.lead,source:x.source,agent:x.agent,status:String(x.status).replace('_',' '),duration:x.duration,intent:x.intent||0,next:x.next,attempts:x.attempts,lastError:x.lastError,createdAt:x.createdAt}))
   const trackedRows=(events.items||[]).map((x:any)=>({id:x.id,kind:'tracked',lead:x.customerId||x.from||'Caller',source:x.source||x.provider||'Telephony',agent:'Call Tracking Events',status:String(x.status||'completed').replace('_',' '),duration:x.durationSeconds?x.durationSeconds+'s':'—',intent:0,next:x.disposition||'Attribution captured',provider:x.provider,startedAt:x.startedAt,from:x.from,to:x.to,campaign:x.campaign,keyword:x.keyword,creative:x.creative,adGroup:x.adGroup,gclid:x.gclid,fbclid:x.fbclid,msclkid:x.msclkid}))
   setCalls(mapped);setTracked(trackedRows)
   const first=mapped[0]?.id||trackedRows[0]?.id||''
-  setSelected(x=>x&&[...mapped,...trackedRows].some((r:any)=>r.id===x)?x:first)
+   setSelected(x=>x&&[...mapped,...trackedRows].some((r:any)=>r.id===x)?x:first)
+  }catch(e:any){setNotice({kind:'error',text:e?.message||'Call operations could not be loaded. Existing call state was preserved.'})}
+  finally{setLoading(false)}
  }
  useEffect(()=>{load()},[])
  const rows=[...calls,...tracked]
  const current=rows.find(x=>x.id===selected)||rows[0]
  const retry=async(id:string)=>{
-  setBusy('retry:'+id);setNotice('')
-  try{await api.retryQualificationCall(id);setNotice('Qualification call re-queued through the durable agent worker.');await load()}
-  catch(e:any){setNotice(e?.message||'Call retry failed.')}
+  setBusy('retry:'+id);setNotice({kind:'',text:''})
+  try{await api.retryQualificationCall(id);setNotice({kind:'ok',text:'Qualification call re-queued through the durable agent worker.'});await load()}
+  catch(e:any){setNotice({kind:'error',text:e?.message||'Call retry failed.'})}
   finally{setBusy('')}
  }
  const schedule=async()=>{
   if(!current||!scheduleAt)return
-  setBusy('schedule');setNotice('')
+  setBusy('schedule');setNotice({kind:'',text:''})
   try{
    const startsAt=new Date(scheduleAt).toISOString()
    await api.createMeeting({leadRef:current.lead,startsAt,owner:'Unassigned',reminderPlan:['voice'],attendeePhone:current.from||'',syncCalendar:true})
-   setNotice('Consultation created. It is now available in Meetings for reminder operations.')
+   setNotice({kind:'ok',text:'Consultation created. It is now available in Meetings for reminder operations.'})
    setScheduleAt('')
-  }catch(e:any){setNotice(e?.message||'Meeting could not be created.')}
+  }catch(e:any){setNotice({kind:'error',text:e?.message||'Meeting could not be created.'})}
   finally{setBusy('')}
  }
  const createQualification=async(e:any)=>{
-  e.preventDefault();const fd=new FormData(e.currentTarget);setBusy('create');setNotice('')
+  e.preventDefault();const fd=new FormData(e.currentTarget);setBusy('create');setNotice({kind:'',text:''})
   try{
    const r:any=await api.createQualificationCall({
     lead:String(fd.get('lead')||''),
@@ -2068,18 +2073,18 @@ function Calls(){
     intent:Number(fd.get('intent')||0),
     trigger:String(fd.get('trigger')||'manual_qualification')
    })
-   setBuilder(false);setNotice('Qualification call queued through the durable voice-agent worker'+(r?.id?' · '+String(r.id).slice(0,18):'')+'.');await load();if(r?.id)setSelected(r.id)
-  }catch(err:any){setNotice(err?.message||'Qualification call could not be queued.')}finally{setBusy('')}
+   setBuilder(false);setNotice({kind:'ok',text:'Qualification call queued through the durable voice-agent worker'+(r?.id?' · '+String(r.id).slice(0,18):'')+'.'});await load();if(r?.id)setSelected(r.id)
+  }catch(err:any){setNotice({kind:'error',text:err?.message||'Qualification call could not be queued.'})}finally{setBusy('')}
  }
  const connected=tracked.filter(x=>['answered','completed','connected','qualified'].includes(String(x.status).toLowerCase())).length
  const qualified=calls.filter(x=>String(x.status).toLowerCase().includes('succeed')||String(x.status).toLowerCase().includes('qualified')).length
  const coverage=(field:string)=>tracked.length?Math.round(tracked.filter((x:any)=>Boolean(x[field])).length/tracked.length*100):0
  const clickCoverage=tracked.length?Math.round(tracked.filter((x:any)=>x.gclid||x.fbclid||x.msclkid).length/tracked.length*100):0
- return <><PageHead crumb="Conversion / Calls" title="Voice qualification & call tracking" sub="Run qualification agents and ingest signed telephony events into lead context and offline attribution." action="Start qualification" onAction={()=>setBuilder(true)}/>
- {notice&&<div className="delivery-notice ok"><CheckCircle2/><span>{notice}</span></div>}
+ return <><PageHead crumb="Conversion / Calls" title="Voice qualification & call tracking" sub="Run qualification agents and ingest signed telephony events into lead context and offline attribution." action={loading?'Refreshing…':'Refresh calls'} onAction={load}/>
+ {notice.text&&<div className={'delivery-notice '+(notice.kind==='error'?'error':'ok')} role={notice.kind==='error'?'alert':'status'}>{notice.kind==='error'?<ShieldCheck/>:<CheckCircle2/>}<span>{notice.text}</span></div>}
  <div className="stats-grid"><Stat label="Qualification runs" value={String(calls.length)} sub="Persisted agent executions" Icon={PhoneIncoming}/><Stat label="Tracked call events" value={String(tracked.length)} sub="Signed telephony webhook events" Icon={PhoneCall}/><Stat label="Connected tracked calls" value={String(connected)} sub="Answered / completed outcomes" Icon={Activity}/><Stat label="Qualified runs" value={String(qualified)} sub="Successful qualification outcomes" Icon={Target}/></div>
  <div className="call-attribution-strip"><article><span>Campaign coverage</span><b>{coverage('campaign')}%</b><small>Tracked calls with campaign context</small></article><article><span>Keyword coverage</span><b>{coverage('keyword')}%</b><small>Search/call keyword captured</small></article><article><span>Creative coverage</span><b>{coverage('creative')}%</b><small>Ad creative/name available</small></article><article><span>Click-ID coverage</span><b>{clickCoverage}%</b><small>GCLID / FBCLID / MSCLKID present</small></article></div>
- <div className="call-ops-layout"><div className="app-panel call-list"><div className="panel-head"><div><h3>Recent call activity</h3><p>Agent runs plus provider call-tracking events</p></div><div className="panel-actions"><button onClick={load}>Refresh</button><button onClick={()=>window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:'Agents'}))}>Configure agent</button></div></div>{rows.length?rows.map(x=><button key={x.kind+':'+x.id} className={selected===x.id?'selected':''} onClick={()=>setSelected(x.id)}><PhoneIncoming/><div><b>{x.lead}</b><small>{x.source} · {x.duration}</small></div><span>{x.status}</span><ChevronRight/></button>):<div className="empty-delivery-state"><PhoneIncoming/><div><b>No calls recorded yet</b><small>Qualification runs and signed telephony events will appear here.</small></div></div>}</div>
+ <div className="call-ops-layout"><div className="app-panel call-list"><div className="panel-head"><div><h3>Recent call activity</h3><p>Agent runs plus provider call-tracking events</p></div><div className="panel-actions"><button disabled={loading} onClick={load}>{loading?'Refreshing…':'Refresh'}</button><button onClick={()=>window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:'Agents'}))}>Configure agent</button></div></div>{loading&&!rows.length?<div className="empty-delivery-state"><Activity/><div><b>Loading call operations</b><small>Reading voice-agent runs and signed telephony events.</small></div></div>:rows.length?rows.map(x=><button key={x.kind+':'+x.id} className={selected===x.id?'selected':''} onClick={()=>setSelected(x.id)}><PhoneIncoming/><div><b>{x.lead}</b><small>{x.source} · {x.duration}</small></div><span>{x.status}</span><ChevronRight/></button>):<div className="empty-delivery-state"><PhoneIncoming/><div><b>No calls recorded yet</b><small>Qualification runs and signed telephony events will appear here.</small></div></div>}</div>
  {current?<div className="app-panel call-detail"><div className="panel-head"><div><h3>{current.lead}</h3><p>{current.agent}</p></div><span className="score">{current.kind==='agent'?current.intent+' intent':'Tracked call'}</span></div><div className="call-detail-grid">{[['Call ID',current.id],['Source',current.source],['Outcome',current.status],['Campaign',current.campaign||'—'],['Keyword',current.keyword||'—'],['Creative',current.creative||'—'],['Ad group / ad set',current.adGroup||'—'],['Next action',current.next||'Review journey']].map(x=><div key={x[0]}><span>{x[0]}</span><b>{x[1]}</b></div>)}</div>
  <div className="source-conflict-note"><PhoneCall/><div><b>{current.kind==='tracked'?'Provider event captured':'Qualification execution'}</b><p>{current.kind==='tracked'?('Provider: '+(current.provider||'telephony')+(current.campaign?' · Campaign: '+current.campaign:'')+(current.keyword?' · Keyword: '+current.keyword:'')+(current.creative?' · Creative: '+current.creative:'')):(current.lastError?'Last error: '+current.lastError:'Execution state comes from the durable agent worker; no synthetic transcript is shown.')}</p></div></div>
  <div className="call-schedule-box"><label>Consultation time<input type="datetime-local" value={scheduleAt} onChange={e=>setScheduleAt(e.target.value)}/></label><button className="approve" disabled={!scheduleAt||busy==='schedule'} onClick={schedule}><CalendarDays/>{busy==='schedule'?'Scheduling…':'Schedule consultation'}</button></div>
@@ -2190,26 +2195,39 @@ function Feedback(){
  const [builder,setBuilder]=useState(false)
  const [requestOpen,setRequestOpen]=useState(false)
  const [busy,setBusy]=useState('')
- const [notice,setNotice]=useState('')
+ const [loading,setLoading]=useState(true)
+ const [notice,setNotice]=useState<{kind:'ok'|'error'|'',text:string}>({kind:'',text:''})
  const [routed,setRouted]=useState<any>(null)
- const load=()=>api.feedback().then((r:any)=>setData(r)).catch(()=>setData({items:[],stats:{},themes:[]}))
+ const load=async()=>{
+  setLoading(true)
+  try{const r:any=await api.feedback();setData(r)}
+  catch(e:any){setNotice({kind:'error',text:e?.message||'Feedback data could not be loaded. Existing feedback state was preserved.'})}
+  finally{setLoading(false)}
+ }
  useEffect(()=>{load()},[])
  const items=(data.items||[]).map((x:any)=>({id:x.id,lead:x.lead_ref,score:Number(x.score||0),channel:x.channel,theme:x.theme||'Uncategorized',quote:x.response||'',createdAt:x.created_at}))
  const themes=['All',...(data.themes||[]).map((x:any)=>x.theme)]
  const shown=filter==='All'?items:items.filter((x:any)=>x.theme===filter)
  const stats=data.stats||{}
- const openJourney=async(lead:string)=>{const r:any=await api.journeys().catch(()=>({items:[]}));const hit=(r.items||[]).find((x:any)=>String(x.lead||'').toLowerCase()===String(lead||'').toLowerCase())||null;setJourneyRecord(hit);setJourneyOpen(true)}
- const record=async(e:any)=>{e.preventDefault();const f=new FormData(e.currentTarget);setBusy('record');setNotice('');try{await api.recordFeedback({lead:String(f.get('lead')||''),score:Number(f.get('score')||0),channel:String(f.get('channel')||'Post-call'),theme:String(f.get('theme')||''),response:String(f.get('response')||'')});setBuilder(false);setNotice('Feedback saved.');await load()}catch(err:any){setNotice(err?.message||'Feedback could not be saved.')}finally{setBusy('')}}
- const request=async(e:any)=>{e.preventDefault();const f=new FormData(e.currentTarget);setBusy('request');setNotice('');try{const r:any=await api.requestFeedback({lead:String(f.get('lead')||''),leadRef:String(f.get('lead')||''),phone:String(f.get('phone')||''),email:String(f.get('email')||''),channel:String(f.get('channel')||'voice'),prompt:String(f.get('prompt')||'Please share feedback about your recent interaction.')});setRequestOpen(false);setNotice('Feedback request queued through the agent worker'+(r?.runId?' · '+String(r.runId).slice(0,18):'')+'.')}catch(err:any){setNotice(err?.message||'Feedback request could not be queued.')}finally{setBusy('')}}
- const route=async(id:string)=>{setBusy('route:'+id);setNotice('');try{const r:any=await api.routeFeedback(id);setRouted(r);setNotice('Feedback routed into a persisted follow-up task.')}catch(err:any){setNotice(err?.message||'Feedback could not be routed.')}finally{setBusy('')}}
+ const openJourney=async(lead:string)=>{
+  setNotice({kind:'',text:''})
+  try{
+   const r:any=await api.journeys()
+   const hit=(r.items||[]).find((x:any)=>String(x.lead||'').toLowerCase()===String(lead||'').toLowerCase())||null
+   setJourneyRecord(hit);setJourneyOpen(true)
+  }catch(e:any){setNotice({kind:'error',text:e?.message||'Journey context could not be loaded for this feedback record.'})}
+ }
+ const record=async(e:any)=>{e.preventDefault();const f=new FormData(e.currentTarget);setBusy('record');setNotice({kind:'',text:''});try{await api.recordFeedback({lead:String(f.get('lead')||''),score:Number(f.get('score')||0),channel:String(f.get('channel')||'Post-call'),theme:String(f.get('theme')||''),response:String(f.get('response')||'')});setBuilder(false);setNotice({kind:'ok',text:'Feedback saved and persisted.'});await load()}catch(err:any){setNotice({kind:'error',text:err?.message||'Feedback could not be saved.'})}finally{setBusy('')}}
+ const request=async(e:any)=>{e.preventDefault();const f=new FormData(e.currentTarget);setBusy('request');setNotice({kind:'',text:''});try{const r:any=await api.requestFeedback({lead:String(f.get('lead')||''),leadRef:String(f.get('lead')||''),phone:String(f.get('phone')||''),email:String(f.get('email')||''),channel:String(f.get('channel')||'voice'),prompt:String(f.get('prompt')||'Please share feedback about your recent interaction.')});setRequestOpen(false);setNotice({kind:'ok',text:'Feedback request queued through the agent worker'+(r?.runId?' · '+String(r.runId).slice(0,18):'')+'.'})}catch(err:any){setNotice({kind:'error',text:err?.message||'Feedback request could not be queued.'})}finally{setBusy('')}}
+ const route=async(id:string)=>{setBusy('route:'+id);setNotice({kind:'',text:''});try{const r:any=await api.routeFeedback(id);setRouted(r);setNotice({kind:'ok',text:'Feedback routed into a persisted follow-up task.'})}catch(err:any){setNotice({kind:'error',text:err?.message||'Feedback could not be routed.'})}finally{setBusy('')}}
  const openFollowUp=()=>window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:'Follow-ups'}))
- return <><PageHead crumb="Conversion / Feedback" title="Feedback agent" sub="Collect post-interaction feedback, detect objections and route insights into real recovery, sales and marketing workflows." action="Record feedback" onAction={()=>setBuilder(true)}/>
- {notice&&<div className="delivery-notice ok"><CheckCircle2/><span>{notice}</span></div>}
+ return <><PageHead crumb="Conversion / Feedback" title="Feedback agent" sub="Collect post-interaction feedback, detect objections and route insights into real recovery, sales and marketing workflows." action={loading?'Refreshing…':'Refresh feedback'} onAction={load}/>
+ {notice.text&&<div className={'delivery-notice '+(notice.kind==='error'?'error':'ok')} role={notice.kind==='error'?'alert':'status'}>{notice.kind==='error'?<ShieldCheck/>:<CheckCircle2/>}<span>{notice.text}</span></div>}
  <div className="stats-grid"><Stat label="Responses" value={String(stats.responses||0)} sub="Persisted feedback records" Icon={MessageSquareText}/><Stat label="Average satisfaction" value={stats.responses?Number(stats.average||0).toFixed(1)+'/5':'—'} sub="Scored responses only" Icon={Activity}/><Stat label="Low satisfaction" value={String(stats.lowSatisfaction||0)} sub="Scores 1–2" Icon={CheckCircle2}/><Stat label="Themes observed" value={String(stats.themes||0)} sub="Persisted theme groups" Icon={Target}/></div>
  <div className="feedback-command-bar"><div><button className="app-primary" onClick={()=>setRequestOpen(true)}><PhoneOutgoing/>Request feedback</button><button onClick={()=>setBuilder(true)}><Plus/>Record response</button></div><span>Request → collect → understand → route → follow up</span></div>
  {routed&&<div className="feedback-route-result"><CheckCircle2/><div><b>{routed.task?.reason||'Feedback follow-up created'}</b><p>{routed.task?.owner||'Owner'} · {routed.task?.priority||'priority'} · {routed.task?.channel||'channel'}</p></div><button onClick={openFollowUp}>Open Follow-ups <ArrowRight/></button></div>}
  <div className="feedback-toolbar">{themes.map((x:string)=><button key={x} className={filter===x?'active':''} onClick={()=>setFilter(x)}>{x}</button>)}</div>
- <div className="feedback-grid">{shown.length?shown.map((x:any)=><article key={x.id||x.lead+x.theme}><div className="feedback-head"><div><span className="lead-avatar">{String(x.lead||'?').split(' ').map((s:string)=>s[0]).join('').slice(0,2)}</span><div><b>{x.lead}</b><small>{x.channel}{x.createdAt?' · '+new Date(x.createdAt).toLocaleString():''}</small></div></div><strong>{'★'.repeat(Math.max(0,Math.min(5,x.score)))}{'☆'.repeat(Math.max(0,5-Math.max(0,Math.min(5,x.score))))}</strong></div><p>{x.quote?'“'+x.quote+'”':'No written response'}</p><footer><span>{x.theme}</span><div><button onClick={()=>openJourney(x.lead)}>Open journey <ChevronRight/></button><button disabled={busy==='route:'+x.id} onClick={()=>route(x.id)}>{busy==='route:'+x.id?'Routing…':'Route insight'} <ArrowRight/></button></div></footer></article>):<div className="empty-delivery-state"><MessageSquareText/><div><b>No feedback yet</b><small>Record a response or request feedback through the configured feedback agent.</small></div></div>}</div>
+ <div className="feedback-grid">{loading&&!shown.length?<div className="empty-delivery-state"><Activity/><div><b>Loading feedback</b><small>Reading persisted responses, themes and routing evidence.</small></div></div>:shown.length?shown.map((x:any)=><article key={x.id||x.lead+x.theme}><div className="feedback-head"><div><span className="lead-avatar">{String(x.lead||'?').split(' ').map((s:string)=>s[0]).join('').slice(0,2)}</span><div><b>{x.lead}</b><small>{x.channel}{x.createdAt?' · '+new Date(x.createdAt).toLocaleString():''}</small></div></div><strong>{'★'.repeat(Math.max(0,Math.min(5,x.score)))}{'☆'.repeat(Math.max(0,5-Math.max(0,Math.min(5,x.score))))}</strong></div><p>{x.quote?'“'+x.quote+'”':'No written response'}</p><footer><span>{x.theme}</span><div><button onClick={()=>openJourney(x.lead)}>Open journey <ChevronRight/></button><button disabled={busy==='route:'+x.id} onClick={()=>route(x.id)}>{busy==='route:'+x.id?'Routing…':'Route insight'} <ArrowRight/></button></div></footer></article>):<div className="empty-delivery-state"><MessageSquareText/><div><b>No feedback yet</b><small>Record a response or request feedback through the configured feedback agent.</small></div></div>}</div>
  <div className="two-col"><div className="app-panel"><div className="panel-head"><div><h3>Top themes</h3><p>Grouped from persisted feedback</p></div></div>{(data.themes||[]).length?(data.themes||[]).map((x:any)=><div className="health-line" key={x.theme}><span>{x.theme}</span><div className="progress"><i style={{width:(stats.responses?Math.min(100,Number(x.count||0)/Number(stats.responses)*100):0)+'%'}}/></div><b>{x.count}</b></div>):<div className="empty-delivery-state"><MessageSquareText/><div><b>No themes yet</b></div></div>}</div><div className="app-panel"><div className="panel-head"><div><h3>Feedback routing policy</h3><p>Rules executed by Route insight</p></div></div>{[['Score 1–2','Customer recovery · call · high priority'],['Pricing / fee objection','Sales manager · call · high priority'],['Program / product mismatch','Sales operations · disposition review'],['Score 4–5','Marketing · promoter/testimonial review']].map(x=><div className="mapping-rule" key={x[0]}><span>{x[0]}</span><ArrowRight/><b>{x[1]}</b></div>)}</div></div>
  {builder&&<div className="connector-modal"><form className="connector-card" onSubmit={record}><div className="connector-modal-head"><div><MessageSquareText/><div><b>Record feedback</b><small>Persist a real response.</small></div></div><button type="button" onClick={()=>setBuilder(false)}><X/></button></div><label>Lead<input name="lead" required placeholder="customer_123"/></label><label>Score<input name="score" type="number" min="1" max="5" required defaultValue="5"/></label><label>Channel<select name="channel"><option>Post-call</option><option>Post-meeting</option><option>WhatsApp</option><option>Email</option></select></label><label>Theme<input name="theme" required placeholder="Pricing objection"/></label><label>Response<textarea name="response" rows={4} placeholder="Customer feedback"/></label><button disabled={busy==='record'}>{busy==='record'?'Saving…':'Save feedback'}</button></form></div>}
  {requestOpen&&<div className="connector-modal"><form className="connector-card" onSubmit={request}><div className="connector-modal-head"><div><PhoneOutgoing/><div><b>Request feedback</b><small>Queue provider-backed outreach through the agent worker.</small></div></div><button type="button" onClick={()=>setRequestOpen(false)}><X/></button></div><label>Lead reference<input name="lead" required placeholder="lead_123"/></label><div className="two-col"><label>Phone<input name="phone" placeholder="+91..."/></label><label>Email<input name="email" type="email" placeholder="lead@example.com"/></label></div><label>Channel<select name="channel"><option value="voice">Voice</option><option value="whatsapp">WhatsApp</option><option value="email">Email</option></select></label><label>Prompt<textarea name="prompt" rows={3} defaultValue="Please share feedback about your recent interaction."/></label><div className="source-conflict-note"><ShieldCheck/><div><b>Provider-backed execution</b><p>The request is queued as an agent action. Delivery only succeeds when the configured feedback transport/provider is available.</p></div></div><button disabled={busy==='request'}>{busy==='request'?'Queuing…':'Queue feedback request'}</button></form></div>}
