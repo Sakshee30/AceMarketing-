@@ -74,7 +74,6 @@ test('platform control exposes required operational page ownership without write
   await expect(page.getByRole('button',{name:/Apply|Execute|Delete|Rollback/i})).toHaveCount(0)
 })
 
-import {expect,test} from '@playwright/test'
 
 const metrics=async(page:any)=>page.evaluate(()=>((window as any).__ACE_FRONTEND_METRICS__||[]))
 
