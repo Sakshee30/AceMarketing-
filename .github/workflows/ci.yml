@@ -76,6 +76,13 @@ jobs:
         run: npm run frontend:budget
       - name: Verify frontend release asset integrity
         run: npm run frontend:release
+      - name: Generate frontend release evidence
+        run: npm run frontend:evidence
+      - name: Upload frontend release evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-release-evidence
+          path: artifacts/frontend-evidence
       - name: Run database migrations
         run: npm run migrate
       - name: Install Playwright browser
@@ -93,6 +100,7 @@ jobs:
           npm run security:smoke
           npm run load:smoke
           npm run e2e
+          npm run e2e:standalone
           kill "$(cat /tmp/ace-api.pid)"
       - name: Build production containers
         run: |
@@ -289,5 +297,11 @@ jobs:
           test -f docker-compose.yml
           test -f docs/PRODUCTION_RUNBOOK.md
           test -f playwright.config.ts
+          test -f playwright.standalone.config.ts
+          test -f playwright.matrix.config.ts
+          test -f tests/e2e/standalone-frontends.spec.ts
+          test -f tests/e2e/frontend-matrix.spec.ts
+          test -f scripts/frontend-evidence.mjs
+          test -f docs/evidence/FRONTEND_RELEASE_EVIDENCE.md
           test -f tests/e2e/platform.spec.ts
           test -f tests/e2e/frontend-protection.spec.ts

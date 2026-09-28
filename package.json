@@ -44,7 +44,10 @@
     "frontend:budget:customer": "node scripts/frontend-budget.mjs --dist=dist/customer-app",
     "frontend:release:customer": "node scripts/frontend-release-check.mjs --dist=dist/customer-app",
     "customer-app:verify": "npm run check:frontend && npm run build:customer-app && npm run frontend:budget:customer && npm run frontend:release:customer",
-    "frontends:verify": "npm run frontend:verify && npm run customer-app:verify && npm run public-site:verify"
+    "frontends:verify": "npm run frontend:verify && npm run customer-app:verify && npm run public-site:verify && npm run frontend:evidence",
+    "e2e:standalone": "playwright test --config=playwright.standalone.config.ts",
+    "e2e:matrix": "playwright test --config=playwright.matrix.config.ts",
+    "frontend:evidence": "node scripts/frontend-evidence.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",

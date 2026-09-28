@@ -6173,3 +6173,15 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Fixed the compatibility frontend Docker build context so it includes the newly extracted `website` and shared `packages` sources.
 - CI now builds, budget-checks, release-checks and containerizes the compatibility frontend, customer app and public website independently.
 - Backend restructuring remains deferred until final frontend test/release evidence is available.
+
+
+### Frontend release evidence + browser matrix — 2026-09-28
+
+- Added standalone-deployment E2E coverage for the public website and customer application on desktop Chromium and Pixel 7 profiles.
+- Public standalone tests verify path routing, canonical/robots metadata and that public API requests do not inherit customer Authorization headers.
+- Customer standalone tests verify direct workspace/login routes and noindex privacy behavior.
+- Added a scheduled Chromium/Firefox/WebKit/Pixel browser matrix for core public, customer and keyboard journeys.
+- Added `scripts/frontend-evidence.mjs` to emit build/bundle/SEO evidence for all three frontend outputs without pretending that bundle sizes prove Core Web Vitals.
+- Added an explicit frontend evidence register distinguishing automated controls from still-required field performance, long-session memory and assistive-technology evidence.
+- Main CI now runs standalone deployment tests and uploads the generated frontend release evidence artifact.
+- Backend restructuring remains deferred until these frontend release gates have actual passing evidence.
