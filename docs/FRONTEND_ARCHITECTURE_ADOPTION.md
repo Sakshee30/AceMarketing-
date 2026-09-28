@@ -179,6 +179,16 @@ AceMarketing keeps the current product pipeline and all existing product feature
 - CI rejects reintroduction of the legacy `DataFlows` and `Audiences` functions and verifies the extracted structures.
 - Playwright verifies the existing direct routes for both features.
 
+### Ninth and tenth feature extractions: Planner and Models
+- Planner and Models are now feature-owned lazy chunks rather than inline implementations inside `AcePlatform.tsx`.
+- Each owns a manifest, public entry point, page implementation, browser data adapter and ownership README.
+- Existing planner evidence, budget allocation, saved scenarios, model catalog, custom model definitions, validation evidence and scoring-run behavior are preserved.
+- Planner scenario saves now use the shared mutation lifecycle so timeout/network loss becomes an explicit unknown outcome requiring reconciliation before repeat submission.
+- Model creation and scoring runs use the same confirmed/rejected/conflict/unknown outcome vocabulary.
+- The custom model builder now uses the shared accessible dialog primitive while retaining its current fields and model semantics.
+- Planner and Models remain registered with dirty-work protection.
+- CI rejects reintroduction of the legacy `Planner` and `Models` functions and Playwright verifies both direct routes.
+
 ### Bundle-budget evidence
 - Vite now emits a build manifest.
 - CI calculates gzip size for each entry and all of its static dependencies.
