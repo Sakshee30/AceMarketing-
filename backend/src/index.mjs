@@ -4,7 +4,7 @@ import { URL } from 'node:url'
 import { createToken, verifyToken, verifyPassword, hashPassword, hasPermission, createRateLimiter, securityHeaders, resolveCorsOrigin } from './security.mjs'
 import { closeStore, getState, mutateState, storageHealth, withWorkspace } from './store.mjs'
 import { connectorVaultReady, decryptSecret, encryptSecret } from './vault.mjs'
-import { enqueueJob, queueAvailable, queueStats } from './queue.mjs'
+import { enqueueJob, getJob, queueAvailable, queueStats, requestJobCancellation } from './queue.mjs'
 import { attributionStats, captureClickSession, closeAttributionStore, recordAssistedEvent, reconcileAttribution } from './attribution-store.mjs'
 import { audienceOpsStats, closeLeadOps, createActivationRun, createAudience as createLeadAudience, getAudienceBundle, getLeadProfile, leadOpsStats, listActivationRuns, listAudiences as listLeadAudiences, listLeadProfiles, materializeAudience, overrideLeadGrade as persistLeadGrade, previewAudience as previewLeadAudience, scoreLead, upsertLeadProfile, updateAudienceSyncState } from './lead-ops.mjs'
 import { closeAgentOrchestrator, completeFollowUp as persistCompleteFollowUp, createAgentRun, createFollowUp, createMeeting, getMeeting, listAgentRuns, listFeedback as listPersistedFeedback, listFollowUps as listPersistedFollowUps, listMeetings as listPersistedMeetings, listRoutingDecisions, recordFeedback, rescheduleMeeting, routeLead, updateAgentRun } from './agent-orchestrator.mjs'
@@ -23,6 +23,8 @@ import { parseWhatsAppWebhook, resolveWhatsAppWorkspace, sendWhatsAppMessage, ve
 import { normalizeCallEvent, resolveCallWorkspace, verifyCallWebhook } from './call-events.mjs'
 import { createCalendarEvent, updateCalendarEvent } from './calendar-provider.mjs'
 import { authMailConfigured, sendPasswordReset } from './auth-mailer.mjs'
+import { modelCatalogItems, registrySummary } from './ai-registry.mjs'
+import { closeAiRuntime, listAiResults, submitHostedAiJob } from './ai-runtime.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -439,7 +441,7 @@ const permissionForRequest=(method,path)=>{
   }
   if(path.startsWith('/api/members')||path.startsWith('/api/invitations')) return 'members.write'
   if(path.startsWith('/api/integrations')||path.startsWith('/api/custom-integrations')) return 'integrations.write'
-  if(path.startsWith('/api/agents')||path.startsWith('/api/models/run')) return 'agents.write'
+  if(path.startsWith('/api/agents')||path.startsWith('/api/models/run')||path.startsWith('/api/ai/analysis')||path.includes('/api/ai/jobs/')) return 'agents.write'
   if(path.startsWith('/api/audiences')) return 'audiences.write'
   if(path.startsWith('/api/approvals')) return 'approvals.write'
   if(path.startsWith('/api/follow-ups')) return 'followups.write'
@@ -4544,6 +4546,96 @@ const server = http.createServer(async (req,res)=>{
         recent
       })
     }
+    if (req.method === 'GET' && url.pathname === '/api/ai/registry') {
+      return send(req,res,200,registrySummary())
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/results') {
+      const task=String(url.searchParams.get('task')||'').trim()||null
+      const limit=Math.max(1,Math.min(Number(url.searchParams.get('limit')||50),200))
+      const items=await listAiResults({workspaceId,task,limit}).catch(()=>[])
+      return send(req,res,200,{items,task,limit,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'GET' && /^\/api\/ai\/jobs\/[^/]+$/.test(url.pathname)) {
+      const id=decodeURIComponent(url.pathname.split('/').pop()||'')
+      const job=await getJob({workspaceId,id})
+      return job?send(req,res,200,{job}):send(req,res,404,{error:'AI job not found'})
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/jobs\/[^/]+\/cancel$/.test(url.pathname)) {
+      const parts=url.pathname.split('/')
+      const id=decodeURIComponent(parts[4]||'')
+      const job=await requestJobCancellation({workspaceId,id})
+      return job?send(req,res,200,{job}):send(req,res,404,{error:'cancellable AI job not found'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/ai/analysis') {
+      const body=await readBody(req)
+      const question=String(body.question||'').trim()
+      if(!question)return send(req,res,400,{error:'question required'})
+      if(question.length>8000)return send(req,res,400,{error:'question exceeds 8000 characters'})
+      const [leadStats,attr,state]=await Promise.all([
+        leadOpsStats(workspaceId).catch(()=>({available:false,total:0,averageScore:0})),
+        attributionStats(workspaceId).catch(()=>({available:false,matchedEvents:0,unmatchedEvents:0,assistedEvents:0})),
+        getState()
+      ])
+      const deliveries=state.signalDeliveries||[]
+      const connectors=state.connectorConnections||[]
+      const evidenceIds=[
+        'lead_ops:'+workspaceId,
+        'attribution:'+workspaceId,
+        'connector_state:'+workspaceId,
+        'signal_delivery:'+workspaceId
+      ]
+      const sourceSnapshot={
+        schemaVersion:'workspace-analytics.v1',
+        capturedAt:new Date().toISOString(),
+        evidenceIds,
+        leadOps:{
+          available:Boolean(leadStats?.available),
+          total:Number(leadStats?.total||0),
+          averageScore:Number(leadStats?.averageScore||0),
+          aGrade:Number(leadStats?.aGrade||0),
+          abQuality:Number(leadStats?.abQuality||0)
+        },
+        attribution:{
+          available:Boolean(attr?.available),
+          matchedEvents:Number(attr?.matchedEvents||0),
+          unmatchedEvents:Number(attr?.unmatchedEvents||0),
+          assistedEvents:Number(attr?.assistedEvents||0)
+        },
+        operations:{
+          connectors:connectors.length,
+          connectedConnectors:connectors.filter(x=>['connected','healthy','active'].includes(String(x.status||'').toLowerCase())).length,
+          signalDeliveries:deliveries.length,
+          deliveryFailures:deliveries.filter(x=>['failed','dead_letter'].includes(String(x.status||'').toLowerCase())).length
+        }
+      }
+      const submission=await submitHostedAiJob({
+        workspaceId,
+        task:'analyst',
+        input:{
+          question,
+          evidence:sourceSnapshot,
+          instructions:'Use only the supplied immutable workspace snapshot. Every numerical statement must be traceable to an evidence ID. Distinguish observed facts from hypotheses and do not invent forecasts.'
+        },
+        sourceSnapshot,
+        idempotencyKey:String(req.headers['idempotency-key']||req.requestId||randomUUID()),
+        actor:authenticatedUser
+      })
+      if(!submission.accepted){
+        return send(req,res,submission.status||409,{
+          error:submission.error,
+          readiness:submission.readiness||null,
+          prerequisites:submission.prerequisites||[]
+        })
+      }
+      return send(req,res,202,{
+        jobId:submission.job.id,
+        status:submission.job.status,
+        task:'analyst',
+        readiness:submission.route.readiness,
+        requestedModel:submission.route.requestedModel,
+        resultSchemaVersion:'ai-result.v1'
+      })
+    }
     if (req.method === 'GET' && url.pathname === '/api/models') {
       const state=await getState()
       const stats=await leadOpsStats(workspaceId).catch(()=>({available:false,total:0,averageScore:0}))
@@ -4553,7 +4645,8 @@ const server = http.createServer(async (req,res)=>{
         {id:'builtin_journey_features',name:'Journey propensity features',version:'workspace',status:Number(stats?.total||0)>0?'active':'ready',type:'Feature set',metric:'Profiles available',value:Number(stats?.total||0),description:'Uses persisted journey depth, pricing views, messaging, calls, meetings and CRM stage as model features.',builtIn:true}
       ]
       const custom=(state.customModels||[]).map(x=>({...x,builtIn:false,status:x.status||'ready',type:'Weighted scoring',metric:'Average custom score',value:x.lastAverageScore??'—'}))
-      return send(req,res,200,{items:[...builtIn,...custom],runs})
+      const registry=modelCatalogItems()
+      return send(req,res,200,{items:[...builtIn,...custom,...registry],runs})
     }
     if (req.method === 'POST' && url.pathname === '/api/models') {
       const body=await readBody(req)
@@ -4583,6 +4676,14 @@ const server = http.createServer(async (req,res)=>{
     if (req.method === 'POST' && url.pathname === '/api/models/run') {
       const body=await readBody(req)
       if(!body.name) return send(req,res,400,{error:'name required'})
+      const registryModel=modelCatalogItems().find(x=>x.name===String(body.name)||x.id===String(body.id||''))
+      if(registryModel){
+        return send(req,res,409,{
+          error:registryModel.blockedReason||'This registry model must use its task-specific endpoint.',
+          readiness:registryModel.governance?.readiness||registryModel.status,
+          task:registryModel.governance?.task||null
+        })
+      }
       const [profiles,state,stats]=await Promise.all([listLeadProfiles(workspaceId,500),getState(),leadOpsStats(workspaceId).catch(()=>({averageScore:0}))])
       const custom=(state.customModels||[]).find(x=>x.name===String(body.name)||x.id===String(body.id||''))
       const scoreProfile=lead=>{
@@ -5100,6 +5201,6 @@ server.keepAliveTimeout=65_000
 server.headersTimeout=66_000
 server.requestTimeout=30_000
 server.listen(PORT,()=>console.log(`AceMarketing API listening on http://localhost:${PORT}`))
-const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations(),closeObservability(),closeEntitlements(),closeBillingProvider(),closeConsentStore(),closePrivacyOps(),closeAudienceScheduler(),closeCohortAnalytics(),closeEventRules()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
+const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations(),closeObservability(),closeEntitlements(),closeBillingProvider(),closeConsentStore(),closePrivacyOps(),closeAudienceScheduler(),closeCohortAnalytics(),closeEventRules(),closeAiRuntime()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
 process.on('SIGTERM',()=>shutdown('SIGTERM'))
 process.on('SIGINT',()=>shutdown('SIGINT'))
