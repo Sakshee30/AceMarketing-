@@ -40,6 +40,9 @@ for(const file of walk(frontend)){
 const acePlatform=path.join(frontend,'AcePlatform.tsx')
 if(fs.existsSync(acePlatform)){
   const source=fs.readFileSync(acePlatform,'utf8')
+  if(/function\s+Events\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Events implementation after feature extraction.')
+  }
   if(/function\s+LeakMonitor\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Leak Monitor implementation after feature extraction.')
   }
@@ -129,6 +132,10 @@ if(fs.existsSync(acePlatform)){
 }
 
 const required=[
+  'frontend/src/features/events/data/events.api.ts',
+  'frontend/src/features/events/pages/EventsPage.tsx',
+  'frontend/src/features/events/public.ts',
+  'frontend/src/features/events/feature.manifest.ts',
   'frontend/src/features/leak-monitor/data/leak-monitor.api.ts',
   'frontend/src/features/leak-monitor/pages/LeakMonitorPage.tsx',
   'frontend/src/features/leak-monitor/public.ts',
