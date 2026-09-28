@@ -5754,3 +5754,14 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - This remains credential-deferred: connector configuration and internal persistence work now, while final third-party authorization can be completed later with real credentials.
 - Added Playwright coverage that forces `GET /api/integrations` to fail, verifies the visible error, restores the backend, refreshes, and confirms recovery.
 - Implemented directly on `main`; no separate branch was created.
+
+
+### Agent and approval reliability hardening — 2026-09-28
+
+- **Agents** now exposes load failures instead of replacing the catalog with an unexplained empty state; refresh is disabled while loading and errors remain retryable.
+- Custom-agent creation and test failures now render as errors, while successful creation/test runs render as backend-confirmed success states.
+- **Approvals** now has explicit loading, refresh, success, and failure states and preserves existing approval history during transient backend failures.
+- Approve/reject actions now require backend-confirmed decision state before the UI reports success.
+- Added Playwright recovery coverage for forced `/api/agents` and `/api/approvals` failures followed by successful refreshes.
+- These workflows require no external provider credentials; definitions, approval records, decisions, and test runs are fully internal frontend/backend behavior.
+- Implemented directly on `main`; no separate branch was created.
