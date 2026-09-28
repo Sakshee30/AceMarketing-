@@ -110,6 +110,7 @@ export class FrontendWidgetBoundary extends Component<WidgetBoundaryProps,Widget
     return <div className="ace-widget-recovery" role="status" aria-live="polite">
       <span>{this.props.label} is temporarily unavailable.</span>
       <button type="button" onClick={this.retry}>Retry</button>
+      <button type="button" onClick={()=>window.location.reload()}>Reload application</button>
     </div>
   }
 }
