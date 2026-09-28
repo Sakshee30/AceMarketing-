@@ -79,6 +79,11 @@ if(fs.existsSync(acePlatform)){
   if(/function\s+DeliveryCenter\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy DeliveryCenter implementation after feature extraction.')
   }
+  for(const legacyName of ['MatchQuality','Reconciliation','Fraud']){
+    if(new RegExp('function\\s+'+legacyName+'\\s*\\(').test(source)){
+      failures.push('frontend/src/AcePlatform.tsx still contains the legacy '+legacyName+' implementation after feature extraction.')
+    }
+  }
   for(const legacyName of ['Adjustments','Diagnostics']){
     if(new RegExp('function\\s+'+legacyName+'\\s*\\(').test(source)){
       failures.push('frontend/src/AcePlatform.tsx still contains the legacy '+legacyName+' implementation after feature extraction.')
@@ -104,6 +109,18 @@ if(fs.existsSync(acePlatform)){
 
 const required=[
   'frontend/src/features/workspace/manifest.ts',
+  'frontend/src/features/fraud/data/fraud.api.ts',
+  'frontend/src/features/fraud/pages/FraudPage.tsx',
+  'frontend/src/features/fraud/public.ts',
+  'frontend/src/features/fraud/feature.manifest.ts',
+  'frontend/src/features/reconciliation/data/reconciliation.api.ts',
+  'frontend/src/features/reconciliation/pages/ReconciliationPage.tsx',
+  'frontend/src/features/reconciliation/public.ts',
+  'frontend/src/features/reconciliation/feature.manifest.ts',
+  'frontend/src/features/match-quality/data/match-quality.api.ts',
+  'frontend/src/features/match-quality/pages/MatchQualityPage.tsx',
+  'frontend/src/features/match-quality/public.ts',
+  'frontend/src/features/match-quality/feature.manifest.ts',
   'frontend/src/features/diagnostics/data/diagnostics.api.ts',
   'frontend/src/features/diagnostics/pages/DiagnosticsPage.tsx',
   'frontend/src/features/diagnostics/public.ts',
