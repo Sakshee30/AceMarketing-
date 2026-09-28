@@ -189,6 +189,14 @@ AceMarketing keeps the current product pipeline and all existing product feature
 - Planner and Models remain registered with dirty-work protection.
 - CI rejects reintroduction of the legacy `Planner` and `Models` functions and Playwright verifies both direct routes.
 
+### Eleventh feature extraction: Settings
+- Settings is now a feature-owned lazy chunk rather than an inline implementation inside `AcePlatform.tsx`.
+- It owns a manifest, public entry point, page implementation, feature-local UI primitives, browser data adapter, member/role settings, governance/privacy settings, billing/usage settings and ownership README.
+- Existing workspace, tracking, governance, API-key, approval-policy, notification, membership and billing behavior remains available through the same backend endpoints and CSS classes.
+- Unsaved workspace edits continue to use the shared dirty-work registry.
+- Settings saves and API-key creation now explicitly warn when timeout/network loss leaves the authoritative outcome unknown instead of implying a confirmed failure.
+- CI rejects reintroduction of legacy Settings/member/governance/billing settings functions into `AcePlatform.tsx`, and Playwright verifies the direct Settings route.
+
 ### Bundle-budget evidence
 - Vite now emits a build manifest.
 - CI calculates gzip size for each entry and all of its static dependencies.
