@@ -868,6 +868,29 @@ test('manual integration cards open the custom adapter builder', async ({ page }
 })
 
 
+test('reports and routing expose backend failures and recover on refresh', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+
+  await page.route('**/api/cohorts**',route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'CI reports unavailable'})}))
+  await openWorkspaceTab(page,'Reports')
+  await expect(page.getByRole('alert')).toContainText('CI reports unavailable')
+  await page.unroute('**/api/cohorts**')
+  const reportResponse=page.waitForResponse(r=>r.url().includes('/api/cohorts')&&r.request().method()==='GET'&&r.status()===200)
+  await page.getByRole('button',{name:'Refresh reports'}).click()
+  await reportResponse
+  await expect(page.getByRole('alert')).toHaveCount(0)
+
+  await page.route('**/api/routing',route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'CI routing unavailable'})}))
+  await openWorkspaceTab(page,'Routing')
+  await expect(page.getByRole('alert')).toContainText('CI routing unavailable')
+  await page.unroute('**/api/routing')
+  const routingResponse=page.waitForResponse(r=>r.url().includes('/api/routing')&&r.request().method()==='GET'&&r.status()===200)
+  await page.getByRole('button',{name:'Refresh routing'}).click()
+  await routingResponse
+  await expect(page.getByRole('alert')).toHaveCount(0)
+})
+
 test('agents and approvals expose backend failures and recover on refresh', async ({ page }) => {
   await page.goto('/#/workspace')
   await dismissConsent(page)
