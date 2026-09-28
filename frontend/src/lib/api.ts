@@ -22,6 +22,11 @@ type AceRequestInit = RequestInit & { timeoutMs?: number }
 
 const activeRequests=new Set<AbortController>()
 
+const emitTransportState=(detail:{state:'healthy'|'degraded'|'offline';cause?:string;requestId?:string})=>{
+  if(typeof window==='undefined')return
+  window.dispatchEvent(new CustomEvent('ace-transport-state',{detail:{...detail,at:Date.now()}}))
+}
+
 export const cancelWorkspaceRequests=(reason='workspace_scope_changed')=>{
   for(const controller of [...activeRequests]){
     try{controller.abort(reason)}catch{}
@@ -65,6 +70,7 @@ const request = async <T>(path: string, init?: AceRequestInit): Promise<T> => {
     const reason=String((controller.signal as any).reason||'')
     const cause=aborted?(reason==='request_deadline_exceeded'?'timeout':'aborted'):'network'
     const message=cause==='timeout'?'Request timed out before the backend confirmed an outcome.':cause==='aborted'?'Request cancelled because the application scope changed.':error instanceof Error?error.message:'Network request failed'
+    if(cause!=='aborted')emitTransportState({state:typeof navigator!=='undefined'&&navigator.onLine===false?'offline':'degraded',cause,requestId:clientRequestId})
     throw new AceApiError(message,0,clientRequestId,{cause,path,clientRequestId,timeoutMs})
   }finally{
     window.clearTimeout(timer)
@@ -73,6 +79,7 @@ const request = async <T>(path: string, init?: AceRequestInit): Promise<T> => {
   }
 
   const requestId=response.headers.get('x-request-id')||clientRequestId
+  emitTransportState({state:'healthy',requestId})
   if(response.status===204) return undefined as T
 
   const raw=await response.text()
