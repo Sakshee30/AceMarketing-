@@ -70,6 +70,11 @@ if(fs.existsSync(acePlatform)){
   if(/function\s+Models\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Models implementation after feature extraction.')
   }
+  for(const legacyName of ['Settings','UsersRolesSettings','GovernanceSettings','BillingUsageSettings']){
+    if(new RegExp('function\\s+'+legacyName+'\\s*\\(').test(source)){
+      failures.push('frontend/src/AcePlatform.tsx still contains the legacy '+legacyName+' implementation after Settings feature extraction.')
+    }
+  }
   const bytes=fs.statSync(acePlatform).size
   if(bytes>600_000){
     failures.push('frontend/src/AcePlatform.tsx exceeds the temporary 600 KB migration ceiling. Extract features before adding more monolithic code.')
@@ -80,6 +85,14 @@ if(fs.existsSync(acePlatform)){
 
 const required=[
   'frontend/src/features/workspace/manifest.ts',
+  'frontend/src/features/settings/components/BillingUsageSettings.tsx',
+  'frontend/src/features/settings/components/GovernanceSettings.tsx',
+  'frontend/src/features/settings/components/UsersRolesSettings.tsx',
+  'frontend/src/features/settings/ui/SettingsPrimitives.tsx',
+  'frontend/src/features/settings/data/settings.api.ts',
+  'frontend/src/features/settings/pages/SettingsPage.tsx',
+  'frontend/src/features/settings/public.ts',
+  'frontend/src/features/settings/feature.manifest.ts',
   'frontend/src/features/models/data/models.api.ts',
   'frontend/src/features/models/pages/ModelsPage.tsx',
   'frontend/src/features/models/public.ts',
