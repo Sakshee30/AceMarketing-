@@ -7,6 +7,7 @@ export default defineConfig({
   build: {
     outDir: '../dist/frontend',
     emptyOutDir: true,
+    manifest: true,
   },
   server: {
     port: 5173,
