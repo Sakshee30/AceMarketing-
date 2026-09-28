@@ -57,6 +57,7 @@ const longFormFeatures=new Set([
   'Deep Links',
   'Sites',
   'Fingerprinting',
+  'Live Sync',
   'Data Flows',
   'Models',
   'Planner',
@@ -86,7 +87,7 @@ export const workspaceFeatureManifest:readonly WorkspaceFeatureManifest[]=(Objec
       workspaceRequired:true as const,
       permission:'workspace.read' as const,
       unsavedWork:longFormFeatures.has(label)?'confirm' as const:'allow' as const,
-      implementation:((label==='Launchpad'||label==='Overview'||label==='AdSync'||label==='ChatGPT Ads'||label==='Funnel'||label==='Leak Monitor'||label==='Events'||label==='Deep Links'||label==='Sites'||label==='Fingerprinting'||label==='Approvals'||label==='Monitoring'||label==='Alerts'||label==='Reports'||label==='Executive Briefs'||label==='Integrations'||label==='Data Flows'||label==='Audiences'||label==='Planner'||label==='Models'||label==='Settings'||label==='Compliance'||label==='Developers'||label==='Delivery'||label==='Real-Time Activation'||label==='Personalization'||label==='Exclusions'||label==='Adjustments'||label==='Diagnostics'||label==='Match Quality'||label==='Reconciliation'||label==='Fraud')?'feature-chunk':'current-composition') as WorkspaceFeatureManifest['implementation'],
+      implementation:((label==='Launchpad'||label==='Overview'||label==='AdSync'||label==='ChatGPT Ads'||label==='Funnel'||label==='Leak Monitor'||label==='Events'||label==='Deep Links'||label==='Sites'||label==='Fingerprinting'||label==='Live Sync'||label==='Approvals'||label==='Monitoring'||label==='Alerts'||label==='Reports'||label==='Executive Briefs'||label==='Integrations'||label==='Data Flows'||label==='Audiences'||label==='Planner'||label==='Models'||label==='Settings'||label==='Compliance'||label==='Developers'||label==='Delivery'||label==='Real-Time Activation'||label==='Personalization'||label==='Exclusions'||label==='Adjustments'||label==='Diagnostics'||label==='Match Quality'||label==='Reconciliation'||label==='Fraud')?'feature-chunk':'current-composition') as WorkspaceFeatureManifest['implementation'],
       errorBoundary:'workspace-section' as const
     }
   }))
