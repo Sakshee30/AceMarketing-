@@ -1911,6 +1911,23 @@ test('alert center shows owner affected period and investigation runbook', async
 })
 
 
+test('monitoring exposes backend load failures and recovers on refresh', async ({ page }) => {
+  await page.goto('/#/workspace')
+  await dismissConsent(page)
+  await page.route('**/api/monitoring',route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'CI monitoring unavailable'})}))
+  await openWorkspaceTab(page,'Monitoring')
+  await expect(page.getByRole('heading',{name:'Platform monitoring'})).toBeVisible()
+  await expect(page.getByRole('alert')).toContainText('CI monitoring unavailable')
+  await expect(page.getByText('Unavailable',{exact:true})).toBeVisible()
+
+  await page.unroute('**/api/monitoring')
+  const responsePromise=page.waitForResponse(r=>r.url().includes('/api/monitoring')&&r.request().method()==='GET'&&r.status()===200)
+  await page.getByRole('button',{name:'Refresh monitoring'}).click()
+  await responsePromise
+  await expect(page.getByRole('alert')).toHaveCount(0)
+  await expect(page.getByText('24-hour API health',{exact:true})).toBeVisible()
+})
+
 test('alert resolution preserves open state when backend resolution fails', async ({ page }) => {
   await page.goto('/#/workspace')
   await dismissConsent(page)
