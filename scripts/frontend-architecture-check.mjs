@@ -73,6 +73,12 @@ if(fs.existsSync(acePlatform)){
   if(/function\s+Compliance\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Compliance implementation after feature extraction.')
   }
+  if(/function\s+Developers\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Developers implementation after feature extraction.')
+  }
+  if(/function\s+DeliveryCenter\s*\(/.test(source)){
+    failures.push('frontend/src/AcePlatform.tsx still contains the legacy DeliveryCenter implementation after feature extraction.')
+  }
   for(const legacyName of ['Settings','UsersRolesSettings','GovernanceSettings','BillingUsageSettings']){
     if(new RegExp('function\\s+'+legacyName+'\\s*\\(').test(source)){
       failures.push('frontend/src/AcePlatform.tsx still contains the legacy '+legacyName+' implementation after Settings feature extraction.')
@@ -88,6 +94,14 @@ if(fs.existsSync(acePlatform)){
 
 const required=[
   'frontend/src/features/workspace/manifest.ts',
+  'frontend/src/features/delivery/data/delivery.api.ts',
+  'frontend/src/features/delivery/pages/DeliveryCenterPage.tsx',
+  'frontend/src/features/delivery/public.ts',
+  'frontend/src/features/delivery/feature.manifest.ts',
+  'frontend/src/features/developers/data/developers.api.ts',
+  'frontend/src/features/developers/pages/DevelopersPage.tsx',
+  'frontend/src/features/developers/public.ts',
+  'frontend/src/features/developers/feature.manifest.ts',
   'frontend/src/features/compliance/data/compliance.api.ts',
   'frontend/src/features/compliance/pages/CompliancePage.tsx',
   'frontend/src/features/compliance/public.ts',
