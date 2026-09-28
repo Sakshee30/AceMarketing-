@@ -5721,3 +5721,14 @@ As with every release pass, production promotion requires the complete GitHub Ac
 - Existing monitoring values are preserved if a refresh fails, preventing a transient API outage from erasing the last visible operational evidence.
 - Added Playwright coverage that forces `GET /api/monitoring` to return 503, verifies the visible failure state, restores the API, refreshes, and confirms recovery.
 - Implemented directly on `main`; no separate branch was created.
+
+
+### Credential-deferred billing/usage hardening — 2026-09-28
+
+- Billing credentials are explicitly treated as a later production-integration step; internal usage metering and entitlement enforcement remain fully functional now.
+- Added explicit loading, error, and **Refresh usage** states to **Settings → Billing & usage** instead of silently swallowing backend failures.
+- Usage/entitlement values now distinguish loading, unavailable, unlimited, used, limit, percent, and remaining states without inventing payment-provider data.
+- Payment actions remain hidden until a billing provider is configured; checkout/portal actions now surface provider errors instead of appearing to do nothing.
+- The UI labels unconfigured payments as **Credentials deferred**, matching the current implementation scope.
+- Added Playwright coverage that forces the usage API to fail, verifies a visible failure state, restores the backend, refreshes, and confirms recovery without Stripe credentials.
+- Implemented directly on `main`; no separate branch was created.
