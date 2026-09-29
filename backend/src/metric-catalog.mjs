@@ -90,14 +90,18 @@ export const calculateMetricSet=({
   if(startMs===null||endMs===null||startMs>=endMs)throw new TypeError('startAt/endAt must define a valid start-inclusive end-exclusive window')
 
   const windowEvents=events.filter(event=>inWindow(event.occurredAt,startMs,endMs))
-  const currencies=new Set(
+  const declaredCurrency=String(currency||'').trim().toUpperCase()||null
+  const eventCurrencies=new Set(
     windowEvents
       .filter(event=>['campaign.spend','payment.succeeded','payment.refunded'].includes(normalizeType(event.eventType)))
-      .map(event=>String(event.currency||currency||'').trim().toUpperCase())
+      .map(event=>String(event.currency||'').trim().toUpperCase())
       .filter(Boolean)
   )
-  if(currencies.size>1)throw new Error('mixed_currency: explicit versioned conversion policy required')
-  const resolvedCurrency=String(currency||[...currencies][0]||'').trim().toUpperCase()||null
+  if(eventCurrencies.size>1)throw new Error('mixed_currency: explicit versioned conversion policy required')
+  if(declaredCurrency&&eventCurrencies.size===1&&!eventCurrencies.has(declaredCurrency)){
+    throw new Error('currency_mismatch: declared currency does not match monetary event currency')
+  }
+  const resolvedCurrency=declaredCurrency||[...eventCurrencies][0]||null
 
   const spend=amountFor(windowEvents,'campaign.spend')
   const impressions=distinctEvents(windowEvents,'ad.impression')
