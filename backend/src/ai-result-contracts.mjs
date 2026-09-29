@@ -1,4 +1,4 @@
-const kinds=new Set(['observed_metric','calibrated_probability','regression_estimate','forecast_distribution','causal_estimate','anomaly_score','cluster_assignment','ranking','transcript','generated_asset','provider_output'])
+const kinds=new Set(['observed_metric','calibrated_probability','regression_estimate','forecast_distribution','causal_estimate','anomaly_score','cluster_assignment','ranking','transcript','generated_asset','provider_output','model_evaluation'])
 
 const requiredString=(value,name)=>{
   if(typeof value!=='string'||!value.trim())throw new Error(name+' required')
