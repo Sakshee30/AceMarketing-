@@ -225,6 +225,7 @@ export const api = {
   modelValidation: (name: string, options?:{signal?:AbortSignal}) => request('/models/validation?name=' + encodeURIComponent(name),{signal:options?.signal}),
   runModel: (name: string) => request('/models/run', { method: 'POST', body: JSON.stringify({ name }) }),
   aiRegistry: (options?:{signal?:AbortSignal}) => request('/ai/registry',{signal:options?.signal}),
+  verifyAiProviderAccess: (task:string) => request('/ai/providers/'+encodeURIComponent(task)+'/verify',{method:'POST',body:JSON.stringify({})}),
   aiEvaluations: (task?:string,options?:{signal?:AbortSignal}) => request('/ai/evaluations'+(task?'?task='+encodeURIComponent(task):''),{signal:options?.signal}),
   aiEvaluationPolicy: (task:string,options?:{signal?:AbortSignal}) => request('/ai/evaluation-policy?task='+encodeURIComponent(task),{signal:options?.signal}),
   saveAiEvaluationPolicy: (payload:Record<string,unknown>) => request('/ai/evaluation-policy',{method:'POST',body:JSON.stringify(payload)}),
