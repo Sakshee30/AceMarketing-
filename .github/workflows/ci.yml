@@ -251,6 +251,7 @@ jobs:
           test -f backend/tests/ai-governance-store.test.mjs
           test -f backend/tests/ai-object-store.test.mjs
           test -f backend/migrations/026_ai_task_policies_and_media_review.sql
+          test -f backend/migrations/027_ai_domain_result_persistence.sql
           test -f backend/tests/ai-result-contracts.test.mjs
           test -f backend/tests/ai-registry.test.mjs
           test -f backend/tests/ai-contract-manifest.test.mjs
