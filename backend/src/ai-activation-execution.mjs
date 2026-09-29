@@ -7,6 +7,7 @@ import {ProviderExecutionError} from './ai-providers.mjs'
 const enabled=()=>process.env.AI_ACTIVATION_EXECUTION_ENABLED==='true'
 
 export const activationExecutionEnabled=enabled
+export const activationQueueStatusProcessable=status=>['pending','retry','leased'].includes(String(status||''))
 
 export const validateActivationAdapterInput=({proposalType,payload})=>{
   const type=String(proposalType||'').trim()
@@ -104,7 +105,7 @@ export const queueAiActivationExecution=async({workspaceId,id,actor})=>{
   })
   if(!job)throw new Error('durable queue is unavailable')
   const queueStatus=String(job.status||'')
-  if(!['pending','retry','leased'].includes(queueStatus)){
+  if(!activationQueueStatusProcessable(queueStatus)){
     throw new Error('activation execution job is not processable: '+(queueStatus||'unknown'))
   }
   const updated=await updateExecution({
