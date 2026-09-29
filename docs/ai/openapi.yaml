@@ -313,3 +313,36 @@ paths:
       summary: Create governed live voice session
       parameters: [{$ref: '#/components/parameters/Workspace'}]
       responses: {'201': {description: Session created}, '409': {description: Governance blocked}}
+
+  /ai/activation-proposals:
+    get:
+      summary: List tenant-scoped AI activation proposals
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: status, in: query, required: false, schema: {type: string}}
+        - {name: limit, in: query, required: false, schema: {type: integer, minimum: 1, maximum: 500}}
+      responses: {'200': {description: Activation proposals}}
+    post:
+      summary: Create immutable high-risk activation proposal
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses:
+        '201': {description: Proposal created; no provider side effect executed}
+        '409': {description: Proposal blocked by governance or stale model state}
+  /ai/activation-proposals/{id}/approve:
+    post:
+      summary: Approve a fresh immutable activation proposal with separation of duties
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        '200': {description: Proposal approved; approval does not execute provider action}
+        '409': {description: Expired, stale, tampered, self-approved or otherwise blocked}
+  /ai/activation-proposals/{id}/reject:
+    post:
+      summary: Reject pending activation proposal
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        '200': {description: Proposal rejected}
+        '404': {description: Proposal not found or no longer pending}
