@@ -112,9 +112,13 @@ export const getTenantRegistry=async workspaceId=>{
   })
 }
 
-const resultTypeForTask=task=>{
-  if(['lead_qualification','paid_conversion','customer_churn'].includes(task))return 'calibrated_probability'
-  if(task==='future_customer_value')return 'regression_estimate'
+const resultTypeForExecution=(task,operation)=>{
+  if(['classification_train','regression_train','offer_ranking'].includes(operation))return 'model_evaluation'
+  if(operation==='artifact_score'){
+    if(['lead_qualification','paid_conversion','customer_churn'].includes(task))return 'calibrated_probability'
+    if(task==='future_customer_value')return 'regression_estimate'
+  }
+  if(operation==='offer_ranking_score')return 'ranking'
   if(task.startsWith('forecast_'))return 'forecast_distribution'
   if(task==='incrementality'||task==='marketing_mix')return 'causal_estimate'
   if(task==='anomaly_detection')return 'anomaly_score'
@@ -134,6 +138,7 @@ export const recordMlExecution=async({workspaceId,job,result})=>{
   if(!pool)return null
   await syncTenantRegistry(workspaceId)
   const task=String(result?.task||job.payload?.task||'')
+  const operation=String(job.payload?.operation||'')
   if(!task)throw new Error('ML result task is required')
   const payload=result?.result||result
   const artifact=payload?.artifact||null
@@ -151,7 +156,7 @@ export const recordMlExecution=async({workspaceId,job,result})=>{
          source_snapshot,target,horizon,warnings,evidence_refs,payload,usage)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'ml-result.v1',$10::jsonb,$11,$12,$13::jsonb,'[]'::jsonb,$14::jsonb,NULL)`,
       [
-        resultId,workspaceId,job.id,task,blocked?'blocked':'completed',resultTypeForTask(task),
+        resultId,workspaceId,job.id,task,blocked?'blocked':'completed',resultTypeForExecution(task,operation),
         null,null,artifact?.artifactId||null,JSON.stringify(job.input_snapshot||{}),
         payload?.target||null,payload?.horizon||null,JSON.stringify(warnings),
         JSON.stringify(payload)
