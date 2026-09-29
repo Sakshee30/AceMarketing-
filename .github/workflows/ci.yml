@@ -46,6 +46,8 @@ jobs:
         run: npm run frontend:architecture
       - name: Validate frontend and backend
         run: npm run check:all
+      - name: Run AI backend unit checks
+        run: npm run test:ai-backend
       - name: Build production frontend
         run: npm run build
       - name: Build standalone customer application
