@@ -375,6 +375,55 @@ export const qualifyEvaluation=async({workspaceId,evaluationId,actor=null})=>{
   }
 }
 
+export const deployModel=async({workspaceId,task,actor=null})=>{
+  if(!pool)throw new Error('DATABASE_URL is required for deployment state')
+  await syncTenantRegistry(workspaceId)
+  const client=await pool.connect()
+  try{
+    await client.query('BEGIN')
+    const {rows}=await client.query(
+      `SELECT * FROM ace_ai_model_registry WHERE workspace_id=$1 AND task=$2 FOR UPDATE`,
+      [workspaceId,task]
+    )
+    const current=rows[0]
+    if(!current)throw new Error('model registry entry not found')
+    if(current.documentation_verified!==true)throw new Error('model documentation verification is incomplete')
+    if(current.evaluation_status!=='qualified')throw new Error('model has not passed its predeclared evaluation gate')
+    if(current.approval_status!=='approved')throw new Error('model has not been approved')
+    if(current.kind==='hosted_model'&&current.access_verified!==true)throw new Error('hosted provider access is not verified')
+    if(current.kind!=='hosted_model'&&current.kind!=='deterministic_baseline'&&!current.artifact_revision){
+      throw new Error('fitted model has no registered artifact revision')
+    }
+    const {rows:updated}=await client.query(
+      `UPDATE ace_ai_model_registry
+       SET deployment_status='deployed',updated_at=now()
+       WHERE workspace_id=$1 AND task=$2
+       RETURNING *`,
+      [workspaceId,task]
+    )
+    await client.query('COMMIT')
+    return {...updated[0],deploymentActor:actor?.userId||null}
+  }catch(error){
+    await client.query('ROLLBACK').catch(()=>{})
+    throw error
+  }finally{
+    client.release()
+  }
+}
+
+export const undeployModel=async({workspaceId,task,actor=null})=>{
+  if(!pool)throw new Error('DATABASE_URL is required for deployment state')
+  const {rows}=await pool.query(
+    `UPDATE ace_ai_model_registry
+     SET deployment_status='not_deployed',updated_at=now()
+     WHERE workspace_id=$1 AND task=$2
+     RETURNING *`,
+    [workspaceId,task]
+  )
+  if(!rows[0])throw new Error('model registry entry not found')
+  return {...rows[0],deploymentActor:actor?.userId||null}
+}
+
 export const rollbackModel=async({workspaceId,task,actor=null})=>{
   if(!pool)throw new Error('DATABASE_URL is required for rollback')
   const client=await pool.connect()
