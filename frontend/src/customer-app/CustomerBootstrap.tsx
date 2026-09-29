@@ -29,7 +29,7 @@ export default function CustomerBootstrap({back}:{back:()=>void}){
     }catch(error:any){
       if(current!==generation.current)return
       const status=Number(error?.status||0)
-      if(status===401||status===403){
+      if(status===401){
         clearSessionToken()
         setState({kind:'signed-out',message:signedOutMessage})
       }else{
