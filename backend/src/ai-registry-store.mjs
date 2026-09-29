@@ -25,6 +25,13 @@ export const syncTenantRegistry=async workspaceId=>{
   try{
     await client.query('BEGIN')
     for(const item of items){
+      const activeDispatch=await client.query(
+        `SELECT 1 FROM ace_ai_activation_proposals
+         WHERE workspace_id=$1 AND task=$2 AND execution_status='running'
+         LIMIT 1`,
+        [workspaceId,item.task]
+      )
+      if(activeDispatch.rows[0])continue
       await client.query(
         `INSERT INTO ace_ai_model_registry
           (workspace_id,task,kind,provider,requested_model,resolved_model,input_schema_version,output_schema_version,
