@@ -57,9 +57,7 @@ class ArtifactStore:
                 str(path),
                 self.bucket,
                 object_key,
-                ExtraArgs={
-                    "ServerSideEncryption": os.getenv("ML_ARTIFACT_S3_SSE", "AES256")
-                },
+                ExtraArgs={"ServerSideEncryption": os.getenv("ML_ARTIFACT_S3_SSE", "AES256")},
             )
             storage = "s3"
 
@@ -121,10 +119,14 @@ class ArtifactStore:
 
         if metadata.get("storage") == "s3":
             if not self.bucket:
-                raise RuntimeError("artifact metadata requires object storage but ML_ARTIFACT_S3_BUCKET is not configured")
+                raise RuntimeError(
+                    "artifact metadata requires object storage but ML_ARTIFACT_S3_BUCKET is not configured"
+                )
             with tempfile.NamedTemporaryFile(prefix="ace-ml-", suffix=".joblib", delete=False) as handle:
                 cleanup_path = Path(handle.name)
-            self._s3().download_file(self.bucket, str(metadata.get("objectKey") or self._object_key(artifact_id)), str(cleanup_path))
+            self._s3().download_file(
+                self.bucket, str(metadata.get("objectKey") or self._object_key(artifact_id)), str(cleanup_path)
+            )
             path = cleanup_path
         else:
             path = local_path
