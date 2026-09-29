@@ -105,7 +105,7 @@ const postJson=async({provider,task,url,headers,body})=>{
 }
 
 const normalizeOpenAIText=response=>{
-  if(typeof response?.output_text==='string') return response.output_text
+  if(typeof response?.output_text==='string') return response.output_text.trim()
   const chunks=[]
   for(const item of response?.output||[]){
     for(const content of item?.content||[]){
@@ -355,6 +355,12 @@ export const verifyAnthropicModelAccess=async({task='recommendation_reviewer',re
   if(!model)throw new ProviderExecutionError('Anthropic requested model is required',{provider:'anthropic',task,status:400})
   if(!process.env.ANTHROPIC_API_KEY)throw new ProviderExecutionError('Anthropic credential is not configured',{provider:'anthropic',task,status:503})
   const base=String(process.env.ANTHROPIC_MODELS_URL||'https://api.anthropic.com/v1/models').replace(/\/$/,'')
+  let endpoint
+  try{endpoint=new URL(base)}
+  catch{throw new ProviderExecutionError('Anthropic models endpoint is invalid',{provider:'anthropic',task,status:400})}
+  if(endpoint.protocol!=='https:'){
+    throw new ProviderExecutionError('Anthropic models endpoint must use HTTPS',{provider:'anthropic',task,status:400})
+  }
   const result=await getJson({
     provider:'anthropic',task,
     url:base+'/'+encodeURIComponent(model),
@@ -363,7 +369,10 @@ export const verifyAnthropicModelAccess=async({task='recommendation_reviewer',re
       'anthropic-version':process.env.ANTHROPIC_API_VERSION||'2023-06-01'
     }
   })
-  const resolved=String(result.json?.id||result.json?.model||model)
+  const resolved=String(result.json?.id||'').trim()
+  if(!resolved){
+    throw new ProviderExecutionError('Anthropic access check returned no model identifier',{provider:'anthropic',task,status:502,providerRequestId:result.providerRequestId||null})
+  }
   if(resolved!==model){
     throw new ProviderExecutionError('Anthropic access check resolved a different model identifier; silent substitution is forbidden',{provider:'anthropic',task,status:409,providerRequestId:result.providerRequestId||null})
   }
