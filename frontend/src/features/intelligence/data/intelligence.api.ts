@@ -4,6 +4,7 @@ export const intelligenceApi={
   registry:(options?:{signal?:AbortSignal})=>api.aiRegistry(options),
   metrics:(options?:{signal?:AbortSignal})=>api.aiMetricCatalog(options),
   capabilities:(options?:{signal?:AbortSignal})=>api.aiMlCapabilities(options),
+  score:(payload:Record<string,unknown>,operationId?:string)=>api.aiMlScore(payload,{operationId}),
   analysis:(question:string,operationId?:string)=>api.aiAnalysis(question,{operationId}),
   job:(id:string,options?:{signal?:AbortSignal})=>api.aiJob(id,options),
   streamJob:(id:string,onEvent:(event:{event:string;data:any})=>void,signal?:AbortSignal)=>streamAiJob(id,onEvent,signal),
