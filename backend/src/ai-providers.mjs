@@ -46,7 +46,7 @@ const getJson=async({provider,task,url,headers={}})=>{
   const controller=new AbortController()
   const timeout=setTimeout(()=>controller.abort('provider_timeout'),Math.min(requestTimeoutMs,15000))
   try{
-    const response=await fetch(url,{method:'GET',headers,signal:controller.signal})
+    const response=await fetch(url,{method:'GET',headers,redirect:'manual',signal:controller.signal})
     const providerRequestId=response.headers.get('x-request-id')||response.headers.get('request-id')||response.headers.get('x-goog-request-id')||null
     if(!response.ok){
       throw new ProviderExecutionError(await safeProviderError(response),{provider,task,status:response.status,providerRequestId,unknownOutcome:false})
@@ -75,6 +75,7 @@ const postJson=async({provider,task,url,headers,body})=>{
       method:'POST',
       headers:{'Content-Type':'application/json',...headers},
       body:JSON.stringify(body),
+      redirect:'manual',
       signal:controller.signal
     })
     const providerRequestId=response.headers.get('x-request-id')||response.headers.get('request-id')||response.headers.get('x-goog-request-id')||null
