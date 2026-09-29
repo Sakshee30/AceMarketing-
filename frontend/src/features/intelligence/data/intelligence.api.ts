@@ -1,4 +1,4 @@
-import {api} from '../../../lib/api'
+import {api,streamAiJob} from '../../../lib/api'
 
 export const intelligenceApi={
   registry:(options?:{signal?:AbortSignal})=>api.aiRegistry(options),
@@ -6,6 +6,7 @@ export const intelligenceApi={
   capabilities:(options?:{signal?:AbortSignal})=>api.aiMlCapabilities(options),
   analysis:(question:string,operationId?:string)=>api.aiAnalysis(question,{operationId}),
   job:(id:string,options?:{signal?:AbortSignal})=>api.aiJob(id,options),
+  streamJob:(id:string,onEvent:(event:{event:string;data:any})=>void,signal?:AbortSignal)=>streamAiJob(id,onEvent,signal),
   cancelJob:(id:string)=>api.cancelAiJob(id),
   results:(task?:string,limit=50,options?:{signal?:AbortSignal})=>api.aiResults(task,limit,options),
   datasets:(task?:string,options?:{signal?:AbortSignal})=>api.aiDatasets(task,options),
