@@ -210,3 +210,16 @@ def test_classification_rejects_single_class_partitions(monkeypatch, tmp_path):
     )
     with pytest.raises(ValueError, match="insufficient_classes"):
         train_classification(request)
+
+
+def test_shared_result_contract_manifest():
+    import json
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[2] / "configs" / "ai" / "result-schema-v1.json"
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    assert manifest["schemaVersion"] == "ai-result-contract.v1"
+    assert "forecast_distribution" in manifest["resultTypes"]
+    assert "causal_estimate" in manifest["resultTypes"]
+    assert "marketing_mix_analysis" in manifest["resultTypes"]
+    assert "calibrationReference" in manifest["resultTypes"]["calibrated_probability"]
