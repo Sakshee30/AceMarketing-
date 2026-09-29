@@ -14,6 +14,7 @@ import { executeMlJob } from './ml-client.mjs'
 import { closeKnowledge, embedKnowledgeSourceJob, searchKnowledgeJob } from './knowledge.mjs'
 import { closeRegistryStore, recordMlExecution, syncTenantRegistry } from './ai-registry-store.mjs'
 import {executeAiActivationJob,reconcileStaleActivationDispatches} from './ai-activation-execution.mjs'
+import {recordDeploymentObservation} from './ai-deployment-controls.mjs'
 
 if(!queueAvailable()) throw new Error('DATABASE_URL is required for the worker runtime')
 
@@ -153,6 +154,21 @@ const runBatch=async()=>{
   const jobs=await leaseJobs({workerId,limit:batchSize})
   for(const job of jobs){
     let heartbeatTimer=null
+    const startedAt=Date.now()
+    const deploymentDecision=job.payload?.deploymentDecision||{}
+    const recordAiOutcome=outcome=>{
+      if(!['ai_hosted_task','ml_task'].includes(job.kind))return Promise.resolve(null)
+      return recordDeploymentObservation({
+        workspaceId:job.workspace_id,
+        task:String(job.payload?.task||''),
+        mode:deploymentDecision.mode||'active',
+        bucket:deploymentDecision.bucket??null,
+        servedCandidate:deploymentDecision.servedCandidate!==false,
+        outcome,
+        latencyMs:Date.now()-startedAt,
+        jobId:job.id
+      }).catch(()=>null)
+    }
     try{
       const heartbeatEvery=Math.max(1000,Math.floor(Number(process.env.WORKER_LEASE_MS||60000)/3))
       heartbeatTimer=setInterval(()=>{
@@ -172,6 +188,7 @@ const runBatch=async()=>{
         resultSchemaVersion:job.result_schema_version||null,
         actualUnits:usageUnitsFromResult(result)
       })
+      await recordAiOutcome('succeeded')
     }catch(error){
       if(error instanceof ProviderExecutionError&&error.unknownOutcome){
         await markUnknownOutcome({
@@ -184,10 +201,12 @@ const runBatch=async()=>{
         if(['ai_hosted_task','ml_task'].includes(job.kind)){
           await reconcileAiUsageReservation({workspaceId:job.workspace_id,jobId:job.id,actualUnits:null,status:'unknown'}).catch(()=>{})
         }
+        await recordAiOutcome('unknown')
         continue
       }
       const failed=await failJob(job.id,error instanceof Error?error.message:String(error),{workerId,fencingToken:job.fencing_token})
       const message=error instanceof Error?error.message:String(error)
+      await recordAiOutcome(failed?.status==='cancelled'?'cancelled':'failed')
       if(failed?.status==='dead_letter'&&['ai_hosted_task','ml_task'].includes(job.kind)){
         await reconcileAiUsageReservation({workspaceId:job.workspace_id,jobId:job.id,actualUnits:null,status:'released'}).catch(()=>{})
       }
