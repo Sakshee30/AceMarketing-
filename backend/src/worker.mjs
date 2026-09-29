@@ -139,7 +139,9 @@ const handle=async job=>{
 }
 
 const runBatch=async()=>{
-  await reconcileStaleActivationDispatches({limit:25})
+  await reconcileStaleActivationDispatches({limit:25}).catch(error=>{
+    console.error('[worker] activation reconciliation failed',error instanceof Error?error.message:error)
+  })
   if(Date.now()-lastAudienceSchedulePoll>=audienceSchedulePollMs){
     lastAudienceSchedulePoll=Date.now()
     await runDueAudienceSchedules(audienceScheduleBatch)
