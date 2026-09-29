@@ -1,0 +1,22 @@
+import {api} from '../../../lib/api'
+
+export const intelligenceApi={
+  registry:(options?:{signal?:AbortSignal})=>api.aiRegistry(options),
+  metrics:(options?:{signal?:AbortSignal})=>api.aiMetricCatalog(options),
+  capabilities:(options?:{signal?:AbortSignal})=>api.aiMlCapabilities(options),
+  analysis:(question:string,operationId?:string)=>api.aiAnalysis(question,{operationId}),
+  job:(id:string,options?:{signal?:AbortSignal})=>api.aiJob(id,options),
+  cancelJob:(id:string)=>api.cancelAiJob(id),
+  results:(task?:string,limit=50,options?:{signal?:AbortSignal})=>api.aiResults(task,limit,options),
+  datasets:(task?:string,options?:{signal?:AbortSignal})=>api.aiDatasets(task,options),
+  createDataset:(payload:Record<string,unknown>)=>api.createAiDataset(payload),
+  trainDataset:(id:string,payload:Record<string,unknown>,operationId?:string)=>api.trainAiDataset(id,payload,{operationId}),
+  retireDataset:(id:string)=>api.retireAiDataset(id),
+  knowledge:()=>api.aiKnowledge(),
+  ingestKnowledge:(payload:Record<string,unknown>)=>api.ingestAiKnowledge(payload),
+  searchKnowledge:(payload:Record<string,unknown>,operationId?:string)=>api.searchAiKnowledge(payload,{operationId}),
+  revokeKnowledge:(id:string)=>api.revokeAiKnowledge(id),
+  forecastBaseline:(payload:Record<string,unknown>,operationId?:string)=>api.aiMlSeasonalForecast(payload,{operationId}),
+  forecastChronos:(payload:Record<string,unknown>,operationId?:string)=>api.aiMlChronosForecast(payload,{operationId}),
+  forecastChallenger:(payload:Record<string,unknown>,operationId?:string)=>api.aiMlForecastChallenger(payload,{operationId})
+}
