@@ -16,6 +16,7 @@ const pool=databaseUrl?new Pool({
 const sessions=new Map()
 const maxDurationMs=()=>Math.max(60_000,Math.min(Number(process.env.AI_LIVE_VOICE_MAX_DURATION_MS||30*60*1000),60*60*1000))
 const maxInputBytes=()=>Math.max(1_000_000,Math.min(Number(process.env.AI_LIVE_VOICE_MAX_INPUT_BYTES||64*1024*1024),256*1024*1024))
+const maxOutputBytes=()=>Math.max(1_000_000,Math.min(Number(process.env.AI_LIVE_VOICE_MAX_OUTPUT_BYTES||64*1024*1024),256*1024*1024))
 const maxReconnects=()=>Math.max(0,Math.min(Number(process.env.AI_LIVE_VOICE_MAX_RECONNECTS||2),5))
 const tokenHash=token=>createHash('sha256').update(String(token)).digest()
 const tokenHashHex=token=>tokenHash(token).toString('hex')
@@ -166,12 +167,32 @@ const authorizeUpgrade=async req=>{
   const expected=Buffer.from(String(item.token_hash||''),'hex')
   const actual=tokenHash(token)
   if(expected.length!==actual.length||!timingSafeEqual(expected,actual))return {error:'invalid session token'}
-  if(Number(item.reconnect_count||0)>maxReconnects())return {error:'session reconnect limit exceeded'}
   return {id,item}
+}
+
+const claimReconnect=async id=>{
+  if(!pool)return null
+  const {rows}=await pool.query(
+    `UPDATE ace_ai_live_voice_sessions
+     SET reconnect_count=reconnect_count+1,status='connecting',last_error=NULL
+     WHERE id=$1
+       AND status NOT IN ('terminated','expired','failed')
+       AND expires_at>now()
+       AND reconnect_count<=$2
+     RETURNING *`,
+    [id,maxReconnects()]
+  )
+  return rows[0]||null
 }
 
 const attachRelay=async({client,id,item})=>{
   const route=requireConfiguredRoute()
+  const claimed=await claimReconnect(id)
+  if(!claimed){
+    try{client.close(4008,'session reconnect limit or validity check failed')}catch{}
+    return
+  }
+  item=claimed
   const current=sessions.get(id)
   if(current)closePair(current,4001,'superseded connection')
 
@@ -184,11 +205,6 @@ const attachRelay=async({client,id,item})=>{
     usage:item.usage||{},timer:null
   }
   sessions.set(id,record)
-  await updateSession(id,{
-    status:'connecting',
-    reconnectCount:Number(item.reconnect_count||0)+1,
-    lastError:null
-  }).catch(()=>{})
 
   record.timer=setTimeout(()=>{
     closePair(record,4000,'session duration limit reached')
@@ -212,8 +228,11 @@ const attachRelay=async({client,id,item})=>{
   provider.on('message',data=>{
     const bytes=Buffer.byteLength(data)
     record.outputBytes+=bytes
-    if(record.outputBytes>maxInputBytes()){
-      closePair(record,4000,'session output budget exceeded')
+    if(record.outputBytes>maxOutputBytes()){
+      void updateSession(id,{status:'failed',outputBytes:record.outputBytes,usage:record.usage,lastError:'session output budget exceeded',terminatedAt:new Date().toISOString()}).finally(()=>{
+        closePair(record,4000,'session output budget exceeded')
+        sessions.delete(id)
+      })
       return
     }
     try{
