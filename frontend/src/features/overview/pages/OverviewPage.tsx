@@ -72,7 +72,7 @@ function FunnelPanel(){
       <div className="funnel-row" key={item[0]}>
         <div><span>{item[0]}</span><b>{formatNumber(item[1])}</b></div>
         <div className="progress"><i style={{width:item[2]+'%'}}/></div>
-        {index<steps.length-1&&item[1]>0&&<small>{Math.round((steps[index+1][1]/item[1])*100)}% progression</small>}
+        {index<steps.length-1&&item[1]>0&&<small>{Math.round((Number(steps[index+1][1])/Number(item[1]))*100)}% progression</small>}
       </div>
     )}
     {data&&mode==='campaign'&&(data.campaigns||[]).map((item:any)=>

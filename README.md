@@ -59,16 +59,17 @@ Install packages:
 npm install
 ```
 
-Terminal 1 — API:
-
-```bash
-npm run api
-```
-
-Terminal 2 — frontend:
+Start the API and frontend together:
 
 ```bash
 npm run dev
+```
+
+For individual service debugging, use separate terminals:
+
+```bash
+npm run dev:backend
+npm run dev:frontend
 ```
 
 Open:
@@ -82,6 +83,8 @@ The API health endpoint is:
 ```text
 http://localhost:3001/api/health
 ```
+
+When `DATABASE_URL` is not configured in local development, AceMarketing automatically starts an embedded PostgreSQL-compatible feature store and applies all migrations in process. Production continues to require the configured PostgreSQL deployment. To verify every authenticated dashboard read plus representative feature writes locally, run `npm run verify:local-features` while `npm run dev` is active.
 
 ## Build and type-check
 

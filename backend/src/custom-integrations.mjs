@@ -1,20 +1,10 @@
 import {randomUUID} from 'node:crypto'
 import {lookup} from 'node:dns/promises'
 import {isIP} from 'node:net'
-import pg from 'pg'
+import {pool} from './database.mjs'
 import {connectorVaultReady,decryptSecret,encryptSecret} from './vault.mjs'
-
-const {Pool}=pg
-const databaseUrl=process.env.DATABASE_URL||''
 const allowHttp=process.env.CUSTOM_INTEGRATION_ALLOW_HTTP==='true'
 const timeoutMs=Number(process.env.CUSTOM_INTEGRATION_TIMEOUT_MS||5000)
-const pool=databaseUrl?new Pool({
-  connectionString:databaseUrl,
-  max:Number(process.env.CUSTOM_INTEGRATION_DB_POOL_MAX||10),
-  idleTimeoutMillis:Number(process.env.DB_IDLE_TIMEOUT_MS||30000),
-  connectionTimeoutMillis:Number(process.env.DB_CONNECT_TIMEOUT_MS||5000),
-  ...(process.env.DB_SSL==='require'?{ssl:{rejectUnauthorized:false}}:{})
-}):null
 
 const privateV4=ip=>{
   const p=ip.split('.').map(Number)

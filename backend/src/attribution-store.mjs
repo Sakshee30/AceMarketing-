@@ -1,17 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto'
-import pg from 'pg'
-
-const {Pool}=pg
-const databaseUrl=process.env.DATABASE_URL||''
+import {pool} from './database.mjs'
 const retentionDays=Number(process.env.CLICK_ID_RETENTION_DAYS||90)
 const callWindowMinutes=Number(process.env.CALL_MATCH_WINDOW_MINUTES||30)
-const pool=databaseUrl?new Pool({
-  connectionString:databaseUrl,
-  max:Number(process.env.ATTRIBUTION_DB_POOL_MAX||10),
-  idleTimeoutMillis:Number(process.env.DB_IDLE_TIMEOUT_MS||30000),
-  connectionTimeoutMillis:Number(process.env.DB_CONNECT_TIMEOUT_MS||5000),
-  ...(process.env.DB_SSL==='require'?{ssl:{rejectUnauthorized:false}}:{})
-}):null
 
 const sha=value=>createHash('sha256').update(String(value)).digest('hex')
 const cleanEmail=value=>String(value||'').trim().toLowerCase()
@@ -61,11 +51,14 @@ export const captureClickSession=async(workspaceId,body={})=>{
 
 const candidateFor=async(workspaceId,event)=>{
   const ids=identifiers(event)
-  const occurredAt=new Date(event.occurredAt||event.timestamp||Date.now()).toISOString()
+  const occurredDate=new Date(event.occurredAt||event.timestamp||Date.now())
+  const occurredAt=occurredDate.toISOString()
   const values=[
     workspaceId,occurredAt,
     ids.customerId,ids.gclid,ids.gbraid,ids.wbraid,ids.fbclid,ids.msclkid,ids.ttclid,ids.twclid,
-    ids.phoneSha256,ids.emailSha256,ids.visitorId,callWindowMinutes
+    ids.phoneSha256,ids.emailSha256,ids.visitorId,
+    new Date(occurredDate.getTime()-callWindowMinutes*60000).toISOString(),
+    new Date(occurredDate.getTime()+5*60000).toISOString()
   ]
   const {rows}=await pool.query(
     `SELECT *,
@@ -86,7 +79,7 @@ const candidateFor=async(workspaceId,event)=>{
       END AS score
      FROM (
        SELECT s.*,
-         CASE WHEN s.last_seen_at BETWEEN ($2::timestamptz-($14*interval '1 minute')) AND ($2::timestamptz+interval '5 minute')
+         CASE WHEN s.last_seen_at BETWEEN $14::timestamptz AND $15::timestamptz
               THEN 'time_window' ELSE NULL END source_hint
        FROM ace_click_sessions s
        WHERE workspace_id=$1
@@ -184,6 +177,7 @@ export const reconcileAttribution=async(workspaceId,limit=250)=>{
 export const attributionStats=async(workspaceId,{periodDays=null}={})=>{
   if(!pool) return {available:false}
   const days=[7,30,90].includes(Number(periodDays))?Number(periodDays):null
+  const cutoff=days==null?null:new Date(Date.now()-days*86400000).toISOString()
   const [sessions,events,methods,recent,channels,campaigns,eventTypes,touchSummary]=await Promise.all([
     pool.query(`SELECT COUNT(*)::int total,
       COUNT(*) FILTER (WHERE gclid IS NOT NULL)::int gclid,
@@ -193,7 +187,7 @@ export const attributionStats=async(workspaceId,{periodDays=null}={})=>{
       COUNT(*) FILTER (WHERE twclid IS NOT NULL)::int x
       FROM ace_click_sessions
       WHERE workspace_id=$1 AND expires_at>=now()
-        AND ($2::int IS NULL OR first_seen_at>=now()-($2*interval '1 day'))`,[workspaceId,days]),
+        AND ($2::timestamptz IS NULL OR first_seen_at>=$2::timestamptz)`,[workspaceId,cutoff]),
     pool.query(`SELECT COUNT(*)::int total,
       COUNT(*) FILTER (WHERE status='matched')::int matched,
       COUNT(*) FILTER (WHERE status='unmatched')::int unmatched,
@@ -201,19 +195,19 @@ export const attributionStats=async(workspaceId,{periodDays=null}={})=>{
       COALESCE(AVG(match_confidence) FILTER (WHERE status='matched' AND match_confidence IS NOT NULL),0)::numeric avg_confidence
       FROM ace_assisted_events
       WHERE workspace_id=$1
-        AND ($2::int IS NULL OR occurred_at>=now()-($2*interval '1 day'))`,[workspaceId,days]),
+        AND ($2::timestamptz IS NULL OR occurred_at>=$2::timestamptz)`,[workspaceId,cutoff]),
     pool.query(`SELECT COALESCE(match_method,'unmatched') method,COUNT(*)::int count
       FROM ace_assisted_events
       WHERE workspace_id=$1
-        AND ($2::int IS NULL OR occurred_at>=now()-($2*interval '1 day'))
-      GROUP BY COALESCE(match_method,'unmatched') ORDER BY count DESC`,[workspaceId,days]),
+        AND ($2::timestamptz IS NULL OR occurred_at>=$2::timestamptz)
+      GROUP BY COALESCE(match_method,'unmatched') ORDER BY count DESC`,[workspaceId,cutoff]),
     pool.query(`SELECT e.id,e.event_type,e.source,e.occurred_at,e.status,e.match_method,e.match_confidence,e.value,e.currency,
         s.utm_source,s.utm_medium,s.utm_campaign,s.utm_term,s.utm_content,s.landing_url,s.referrer,s.first_seen_at,s.last_seen_at
       FROM ace_assisted_events e
       LEFT JOIN ace_click_sessions s ON s.id=e.matched_session_id AND s.workspace_id=e.workspace_id
       WHERE e.workspace_id=$1
-        AND ($2::int IS NULL OR e.occurred_at>=now()-($2*interval '1 day'))
-      ORDER BY e.occurred_at DESC LIMIT 30`,[workspaceId,days]),
+        AND ($2::timestamptz IS NULL OR e.occurred_at>=$2::timestamptz)
+      ORDER BY e.occurred_at DESC LIMIT 30`,[workspaceId,cutoff]),
     pool.query(`SELECT COALESCE(NULLIF(s.utm_source,''),NULLIF(e.source,''),'Direct / Unknown') channel,
         COUNT(*)::int events,
         COUNT(*) FILTER (WHERE e.status='matched')::int matched,
@@ -222,10 +216,10 @@ export const attributionStats=async(workspaceId,{periodDays=null}={})=>{
       FROM ace_assisted_events e
       LEFT JOIN ace_click_sessions s ON s.id=e.matched_session_id AND s.workspace_id=e.workspace_id
       WHERE e.workspace_id=$1
-        AND ($2::int IS NULL OR e.occurred_at>=now()-($2*interval '1 day'))
+        AND ($2::timestamptz IS NULL OR e.occurred_at>=$2::timestamptz)
       GROUP BY COALESCE(NULLIF(s.utm_source,''),NULLIF(e.source,''),'Direct / Unknown')
       ORDER BY value DESC,matched DESC,events DESC
-      LIMIT 25`,[workspaceId,days]),
+      LIMIT 25`,[workspaceId,cutoff]),
     pool.query(`SELECT COALESCE(NULLIF(s.utm_campaign,''),'Unattributed campaign') campaign,
         COALESCE(NULLIF(s.utm_source,''),NULLIF(e.source,''),'Direct / Unknown') channel,
         COUNT(*)::int events,
@@ -235,20 +229,20 @@ export const attributionStats=async(workspaceId,{periodDays=null}={})=>{
       FROM ace_assisted_events e
       LEFT JOIN ace_click_sessions s ON s.id=e.matched_session_id AND s.workspace_id=e.workspace_id
       WHERE e.workspace_id=$1
-        AND ($2::int IS NULL OR e.occurred_at>=now()-($2*interval '1 day'))
+        AND ($2::timestamptz IS NULL OR e.occurred_at>=$2::timestamptz)
       GROUP BY COALESCE(NULLIF(s.utm_campaign,''),'Unattributed campaign'),COALESCE(NULLIF(s.utm_source,''),NULLIF(e.source,''),'Direct / Unknown')
       ORDER BY value DESC,matched DESC,events DESC
-      LIMIT 30`,[workspaceId,days]),
+      LIMIT 30`,[workspaceId,cutoff]),
     pool.query(`SELECT event_type,
         COUNT(*)::int events,
         COUNT(*) FILTER (WHERE status='matched')::int matched,
         COALESCE(SUM(value) FILTER (WHERE status='matched'),0)::numeric value
       FROM ace_assisted_events
       WHERE workspace_id=$1
-        AND ($2::int IS NULL OR occurred_at>=now()-($2*interval '1 day'))
+        AND ($2::timestamptz IS NULL OR occurred_at>=$2::timestamptz)
       GROUP BY event_type
       ORDER BY value DESC,matched DESC,events DESC
-      LIMIT 20`,[workspaceId,days]),
+      LIMIT 20`,[workspaceId,cutoff]),
     pool.query(`SELECT
         COUNT(*) FILTER (WHERE s.id IS NOT NULL)::int matched_sessions,
         COUNT(DISTINCT s.utm_source) FILTER (WHERE s.utm_source IS NOT NULL AND s.utm_source<>'')::int source_count,
@@ -258,7 +252,7 @@ export const attributionStats=async(workspaceId,{periodDays=null}={})=>{
       FROM ace_assisted_events e
       LEFT JOIN ace_click_sessions s ON s.id=e.matched_session_id AND s.workspace_id=e.workspace_id
       WHERE e.workspace_id=$1
-        AND ($2::int IS NULL OR e.occurred_at>=now()-($2*interval '1 day'))`,[workspaceId,days])
+        AND ($2::timestamptz IS NULL OR e.occurred_at>=$2::timestamptz)`,[workspaceId,cutoff])
   ])
   const e=events.rows[0],s=sessions.rows[0]
   const rate=e.total?Number(((e.matched/e.total)*100).toFixed(2)):0

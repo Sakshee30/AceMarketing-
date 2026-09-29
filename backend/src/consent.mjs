@@ -1,16 +1,6 @@
 import {createHash,randomUUID} from 'node:crypto'
-import pg from 'pg'
-
-const {Pool}=pg
-const databaseUrl=process.env.DATABASE_URL||''
+import {pool} from './database.mjs'
 const policyVersion=process.env.CONSENT_POLICY_VERSION||'v1'
-const pool=databaseUrl?new Pool({
-  connectionString:databaseUrl,
-  max:Number(process.env.CONSENT_DB_POOL_MAX||10),
-  idleTimeoutMillis:Number(process.env.DB_IDLE_TIMEOUT_MS||30000),
-  connectionTimeoutMillis:Number(process.env.DB_CONNECT_TIMEOUT_MS||5000),
-  ...(process.env.DB_SSL==='require'?{ssl:{rejectUnauthorized:false}}:{})
-}):null
 
 const digest=value=>value?createHash('sha256').update(String(value)).digest('hex'):null
 const cleanSubject=value=>String(value||'').trim().slice(0,200)

@@ -1,11 +1,8 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { dirname, extname, basename, join } from 'node:path'
-import pg from 'pg'
-
-const { Pool }=pg
+import {pool as sharedPool,databaseUrl} from './database.mjs'
 const filePath=process.env.DATA_FILE || 'backend/data/ace-state.json'
-const databaseUrl=process.env.DATABASE_URL || ''
 const defaultWorkspaceId=process.env.DEFAULT_WORKSPACE_ID || 'ws_default'
 const isProd=process.env.NODE_ENV==='production'
 const allowFileStoreInProduction=process.env.ALLOW_FILE_STORE_IN_PRODUCTION==='true'
@@ -17,13 +14,7 @@ if(isProd && !databaseUrl && !allowFileStoreInProduction){
 const workspaceContext=new AsyncLocalStorage()
 const cache=new Map()
 const writeChains=new Map()
-const pool=databaseUrl ? new Pool({
-  connectionString:databaseUrl,
-  max:Number(process.env.DB_POOL_MAX||20),
-  idleTimeoutMillis:Number(process.env.DB_IDLE_TIMEOUT_MS||30000),
-  connectionTimeoutMillis:Number(process.env.DB_CONNECT_TIMEOUT_MS||5000),
-  ...(process.env.DB_SSL==='require'?{ssl:{rejectUnauthorized:false}}:{})
-}) : null
+const pool=databaseUrl?sharedPool:null
 
 const initial={
   members:[

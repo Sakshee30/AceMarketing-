@@ -5,6 +5,15 @@ export type DemoRequest = Record<string, FormDataEntryValue>
 
 const getToken = () => getSessionToken()
 const getWorkspace = () => typeof window !== 'undefined' ? (window.localStorage.getItem('ace_workspace_id') || 'ws_default') : 'ws_default'
+const tokenWorkspace = (token:string|null) => {
+  try{
+    if(!token)return null
+    const encoded=token.split('.')[1]
+    if(!encoded)return null
+    const normalized=encoded.replace(/-/g,'+').replace(/_/g,'/')
+    return String(JSON.parse(atob(normalized)).workspaceId||'')||null
+  }catch{return null}
+}
 
 export class AceApiError extends Error {
   status:number
@@ -350,6 +359,17 @@ export const api = {
   settings: () => request('/settings'),
   workspaces: (options?:{signal?:AbortSignal}) => request('/workspaces',{signal:options?.signal}),
   createWorkspace: (payload: Record<string, unknown>) => request('/workspaces', { method: 'POST', body: JSON.stringify(payload) }),
+  switchWorkspace: async (workspaceId:string) => {
+    const currentWorkspace=tokenWorkspace(getToken())||getWorkspace()
+    const result=await request<{token:string;workspaceId:string;expiresIn:number}>('/auth/workspace/switch',{
+      method:'POST',
+      headers:{'X-Workspace-ID':currentWorkspace},
+      body:JSON.stringify({workspaceId})
+    })
+    window.localStorage.setItem('ace_workspace_id',result.workspaceId)
+    setSessionToken(result.token,false)
+    return result
+  },
   saveSettings: (payload: Record<string, unknown>) => request('/settings', { method: 'POST', body: JSON.stringify(payload) }),
   webhookDeliveries: () => request('/webhooks/deliveries'),
   webhookEndpoints: () => request('/webhooks/endpoints'),

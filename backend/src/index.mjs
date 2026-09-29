@@ -687,11 +687,16 @@ const server = http.createServer(async (req,res)=>{
     res.once('finish',()=>finalizeReservation(usageReservationId,res.statusCode<400).catch(()=>{}))
   }
   let authenticatedUser=null
-  if(AUTH_REQUIRED && url.pathname.startsWith('/api/') && !isPublicRequest(req.method||'GET',url.pathname)){
+  const protectedRequest=url.pathname.startsWith('/api/')&&!isPublicRequest(req.method||'GET',url.pathname)
+  if(protectedRequest){
     const token=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'')
-    authenticatedUser=verifyToken(token,JWT_SECRET)
-    if(!authenticatedUser) return send(req,res,401,{error:'unauthorized'})
-    if(authenticatedUser.workspaceId!==workspaceId) return send(req,res,403,{error:'token workspace mismatch'})
+    if(token){
+      authenticatedUser=verifyToken(token,JWT_SECRET)
+      if(!authenticatedUser) return send(req,res,401,{error:'unauthorized'})
+      if(authenticatedUser.workspaceId!==workspaceId) return send(req,res,403,{error:'token workspace mismatch'})
+    }else if(AUTH_REQUIRED||url.pathname==='/api/auth/me'){
+      return send(req,res,401,{error:'unauthorized'})
+    }
   }
   return withWorkspace(workspaceId,async()=>{
   let trackedEvents=trackedEventsByWorkspace.get(workspaceId)
@@ -1177,6 +1182,35 @@ const server = http.createServer(async (req,res)=>{
     }
     if (req.method === 'GET' && url.pathname === '/api/auth/me') {
       return send(req,res,200,{user:{id:req.user.userId,email:req.user.email,role:req.user.role},workspaceId})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/auth/workspace/switch') {
+      const body=await readBody(req)
+      const targetWorkspaceId=String(body.workspaceId||'').trim()
+      if(!/^[A-Za-z0-9_-]{1,64}$/.test(targetWorkspaceId)) return send(req,res,400,{error:'invalid workspace id'})
+      const state=await withWorkspace('ws_default',()=>getState())
+      const target=(state.workspaces||[]).find(item=>String(item.id)===targetWorkspaceId)
+      if(!target) return send(req,res,404,{error:'workspace not found'})
+      const ttl=Number(process.env.TOKEN_TTL_SECONDS||3600)
+      const jti=randomUUID()
+      const now=new Date().toISOString()
+      const expiresAt=new Date(Date.now()+ttl*1000).toISOString()
+      const token=createToken({email:req.user.email,userId:req.user.userId,workspaceId:targetWorkspaceId,role:req.user.role,jti},JWT_SECRET,ttl)
+      await mutateState(s=>{
+        const previous=(s.sessions||[]).find(item=>item.jti===req.user.jti)
+        if(previous){previous.status='revoked';previous.revokedAt=now}
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'auth.workspace_switched',entityId:targetWorkspaceId,userId:req.user.userId,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      await withWorkspace(targetWorkspaceId,()=>mutateState(s=>{
+        s.sessions=s.sessions||[]
+        s.sessions.unshift({jti,userId:req.user.userId,email:req.user.email,role:req.user.role,status:'active',createdAt:now,expiresAt})
+        s.sessions=s.sessions.filter(item=>!item.expiresAt||Date.parse(item.expiresAt)>Date.now()).slice(0,5000)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'auth.workspace_session_started',entityId:req.user.userId,sourceWorkspaceId:workspaceId,at:now})
+        s.audit=s.audit.slice(0,1000)
+      }))
+      return send(req,res,200,{token,workspaceId:targetWorkspaceId,expiresIn:ttl})
     }
     if (req.method === 'GET' && url.pathname === '/api/members') {
       const state=await getState()
@@ -5344,7 +5378,7 @@ const server = http.createServer(async (req,res)=>{
       return send(req,res,200,saved)
     }
     if (req.method === 'GET' && url.pathname === '/api/workspaces') {
-      const state=await getState()
+      const state=await withWorkspace('ws_default',()=>getState())
       return send(req,res,200,{items:state.workspaces||[]})
     }
     if (req.method === 'POST' && url.pathname === '/api/workspaces') {
@@ -5353,7 +5387,7 @@ const server = http.createServer(async (req,res)=>{
       if(name.length<2) return send(req,res,400,{error:'workspace name required'})
       const now=new Date().toISOString()
       let item=null
-      await mutateState(s=>{
+      await withWorkspace('ws_default',()=>mutateState(s=>{
         s.workspaces=s.workspaces||[]
         if(s.workspaces.some(x=>String(x.name).toLowerCase()===name.toLowerCase())) return
         item={id:'ws_'+randomUUID().replaceAll('-','').slice(0,12),name,environment:String(body.environment||'Production'),initials:String(body.initials||name.split(/\s+/).map(x=>x[0]).join('').slice(0,3)).toUpperCase(),createdAt:now}
@@ -5361,7 +5395,7 @@ const server = http.createServer(async (req,res)=>{
         s.audit=s.audit||[]
         s.audit.unshift({id:randomUUID(),action:'workspace.created',entityId:item.id,name:item.name,at:now})
         s.audit=s.audit.slice(0,1000)
-      })
+      }))
       return item?send(req,res,201,item):send(req,res,409,{error:'workspace name already exists'})
     }
     if (req.method === 'GET' && url.pathname === '/api/audit-log') {
