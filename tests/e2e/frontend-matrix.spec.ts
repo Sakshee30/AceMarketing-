@@ -7,6 +7,20 @@ const dismissConsent=async(page:any)=>{
   }
 }
 
+const authenticateWorkspace=async(page:any)=>{
+  const response=await page.request.post('/api/auth/login',{
+    headers:{'Content-Type':'application/json','X-Workspace-ID':'ws_default'},
+    data:{email:'owner@example.com',password:'browser-matrix-password'}
+  })
+  expect(response.ok()).toBeTruthy()
+  const payload=await response.json()
+  expect(typeof payload?.token).toBe('string')
+  await page.addInitScript(({token,workspaceId}:{token:string;workspaceId:string})=>{
+    window.sessionStorage.setItem('ace_session_token',token)
+    window.localStorage.setItem('ace_workspace_id',workspaceId)
+  },{token:payload.token,workspaceId:payload.workspaceId||'ws_default'})
+}
+
 test('public core journey renders across declared browser matrix',async({page})=>{
   await page.goto('/#/pricing')
   await dismissConsent(page)
@@ -16,6 +30,7 @@ test('public core journey renders across declared browser matrix',async({page})=
 })
 
 test('customer core journey renders across declared browser matrix',async({page})=>{
+  await authenticateWorkspace(page)
   await page.goto('/#/workspace?tab=Overview')
   await dismissConsent(page)
   await expect(page.getByRole('heading',{name:/Acquisition command center/i})).toBeVisible()
@@ -33,6 +48,7 @@ test('keyboard-only login controls remain reachable',async({page})=>{
 
 
 test('skip link and visible focus are available across the compatibility shell',async({page})=>{
+  await authenticateWorkspace(page)
   await page.goto('/#/workspace?tab=Overview')
   await dismissConsent(page)
   await page.keyboard.press('Tab')
@@ -44,6 +60,7 @@ test('skip link and visible focus are available across the compatibility shell',
 })
 
 test('reduced-motion preference preserves core customer navigation',async({page})=>{
+  await authenticateWorkspace(page)
   await page.emulateMedia({reducedMotion:'reduce'})
   await page.goto('/#/workspace?tab=Overview')
   await dismissConsent(page)
