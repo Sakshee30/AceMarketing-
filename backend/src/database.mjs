@@ -35,6 +35,15 @@ const createEmbeddedPool=async()=>{
     let sql=await readFile(join(migrationsDir,file),'utf8')
     // pg-mem does not implement PostgreSQL's regex CHECK operator; runtime validation remains active.
     if(file==='001_workspace_state.sql')sql=sql.replace(/,\s*CHECK \(workspace_id ~ '[^']+'\)/,'')
+    // pg-mem gives the original inline job-status CHECK an generated name, so
+    // migration 022 cannot drop it by PostgreSQL's production constraint name.
+    // Expand the embedded copy up front to the final migrated state.
+    if(file==='002_job_queue.sql'){
+      sql=sql.replace(
+        "CHECK (status IN ('pending','leased','retry','succeeded','dead_letter'))",
+        "CHECK (status IN ('pending','leased','retry','succeeded','dead_letter','cancelled','unknown_outcome'))"
+      )
+    }
     // Preserve the production PostgreSQL GIN/FTS index, but omit it only from
     // the embedded pg-mem schema because pg-mem does not implement tsvector/GIN.
     if(file==='023_ai_knowledge.sql'){
