@@ -191,3 +191,23 @@ export const deploymentHealth=async({workspaceId,task,limit=500})=>{
     generatedAt:new Date().toISOString()
   }
 }
+
+
+export const applyDeploymentHealthGuard=async({workspaceId,task})=>{
+  const health=await deploymentHealth({workspaceId,task})
+  if(!pool||!health.control.autoRollback||!health.reasons.length)return {halted:false,health}
+  if(!['canary','active'].includes(health.control.mode))return {halted:false,health}
+  const {rows}=await pool.query(
+    `UPDATE ace_ai_deployment_controls
+     SET mode='off',canary_percent=0,updated_by='system:deployment-health-guard',updated_at=now()
+     WHERE workspace_id=$1 AND task=$2 AND auto_rollback=true AND mode IN ('canary','active')
+     RETURNING *`,
+    [workspaceId,task]
+  )
+  return {
+    halted:Boolean(rows[0]),
+    control:rows[0]?rowToControl(rows[0]):health.control,
+    health,
+    note:rows[0]?'Candidate traffic was halted after a configured deployment-health threshold breach. Artifact rollback still requires the governed rollback operation.':null
+  }
+}
