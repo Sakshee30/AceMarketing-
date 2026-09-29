@@ -302,6 +302,7 @@ export const api = {
   createAiActivationProposal: (payload:Record<string,unknown>) => request('/ai/activation-proposals',{method:'POST',body:JSON.stringify(payload)}),
   approveAiActivationProposal: (id:string) => request('/ai/activation-proposals/'+encodeURIComponent(id)+'/approve',{method:'POST',body:JSON.stringify({})}),
   rejectAiActivationProposal: (id:string,reason?:string) => request('/ai/activation-proposals/'+encodeURIComponent(id)+'/reject',{method:'POST',body:JSON.stringify({reason:reason||'Rejected by reviewer'})}),
+  executeAiActivationProposal: (id:string) => request('/ai/activation-proposals/'+encodeURIComponent(id)+'/execute',{method:'POST',body:JSON.stringify({})}),
   aiAnalysis: (question:string,options?:{signal?:AbortSignal;operationId?:string}) => request('/ai/analysis',{method:'POST',signal:options?.signal,headers:options?.operationId?{'Idempotency-Key':options.operationId}:undefined,body:JSON.stringify({question})}),
   aiJob: (id:string,options?:{signal?:AbortSignal}) => request('/ai/jobs/'+encodeURIComponent(id),{signal:options?.signal}),
   cancelAiJob: (id:string) => request('/ai/jobs/'+encodeURIComponent(id)+'/cancel',{method:'POST',body:JSON.stringify({})}),
