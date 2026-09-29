@@ -21,7 +21,7 @@ const eligibleAudienceMembers=async(workspaceId,bundle)=>{
 
 const activationProviderTimeoutMs=()=>Math.max(1000,Math.min(Number(process.env.ACTIVATION_PROVIDER_TIMEOUT_MS||45000),120000))
 
-const providerForUrl=url=>{
+export const activationProviderForUrl=url=>{
   let parsed
   try{parsed=new URL(url)}
   catch{throw new Error('activation provider URL is invalid')}
@@ -37,7 +37,7 @@ const providerForUrl=url=>{
 
 const requestJson=async(url,options={})=>{
   const started=Date.now()
-  const provider=providerForUrl(url)
+  const provider=activationProviderForUrl(url)
   const controller=new AbortController()
   const timeout=setTimeout(()=>controller.abort('activation_provider_timeout'),activationProviderTimeoutMs())
   let submitted=false
