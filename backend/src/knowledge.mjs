@@ -25,26 +25,20 @@ const canReadPolicy=(policy,role)=>{
 }
 
 const chunkText=text=>{
-  const source=String(text||'').replace(/
-/g,'
-').trim()
+  const source=String(text||'').replace(/\r\n/g,'\n').trim()
   if(!source)return []
   const maxChars=Math.max(1000,Math.min(Number(process.env.KNOWLEDGE_CHUNK_CHARS||6000),12000))
   const overlap=Math.max(0,Math.min(Number(process.env.KNOWLEDGE_CHUNK_OVERLAP_CHARS||600),Math.floor(maxChars/3)))
-  const sections=source.split(/
-{2,}/).map(x=>x.trim()).filter(Boolean)
+  const sections=source.split(/\n{2,}/).map(x=>x.trim()).filter(Boolean)
   const chunks=[]
   let buffer=''
   let sectionIndex=0
   for(const section of sections){
     if(buffer&&buffer.length+section.length+2>maxChars){
       chunks.push({content:buffer,section:'section_'+sectionIndex++})
-      buffer=(overlap?buffer.slice(-overlap):'')+(overlap?'
-':'')+section
+      buffer=(overlap?buffer.slice(-overlap):'')+(overlap?'\n':'')+section
     }else{
-      buffer+=buffer?'
-
-'+section:section
+      buffer+=buffer?'\n\n'+section:section
     }
   }
   if(buffer)chunks.push({content:buffer,section:'section_'+sectionIndex})
