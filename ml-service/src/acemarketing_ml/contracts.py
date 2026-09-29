@@ -168,7 +168,7 @@ class PredictionRow(BaseModel):
 class ArtifactScoreRequest(BaseModel):
     run_id: str | None = Field(default=None, max_length=256)
     task: Literal["lead_qualification", "paid_conversion", "customer_churn", "future_customer_value"]
-    artifact_id: str = Field(min_length=1, max_length=256)
+    artifact_id: str = Field(min_length=1, max_length=256, pattern=r"^[A-Za-z0-9_.-]+$")
     artifact_sha256: str = Field(pattern=r"^[a-fA-F0-9]{64}$")
     rows: list[PredictionRow] = Field(min_length=1, max_length=50_000)
     horizon: Literal["90d", "180d"] | None = None
