@@ -3,6 +3,7 @@ import pg from 'pg'
 import { enqueueJob } from './queue.mjs'
 import { executeHostedTask, ProviderExecutionError } from './ai-providers.mjs'
 import { modelRegistryItem } from './ai-registry.mjs'
+import { getTenantRegistry, syncTenantRegistry } from './ai-registry-store.mjs'
 
 const { Pool }=pg
 const databaseUrl=process.env.DATABASE_URL||''
@@ -27,16 +28,25 @@ export const submitHostedAiJob=async({
   deadlineAt=null,
   actor=null
 })=>{
-  const route=modelRegistryItem(task)
-  if(!route) return {accepted:false,status:400,error:'unknown AI task'}
-  if(route.kind!=='hosted_model') return {accepted:false,status:400,error:'task is not a hosted-provider route'}
-  if(route.readiness!=='active'){
+  const staticRoute=modelRegistryItem(task)
+  if(!staticRoute) return {accepted:false,status:400,error:'unknown AI task'}
+  if(staticRoute.kind!=='hosted_model') return {accepted:false,status:400,error:'task is not a hosted-provider route'}
+  await syncTenantRegistry(workspaceId)
+  const tenantRegistry=await getTenantRegistry(workspaceId)
+  const route=tenantRegistry.find(item=>item.task===task)||staticRoute
+  const prerequisites=[]
+  if(route.documentationVerified!==true)prerequisites.push('documentation verification')
+  if(route.accessVerified!==true)prerequisites.push('provider access verification')
+  if(route.evaluationStatus!=='qualified')prerequisites.push('qualified evaluation')
+  if(route.approvalStatus!=='approved')prerequisites.push('approval')
+  if(route.deploymentStatus!=='deployed')prerequisites.push('deployment')
+  if(prerequisites.length){
     return {
       accepted:false,
       status:409,
       error:'AI task is not active',
-      readiness:route.readiness,
-      prerequisites:route.warnings
+      readiness:'blocked',
+      prerequisites
     }
   }
   if(!pool) return {accepted:false,status:503,error:'durable AI runtime requires DATABASE_URL'}
