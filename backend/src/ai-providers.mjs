@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { modelRegistryItem } from './ai-registry.mjs'
+import { aiPromptTemplate } from './ai-prompts.mjs'
 
 const requestTimeoutMs=Number(process.env.AI_PROVIDER_TIMEOUT_MS||45000)
 
@@ -116,9 +117,10 @@ const normalizeOpenAIText=response=>{
 
 export const runOpenAIAnalyst=async({question,evidence,instructions})=>{
   const route=requireLiveRoute('analyst')
+  const prompt=aiPromptTemplate('analyst')
   const payload={
     model:route.requestedModel,
-    instructions:String(instructions||'Return a concise grounded analysis using only supplied evidence. Distinguish observed facts, predictions, causal estimates and hypotheses.'),
+    instructions:String(instructions||prompt.system),
     input:[
       {
         role:'user',
@@ -154,7 +156,8 @@ export const runOpenAIAnalyst=async({question,evidence,instructions})=>{
     requestFingerprint:result.requestFingerprint,
     text:normalizeOpenAIText(result.json),
     usage:result.json?.usage||null,
-    rawStatus:result.json?.status||'completed'
+    rawStatus:result.json?.status||'completed',
+    promptVersion:prompt.version
   }
 }
 
@@ -166,6 +169,7 @@ const normalizeAnthropicText=response=>(response?.content||[])
 
 export const runAnthropicReviewer=async({recommendation,evidence,policy})=>{
   const route=requireLiveRoute('recommendation_reviewer')
+  const prompt=aiPromptTemplate('recommendation_reviewer')
   const result=await postJson({
     provider:'anthropic',
     task:'recommendation_reviewer',
@@ -177,7 +181,7 @@ export const runAnthropicReviewer=async({recommendation,evidence,policy})=>{
     body:{
       model:route.requestedModel,
       max_tokens:1200,
-      system:'Review the immutable recommendation and evidence snapshot. Identify contradictions, missing data, numerical mismatches, causal overclaims and policy violations. Do not alter backend numbers and do not authorize an action. Return concise rationale and unresolved issues only.',
+      system:prompt.system,
       messages:[{
         role:'user',
         content:JSON.stringify({
@@ -197,7 +201,8 @@ export const runAnthropicReviewer=async({recommendation,evidence,policy})=>{
     requestFingerprint:result.requestFingerprint,
     text:normalizeAnthropicText(result.json),
     usage:result.json?.usage||null,
-    rawStatus:result.json?.stop_reason||'completed'
+    rawStatus:result.json?.stop_reason||'completed',
+    promptVersion:prompt.version
   }
 }
 
