@@ -32,7 +32,7 @@ jobs:
       - name: Ruff format
         run: ruff format --check ml-service/src ml-service/tests
       - name: Mypy
-        run: mypy ml-service/src/acemarketing_ml
+        run: mypy --config-file ml-service/pyproject.toml ml-service/src/acemarketing_ml
       - name: Compile
         run: python -m compileall -q ml-service/src
       - name: Tests
