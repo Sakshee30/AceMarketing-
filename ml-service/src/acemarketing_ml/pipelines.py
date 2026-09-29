@@ -126,7 +126,26 @@ def train_classification(request) -> dict[str, Any]:
     calibrator.fit(x_cal, y_cal)
 
     probability = calibrator.predict_proba(x_test)[:, 1]
-    predicted = (probability >= 0.5).astype(int)
+    predicted = (probability >= request.decision_threshold).astype(int)
+    ranked = sorted(zip(probability.tolist(), y_test, strict=True), key=lambda item: item[0], reverse=True)
+    capacity_n = max(1, min(len(ranked), int(math.ceil(len(ranked) * request.operating_capacity_fraction))))
+    top_positives = sum(label for _, label in ranked[:capacity_n])
+    overall_rate = float(sum(y_test) / len(y_test))
+    top_rate = float(top_positives / capacity_n)
+    lift_at_capacity = float(top_rate / overall_rate) if overall_rate > 0 else None
+    reliability = []
+    for lower in [0.0, 0.2, 0.4, 0.6, 0.8]:
+        upper = lower + 0.2
+        indexes = [index for index, value in enumerate(probability) if lower <= float(value) < upper or (upper >= 1.0 and float(value) == 1.0)]
+        if not indexes:
+            continue
+        reliability.append({
+            "lower": lower,
+            "upper": min(1.0, upper),
+            "count": len(indexes),
+            "meanProbability": float(sum(float(probability[index]) for index in indexes) / len(indexes)),
+            "observedRate": float(sum(y_test[index] for index in indexes) / len(indexes)),
+        })
     metrics = {
         "precision": float(precision_score(y_test, predicted, zero_division=0)),
         "recall": float(recall_score(y_test, predicted, zero_division=0)),
@@ -134,7 +153,11 @@ def train_classification(request) -> dict[str, Any]:
         "logLoss": float(log_loss(y_test, probability, labels=[0, 1])),
         "brier": float(brier_score_loss(y_test, probability)),
         "testRows": len(y_test),
-        "positiveRate": float(sum(y_test) / len(y_test)),
+        "positiveRate": overall_rate,
+        "decisionThreshold": request.decision_threshold,
+        "operatingCapacityFraction": request.operating_capacity_fraction,
+        "liftAtCapacity": lift_at_capacity,
+        "reliability": reliability,
     }
 
     artifact_id = request.run_id or f"{request.task}_{uuid4().hex}"
@@ -158,6 +181,10 @@ def train_classification(request) -> dict[str, Any]:
             "testRows": len(test),
             "labelCutoff": request.label_cutoff.isoformat(),
             "randomSeed": request.random_seed,
+            "datasetId": request.dataset_id,
+            "datasetHash": request.dataset_hash,
+            "featureSchemaVersion": request.feature_schema_version,
+            "labelSchemaVersion": request.label_schema_version,
         },
     )
     return {
@@ -207,10 +234,15 @@ def train_regression(request) -> dict[str, Any]:
     )
     prediction = np.asarray(model.predict(x_test), dtype=float)
     residual = prediction - y_test
+    baseline_value = float(np.mean(y_train))
+    baseline_prediction = np.full_like(y_test, baseline_value, dtype=float)
     metrics = {
         "mae": float(mean_absolute_error(y_test, prediction)),
         "rmse": float(math.sqrt(mean_squared_error(y_test, prediction))),
         "bias": float(residual.mean()),
+        "baselineMae": float(mean_absolute_error(y_test, baseline_prediction)),
+        "baselineRmse": float(math.sqrt(mean_squared_error(y_test, baseline_prediction))),
+        "baselineValue": baseline_value,
         "testRows": len(y_test),
     }
     artifact_id = request.run_id or f"{request.task}_{request.horizon}_{uuid4().hex}"
@@ -227,6 +259,10 @@ def train_regression(request) -> dict[str, Any]:
             "testRows": len(test),
             "labelCutoff": request.label_cutoff.isoformat(),
             "randomSeed": request.random_seed,
+            "datasetId": request.dataset_id,
+            "datasetHash": request.dataset_hash,
+            "featureSchemaVersion": request.feature_schema_version,
+            "labelSchemaVersion": request.label_schema_version,
         },
     )
     return {
