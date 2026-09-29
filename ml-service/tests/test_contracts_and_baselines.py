@@ -65,7 +65,6 @@ def test_seasonal_naive_rejects_irregular_time_axis():
         seasonal_naive_forecast(request)
 
 
-
 def test_artifact_store_rejects_tampering(monkeypatch, tmp_path):
     from acemarketing_ml.artifacts import ArtifactStore
 
@@ -106,8 +105,7 @@ def test_catboost_challenger_preserves_time_boundary(monkeypatch, tmp_path):
             for index in range(90)
         ],
         known_future_covariates=[
-            {"timestamp": (start + timedelta(days=90 + index)).isoformat(), "holiday": 0}
-            for index in range(7)
+            {"timestamp": (start + timedelta(days=90 + index)).isoformat(), "holiday": 0} for index in range(7)
         ],
     )
     result = forecast_challenger(request)
@@ -164,8 +162,7 @@ def test_forecast_challenger_rejects_incomplete_future_covariates(monkeypatch, t
     monkeypatch.setenv("ML_ENV", "development")
     start = datetime(2026, 1, 1, tzinfo=UTC)
     history = [
-        MetricPoint(timestamp=start + timedelta(days=index), value=float(20 + index * 0.2))
-        for index in range(90)
+        MetricPoint(timestamp=start + timedelta(days=index), value=float(20 + index * 0.2)) for index in range(90)
     ]
     request = ChallengerForecastRequest(
         series_id="leads",
@@ -175,9 +172,7 @@ def test_forecast_challenger_rejects_incomplete_future_covariates(monkeypatch, t
         frequency="D",
         timezone="UTC",
         lags=[1, 7, 14],
-        known_future_covariates=[
-            {"timestamp": (start + timedelta(days=90)).isoformat(), "holiday": 0}
-        ],
+        known_future_covariates=[{"timestamp": (start + timedelta(days=90)).isoformat(), "holiday": 0}],
     )
     with pytest.raises(ValueError, match="missing_future_covariates"):
         forecast_challenger(request)
@@ -196,8 +191,8 @@ def test_classification_rejects_single_class_partitions(monkeypatch, tmp_path):
             entity_id=f"lead-{index}",
             features={"score": index},
             label=1,
-            feature_available_at=cutoff - timedelta(days=90-index),
-            prediction_cutoff=cutoff - timedelta(days=80-index),
+            feature_available_at=cutoff - timedelta(days=90 - index),
+            prediction_cutoff=cutoff - timedelta(days=80 - index),
             label_observed_at=cutoff - timedelta(days=1),
         )
         for index in range(60)
@@ -230,10 +225,7 @@ def test_anomaly_minimum_volume_and_duplicate_suppression():
     from acemarketing_ml.contracts import AnomalyRequest, MatrixRow
     from acemarketing_ml.pipelines import anomaly_detection
 
-    rows = [
-        MatrixRow(entity_id=f"entity-{index}", features={"value": float(index)})
-        for index in range(12)
-    ]
+    rows = [MatrixRow(entity_id=f"entity-{index}", features={"value": float(index)}) for index in range(12)]
     rows.append(MatrixRow(entity_id="entity-0", features={"value": 999.0}))
     result = anomaly_detection(AnomalyRequest(rows=rows, minimum_volume=20))
     assert result["status"] == "insufficient_data"

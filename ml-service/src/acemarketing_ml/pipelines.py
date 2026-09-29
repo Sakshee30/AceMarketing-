@@ -115,7 +115,9 @@ def train_classification(request) -> dict[str, Any]:
     negatives = len(y_cal) - positives
     if method == "isotonic" and (len(y_cal) < 100 or min(positives, negatives) < 20):
         method = "sigmoid"
-        warnings.append("Isotonic calibration was replaced with sigmoid because the calibration partition is too small.")
+        warnings.append(
+            "Isotonic calibration was replaced with sigmoid because the calibration partition is too small."
+        )
 
     try:
         from sklearn.frozen import FrozenEstimator
@@ -136,16 +138,22 @@ def train_classification(request) -> dict[str, Any]:
     reliability = []
     for lower in [0.0, 0.2, 0.4, 0.6, 0.8]:
         upper = lower + 0.2
-        indexes = [index for index, value in enumerate(probability) if lower <= float(value) < upper or (upper >= 1.0 and float(value) == 1.0)]
+        indexes = [
+            index
+            for index, value in enumerate(probability)
+            if lower <= float(value) < upper or (upper >= 1.0 and float(value) == 1.0)
+        ]
         if not indexes:
             continue
-        reliability.append({
-            "lower": lower,
-            "upper": min(1.0, upper),
-            "count": len(indexes),
-            "meanProbability": float(sum(float(probability[index]) for index in indexes) / len(indexes)),
-            "observedRate": float(sum(y_test[index] for index in indexes) / len(indexes)),
-        })
+        reliability.append(
+            {
+                "lower": lower,
+                "upper": min(1.0, upper),
+                "count": len(indexes),
+                "meanProbability": float(sum(float(probability[index]) for index in indexes) / len(indexes)),
+                "observedRate": float(sum(y_test[index] for index in indexes) / len(indexes)),
+            }
+        )
     metrics = {
         "precision": float(precision_score(y_test, predicted, zero_division=0)),
         "recall": float(recall_score(y_test, predicted, zero_division=0)),
@@ -195,7 +203,10 @@ def train_classification(request) -> dict[str, Any]:
         "calibrationMethod": method,
         "censoredRows": censored,
         "warnings": warnings,
-        "promotion": {"approved": False, "reason": "Promotion thresholds and tenant approval must be evaluated outside training."},
+        "promotion": {
+            "approved": False,
+            "reason": "Promotion thresholds and tenant approval must be evaluated outside training.",
+        },
     }
 
 
@@ -248,7 +259,13 @@ def train_regression(request) -> dict[str, Any]:
     artifact_id = request.run_id or f"{request.task}_{request.horizon}_{uuid4().hex}"
     artifact = ArtifactStore().save_joblib(
         artifact_id,
-        {"task": request.task, "horizon": request.horizon, "model": model, "features": names, "categoricalFeatures": categorical},
+        {
+            "task": request.task,
+            "horizon": request.horizon,
+            "model": model,
+            "features": names,
+            "categoricalFeatures": categorical,
+        },
         {
             "task": request.task,
             "kind": "catboost_regressor",
@@ -273,7 +290,10 @@ def train_regression(request) -> dict[str, Any]:
         "metrics": metrics,
         "censoredRows": censored,
         "warnings": ["Point predictions do not carry a fabricated confidence percentage."],
-        "promotion": {"approved": False, "reason": "Tenant-specific thresholds and interval validation are still required."},
+        "promotion": {
+            "approved": False,
+            "reason": "Tenant-specific thresholds and interval validation are still required.",
+        },
     }
 
 
@@ -301,7 +321,14 @@ def seasonal_naive_forecast(request) -> dict[str, Any]:
             continue
         predicted = values[origin - season]
         actual = values[origin]
-        backtests.append({"originIndex": origin, "actual": actual, "prediction": predicted, "absoluteError": abs(actual - predicted)})
+        backtests.append(
+            {
+                "originIndex": origin,
+                "actual": actual,
+                "prediction": predicted,
+                "absoluteError": abs(actual - predicted),
+            }
+        )
     mae = sum(item["absoluteError"] for item in backtests) / len(backtests) if backtests else None
 
     return {
@@ -460,7 +487,9 @@ def train_ranker(request) -> dict[str, Any]:
     if not train_groups or not holdout_groups:
         raise ValueError("insufficient_data: ranking group holdout could not be created")
 
-    names = sorted({key for _, _, candidates in exposed_groups for candidate in candidates for key in candidate.features})
+    names = sorted(
+        {key for _, _, candidates in exposed_groups for candidate in candidates for key in candidate.features}
+    )
     if not names:
         raise ValueError("ranking requires at least one candidate feature")
 
@@ -487,8 +516,8 @@ def train_ranker(request) -> dict[str, Any]:
     ndcgs = []
     offset = 0
     for size in test_sizes:
-        truth = np.asarray(test_labels[offset:offset + size], dtype=float).reshape(1, -1)
-        score = np.asarray(predictions[offset:offset + size], dtype=float).reshape(1, -1)
+        truth = np.asarray(test_labels[offset : offset + size], dtype=float).reshape(1, -1)
+        score = np.asarray(predictions[offset : offset + size], dtype=float).reshape(1, -1)
         ndcgs.append(float(ndcg_score(truth, score)))
         offset += size
 
@@ -521,6 +550,7 @@ def train_ranker(request) -> dict[str, Any]:
         "warning": "Only exposed candidates were treated as labelled observations; NDCG is measured on held-out groups and does not prove incremental lift.",
     }
 
+
 def dependency_capabilities() -> list[dict[str, Any]]:
     import importlib.util
 
@@ -551,7 +581,9 @@ def dependency_capabilities() -> list[dict[str, Any]]:
                 "evaluated": False,
                 "approved": False,
                 "deployed": False,
-                "reason": None if available else f"Optional dependency {module} is not installed in this service profile.",
+                "reason": None
+                if available
+                else f"Optional dependency {module} is not installed in this service profile.",
             }
         )
     return result
@@ -648,7 +680,10 @@ def chronos2_forecast(request) -> dict[str, Any]:
         "forecasts": records,
         "quantileLevels": [0.1, 0.5, 0.9],
         "warning": "Chronos-2 output is a probabilistic forecast, not evidence that changing spend causes the predicted outcome.",
-        "promotion": {"approved": False, "reason": "Rolling-origin comparison against baseline and challenger is still required."},
+        "promotion": {
+            "approved": False,
+            "reason": "Rolling-origin comparison against baseline and challenger is still required.",
+        },
     }
 
 
@@ -738,7 +773,10 @@ def causal_forest_estimate(request) -> dict[str, Any]:
             "binaryTreatedRate": float(treatment.mean()) if set(unique_treatment).issubset({0.0, 1.0}) else None,
         },
         "warning": "This observational estimate depends on documented no-unmeasured-confounding and overlap assumptions; it is not a randomized experiment.",
-        "promotion": {"approved": False, "reason": "Assumption review, sensitivity checks and experiment comparison are required before action."},
+        "promotion": {
+            "approved": False,
+            "reason": "Assumption review, sensitivity checks and experiment comparison are required before action.",
+        },
     }
 
 
@@ -1131,12 +1169,16 @@ def forecast_challenger(request) -> dict[str, Any]:
         expected = [(timestamps[-1] + step * index).isoformat() for index in range(1, request.horizon + 1)]
         missing = [timestamp for timestamp in expected if timestamp not in supplied]
         if missing:
-            raise ValueError("missing_future_covariates: every forecast step must be supplied once future covariates are declared")
+            raise ValueError(
+                "missing_future_covariates: every forecast step must be supplied once future covariates are declared"
+            )
         for timestamp in expected:
             item = supplied[timestamp]
             absent = [key for key in known_future_keys if not isinstance(item.get(key), (int, float))]
             if absent:
-                raise ValueError("missing_future_covariates: declared numeric future covariates must be available for every forecast step")
+                raise ValueError(
+                    "missing_future_covariates: declared numeric future covariates must be available for every forecast step"
+                )
 
     rows = []
     targets = []
@@ -1268,7 +1310,10 @@ def forecast_challenger(request) -> dict[str, Any]:
         "metrics": metrics,
         "intervals": None,
         "warning": "Recursive lag forecasts are predictive only; future covariates are accepted only when explicitly supplied as known at forecast time.",
-        "promotion": {"approved": False, "reason": "Compare against seasonal-naive and Chronos on predeclared rolling-origin criteria before promotion."},
+        "promotion": {
+            "approved": False,
+            "reason": "Compare against seasonal-naive and Chronos on predeclared rolling-origin criteria before promotion.",
+        },
     }
 
 
