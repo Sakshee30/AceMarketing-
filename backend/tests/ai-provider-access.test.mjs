@@ -153,3 +153,77 @@ test('confirmed malformed analyst output is rejected instead of persisted as emp
     globalThis.fetch=previousFetch
   }
 })
+
+
+test('Anthropic access check rejects non-HTTPS model endpoints before sending credentials',async()=>{
+  const previousFetch=globalThis.fetch
+  let called=false
+  globalThis.fetch=async()=>{called=true;throw new Error('must not be called')}
+  try{
+    await withEnv({ANTHROPIC_API_KEY:'test-only',ANTHROPIC_MODELS_URL:'http://anthropic.invalid/v1/models'},async()=>{
+      await assert.rejects(
+        ()=>verifyAnthropicModelAccess({requestedModel:'claude-fable-5-1'}),
+        error=>{
+          assert.ok(error instanceof ProviderExecutionError)
+          assert.equal(error.status,400)
+          assert.match(error.message,/must use HTTPS/i)
+          return true
+        }
+      )
+      assert.equal(called,false)
+    })
+  }finally{
+    globalThis.fetch=previousFetch
+  }
+})
+
+test('Anthropic access check rejects a blank provider model identifier',async()=>{
+  const previousFetch=globalThis.fetch
+  globalThis.fetch=async()=>new Response(JSON.stringify({id:'   '}),{
+    status:200,
+    headers:{'content-type':'application/json'}
+  })
+  try{
+    await withEnv({ANTHROPIC_API_KEY:'test-only'},async()=>{
+      await assert.rejects(
+        ()=>verifyAnthropicModelAccess({requestedModel:'claude-fable-5-1'}),
+        error=>{
+          assert.ok(error instanceof ProviderExecutionError)
+          assert.equal(error.status,502)
+          assert.match(error.message,/no model identifier/i)
+          return true
+        }
+      )
+    })
+  }finally{
+    globalThis.fetch=previousFetch
+  }
+})
+
+test('whitespace-only analyst output is rejected as malformed',async()=>{
+  const previousFetch=globalThis.fetch
+  globalThis.fetch=async()=>new Response(JSON.stringify({
+    id:'resp_whitespace',
+    model:'gpt-6-astra',
+    status:'completed',
+    output_text:'   \n\t '
+  }),{
+    status:200,
+    headers:{'content-type':'application/json','x-request-id':'whitespace-test'}
+  })
+  try{
+    await withEnv({OPENAI_API_KEY:'test-only',AI_LIVE_PROVIDER_CALLS:'true'},async()=>{
+      await assert.rejects(
+        ()=>runOpenAIAnalyst({question:'bounded offline test',evidence:{}}),
+        error=>{
+          assert.ok(error instanceof ProviderExecutionError)
+          assert.equal(error.status,502)
+          assert.match(error.message,/no usable text/i)
+          return true
+        }
+      )
+    })
+  }finally{
+    globalThis.fetch=previousFetch
+  }
+})
