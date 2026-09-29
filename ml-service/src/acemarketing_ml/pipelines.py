@@ -452,7 +452,7 @@ def train_ranker(request) -> dict[str, Any]:
     else:
         split_method = "input_order_group_holdout"
 
-    test_groups = max(1, int(math.ceil(len(exposed_groups) * request.holdout_fraction)))
+    test_groups = max(1, math.ceil(len(exposed_groups) * request.holdout_fraction))
     if len(exposed_groups) - test_groups < 3:
         test_groups = len(exposed_groups) - 3
     train_groups = exposed_groups[:-test_groups]
