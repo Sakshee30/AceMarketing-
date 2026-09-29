@@ -742,6 +742,73 @@ def causal_forest_estimate(request) -> dict[str, Any]:
     }
 
 
+def _validate_meridian_scenario(channels, spend, scenario):
+    total_historical = float(sum(float(value) for value in spend))
+    if total_historical <= 0:
+        raise ValueError("Meridian budget scenarios require positive historical media spend")
+    baseline = {channel: float(spend[index]) / total_historical for index, channel in enumerate(channels)}
+    unknown_min = set(scenario.minimum_allocation) - set(channels)
+    unknown_max = set(scenario.maximum_allocation) - set(channels)
+    if unknown_min or unknown_max:
+        unknown = sorted(unknown_min | unknown_max)
+        raise ValueError("budget scenario contains unknown media channels: " + ", ".join(unknown))
+
+    minimum = {}
+    maximum = {}
+    lower_constraint = {}
+    upper_constraint = {}
+    for channel in channels:
+        share = baseline[channel]
+        default_min = max(0.0, share * (1.0 - scenario.max_change_fraction))
+        default_max = min(1.0, share * (1.0 + scenario.max_change_fraction))
+        min_share = float(scenario.minimum_allocation.get(channel, default_min))
+        max_share = float(scenario.maximum_allocation.get(channel, default_max))
+        if not 0.0 <= min_share <= 1.0 or not 0.0 <= max_share <= 1.0:
+            raise ValueError("budget allocation bounds must be between 0 and 1")
+        if min_share > max_share:
+            raise ValueError("minimum allocation cannot exceed maximum allocation for " + channel)
+        if share == 0.0 and (min_share > 0.0 or max_share > 0.0):
+            raise ValueError("relative Meridian constraints cannot introduce spend into a zero-baseline channel")
+        minimum[channel] = min_share
+        maximum[channel] = max_share
+        if share == 0.0:
+            lower_constraint[channel] = 0.0
+            upper_constraint[channel] = 0.0
+        else:
+            lower_constraint[channel] = min(1.0, max(0.0, (share - min_share) / share))
+            upper_constraint[channel] = min(1.0, max(0.0, (max_share - share) / share))
+
+    if sum(minimum.values()) > 1.0 + 1e-9:
+        raise ValueError("minimum channel allocations are infeasible because they sum above 1")
+    if sum(maximum.values()) < 1.0 - 1e-9:
+        raise ValueError("maximum channel allocations are infeasible because they sum below 1")
+
+    largest_change = max(
+        [*lower_constraint.values(), *upper_constraint.values()],
+        default=0.0,
+    )
+    return {
+        "totalBudget": float(scenario.total_budget or total_historical),
+        "baselineAllocation": baseline,
+        "minimumAllocation": minimum,
+        "maximumAllocation": maximum,
+        "lowerConstraint": lower_constraint,
+        "upperConstraint": upper_constraint,
+        "largestRelativeConstraint": largest_change,
+    }
+
+
+def _xarray_records(dataset, limit=5000):
+    import json
+
+    frame = dataset.to_dataframe().reset_index()
+    total = len(frame)
+    if total > limit:
+        frame = frame.iloc[:limit]
+    records = json.loads(frame.to_json(orient="records", date_format="iso"))
+    return records, total > limit
+
+
 def fit_meridian(request) -> dict[str, Any]:
     import tempfile
     from pathlib import Path
@@ -750,6 +817,7 @@ def fit_meridian(request) -> dict[str, Any]:
     import xarray as xr
 
     try:
+        from meridian.analysis import optimizer
         from meridian.data import input_data
         from meridian.model import model, spec
     except ImportError as exc:
@@ -848,12 +916,75 @@ def fit_meridian(request) -> dict[str, Any]:
         artifact_path.unlink(missing_ok=True)
 
     health_failed = "FAIL" in health_status.upper()
+    budget_scenario = None
+    if request.budget_scenario is not None:
+        validated_scenario = _validate_meridian_scenario(channels, spend, request.budget_scenario)
+        if health_failed:
+            budget_scenario = {
+                "status": "blocked_by_diagnostics",
+                "reason": "Meridian model health checks failed; budget optimization was not executed.",
+                "originalAllocation": validated_scenario["baselineAllocation"],
+                "constraints": {
+                    "minimumAllocation": validated_scenario["minimumAllocation"],
+                    "maximumAllocation": validated_scenario["maximumAllocation"],
+                },
+            }
+        else:
+            argument_builder = mmm.input_data.get_paid_channels_argument_builder()
+            pct_of_spend = argument_builder(**validated_scenario["baselineAllocation"])
+            lower = argument_builder(**validated_scenario["lowerConstraint"])
+            upper = argument_builder(**validated_scenario["upperConstraint"])
+            optimization = optimizer.BudgetOptimizer(mmm).optimize(
+                start_date=request.budget_scenario.start_date,
+                end_date=request.budget_scenario.end_date,
+                fixed_budget=True,
+                budget=validated_scenario["totalBudget"],
+                pct_of_spend=pct_of_spend,
+                spend_constraint_lower=lower,
+                spend_constraint_upper=upper,
+                confidence_level=request.budget_scenario.confidence_level,
+                batch_size=request.budget_scenario.batch_size,
+            )
+            original_records, original_truncated = _xarray_records(optimization.nonoptimized_data)
+            proposed_records, proposed_truncated = _xarray_records(optimization.optimized_data)
+            response_records, response_truncated = _xarray_records(optimization.get_response_curves())
+            extrapolation = validated_scenario["largestRelativeConstraint"] > 0.5
+            budget_scenario = {
+                "status": "evaluated_not_approved",
+                "totalBudget": validated_scenario["totalBudget"],
+                "originalAllocation": validated_scenario["baselineAllocation"],
+                "constraints": {
+                    "minimumAllocation": validated_scenario["minimumAllocation"],
+                    "maximumAllocation": validated_scenario["maximumAllocation"],
+                    "maxChangeFraction": request.budget_scenario.max_change_fraction,
+                },
+                "nonOptimizedMetrics": original_records,
+                "optimizedMetrics": proposed_records,
+                "responseCurves": response_records,
+                "recordsTruncated": {
+                    "nonOptimized": original_truncated,
+                    "optimized": proposed_truncated,
+                    "responseCurves": response_truncated,
+                },
+                "credibleIntervalConfidence": request.budget_scenario.confidence_level,
+                "extrapolationWarning": (
+                    "One or more channel bounds permit changes above 50% of historical allocation; "
+                    "review response-curve support before approval."
+                    if extrapolation
+                    else None
+                ),
+                "approval": {
+                    "approved": False,
+                    "reason": "Budget scenarios require explicit policy and human approval; no provider action is executed.",
+                },
+            }
     return {
         "task": "marketing_mix",
         "status": "blocked_by_diagnostics" if health_failed else "evaluated_not_promoted",
         "artifact": artifact,
         "healthStatus": health_status,
         "edaOutcomes": eda,
+        "budgetScenario": budget_scenario,
         "sampling": {
             "priorDraws": request.prior_draws,
             "chains": request.n_chains,
