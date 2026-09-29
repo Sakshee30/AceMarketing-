@@ -31,3 +31,29 @@ When the backend is not configured, production retrieval remains lexical (plus a
 ## Activation dispatch fencing
 
 Provider-side activation remains disabled by default. When explicitly enabled, configure AI_ACTIVATION_DISPATCH_LEASE_MS for the bounded external-dispatch window and AI_ACTIVATION_QUEUE_PUBLISH_DELAY_MS for proposal-state publication before worker eligibility. The database migration 031_ai_activation_dispatch_lease.sql must be applied before enabling execution. Credential-bearing provider redirects are rejected. Model lifecycle changes are refused while a dispatch lease is active; ambiguous outcomes remain blocked for reconciliation rather than automatic replay.
+
+
+## Shadow, canary and rollback controls
+
+Migration `033_ai_deployment_controls.sql` adds tenant-scoped deployment traffic controls and bounded execution observations.
+
+Supported modes are:
+
+- `off`: candidate traffic is blocked.
+- `shadow`: normal user-serving requests are blocked; only the explicit governed shadow endpoint may execute the candidate.
+- `canary`: a deterministic hash bucket limits candidate traffic to the configured percentage. Requests outside the allocation are not silently routed to the candidate.
+- `active`: candidate traffic is fully eligible, subject to the normal model/task governance gates.
+
+Per-task controls also record maximum error-rate and p95-latency thresholds plus a minimum observation count. When the optional rollback guard is enabled and a threshold is breached, the worker conservatively switches candidate traffic to `off`. It does not silently swap model artifacts; the existing governed rollback operation remains the authoritative artifact rollback path.
+
+### Opt-in live verification
+
+Live checks remain off by default.
+
+Provider account/model smoke:
+`AI_LIVE_PROVIDER_SMOKE=true AI_LIVE_PROVIDER_MAX_CALLS=1 npm run ai:live-provider-smoke -- --task=<task>`
+
+Real Chronos checkpoint smoke:
+`AI_REAL_CHECKPOINT_SMOKE=true npm run ai:checkpoint-smoke`
+
+The first command verifies configured provider access only. The second submits one bounded durable `amazon/chronos-2` smoke job and waits for completion. Neither command qualifies, approves or deploys a model, and neither replaces tenant-specific evaluation.
