@@ -1,21 +1,11 @@
 import { createHash, randomUUID } from 'node:crypto'
-import pg from 'pg'
+import {pool} from './database.mjs'
 import { enqueueJob } from './queue.mjs'
 import { executeHostedTask, ProviderExecutionError } from './ai-providers.mjs'
 import { modelRegistryItem } from './ai-registry.mjs'
 import { getTenantRegistry, syncTenantRegistry } from './ai-registry-store.mjs'
 import { evaluateAiTaskAdmission, persistCreativeAsset, persistTranscript } from './ai-governance-store.mjs'
 import { recordActivationProposalReviewerFailure, recordActivationProposalReviewerResult } from './ai-activation-proposals.mjs'
-
-const { Pool }=pg
-const databaseUrl=process.env.DATABASE_URL||''
-const pool=databaseUrl?new Pool({
-  connectionString:databaseUrl,
-  max:Number(process.env.AI_DB_POOL_MAX||5),
-  idleTimeoutMillis:Number(process.env.DB_IDLE_TIMEOUT_MS||30000),
-  connectionTimeoutMillis:Number(process.env.DB_CONNECT_TIMEOUT_MS||5000),
-  ...(process.env.DB_SSL==='require'?{ssl:{rejectUnauthorized:false}}:{})
-}):null
 
 export const aiRuntimeAvailable=()=>Boolean(pool)
 
@@ -282,4 +272,4 @@ export const listAiResults=async({workspaceId,task=null,limit=50})=>{
   return rows
 }
 
-export const closeAiRuntime=async()=>{if(pool)await pool.end()}
+export const closeAiRuntime=async()=>{}
