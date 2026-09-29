@@ -8,4 +8,6 @@ Input snapshots and results are tenant scoped. Prompts, transcripts, embeddings,
 
 Production fitted artifacts require encrypted object storage. Generated artifacts are SHA-256 recorded and hash-verified before loading. S3-compatible storage uses server-side encryption and can use a configured endpoint/region.
 
-Cross-tenant training is not implemented. External activation remains in existing governed approval/adapter flows; reviewer output is not authorization.
+Cross-tenant training is not implemented. External activation is separated into proposal, reviewer evidence, human approval and worker execution. Reviewer output is never authorization.
+
+Provider-side activation execution is disabled by default with `AI_ACTIVATION_EXECUTION_ENABLED=false`. Enabling it does not bypass authorization: the execute endpoint requires the dedicated `ai.activation.execute` permission, queues a durable worker job, and the worker rechecks proposal hash, expiry, evaluation/model snapshot and deployment state immediately before dispatch. Audience execution reuses the existing consent-aware Meta/Google audience adapters; CRM execution reuses the existing workspace-scoped HubSpot/Zoho/Salesforce writeback adapters. Unsupported budget changes remain blocked rather than being mapped to an unverified provider API.
