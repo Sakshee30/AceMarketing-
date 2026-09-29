@@ -64,7 +64,8 @@ export const getAiTaskPolicy=async(workspaceId,task)=>{
     policyVersion:row.policy_version,
     updatedBy:row.updated_by,
     updatedAt:row.updated_at,
-    source:'persisted'
+    source:'persisted',
+    usage:await readTaskUsage(workspaceId,task)
   }
 }
 
