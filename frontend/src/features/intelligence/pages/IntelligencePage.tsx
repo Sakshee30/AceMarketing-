@@ -52,7 +52,7 @@ export default function IntelligencePage(){
     intelligenceApi.transcripts(),
     intelligenceApi.creatives(),
     intelligenceApi.anomalyItems(),
-    intelligenceApi.segments(),
+    intelligenceApi.listSegments(),
     intelligenceApi.rankings(),
     intelligenceApi.capabilities().catch(()=>({items:[],configured:false})),
     intelligenceApi.metrics(),
