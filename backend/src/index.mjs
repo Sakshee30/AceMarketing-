@@ -39,6 +39,7 @@ import { approveAiActivationProposal, attachActivationProposalReviewerJob, creat
 import {queueAiActivationExecution} from './ai-activation-execution.mjs'
 import {analystToolNames,executeAnalystTool,executeAnalystToolSet} from './ai-analyst-tools.mjs'
 import {deploymentHealth,listDeploymentControls,saveDeploymentControl} from './ai-deployment-controls.mjs'
+import {aiMonitoringSnapshot} from './ai-monitoring.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -4832,6 +4833,14 @@ const server = http.createServer(async (req,res)=>{
         persistence='static_fallback'
       }
       return send(req,res,200,{...staticRegistry,tenantItems,persistence})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/monitoring') {
+      const windowHours=Math.max(1,Math.min(Number(url.searchParams.get('windowHours')||24),24*90))
+      try{
+        return send(req,res,200,await aiMonitoringSnapshot({workspaceId,windowHours}))
+      }catch(error){
+        return send(req,res,503,{error:error instanceof Error?error.message:'AI monitoring unavailable'})
+      }
     }
     if (req.method === 'GET' && url.pathname === '/api/ai/deployment-controls') {
       const controls=await listDeploymentControls(workspaceId)

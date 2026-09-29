@@ -286,6 +286,7 @@ export const api = {
   runModel: (name: string) => request('/models/run', { method: 'POST', body: JSON.stringify({ name }) }),
   aiRegistry: (options?:{signal?:AbortSignal}) => request('/ai/registry',{signal:options?.signal}),
   aiDeploymentControls: (options?:{signal?:AbortSignal}) => request('/ai/deployment-controls',{signal:options?.signal}),
+  aiMonitoring: (windowHours=24,options?:{signal?:AbortSignal}) => request('/ai/monitoring?windowHours='+encodeURIComponent(String(windowHours)),{signal:options?.signal}),
   saveAiDeploymentControl: (task:string,payload:Record<string,unknown>) => request('/ai/deployment-controls/'+encodeURIComponent(task),{method:'POST',body:JSON.stringify(payload)}),
   aiTaskPolicies: (options?:{signal?:AbortSignal}) => request('/ai/task-policies',{signal:options?.signal}),
   saveAiTaskPolicy: (task:string,payload:Record<string,unknown>) => request('/ai/task-policies/'+encodeURIComponent(task),{method:'POST',body:JSON.stringify(payload)}),

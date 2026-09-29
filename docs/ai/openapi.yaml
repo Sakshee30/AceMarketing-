@@ -88,6 +88,15 @@ paths:
       parameters: [{$ref: '#/components/parameters/Workspace'}]
       responses:
         '200': {description: Registry}
+  /ai/monitoring:
+    get:
+      summary: Read tenant AI quality, freshness, provider, queue, usage, evaluation and deployment health
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: windowHours, in: query, required: false, schema: {type: integer, minimum: 1, maximum: 2160, default: 24}}
+      responses:
+        '200': {description: AI monitoring snapshot}
+        '503': {description: Monitoring persistence unavailable}
   /ai/deployment-controls:
     get:
       summary: List tenant AI shadow/canary traffic controls and observed health

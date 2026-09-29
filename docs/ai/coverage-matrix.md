@@ -64,3 +64,17 @@
 | rollback support | threshold guard can halt candidate traffic; registry rollback remains explicit and audited | real rollback exercise remains a deployment prerequisite |
 | live provider smoke | `scripts/ai/live-provider-smoke.mjs` | requires explicit credentials, live-call enablement and bounded budget |
 | real Chronos smoke | `scripts/ai/checkpoint-smoke.mjs` | requires provisioned pinned checkpoint and isolated forecasting service |
+
+
+## AI quality and operations monitoring
+
+| Requirement | Implementation | Evidence / limitation |
+|---|---|---|
+| freshness / queue age / cancellations | `ai-monitoring.mjs` reads tenant-scoped AI jobs and latest results | `ai-monitoring.test.mjs` verifies queue age and freshness semantics |
+| provider errors / latency / uncertain outcomes | provider-request outcomes and observed request duration | unknown/submitted requests are surfaced for reconciliation, not treated as success |
+| usage / cost | usage reservations and reconciled units | units are reported; monetary cost is null until pricing/cost accounting is configured |
+| calibration / drift / delayed labels | latest evaluation metrics when actually persisted | unavailable metrics remain null; no fabricated quality score |
+| interval coverage | persisted forecast nominal/measured coverage and gap | appears only after evaluated backtests produce measured coverage |
+| anomaly false positives | investigator triage feedback summarized as reviewed false-positive rate | requires human triage evidence |
+| canary health | deployment observations + `ai-deployment-controls.mjs` health | representative production evidence remains an external prerequisite |
+| admin surface | AI Intelligence / Administration monitoring panel | loading/error state uses the existing page-level state model |

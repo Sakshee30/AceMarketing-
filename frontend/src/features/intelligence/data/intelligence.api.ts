@@ -3,6 +3,7 @@ import {api,streamAiJob} from '../../../lib/api'
 export const intelligenceApi={
   registry:(options?:{signal?:AbortSignal})=>api.aiRegistry(options),
   deploymentControls:(options?:{signal?:AbortSignal})=>api.aiDeploymentControls(options),
+  monitoring:(windowHours=24,options?:{signal?:AbortSignal})=>api.aiMonitoring(windowHours,options),
   saveDeploymentControl:(task:string,payload:Record<string,unknown>)=>api.saveAiDeploymentControl(task,payload),
   policies:(options?:{signal?:AbortSignal})=>api.aiTaskPolicies(options),
   activationProposals:(status?:string,options?:{signal?:AbortSignal})=>api.aiActivationProposals(status,options),
