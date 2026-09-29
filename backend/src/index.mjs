@@ -4631,7 +4631,9 @@ const server = http.createServer(async (req,res)=>{
             capturedAt:new Date().toISOString(),
             actor:authenticatedUser?{userId:authenticatedUser.userId||null,role:authenticatedUser.role||null}:null
           },
-          resultSchemaVersion:'ml-result.v1'
+          resultSchemaVersion:'ml-result.v1',
+          aiUsageReservation:{task,provider:'local_ml',requestedModel:task,reservedUnits:1},
+          outboxEvent:{eventType:'ai.job.accepted',schemaVersion:'ai-job-event.v1',payload:{task,operation,datasetId:id}}
         })
         if(!job)return send(req,res,503,{error:'durable queue requires DATABASE_URL'})
         return send(req,res,202,{jobId:job.id,status:job.status,task,operation,datasetId:id,deadlineAt:job.deadline_at||deadlineAt,resultSchemaVersion:'ml-result.v1'})
@@ -4853,7 +4855,9 @@ const server = http.createServer(async (req,res)=>{
           actor:authenticatedUser?{userId:authenticatedUser.userId||null,role:authenticatedUser.role||null}:null,
           request:body
         },
-        resultSchemaVersion:'ml-result.v1'
+        resultSchemaVersion:'ml-result.v1',
+        aiUsageReservation:{task,provider:'local_ml',requestedModel:task,reservedUnits:1},
+        outboxEvent:{eventType:'ai.job.accepted',schemaVersion:'ai-job-event.v1',payload:{task,operation:spec.operation}}
       })
       if(!job)return send(req,res,503,{error:'durable queue requires DATABASE_URL'})
       return send(req,res,202,{
