@@ -342,6 +342,26 @@ export const generateCreativeImage=async({prompt})=>googleGenerateContent({
   generationConfig:{responseModalities:['TEXT','IMAGE']}
 })
 
+export const verifyAnthropicModelAccess=async({task='recommendation_reviewer',requestedModel})=>{
+  const model=String(requestedModel||'').trim()
+  if(!model)throw new ProviderExecutionError('Anthropic requested model is required',{provider:'anthropic',task,status:400})
+  if(!process.env.ANTHROPIC_API_KEY)throw new ProviderExecutionError('Anthropic credential is not configured',{provider:'anthropic',task,status:503})
+  const base=String(process.env.ANTHROPIC_MODELS_URL||'https://api.anthropic.com/v1/models').replace(/\/$/,'')
+  const result=await getJson({
+    provider:'anthropic',task,
+    url:base+'/'+encodeURIComponent(model),
+    headers:{
+      'x-api-key':process.env.ANTHROPIC_API_KEY,
+      'anthropic-version':process.env.ANTHROPIC_API_VERSION||'2023-06-01'
+    }
+  })
+  const resolved=String(result.json?.id||result.json?.model||model)
+  if(resolved!==model){
+    throw new ProviderExecutionError('Anthropic access check resolved a different model identifier; silent substitution is forbidden',{provider:'anthropic',task,status:409,providerRequestId:result.providerRequestId||null})
+  }
+  return {provider:'anthropic',task,requestedModel:model,resolvedModel:resolved,providerRequestId:result.providerRequestId||null,accessVerified:true}
+}
+
 export const verifyProviderAccess=async task=>{
   if(process.env.AI_PROVIDER_TESTS_ENABLED!=='true'){
     throw new ProviderExecutionError('provider access verification is disabled; set AI_PROVIDER_TESTS_ENABLED=true only for an authorized bounded test',{task,status:503})
@@ -361,21 +381,7 @@ export const verifyProviderAccess=async task=>{
     return {provider:'openai',task,requestedModel:route.requestedModel,resolvedModel:result.json?.id||route.requestedModel,providerRequestId:result.providerRequestId||null,accessVerified:true}
   }
   if(route.provider==='anthropic'){
-    if(!process.env.ANTHROPIC_API_KEY)throw new ProviderExecutionError('Anthropic credential is not configured',{provider:'anthropic',task,status:503})
-    const base=String(process.env.ANTHROPIC_MODELS_URL||'https://api.anthropic.com/v1/models').replace(/\/$/,'')
-    const result=await getJson({
-      provider:'anthropic',task,
-      url:base+'/'+encodeURIComponent(route.requestedModel),
-      headers:{
-        'x-api-key':process.env.ANTHROPIC_API_KEY,
-        'anthropic-version':process.env.ANTHROPIC_API_VERSION||'2023-06-01'
-      }
-    })
-    const resolved=String(result.json?.id||result.json?.model||route.requestedModel)
-    if(resolved!==route.requestedModel){
-      throw new ProviderExecutionError('Anthropic access check resolved a different model identifier; silent substitution is forbidden',{provider:'anthropic',task,status:409,providerRequestId:result.providerRequestId||null})
-    }
-    return {provider:'anthropic',task,requestedModel:route.requestedModel,resolvedModel:resolved,providerRequestId:result.providerRequestId||null,accessVerified:true}
+    return verifyAnthropicModelAccess({task,requestedModel:route.requestedModel})
   }
   if(route.provider==='google'){
     if(!process.env.GOOGLE_AI_API_KEY)throw new ProviderExecutionError('Google AI credential is not configured',{provider:'google',task,status:503})
