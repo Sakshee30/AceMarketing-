@@ -13,7 +13,7 @@ import { ProviderExecutionError } from './ai-providers.mjs'
 import { executeMlJob } from './ml-client.mjs'
 import { closeKnowledge, embedKnowledgeSourceJob, searchKnowledgeJob } from './knowledge.mjs'
 import { closeRegistryStore, recordMlExecution, syncTenantRegistry } from './ai-registry-store.mjs'
-import {executeAiActivationJob} from './ai-activation-execution.mjs'
+import {executeAiActivationJob,reconcileStaleActivationDispatches} from './ai-activation-execution.mjs'
 
 if(!queueAvailable()) throw new Error('DATABASE_URL is required for the worker runtime')
 
@@ -139,6 +139,7 @@ const handle=async job=>{
 }
 
 const runBatch=async()=>{
+  await reconcileStaleActivationDispatches({limit:25})
   if(Date.now()-lastAudienceSchedulePoll>=audienceSchedulePollMs){
     lastAudienceSchedulePoll=Date.now()
     await runDueAudienceSchedules(audienceScheduleBatch)
