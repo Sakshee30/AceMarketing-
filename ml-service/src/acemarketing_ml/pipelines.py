@@ -553,7 +553,7 @@ def causal_forest_estimate(request) -> dict[str, Any]:
 
     try:
         from econml.dml import CausalForestDML
-        from sklearn.ensemble import RandomForestRegressor
+        from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
     except ImportError as exc:
         raise ValueError("econml optional dependency is not installed") from exc
 
@@ -584,20 +584,36 @@ def causal_forest_estimate(request) -> dict[str, Any]:
     if len(x_test) < 20:
         raise ValueError("insufficient_evidence: holdout population is too small")
 
+    binary_treatment = set(unique_treatment).issubset({0.0, 1.0})
+    treatment_model = (
+        RandomForestClassifier(n_estimators=150, min_samples_leaf=5, random_state=request.random_seed)
+        if binary_treatment
+        else RandomForestRegressor(n_estimators=150, min_samples_leaf=5, random_state=request.random_seed)
+    )
     model = CausalForestDML(
         model_y=RandomForestRegressor(n_estimators=150, min_samples_leaf=5, random_state=request.random_seed),
-        model_t=RandomForestRegressor(n_estimators=150, min_samples_leaf=5, random_state=request.random_seed),
+        model_t=treatment_model,
         n_estimators=400,
         min_samples_leaf=10,
         max_depth=None,
-        discrete_treatment=False,
+        discrete_treatment=binary_treatment,
         random_state=request.random_seed,
     )
-    model.fit(y_train, t_train, X=x_train)
+    fit_kwargs = {"X": x_train}
+    group_values = [row.group_id for row in rows[:split]]
+    if all(value is not None for value in group_values) and len(set(group_values)) >= 2:
+        fit_kwargs["groups"] = np.asarray(group_values)
+    model.fit(y_train, t_train, **fit_kwargs)
     effects = np.asarray(model.effect(x_test), dtype=float)
     ate = float(effects.mean())
-    stderr = float(effects.std(ddof=1) / np.sqrt(max(1, len(effects))))
-    interval = [ate - 1.96 * stderr, ate + 1.96 * stderr]
+    try:
+        effect_lower, effect_upper = model.effect_interval(x_test, alpha=0.05)
+        interval = [float(np.mean(effect_lower)), float(np.mean(effect_upper))]
+        interval_method = "econml_effect_interval"
+    except Exception:
+        stderr = float(effects.std(ddof=1) / np.sqrt(max(1, len(effects))))
+        interval = [ate - 1.96 * stderr, ate + 1.96 * stderr]
+        interval_method = "holdout_effect_mean_normal_approximation"
 
     return {
         "task": "incrementality",
@@ -608,7 +624,9 @@ def causal_forest_estimate(request) -> dict[str, Any]:
         "sampleSize": len(rows),
         "holdoutSize": len(x_test),
         "averageTreatmentEffect": ate,
-        "approximateInterval95": interval,
+        "interval95": interval,
+        "intervalMethod": interval_method,
+        "groupAwareCrossFitting": "groups" in fit_kwargs,
         "overlap": {
             "treatmentMin": float(treatment.min()),
             "treatmentMax": float(treatment.max()),
