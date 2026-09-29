@@ -158,7 +158,7 @@ const runBatch=async()=>{
       },heartbeatEvery)
       heartbeatTimer.unref?.()
       const result=await handle(job)
-      const completed=await completeJob(job.id,result,{
+      await completeJob(job.id,result,{
         workerId,
         fencingToken:job.fencing_token,
         externalRequestId:result?.providerRequestId||null,
