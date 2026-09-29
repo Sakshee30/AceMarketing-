@@ -18,7 +18,8 @@ export const submitHostedAiJob=async({
   sourceSnapshot,
   idempotencyKey,
   deadlineAt=null,
-  actor=null
+  actor=null,
+  executionMode='serve'
 })=>{
   const staticRoute=modelRegistryItem(task)
   if(!staticRoute) return {accepted:false,status:400,error:'unknown AI task'}
@@ -26,7 +27,16 @@ export const submitHostedAiJob=async({
   await syncTenantRegistry(workspaceId)
   const tenantRegistry=await getTenantRegistry(workspaceId)
   const route=tenantRegistry.find(item=>item.task===task)||staticRoute
-  const admission=await evaluateAiTaskAdmission({workspaceId,task,requestedModel:route.requestedModel,reservedUnits:1})
+  const trafficKey=String(idempotencyKey||fingerprint({workspaceId,task,input,sourceSnapshot}))
+  const admission=await evaluateAiTaskAdmission({
+    workspaceId,
+    task,
+    requestedModel:route.requestedModel,
+    reservedUnits:1,
+    trafficKey,
+    enforceDeploymentTraffic:true,
+    allowShadow:executionMode==='shadow'
+  })
   if(!admission.allowed){
     return {
       accepted:false,
@@ -67,7 +77,17 @@ export const submitHostedAiJob=async({
   const job=await enqueueJob({
     workspaceId,
     kind:'ai_hosted_task',
-    payload:{task,input:input||{},sourceSnapshot:sourceSnapshot||{}},
+    payload:{
+      task,
+      input:input||{},
+      sourceSnapshot:sourceSnapshot||{},
+      deploymentDecision:admission.deployment?{
+        mode:admission.deployment.mode,
+        bucket:admission.deployment.bucket,
+        servedCandidate:admission.deployment.servedCandidate,
+        shadow:admission.deployment.shadow
+      }:null
+    },
     idempotencyKey:'ai:'+task+':'+key,
     maxAttempts:Number(process.env.AI_JOB_MAX_ATTEMPTS||2),
     deadlineAt:deadline,
@@ -85,7 +105,7 @@ export const submitHostedAiJob=async({
       payload:{task,provider:route.provider,requestedModel:route.requestedModel}
     }
   })
-  return {accepted:true,status:202,job,route}
+  return {accepted:true,status:202,job,route,deployment:admission.deployment||null}
 }
 
 const providerRequestStart=async({workspaceId,job})=>{
@@ -168,7 +188,7 @@ const persistResult=async({workspaceId,job,execution,mediaPersistenceError=null}
       workspaceId,
       job.id,
       task,
-      mediaPersistenceError?'degraded':'completed',
+      job.payload?.deploymentDecision?.shadow?'shadow':mediaPersistenceError?'degraded':'completed',
       task==='analyst'?'provider_output':task==='call_transcription'?'transcript':task==='creative_image'?'generated_asset':'provider_output',
       route?.requestedModel||null,
       execution?.resolvedModel||route?.requestedModel||null,
