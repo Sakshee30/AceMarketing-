@@ -4,7 +4,7 @@ import {canReadKnowledgePolicy,normalizeKnowledgePolicy} from '../src/knowledge.
 
 test('knowledge policy normalizes role allowlists without granting extra roles',()=>{
   const policy=normalizeKnowledgePolicy({allowedRoles:['admin','analyst','',null,'admin']})
-  assert.deepEqual(policy.allowedRoles,['admin','analyst','admin'])
+  assert.deepEqual(policy.allowedRoles,['admin','analyst'])
   assert.equal(canReadKnowledgePolicy(policy,'viewer'),false)
   assert.equal(canReadKnowledgePolicy(policy,'analyst'),true)
   assert.equal(canReadKnowledgePolicy(policy,'owner'),true)
