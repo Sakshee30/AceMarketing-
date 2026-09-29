@@ -153,3 +153,31 @@ def test_unobserved_labels_are_censored():
     eligible, censored = _eligible_supervised_rows(rows, cutoff)
     assert len(eligible) == 40
     assert censored == 1
+
+
+def test_forecast_challenger_rejects_incomplete_future_covariates(monkeypatch, tmp_path):
+    pytest.importorskip("catboost")
+    from acemarketing_ml.contracts import ChallengerForecastRequest
+    from acemarketing_ml.pipelines import forecast_challenger
+
+    monkeypatch.setenv("ML_ARTIFACT_DIR", str(tmp_path))
+    monkeypatch.setenv("ML_ENV", "development")
+    start = datetime(2026, 1, 1, tzinfo=UTC)
+    history = [
+        MetricPoint(timestamp=start + timedelta(days=index), value=float(20 + index * 0.2))
+        for index in range(90)
+    ]
+    request = ChallengerForecastRequest(
+        series_id="leads",
+        history=history,
+        horizon=7,
+        season_length=7,
+        frequency="D",
+        timezone="UTC",
+        lags=[1, 7, 14],
+        known_future_covariates=[
+            {"timestamp": (start + timedelta(days=90)).isoformat(), "holiday": 0}
+        ],
+    )
+    with pytest.raises(ValueError, match="missing_future_covariates"):
+        forecast_challenger(request)
