@@ -1,6 +1,7 @@
 import {connectorCredential} from './connector-auth.mjs'
 import {getAudienceBundle,getLeadProfile} from './lead-ops.mjs'
 import {consentAllows} from './consent.mjs'
+import {ProviderExecutionError} from './ai-providers.mjs'
 
 const credentialFor=async(workspaceId,connector)=>{
   const result=await connectorCredential(workspaceId,connector)
@@ -18,19 +19,55 @@ const eligibleAudienceMembers=async(workspaceId,bundle)=>{
   return eligible
 }
 
+const activationProviderTimeoutMs=()=>Math.max(1000,Math.min(Number(process.env.ACTIVATION_PROVIDER_TIMEOUT_MS||45000),120000))
+
+const providerForUrl=url=>{
+  try{
+    const host=new URL(url).hostname.toLowerCase()
+    if(host.endsWith('googleapis.com'))return 'google'
+    if(host.endsWith('facebook.com'))return 'meta'
+    if(host.endsWith('hubapi.com'))return 'hubspot'
+    if(host.includes('zoho'))return 'zoho'
+    if(host.includes('salesforce'))return 'salesforce'
+  }catch{}
+  return 'activation'
+}
+
 const requestJson=async(url,options={})=>{
   const started=Date.now()
-  const response=await fetch(url,options)
-  const raw=await response.text()
-  let body
-  try{body=raw?JSON.parse(raw):{}}catch{body={raw:raw.slice(0,2000)}}
-  if(!response.ok){
-    const error=new Error('provider request failed: '+response.status)
-    error.status=response.status
-    error.providerBody=body
-    throw error
+  const provider=providerForUrl(url)
+  const controller=new AbortController()
+  const timeout=setTimeout(()=>controller.abort('activation_provider_timeout'),activationProviderTimeoutMs())
+  let submitted=false
+  try{
+    submitted=true
+    const response=await fetch(url,{...options,signal:controller.signal})
+    const providerRequestId=response.headers.get('request-id')
+      ||response.headers.get('x-request-id')
+      ||response.headers.get('x-goog-request-id')
+      ||response.headers.get('x-fb-trace-id')
+      ||null
+    const raw=await response.text()
+    let body
+    try{body=raw?JSON.parse(raw):{}}catch{body={raw:raw.slice(0,2000)}}
+    if(!response.ok){
+      const error=new ProviderExecutionError('provider request failed: '+response.status,{
+        provider,task:'activation',status:response.status,providerRequestId,unknownOutcome:false
+      })
+      error.providerBody=body
+      throw error
+    }
+    return {status:response.status,latencyMs:Date.now()-started,body,providerRequestId}
+  }catch(error){
+    if(error instanceof ProviderExecutionError)throw error
+    const aborted=controller.signal.aborted
+    throw new ProviderExecutionError(
+      aborted?'activation provider request timed out':'activation provider request failed before a confirmed response',
+      {provider,task:'activation',status:null,providerRequestId:null,unknownOutcome:submitted,cause:aborted?'timeout':'network'}
+    )
+  }finally{
+    clearTimeout(timeout)
   }
-  return {status:response.status,latencyMs:Date.now()-started,body}
 }
 
 const metaAudience=async(workspaceId,audienceId)=>{
@@ -92,6 +129,81 @@ const googleHeaders=async workspaceId=>{
   if(process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID) headers['login-customer-id']=String(process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID).replace(/-/g,'')
   return headers
 }
+
+const boundedBudgetMicros=value=>{
+  const n=Number(value)
+  if(!Number.isSafeInteger(n)||n<=0)throw new Error('budget amount must be a positive safe integer in micros')
+  return n
+}
+
+export const changeGoogleAdsCampaignBudget=async(workspaceId,input={})=>{
+  const resourceName=String(input.campaignBudgetResourceName||'').trim()
+  const match=resourceName.match(/^customers\/(\d+)\/campaignBudgets\/(\d+)$/)
+  if(!match)throw new Error('campaignBudgetResourceName must be a Google Ads campaign budget resource name')
+  const customerId=String(process.env.GOOGLE_ADS_CUSTOMER_ID||'').replace(/-/g,'')
+  if(!customerId)throw new Error('GOOGLE_ADS_CUSTOMER_ID is required')
+  if(match[1]!==customerId)throw new Error('campaign budget belongs to a different Google Ads customer')
+
+  const expectedCurrentAmountMicros=boundedBudgetMicros(input.expectedCurrentAmountMicros)
+  const newAmountMicros=boundedBudgetMicros(input.newAmountMicros)
+  const maxChangePct=Math.max(0.1,Math.min(Number(process.env.AI_ACTIVATION_MAX_BUDGET_CHANGE_PCT||20),100))
+  const absoluteCapRaw=String(process.env.AI_ACTIVATION_MAX_DAILY_BUDGET_MICROS||'').trim()
+  if(absoluteCapRaw){
+    const absoluteCap=boundedBudgetMicros(absoluteCapRaw)
+    if(newAmountMicros>absoluteCap)throw new Error('proposed Google Ads budget exceeds AI_ACTIVATION_MAX_DAILY_BUDGET_MICROS')
+  }
+
+  const version=process.env.GOOGLE_ADS_API_VERSION||'v25'
+  const headers=await googleHeaders(workspaceId)
+  const query=[
+    'SELECT campaign_budget.resource_name, campaign_budget.amount_micros, campaign_budget.reference_count',
+    'FROM campaign_budget',
+    "WHERE campaign_budget.resource_name = '"+resourceName+"'",
+    'LIMIT 1'
+  ].join(' ')
+  const observed=await requestJson(`https://googleads.googleapis.com/${version}/customers/${customerId}/googleAds:search`,{
+    method:'POST',headers,body:JSON.stringify({query})
+  })
+  const current=observed.body?.results?.[0]?.campaignBudget
+  if(!current)throw new Error('Google Ads campaign budget was not found')
+  const observedAmount=boundedBudgetMicros(current.amountMicros)
+  if(observedAmount!==expectedCurrentAmountMicros){
+    throw new Error('stale budget proposal: current Google Ads amount no longer matches the approved snapshot')
+  }
+  const referenceCount=Math.max(0,Number(current.referenceCount||0))
+  if(referenceCount>1&&input.sharedBudgetAcknowledged!==true){
+    throw new Error('shared campaign budget affects multiple campaigns; sharedBudgetAcknowledged=true is required')
+  }
+  const changePct=Math.abs(newAmountMicros-observedAmount)/observedAmount*100
+  if(changePct>maxChangePct+Number.EPSILON){
+    throw new Error('proposed Google Ads budget change exceeds the configured percentage limit')
+  }
+
+  const mutated=await requestJson(`https://googleads.googleapis.com/${version}/customers/${customerId}/campaignBudgets:mutate`,{
+    method:'POST',headers,
+    body:JSON.stringify({
+      operations:[{
+        update:{resourceName,amountMicros:newAmountMicros},
+        updateMask:'amountMicros'
+      }],
+      partialFailure:false,
+      validateOnly:false
+    })
+  })
+  const returned=mutated.body?.results?.[0]?.resourceName
+  if(returned&&returned!==resourceName)throw new Error('Google Ads returned an unexpected campaign budget resource')
+  return {
+    provider:'google',
+    externalId:resourceName,
+    status:mutated.status,
+    providerRequestId:mutated.providerRequestId||observed.providerRequestId||null,
+    previousAmountMicros:observedAmount,
+    newAmountMicros,
+    referenceCount,
+    changePct
+  }
+}
+
 
 const googleAudience=async(workspaceId,audienceId)=>{
   const mode=process.env.GOOGLE_CUSTOMER_MATCH_MODE||'legacy'
