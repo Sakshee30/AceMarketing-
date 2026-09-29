@@ -18,5 +18,11 @@ export const intelligenceApi={
   revokeKnowledge:(id:string)=>api.revokeAiKnowledge(id),
   forecastBaseline:(payload:Record<string,unknown>,operationId?:string)=>api.aiMlSeasonalForecast(payload,{operationId}),
   forecastChronos:(payload:Record<string,unknown>,operationId?:string)=>api.aiMlChronosForecast(payload,{operationId}),
-  forecastChallenger:(payload:Record<string,unknown>,operationId?:string)=>api.aiMlForecastChallenger(payload,{operationId})
+  forecastChallenger:(payload:Record<string,unknown>,operationId?:string)=>api.aiMlForecastChallenger(payload,{operationId}),
+  marketingMix:(payload:Record<string,unknown>,operationId?:string)=>api.aiMlMarketingMix(payload,{operationId}),
+  incrementality:(payload:Record<string,unknown>,operationId?:string)=>api.aiMlIncrementality(payload,{operationId}),
+  anomalies:(payload:Record<string,unknown>,operationId?:string)=>api.aiMlAnomalies(payload,{operationId}),
+  segments:(payload:Record<string,unknown>,operationId?:string)=>api.aiMlSegments(payload,{operationId}),
+  rank:(payload:Record<string,unknown>,operationId?:string)=>api.aiMlRank(payload,{operationId}),
+  hostedTask:(task:string,payload:Record<string,unknown>,operationId?:string)=>api.submitAiTask(task,payload,{operationId})
 }
