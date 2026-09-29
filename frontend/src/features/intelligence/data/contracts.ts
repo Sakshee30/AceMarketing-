@@ -33,6 +33,5 @@ export type RankingResult=AiResultCommon&{resultType:'ranking';items:Array<{cand
 export type TranscriptResult=AiResultCommon&{resultType:'transcript';text:string;language?:string|null;speakers?:unknown[];timestamps?:unknown[]}
 export type GeneratedAssetResult=AiResultCommon&{resultType:'generated_asset';assetRef:string;reviewStatus:'draft'|'in_review'|'approved'|'rejected';provenance?:Record<string,unknown>}
 export type ProviderOutputResult=AiResultCommon&{resultType:'provider_output';payload?:Record<string,unknown>|string|null}
-export type ModelEvaluationResult=AiResultCommon&{resultType:'model_evaluation';metrics?:Record<string,unknown>;qualified?:boolean|null}
 
-export type AiTypedResult=ObservedMetricResult|CalibratedProbabilityResult|RegressionEstimateResult|ForecastDistributionResult|CausalEstimateResult|MarketingMixAnalysisResult|ModelEvaluationResult|AnomalyScoreResult|ClusterAssignmentResult|RankingResult|TranscriptResult|GeneratedAssetResult|ProviderOutputResult|ModelEvaluationResult
+export type AiTypedResult=ObservedMetricResult|CalibratedProbabilityResult|RegressionEstimateResult|ForecastDistributionResult|CausalEstimateResult|MarketingMixAnalysisResult|ModelEvaluationResult|AnomalyScoreResult|ClusterAssignmentResult|RankingResult|TranscriptResult|GeneratedAssetResult|ProviderOutputResult
