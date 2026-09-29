@@ -5186,7 +5186,7 @@ const server = http.createServer(async (req,res)=>{
       const job=await requestJobCancellation({workspaceId,id})
       return job?send(req,res,200,{job}):send(req,res,404,{error:'cancellable AI job not found'})
     }
-    if (req.method === 'POST' && /^\\/api\\/ai\\/tasks\\/[^/]+\\/submit$/.test(url.pathname)) {
+    if (req.method === 'POST' && /^\/api\/ai\/tasks\/[^/]+\/submit$/.test(url.pathname)) {
       const task=decodeURIComponent(url.pathname.split('/')[4]||'')
       if(task==='live_voice')return send(req,res,400,{error:'live_voice uses the dedicated session endpoint'})
       const body=await readBody(req)
