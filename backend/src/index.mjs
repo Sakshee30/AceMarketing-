@@ -29,6 +29,8 @@ import { closeAiRuntime, listAiResults, submitHostedAiJob } from './ai-runtime.m
 import { getMlCapabilities, mlServiceConfigured } from './ml-client.mjs'
 import { closeKnowledge, ingestKnowledgeText, listKnowledgeSources, revokeKnowledgeSource } from './knowledge.mjs'
 import { getEvaluationPolicy, getTenantRegistry, listEvaluations, promoteModel, qualifyEvaluation, recordProviderAccessVerification, rollbackModel, syncTenantRegistry, upsertEvaluationPolicy } from './ai-registry-store.mjs'
+import { closeAiDatasets, createAiDataset, getAiDataset, listAiDatasets, retireAiDataset, trainingRequestFromDataset, trainingRequestFromDatasetWithHorizon } from './ai-datasets.mjs'
+import { metricCatalog } from './metric-catalog.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -446,8 +448,9 @@ const permissionForRequest=(method,path)=>{
   if(path.startsWith('/api/members')||path.startsWith('/api/invitations')) return 'members.write'
   if(path.startsWith('/api/integrations')||path.startsWith('/api/custom-integrations')) return 'integrations.write'
   if(path==='/api/ai/knowledge/search') return 'ai.analysis.run'
-  if(path.startsWith('/api/ai/knowledge')) return req.method==='GET'?'workspace.read':'ai.knowledge.write'
+  if(path.startsWith('/api/ai/knowledge')) return method==='GET'?'workspace.read':'ai.knowledge.write'
   if(path==='/api/ai/analysis') return 'ai.analysis.run'
+  if(path.startsWith('/api/ai/datasets')&&method!=='GET') return 'ai.training.run'
   if(path.startsWith('/api/ai/ml/train/')||path==='/api/ai/ml/rank') return 'ai.training.run'
   if(path==='/api/ai/ml/score'||path==='/api/ai/ml/rank/score'||path==='/api/ai/ml/forecast/seasonal-naive'||path==='/api/ai/ml/forecast/chronos-2'||path==='/api/ai/ml/forecast/catboost-challenger'||path==='/api/ai/ml/incrementality'||path==='/api/ai/ml/marketing-mix'||path==='/api/ai/ml/anomalies'||path==='/api/ai/ml/segments') return 'ai.analysis.run'
   if(path.includes('/api/ai/jobs/')) return 'ai.analysis.run'
@@ -4556,6 +4559,86 @@ const server = http.createServer(async (req,res)=>{
         recent
       })
     }
+    if (req.method === 'GET' && url.pathname === '/api/ai/metrics/catalog') {
+      return send(req,res,200,metricCatalog())
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/datasets') {
+      const task=String(url.searchParams.get('task')||'').trim()||null
+      const limit=Math.max(1,Math.min(Number(url.searchParams.get('limit')||50),200))
+      const items=await listAiDatasets({workspaceId,task,limit}).catch(()=>[])
+      return send(req,res,200,{items,task,limit,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/ai/datasets') {
+      const body=await readBody(req)
+      try{
+        const item=await createAiDataset({
+          workspaceId,
+          task:String(body.task||''),
+          rows:body.rows,
+          schemaVersion:String(body.schemaVersion||'point-in-time.v1'),
+          featureDefinitionVersion:String(body.featureDefinitionVersion||'features.v1'),
+          labelDefinitionVersion:String(body.labelDefinitionVersion||'labels.v1'),
+          labelObservationCutoff:body.labelObservationCutoff,
+          sourceSnapshot:body.sourceSnapshot&&typeof body.sourceSnapshot==='object'?body.sourceSnapshot:{},
+          createdBy:authenticatedUser?.userId||null
+        })
+        return send(req,res,201,{item})
+      }catch(error){
+        return send(req,res,422,{error:error instanceof Error?error.message:'dataset could not be created'})
+      }
+    }
+    if (req.method === 'GET' && /^\/api\/ai\/datasets\/[^/]+$/.test(url.pathname)) {
+      const id=decodeURIComponent(url.pathname.split('/')[4]||'')
+      const item=await getAiDataset({workspaceId,id,includeRows:false}).catch(()=>null)
+      return item?send(req,res,200,{item}):send(req,res,404,{error:'dataset not found'})
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/datasets\/[^/]+\/retire$/.test(url.pathname)) {
+      if(!['owner','admin'].includes(authenticatedUser?.role||''))return send(req,res,403,{error:'owner or admin role required'})
+      const id=decodeURIComponent(url.pathname.split('/')[4]||'')
+      const item=await retireAiDataset({workspaceId,id})
+      return item?send(req,res,200,{item}):send(req,res,404,{error:'dataset not found'})
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/datasets\/[^/]+\/train$/.test(url.pathname)) {
+      if(!mlServiceConfigured())return send(req,res,503,{error:'ML service is not configured'})
+      const id=decodeURIComponent(url.pathname.split('/')[4]||'')
+      const body=await readBody(req)
+      try{
+        const dataset=await getAiDataset({workspaceId,id,includeRows:false})
+        if(!dataset)return send(req,res,404,{error:'dataset not found'})
+        const task=String(dataset.task||'')
+        const request=task==='future_customer_value'
+          ?await trainingRequestFromDatasetWithHorizon({
+            workspaceId,id,horizon:String(body.horizon||''),randomSeed:Number(body.randomSeed||42),categoricalFeatures:body.categoricalFeatures||[]
+          })
+          :await trainingRequestFromDataset({
+            workspaceId,id,randomSeed:Number(body.randomSeed||42),calibrationMethod:String(body.calibrationMethod||'sigmoid'),categoricalFeatures:body.categoricalFeatures||[]
+          })
+        const operation=task==='future_customer_value'?'regression_train':'classification_train'
+        const requestKey=String(req.headers['idempotency-key']||req.requestId||randomUUID())
+        const deadlineAt=new Date(Date.now()+Number(process.env.ML_JOB_DEADLINE_MS||15*60*1000)).toISOString()
+        const job=await enqueueJob({
+          workspaceId,
+          kind:'ml_task',
+          payload:{operation,task,request},
+          idempotencyKey:'ml:dataset:'+id+':'+requestKey,
+          maxAttempts:Number(process.env.ML_JOB_MAX_ATTEMPTS||2),
+          deadlineAt,
+          inputSnapshot:{
+            schemaVersion:'ml-dataset-input.v1',
+            task,operation,datasetId:id,datasetHash:dataset.content_hash,
+            featureSchemaVersion:dataset.feature_definition_version,
+            labelSchemaVersion:dataset.label_definition_version,
+            capturedAt:new Date().toISOString(),
+            actor:authenticatedUser?{userId:authenticatedUser.userId||null,role:authenticatedUser.role||null}:null
+          },
+          resultSchemaVersion:'ml-result.v1'
+        })
+        if(!job)return send(req,res,503,{error:'durable queue requires DATABASE_URL'})
+        return send(req,res,202,{jobId:job.id,status:job.status,task,operation,datasetId:id,deadlineAt:job.deadline_at||deadlineAt,resultSchemaVersion:'ml-result.v1'})
+      }catch(error){
+        return send(req,res,422,{error:error instanceof Error?error.message:'dataset training could not be submitted'})
+      }
+    }
     if (req.method === 'GET' && url.pathname === '/api/ai/registry') {
       const staticRegistry=registrySummary()
       let tenantItems=[]
@@ -4748,6 +4831,9 @@ const server = http.createServer(async (req,res)=>{
       const body=await readBody(req)
       const task=spec.taskFromBody?String(body.task||''):spec.task
       if(!task)return send(req,res,400,{error:'task required'})
+      if(IS_PROD&&['classification_train','regression_train'].includes(spec.operation)&&process.env.AI_ALLOW_INLINE_TRAINING!=='true'){
+        return send(req,res,409,{error:'production supervised training requires an immutable dataset snapshot; create /api/ai/datasets and submit /api/ai/datasets/:id/train'})
+      }
       const allowedTasks=new Set(['lead_qualification','paid_conversion','customer_churn','future_customer_value','forecast_baseline','forecast_primary','forecast_challenger','incrementality','marketing_mix','anomaly_detection','behavioral_segments','offer_ranking'])
       if(!allowedTasks.has(task))return send(req,res,400,{error:'unsupported ML task'})
       const requestKey=String(req.headers['idempotency-key']||req.requestId||randomUUID())
