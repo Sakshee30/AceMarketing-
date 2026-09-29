@@ -1,18 +1,8 @@
 import { createHash, randomUUID } from 'node:crypto'
-import pg from 'pg'
+import {embeddedDatabase,pool} from './database.mjs'
 import { enqueueJob } from './queue.mjs'
 import { embedVoyage, rerankVoyage } from './ai-providers.mjs'
 import { modelRegistryItem } from './ai-registry.mjs'
-
-const { Pool }=pg
-const databaseUrl=process.env.DATABASE_URL||''
-const pool=databaseUrl?new Pool({
-  connectionString:databaseUrl,
-  max:Number(process.env.KNOWLEDGE_DB_POOL_MAX||5),
-  idleTimeoutMillis:Number(process.env.DB_IDLE_TIMEOUT_MS||30000),
-  connectionTimeoutMillis:Number(process.env.DB_CONNECT_TIMEOUT_MS||5000),
-  ...(process.env.DB_SSL==='require'?{ssl:{rejectUnauthorized:false}}:{})
-}):null
 
 const hash=value=>createHash('sha256').update(String(value)).digest('hex')
 export const normalizeKnowledgePolicy=value=>{
@@ -234,21 +224,47 @@ const cosine=(a,b)=>{
 export const searchKnowledge=async({workspaceId,query,role,limit=10,queryVector=null})=>{
   if(!pool)return []
   const safeLimit=Math.max(1,Math.min(Number(limit||10),50))
-  const {rows}=await pool.query(
-    `SELECT c.id,c.source_id,c.ordinal,c.section,c.source_offset,c.content,c.access_policy,c.embedding,
-            c.embedding_model,c.embedding_dimensions,c.index_version,s.name source_name,s.source_location,
-            ts_rank_cd(to_tsvector('english',c.content),websearch_to_tsquery('english',$2)) lexical_rank
-     FROM ace_ai_knowledge_chunks c
-     JOIN ace_ai_knowledge_sources s ON s.id=c.source_id AND s.workspace_id=c.workspace_id
-     WHERE c.workspace_id=$1
-       AND c.revoked_at IS NULL
-       AND s.revoked_at IS NULL
-       AND s.deleted_at IS NULL
-       AND to_tsvector('english',c.content) @@ websearch_to_tsquery('english',$2)
-     ORDER BY lexical_rank DESC
-     LIMIT 100`,
-    [workspaceId,String(query).slice(0,1000)]
-  )
+  const cleanQuery=String(query).slice(0,1000).trim()
+  if(!cleanQuery)return []
+  let rows
+  if(embeddedDatabase){
+    const result=await pool.query(
+      `SELECT c.id,c.source_id,c.ordinal,c.section,c.source_offset,c.content,c.access_policy,c.embedding,
+              c.embedding_model,c.embedding_dimensions,c.index_version,s.name source_name,s.source_location
+       FROM ace_ai_knowledge_chunks c
+       JOIN ace_ai_knowledge_sources s ON s.id=c.source_id AND s.workspace_id=c.workspace_id
+       WHERE c.workspace_id=$1
+         AND c.revoked_at IS NULL
+         AND s.revoked_at IS NULL
+         AND s.deleted_at IS NULL
+       ORDER BY c.ordinal ASC
+       LIMIT 500`,
+      [workspaceId]
+    )
+    const terms=Array.from(new Set(cleanQuery.toLowerCase().split(/[^a-z0-9]+/).filter(term=>term.length>1))).slice(0,20)
+    rows=result.rows.map(row=>{
+      const haystack=String(row.content||'').toLowerCase()
+      const matched=terms.reduce((count,term)=>count+(haystack.includes(term)?1:0),0)
+      return {...row,lexical_rank:terms.length?matched/terms.length:0}
+    }).filter(row=>Number(row.lexical_rank)>0)
+  }else{
+    const result=await pool.query(
+      `SELECT c.id,c.source_id,c.ordinal,c.section,c.source_offset,c.content,c.access_policy,c.embedding,
+              c.embedding_model,c.embedding_dimensions,c.index_version,s.name source_name,s.source_location,
+              ts_rank_cd(to_tsvector('english',c.content),websearch_to_tsquery('english',$2)) lexical_rank
+       FROM ace_ai_knowledge_chunks c
+       JOIN ace_ai_knowledge_sources s ON s.id=c.source_id AND s.workspace_id=c.workspace_id
+       WHERE c.workspace_id=$1
+         AND c.revoked_at IS NULL
+         AND s.revoked_at IS NULL
+         AND s.deleted_at IS NULL
+         AND to_tsvector('english',c.content) @@ websearch_to_tsquery('english',$2)
+       ORDER BY lexical_rank DESC
+       LIMIT 100`,
+      [workspaceId,cleanQuery]
+    )
+    rows=result.rows
+  }
   const authorized=rows.filter(row=>canReadKnowledgePolicy(row.access_policy,role)).map(row=>{
     const vectorScore=queryVector?cosine(queryVector,row.embedding):null
     return {...row,vectorScore,hybridScore:Number(row.lexical_rank||0)+(vectorScore==null?0:vectorScore)}
@@ -303,4 +319,4 @@ export const searchKnowledgeJob=async job=>{
   }
 }
 
-export const closeKnowledge=async()=>{if(pool)await pool.end()}
+export const closeKnowledge=async()=>{}
