@@ -227,3 +227,29 @@ test('whitespace-only analyst output is rejected as malformed',async()=>{
     globalThis.fetch=previousFetch
   }
 })
+
+
+test('Anthropic verification does not follow credentialed redirects',async()=>{
+  const previousFetch=globalThis.fetch
+  let seenOptions=null
+  globalThis.fetch=async(_url,options)=>{
+    seenOptions=options
+    return new Response('',{status:302,headers:{location:'https://example.invalid/models/claude-fable-5-1'}})
+  }
+  try{
+    await withEnv({ANTHROPIC_API_KEY:'test-only'},async()=>{
+      await assert.rejects(
+        ()=>verifyAnthropicModelAccess({requestedModel:'claude-fable-5-1'}),
+        error=>{
+          assert.ok(error instanceof ProviderExecutionError)
+          assert.equal(error.status,302)
+          assert.equal(error.unknownOutcome,false)
+          return true
+        }
+      )
+      assert.equal(seenOptions.redirect,'manual')
+    })
+  }finally{
+    globalThis.fetch=previousFetch
+  }
+})
