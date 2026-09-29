@@ -32,8 +32,8 @@ const usageUnitsFromResult=result=>{
   if(!usage||typeof usage!=='object')return null
   const candidates=[
     usage.total_tokens,usage.totalTokens,usage.totalTokenCount,
-    usage.input_tokens&&usage.output_tokens?Number(usage.input_tokens)+Number(usage.output_tokens):null,
-    usage.promptTokenCount&&usage.candidatesTokenCount?Number(usage.promptTokenCount)+Number(usage.candidatesTokenCount):null
+    usage.input_tokens!=null&&usage.output_tokens!=null?Number(usage.input_tokens)+Number(usage.output_tokens):null,
+    usage.promptTokenCount!=null&&usage.candidatesTokenCount!=null?Number(usage.promptTokenCount)+Number(usage.candidatesTokenCount):null
   ]
   const value=candidates.map(Number).find(Number.isFinite)
   return Number.isFinite(value)?Math.max(0,value):null
