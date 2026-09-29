@@ -47,20 +47,28 @@ export const listAiTaskPolicies=async workspaceId=>{
   return tasks
 }
 
-export const saveAiTaskPolicy=async({workspaceId,task,input,actor})=>{
+export const normalizeAiTaskPolicyInput=(task,input={})=>{
   const route=modelRegistryItem(task)
   if(!route)throw new Error('unknown AI task')
-  if(!pool)throw new Error('DATABASE_URL is required to persist AI task policy')
   const enabled=input.enabled!==false
   const approvedRequestedModel=input.approvedRequestedModel==null||input.approvedRequestedModel===''?null:String(input.approvedRequestedModel)
   if(approvedRequestedModel&&approvedRequestedModel!==route.requestedModel){
     throw new Error('approvedRequestedModel must match the registry requested model; silent substitution is not allowed')
   }
-  const maxConcurrentJobs=asInt(input.maxConcurrentJobs,4,1,1000)
+  const rawConcurrent=input.maxConcurrentJobs==null?4:Number(input.maxConcurrentJobs)
+  if(!Number.isInteger(rawConcurrent)||rawConcurrent<1||rawConcurrent>1000)throw new Error('maxConcurrentJobs must be an integer between 1 and 1000')
   const monthlyUnitBudget=input.monthlyUnitBudget==null||input.monthlyUnitBudget===''?null:Number(input.monthlyUnitBudget)
   if(monthlyUnitBudget!=null&&(!Number.isFinite(monthlyUnitBudget)||monthlyUnitBudget<0))throw new Error('monthlyUnitBudget must be null or a non-negative number')
-  const featureFlags=input.featureFlags&&typeof input.featureFlags==='object'&&!Array.isArray(input.featureFlags)?input.featureFlags:{}
-  const policyVersion=String(input.policyVersion||'v1').slice(0,120)
+  const featureFlags=input.featureFlags==null?{}:input.featureFlags
+  if(!featureFlags||typeof featureFlags!=='object'||Array.isArray(featureFlags))throw new Error('featureFlags must be an object')
+  const policyVersion=String(input.policyVersion||'v1').trim().slice(0,120)
+  if(!policyVersion)throw new Error('policyVersion required')
+  return {route,enabled,approvedRequestedModel,maxConcurrentJobs:rawConcurrent,monthlyUnitBudget,featureFlags,policyVersion}
+}
+
+export const saveAiTaskPolicy=async({workspaceId,task,input,actor})=>{
+  const {enabled,approvedRequestedModel,maxConcurrentJobs,monthlyUnitBudget,featureFlags,policyVersion}=normalizeAiTaskPolicyInput(task,input)
+  if(!pool)throw new Error('DATABASE_URL is required to persist AI task policy')
   const {rows}=await pool.query(
     `INSERT INTO ace_ai_task_policies
       (workspace_id,task,enabled,approved_requested_model,max_concurrent_jobs,monthly_unit_budget,feature_flags,policy_version,updated_by)
