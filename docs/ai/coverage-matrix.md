@@ -26,4 +26,4 @@
 | Operator lifecycle scripts | scripts/ai/* | n/a | check:ai-tools | operator token/workspace |
 | Kubernetes | deploy/k8s/* | n/a | CI canonical check | cluster secrets/storage classes/network egress |
 
-| Activation proposals/execution | ai-activation-proposals.mjs + ai-activation-execution.mjs + migrations 028-030 | AI Intelligence / Administration | proposal + execution boundary tests | execution default-off; Meta/Google audience and HubSpot/Zoho/Salesforce CRM adapters reuse current consent/authorization controls; budget-change adapter intentionally blocked |
+| Activation proposals/execution | ai-activation-proposals.mjs + ai-activation-execution.mjs + activation-adapters.mjs + migrations 028-030 | AI Intelligence / Administration | proposal + execution boundary tests | execution default-off; Meta/Google audience and HubSpot/Zoho/Salesforce CRM adapters plus bounded Google Ads campaign-budget mutation; real provider credentials/approval remain required |
