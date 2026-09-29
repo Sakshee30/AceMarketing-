@@ -27,6 +27,7 @@ export default function IntelligencePage(){
  const [anomalyItems,setAnomalyItems]=useState<any[]>([])
  const [segmentSnapshots,setSegmentSnapshots]=useState<any[]>([])
  const [rankingItems,setRankingItems]=useState<any[]>([])
+ const [activationProposals,setActivationProposals]=useState<any[]>([])
  const [policyDrafts,setPolicyDrafts]=useState<Record<string,{enabled:boolean;maxConcurrentJobs:number;monthlyUnitBudget:string}>>({})
  const [loading,setLoading]=useState(true)
  const [error,setError]=useState('')
@@ -42,11 +43,12 @@ export default function IntelligencePage(){
  const [creativePrompt,setCreativePrompt]=useState('')
  const [predictionPayload,setPredictionPayload]=useState('{"task":"lead_qualification","artifactId":"","rows":[]}')
  const [mediaDraft,setMediaDraft]=useState({task:'multimodal_extraction',payload:'{"prompt":"Extract structured evidence.","inlineData":{"mimeType":"image/png","data":""}}'})
+ const [activationDraft,setActivationDraft]=useState({task:'forecast_primary',proposalType:'budget_change',providerAdapter:'google_ads',payload:'{"budget":1000}',evidenceRefs:'["result_or_report_id"]',expiresMinutes:30})
 
  const load=async()=>{
   setLoading(true);setError('')
   try{
-   const [r,p,t,cr,an,sg,rk,caps,m,d,k,res]:any=await Promise.all([
+   const [r,p,t,cr,an,sg,rk,ap,caps,m,d,k,res]:any=await Promise.all([
     intelligenceApi.registry(),
     intelligenceApi.policies(),
     intelligenceApi.transcripts(),
@@ -54,6 +56,7 @@ export default function IntelligencePage(){
     intelligenceApi.anomalyItems(),
     intelligenceApi.listSegments(),
     intelligenceApi.rankings(),
+    intelligenceApi.activationProposals(),
     intelligenceApi.capabilities().catch(()=>({items:[],configured:false})),
     intelligenceApi.metrics(),
     intelligenceApi.datasets(),
@@ -67,6 +70,7 @@ export default function IntelligencePage(){
    setAnomalyItems(an.items||[])
    setSegmentSnapshots(sg.items||[])
    setRankingItems(rk.items||[])
+   setActivationProposals(ap.items||[])
    setPolicyDrafts(Object.fromEntries((p.items||[]).map((item:any)=>[item.task,{enabled:item.enabled!==false,maxConcurrentJobs:Number(item.maxConcurrentJobs||4),monthlyUnitBudget:item.monthlyUnitBudget==null?'':String(item.monthlyUnitBudget)}])))
    setCapabilities(caps.items||[])
    setMetrics(m)
@@ -138,6 +142,38 @@ export default function IntelligencePage(){
    setNotice({kind:'ok',text:'Anomaly triage state updated. The anomaly score remains an investigation signal, not a fraud probability.'})
    await load()
   }catch(e:any){setNotice({kind:'error',text:e?.message||'Anomaly triage could not be updated.'})}
+  finally{setBusy('')}
+ }
+
+ const createActivationProposal=async()=>{
+  setBusy('activation-create');setNotice({kind:'',text:''})
+  try{
+   const payload=JSON.parse(activationDraft.payload)
+   const evidenceRefs=JSON.parse(activationDraft.evidenceRefs)
+   if(!payload||typeof payload!=='object'||Array.isArray(payload))throw new Error('Activation payload must be a JSON object.')
+   if(!Array.isArray(evidenceRefs)||!evidenceRefs.length)throw new Error('Evidence references must be a non-empty JSON array.')
+   const expiresAt=new Date(Date.now()+Math.max(1,Math.min(Number(activationDraft.expiresMinutes||30),1440))*60_000).toISOString()
+   await intelligenceApi.createActivationProposal({
+    task:activationDraft.task,
+    proposalType:activationDraft.proposalType,
+    payload:{...payload,providerAdapter:activationDraft.providerAdapter},
+    evidenceSnapshot:{evidenceRefs},
+    expiresAt
+   })
+   setNotice({kind:'ok',text:'Activation proposal created for separate approval. No provider side effect has been executed.'})
+   await load()
+  }catch(e:any){setNotice({kind:'error',text:e?.message||'Activation proposal could not be created.'})}
+  finally{setBusy('')}
+ }
+
+ const decideActivationProposal=async(id:string,decision:'approve'|'reject')=>{
+  setBusy('activation:'+decision+':'+id);setNotice({kind:'',text:''})
+  try{
+   if(decision==='approve')await intelligenceApi.approveActivationProposal(id)
+   else await intelligenceApi.rejectActivationProposal(id,'Rejected in AI administration.')
+   setNotice({kind:'ok',text:decision==='approve'?'Proposal approved after freshness and separation-of-duties checks. Approval alone does not execute the provider action.':'Proposal rejected; no provider side effect was executed.'})
+   await load()
+  }catch(e:any){setNotice({kind:'error',text:e?.message||'Activation proposal decision failed.'})}
   finally{setBusy('')}
  }
 
@@ -349,7 +385,8 @@ export default function IntelligencePage(){
 
    {section==='Results'&&<section className="app-panel"><div className="panel-head"><div><h3>Persisted AI results</h3><p>Observed metrics, predictions, forecasts and provider outputs remain typed and versioned.</p></div><button onClick={()=>void load()}><RefreshCw/>Refresh</button></div><div className="intel-results">{results.length?results.map((item:any)=><article key={item.id}><div><b>{item.task}</b><span>{item.result_type||item.resultType||'result'} · {item.status}</span><small>{item.requested_model||item.requestedModel||'—'} → {item.resolved_model||item.resolvedModel||'—'}</small></div><pre>{short(item.payload)}</pre></article>):<EmptyState title="No persisted AI results" description="Completed governed jobs will appear here; queued work is not treated as a completed result."/>}</div></section>}
 
-   {section==='Administration'&&<div className="intel-grid two"><section className="app-panel"><div className="panel-head"><div><h3>Task registry & policy</h3><p>Configuration, provider access, evaluation, approval, deployment and tenant execution policy remain separate.</p></div><ShieldCheck/></div><div className="intel-list registry">{registry.map((item:any)=>{const draft=policyDrafts[item.task]||{enabled:true,maxConcurrentJobs:4,monthlyUnitBudget:''};return <article key={item.task}><div><b>{item.task}</b><small>{item.provider} · {item.requestedModel} · {item.readiness||'unknown'}</small><div className="intel-policy-row"><label><input type="checkbox" checked={draft.enabled} onChange={e=>setPolicyDrafts(x=>({...x,[item.task]:{...draft,enabled:e.target.checked}}))}/> Enabled</label><label>Concurrency<input type="number" min="1" max="1000" value={draft.maxConcurrentJobs} onChange={e=>setPolicyDrafts(x=>({...x,[item.task]:{...draft,maxConcurrentJobs:Number(e.target.value)}}))}/></label><label>Monthly units<input type="number" min="0" placeholder="No explicit cap" value={draft.monthlyUnitBudget} onChange={e=>setPolicyDrafts(x=>({...x,[item.task]:{...draft,monthlyUnitBudget:e.target.value}}))}/></label><button disabled={busy==='policy:'+item.task} onClick={()=>void saveTaskPolicy(item.task)}>{busy==='policy:'+item.task?'Saving…':'Save policy'}</button></div></div></article>})}</div></section><section className="app-panel"><div className="panel-head"><div><h3>Governance boundary</h3><p>Use Models for verification, qualification, promotion, deployment and rollback.</p></div><BrainCircuit/></div><div className="intel-callout"><ShieldCheck/><div><b>No implicit activation</b><p>Missing numerical models never fall back to LLM-generated numbers. Reviewer output never authorizes a side effect. Policy enablement does not qualify a model.</p></div></div><button onClick={()=>window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:'Models'}))}>Open Models administration</button></section></div>}
+   {section==='Administration'&&<><div className="intel-grid two"><section className="app-panel"><div className="panel-head"><div><h3>Task registry & policy</h3><p>Configuration, provider access, evaluation, approval, deployment and tenant execution policy remain separate.</p></div><ShieldCheck/></div><div className="intel-list registry">{registry.map((item:any)=>{const draft=policyDrafts[item.task]||{enabled:true,maxConcurrentJobs:4,monthlyUnitBudget:''};return <article key={item.task}><div><b>{item.task}</b><small>{item.provider} · {item.requestedModel} · {item.readiness||'unknown'}</small><div className="intel-policy-row"><label><input type="checkbox" checked={draft.enabled} onChange={e=>setPolicyDrafts(x=>({...x,[item.task]:{...draft,enabled:e.target.checked}}))}/> Enabled</label><label>Concurrency<input type="number" min="1" max="1000" value={draft.maxConcurrentJobs} onChange={e=>setPolicyDrafts(x=>({...x,[item.task]:{...draft,maxConcurrentJobs:Number(e.target.value)}}))}/></label><label>Monthly units<input type="number" min="0" placeholder="No explicit cap" value={draft.monthlyUnitBudget} onChange={e=>setPolicyDrafts(x=>({...x,[item.task]:{...draft,monthlyUnitBudget:e.target.value}}))}/></label><button disabled={busy==='policy:'+item.task} onClick={()=>void saveTaskPolicy(item.task)}>{busy==='policy:'+item.task?'Saving…':'Save policy'}</button></div></div></article>})}</div></section><section className="app-panel"><div className="panel-head"><div><h3>Governance boundary</h3><p>Use Models for verification, qualification, promotion, deployment and rollback.</p></div><BrainCircuit/></div><div className="intel-callout"><ShieldCheck/><div><b>No implicit activation</b><p>Missing numerical models never fall back to LLM-generated numbers. Reviewer output never authorizes a side effect. Policy enablement does not qualify a model.</p></div></div><button onClick={()=>window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:'Models'}))}>Open Models administration</button></section></div>
+   <div className="intel-grid two"><section className="app-panel"><div className="panel-head"><div><h3>Activation proposal</h3><p>Create an immutable proposal for separate approval. This screen never executes an advertising/provider side effect.</p></div><ShieldCheck/></div><div className="intel-row"><label>Task<select value={activationDraft.task} onChange={e=>setActivationDraft(x=>({...x,task:e.target.value}))}>{registry.map((item:any)=><option key={item.task} value={item.task}>{item.task}</option>)}</select></label><label>Proposal type<input value={activationDraft.proposalType} onChange={e=>setActivationDraft(x=>({...x,proposalType:e.target.value}))}/></label><label>Provider adapter<input value={activationDraft.providerAdapter} onChange={e=>setActivationDraft(x=>({...x,providerAdapter:e.target.value}))}/></label><label>Expiry minutes<input type="number" min="1" max="1440" value={activationDraft.expiresMinutes} onChange={e=>setActivationDraft(x=>({...x,expiresMinutes:Number(e.target.value)}))}/></label></div><label className="intel-field">Payload JSON<textarea value={activationDraft.payload} onChange={e=>setActivationDraft(x=>({...x,payload:e.target.value}))}/></label><label className="intel-field">Evidence refs JSON<textarea value={activationDraft.evidenceRefs} onChange={e=>setActivationDraft(x=>({...x,evidenceRefs:e.target.value}))}/></label><button className="app-primary" disabled={busy==='activation-create'} onClick={()=>void createActivationProposal()}>{busy==='activation-create'?'Creating…':'Create governed activation proposal'}</button></section><section className="app-panel"><div className="panel-head"><div><h3>Pending activation approvals</h3><p>Creator/approver separation, proposal hash integrity, expiry and model freshness are checked server-side.</p></div><ShieldCheck/></div><div className="intel-list">{activationProposals.length?activationProposals.map((item:any)=><article key={item.id}><div><b>{item.proposal_type||item.proposalType} · {item.task||'task'}</b><small>{item.status} · expires {new Date(item.expires_at||item.expiresAt).toLocaleString()}</small></div>{item.status==='pending_approval'&&<div className="intel-actions"><button disabled={busy==='activation:approve:'+item.id} onClick={()=>void decideActivationProposal(item.id,'approve')}>Approve</button><button disabled={busy==='activation:reject:'+item.id} onClick={()=>void decideActivationProposal(item.id,'reject')}>Reject</button></div>}</article>):<EmptyState title="No activation proposals" description="High-risk AI recommendations remain non-executable until an immutable proposal is separately approved."/>}</div></section></div></>}
   </>}
  </>
 }
