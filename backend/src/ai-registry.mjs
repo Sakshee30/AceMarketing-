@@ -11,31 +11,31 @@ const credentialConfigured=provider=>{
 const providerDocs={
   openai:{
     identifierVerified:true,
-    capabilityVerified:false,
-    verifiedAt:'2026-09-28',
+    capabilityVerified:true,
+    verifiedAt:'2026-09-29',
     source:'https://platform.openai.com/pricing',
-    note:'Identifier is listed by OpenAI. Endpoint/tool capability still requires account-scoped verification before activation.'
+    note:'gpt-6-astra is listed in official OpenAI API material; Responses-based execution is implemented. Account access remains separately unverified.'
   },
   anthropic:{
     identifierVerified:false,
     capabilityVerified:false,
-    verifiedAt:'2026-09-28',
+    verifiedAt:'2026-09-29',
     source:'https://docs.anthropic.com/',
     note:'The requested claude-fable-5-1 identifier was not found in official documentation during verification; substitution is forbidden.'
   },
   google:{
     identifierVerified:true,
     capabilityVerified:true,
-    verifiedAt:'2026-09-28',
+    verifiedAt:'2026-09-29',
     source:'https://ai.google.dev/gemini-api/docs/models',
-    note:'Requested Gemini identifiers are present in official model documentation; live account access is verified separately.'
+    note:'Requested Gemini identifiers are present in official documentation. Transcription requires Files + Interactions; live voice requires Live API transport. Account access is verified separately.'
   },
   voyage:{
     identifierVerified:true,
     capabilityVerified:true,
-    verifiedAt:'2026-09-28',
-    source:'https://docs.voyageai.com/docs/tokenization',
-    note:'Requested embedding and reranking identifiers are present in official Voyage documentation; live account access is verified separately.'
+    verifiedAt:'2026-09-29',
+    source:'https://docs.voyageai.com/docs/embeddings',
+    note:'voyage-4-large and rerank-2.5 plus their REST endpoints are present in official Voyage documentation; live account access is verified separately.'
   },
   local_ml:{
     identifierVerified:true,
