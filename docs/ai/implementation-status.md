@@ -18,7 +18,9 @@ This document records implementation state separately from provider access, trai
 - Governed live-voice session lifecycle.
 - Governed hosted-task submission endpoint for analyst, recommendation reviewer, multimodal extraction, embeddings, reranking, transcription and creative image generation.
 - Frontend API clients for AI jobs, results, datasets, knowledge and governed hosted-task submission.
-- Customer-facing AI Intelligence workspace for grounded analyst jobs, forecast candidates, point-in-time datasets, knowledge management, persisted result history and registry state.
+- Customer-facing AI Intelligence workspace for grounded analyst jobs, prediction scoring, forecast candidates, specialist ML tasks, multimodal/transcription routes, creative draft jobs, point-in-time datasets, knowledge management, persisted result history and registry state.
+- Authenticated SSE job status streaming with bounded lifetime and terminal-state closure.
+- OpenAPI specification, operator lifecycle scripts, discriminated result contracts/tests, Kubernetes worker/ML/HPA/storage/network-policy assets.
 - Complete docs/ai runbook set covering architecture, verification, features/labels, APIs, evaluation, deployment, security and requirement coverage.
 
 ## Hosted task endpoint
