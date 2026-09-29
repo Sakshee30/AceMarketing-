@@ -9,7 +9,8 @@ export const assertNoActiveActivationDispatch=async(client,{workspaceId,task})=>
   const {rows}=await client.query(
     `SELECT id,execution_job_id,execution_lease_until
      FROM ace_ai_activation_proposals
-     WHERE workspace_id=$1 AND task=$2 AND execution_status='running'
+     WHERE workspace_id=$1 AND task=$2
+       AND (execution_status='running' OR execution_outcome_state='unknown')
      LIMIT 1`,
     [workspaceId,task]
   )
@@ -27,7 +28,8 @@ export const syncTenantRegistry=async workspaceId=>{
     for(const item of items){
       const activeDispatch=await client.query(
         `SELECT 1 FROM ace_ai_activation_proposals
-         WHERE workspace_id=$1 AND task=$2 AND execution_status='running'
+         WHERE workspace_id=$1 AND task=$2
+           AND (execution_status='running' OR execution_outcome_state='unknown')
          LIMIT 1`,
         [workspaceId,item.task]
       )
