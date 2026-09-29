@@ -1,7 +1,7 @@
 import {pool} from './database.mjs'
 import {enqueueJob} from './queue.mjs'
 import {assertAiActivationExecutable} from './ai-activation-proposals.mjs'
-import {syncAudienceProvider,writebackLead} from './activation-adapters.mjs'
+import {changeGoogleAdsCampaignBudget,syncAudienceProvider,writebackLead} from './activation-adapters.mjs'
 import {ProviderExecutionError} from './ai-providers.mjs'
 
 const enabled=()=>process.env.AI_ACTIVATION_EXECUTION_ENABLED==='true'
@@ -35,7 +35,29 @@ export const validateActivationAdapterInput=({proposalType,payload})=>{
   }
 
   if(type==='budget_change'){
-    throw new Error('budget_change execution is blocked until a verified provider-specific budget adapter is implemented')
+    if(!['google_ads_budget','google_ads'].includes(adapter)){
+      throw new Error('unsupported budget execution adapter: '+adapter)
+    }
+    const campaignBudgetResourceName=String(body.campaignBudgetResourceName||'').trim()
+    if(!/^customers\/\d+\/campaignBudgets\/\d+$/.test(campaignBudgetResourceName)){
+      throw new Error('budget_change requires a valid payload.campaignBudgetResourceName')
+    }
+    const expectedCurrentAmountMicros=Number(body.expectedCurrentAmountMicros)
+    const newAmountMicros=Number(body.newAmountMicros)
+    if(!Number.isSafeInteger(expectedCurrentAmountMicros)||expectedCurrentAmountMicros<=0){
+      throw new Error('budget_change requires positive integer payload.expectedCurrentAmountMicros')
+    }
+    if(!Number.isSafeInteger(newAmountMicros)||newAmountMicros<=0){
+      throw new Error('budget_change requires positive integer payload.newAmountMicros')
+    }
+    return {
+      kind:'budget_change',
+      adapter:'google_ads_budget',
+      campaignBudgetResourceName,
+      expectedCurrentAmountMicros,
+      newAmountMicros,
+      sharedBudgetAcknowledged:body.sharedBudgetAcknowledged===true
+    }
   }
 
   throw new Error('unsupported activation proposal type: '+type)
@@ -127,6 +149,9 @@ const executeAdapter=async(workspaceId,proposal)=>{
     const provider=validated.adapter==='hubspot_crm'?'hubspot':validated.adapter==='zoho_crm'?'zoho':'salesforce'
     return writebackLead(workspaceId,validated.leadRef,provider,validated.fields)
   }
+  if(validated.kind==='budget_change'){
+    return changeGoogleAdsCampaignBudget(workspaceId,validated)
+  }
   throw new Error('unsupported activation execution kind')
 }
 
@@ -170,6 +195,10 @@ export const executeAiActivationJob=async job=>{
       providerJob:result?.job||null,
       received:result?.received??null,
       httpStatus:result?.status??null,
+      previousAmountMicros:result?.previousAmountMicros??null,
+      newAmountMicros:result?.newAmountMicros??null,
+      referenceCount:result?.referenceCount??null,
+      changePct:result?.changePct??null,
       completedAt:new Date().toISOString()
     }
     await updateExecution({
@@ -177,8 +206,11 @@ export const executeAiActivationJob=async job=>{
     })
     return {proposalId,status:'succeeded',receipt}
   }catch(error){
+    const unknownOutcome=Boolean(error?.unknownOutcome)
     await updateExecution({
-      workspaceId,id:proposalId,status:'failed',jobId:job.id,error:error instanceof Error?error.message:String(error)
+      workspaceId,id:proposalId,status:unknownOutcome?'blocked':'failed',jobId:job.id,
+      error:error instanceof Error?error.message:String(error),
+      providerRequestId:error?.providerRequestId||null
     }).catch(()=>{})
     throw error
   }
