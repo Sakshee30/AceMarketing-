@@ -6,6 +6,9 @@ import { modelRegistryItem } from './ai-registry.mjs'
 
 const hash=value=>createHash('sha256').update(String(value)).digest('hex')
 export const normalizeKnowledgePolicy=value=>{
+  if(value?.allowedRoles!==undefined&&!Array.isArray(value.allowedRoles)){
+    throw new Error('knowledge access_policy.allowedRoles must be an array when provided')
+  }
   const roles=Array.isArray(value?.allowedRoles)
     ?Array.from(new Set(value.allowedRoles.filter(x=>typeof x==='string').map(x=>x.trim()).filter(Boolean))).slice(0,20)
     :[]
@@ -237,16 +240,18 @@ export const searchKnowledge=async({workspaceId,query,role,limit=10,queryVector=
          AND c.revoked_at IS NULL
          AND s.revoked_at IS NULL
          AND s.deleted_at IS NULL
-       ORDER BY c.ordinal ASC
-       LIMIT 500`,
+       ORDER BY c.ordinal ASC`,
       [workspaceId]
     )
     const terms=Array.from(new Set(cleanQuery.toLowerCase().split(/[^a-z0-9]+/).filter(term=>term.length>1))).slice(0,20)
-    rows=result.rows.map(row=>{
-      const haystack=String(row.content||'').toLowerCase()
-      const matched=terms.reduce((count,term)=>count+(haystack.includes(term)?1:0),0)
-      return {...row,lexical_rank:terms.length?matched/terms.length:0}
-    }).filter(row=>Number(row.lexical_rank)>0)
+    rows=result.rows
+      .filter(row=>canReadKnowledgePolicy(row.access_policy,role))
+      .map(row=>{
+        const haystack=String(row.content||'').toLowerCase()
+        const matched=terms.reduce((count,term)=>count+(haystack.includes(term)?1:0),0)
+        return {...row,lexical_rank:terms.length?matched/terms.length:0}
+      })
+      .filter(row=>Number(row.lexical_rank)>0)
   }else{
     const result=await pool.query(
       `SELECT c.id,c.source_id,c.ordinal,c.section,c.source_offset,c.content,c.access_policy,c.embedding,
@@ -259,9 +264,19 @@ export const searchKnowledge=async({workspaceId,query,role,limit=10,queryVector=
          AND s.revoked_at IS NULL
          AND s.deleted_at IS NULL
          AND to_tsvector('english',c.content) @@ websearch_to_tsquery('english',$2)
+         AND (
+           $3='owner'
+           OR NOT (c.access_policy ? 'allowedRoles')
+           OR jsonb_array_length(COALESCE(c.access_policy->'allowedRoles','[]'::jsonb))=0
+           OR EXISTS (
+             SELECT 1
+             FROM jsonb_array_elements_text(COALESCE(c.access_policy->'allowedRoles','[]'::jsonb)) allowed_role(value)
+             WHERE allowed_role.value=$3
+           )
+         )
        ORDER BY lexical_rank DESC
        LIMIT 100`,
-      [workspaceId,cleanQuery]
+      [workspaceId,cleanQuery,role]
     )
     rows=result.rows
   }
