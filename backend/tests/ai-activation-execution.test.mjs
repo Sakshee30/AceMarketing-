@@ -1,8 +1,10 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {activationExecutionEnabled,activationQueueStatusProcessable,validateActivationAdapterInput} from '../src/ai-activation-execution.mjs'
+import {activationExecutionEnabled,activationQueueStatusProcessable,reconcileStaleActivationDispatches,validateActivationAdapterInput} from '../src/ai-activation-execution.mjs'
 import {hasPermission} from '../src/security.mjs'
 import {activationProviderForUrl,activationRequestJson,googleAdsReferenceCount} from '../src/activation-adapters.mjs'
+import {assertNoActiveActivationDispatch} from '../src/ai-registry-store.mjs'
+import {pool} from '../src/database.mjs'
 
 const withEnv=(key,value,fn)=>{
   const previous=process.env[key]
@@ -161,4 +163,37 @@ test('Google Ads shared-budget reference count rejects malformed provider values
   assert.throws(()=>googleAdsReferenceCount('not-a-number'),/invalid campaign budget referenceCount/)
   assert.throws(()=>googleAdsReferenceCount(-1),/invalid campaign budget referenceCount/)
   assert.throws(()=>googleAdsReferenceCount(1.5),/invalid campaign budget referenceCount/)
+})
+
+
+test('expired activation dispatch is recorded as unknown and continues to block lifecycle changes',async()=>{
+  const id='aiprop_stale_'+Date.now()
+  const workspaceId='ws_stale_'+Date.now()
+  await pool.query(
+    `INSERT INTO ace_ai_activation_proposals
+      (id,workspace_id,proposal_type,proposal_hash,evidence_snapshot,model_snapshot,policy_result,payload,status,expires_at,task,
+       execution_status,execution_fence_token,execution_lease_until)
+     VALUES ($1,$2,'budget_change',$3,'{}'::jsonb,'{}'::jsonb,'{}'::jsonb,$4::jsonb,'approved',now()+interval '1 hour','forecast_primary',
+             'running','old-fence',now()-interval '1 minute')`,
+    [id,workspaceId,'hash_'+id,JSON.stringify({providerAdapter:'google_ads_budget'})]
+  )
+  try{
+    const reconciled=await reconcileStaleActivationDispatches({limit:10})
+    const item=reconciled.find(row=>row.id===id)
+    assert.ok(item)
+    assert.equal(item.execution_status,'blocked')
+    assert.equal(item.execution_outcome_state,'unknown')
+    assert.equal(item.execution_fence_token,null)
+    const client=await pool.connect()
+    try{
+      await assert.rejects(
+        ()=>assertNoActiveActivationDispatch(client,{workspaceId,task:'forecast_primary'}),
+        /lifecycle change is blocked/
+      )
+    }finally{
+      client.release()
+    }
+  }finally{
+    await pool.query('DELETE FROM ace_ai_activation_proposals WHERE id=$1 AND workspace_id=$2',[id,workspaceId])
+  }
 })
