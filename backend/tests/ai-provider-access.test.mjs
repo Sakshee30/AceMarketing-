@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {ProviderExecutionError,verifyAnthropicModelAccess,verifyProviderAccess} from '../src/ai-providers.mjs'
+import {ProviderExecutionError,runOpenAIAnalyst,verifyAnthropicModelAccess,verifyProviderAccess} from '../src/ai-providers.mjs'
 
 const withEnv=async(patch,fn)=>{
   const previous={}
@@ -76,6 +76,75 @@ test('Anthropic access check rejects a provider-side identifier substitution',as
           assert.ok(error instanceof ProviderExecutionError)
           assert.equal(error.status,409)
           assert.match(error.message,/silent substitution is forbidden/i)
+          return true
+        }
+      )
+    })
+  }finally{
+    globalThis.fetch=previousFetch
+  }
+})
+
+
+test('network failure after provider submission is marked unknown to prevent blind retries',async()=>{
+  const previousFetch=globalThis.fetch
+  globalThis.fetch=async()=>{throw new Error('socket reset after submit')}
+  try{
+    await withEnv({OPENAI_API_KEY:'test-only',AI_LIVE_PROVIDER_CALLS:'true'},async()=>{
+      await assert.rejects(
+        ()=>runOpenAIAnalyst({question:'bounded offline test',evidence:{}}),
+        error=>{
+          assert.ok(error instanceof ProviderExecutionError)
+          assert.equal(error.unknownOutcome,true)
+          assert.equal(error.causeCode,'network')
+          return true
+        }
+      )
+    })
+  }finally{
+    globalThis.fetch=previousFetch
+  }
+})
+
+test('provider rate limits are explicit confirmed failures, not unknown outcomes',async()=>{
+  const previousFetch=globalThis.fetch
+  globalThis.fetch=async()=>new Response(JSON.stringify({error:{message:'rate limited'}}),{
+    status:429,
+    headers:{'content-type':'application/json','x-request-id':'rate-limit-test'}
+  })
+  try{
+    await withEnv({OPENAI_API_KEY:'test-only',AI_LIVE_PROVIDER_CALLS:'true'},async()=>{
+      await assert.rejects(
+        ()=>runOpenAIAnalyst({question:'bounded offline test',evidence:{}}),
+        error=>{
+          assert.ok(error instanceof ProviderExecutionError)
+          assert.equal(error.status,429)
+          assert.equal(error.unknownOutcome,false)
+          assert.equal(error.providerRequestId,'rate-limit-test')
+          return true
+        }
+      )
+    })
+  }finally{
+    globalThis.fetch=previousFetch
+  }
+})
+
+test('confirmed malformed analyst output is rejected instead of persisted as empty success',async()=>{
+  const previousFetch=globalThis.fetch
+  globalThis.fetch=async()=>new Response(JSON.stringify({id:'resp_test',model:'gpt-6-astra',status:'completed',output:[]}),{
+    status:200,
+    headers:{'content-type':'application/json','x-request-id':'malformed-test'}
+  })
+  try{
+    await withEnv({OPENAI_API_KEY:'test-only',AI_LIVE_PROVIDER_CALLS:'true'},async()=>{
+      await assert.rejects(
+        ()=>runOpenAIAnalyst({question:'bounded offline test',evidence:{}}),
+        error=>{
+          assert.ok(error instanceof ProviderExecutionError)
+          assert.equal(error.status,502)
+          assert.equal(error.unknownOutcome,false)
+          assert.match(error.message,/no usable text/i)
           return true
         }
       )
