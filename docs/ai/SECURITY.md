@@ -2,7 +2,7 @@
 
 Tenant scope is derived from authenticated workspace context. Dedicated permissions cover analysis and training; owner remains the only wildcard role.
 
-Provider credentials stay server-side. Internal ML calls require `X-Internal-Token`. Provider and ML URLs are configuration-owned, not user supplied.
+Provider credentials stay server-side. Internal ML calls require `X-Internal-Token`. Provider and ML URLs are configuration-owned, not user supplied. Activation egress additionally requires HTTPS and an explicit provider-host allowlist before a credentialed request is sent.
 
 Input snapshots and results are tenant scoped. Prompts, transcripts, embeddings, features and artifacts are treated as sensitive.
 
