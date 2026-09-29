@@ -34,7 +34,7 @@ import { metricCatalog } from './metric-catalog.mjs'
 import { closeLiveVoice, createLiveVoiceSession, getLiveVoiceSession, installLiveVoiceWebSocket, terminateLiveVoiceSession } from './live-voice.mjs'
 import { validateHostedTaskInput } from './ai-input-validation.mjs'
 import { evaluateAiTaskAdmission, getAiTaskPolicy, listAiTaskPolicies, listCreativeAssets, listTranscripts, reviewCreativeAsset, saveAiTaskPolicy } from './ai-governance-store.mjs'
-import { getSegmentMemberships, listAnomalyItems, listRankingItems, listSegmentSnapshots, reviewAnomalyItem } from './ai-domain-results.mjs'
+import { getSegmentMemberships, listAnomalyItems, listCausalRecords, listForecastRecords, listMarketingMixRecords, listRankingItems, listSegmentSnapshots, reviewAnomalyItem } from './ai-domain-results.mjs'
 import { approveAiActivationProposal, attachActivationProposalReviewerJob, createAiActivationProposal, listAiActivationProposals, markActivationProposalReviewerBlocked, rejectAiActivationProposal } from './ai-activation-proposals.mjs'
 
 const CONNECTOR_PROVIDERS={
@@ -5075,6 +5075,22 @@ const server = http.createServer(async (req,res)=>{
         deadlineAt:job.deadline_at||deadlineAt,
         resultSchemaVersion:'ml-result.v1'
       })
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/forecast-records') {
+      const task=String(url.searchParams.get('task')||'').trim()||null
+      const limit=Math.max(1,Math.min(Number(url.searchParams.get('limit')||100),500))
+      const items=await listForecastRecords({workspaceId,task,limit})
+      return send(req,res,200,{items,task,limit,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/causal-records') {
+      const limit=Math.max(1,Math.min(Number(url.searchParams.get('limit')||100),500))
+      const items=await listCausalRecords({workspaceId,limit})
+      return send(req,res,200,{items,limit,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/marketing-mix-records') {
+      const limit=Math.max(1,Math.min(Number(url.searchParams.get('limit')||100),500))
+      const items=await listMarketingMixRecords({workspaceId,limit})
+      return send(req,res,200,{items,limit,generatedAt:new Date().toISOString()})
     }
     if (req.method === 'GET' && url.pathname === '/api/ai/anomalies') {
       const status=String(url.searchParams.get('status')||'').trim()||null
