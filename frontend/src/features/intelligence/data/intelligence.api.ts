@@ -3,6 +3,10 @@ import {api,streamAiJob} from '../../../lib/api'
 export const intelligenceApi={
   registry:(options?:{signal?:AbortSignal})=>api.aiRegistry(options),
   policies:(options?:{signal?:AbortSignal})=>api.aiTaskPolicies(options),
+  activationProposals:(status?:string,options?:{signal?:AbortSignal})=>api.aiActivationProposals(status,options),
+  createActivationProposal:(payload:Record<string,unknown>)=>api.createAiActivationProposal(payload),
+  approveActivationProposal:(id:string)=>api.approveAiActivationProposal(id),
+  rejectActivationProposal:(id:string,reason?:string)=>api.rejectAiActivationProposal(id,reason),
   savePolicy:(task:string,payload:Record<string,unknown>)=>api.saveAiTaskPolicy(task,payload),
   transcripts:(options?:{signal?:AbortSignal})=>api.aiTranscripts(options),
   creatives:(options?:{signal?:AbortSignal})=>api.aiCreativeAssets(options),
