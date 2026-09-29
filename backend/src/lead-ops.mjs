@@ -1,15 +1,5 @@
 import {createHash,randomUUID} from 'node:crypto'
-import pg from 'pg'
-
-const {Pool}=pg
-const databaseUrl=process.env.DATABASE_URL||''
-const pool=databaseUrl?new Pool({
-  connectionString:databaseUrl,
-  max:Number(process.env.LEAD_OPS_DB_POOL_MAX||10),
-  idleTimeoutMillis:Number(process.env.DB_IDLE_TIMEOUT_MS||30000),
-  connectionTimeoutMillis:Number(process.env.DB_CONNECT_TIMEOUT_MS||5000),
-  ...(process.env.DB_SSL==='require'?{ssl:{rejectUnauthorized:false}}:{})
-}):null
+import {pool,embeddedDatabase} from './database.mjs'
 
 const sha=v=>createHash('sha256').update(String(v)).digest('hex')
 const normEmail=v=>String(v||'').trim().toLowerCase()
@@ -111,7 +101,7 @@ export const leadOpsStats=async workspaceId=>{
       COUNT(*) FILTER(WHERE grade IN ('A','B'))::int ab,
       COUNT(*) FILTER(WHERE grade='C')::int c,
       COUNT(*) FILTER(WHERE grade='D')::int d,
-      ROUND(AVG(score),1)::numeric avg_score
+      AVG(score)::numeric avg_score
      FROM ace_lead_profiles WHERE workspace_id=$1 AND status='active'`,[workspaceId])
   const r=rows[0]
   return {available:true,total:r.total,aGrade:r.a,abQuality:r.ab,cGrade:r.c,dGrade:r.d,averageScore:Number(r.avg_score||0)}
@@ -301,6 +291,7 @@ export const listAudiences=async workspaceId=>{
 
 export const audienceOpsStats=async workspaceId=>{
   if(!pool)return {available:false}
+  const syncLatency=embeddedDatabase?'NULL::numeric avg_sync_seconds':"AVG(EXTRACT(EPOCH FROM (COALESCE(last_synced_at,updated_at)-created_at))) FILTER (WHERE last_synced_at IS NOT NULL) avg_sync_seconds"
   const [audiences,profiles]=await Promise.all([
     pool.query(`SELECT
       COUNT(*)::int total,
@@ -309,7 +300,7 @@ export const audienceOpsStats=async workspaceId=>{
       COUNT(*) FILTER (WHERE status='active')::int active,
       COUNT(*) FILTER (WHERE status='error')::int errors,
       COUNT(*) FILTER (WHERE identity_mode='device')::int device_audiences,
-      AVG(EXTRACT(EPOCH FROM (COALESCE(last_synced_at,updated_at)-created_at))) FILTER (WHERE last_synced_at IS NOT NULL) avg_sync_seconds
+      ${syncLatency}
      FROM ace_audiences WHERE workspace_id=$1`,[workspaceId]),
     pool.query(`SELECT
       COUNT(*)::int total,
