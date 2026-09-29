@@ -6,12 +6,14 @@ on:
     paths:
       - "ml-service/**"
       - "deploy/Dockerfile.ml"
+      - "deploy/Dockerfile.ml-specialist"
       - ".github/workflows/ml-ci.yml"
   pull_request:
     branches: [main]
     paths:
       - "ml-service/**"
       - "deploy/Dockerfile.ml"
+      - "deploy/Dockerfile.ml-specialist"
       - ".github/workflows/ml-ci.yml"
 
 jobs:
@@ -25,11 +27,15 @@ jobs:
           cache: "pip"
       - name: Install ML service and test tools
         run: python -m pip install -e "ml-service[test]"
-      - name: Ruff
+      - name: Ruff lint
         run: ruff check ml-service/src ml-service/tests
+      - name: Ruff format
+        run: ruff format --check ml-service/src ml-service/tests
+      - name: Mypy
+        run: mypy ml-service/src/acemarketing_ml
       - name: Compile
         run: python -m compileall -q ml-service/src
       - name: Tests
-        run: pytest -q ml-service/tests
+        run: pytest -q -rs ml-service/tests
       - name: Build ML container
         run: docker build -f deploy/Dockerfile.ml -t ace-ml:ci .

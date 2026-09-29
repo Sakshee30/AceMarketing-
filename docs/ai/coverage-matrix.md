@@ -90,3 +90,15 @@
 | Redis loss | durable AI job, usage and result state remains database-backed with no Redis dependency in queue/worker execution | source-level resilience assertion |
 | database/queue unavailable | durable submission/worker startup fails closed rather than fabricating completion | existing queue/runtime guards + resilience coverage |
 | provider unknown outcome | explicit `unknown_outcome` state and reconciliation path | durable-job and activation execution tests |
+
+
+## ML verification evidence
+
+| Requirement | Implementation | Evidence |
+|---|---|---|
+| Python formatting check | `ruff format --check ml-service/src ml-service/tests` | ML CI |
+| Python type check | bounded `mypy ml-service/src/acemarketing_ml` with untyped-body checking | ML CI |
+| Python lint | `ruff check` | ML CI |
+| skipped-test reasons | `pytest -q -rs` | ML CI reports skip reasons separately from pass count |
+| specialist dependency-profile changes | `deploy/Dockerfile.ml-specialist` included in ML CI path trigger | workflow trigger |
+| model integration tests | existing small-fit and contract tests remain in `ml-service/tests` | pytest stage; no test gates weakened |

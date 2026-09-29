@@ -73,3 +73,10 @@ The monitoring contract does not fabricate missing quality evidence. Feature dri
 Worker execution now rechecks tenant task policy, platform policy, exact requested model identity, and the current deployment traffic mode immediately before hosted or ML execution. A task disabled after queue admission is cancelled before the provider/model call; shadow-only and narrowed canary changes are also enforced at execution time.
 
 The resilience test suite verifies this fail-closed execution gate and asserts that durable AI queue state does not depend on Redis. Database-backed jobs remain authoritative; optional acceleration loss cannot silently create synthetic predictions. Queue/database unavailability continues to block durable AI work instead of reporting fake success.
+
+
+## ML verification closure
+
+The ML workflow now runs Ruff linting, Ruff formatting verification, bounded mypy type checking, bytecode compilation, model-pipeline tests with explicit skip reasons, and the ML container build. Changes to both the core ML Dockerfile and specialist dependency-profile Dockerfile trigger the workflow.
+
+Mypy is configured to inspect untyped function bodies and report unreachable/redundant typing issues while tolerating missing third-party stub packages. This adds real type verification without claiming full strict typing for scientific libraries that do not publish complete stubs.
