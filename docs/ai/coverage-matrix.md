@@ -11,7 +11,7 @@
 | Creative image | ai-providers.mjs | governed generic task API | hosted input validation | provider access + draft-review UX expansion |
 | Point-in-time datasets | ai-datasets.mjs | AI Intelligence / Datasets | dataset validation logic | tenant data |
 | Classification/value | ML service pipelines | AI Intelligence + Models | Python pipeline tests | fitted/evaluated artifacts |
-| Forecasting | ML service pipelines | AI Intelligence / Forecasts | baseline/contract tests | Chronos revision + evaluation |
+| Forecasting | ML service pipelines + `/v1/evaluate/forecast-candidates` | AI Intelligence / Forecasts | baseline/contract/qualification tests | provisioned Chronos revision + tenant evaluation |
 | MMM/incrementality | ML service pipelines | API + result history | Python pipeline tests | real causal/MMM data/diagnostics |
 | Anomaly/segments/ranking | ML service pipelines | API + result history | Python pipeline tests | tenant evaluation evidence |
 | Metrics | metric-catalog.mjs | Analyst contract panel | metric-catalog tests | source freshness |
