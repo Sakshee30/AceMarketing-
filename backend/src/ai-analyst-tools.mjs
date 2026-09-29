@@ -51,7 +51,18 @@ const campaignPerformance=async(workspaceId,args)=>{
   return {
     kind:'observed',
     evidenceId:'campaign_performance:'+workspaceId,
-    campaigns:campaigns.slice(0,args.limit),
+    campaigns:campaigns.slice(0,args.limit).map(item=>({
+      id:item.id||item.campaignId||null,
+      name:item.name||item.campaignName||null,
+      status:item.status||null,
+      spend:item.spend??null,
+      impressions:item.impressions??null,
+      clicks:item.clicks??null,
+      leads:item.leads??null,
+      customers:item.customers??null,
+      revenue:item.revenue??null,
+      currency:item.currency||null
+    })),
     deliverySummary:{
       total:deliveries.length,
       succeeded:deliveries.filter(x=>['sent','succeeded','delivered'].includes(String(x.status||'').toLowerCase())).length,
@@ -86,13 +97,12 @@ const customerAggregates=async(workspaceId,args)=>{
     kind:'observed',
     evidenceId:'customer_aggregates:'+workspaceId,
     stats,
-    recentProfiles:profiles.map(profile=>({
-      externalLeadId:profile.external_lead_id,
-      grade:profile.grade,
-      score:profile.score,
-      crmStage:profile.crm_stage,
-      updatedAt:profile.updated_at
-    }))
+    recentProfileSummary:{
+      sampled:profiles.length,
+      byGrade:profiles.reduce((acc,profile)=>{const key=String(profile.grade||'unknown');acc[key]=(acc[key]||0)+1;return acc},{}),
+      byStage:profiles.reduce((acc,profile)=>{const key=String(profile.crm_stage||'unknown');acc[key]=(acc[key]||0)+1;return acc},{}),
+      averageScore:profiles.length?profiles.reduce((sum,profile)=>sum+Number(profile.score||0),0)/profiles.length:null
+    }
   }
 }
 
