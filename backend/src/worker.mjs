@@ -13,6 +13,7 @@ import { ProviderExecutionError } from './ai-providers.mjs'
 import { executeMlJob } from './ml-client.mjs'
 import { closeKnowledge, embedKnowledgeSourceJob, searchKnowledgeJob } from './knowledge.mjs'
 import { closeRegistryStore, recordMlExecution, syncTenantRegistry } from './ai-registry-store.mjs'
+import {executeAiActivationJob} from './ai-activation-execution.mjs'
 
 if(!queueAvailable()) throw new Error('DATABASE_URL is required for the worker runtime')
 
@@ -45,6 +46,9 @@ const updateDelivery=async(workspaceId,deliveryId,patch)=>withWorkspace(workspac
 }))
 
 const handle=async job=>{
+  if(job.kind==='ai_activation_execution'){
+    return executeAiActivationJob(job)
+  }
   if(job.kind==='knowledge_embedding'){
     return embedKnowledgeSourceJob(job)
   }
