@@ -63,7 +63,7 @@ def evaluate_forecast_candidates(request) -> dict[str, Any]:
 
         quantile_loss = None
         if candidate.quantiles:
-            losses = []
+            losses: list[float] = []
             for key, values in candidate.quantiles.items():
                 q = float(key)
                 if not 0.0 < q < 1.0:
