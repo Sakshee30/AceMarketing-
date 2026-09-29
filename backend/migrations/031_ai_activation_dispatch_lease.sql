@@ -7,5 +7,4 @@ ALTER TABLE ace_ai_activation_proposals
   ADD COLUMN IF NOT EXISTS execution_lease_until TIMESTAMPTZ;
 
 CREATE INDEX IF NOT EXISTS ace_ai_activation_dispatch_lease_idx
-  ON ace_ai_activation_proposals (workspace_id,task,execution_status,execution_lease_until)
-  WHERE execution_status='running';
+  ON ace_ai_activation_proposals (workspace_id,task,execution_status,execution_lease_until);
