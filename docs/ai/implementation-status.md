@@ -18,6 +18,8 @@ This document records implementation state separately from provider access, trai
 - Governed live-voice session lifecycle.
 - Governed hosted-task submission endpoint for analyst, recommendation reviewer, multimodal extraction, embeddings, reranking, transcription and creative image generation.
 - Frontend API clients for AI jobs, results, datasets, knowledge and governed hosted-task submission.
+- Customer-facing AI Intelligence workspace for grounded analyst jobs, forecast candidates, point-in-time datasets, knowledge management, persisted result history and registry state.
+- Complete docs/ai runbook set covering architecture, verification, features/labels, APIs, evaluation, deployment, security and requirement coverage.
 
 ## Hosted task endpoint
 
