@@ -35,3 +35,12 @@
 - Provider egress: credential-bearing AI/activation requests reject redirects and activation URLs remain HTTPS/provider allowlisted.
 - Google Ads budget safety: provider referenceCount must be a non-negative safe integer before shared-budget acknowledgement is evaluated.
 - Knowledge degradation: malformed/non-finite embedding vectors are rejected from vector execution while authorized lexical retrieval remains available.
+
+## Final review closure
+
+| Requirement | Implementation | Evidence |
+|---|---|---|
+| analyst evidence minimization | `ai-analyst-tools.mjs` fixed experiment projection | `ai-analyst-tools.test.mjs` verifies arbitrary fields are stripped |
+| vector compatibility | `knowledge.mjs` requires matching embedding dimensions for pgvector/application cosine | `ai-knowledge-authorization.test.mjs` dimension contract test |
+| stale provider outcome reconciliation | migration 032 + `reconcileStaleActivationDispatches` + lifecycle guard | `ai-activation-execution.test.mjs` verifies expired dispatch becomes unknown and still blocks lifecycle changes |
+
