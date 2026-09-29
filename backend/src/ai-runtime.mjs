@@ -4,6 +4,7 @@ import { enqueueJob } from './queue.mjs'
 import { executeHostedTask, ProviderExecutionError } from './ai-providers.mjs'
 import { modelRegistryItem } from './ai-registry.mjs'
 import { getTenantRegistry, syncTenantRegistry } from './ai-registry-store.mjs'
+import { evaluateAiTaskAdmission, persistCreativeAsset, persistTranscript } from './ai-governance-store.mjs'
 
 const { Pool }=pg
 const databaseUrl=process.env.DATABASE_URL||''
@@ -34,6 +35,18 @@ export const submitHostedAiJob=async({
   await syncTenantRegistry(workspaceId)
   const tenantRegistry=await getTenantRegistry(workspaceId)
   const route=tenantRegistry.find(item=>item.task===task)||staticRoute
+  const admission=await evaluateAiTaskAdmission({workspaceId,task,requestedModel:route.requestedModel,reservedUnits:1})
+  if(!admission.allowed){
+    return {
+      accepted:false,
+      status:429,
+      error:'AI task is blocked by tenant policy',
+      readiness:'blocked',
+      prerequisites:admission.reasons,
+      policy:admission.policy,
+      usage:admission.usage
+    }
+  }
   const prerequisites=[]
   if(route.documentationVerified!==true)prerequisites.push('documentation verification')
   if(route.accessVerified!==true)prerequisites.push('provider access verification')
@@ -181,9 +194,17 @@ export const executeHostedAiJob=async job=>{
     const execution=await executeHostedTask({task,input:job.payload?.input||{}})
     await providerRequestFinish({workspaceId,job,execution,outcome:'confirmed'})
     const result=await persistResult({workspaceId,job,execution})
+    const transcript=task==='call_transcription'
+      ?await persistTranscript({workspaceId,job,execution,route:modelRegistryItem(task)}).catch(()=>null)
+      :null
+    const creativeAsset=task==='creative_image'
+      ?await persistCreativeAsset({workspaceId,job,execution,route:modelRegistryItem(task)}).catch(()=>null)
+      :null
     return {
       task,
       resultId:result?.id||null,
+      transcriptId:transcript?.id||null,
+      creativeAssetId:creativeAsset?.id||null,
       provider:execution.provider,
       requestedModel:execution.requestedModel,
       resolvedModel:execution.resolvedModel,
