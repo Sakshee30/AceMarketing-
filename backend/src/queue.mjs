@@ -1,16 +1,6 @@
 import { randomUUID } from 'node:crypto'
-import pg from 'pg'
-
-const { Pool }=pg
-const databaseUrl=process.env.DATABASE_URL||''
+import {pool} from './database.mjs'
 const leaseMs=Number(process.env.WORKER_LEASE_MS||60000)
-const pool=databaseUrl?new Pool({
-  connectionString:databaseUrl,
-  max:Number(process.env.WORKER_DB_POOL_MAX||10),
-  idleTimeoutMillis:Number(process.env.DB_IDLE_TIMEOUT_MS||30000),
-  connectionTimeoutMillis:Number(process.env.DB_CONNECT_TIMEOUT_MS||5000),
-  ...(process.env.DB_SSL==='require'?{ssl:{rejectUnauthorized:false}}:{})
-}):null
 
 export const queueAvailable=()=>Boolean(pool)
 
