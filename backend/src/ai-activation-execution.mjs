@@ -2,6 +2,7 @@ import {pool} from './database.mjs'
 import {enqueueJob} from './queue.mjs'
 import {assertAiActivationExecutable} from './ai-activation-proposals.mjs'
 import {syncAudienceProvider,writebackLead} from './activation-adapters.mjs'
+import {ProviderExecutionError} from './ai-providers.mjs'
 
 const enabled=()=>process.env.AI_ACTIVATION_EXECUTION_ENABLED==='true'
 
@@ -102,6 +103,10 @@ export const queueAiActivationExecution=async({workspaceId,id,actor})=>{
     }
   })
   if(!job)throw new Error('durable queue is unavailable')
+  const queueStatus=String(job.status||'')
+  if(!['pending','retry','leased'].includes(queueStatus)){
+    throw new Error('activation execution job is not processable: '+(queueStatus||'unknown'))
+  }
   const updated=await updateExecution({
     workspaceId,id,status:'queued',jobId:job.id,actor:actorId
   })
@@ -125,14 +130,33 @@ const executeAdapter=async(workspaceId,proposal)=>{
 }
 
 export const executeAiActivationJob=async job=>{
-  if(!enabled())throw new Error('AI activation execution was disabled before worker execution')
   const workspaceId=job.workspace_id
   const proposalId=String(job.payload?.proposalId||'')
+  if(!enabled()){
+    await updateExecution({
+      workspaceId,id:proposalId,status:'blocked',jobId:job.id,
+      error:'AI activation execution was disabled before worker execution'
+    }).catch(()=>{})
+    throw new Error('AI activation execution was disabled before worker execution')
+  }
   const expectedHash=String(job.payload?.proposalHash||'')
   const proposal=await assertAiActivationExecutable({workspaceId,id:proposalId})
   if(String(proposal.proposal_hash)!==expectedHash)throw new Error('activation proposal hash changed before execution')
   if(proposal.executed_at||proposal.execution_status==='succeeded'){
     return {proposalId,status:'already_succeeded',receipt:proposal.execution_receipt||null}
+  }
+  if(proposal.execution_status==='running'&&String(proposal.execution_job_id||'')===String(job.id)){
+    await updateExecution({
+      workspaceId,id:proposalId,status:'blocked',jobId:job.id,
+      error:'Previous execution attempt may have reached the provider; reconciliation is required before retry.'
+    }).catch(()=>{})
+    throw new ProviderExecutionError(
+      'activation execution outcome is unknown; automatic retry is blocked pending reconciliation',
+      {provider:'activation',task:proposal.task||'activation',unknownOutcome:true,cause:'reconciliation_required'}
+    )
+  }
+  if(proposal.execution_status==='running'){
+    throw new Error('activation proposal is already running under a different job')
   }
   await updateExecution({workspaceId,id:proposalId,status:'running',jobId:job.id})
   try{
