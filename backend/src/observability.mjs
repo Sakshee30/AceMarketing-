@@ -1,17 +1,7 @@
 import {createHash,randomUUID} from 'node:crypto'
-import pg from 'pg'
-
-const {Pool}=pg
-const databaseUrl=process.env.DATABASE_URL||''
+import {pool,embeddedDatabase} from './database.mjs'
 const evalIntervalMs=Number(process.env.MONITORING_EVAL_INTERVAL_MS||60000)
 const retentionDays=Number(process.env.API_METRIC_RETENTION_DAYS||30)
-const pool=databaseUrl?new Pool({
-  connectionString:databaseUrl,
-  max:Number(process.env.OBSERVABILITY_DB_POOL_MAX||10),
-  idleTimeoutMillis:Number(process.env.DB_IDLE_TIMEOUT_MS||30000),
-  connectionTimeoutMillis:Number(process.env.DB_CONNECT_TIMEOUT_MS||5000),
-  ...(process.env.DB_SSL==='require'?{ssl:{rejectUnauthorized:false}}:{})
-}):null
 
 const lastEval=new Map()
 const monitoringRuleId=(workspaceId,metric)=>'mr_'+createHash('sha256').update(String(workspaceId)+'\n'+String(metric)).digest('hex').slice(0,40)
@@ -55,6 +45,15 @@ const compare=(value,operator,threshold)=>{
 }
 
 const metricSnapshot=async(workspaceId,windowMinutes=10)=>{
+  if(embeddedDatabase){
+    const [api,jobs,audiences]=await Promise.all([
+      pool.query(`SELECT COUNT(*)::int requests,COUNT(*) FILTER (WHERE status_code>=500)::int errors FROM ace_api_metrics WHERE workspace_id=$1`,[workspaceId]),
+      pool.query(`SELECT COUNT(*)::int count FROM ace_jobs WHERE workspace_id=$1 AND status='dead_letter'`,[workspaceId]),
+      pool.query(`SELECT COUNT(*)::int count FROM ace_audiences WHERE workspace_id=$1 AND status='error'`,[workspaceId])
+    ])
+    const value=api.rows[0]
+    return {api_error_rate:value.requests?Number(((value.errors/value.requests)*100).toFixed(3)):0,api_p95_latency_ms:0,dead_letter_jobs:Number(jobs.rows[0]?.count||0),audience_sync_errors:Number(audiences.rows[0]?.count||0),tracking_inactivity_minutes:0,signal_delivery_backlog_minutes:0}
+  }
   const [api,jobs,audiences,tracking,signalBacklog]=await Promise.all([
     pool.query(
       `SELECT COUNT(*)::int requests,
@@ -188,19 +187,19 @@ export const monitoringSnapshot=async workspaceId=>{
   if(!pool)return {available:false}
   await ensureRules(workspaceId)
   await evaluateMonitoring(workspaceId)
+  const recentQuery=embeddedDatabase
+    ?`SELECT COUNT(*)::int requests,COUNT(*) FILTER (WHERE status_code>=500)::int errors,0::int p95 FROM ace_api_metrics WHERE workspace_id=$1`
+    :`SELECT COUNT(*)::int requests,COUNT(*) FILTER (WHERE status_code>=500)::int errors,COALESCE(percentile_disc(0.95) WITHIN GROUP (ORDER BY latency_ms),0)::int p95 FROM ace_api_metrics WHERE workspace_id=$1 AND created_at>=now()-interval '15 minutes'`
+  const dayQuery=embeddedDatabase
+    ?recentQuery
+    :`SELECT COUNT(*)::int requests,COUNT(*) FILTER (WHERE status_code>=500)::int errors,COALESCE(percentile_disc(0.95) WITHIN GROUP (ORDER BY latency_ms),0)::int p95 FROM ace_api_metrics WHERE workspace_id=$1 AND created_at>=now()-interval '24 hours'`
   const [recent,day,usage,rules,alerts]=await Promise.all([
     pool.query(
-      `SELECT COUNT(*)::int requests,
-       COUNT(*) FILTER (WHERE status_code>=500)::int errors,
-       COALESCE(percentile_disc(0.95) WITHIN GROUP (ORDER BY latency_ms),0)::int p95
-       FROM ace_api_metrics WHERE workspace_id=$1 AND created_at>=now()-interval '15 minutes'`,
+      recentQuery,
       [workspaceId]
     ),
     pool.query(
-      `SELECT COUNT(*)::int requests,
-       COUNT(*) FILTER (WHERE status_code>=500)::int errors,
-       COALESCE(percentile_disc(0.95) WITHIN GROUP (ORDER BY latency_ms),0)::int p95
-       FROM ace_api_metrics WHERE workspace_id=$1 AND created_at>=now()-interval '24 hours'`,
+      dayQuery,
       [workspaceId]
     ),
     pool.query(
