@@ -178,7 +178,7 @@ const persistResult=async({workspaceId,job,execution,mediaPersistenceError=null}
       job.id,
       task,
       mediaPersistenceError?'degraded':'completed',
-      task==='analyst'?'observed_metrics':task==='call_transcription'?'transcript':task==='creative_image'?'generated_asset':'provider_output',
+      task==='analyst'?'provider_output':task==='call_transcription'?'transcript':task==='creative_image'?'generated_asset':'provider_output',
       route?.requestedModel||null,
       execution?.resolvedModel||route?.requestedModel||null,
       null,
