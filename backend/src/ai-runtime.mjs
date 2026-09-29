@@ -154,7 +154,7 @@ const providerRequestFinish=async({workspaceId,job,execution,outcome='confirmed'
   return rows[0]||null
 }
 
-const persistResult=async({workspaceId,job,execution})=>{
+const persistResult=async({workspaceId,job,execution,mediaPersistenceError=null})=>{
   if(!pool) return null
   const task=String(job.payload?.task||'')
   const route=modelRegistryItem(task)
@@ -162,22 +162,28 @@ const persistResult=async({workspaceId,job,execution})=>{
   const evidenceRefs=Array.isArray(job.payload?.sourceSnapshot?.evidenceIds)?job.payload.sourceSnapshot.evidenceIds:[]
   const payload=task==='analyst'
     ?{text:execution.text||'',rawStatus:execution.rawStatus||null}
-    :execution
+    :task==='creative_image'
+      ?{provider:execution.provider,requestedModel:execution.requestedModel,resolvedModel:execution.resolvedModel,providerRequestId:execution.providerRequestId||null,assetStored:!mediaPersistenceError}
+      :task==='call_transcription'
+        ?{text:String(execution.text||'').slice(0,20000),transcriptionConfig:execution.transcriptionConfig||null,providerRequestId:execution.providerRequestId||null}
+        :execution
   const {rows}=await pool.query(
     `INSERT INTO ace_ai_results
       (id,workspace_id,job_id,task,status,result_type,requested_model,resolved_model,artifact_version,schema_version,source_snapshot,warnings,evidence_refs,payload,usage)
-     VALUES ($1,$2,$3,$4,'completed',$5,$6,$7,$8,'ai-result.v1',$9::jsonb,'[]'::jsonb,$10::jsonb,$11::jsonb,$12::jsonb)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'ai-result.v1',$10::jsonb,$11::jsonb,$12::jsonb,$13::jsonb,$14::jsonb)
      RETURNING *`,
     [
       id,
       workspaceId,
       job.id,
       task,
-      task==='analyst'?'observed_metrics':'provider_output',
+      mediaPersistenceError?'degraded':'completed',
+      task==='analyst'?'observed_metrics':task==='call_transcription'?'transcript':task==='creative_image'?'generated_asset':'provider_output',
       route?.requestedModel||null,
       execution?.resolvedModel||route?.requestedModel||null,
       null,
       JSON.stringify(job.payload?.sourceSnapshot||{}),
+      JSON.stringify(mediaPersistenceError?[String(mediaPersistenceError).slice(0,1000)]:[]),
       JSON.stringify(evidenceRefs),
       JSON.stringify(payload),
       JSON.stringify(execution?.usage||null)
@@ -193,13 +199,18 @@ export const executeHostedAiJob=async job=>{
   try{
     const execution=await executeHostedTask({task,input:job.payload?.input||{}})
     await providerRequestFinish({workspaceId,job,execution,outcome:'confirmed'})
-    const result=await persistResult({workspaceId,job,execution})
-    const transcript=task==='call_transcription'
-      ?await persistTranscript({workspaceId,job,execution,route:modelRegistryItem(task)}).catch(()=>null)
-      :null
-    const creativeAsset=task==='creative_image'
-      ?await persistCreativeAsset({workspaceId,job,execution,route:modelRegistryItem(task)}).catch(()=>null)
-      :null
+    let transcript=null
+    let creativeAsset=null
+    let mediaPersistenceError=null
+    if(task==='call_transcription'){
+      try{transcript=await persistTranscript({workspaceId,job,execution,route:modelRegistryItem(task)})}
+      catch(error){mediaPersistenceError=error instanceof Error?error.message:String(error)}
+    }
+    if(task==='creative_image'){
+      try{creativeAsset=await persistCreativeAsset({workspaceId,job,execution,route:modelRegistryItem(task)})}
+      catch(error){mediaPersistenceError=error instanceof Error?error.message:String(error)}
+    }
+    const result=await persistResult({workspaceId,job,execution,mediaPersistenceError})
     return {
       task,
       resultId:result?.id||null,
@@ -210,6 +221,7 @@ export const executeHostedAiJob=async job=>{
       resolvedModel:execution.resolvedModel,
       providerRequestId:execution.providerRequestId||null,
       usage:execution.usage||null,
+      mediaPersistenceError,
       ...(task==='analyst'?{text:execution.text||''}:{})
     }
   }catch(error){
