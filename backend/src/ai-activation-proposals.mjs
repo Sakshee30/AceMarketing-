@@ -162,6 +162,7 @@ export const approveAiActivationProposal=async({workspaceId,id,actor})=>{
     const row=rows[0]
     if(!row)throw new Error('activation proposal not found')
     if(row.status!=='pending_approval')throw new Error('activation proposal is not pending approval')
+    if(row.reviewer_status!=='completed')throw new Error('required recommendation reviewer has not completed')
     const approver=actor?.userId||actor?.email||null
     assertActivationApprovalActor(row.created_by,approver)
     await assertFresh(workspaceId,row)
@@ -187,7 +188,7 @@ export const rejectAiActivationProposal=async({workspaceId,id,actor,reason})=>{
   const {rows}=await pool.query(
     `UPDATE ace_ai_activation_proposals
      SET status='rejected',rejected_by=$3,rejected_at=now(),rejection_reason=$4
-     WHERE id=$1 AND workspace_id=$2 AND status='pending_approval'
+     WHERE id=$1 AND workspace_id=$2 AND status='pending_approval' AND reviewer_status='completed'
      RETURNING *`,
     [id,workspaceId,reviewer,String(reason||'Rejected by reviewer').slice(0,2000)]
   )
@@ -206,3 +207,55 @@ export const assertAiActivationExecutable=async({workspaceId,id})=>{
 }
 
 export const activationProposalHash=hashProposal
+
+
+export const attachActivationProposalReviewerJob=async({workspaceId,id,jobId})=>{
+  if(!pool)return null
+  const {rows}=await pool.query(
+    `UPDATE ace_ai_activation_proposals
+     SET reviewer_job_id=$3,reviewer_status='queued',status='pending_review'
+     WHERE workspace_id=$1 AND id=$2
+       AND reviewer_status IN ('not_requested','blocked','failed')
+       AND expires_at>now()
+     RETURNING *`,
+    [workspaceId,id,jobId]
+  )
+  return rows[0]||null
+}
+
+export const markActivationProposalReviewerBlocked=async({workspaceId,id,reason})=>{
+  if(!pool)return null
+  const {rows}=await pool.query(
+    `UPDATE ace_ai_activation_proposals
+     SET reviewer_status='blocked',reviewer_summary=$3,reviewer_completed_at=now(),status='review_blocked'
+     WHERE workspace_id=$1 AND id=$2 AND expires_at>now()
+     RETURNING *`,
+    [workspaceId,id,String(reason||'required reviewer unavailable').slice(0,4000)]
+  )
+  return rows[0]||null
+}
+
+export const recordActivationProposalReviewerResult=async({workspaceId,jobId,resultId,summary})=>{
+  if(!pool)return null
+  const {rows}=await pool.query(
+    `UPDATE ace_ai_activation_proposals
+     SET reviewer_result_id=$3,reviewer_status='completed',reviewer_summary=$4,
+         reviewer_completed_at=now(),status='pending_approval'
+     WHERE workspace_id=$1 AND reviewer_job_id=$2 AND expires_at>now()
+     RETURNING *`,
+    [workspaceId,jobId,resultId||null,String(summary||'').slice(0,12000)]
+  )
+  return rows[0]||null
+}
+
+export const recordActivationProposalReviewerFailure=async({workspaceId,jobId,reason})=>{
+  if(!pool)return null
+  const {rows}=await pool.query(
+    `UPDATE ace_ai_activation_proposals
+     SET reviewer_status='failed',reviewer_summary=$3,reviewer_completed_at=now(),status='review_failed'
+     WHERE workspace_id=$1 AND reviewer_job_id=$2 AND reviewer_status='queued'
+     RETURNING *`,
+    [workspaceId,jobId,String(reason||'reviewer execution failed').slice(0,4000)]
+  )
+  return rows[0]||null
+}
