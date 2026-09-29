@@ -35,7 +35,7 @@ import { closeLiveVoice, createLiveVoiceSession, getLiveVoiceSession, installLiv
 import { validateHostedTaskInput } from './ai-input-validation.mjs'
 import { evaluateAiTaskAdmission, getAiTaskPolicy, listAiTaskPolicies, listCreativeAssets, listTranscripts, reviewCreativeAsset, saveAiTaskPolicy } from './ai-governance-store.mjs'
 import { getSegmentMemberships, listAnomalyItems, listRankingItems, listSegmentSnapshots, reviewAnomalyItem } from './ai-domain-results.mjs'
-import { approveAiActivationProposal, createAiActivationProposal, listAiActivationProposals, rejectAiActivationProposal } from './ai-activation-proposals.mjs'
+import { approveAiActivationProposal, attachActivationProposalReviewerJob, createAiActivationProposal, listAiActivationProposals, markActivationProposalReviewerBlocked, rejectAiActivationProposal } from './ai-activation-proposals.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -4717,7 +4717,44 @@ const server = http.createServer(async (req,res)=>{
       const body=await readBody(req)
       try{
         const item=await createAiActivationProposal({workspaceId,input:body,actor:authenticatedUser})
-        return send(req,res,201,{item})
+        const reviewerSubmission=await submitHostedAiJob({
+          workspaceId,
+          task:'recommendation_reviewer',
+          input:{
+            recommendation:item.payload,
+            evidence:item.evidence_snapshot,
+            policy:item.policy_result
+          },
+          sourceSnapshot:{
+            schemaVersion:'activation-review.v1',
+            proposalId:item.id,
+            proposalHash:item.proposal_hash,
+            evidenceIds:Array.isArray(item.evidence_snapshot?.evidenceRefs)?item.evidence_snapshot.evidenceRefs:[],
+            capturedAt:new Date().toISOString()
+          },
+          idempotencyKey:'activation-review:'+item.proposal_hash,
+          actor:authenticatedUser
+        })
+        if(!reviewerSubmission.accepted){
+          const blocked=await markActivationProposalReviewerBlocked({
+            workspaceId,
+            id:item.id,
+            reason:[reviewerSubmission.error,...(reviewerSubmission.prerequisites||[])].filter(Boolean).join('; ')
+          })
+          return send(req,res,409,{
+            error:'required recommendation reviewer is blocked',
+            item:blocked||item,
+            prerequisites:reviewerSubmission.prerequisites||[],
+            note:'The proposal is preserved but cannot be approved without required reviewer evidence.'
+          })
+        }
+        const reviewed=await attachActivationProposalReviewerJob({workspaceId,id:item.id,jobId:reviewerSubmission.job.id})
+        return send(req,res,202,{
+          item:reviewed||item,
+          reviewerJobId:reviewerSubmission.job.id,
+          reviewerStatus:'queued',
+          note:'Reviewer output is evidence only and cannot authorize or execute the proposal.'
+        })
       }catch(error){
         return send(req,res,409,{error:error instanceof Error?error.message:'activation proposal could not be created'})
       }
