@@ -162,16 +162,9 @@ const runBatch=async()=>{
         workerId,
         fencingToken:job.fencing_token,
         externalRequestId:result?.providerRequestId||null,
-        resultSchemaVersion:job.result_schema_version||null
+        resultSchemaVersion:job.result_schema_version||null,
+        actualUnits:usageUnitsFromResult(result)
       })
-      if(completed&&['ai_hosted_task','ml_task'].includes(job.kind)){
-        await reconcileAiUsageReservation({
-          workspaceId:job.workspace_id,
-          jobId:job.id,
-          actualUnits:usageUnitsFromResult(result),
-          status:'committed'
-        }).catch(()=>{})
-      }
     }catch(error){
       if(error instanceof ProviderExecutionError&&error.unknownOutcome){
         await markUnknownOutcome({
