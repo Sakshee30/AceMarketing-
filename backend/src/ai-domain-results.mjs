@@ -2,6 +2,57 @@ import {randomUUID} from 'node:crypto'
 import {pool} from './database.mjs'
 
 export const persistDomainResult=async(client,{workspaceId,resultId,task,operation,payload})=>{
+  if(task.startsWith('forecast_')){
+    const warningList=[].concat(Array.isArray(payload?.warnings)?payload.warnings:[],payload?.warning||[]).filter(Boolean)
+    const pointForecast=payload?.pointForecast??payload?.forecasts??null
+    const quantiles=payload?.quantiles??(payload?.quantileLevels?{levels:payload.quantileLevels,records:payload?.forecasts||null}:null)
+    await client.query(
+      `INSERT INTO ace_ai_forecast_records
+        (workspace_id,result_id,task,series_id,horizon,frequency,model_revision,point_forecast,quantiles,intervals,metrics,
+         baseline_comparison,interval_method,nominal_coverage,measured_coverage,data_cutoff,warnings)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9::jsonb,$10::jsonb,$11::jsonb,$12::jsonb,$13,$14,$15,$16::timestamptz,$17::jsonb)
+       ON CONFLICT (workspace_id,result_id) DO NOTHING`,
+      [
+        workspaceId,resultId,task,payload?.seriesId||null,Number(payload?.horizon)||null,payload?.frequency||null,
+        payload?.revision||payload?.artifact?.artifactId||null,JSON.stringify(pointForecast),JSON.stringify(quantiles),
+        JSON.stringify(payload?.intervals??null),JSON.stringify(payload?.metrics??{}),JSON.stringify(payload?.baselineComparison??null),
+        payload?.intervalMethod||null,payload?.nominalCoverage??null,payload?.measuredCoverage??null,payload?.dataCutoff||null,
+        JSON.stringify(warningList)
+      ]
+    )
+  }
+  if(task==='incrementality'){
+    const interval=payload?.approximateInterval95||payload?.interval||null
+    const estimate=payload?.averageTreatmentEffect??payload?.estimate??null
+    const supported=!String(payload?.status||'').includes('unsupported')&&!String(payload?.status||'').includes('insufficient')
+    await client.query(
+      `INSERT INTO ace_ai_causal_records
+        (workspace_id,result_id,task,estimand,treatment_name,outcome_name,supported,estimate,interval,overlap,diagnostics,assumptions,sample_size)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10::jsonb,$11::jsonb,$12::jsonb,$13)
+       ON CONFLICT (workspace_id,result_id) DO NOTHING`,
+      [
+        workspaceId,resultId,task,payload?.estimand||null,payload?.treatment||null,payload?.outcome||null,supported,
+        estimate,JSON.stringify(interval),JSON.stringify(payload?.overlap||{}),JSON.stringify(payload?.diagnostics||{}),
+        JSON.stringify([payload?.warning].filter(Boolean)),Number(payload?.sampleSize)||null
+      ]
+    )
+  }
+  if(task==='marketing_mix'){
+    const healthStatus=String(payload?.healthStatus||'unknown')
+    const supported=!String(payload?.status||'').includes('blocked')&&!healthStatus.toUpperCase().includes('FAIL')
+    await client.query(
+      `INSERT INTO ace_ai_marketing_mix_records
+        (workspace_id,result_id,task,supported,health_status,artifact_id,artifact_hash,media_channels,sampling,diagnostics,assumptions)
+       VALUES ($1,$2,'marketing_mix',$3,$4,$5,$6,$7::jsonb,$8::jsonb,$9::jsonb,$10::jsonb)
+       ON CONFLICT (workspace_id,result_id) DO NOTHING`,
+      [
+        workspaceId,resultId,supported,healthStatus,payload?.artifact?.artifactId||null,payload?.artifact?.sha256||null,
+        JSON.stringify(payload?.artifact?.metadata?.mediaChannels||[]),JSON.stringify(payload?.sampling||{}),
+        JSON.stringify({healthStatus,edaOutcomes:payload?.edaOutcomes||[],promotion:payload?.promotion||null}),
+        JSON.stringify([payload?.warning].filter(Boolean))
+      ]
+    )
+  }
   if(task==='anomaly_detection'&&Array.isArray(payload?.items)){
     for(const item of payload.items.slice(0,250000)){
       await client.query(
@@ -116,6 +167,41 @@ export const listRankingItems=async({workspaceId,resultId=null,limit=500})=>{
   const {rows}=await pool.query(
     `SELECT * FROM ace_ai_ranking_items WHERE ${where} ORDER BY created_at DESC,group_id,rank LIMIT $${params.length}`,
     params
+  )
+  return rows
+}
+
+
+export const listForecastRecords=async({workspaceId,task=null,limit=100})=>{
+  if(!pool)return []
+  const safeLimit=Math.max(1,Math.min(Number(limit||100),500))
+  const params=[workspaceId]
+  let where='workspace_id=$1'
+  if(task){params.push(task);where+=' AND task=$2'}
+  params.push(safeLimit)
+  const {rows}=await pool.query(
+    `SELECT * FROM ace_ai_forecast_records WHERE ${where} ORDER BY created_at DESC LIMIT $${params.length}`,
+    params
+  )
+  return rows
+}
+
+export const listCausalRecords=async({workspaceId,limit=100})=>{
+  if(!pool)return []
+  const safeLimit=Math.max(1,Math.min(Number(limit||100),500))
+  const {rows}=await pool.query(
+    'SELECT * FROM ace_ai_causal_records WHERE workspace_id=$1 ORDER BY created_at DESC LIMIT $2',
+    [workspaceId,safeLimit]
+  )
+  return rows
+}
+
+export const listMarketingMixRecords=async({workspaceId,limit=100})=>{
+  if(!pool)return []
+  const safeLimit=Math.max(1,Math.min(Number(limit||100),500))
+  const {rows}=await pool.query(
+    'SELECT * FROM ace_ai_marketing_mix_records WHERE workspace_id=$1 ORDER BY created_at DESC LIMIT $2',
+    [workspaceId,safeLimit]
   )
   return rows
 }
