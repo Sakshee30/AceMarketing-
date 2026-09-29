@@ -14,12 +14,14 @@ from .contracts import (
     ChallengerForecastRequest,
     ClassificationTrainRequest,
     ForecastRequest,
+    ForecastQualificationRequest,
     MeridianFitRequest,
     RankScoreRequest,
     RankingTrainRequest,
     RegressionTrainRequest,
     SegmentationRequest,
 )
+from .qualification import evaluate_forecast_candidates
 from .pipelines import (
     anomaly_detection,
     behavioral_segments,
@@ -156,4 +158,12 @@ def ranker_score_endpoint(request: RankScoreRequest):
     try:
         return score_ranker(request)
     except (ValueError, FileNotFoundError, RuntimeError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.post("/v1/evaluate/forecast-candidates", dependencies=[Depends(require_internal_token)])
+def evaluate_forecast_candidates_endpoint(request: ForecastQualificationRequest):
+    try:
+        return evaluate_forecast_candidates(request)
+    except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
