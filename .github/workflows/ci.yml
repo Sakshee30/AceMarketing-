@@ -240,6 +240,7 @@ jobs:
           test -f frontend/src/features/intelligence/public.ts
           test -f frontend/src/features/intelligence/feature.manifest.ts
           test -f backend/src/ai-result-contracts.mjs
+          test -f backend/src/ai-platform-policy.mjs
           test -f backend/src/ai-activation-proposals.mjs
           test -f backend/src/ai-domain-results.mjs
           test -f backend/tests/ai-activation-proposals.test.mjs
@@ -253,6 +254,8 @@ jobs:
           test -f backend/tests/ai-result-contracts.test.mjs
           test -f backend/tests/ai-registry.test.mjs
           test -f backend/tests/ai-contract-manifest.test.mjs
+          test -f backend/tests/ai-platform-policy.test.mjs
+          test -f docs/ai/task-map.md
           test -f configs/ai/result-schema-v1.json
           test -f docs/ai/openapi.yaml
           test -f docs/ai/coverage-matrix.md
