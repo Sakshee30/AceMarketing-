@@ -26,6 +26,13 @@ export const validateAiResultEnvelope=value=>{
     if(!Array.isArray(value.pointForecast||value.point_forecast)&&!Array.isArray(value.forecasts))throw new Error('forecast distribution requires forecast values')
     requiredString(value.horizon,'horizon')
   }
+  if(resultType==='marketing_mix_analysis'){
+    requiredString(value.healthStatus||value.health_status,'healthStatus')
+    if(value.supported!==true&&value.supported!==false)throw new Error('marketing mix supported flag required')
+  }
+  if(resultType==='model_evaluation'){
+    if(!value.metrics||typeof value.metrics!=='object'||Array.isArray(value.metrics))throw new Error('model evaluation metrics required')
+  }
   if(resultType==='causal_estimate'){
     requiredString(value.estimand,'estimand')
     if(value.supported!==true&&value.supported!==false)throw new Error('causal estimate supported flag required')
