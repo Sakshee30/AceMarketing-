@@ -43,3 +43,12 @@ The final safety review gaps are implemented in code:
 
 These controls still do not qualify providers, train tenant artifacts, approve models, or deploy production infrastructure without the required external evidence.
 
+## Specialist model evaluation hardening
+
+The specialist ML service now records additional task-specific evidence required by the implementation specification:
+
+- IsolationForest deduplicates repeated entity IDs, enforces a configurable minimum-volume gate, and reports its decision threshold, flagged rate, and false-positive feedback capability.
+- HDBSCAN reports cluster/noise counts, membership strength when available, and a deterministic small-perturbation adjusted-Rand stability diagnostic. Cluster IDs remain explicitly version-specific.
+- LightGBM ranking trains only on exposed candidates and evaluates NDCG on held-out groups. When group timestamps are supplied, the holdout is time ordered; otherwise the input group order is preserved and reported. Position-context coverage is also reported.
+- These evaluation signals remain evidence for qualification and do not automatically promote or deploy an artifact.
+
