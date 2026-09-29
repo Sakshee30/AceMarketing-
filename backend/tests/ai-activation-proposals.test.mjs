@@ -67,3 +67,26 @@ test('budget activation proposal is rejected before review when deterministic ch
     /percentage limit/
   )
 })
+
+
+test('invalid budget percentage configuration fails closed',()=>{
+  const previous=process.env.AI_ACTIVATION_MAX_BUDGET_CHANGE_PCT
+  process.env.AI_ACTIVATION_MAX_BUDGET_CHANGE_PCT='not-a-number'
+  try{
+    assert.throws(
+      ()=>validateActivationProposalPolicy({
+        proposalType:'budget_change',
+        payload:{
+          providerAdapter:'google_ads_budget',
+          campaignBudgetResourceName:'customers/123/campaignBudgets/456',
+          expectedCurrentAmountMicros:100000000,
+          newAmountMicros:101000000
+        }
+      }),
+      /AI_ACTIVATION_MAX_BUDGET_CHANGE_PCT/
+    )
+  }finally{
+    if(previous==null)delete process.env.AI_ACTIVATION_MAX_BUDGET_CHANGE_PCT
+    else process.env.AI_ACTIVATION_MAX_BUDGET_CHANGE_PCT=previous
+  }
+})
