@@ -7,6 +7,7 @@ export const intelligenceApi={
   createActivationProposal:(payload:Record<string,unknown>)=>api.createAiActivationProposal(payload),
   approveActivationProposal:(id:string)=>api.approveAiActivationProposal(id),
   rejectActivationProposal:(id:string,reason?:string)=>api.rejectAiActivationProposal(id,reason),
+  executeActivationProposal:(id:string)=>api.executeAiActivationProposal(id),
   savePolicy:(task:string,payload:Record<string,unknown>)=>api.saveAiTaskPolicy(task,payload),
   transcripts:(options?:{signal?:AbortSignal})=>api.aiTranscripts(options),
   creatives:(options?:{signal?:AbortSignal})=>api.aiCreativeAssets(options),
