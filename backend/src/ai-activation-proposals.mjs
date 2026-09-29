@@ -165,7 +165,26 @@ export const approveAiActivationProposal=async({workspaceId,id,actor})=>{
     if(row.reviewer_status!=='completed')throw new Error('required recommendation reviewer has not completed')
     const approver=actor?.userId||actor?.email||null
     assertActivationApprovalActor(row.created_by,approver)
-    await assertFresh(workspaceId,row)
+    const registryResult=await client.query(
+      `SELECT requested_model,resolved_model,artifact_revision,artifact_hash,evaluation_reference,evaluation_status,approval_status,deployment_status
+       FROM ace_ai_model_registry
+       WHERE workspace_id=$1 AND task=$2
+       FOR SHARE`,
+      [workspaceId,row.task]
+    )
+    const registryRow=registryResult.rows[0]
+    const lockedRoute=registryRow?{
+      task:row.task,
+      requestedModel:registryRow.requested_model,
+      resolvedModel:registryRow.resolved_model,
+      artifactRevision:registryRow.artifact_revision,
+      artifactHash:registryRow.artifact_hash,
+      evaluationReference:registryRow.evaluation_reference,
+      evaluationStatus:registryRow.evaluation_status,
+      approvalStatus:registryRow.approval_status,
+      deploymentStatus:registryRow.deployment_status
+    }:null
+    assertActivationProposalFresh({row,route:lockedRoute})
     const updated=await client.query(
       `UPDATE ace_ai_activation_proposals
        SET status='approved',approved_by=$3,approved_at=now()
