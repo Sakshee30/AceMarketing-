@@ -16,7 +16,9 @@ const pool=databaseUrl?new Pool({
 
 const hash=value=>createHash('sha256').update(String(value)).digest('hex')
 export const normalizeKnowledgePolicy=value=>{
-  const roles=Array.isArray(value?.allowedRoles)?value.allowedRoles.map(x=>String(x)).filter(Boolean).slice(0,20):[]
+  const roles=Array.isArray(value?.allowedRoles)
+    ?Array.from(new Set(value.allowedRoles.filter(x=>typeof x==='string').map(x=>x.trim()).filter(Boolean))).slice(0,20)
+    :[]
   return {allowedRoles:roles}
 }
 export const canReadKnowledgePolicy=(policy,role)=>{
