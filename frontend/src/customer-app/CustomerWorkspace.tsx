@@ -141,10 +141,12 @@ function CustomerWorkspaceShell({back,queryClient}:{back:()=>void;queryClient:Qu
  const [createOpen,setCreateOpen]=useState(false)
  const [workspaceDraft,setWorkspaceDraft]=useState({name:'',environment:'Production'})
  const [workspaceBusy,setWorkspaceBusy]=useState(false)
+ const [workspaceCreateError,setWorkspaceCreateError]=useState('')
  const [search,setSearch]=useState('')
  const [regionOpen,setRegionOpen]=useState(false)
  const [navOpen,setNavOpen]=useState<Record<string,boolean>>(()=>{
-  try{return {...Object.fromEntries(dashboardSections.map(s=>[s.id,true])),...JSON.parse(window.localStorage.getItem('ace_nav_sections')||'{}')}}catch{return Object.fromEntries(dashboardSections.map(s=>[s.id,true]))}
+  const activeSection=dashboardSections.find(section=>section.tabs.includes(tab as any))?.id||'workspace'
+  return Object.fromEntries(dashboardSections.map(section=>[section.id,section.id===activeSection]))
  })
  const [navFilter,setNavFilter]=useState('')
  const [sectionSummary,setSectionSummary]=useState<any>(null)
@@ -191,7 +193,7 @@ function CustomerWorkspaceShell({back,queryClient}:{back:()=>void;queryClient:Qu
  },[workspaceGeneration,queryClient])
  useEffect(()=>{window.localStorage.setItem('ace_active_tab',tab)},[tab])
  useEffect(()=>{window.localStorage.setItem('ace_nav_sections',JSON.stringify(navOpen))},[navOpen])
- useEffect(()=>{const section=dashboardSections.find(s=>s.tabs.includes(tab as any));if(section&&!navOpen[section.id])setNavOpen(x=>({...x,[section.id]:true}))},[tab])
+ useEffect(()=>{const section=dashboardSections.find(s=>s.tabs.includes(tab as any));if(section&&!navOpen[section.id])setNavOpen(Object.fromEntries(dashboardSections.map(item=>[item.id,item.id===section.id])))},[tab])
  useEffect(()=>{const openTab=(event:any)=>{const next=event?.detail as AppTab;if(appTabs.some(([name])=>name===next))navigateToTab(next)};window.addEventListener('ace-app-tab',openTab as EventListener);return()=>window.removeEventListener('ace-app-tab',openTab as EventListener)},[tab])
 
  const chooseWorkspace=async(x:any)=>{
@@ -207,8 +209,10 @@ function CustomerWorkspaceShell({back,queryClient}:{back:()=>void;queryClient:Qu
   await queryClient.cancelQueries()
   queryClient.clear()
   cancelWorkspaceRequests('workspace_scope_changed')
-  window.localStorage.setItem('ace_workspace_id',x.id)
+  let switched=false
   try{
+   await api.switchWorkspace(String(x.id))
+   switched=true
    const summary:any=await queryClient.fetchQuery({
     queryKey:customerQueryKeys.dashboard(getSessionGeneration(),String(x.id),workspaceGeneration+1),
     queryFn:({signal})=>api.dashboardSummary({signal}),
@@ -221,6 +225,9 @@ function CustomerWorkspaceShell({back,queryClient}:{back:()=>void;queryClient:Qu
    window.history.replaceState(null,'',buildWorkspaceHash(tab,String(x.id)))
    setWorkspaceTransition(null)
   }catch(e:any){
+   if(switched&&previousId&&previousId!==String(x.id)){
+    try{await api.switchWorkspace(previousId)}catch{}
+   }
    if(previousId){window.localStorage.setItem('ace_workspace_id',previousId);setWorkspaceScopeId(previousId)}
    else window.localStorage.removeItem('ace_workspace_id')
    queryClient.clear()
@@ -228,13 +235,17 @@ function CustomerWorkspaceShell({back,queryClient}:{back:()=>void;queryClient:Qu
   }
  }
  const createWorkspace=async()=>{
-  if(!workspaceDraft.name.trim())return
+  const name=workspaceDraft.name.trim()
+  if(name.length<2){setWorkspaceCreateError('Workspace name must contain at least 2 characters.');return}
+  setWorkspaceCreateError('')
   setWorkspaceBusy(true)
   try{
-   const item:any=await api.createWorkspace(workspaceDraft)
+   const item:any=await api.createWorkspace({...workspaceDraft,name})
    setWorkspaces(xs=>[...xs,item])
    setCreateOpen(false);setWorkspaceDraft({name:'',environment:'Production'})
    await chooseWorkspace(item)
+  }catch(error:any){
+   setWorkspaceCreateError(error?.message||'Workspace could not be created. Please try again.')
   }finally{setWorkspaceBusy(false)}
  }
  useEffect(()=>{
@@ -266,8 +277,8 @@ function CustomerWorkspaceShell({back,queryClient}:{back:()=>void;queryClient:Qu
   if(navFilter.trim()&&!matching.length)return null
   const opened=navFilter.trim()?true:navOpen[section.id]
   return <div className="product-nav-group" key={section.id}>
-   <button className="product-nav-group-head" aria-label={'Toggle '+section.id+' navigation group'} onClick={()=>setNavOpen(x=>({...x,[section.id]:!x[section.id]}))}><SectionIcon/><span>{section.label}</span><small>{matching.length}</small><ChevronDown className={opened?'open':''}/></button>
-   {opened&&<div className="product-nav-group-items">{matching.map(name=>{const meta=tabMeta[name];const I=meta?.Icon||Activity;return <button key={name} className={tab===name?'active':''} onClick={()=>navigateToTab(name as AppTab)} title={name}><I/>{name}{tab===name&&<span className="nav-active-dot"/>}</button>})}</div>}
+    <button className="product-nav-group-head" aria-expanded={opened} aria-controls={'nav-group-'+section.id} onClick={()=>setNavOpen(Object.fromEntries(dashboardSections.map(item=>[item.id,item.id===section.id?!opened:false])))}><SectionIcon/><span>{section.label}</span><small>{matching.length}</small><ChevronDown className={opened?'open':''}/></button>
+    {opened&&<div className="product-nav-group-items" id={'nav-group-'+section.id}>{matching.map(name=>{const meta=tabMeta[name];const I=meta?.Icon||Activity;return <button key={name} className={tab===name?'active':''} aria-current={tab===name?'page':undefined} onClick={()=>navigateToTab(name as AppTab)} title={name}><I/>{name}{tab===name&&<span className="nav-active-dot"/>}</button>})}</div>}
   </div>
  })}
  </nav><div className="aside-footer"><button onClick={leaveWorkspace}><ArrowRight/>Back to website</button><div className="profile-mini"><span>S</span><div><b>Sakshee</b><small>Workspace owner</small></div></div></div></aside>
@@ -283,7 +294,7 @@ function CustomerWorkspaceShell({back,queryClient}:{back:()=>void;queryClient:Qu
   })}
  </div>
  <div className="product-body">{workspaceTransition?<div className={'app-panel workspace-transition '+workspaceTransition.state} role={workspaceTransition.state==='error'?'alert':'status'}><div className="workspace-transition-icon">{workspaceTransition.state==='error'?<AlertTriangle/>:<Activity/>}</div><div><span>{workspaceTransition.state==='error'?'WORKSPACE SWITCH BLOCKED':'SWITCHING WORKSPACE'}</span><h1 tabIndex={-1}>{workspaceTransition.item?.name||'Workspace'}</h1><p>{workspaceTransition.message}</p>{workspaceTransition.state==='resolving'&&<small>Previous workspace content is intentionally hidden until the target scope is confirmed.</small>}</div>{workspaceTransition.state==='error'&&<div className="workspace-transition-actions"><button onClick={()=>setWorkspaceTransition(null)}>Stay in {workspace}</button><button className="app-primary" onClick={retryWorkspace}><RefreshCw/>Retry</button></div>}</div>:<WorkspaceSectionBoundary key={workspaceGeneration+':'+tab} tab={tab}>{view}</WorkspaceSectionBoundary>}</div></main>
- {createOpen&&<AccessibleDialog ariaLabel="Create workspace" onClose={()=>setCreateOpen(false)}><div className="connector-card"><div className="connector-modal-head"><div><Building2/><div><b>Create workspace</b><small>Create a persisted tenant workspace.</small></div></div><button onClick={()=>setCreateOpen(false)}><X/></button></div><div className="connector-step"><label>Workspace name<input value={workspaceDraft.name} onChange={e=>setWorkspaceDraft({...workspaceDraft,name:e.target.value})} placeholder="Ace Retail"/></label><label>Environment<select value={workspaceDraft.environment} onChange={e=>setWorkspaceDraft({...workspaceDraft,environment:e.target.value})}><option>Production</option><option>Sandbox</option></select></label><button disabled={workspaceBusy||!workspaceDraft.name.trim()} onClick={createWorkspace}>{workspaceBusy?'Creating…':'Create workspace'}</button></div></div></AccessibleDialog>}
+ {createOpen&&<AccessibleDialog ariaLabel="Create workspace" onClose={()=>setCreateOpen(false)}><div className="connector-card"><div className="connector-modal-head"><div><Building2/><div><b>Create workspace</b><small>Create a persisted tenant workspace.</small></div></div><button aria-label="Close create workspace dialog" onClick={()=>setCreateOpen(false)}><X/></button></div><div className="connector-step"><label>Workspace name<input value={workspaceDraft.name} onChange={e=>{setWorkspaceDraft({...workspaceDraft,name:e.target.value});setWorkspaceCreateError('')}} placeholder="Ace Retail" aria-describedby="workspace-name-help"/></label><small id="workspace-name-help">Use at least 2 characters.</small><label>Environment<select value={workspaceDraft.environment} onChange={e=>setWorkspaceDraft({...workspaceDraft,environment:e.target.value})}><option>Production</option><option>Sandbox</option></select></label>{workspaceCreateError&&<div className="connector-form-error" role="alert">{workspaceCreateError}</div>}<button disabled={workspaceBusy||workspaceDraft.name.trim().length<2} onClick={createWorkspace}>{workspaceBusy?'Creating…':'Create workspace'}</button></div></div></AccessibleDialog>}
  </div>
 }
 
