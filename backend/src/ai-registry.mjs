@@ -17,11 +17,11 @@ const providerDocs={
     note:'gpt-6-astra is listed in official OpenAI API material; Responses-based execution is implemented. Account access remains separately unverified.'
   },
   anthropic:{
-    identifierVerified:true,
-    capabilityVerified:true,
+    identifierVerified:false,
+    capabilityVerified:false,
     verifiedAt:'2026-09-29',
-    source:'https://www.anthropic.com/claude/fable',
-    note:'claude-fable-5-1 is documented for the Claude API. Account access and tenant qualification remain separate and unverified until an authorized live verification succeeds.'
+    source:'https://docs.anthropic.com/en/docs/about-claude/model-deprecations',
+    note:'Official Anthropic documentation currently lists claude-fable-5, but the exact requested claude-fable-5-1 identifier was not verified. Silent substitution is forbidden, so this route remains unavailable until the exact identifier and capability are documented.'
   },
   google:{
     identifierVerified:true,
