@@ -2,6 +2,9 @@ import {useEffect,useMemo,useRef,useState,type FormEvent} from 'react'
 import {Activity,CheckCircle2,ChevronRight,ShieldCheck,Sparkles,Target,X} from 'lucide-react'
 import {
   modelsApi,
+  type AiEvaluation,
+  type AiEvaluationPolicy,
+  type AiRegistryEntry,
   type ModelCatalogItem,
   type ModelRun,
   type ModelsResponse,
@@ -45,12 +48,56 @@ export default function ModelsPage(){
   const [notice,setNotice]=useState<{kind:'ok'|'error'|'unknown'|'',text:string}>({kind:'',text:''})
   const [runState,setRunState]=useState(()=>initialMutationLifecycle<ModelRun>())
   const [createState,setCreateState]=useState(()=>initialMutationLifecycle<{item:ModelCatalogItem}>())
+  const [registry,setRegistry]=useState<AiRegistryEntry[]>([])
+  const [evaluations,setEvaluations]=useState<AiEvaluation[]>([])
+  const [policy,setPolicy]=useState<AiEvaluationPolicy|null>(null)
+  const [governanceLoading,setGovernanceLoading]=useState(false)
+  const [governanceError,setGovernanceError]=useState('')
+  const [governanceBusy,setGovernanceBusy]=useState('')
+  const [policyOpen,setPolicyOpen]=useState(false)
+  const [policyDraft,setPolicyDraft]=useState({version:'v1',thresholds:'{"meanNdcg":{"min":0.6}}',notes:''})
   const loadSequence=useRef(0)
   const loadAbort=useRef<AbortController|null>(null)
   const validationSequence=useRef(0)
   const validationAbort=useRef<AbortController|null>(null)
+  const governanceSequence=useRef(0)
+  const governanceAbort=useRef<AbortController|null>(null)
 
   useDirtyWork({key:'custom-model-draft',label:'Custom model draft',dirty:builder,scope:'feature'})
+
+  const loadGovernance=async(task?:string)=>{
+    const sequence=++governanceSequence.current
+    governanceAbort.current?.abort('superseded_model_governance_read')
+    const controller=new AbortController()
+    governanceAbort.current=controller
+    setGovernanceLoading(true)
+    setGovernanceError('')
+    try{
+      const [registryResponse,evaluationResponse,policyResponse]=await Promise.all([
+        modelsApi.governance({signal:controller.signal}),
+        modelsApi.evaluations(task,{signal:controller.signal}),
+        task?modelsApi.policy(task,{signal:controller.signal}):Promise.resolve({item:null,task:''})
+      ])
+      if(sequence!==governanceSequence.current)return
+      setRegistry(Array.isArray(registryResponse.tenantItems)&&registryResponse.tenantItems.length
+        ?registryResponse.tenantItems
+        :Array.isArray(registryResponse.items)?registryResponse.items:[])
+      setEvaluations(Array.isArray(evaluationResponse.items)?evaluationResponse.items:[])
+      setPolicy(policyResponse.item||null)
+      if(policyResponse.item){
+        setPolicyDraft({
+          version:policyResponse.item.version||'v1',
+          thresholds:JSON.stringify(policyResponse.item.thresholds||{},null,2),
+          notes:policyResponse.item.notes||''
+        })
+      }
+    }catch(error:any){
+      if(sequence!==governanceSequence.current||String(error?.details?.cause||'')==='aborted')return
+      setGovernanceError(error?.message||'AI governance evidence could not be loaded.')
+    }finally{
+      if(sequence===governanceSequence.current)setGovernanceLoading(false)
+    }
+  }
 
   const load=async()=>{
     const sequence=++loadSequence.current
@@ -78,9 +125,11 @@ export default function ModelsPage(){
 
   useEffect(()=>{
     void load()
+    void loadGovernance()
     return ()=>{
       loadAbort.current?.abort('models_feature_unmounted')
       validationAbort.current?.abort('models_feature_unmounted')
+      governanceAbort.current?.abort('models_feature_unmounted')
     }
   },[])
 
@@ -88,6 +137,20 @@ export default function ModelsPage(){
     ()=>data.items.find(item=>item.name===selected)||data.items[0]||null,
     [data.items,selected]
   )
+  const currentTask=current?.governance?.task||null
+  const tenantModel=useMemo(
+    ()=>currentTask?registry.find(item=>item.task===currentTask)||null:null,
+    [registry,currentTask]
+  )
+  const taskEvaluations=useMemo(
+    ()=>currentTask?evaluations.filter(item=>item.task===currentTask):evaluations,
+    [evaluations,currentTask]
+  )
+  const latestEvaluation=taskEvaluations[0]||null
+
+  useEffect(()=>{
+    if(currentTask)void loadGovernance(currentTask)
+  },[currentTask])
 
   const run=async()=>{
     if(!current)return
@@ -147,6 +210,86 @@ export default function ModelsPage(){
       setValidationError(error?.message||'Validation evidence could not be loaded.')
     }finally{
       if(sequence===validationSequence.current)setValidationLoading(false)
+    }
+  }
+
+  const savePolicy=async()=>{
+    if(!currentTask||governanceBusy)return
+    let thresholds:Record<string,unknown>
+    try{
+      const parsed=JSON.parse(policyDraft.thresholds)
+      if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error('thresholds must be a JSON object')
+      thresholds=parsed
+    }catch(error:any){
+      setNotice({kind:'error',text:error?.message||'Thresholds must be valid JSON.'})
+      return
+    }
+    setGovernanceBusy('policy')
+    setNotice({kind:'',text:''})
+    try{
+      await modelsApi.savePolicy({
+        task:currentTask,
+        version:policyDraft.version.trim()||'v1',
+        thresholds,
+        notes:policyDraft.notes.trim()||undefined
+      })
+      setPolicyOpen(false)
+      setNotice({kind:'ok',text:'Evaluation policy saved. Existing evidence is not automatically qualified; run qualification explicitly.'})
+      await loadGovernance(currentTask)
+    }catch(error:any){
+      setNotice({kind:'error',text:error?.message||'Evaluation policy could not be saved.'})
+    }finally{
+      setGovernanceBusy('')
+    }
+  }
+
+  const qualifyLatest=async()=>{
+    if(!currentTask||!latestEvaluation||governanceBusy)return
+    setGovernanceBusy('qualify')
+    setNotice({kind:'',text:''})
+    try{
+      const response=await modelsApi.qualify(latestEvaluation.id)
+      setNotice({
+        kind:response.item.qualified?'ok':'error',
+        text:response.item.qualified
+          ?'Evaluation passed the predeclared policy gate. Promotion still requires an explicit approval action.'
+          :'Evaluation failed the predeclared policy gate. The current baseline remains preserved.'
+      })
+      await loadGovernance(currentTask)
+    }catch(error:any){
+      setNotice({kind:'error',text:error?.message||'Evaluation qualification could not be completed.'})
+    }finally{
+      setGovernanceBusy('')
+    }
+  }
+
+  const promoteLatest=async()=>{
+    if(!currentTask||!latestEvaluation||latestEvaluation.qualified!==true||governanceBusy)return
+    setGovernanceBusy('promote')
+    setNotice({kind:'',text:''})
+    try{
+      await modelsApi.promote(currentTask,latestEvaluation.id)
+      setNotice({kind:'ok',text:'Model version approved from qualified evidence. Deployment remains a separate state and is not implied.'})
+      await loadGovernance(currentTask)
+    }catch(error:any){
+      setNotice({kind:'error',text:error?.message||'Model promotion could not be completed.'})
+    }finally{
+      setGovernanceBusy('')
+    }
+  }
+
+  const rollbackCurrent=async()=>{
+    if(!currentTask||!tenantModel?.rollbackPredecessor||governanceBusy)return
+    setGovernanceBusy('rollback')
+    setNotice({kind:'',text:''})
+    try{
+      await modelsApi.rollback(currentTask)
+      setNotice({kind:'ok',text:'Registry rollback completed to the recorded predecessor. Deployment remains separate from approval.'})
+      await loadGovernance(currentTask)
+    }catch(error:any){
+      setNotice({kind:'error',text:error?.message||'Model rollback could not be completed.'})
+    }finally{
+      setGovernanceBusy('')
     }
   }
 
@@ -281,6 +424,45 @@ export default function ModelsPage(){
     </div>}
 
     <div className="app-panel">
+      <div className="panel-head">
+        <div><h3>AI administration center</h3><p>Tenant-scoped registry, evaluation gates, approvals and rollback evidence</p></div>
+        <button onClick={()=>void loadGovernance(currentTask||undefined)} disabled={governanceLoading}>{governanceLoading?'Refreshing…':'Refresh governance'}</button>
+      </div>
+      {governanceError&&<ErrorState title="AI governance unavailable" description={governanceError} action={{label:'Retry',onClick:()=>void loadGovernance(currentTask||undefined)}} compact/>}
+      {!governanceError&&currentTask&&tenantModel&&<>
+        <div className="site-detail-grid">
+          {[
+            ['Task',tenantModel.task],
+            ['Provider',tenantModel.provider],
+            ['Requested model',tenantModel.requestedModel],
+            ['Configuration',tenantModel.configurationStatus||tenantModel.readiness||'—'],
+            ['Training',tenantModel.trainingStatus||'—'],
+            ['Evaluation',tenantModel.evaluationStatus||'—'],
+            ['Approval',tenantModel.approvalStatus||'—'],
+            ['Deployment',tenantModel.deploymentStatus||'—']
+          ].map(row=><div key={row[0]}><span>{row[0]}</span><b>{String(row[1]??'—')}</b></div>)}
+        </div>
+        <div className="approval-actions">
+          <button onClick={()=>setPolicyOpen(true)} disabled={governanceBusy==='policy'}>Define evaluation policy</button>
+          <button onClick={()=>void qualifyLatest()} disabled={!latestEvaluation||governanceBusy==='qualify'}>{governanceBusy==='qualify'?'Qualifying…':'Qualify latest evidence'}</button>
+          <button className="approve" onClick={()=>void promoteLatest()} disabled={!latestEvaluation||latestEvaluation.qualified!==true||governanceBusy==='promote'}>{governanceBusy==='promote'?'Promoting…':'Approve qualified model'}</button>
+          <button onClick={()=>void rollbackCurrent()} disabled={!tenantModel.rollbackPredecessor||governanceBusy==='rollback'}>{governanceBusy==='rollback'?'Rolling back…':'Rollback predecessor'}</button>
+        </div>
+        {!policy&&<StaleState title="No predeclared evaluation policy" description="Qualification is blocked until an owner or admin defines task-specific thresholds." compact/>}
+        {policy&&<div className="source-conflict-note"><ShieldCheck/><div><b>Active policy · {policy.version}</b><p>{JSON.stringify(policy.thresholds)}{policy.notes?' · '+policy.notes:''}</p></div></div>}
+        <div className="agent-section">
+          <h4>Evaluation evidence</h4>
+          {taskEvaluations.length
+            ?taskEvaluations.slice(0,8).map(item=><div className="developer-event-row" key={item.id}><b>{item.status}</b><span>{item.model_ref||item.task} · qualified {item.qualified===true?'yes':item.qualified===false?'no':'not checked'} · sample {item.sample_size??'—'}</span><strong>{formatDate(item.completed_at||item.created_at)}</strong></div>)
+            :<EmptyState title="No evaluation evidence" description="Run a supported specialist task to create evaluation evidence before qualification or promotion." compact/>
+          }
+        </div>
+        <div className="source-conflict-note"><ShieldCheck/><div><b>Qualification boundary</b><p>Saving a policy does not qualify a model. Qualification checks recorded evidence against the predeclared policy; approval and deployment remain separate explicit states.</p></div></div>
+      </>}
+      {!governanceError&&!currentTask&&<EmptyState title="Select a registry model" description="Choose a specialist or hosted registry entry to inspect its tenant governance lifecycle." compact/>}
+    </div>
+
+    <div className="app-panel">
       <div className="panel-head"><div><h3>Recent model runs</h3><p>Persisted scoring snapshots</p></div></div>
       {data.runs.length
         ?data.runs.slice(0,10).map(item=><div className="developer-event-row" key={item.id}><b>{item.name}</b><span>{item.status} · {Number(item.rowsScored||0).toLocaleString('en-IN')} rows · avg {item.averageScore??'—'}</span><strong>{formatDate(item.completedAt)}</strong></div>)
@@ -307,6 +489,25 @@ export default function ModelsPage(){
           <div className="source-conflict-note"><ShieldCheck/><div><b>Explainability boundary</b><p>Scores use only the visible feature weights above. AceMarketing does not claim predictive accuracy until the model has labelled holdout evaluation evidence.</p></div></div>
           <button disabled={busy==='create'}>{busy==='create'?'Creating…':'Create custom model'}</button>
         </form>
+      </AccessibleDialog>
+    }
+
+    {policyOpen&&currentTask&&
+      <AccessibleDialog ariaLabel="AI evaluation policy" onClose={()=>setPolicyOpen(false)}>
+        <div className="connector-card">
+          <div className="connector-modal-head">
+            <div><ShieldCheck/><div><b>Evaluation policy</b><small>{currentTask}</small></div></div>
+            <button onClick={()=>setPolicyOpen(false)}><X/></button>
+          </div>
+          <label>Policy version<input value={policyDraft.version} onChange={event=>setPolicyDraft({...policyDraft,version:event.target.value})} placeholder="v1"/></label>
+          <label>Thresholds JSON<textarea rows={8} value={policyDraft.thresholds} onChange={event=>setPolicyDraft({...policyDraft,thresholds:event.target.value})}/></label>
+          <label>Notes<textarea rows={3} value={policyDraft.notes} onChange={event=>setPolicyDraft({...policyDraft,notes:event.target.value})} placeholder="Predeclare business/evaluation requirements before qualification."/></label>
+          <div className="source-conflict-note"><ShieldCheck/><div><b>Predeclared gate</b><p>Thresholds are compared with persisted evaluation metrics. Missing metrics fail the gate rather than being guessed or treated as success.</p></div></div>
+          <div className="approval-actions">
+            <button onClick={()=>setPolicyOpen(false)}>Cancel</button>
+            <button className="approve" onClick={()=>void savePolicy()} disabled={governanceBusy==='policy'}>{governanceBusy==='policy'?'Saving…':'Save policy'}</button>
+          </div>
+        </div>
       </AccessibleDialog>
     }
 
