@@ -35,7 +35,7 @@ export const getSessionToken=()=>{
   return memoryToken
 }
 
-export const setSessionToken=(token:string)=>{
+export const setSessionToken=(token:string,publishChange=true)=>{
   initialize()
   memoryToken=token||null
   sessionGeneration+=1
@@ -44,7 +44,7 @@ export const setSessionToken=(token:string)=>{
     else sessionStore()?.removeItem(sessionTokenKey)
     persistentStore()?.removeItem(legacyPersistentTokenKey)
   }catch{}
-  publish(token?'authenticated':'anonymous')
+  if(publishChange)publish(token?'authenticated':'anonymous')
 }
 
 export const clearSessionToken=()=>{
