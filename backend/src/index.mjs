@@ -28,9 +28,10 @@ import { verifyProviderAccess } from './ai-providers.mjs'
 import { closeAiRuntime, listAiResults, submitHostedAiJob } from './ai-runtime.mjs'
 import { getMlCapabilities, mlServiceConfigured } from './ml-client.mjs'
 import { closeKnowledge, ingestKnowledgeText, listKnowledgeSources, revokeKnowledgeSource } from './knowledge.mjs'
-import { getEvaluationPolicy, getTenantRegistry, listEvaluations, promoteModel, qualifyEvaluation, recordProviderAccessVerification, rollbackModel, syncTenantRegistry, upsertEvaluationPolicy } from './ai-registry-store.mjs'
+import { deployModel, getEvaluationPolicy, getTenantRegistry, listEvaluations, promoteModel, qualifyEvaluation, recordProviderAccessVerification, rollbackModel, syncTenantRegistry, undeployModel, upsertEvaluationPolicy } from './ai-registry-store.mjs'
 import { closeAiDatasets, createAiDataset, getAiDataset, listAiDatasets, retireAiDataset, trainingRequestFromDataset, trainingRequestFromDatasetWithHorizon } from './ai-datasets.mjs'
 import { metricCatalog } from './metric-catalog.mjs'
+import { closeLiveVoice, createLiveVoiceSession, getLiveVoiceSession, installLiveVoiceWebSocket, terminateLiveVoiceSession } from './live-voice.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -452,6 +453,7 @@ const permissionForRequest=(method,path)=>{
   if(path==='/api/ai/analysis') return 'ai.analysis.run'
   if(path.startsWith('/api/ai/datasets')&&method!=='GET') return 'ai.training.run'
   if(path.startsWith('/api/ai/ml/train/')||path==='/api/ai/ml/rank') return 'ai.training.run'
+  if(path.startsWith('/api/ai/live-voice')) return 'calls.write'
   if(path==='/api/ai/ml/score'||path==='/api/ai/ml/rank/score'||path==='/api/ai/ml/forecast/seasonal-naive'||path==='/api/ai/ml/forecast/chronos-2'||path==='/api/ai/ml/forecast/catboost-challenger'||path==='/api/ai/ml/incrementality'||path==='/api/ai/ml/marketing-mix'||path==='/api/ai/ml/anomalies'||path==='/api/ai/ml/segments') return 'ai.analysis.run'
   if(path.includes('/api/ai/jobs/')) return 'ai.analysis.run'
   if(path.startsWith('/api/agents')||path.startsWith('/api/models/run')) return 'agents.write'
@@ -4684,6 +4686,54 @@ const server = http.createServer(async (req,res)=>{
         })
       }
     }
+    if (req.method === 'POST' && /^\/api\/ai\/models\/[^/]+\/deploy$/.test(url.pathname)) {
+      if(!['owner','admin'].includes(authenticatedUser?.role||''))return send(req,res,403,{error:'owner or admin role required'})
+      const task=decodeURIComponent(url.pathname.split('/')[4]||'')
+      try{
+        const item=await deployModel({workspaceId,task,actor:authenticatedUser})
+        return send(req,res,200,{item})
+      }catch(error){
+        return send(req,res,409,{error:error instanceof Error?error.message:'deployment gate failed'})
+      }
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/models\/[^/]+\/undeploy$/.test(url.pathname)) {
+      if(!['owner','admin'].includes(authenticatedUser?.role||''))return send(req,res,403,{error:'owner or admin role required'})
+      const task=decodeURIComponent(url.pathname.split('/')[4]||'')
+      try{
+        const item=await undeployModel({workspaceId,task,actor:authenticatedUser})
+        return send(req,res,200,{item})
+      }catch(error){
+        return send(req,res,409,{error:error instanceof Error?error.message:'undeploy failed'})
+      }
+    }
+    if (req.method === 'POST' && url.pathname === '/api/ai/live-voice/sessions') {
+      try{
+        await syncTenantRegistry(workspaceId)
+        const registry=await getTenantRegistry(workspaceId)
+        const route=registry.find(item=>item.task==='live_voice')
+        const missing=[]
+        if(route?.documentationVerified!==true)missing.push('documentation verification')
+        if(route?.accessVerified!==true)missing.push('provider access verification')
+        if(route?.evaluationStatus!=='qualified')missing.push('qualified evaluation')
+        if(route?.approvalStatus!=='approved')missing.push('approval')
+        if(route?.deploymentStatus!=='deployed')missing.push('deployment')
+        if(missing.length)return send(req,res,409,{error:'live voice is blocked by governance prerequisites',prerequisites:missing})
+        const session=await createLiveVoiceSession({workspaceId,userId:authenticatedUser?.userId||null})
+        return send(req,res,201,session)
+      }catch(error){
+        return send(req,res,503,{error:error instanceof Error?error.message:'live voice session could not be created'})
+      }
+    }
+    if (req.method === 'GET' && /^\/api\/ai\/live-voice\/sessions\/[^/]+$/.test(url.pathname)) {
+      const id=decodeURIComponent(url.pathname.split('/')[5]||'')
+      const item=await getLiveVoiceSession({workspaceId,id}).catch(()=>null)
+      return item?send(req,res,200,{item}):send(req,res,404,{error:'live voice session not found'})
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/live-voice\/sessions\/[^/]+\/terminate$/.test(url.pathname)) {
+      const id=decodeURIComponent(url.pathname.split('/')[5]||'')
+      const item=await terminateLiveVoiceSession({workspaceId,id})
+      return item?send(req,res,200,{item}):send(req,res,404,{error:'live voice session not found'})
+    }
     if (req.method === 'GET' && url.pathname === '/api/ai/evaluations') {
       const task=String(url.searchParams.get('task')||'').trim()||null
       const limit=Math.max(1,Math.min(Number(url.searchParams.get('limit')||100),500))
@@ -5517,10 +5567,11 @@ const server = http.createServer(async (req,res)=>{
   })
 })
 
+installLiveVoiceWebSocket(server)
 server.keepAliveTimeout=65_000
 server.headersTimeout=66_000
 server.requestTimeout=30_000
 server.listen(PORT,()=>console.log(`AceMarketing API listening on http://localhost:${PORT}`))
-const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations(),closeObservability(),closeEntitlements(),closeBillingProvider(),closeConsentStore(),closePrivacyOps(),closeAudienceScheduler(),closeCohortAnalytics(),closeEventRules(),closeAiRuntime(),closeKnowledge(),closeAiDatasets()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
+const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations(),closeObservability(),closeEntitlements(),closeBillingProvider(),closeConsentStore(),closePrivacyOps(),closeAudienceScheduler(),closeCohortAnalytics(),closeEventRules(),closeAiRuntime(),closeKnowledge(),closeAiDatasets(),closeLiveVoice()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
 process.on('SIGTERM',()=>shutdown('SIGTERM'))
 process.on('SIGINT',()=>shutdown('SIGINT'))
