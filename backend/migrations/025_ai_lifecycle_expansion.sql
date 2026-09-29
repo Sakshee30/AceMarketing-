@@ -182,3 +182,30 @@ CREATE TABLE IF NOT EXISTS ace_ai_outbox_events (
 CREATE INDEX IF NOT EXISTS ace_ai_outbox_ready_idx
   ON ace_ai_outbox_events (status,available_at,created_at)
   WHERE status='pending';
+
+
+CREATE TABLE IF NOT EXISTS ace_ai_live_voice_sessions (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL,
+  user_id TEXT,
+  provider TEXT NOT NULL,
+  requested_model TEXT NOT NULL,
+  resolved_model TEXT,
+  token_hash TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'created'
+    CHECK (status IN ('created','connecting','active','disconnected','terminated','expired','failed')),
+  reconnect_count INTEGER NOT NULL DEFAULT 0,
+  input_bytes BIGINT NOT NULL DEFAULT 0,
+  output_bytes BIGINT NOT NULL DEFAULT 0,
+  usage JSONB NOT NULL DEFAULT '{}'::jsonb,
+  expires_at TIMESTAMPTZ NOT NULL,
+  connected_at TIMESTAMPTZ,
+  disconnected_at TIMESTAMPTZ,
+  terminated_at TIMESTAMPTZ,
+  last_error TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS ace_ai_live_voice_sessions_active_idx
+  ON ace_ai_live_voice_sessions (workspace_id,status,expires_at)
+  WHERE status IN ('created','connecting','active','disconnected');
