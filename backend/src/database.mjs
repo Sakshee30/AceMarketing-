@@ -43,6 +43,11 @@ const createEmbeddedPool=async()=>{
         ''
       )
     }
+    // pg-mem's parser rejects comment-only compatibility marker files.
+    // Production migration tooling may retain those markers, but embedded setup
+    // should simply skip files with no executable SQL.
+    const executableSql=sql.replace(/--.*$/gm,'').trim()
+    if(!executableSql)continue
     try{
       db.public.none(sql)
     }catch(error){
