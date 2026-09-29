@@ -214,6 +214,7 @@ export const embedKnowledgeSourceJob=async job=>{
 }
 
 export const validKnowledgeVector=value=>Array.isArray(value)&&value.length>0&&value.every(item=>Number.isFinite(Number(item)))
+export const knowledgeVectorDimensionsMatch=(embeddingDimensions,queryVector)=>validKnowledgeVector(queryVector)&&Number(embeddingDimensions)===queryVector.length
 
 const cosine=(a,b)=>{
   if(!Array.isArray(a)||!Array.isArray(b)||a.length!==b.length||!a.length)return null
@@ -295,6 +296,7 @@ export const searchKnowledge=async({workspaceId,query,role,limit=10,queryVector=
            AND s.revoked_at IS NULL
            AND s.deleted_at IS NULL
            AND c.embedding IS NOT NULL
+           AND c.embedding_dimensions=$4
            AND (
              $3='owner'
              OR NOT (c.access_policy ? 'allowedRoles')
@@ -307,7 +309,7 @@ export const searchKnowledge=async({workspaceId,query,role,limit=10,queryVector=
            )
          ORDER BY c.embedding::text::vector <=> $2::vector
          LIMIT 100`,
-        [workspaceId,vectorLiteral,role]
+        [workspaceId,vectorLiteral,role,queryVector.length]
       )
       const merged=new Map(rows.map(row=>[row.id,row]))
       for(const row of vectorResult.rows){
@@ -319,7 +321,8 @@ export const searchKnowledge=async({workspaceId,query,role,limit=10,queryVector=
   }
   const useApplicationCosine=embeddedDatabase&&validKnowledgeVector(queryVector)
   const authorized=rows.filter(row=>canReadKnowledgePolicy(row.access_policy,role)).map(row=>{
-    const vectorScore=row.vector_score!=null?Number(row.vector_score):(useApplicationCosine?cosine(queryVector,row.embedding):null)
+    const compatibleApplicationVector=useApplicationCosine&&knowledgeVectorDimensionsMatch(row.embedding_dimensions,queryVector)
+    const vectorScore=row.vector_score!=null?Number(row.vector_score):(compatibleApplicationVector?cosine(queryVector,row.embedding):null)
     return {...row,vectorScore,hybridScore:Number(row.lexical_rank||0)+(vectorScore==null?0:vectorScore)}
   }).sort((a,b)=>b.hybridScore-a.hybridScore).slice(0,Math.max(safeLimit,20))
   return authorized
