@@ -121,7 +121,8 @@ const resultTypeForExecution=(task,operation)=>{
   }
   if(operation==='offer_ranking_score')return 'ranking'
   if(task.startsWith('forecast_'))return 'forecast_distribution'
-  if(task==='incrementality'||task==='marketing_mix')return 'causal_estimate'
+  if(task==='incrementality')return 'causal_estimate'
+  if(task==='marketing_mix')return 'marketing_mix_analysis'
   if(task==='anomaly_detection')return 'anomaly_score'
   if(task==='behavioral_segments')return 'cluster_assignment'
   if(task==='offer_ranking')return 'ranking'
