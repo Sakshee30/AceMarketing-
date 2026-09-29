@@ -15,7 +15,7 @@ from .contracts import (
     ClassificationTrainRequest,
     ForecastRequest,
     MeridianFitRequest,
-    RankingScoreRequest,
+    RankScoreRequest,
     RankingTrainRequest,
     RegressionTrainRequest,
     SegmentationRequest,
@@ -152,7 +152,7 @@ def forecast_challenger_endpoint(request: ChallengerForecastRequest):
 
 
 @app.post("/v1/rank/lgbm/score", dependencies=[Depends(require_internal_token)])
-def ranker_score_endpoint(request: RankingScoreRequest):
+def ranker_score_endpoint(request: RankScoreRequest):
     try:
         return score_ranker(request)
     except (ValueError, FileNotFoundError, RuntimeError) as exc:
