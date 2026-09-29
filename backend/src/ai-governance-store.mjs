@@ -1,6 +1,7 @@
 import {createHash,randomUUID} from 'node:crypto'
 import {pool} from './database.mjs'
 import {modelRegistryItem} from './ai-registry.mjs'
+import {aiObjectStoreStatus,storeAiObject,storeAiText} from './ai-object-store.mjs'
 
 const asInt=(value,fallback,min,max)=>{
   const n=Number(value)
@@ -89,6 +90,10 @@ export const evaluateAiTaskAdmission=async({workspaceId,task,requestedModel,rese
   const reasons=[]
   if(!policy.enabled)reasons.push('task disabled by tenant policy')
   if(policy.approvedRequestedModel&&policy.approvedRequestedModel!==requestedModel)reasons.push('requested model is not approved by tenant policy')
+  if(['creative_image','call_transcription'].includes(task)){
+    const storage=aiObjectStoreStatus()
+    if(!storage.configured)reasons.push('durable AI object storage is unavailable: '+storage.reason)
+  }
   let activeJobs=0
   let monthUnits=0
   if(pool){
@@ -122,19 +127,20 @@ export const persistTranscript=async({workspaceId,job,execution,route})=>{
   const text=String(execution?.text||'')
   const evidenceRefs=Array.isArray(job.payload?.sourceSnapshot?.evidenceIds)?job.payload.sourceSnapshot.evidenceIds:[]
   const assetRef=String(job.payload?.input?.fileUri||'')
+  const stored=await storeAiText({workspaceId,text,kind:'transcript'})
   const id='aitr_'+randomUUID()
   const {rows}=await pool.query(
     `INSERT INTO ace_ai_transcripts
       (id,workspace_id,job_id,asset_ref,provider,requested_model,resolved_model,language_metadata,speaker_metadata,timestamp_metadata,
        transcript_text,redaction_status,review_status,evidence_refs,retention_until)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9::jsonb,$10::jsonb,$11,'pending','unreviewed',$12::jsonb,
-       CASE WHEN $13::int>0 THEN now()+($13::int*interval '1 day') ELSE NULL END)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9::jsonb,$10::jsonb,$11,$12,'pending','unreviewed',$13::jsonb,
+       CASE WHEN $14::int>0 THEN now()+($14::int*interval '1 day') ELSE NULL END)
      RETURNING *`,
     [id,workspaceId,job.id,assetRef,route.provider,route.requestedModel,execution?.resolvedModel||route.requestedModel,
      JSON.stringify({languageCodes:execution?.transcriptionConfig?.languageCodes||[]}),
      JSON.stringify({diarization:Boolean(execution?.transcriptionConfig?.diarization)}),
      JSON.stringify({wordTimestamps:Boolean(execution?.transcriptionConfig?.wordTimestamp)}),
-     text,JSON.stringify(evidenceRefs),Number(process.env.AI_TRANSCRIPT_RETENTION_DAYS||30)]
+     stored.objectRef,text.slice(0,20000),JSON.stringify(evidenceRefs),Number(process.env.AI_TRANSCRIPT_RETENTION_DAYS||30)]
   )
   return rows[0]
 }
@@ -147,9 +153,11 @@ export const persistCreativeAsset=async({workspaceId,job,execution,route})=>{
   if(!imagePart)return null
   const data=String(imagePart.inlineData?.data||imagePart.inline_data?.data||'')
   const mimeType=String(imagePart.inlineData?.mimeType||imagePart.inline_data?.mime_type||'application/octet-stream')
-  const contentHash=sha256(data)
+  const buffer=Buffer.from(data,'base64')
+  const stored=await storeAiObject({workspaceId,data:buffer,mimeType,kind:'creative'})
+  const contentHash=stored.hash
   const id='aica_'+randomUUID()
-  const objectRef='inline-sha256:'+contentHash
+  const objectRef=stored.objectRef
   const evidenceRefs=Array.isArray(job.payload?.sourceSnapshot?.evidenceIds)?job.payload.sourceSnapshot.evidenceIds:[]
   const {rows}=await pool.query(
     `INSERT INTO ace_ai_creative_assets
