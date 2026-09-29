@@ -27,3 +27,11 @@
 | Kubernetes | deploy/k8s/* | n/a | CI canonical check | cluster secrets/storage classes/network egress |
 
 | Activation proposals/execution | ai-activation-proposals.mjs + ai-activation-execution.mjs + activation-adapters.mjs + migrations 028-030 | AI Intelligence / Administration | proposal + execution boundary tests | execution default-off; Meta/Google audience and HubSpot/Zoho/Salesforce CRM adapters plus bounded Google Ads campaign-budget mutation; real provider credentials/approval remain required |
+
+
+## Final hardening coverage
+
+- Activation dispatch: migration 031 plus ai-activation-execution.mjs provide a bounded fence/lease; lifecycle mutations are blocked during an active dispatch and terminal writes require the owning fence.
+- Provider egress: credential-bearing AI/activation requests reject redirects and activation URLs remain HTTPS/provider allowlisted.
+- Google Ads budget safety: provider referenceCount must be a non-negative safe integer before shared-budget acknowledgement is evaluated.
+- Knowledge degradation: malformed/non-finite embedding vectors are rejected from vector execution while authorized lexical retrieval remains available.
