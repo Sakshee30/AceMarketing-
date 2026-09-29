@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS ace_ai_feature_snapshots (
   label_observed_at TIMESTAMPTZ,
   provenance JSONB NOT NULL DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (workspace_id,task,entity_id,prediction_cutoff,feature_schema_version)
+  UNIQUE (workspace_id,dataset_id,entity_id,prediction_cutoff,feature_schema_version)
 );
 
 CREATE INDEX IF NOT EXISTS ace_ai_feature_snapshots_cutoff_idx
