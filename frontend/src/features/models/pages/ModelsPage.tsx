@@ -301,6 +301,36 @@ export default function ModelsPage(){
     }
   }
 
+  const deployCurrent=async()=>{
+    if(!currentTask||!tenantModel||governanceBusy)return
+    setGovernanceBusy('deploy')
+    setNotice({kind:'',text:''})
+    try{
+      await modelsApi.deploy(currentTask)
+      setNotice({kind:'ok',text:'Model deployment state is active for this tenant. Runtime policy, permissions and provider/service health still apply to every execution.'})
+      await loadGovernance(currentTask)
+    }catch(error:any){
+      setNotice({kind:'error',text:error?.message||'Model deployment gate could not be completed.'})
+    }finally{
+      setGovernanceBusy('')
+    }
+  }
+
+  const undeployCurrent=async()=>{
+    if(!currentTask||!tenantModel||governanceBusy)return
+    setGovernanceBusy('undeploy')
+    setNotice({kind:'',text:''})
+    try{
+      await modelsApi.undeploy(currentTask)
+      setNotice({kind:'ok',text:'New model execution is disabled for this tenant without deleting prior results or evaluation history.'})
+      await loadGovernance(currentTask)
+    }catch(error:any){
+      setNotice({kind:'error',text:error?.message||'Model could not be undeployed.'})
+    }finally{
+      setGovernanceBusy('')
+    }
+  }
+
   const rollbackCurrent=async()=>{
     if(!currentTask||!tenantModel?.rollbackPredecessor||governanceBusy)return
     setGovernanceBusy('rollback')
@@ -473,6 +503,10 @@ export default function ModelsPage(){
           <button onClick={()=>setPolicyOpen(true)} disabled={governanceBusy==='policy'}>Define evaluation policy</button>
           <button onClick={()=>void qualifyLatest()} disabled={!latestEvaluation||governanceBusy==='qualify'}>{governanceBusy==='qualify'?'Qualifying…':'Qualify latest evidence'}</button>
           <button className="approve" onClick={()=>void promoteLatest()} disabled={!latestEvaluation||latestEvaluation.qualified!==true||governanceBusy==='promote'}>{governanceBusy==='promote'?'Promoting…':'Approve qualified model'}</button>
+          {tenantModel.deploymentStatus==='deployed'
+            ?<button onClick={()=>void undeployCurrent()} disabled={governanceBusy==='undeploy'}>{governanceBusy==='undeploy'?'Disabling…':'Disable new execution'}</button>
+            :<button className="approve" onClick={()=>void deployCurrent()} disabled={tenantModel.evaluationStatus!=='qualified'||tenantModel.approvalStatus!=='approved'||governanceBusy==='deploy'}>{governanceBusy==='deploy'?'Deploying…':'Deploy approved model'}</button>
+          }
           <button onClick={()=>void rollbackCurrent()} disabled={!tenantModel.rollbackPredecessor||governanceBusy==='rollback'}>{governanceBusy==='rollback'?'Rolling back…':'Rollback predecessor'}</button>
         </div>
         {!policy&&<StaleState title="No predeclared evaluation policy" description="Qualification is blocked until an owner or admin defines task-specific thresholds." compact/>}
