@@ -59,3 +59,10 @@ The specialist ML service now records additional task-specific evidence required
 The code now includes persisted per-tenant `off` / `shadow` / `canary` / `active` deployment controls, deterministic canary allocation, an explicit governed shadow-run endpoint, worker-recorded success/failure/unknown/cancelled observations, p95/error-rate health summaries, and an opt-in health guard that halts candidate traffic after configured threshold breaches. The audited model rollback operation remains separate from traffic halting.
 
 Dedicated live-provider and real-Chronos smoke commands are implemented and intentionally require explicit environment opt-in. Their output is access/runtime evidence only and is not recorded as tenant qualification, approval or production deployment.
+
+
+## AI monitoring closure
+
+Tenant-scoped AI operations monitoring is now implemented through `backend/src/ai-monitoring.mjs` and `GET /api/ai/monitoring`. The snapshot reports queue state/age, cancellations and unknown outcomes, recent provider failures and latency, usage reservations, per-task result freshness, recorded evaluation/calibration/drift evidence, forecast interval coverage, anomaly false-positive feedback, and shadow/canary deployment health.
+
+The monitoring contract does not fabricate missing quality evidence. Feature drift, calibration, delayed-label performance and measured forecast coverage are reported only when their task evaluation/backtest actually records those measurements. Monetary provider cost remains explicitly `not_configured` until a governed pricing/cost ledger exists.
