@@ -140,6 +140,12 @@ const boundedBudgetMicros=value=>{
   return n
 }
 
+export const googleAdsReferenceCount=value=>{
+  const count=Number(value??0)
+  if(!Number.isSafeInteger(count)||count<0)throw new Error('Google Ads returned an invalid campaign budget referenceCount')
+  return count
+}
+
 export const changeGoogleAdsCampaignBudget=async(workspaceId,input={})=>{
   const resourceName=String(input.campaignBudgetResourceName||'').trim()
   const match=resourceName.match(/^customers\/(\d+)\/campaignBudgets\/(\d+)$/)
@@ -178,10 +184,7 @@ export const changeGoogleAdsCampaignBudget=async(workspaceId,input={})=>{
   if(observedAmount!==expectedCurrentAmountMicros){
     throw new Error('stale budget proposal: current Google Ads amount no longer matches the approved snapshot')
   }
-  const referenceCount=Number(current.referenceCount??0)
-  if(!Number.isSafeInteger(referenceCount)||referenceCount<0){
-    throw new Error('Google Ads returned an invalid campaign budget referenceCount')
-  }
+  const referenceCount=googleAdsReferenceCount(current.referenceCount)
   if(referenceCount>1&&input.sharedBudgetAcknowledged!==true){
     throw new Error('shared campaign budget affects multiple campaigns; sharedBudgetAcknowledged=true is required')
   }
