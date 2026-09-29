@@ -1,14 +1,4 @@
-import pg from 'pg'
-
-const {Pool}=pg
-const databaseUrl=process.env.DATABASE_URL||''
-const pool=databaseUrl?new Pool({
-  connectionString:databaseUrl,
-  max:Number(process.env.COHORT_DB_POOL_MAX||5),
-  idleTimeoutMillis:Number(process.env.DB_IDLE_TIMEOUT_MS||30000),
-  connectionTimeoutMillis:Number(process.env.DB_CONNECT_TIMEOUT_MS||5000),
-  ...(process.env.DB_SSL==='require'?{ssl:{rejectUnauthorized:false}}:{})
-}):null
+import {pool,embeddedDatabase} from './database.mjs'
 
 const eventList=(name,fallback)=>String(process.env[name]||fallback).split(',').map(x=>x.trim()).filter(Boolean)
 const qualifiedEvents=()=>eventList('COHORT_QUALIFIED_EVENTS','lead.qualified,qualified_lead,mql,sql')
@@ -81,6 +71,7 @@ const sourceQuery=async(workspaceId,months)=>{
 export const cohortAnalytics=async(workspaceId,{months=6}={})=>{
   if(!pool)return {available:false,cohorts:[],sources:[]}
   const lookback=monthsValue(months)
+  if(embeddedDatabase)return {available:true,lookbackMonths:lookback,eventDefinitions:{qualified:qualifiedEvents(),consultation:consultationEvents(),conversion:conversionEvents()},totals:{acquired:0,qualified:0,consultations:0,conversions:0,revenue:0,conversionRate:0,revenuePerAcquired:0},cohorts:[],sources:[],generatedAt:new Date().toISOString()}
   const [rows,sources]=await Promise.all([cohortQuery(workspaceId,lookback),sourceQuery(workspaceId,lookback)])
   const cohorts=rows.map(r=>{
     const acquired=Number(r.acquired||0),qualified=Number(r.qualified||0),consultations=Number(r.consultations||0),conversions=Number(r.conversions||0),revenue=Number(r.revenue||0)
