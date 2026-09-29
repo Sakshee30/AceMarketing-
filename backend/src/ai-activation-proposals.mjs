@@ -44,6 +44,31 @@ const currentRoute=async(workspaceId,task)=>{
   return items.find(item=>item.task===task)||null
 }
 
+export const assertActivationApprovalActor=(createdBy,approver)=>{
+  if(!approver)throw new Error('authenticated approver required')
+  if(createdBy&&createdBy===approver)throw new Error('separation of duties: proposal creator cannot approve the same proposal')
+}
+
+export const assertActivationProposalFresh=({row,route,now=Date.now()})=>{
+  if(new Date(row.expires_at||row.expiresAt).getTime()<=now)throw new Error('activation proposal expired')
+  const normalized={
+    task:row.task,
+    proposalType:row.proposal_type||row.proposalType,
+    payload:row.payload,
+    evidenceSnapshot:row.evidence_snapshot||row.evidenceSnapshot,
+    modelSnapshot:row.model_snapshot||row.modelSnapshot,
+    expiresAt:new Date(row.expires_at||row.expiresAt).toISOString()
+  }
+  const expected=hashProposal(normalized)
+  const actual=row.proposal_hash||row.proposalHash
+  if(expected!==actual)throw new Error('activation proposal integrity check failed')
+  assertModelReady(route)
+  const snapshot=normalized.modelSnapshot||{}
+  if(String(snapshot.evaluationReference||'')!==String(route.evaluationReference||''))throw new Error('activation proposal is stale: evaluation changed')
+  if(String(snapshot.artifactRevision||'')!==String(route.artifactRevision||''))throw new Error('activation proposal is stale: artifact changed')
+  if(String(snapshot.requestedModel||'')!==String(route.requestedModel||''))throw new Error('activation proposal is stale: model changed')
+}
+
 const assertModelReady=route=>{
   if(!route)throw new Error('task model registry entry not found')
   if(route.evaluationStatus!=='qualified')throw new Error('task evaluation is not qualified')
@@ -121,15 +146,8 @@ const immutableFromRow=row=>({
 })
 
 const assertFresh=async(workspaceId,row)=>{
-  if(new Date(row.expires_at).getTime()<=Date.now())throw new Error('activation proposal expired')
-  const expected=hashProposal(immutableFromRow(row))
-  if(expected!==row.proposal_hash)throw new Error('activation proposal integrity check failed')
   const route=await currentRoute(workspaceId,row.task)
-  assertModelReady(route)
-  const snapshot=row.model_snapshot||{}
-  if(String(snapshot.evaluationReference||'')!==String(route.evaluationReference||''))throw new Error('activation proposal is stale: evaluation changed')
-  if(String(snapshot.artifactRevision||'')!==String(route.artifactRevision||''))throw new Error('activation proposal is stale: artifact changed')
-  if(String(snapshot.requestedModel||'')!==String(route.requestedModel||''))throw new Error('activation proposal is stale: model changed')
+  assertActivationProposalFresh({row,route})
 }
 
 export const approveAiActivationProposal=async({workspaceId,id,actor})=>{
@@ -145,8 +163,7 @@ export const approveAiActivationProposal=async({workspaceId,id,actor})=>{
     if(!row)throw new Error('activation proposal not found')
     if(row.status!=='pending_approval')throw new Error('activation proposal is not pending approval')
     const approver=actor?.userId||actor?.email||null
-    if(!approver)throw new Error('authenticated approver required')
-    if(row.created_by&&row.created_by===approver)throw new Error('separation of duties: proposal creator cannot approve the same proposal')
+    assertActivationApprovalActor(row.created_by,approver)
     await assertFresh(workspaceId,row)
     const updated=await client.query(
       `UPDATE ace_ai_activation_proposals
