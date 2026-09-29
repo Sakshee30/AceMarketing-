@@ -5,6 +5,15 @@ export type DemoRequest = Record<string, FormDataEntryValue>
 
 const getToken = () => getSessionToken()
 const getWorkspace = () => typeof window !== 'undefined' ? (window.localStorage.getItem('ace_workspace_id') || 'ws_default') : 'ws_default'
+const tokenWorkspace = (token:string|null) => {
+  try{
+    if(!token)return null
+    const encoded=token.split('.')[1]
+    if(!encoded)return null
+    const normalized=encoded.replace(/-/g,'+').replace(/_/g,'/')
+    return String(JSON.parse(atob(normalized)).workspaceId||'')||null
+  }catch{return null}
+}
 
 export class AceApiError extends Error {
   status:number
@@ -225,16 +234,6 @@ export const api = {
   modelValidation: (name: string, options?:{signal?:AbortSignal}) => request('/models/validation?name=' + encodeURIComponent(name),{signal:options?.signal}),
   runModel: (name: string) => request('/models/run', { method: 'POST', body: JSON.stringify({ name }) }),
   aiRegistry: (options?:{signal?:AbortSignal}) => request('/ai/registry',{signal:options?.signal}),
-  submitAiTask: (task:string,payload:Record<string,unknown>,options?:{signal?:AbortSignal;operationId?:string}) => request('/ai/tasks/'+encodeURIComponent(task)+'/submit',{method:'POST',signal:options?.signal,headers:options?.operationId?{'Idempotency-Key':options.operationId}:undefined,body:JSON.stringify(payload)}),
-  aiJob: (id:string,options?:{signal?:AbortSignal}) => request('/ai/jobs/'+encodeURIComponent(id),{signal:options?.signal}),
-  cancelAiJob: (id:string) => request('/ai/jobs/'+encodeURIComponent(id)+'/cancel',{method:'POST',body:JSON.stringify({})}),
-  aiResults: (task?:string,limit=50,options?:{signal?:AbortSignal}) => request('/ai/results?limit='+encodeURIComponent(String(limit))+(task?'&task='+encodeURIComponent(task):''),{signal:options?.signal}),
-  aiDatasets: (task?:string,options?:{signal?:AbortSignal}) => request('/ai/datasets'+(task?'?task='+encodeURIComponent(task):''),{signal:options?.signal}),
-  createAiDataset: (payload:Record<string,unknown>) => request('/ai/datasets',{method:'POST',body:JSON.stringify(payload)}),
-  trainAiDataset: (id:string,payload:Record<string,unknown>,options?:{operationId?:string}) => request('/ai/datasets/'+encodeURIComponent(id)+'/train',{method:'POST',headers:options?.operationId?{'Idempotency-Key':options.operationId}:undefined,body:JSON.stringify(payload)}),
-  aiKnowledge: () => request('/ai/knowledge'),
-  ingestAiKnowledge: (payload:Record<string,unknown>) => request('/ai/knowledge',{method:'POST',body:JSON.stringify(payload)}),
-  searchAiKnowledge: (payload:Record<string,unknown>,options?:{operationId?:string}) => request('/ai/knowledge/search',{method:'POST',headers:options?.operationId?{'Idempotency-Key':options.operationId}:undefined,body:JSON.stringify(payload)}),
   verifyAiProviderAccess: (task:string) => request('/ai/providers/'+encodeURIComponent(task)+'/verify',{method:'POST',body:JSON.stringify({})}),
   aiEvaluations: (task?:string,options?:{signal?:AbortSignal}) => request('/ai/evaluations'+(task?'?task='+encodeURIComponent(task):''),{signal:options?.signal}),
   aiEvaluationPolicy: (task:string,options?:{signal?:AbortSignal}) => request('/ai/evaluation-policy?task='+encodeURIComponent(task),{signal:options?.signal}),
@@ -365,6 +364,17 @@ export const api = {
   settings: () => request('/settings'),
   workspaces: (options?:{signal?:AbortSignal}) => request('/workspaces',{signal:options?.signal}),
   createWorkspace: (payload: Record<string, unknown>) => request('/workspaces', { method: 'POST', body: JSON.stringify(payload) }),
+  switchWorkspace: async (workspaceId:string) => {
+    const currentWorkspace=tokenWorkspace(getToken())||getWorkspace()
+    const result=await request<{token:string;workspaceId:string;expiresIn:number}>('/auth/workspace/switch',{
+      method:'POST',
+      headers:{'X-Workspace-ID':currentWorkspace},
+      body:JSON.stringify({workspaceId})
+    })
+    window.localStorage.setItem('ace_workspace_id',result.workspaceId)
+    setSessionToken(result.token,false)
+    return result
+  },
   saveSettings: (payload: Record<string, unknown>) => request('/settings', { method: 'POST', body: JSON.stringify(payload) }),
   webhookDeliveries: () => request('/webhooks/deliveries'),
   webhookEndpoints: () => request('/webhooks/endpoints'),
