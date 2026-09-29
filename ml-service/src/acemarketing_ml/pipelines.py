@@ -323,8 +323,31 @@ def anomaly_detection(request) -> dict[str, Any]:
     import pandas as pd
     from sklearn.ensemble import IsolationForest
 
-    names = sorted({key for row in request.rows for key in row.features})
-    frame = pd.DataFrame([{name: row.features.get(name, 0.0) for name in names} for row in request.rows]).fillna(0.0)
+    unique_rows = []
+    seen = set()
+    suppressed_duplicates = 0
+    for row in request.rows:
+        if row.entity_id in seen:
+            suppressed_duplicates += 1
+            continue
+        seen.add(row.entity_id)
+        unique_rows.append(row)
+
+    if len(unique_rows) < request.minimum_volume:
+        return {
+            "task": "anomaly_detection",
+            "status": "insufficient_data",
+            "items": [],
+            "minimumVolume": request.minimum_volume,
+            "observedVolume": len(unique_rows),
+            "suppressedDuplicates": suppressed_duplicates,
+            "warning": "Anomaly detection was not fitted because the minimum-volume requirement was not met.",
+        }
+
+    names = sorted({key for row in unique_rows for key in row.features})
+    if not names:
+        raise ValueError("anomaly detection requires at least one numeric feature")
+    frame = pd.DataFrame([{name: row.features.get(name, 0.0) for name in names} for row in unique_rows]).fillna(0.0)
     model = IsolationForest(contamination=request.contamination, random_state=request.random_seed)
     predicted = model.fit_predict(frame)
     scores = model.decision_function(frame)
@@ -334,34 +357,78 @@ def anomaly_detection(request) -> dict[str, Any]:
             "anomaly": bool(predicted[index] == -1),
             "score": float(scores[index]),
         }
-        for index, row in enumerate(request.rows)
+        for index, row in enumerate(unique_rows)
     ]
+    flagged = sum(1 for item in items if item["anomaly"])
     return {
         "task": "anomaly_detection",
         "status": "evaluated_not_promoted",
         "items": items,
+        "threshold": {
+            "decisionFunction": 0.0,
+            "contamination": request.contamination,
+            "flagged": flagged,
+            "flaggedRate": float(flagged / len(items)) if items else 0.0,
+        },
+        "minimumVolume": request.minimum_volume,
+        "observedVolume": len(unique_rows),
+        "suppressedDuplicates": suppressed_duplicates,
+        "feedbackMonitoring": {
+            "falsePositiveFeedbackSupported": True,
+            "promotionRequiresUsefulnessReview": True,
+        },
         "warning": "IsolationForest anomaly scores are investigation signals, not fraud probabilities.",
     }
 
 
 def behavioral_segments(request) -> dict[str, Any]:
+    import numpy as np
     import pandas as pd
     from sklearn.cluster import HDBSCAN
+    from sklearn.metrics import adjusted_rand_score
 
     names = sorted({key for row in request.rows for key in row.features})
+    if not names:
+        raise ValueError("segmentation requires at least one numeric feature")
     frame = pd.DataFrame([{name: row.features.get(name, 0.0) for name in names} for row in request.rows]).fillna(0.0)
     kwargs = {"min_cluster_size": request.min_cluster_size}
     if request.min_samples is not None:
         kwargs["min_samples"] = request.min_samples
     model = HDBSCAN(**kwargs)
     labels = model.fit_predict(frame)
-    items = [{"entityId": row.entity_id, "cluster": int(labels[index]), "noise": bool(labels[index] == -1)} for index, row in enumerate(request.rows)]
+
+    rng = np.random.default_rng(request.random_seed)
+    scale = frame.std(axis=0, ddof=0).replace(0, 1.0).to_numpy(dtype=float)
+    perturbation = rng.normal(0.0, request.stability_jitter_fraction, size=frame.shape) * scale
+    perturbed = frame.to_numpy(dtype=float) + perturbation
+    refit = HDBSCAN(**kwargs)
+    perturbed_labels = refit.fit_predict(perturbed)
+    stability_ari = float(adjusted_rand_score(labels, perturbed_labels))
+
+    probabilities = getattr(model, "probabilities_", None)
+    membership_strength = (
+        float(np.asarray(probabilities, dtype=float)[np.asarray(labels) >= 0].mean())
+        if probabilities is not None and np.any(np.asarray(labels) >= 0)
+        else None
+    )
+    noise_count = int(sum(int(value) == -1 for value in labels))
+    items = [
+        {"entityId": row.entity_id, "cluster": int(labels[index]), "noise": bool(labels[index] == -1)}
+        for index, row in enumerate(request.rows)
+    ]
     return {
         "task": "behavioral_segments",
         "status": "evaluated_not_promoted",
         "items": items,
         "clusters": len({int(value) for value in labels if int(value) >= 0}),
-        "warning": "Cluster IDs are version-specific and must not be assumed stable after refitting.",
+        "stability": {
+            "perturbationAdjustedRand": stability_ari,
+            "jitterFraction": request.stability_jitter_fraction,
+            "noiseCount": noise_count,
+            "noiseFraction": float(noise_count / len(labels)) if len(labels) else 0.0,
+            "meanMembershipStrength": membership_strength,
+        },
+        "warning": "Cluster IDs are version-specific and must not be assumed stable after refitting; perturbation stability is diagnostic evidence, not semantic identity across versions.",
     }
 
 
@@ -375,28 +442,52 @@ def train_ranker(request) -> dict[str, Any]:
     for group in request.groups:
         candidates = [candidate for candidate in group.candidates if candidate.exposed]
         if len(candidates) >= 2:
-            exposed_groups.append((group.group_id, candidates))
-    if len(exposed_groups) < 3:
-        raise ValueError("insufficient_data: ranking requires at least 3 groups with 2 exposed candidates each")
+            exposed_groups.append((group.group_id, group.observed_at, candidates))
+    if len(exposed_groups) < 4:
+        raise ValueError("insufficient_data: ranking requires at least 4 groups with 2 exposed candidates each")
 
-    names = sorted({key for _, candidates in exposed_groups for candidate in candidates for key in candidate.features})
-    rows = []
-    labels = []
-    group_sizes = []
-    for _, candidates in exposed_groups:
-        group_sizes.append(len(candidates))
-        for candidate in candidates:
-            rows.append({name: candidate.features.get(name, 0.0) for name in names})
-            labels.append(float(candidate.relevance))
-    frame = pd.DataFrame(rows).fillna(0.0)
+    if all(observed_at is not None for _, observed_at, _ in exposed_groups):
+        exposed_groups.sort(key=lambda item: item[1])
+        split_method = "time_ordered_group_holdout"
+    else:
+        split_method = "input_order_group_holdout"
+
+    test_groups = max(1, int(math.ceil(len(exposed_groups) * request.holdout_fraction)))
+    if len(exposed_groups) - test_groups < 3:
+        test_groups = len(exposed_groups) - 3
+    train_groups = exposed_groups[:-test_groups]
+    holdout_groups = exposed_groups[-test_groups:]
+    if not train_groups or not holdout_groups:
+        raise ValueError("insufficient_data: ranking group holdout could not be created")
+
+    names = sorted({key for _, _, candidates in exposed_groups for candidate in candidates for key in candidate.features})
+    if not names:
+        raise ValueError("ranking requires at least one candidate feature")
+
+    def build_frame(groups):
+        rows = []
+        labels = []
+        sizes = []
+        positions = []
+        for _, _, candidates in groups:
+            sizes.append(len(candidates))
+            for candidate in candidates:
+                rows.append({name: candidate.features.get(name, 0.0) for name in names})
+                labels.append(float(candidate.relevance))
+                positions.append(candidate.position)
+        return pd.DataFrame(rows, columns=names).fillna(0.0), labels, sizes, positions
+
+    train_frame, train_labels, train_sizes, train_positions = build_frame(train_groups)
+    test_frame, test_labels, test_sizes, test_positions = build_frame(holdout_groups)
+
     model = LGBMRanker(objective="lambdarank", random_state=request.random_seed, n_estimators=150)
-    model.fit(frame, labels, group=group_sizes)
-    predictions = model.predict(frame)
+    model.fit(train_frame, train_labels, group=train_sizes)
+    predictions = model.predict(test_frame)
 
     ndcgs = []
     offset = 0
-    for size in group_sizes:
-        truth = np.asarray(labels[offset:offset + size], dtype=float).reshape(1, -1)
+    for size in test_sizes:
+        truth = np.asarray(test_labels[offset:offset + size], dtype=float).reshape(1, -1)
         score = np.asarray(predictions[offset:offset + size], dtype=float).reshape(1, -1)
         ndcgs.append(float(ndcg_score(truth, score)))
         offset += size
@@ -405,16 +496,30 @@ def train_ranker(request) -> dict[str, Any]:
     artifact = ArtifactStore().save_joblib(
         artifact_id,
         {"task": "offer_ranking", "model": model, "features": names},
-        {"task": "offer_ranking", "kind": "lightgbm_ranker", "groups": len(group_sizes), "randomSeed": request.random_seed},
+        {
+            "task": "offer_ranking",
+            "kind": "lightgbm_ranker",
+            "trainingGroups": len(train_groups),
+            "holdoutGroups": len(holdout_groups),
+            "splitMethod": split_method,
+            "randomSeed": request.random_seed,
+        },
     )
+    observed_positions = [position for position in train_positions + test_positions if position is not None]
     return {
         "task": "offer_ranking",
         "status": "evaluated_not_promoted",
         "artifact": artifact,
-        "metrics": {"meanNdcg": float(sum(ndcgs) / len(ndcgs)), "groups": len(ndcgs)},
-        "warning": "Only exposed candidates were treated as labelled observations; offline ranking quality does not prove incremental lift.",
+        "metrics": {
+            "meanNdcg": float(sum(ndcgs) / len(ndcgs)),
+            "holdoutGroups": len(ndcgs),
+            "trainingGroups": len(train_groups),
+            "splitMethod": split_method,
+            "exposureAware": True,
+            "positionContextCoverage": float(len(observed_positions) / (len(train_labels) + len(test_labels))),
+        },
+        "warning": "Only exposed candidates were treated as labelled observations; NDCG is measured on held-out groups and does not prove incremental lift.",
     }
-
 
 def dependency_capabilities() -> list[dict[str, Any]]:
     import importlib.util
