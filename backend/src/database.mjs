@@ -35,6 +35,14 @@ const createEmbeddedPool=async()=>{
     let sql=await readFile(join(migrationsDir,file),'utf8')
     // pg-mem does not implement PostgreSQL's regex CHECK operator; runtime validation remains active.
     if(file==='001_workspace_state.sql')sql=sql.replace(/,\s*CHECK \(workspace_id ~ '[^']+'\)/,'')
+    // Preserve the production PostgreSQL GIN/FTS index, but omit it only from
+    // the embedded pg-mem schema because pg-mem does not implement tsvector/GIN.
+    if(file==='023_ai_knowledge.sql'){
+      sql=sql.replace(
+        /CREATE INDEX IF NOT EXISTS ace_ai_knowledge_chunks_fts_idx[\s\S]*?WHERE revoked_at IS NULL;\s*/m,
+        ''
+      )
+    }
     db.public.none(sql)
   }
   const adapter=db.adapters.createPg()
