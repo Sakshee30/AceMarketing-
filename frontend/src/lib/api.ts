@@ -287,6 +287,7 @@ export const api = {
   aiAnalysis: (question:string,options?:{signal?:AbortSignal;operationId?:string}) => request('/ai/analysis',{method:'POST',signal:options?.signal,headers:options?.operationId?{'Idempotency-Key':options.operationId}:undefined,body:JSON.stringify({question})}),
   aiMetricCatalog: (options?:{signal?:AbortSignal}) => request('/ai/metrics/catalog',{signal:options?.signal}),
   aiMlCapabilities: (options?:{signal?:AbortSignal}) => request('/ai/ml/capabilities',{signal:options?.signal}),
+  aiMlScore: (payload:Record<string,unknown>,options?:{operationId?:string}) => request('/ai/ml/score',{method:'POST',headers:options?.operationId?{'Idempotency-Key':options.operationId}:undefined,body:JSON.stringify(payload)}),
   aiMlSeasonalForecast: (payload:Record<string,unknown>,options?:{operationId?:string}) => request('/ai/ml/forecast/seasonal-naive',{method:'POST',headers:options?.operationId?{'Idempotency-Key':options.operationId}:undefined,body:JSON.stringify(payload)}),
   aiMlChronosForecast: (payload:Record<string,unknown>,options?:{operationId?:string}) => request('/ai/ml/forecast/chronos-2',{method:'POST',headers:options?.operationId?{'Idempotency-Key':options.operationId}:undefined,body:JSON.stringify(payload)}),
   aiMlForecastChallenger: (payload:Record<string,unknown>,options?:{operationId?:string}) => request('/ai/ml/forecast/catboost-challenger',{method:'POST',headers:options?.operationId?{'Idempotency-Key':options.operationId}:undefined,body:JSON.stringify(payload)}),
