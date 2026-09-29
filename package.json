@@ -59,7 +59,7 @@
     "platform-admin:verify": "npm run check:frontend && npm run build:platform-admin && npm run frontend:budget:control && npm run frontend:release:control",
     "e2e:soak": "playwright test --config=playwright.soak.config.ts",
     "frontend:telemetry:check": "playwright test --config=playwright.standalone.config.ts --grep 'performance telemetry|lab metrics'",
-    "test:ai-backend": "node --test backend/tests/metric-catalog.test.mjs backend/tests/ai-registry.test.mjs backend/tests/ai-input-validation.test.mjs backend/tests/ai-result-contracts.test.mjs backend/tests/ai-contract-manifest.test.mjs backend/tests/ai-platform-policy.test.mjs backend/tests/ai-governance-store.test.mjs backend/tests/ai-object-store.test.mjs backend/tests/ai-activation-proposals.test.mjs backend/tests/ai-provider-access.test.mjs backend/tests/ai-durable-jobs.test.mjs backend/tests/ai-knowledge-authorization.test.mjs backend/tests/ai-activation-execution.test.mjs backend/tests/ai-analyst-tools.test.mjs",
+    "test:ai-backend": "node --test backend/tests/metric-catalog.test.mjs backend/tests/ai-registry.test.mjs backend/tests/ai-input-validation.test.mjs backend/tests/ai-result-contracts.test.mjs backend/tests/ai-contract-manifest.test.mjs backend/tests/ai-platform-policy.test.mjs backend/tests/ai-governance-store.test.mjs backend/tests/ai-object-store.test.mjs backend/tests/ai-activation-proposals.test.mjs backend/tests/ai-provider-access.test.mjs backend/tests/ai-durable-jobs.test.mjs backend/tests/ai-knowledge-authorization.test.mjs backend/tests/ai-activation-execution.test.mjs backend/tests/ai-analyst-tools.test.mjs backend/tests/ai-deployment-controls.test.mjs",
     "verify:ai-backend": "npm run check:backend && npm run check:ai-tools && npm run test:ai-backend",
     "ai:provider-verify": "node scripts/ai/provider-verify.mjs",
     "ai:dataset-readiness": "node scripts/ai/dataset-readiness.mjs",
@@ -69,7 +69,9 @@
     "ai:promote": "node scripts/ai/promote.mjs",
     "ai:rollback": "node scripts/ai/rollback.mjs",
     "ai:delete": "node scripts/ai/delete.mjs",
-    "check:ai-tools": "node --check scripts/ai/_client.mjs && node --check scripts/ai/provider-verify.mjs && node --check scripts/ai/dataset-readiness.mjs && node --check scripts/ai/train.mjs && node --check scripts/ai/evaluate.mjs && node --check scripts/ai/score.mjs && node --check scripts/ai/backtest.mjs && node --check scripts/ai/promote.mjs && node --check scripts/ai/rollback.mjs && node --check scripts/ai/delete.mjs",
+    "ai:live-provider-smoke": "node scripts/ai/live-provider-smoke.mjs",
+    "ai:checkpoint-smoke": "node scripts/ai/checkpoint-smoke.mjs",
+    "check:ai-tools": "node --check scripts/ai/_client.mjs && node --check scripts/ai/provider-verify.mjs && node --check scripts/ai/dataset-readiness.mjs && node --check scripts/ai/train.mjs && node --check scripts/ai/evaluate.mjs && node --check scripts/ai/score.mjs && node --check scripts/ai/backtest.mjs && node --check scripts/ai/promote.mjs && node --check scripts/ai/rollback.mjs && node --check scripts/ai/delete.mjs && node --check scripts/ai/live-provider-smoke.mjs && node --check scripts/ai/checkpoint-smoke.mjs",
     "ai:score": "node scripts/ai/score.mjs"
   },
   "dependencies": {

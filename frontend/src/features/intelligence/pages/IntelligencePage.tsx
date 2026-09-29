@@ -22,6 +22,7 @@ export default function IntelligencePage(){
  const [knowledge,setKnowledge]=useState<any[]>([])
  const [results,setResults]=useState<any[]>([])
  const [policies,setPolicies]=useState<any[]>([])
+ const [deploymentControls,setDeploymentControls]=useState<any[]>([])
  const [transcripts,setTranscripts]=useState<any[]>([])
  const [creatives,setCreatives]=useState<any[]>([])
  const [anomalyItems,setAnomalyItems]=useState<any[]>([])
@@ -52,9 +53,10 @@ export default function IntelligencePage(){
  const load=async()=>{
   setLoading(true);setError('')
   try{
-   const [r,p,t,cr,an,sg,rk,fr,ca,mm,ap,caps,m,d,k,res]:any=await Promise.all([
+   const [r,p,dc,t,cr,an,sg,rk,fr,ca,mm,ap,caps,m,d,k,res]:any=await Promise.all([
     intelligenceApi.registry(),
     intelligenceApi.policies(),
+    intelligenceApi.deploymentControls(),
     intelligenceApi.transcripts(),
     intelligenceApi.creatives(),
     intelligenceApi.anomalyItems(),
@@ -72,6 +74,7 @@ export default function IntelligencePage(){
    ])
    setRegistry(Array.isArray(r.tenantItems)&&r.tenantItems.length?r.tenantItems:(r.items||[]))
    setPolicies(p.items||[])
+   setDeploymentControls(dc.items||[])
    setTranscripts(t.items||[])
    setCreatives(cr.items||[])
    setAnomalyItems(an.items||[])
@@ -132,6 +135,24 @@ export default function IntelligencePage(){
    setNotice({kind:'ok',text:'Task policy saved. New work will obey the updated enablement, concurrency and monthly usage limits.'})
    await load()
   }catch(e:any){setNotice({kind:'error',text:e?.message||'Task policy could not be saved.'})}
+  finally{setBusy('')}
+ }
+
+ const setDeploymentMode=async(task:string,mode:'off'|'shadow'|'canary'|'active')=>{
+  const current=deploymentControls.find((item:any)=>item.task===task)||{}
+  setBusy('deployment:'+task);setNotice({kind:'',text:''})
+  try{
+   await intelligenceApi.saveDeploymentControl(task,{
+    mode,
+    canaryPercent:mode==='canary'?(Number(current.canaryPercent)>0&&Number(current.canaryPercent)<100?Number(current.canaryPercent):10):mode==='active'?100:0,
+    autoRollback:Boolean(current.autoRollback),
+    maxErrorRatePct:Number(current.maxErrorRatePct||5),
+    maxP95LatencyMs:Number(current.maxP95LatencyMs||5000),
+    minObservations:Number(current.minObservations||20)
+   })
+   setNotice({kind:'ok',text:mode==='shadow'?'Shadow mode saved. Normal user traffic is blocked; explicit governed shadow runs remain available.':mode==='canary'?'Canary mode saved with deterministic bounded traffic.':'Deployment traffic mode updated.'})
+   await load()
+  }catch(e:any){setNotice({kind:'error',text:e?.message||'Deployment control could not be saved.'})}
   finally{setBusy('')}
  }
 
@@ -419,6 +440,7 @@ export default function IntelligencePage(){
    {section==='Results'&&<section className="app-panel"><div className="panel-head"><div><h3>Persisted AI results</h3><p>Observed metrics, predictions, forecasts and provider outputs remain typed and versioned.</p></div><button onClick={()=>void load()}><RefreshCw/>Refresh</button></div><div className="intel-results">{results.length?results.map((item:any)=><article key={item.id}><div><b>{item.task}</b><span>{item.result_type||item.resultType||'result'} · {item.status}</span><small>{item.requested_model||item.requestedModel||'—'} → {item.resolved_model||item.resolvedModel||'—'}</small></div><pre>{short(item.payload)}</pre></article>):<EmptyState title="No persisted AI results" description="Completed governed jobs will appear here; queued work is not treated as a completed result."/>}</div></section>}
 
    {section==='Administration'&&<><div className="intel-grid two"><section className="app-panel"><div className="panel-head"><div><h3>Task registry & policy</h3><p>Configuration, provider access, evaluation, approval, deployment and tenant execution policy remain separate.</p></div><ShieldCheck/></div><div className="intel-list registry">{registry.map((item:any)=>{const draft=policyDrafts[item.task]||{enabled:true,maxConcurrentJobs:4,monthlyUnitBudget:''};const policy=policies.find((entry:any)=>entry.task===item.task);return <article key={item.task}><div><b>{item.task}</b><small>{item.provider} · {item.requestedModel} · {item.readiness||'unknown'}</small><small>{Number(policy?.usage?.monthUnits||0).toLocaleString()} unit(s) this month · {Number(policy?.usage?.activeJobs||0)} active job(s) · cost {policy?.usage?.estimatedCost==null?'not configured':policy.usage.estimatedCost}</small><small>platform ceiling: {policy?.platformPolicy?.enabled===false?'disabled':('max '+Number(policy?.platformPolicy?.maxConcurrentJobs||0)+' concurrent'+(policy?.platformPolicy?.monthlyUnitBudget==null?' · no platform monthly unit cap':' · '+Number(policy.platformPolicy.monthlyUnitBudget).toLocaleString()+' units/month'))}</small><div className="intel-policy-row"><label><input type="checkbox" checked={draft.enabled} onChange={e=>setPolicyDrafts(x=>({...x,[item.task]:{...draft,enabled:e.target.checked}}))}/> Enabled</label><label>Concurrency<input type="number" min="1" max="1000" value={draft.maxConcurrentJobs} onChange={e=>setPolicyDrafts(x=>({...x,[item.task]:{...draft,maxConcurrentJobs:Number(e.target.value)}}))}/></label><label>Monthly units<input type="number" min="0" placeholder="No explicit cap" value={draft.monthlyUnitBudget} onChange={e=>setPolicyDrafts(x=>({...x,[item.task]:{...draft,monthlyUnitBudget:e.target.value}}))}/></label><button disabled={busy==='policy:'+item.task} onClick={()=>void saveTaskPolicy(item.task)}>{busy==='policy:'+item.task?'Saving…':'Save policy'}</button></div></div></article>})}</div></section><section className="app-panel"><div className="panel-head"><div><h3>Governance boundary</h3><p>Use Models for verification, qualification, promotion, deployment and rollback.</p></div><BrainCircuit/></div><div className="intel-callout"><ShieldCheck/><div><b>No implicit activation</b><p>Missing numerical models never fall back to LLM-generated numbers. Reviewer output never authorizes a side effect. Policy enablement does not qualify a model.</p></div></div><button onClick={()=>window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:'Models'}))}>Open Models administration</button></section></div>
+   <section className="app-panel"><div className="panel-head"><div><h3>Shadow & canary deployment</h3><p>Traffic controls are separate from qualification. Canary allocation is deterministic; shadow mode never serves normal user traffic.</p></div><Activity/></div><div className="intel-list">{deploymentControls.length?deploymentControls.map((item:any)=><article key={item.task}><div><b>{item.task}</b><small>{item.mode} · canary {Number(item.canaryPercent||0)}% · {item.health?.sampleSize||0} observation(s)</small><small>error {Number(item.health?.errorRatePct||0).toFixed(2)}% · p95 {Number(item.health?.p95LatencyMs||0)}ms{item.health?.reasons?.length?' · '+item.health.reasons.join(', '):''}</small></div><div className="intel-actions"><button disabled={busy==='deployment:'+item.task} onClick={()=>void setDeploymentMode(item.task,'shadow')}>Shadow</button><button disabled={busy==='deployment:'+item.task} onClick={()=>void setDeploymentMode(item.task,'canary')}>Canary</button><button disabled={busy==='deployment:'+item.task} onClick={()=>void setDeploymentMode(item.task,'active')}>Active</button><button disabled={busy==='deployment:'+item.task} onClick={()=>void setDeploymentMode(item.task,'off')}>Off</button></div></article>):<EmptyState title="No deployment controls" description="Deployment controls are created per task when an administrator saves a traffic mode."/>}</div></section>
    <div className="intel-grid two"><section className="app-panel"><div className="panel-head"><div><h3>Activation proposal</h3><p>Create an immutable proposal for separate review and approval. Approved execution is a distinct worker action and is disabled by default at the server.</p></div><ShieldCheck/></div><div className="intel-row"><label>Task<select value={activationDraft.task} onChange={e=>setActivationDraft(x=>({...x,task:e.target.value}))}>{registry.map((item:any)=><option key={item.task} value={item.task}>{item.task}</option>)}</select></label><label>Proposal type<input value={activationDraft.proposalType} onChange={e=>setActivationDraft(x=>({...x,proposalType:e.target.value}))}/></label><label>Provider adapter<input value={activationDraft.providerAdapter} onChange={e=>setActivationDraft(x=>({...x,providerAdapter:e.target.value}))}/></label><label>Expiry minutes<input type="number" min="1" max="1440" value={activationDraft.expiresMinutes} onChange={e=>setActivationDraft(x=>({...x,expiresMinutes:Number(e.target.value)}))}/></label></div><label className="intel-field">Payload JSON<textarea value={activationDraft.payload} onChange={e=>setActivationDraft(x=>({...x,payload:e.target.value}))}/></label><label className="intel-field">Evidence refs JSON<textarea value={activationDraft.evidenceRefs} onChange={e=>setActivationDraft(x=>({...x,evidenceRefs:e.target.value}))}/></label><button className="app-primary" disabled={busy==='activation-create'} onClick={()=>void createActivationProposal()}>{busy==='activation-create'?'Creating…':'Create governed activation proposal'}</button></section><section className="app-panel"><div className="panel-head"><div><h3>Pending activation approvals</h3><p>Creator/approver separation, proposal hash integrity, expiry and model freshness are checked server-side.</p></div><ShieldCheck/></div><div className="intel-list">{activationProposals.length?activationProposals.map((item:any)=><article key={item.id}><div><b>{item.proposal_type||item.proposalType} · {item.task||'task'}</b><small>{item.status} · expires {new Date(item.expires_at||item.expiresAt).toLocaleString()}</small></div>{item.status==='pending_approval'&&<div className="intel-actions"><button disabled={busy==='activation:approve:'+item.id} onClick={()=>void decideActivationProposal(item.id,'approve')}>Approve</button><button disabled={busy==='activation:reject:'+item.id} onClick={()=>void decideActivationProposal(item.id,'reject')}>Reject</button></div>}{item.status==='approved'&&item.execution_status!=='succeeded'&&<div className="intel-actions"><button disabled={busy==='activation:execute:'+item.id||['queued','running'].includes(String(item.execution_status||''))} onClick={()=>void executeActivationProposal(item.id)}>{['queued','running'].includes(String(item.execution_status||''))?'Execution queued':'Queue approved execution'}</button><small>{item.execution_status||'not_requested'} · server execution is default-off</small></div>}{item.execution_status==='succeeded'&&<small>Execution completed · provider receipt retained</small>}</article>):<EmptyState title="No activation proposals" description="High-risk AI recommendations require reviewer evidence, separate approval, the explicit execution permission and an enabled provider-specific execution adapter."/>}</div></section></div></>}
   </>}
  </>

@@ -88,6 +88,29 @@ paths:
       parameters: [{$ref: '#/components/parameters/Workspace'}]
       responses:
         '200': {description: Registry}
+  /ai/deployment-controls:
+    get:
+      summary: List tenant AI shadow/canary traffic controls and observed health
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'200': {description: Deployment controls and health}}
+  /ai/deployment-controls/{task}:
+    post:
+      summary: Save explicit off/shadow/canary/active traffic policy and health guard thresholds
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: task, in: path, required: true, schema: {type: string}}
+      responses:
+        '200': {description: Saved}
+        '400': {description: Invalid deployment policy}
+  /ai/tasks/{task}/shadow:
+    post:
+      summary: Submit an explicit governed shadow-only hosted-model run
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: task, in: path, required: true, schema: {type: string}}
+      responses:
+        '202': {description: Shadow job accepted}
+        '409': {description: Deployment or governance blocked}
   /ai/providers/{task}/verify:
     post:
       summary: Run bounded privileged provider/model access verification

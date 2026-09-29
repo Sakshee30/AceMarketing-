@@ -52,3 +52,10 @@ The specialist ML service now records additional task-specific evidence required
 - LightGBM ranking trains only on exposed candidates and evaluates NDCG on held-out groups. When group timestamps are supplied, the holdout is time ordered; otherwise the input group order is preserved and reported. Position-context coverage is also reported.
 - These evaluation signals remain evidence for qualification and do not automatically promote or deploy an artifact.
 
+
+
+## Deployment traffic and operational qualification closure
+
+The code now includes persisted per-tenant `off` / `shadow` / `canary` / `active` deployment controls, deterministic canary allocation, an explicit governed shadow-run endpoint, worker-recorded success/failure/unknown/cancelled observations, p95/error-rate health summaries, and an opt-in health guard that halts candidate traffic after configured threshold breaches. The audited model rollback operation remains separate from traffic halting.
+
+Dedicated live-provider and real-Chronos smoke commands are implemented and intentionally require explicit environment opt-in. Their output is access/runtime evidence only and is not recorded as tenant qualification, approval or production deployment.

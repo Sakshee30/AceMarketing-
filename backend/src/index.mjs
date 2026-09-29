@@ -38,6 +38,7 @@ import { getSegmentMemberships, listAnomalyItems, listCausalRecords, listForecas
 import { approveAiActivationProposal, attachActivationProposalReviewerJob, createAiActivationProposal, listAiActivationProposals, markActivationProposalReviewerBlocked, rejectAiActivationProposal } from './ai-activation-proposals.mjs'
 import {queueAiActivationExecution} from './ai-activation-execution.mjs'
 import {analystToolNames,executeAnalystTool,executeAnalystToolSet} from './ai-analyst-tools.mjs'
+import {deploymentHealth,listDeploymentControls,saveDeploymentControl} from './ai-deployment-controls.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -458,7 +459,9 @@ const permissionForRequest=(method,path)=>{
   if(path==='/api/ai/knowledge/search') return 'ai.analysis.run'
   if(path.startsWith('/api/ai/knowledge')) return method==='GET'?'workspace.read':'ai.knowledge.write'
   if(path==='/api/ai/analysis') return 'ai.analysis.run'
+  if(path.startsWith('/api/ai/tasks/')&&path.endsWith('/shadow')) return 'ai.evaluation.write'
   if(path.startsWith('/api/ai/tasks/')) return 'ai.analysis.run'
+  if(path.startsWith('/api/ai/deployment-controls')) return method==='GET'?'workspace.read':'ai.providers.manage'
   if(path.startsWith('/api/ai/task-policies')) return method==='GET'?'workspace.read':'ai.providers.manage'
   if(path.startsWith('/api/ai/activation-proposals')){
     if(method==='GET')return 'workspace.read'
@@ -4830,6 +4833,26 @@ const server = http.createServer(async (req,res)=>{
       }
       return send(req,res,200,{...staticRegistry,tenantItems,persistence})
     }
+    if (req.method === 'GET' && url.pathname === '/api/ai/deployment-controls') {
+      const controls=await listDeploymentControls(workspaceId)
+      const items=await Promise.all(controls.map(async control=>({
+        ...control,
+        health:await deploymentHealth({workspaceId,task:control.task}).catch(()=>null)
+      })))
+      return send(req,res,200,{items,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/deployment-controls\/[^/]+$/.test(url.pathname)) {
+      if(!['owner','admin'].includes(authenticatedUser?.role||''))return send(req,res,403,{error:'owner or admin role required'})
+      const task=decodeURIComponent(url.pathname.split('/')[4]||'')
+      const body=await readBody(req)
+      try{
+        const item=await saveDeploymentControl({workspaceId,task,input:body,actor:authenticatedUser})
+        const health=await deploymentHealth({workspaceId,task}).catch(()=>null)
+        return send(req,res,200,{item,health,note:'Deployment control changes traffic policy only; they do not qualify, approve or deploy an unqualified model.'})
+      }catch(error){
+        return send(req,res,400,{error:error instanceof Error?error.message:'deployment control could not be saved'})
+      }
+    }
     if (req.method === 'POST' && /^\/api\/ai\/providers\/[^/]+\/verify$/.test(url.pathname)) {
       if(!['owner','admin'].includes(authenticatedUser?.role||''))return send(req,res,403,{error:'owner or admin role required'})
       const task=decodeURIComponent(url.pathname.split('/')[4]||'')
@@ -5220,6 +5243,42 @@ const server = http.createServer(async (req,res)=>{
         return send(req,res,400,{error:error instanceof Error?error.message:'analyst tool execution failed'})
       }
     }
+    if (req.method === 'POST' && /^\/api\/ai\/tasks\/[^/]+\/shadow$/.test(url.pathname)) {
+      const task=decodeURIComponent(url.pathname.split('/')[4]||'')
+      if(task==='live_voice')return send(req,res,400,{error:'live_voice uses the dedicated session endpoint'})
+      const body=await readBody(req)
+      const validated=validateHostedTaskInput(task,body)
+      if(!validated.ok)return send(req,res,400,{error:validated.error,task})
+      const sourceSnapshot={
+        schemaVersion:'hosted-task-shadow-input.v1',
+        task,
+        capturedAt:new Date().toISOString(),
+        evidenceIds:Array.isArray(body.evidenceIds)?body.evidenceIds.map(String).slice(0,100):[],
+        clientMetadata:body.clientMetadata&&typeof body.clientMetadata==='object'?body.clientMetadata:{},
+        shadow:true
+      }
+      const submission=await submitHostedAiJob({
+        workspaceId,
+        task,
+        input:validated.input,
+        sourceSnapshot,
+        idempotencyKey:String(req.headers['idempotency-key']||req.requestId||randomUUID()),
+        actor:authenticatedUser,
+        executionMode:'shadow'
+      })
+      if(!submission.accepted){
+        return send(req,res,submission.status||409,{error:submission.error,task,readiness:submission.readiness||null,prerequisites:submission.prerequisites||[]})
+      }
+      return send(req,res,202,{
+        jobId:submission.job.id,
+        status:submission.job.status,
+        task,
+        shadow:true,
+        deployment:submission.deployment,
+        requestedModel:submission.route.requestedModel,
+        resultSchemaVersion:'ai-result.v1'
+      })
+    }
     if (req.method === 'POST' && /^\/api\/ai\/tasks\/[^/]+\/submit$/.test(url.pathname)) {
       const task=decodeURIComponent(url.pathname.split('/')[4]||'')
       if(task==='live_voice')return send(req,res,400,{error:'live_voice uses the dedicated session endpoint'})
@@ -5251,6 +5310,7 @@ const server = http.createServer(async (req,res)=>{
         provider:submission.route.provider,
         requestedModel:submission.route.requestedModel,
         readiness:submission.route.readiness,
+        deployment:submission.deployment||null,
         resultSchemaVersion:'ai-result.v1'
       })
     }

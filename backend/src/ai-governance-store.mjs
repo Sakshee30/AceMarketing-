@@ -3,6 +3,7 @@ import {pool} from './database.mjs'
 import {modelRegistryItem} from './ai-registry.mjs'
 import {aiObjectStoreStatus,storeAiObject,storeAiText} from './ai-object-store.mjs'
 import {enforceTenantPolicyWithinPlatform,platformTaskPolicy} from './ai-platform-policy.mjs'
+import {evaluateDeploymentTraffic} from './ai-deployment-controls.mjs'
 
 const readTaskUsage=async(workspaceId,task)=>{
   if(!pool)return {activeJobs:0,monthUnits:0,estimatedCost:null,costStatus:'not_configured'}
@@ -147,7 +148,7 @@ export const saveAiTaskPolicy=async({workspaceId,task,input,actor})=>{
   }
 }
 
-export const evaluateAiTaskAdmission=async({workspaceId,task,requestedModel,reservedUnits=1})=>{
+export const evaluateAiTaskAdmission=async({workspaceId,task,requestedModel,reservedUnits=1,trafficKey=null,enforceDeploymentTraffic=false,allowShadow=false})=>{
   const policy=await getAiTaskPolicy(workspaceId,task)
   if(!policy)return {allowed:false,reasons:['unknown AI task'],policy:null}
   const reasons=[]
@@ -186,7 +187,12 @@ export const evaluateAiTaskAdmission=async({workspaceId,task,requestedModel,rese
   const budgetCandidates=[policy.monthlyUnitBudget,platform?.monthlyUnitBudget].filter(value=>value!=null).map(Number)
   const effectiveBudget=budgetCandidates.length?Math.min(...budgetCandidates):null
   if(effectiveBudget!=null&&monthUnits+Math.max(0,Number(reservedUnits||0))>effectiveBudget)reasons.push('task monthly unit budget exceeded')
-  return {allowed:reasons.length===0,reasons,policy,platformPolicy:platform,usage:{activeJobs,monthUnits,reservedUnits:Number(reservedUnits||0),effectiveConcurrent,effectiveBudget}}
+  let deployment=null
+  if(enforceDeploymentTraffic){
+    deployment=await evaluateDeploymentTraffic({workspaceId,task,key:trafficKey||task,allowShadow})
+    if(!deployment.allowed)reasons.push(deployment.reason||'deployment traffic policy blocked this request')
+  }
+  return {allowed:reasons.length===0,reasons,policy,platformPolicy:platform,deployment,usage:{activeJobs,monthUnits,reservedUnits:Number(reservedUnits||0),effectiveConcurrent,effectiveBudget}}
 }
 
 const sha256=value=>createHash('sha256').update(value).digest('hex')
