@@ -68,6 +68,8 @@ spec:
   resources:
     requests: {storage: 20Gi}
 ---
+# ReadWriteOnce artifact PVC intentionally caps horizontal scaling at one replica.
+# Use a shared RWX volume or object-store-only serving layout before increasing this.
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
@@ -78,7 +80,7 @@ spec:
     kind: Deployment
     name: acemarketing-ml-service
   minReplicas: 1
-  maxReplicas: 4
+  maxReplicas: 1
   metrics:
     - type: Resource
       resource:
