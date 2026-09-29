@@ -52,3 +52,15 @@
 | segmentation stability / noise handling | deterministic perturbation ARI, noise fraction and membership-strength diagnostics | ML test asserts stability output |
 | exposure-aware ranking evaluation | LightGBM trains on exposed candidates and evaluates on held-out groups, time ordered when timestamps exist | ML test verifies time-ordered train/holdout split and artifact creation |
 
+
+
+## Deployment qualification controls
+
+| Requirement | Implementation | Evidence / remaining prerequisite |
+|---|---|---|
+| shadow deployment | `ai-deployment-controls.mjs` + `POST /api/ai/tasks/{task}/shadow` | explicit shadow jobs are tagged and normal traffic is blocked in shadow mode |
+| canary traffic limit | deterministic tenant/task/request bucket with persisted canary percentage | `ai-deployment-controls.test.mjs`; real tenant rollout evidence still required |
+| operational health | worker writes deployment observations; API returns error rate, p95 and sample count | production traffic required for representative evidence |
+| rollback support | threshold guard can halt candidate traffic; registry rollback remains explicit and audited | real rollback exercise remains a deployment prerequisite |
+| live provider smoke | `scripts/ai/live-provider-smoke.mjs` | requires explicit credentials, live-call enablement and bounded budget |
+| real Chronos smoke | `scripts/ai/checkpoint-smoke.mjs` | requires provisioned pinned checkpoint and isolated forecasting service |
