@@ -302,3 +302,43 @@ def test_ranker_evaluates_held_out_groups(monkeypatch, tmp_path):
     assert result["metrics"]["holdoutGroups"] == 2
     assert result["metrics"]["exposureAware"] is True
     assert result["artifact"]["sha256"]
+
+
+def test_meridian_budget_scenario_constraints_are_feasible_and_bounded():
+    from acemarketing_ml.contracts import MeridianBudgetScenario
+    from acemarketing_ml.pipelines import _validate_meridian_scenario
+
+    scenario = MeridianBudgetScenario(
+        total_budget=1000.0,
+        minimum_allocation={"Search": 0.4, "Social": 0.2},
+        maximum_allocation={"Search": 0.8, "Social": 0.6},
+        max_change_fraction=0.5,
+    )
+    validated = _validate_meridian_scenario(["Search", "Social"], [600.0, 400.0], scenario)
+    assert validated["totalBudget"] == 1000.0
+    assert validated["baselineAllocation"] == {"Search": 0.6, "Social": 0.4}
+    assert validated["minimumAllocation"]["Search"] == 0.4
+    assert validated["maximumAllocation"]["Social"] == 0.6
+    assert 0 <= validated["lowerConstraint"]["Search"] <= 1
+    assert 0 <= validated["upperConstraint"]["Social"] <= 1
+
+
+def test_meridian_budget_scenario_rejects_infeasible_or_unknown_channel_constraints():
+    from acemarketing_ml.contracts import MeridianBudgetScenario
+    from acemarketing_ml.pipelines import _validate_meridian_scenario
+
+    with pytest.raises(ValueError, match="unknown media channels"):
+        _validate_meridian_scenario(
+            ["Search", "Social"],
+            [600.0, 400.0],
+            MeridianBudgetScenario(minimum_allocation={"Telepathy": 0.1}),
+        )
+    with pytest.raises(ValueError, match="sum above 1"):
+        _validate_meridian_scenario(
+            ["Search", "Social"],
+            [600.0, 400.0],
+            MeridianBudgetScenario(
+                minimum_allocation={"Search": 0.7, "Social": 0.6},
+                maximum_allocation={"Search": 0.9, "Social": 0.9},
+            ),
+        )
