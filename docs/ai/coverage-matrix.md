@@ -25,3 +25,5 @@
 | OpenAPI | docs/ai/openapi.yaml | n/a | CI canonical check | publish/version in deployment |
 | Operator lifecycle scripts | scripts/ai/* | n/a | check:ai-tools | operator token/workspace |
 | Kubernetes | deploy/k8s/* | n/a | CI canonical check | cluster secrets/storage classes/network egress |
+
+| Activation proposals | ai-activation-proposals.mjs + migration 028 | AI Intelligence / Administration | ai-activation-proposals.test.mjs | provider-specific execution adapter remains separate and must recheck consent/limits at execution |
