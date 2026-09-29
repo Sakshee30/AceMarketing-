@@ -250,6 +250,7 @@ jobs:
           test -f scripts/ai/dataset-readiness.mjs
           test -f scripts/ai/train.mjs
           test -f scripts/ai/evaluate.mjs
+          test -f scripts/ai/score.mjs
           test -f scripts/ai/backtest.mjs
           test -f scripts/ai/promote.mjs
           test -f scripts/ai/rollback.mjs
