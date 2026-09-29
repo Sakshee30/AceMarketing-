@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {activationExecutionEnabled,activationQueueStatusProcessable,validateActivationAdapterInput} from '../src/ai-activation-execution.mjs'
 import {hasPermission} from '../src/security.mjs'
-import {activationProviderForUrl} from '../src/activation-adapters.mjs'
+import {activationProviderForUrl,activationRequestJson,googleAdsReferenceCount} from '../src/activation-adapters.mjs'
 
 const withEnv=(key,value,fn)=>{
   const previous=process.env[key]
@@ -126,4 +126,39 @@ test('activation egress rejects plaintext and unapproved provider hosts',()=>{
   assert.throws(()=>activationProviderForUrl('http://googleads.googleapis.com/v25/test'),/HTTPS/)
   assert.throws(()=>activationProviderForUrl('https://googleads.googleapis.com.evil.example/test'),/not allowlisted/)
   assert.throws(()=>activationProviderForUrl('https://evilzoho.example/test'),/not allowlisted/)
+})
+
+
+test('credentialed activation requests reject redirects instead of forwarding secrets',async()=>{
+  const previousFetch=globalThis.fetch
+  let optionsSeen=null
+  globalThis.fetch=async(_url,options)=>{
+    optionsSeen=options
+    return new Response('',{status:302,headers:{location:'https://example.invalid/redirect'}})
+  }
+  try{
+    await assert.rejects(
+      ()=>activationRequestJson('https://googleads.googleapis.com/v25/test',{
+        method:'POST',
+        headers:{Authorization:'Bearer test-only','developer-token':'test-only'},
+        body:'{}'
+      }),
+      error=>{
+        assert.equal(error.status,302)
+        assert.equal(error.unknownOutcome,false)
+        return true
+      }
+    )
+    assert.equal(optionsSeen.redirect,'manual')
+  }finally{
+    globalThis.fetch=previousFetch
+  }
+})
+
+test('Google Ads shared-budget reference count rejects malformed provider values',()=>{
+  assert.equal(googleAdsReferenceCount(0),0)
+  assert.equal(googleAdsReferenceCount('2'),2)
+  assert.throws(()=>googleAdsReferenceCount('not-a-number'),/invalid campaign budget referenceCount/)
+  assert.throws(()=>googleAdsReferenceCount(-1),/invalid campaign budget referenceCount/)
+  assert.throws(()=>googleAdsReferenceCount(1.5),/invalid campaign budget referenceCount/)
 })
