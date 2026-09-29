@@ -280,9 +280,9 @@
 }
 @media (prefers-reduced-motion:reduce){
   .ace-a11y-root *, .ace-a11y-root *::before, .ace-a11y-root *::after{
-    animation-duration:.01ms!important;
+    animation-duration:0s!important;
     animation-iteration-count:1!important;
-    transition-duration:.01ms!important;
+    transition-duration:0s!important;
     scroll-behavior:auto!important;
   }
 }
