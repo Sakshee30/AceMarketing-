@@ -26,16 +26,26 @@ class PointInTimeRow(BaseModel):
 
 class ClassificationTrainRequest(BaseModel):
     run_id: str | None = Field(default=None, max_length=256)
+    dataset_id: str | None = Field(default=None, max_length=256)
+    dataset_hash: str | None = Field(default=None, pattern=r"^[a-fA-F0-9]{64}$")
+    feature_schema_version: str | None = Field(default=None, max_length=128)
+    label_schema_version: str | None = Field(default=None, max_length=128)
     task: ClassificationTask
     rows: list[PointInTimeRow] = Field(min_length=30, max_length=250_000)
     categorical_features: list[str] = Field(default_factory=list, max_length=100)
     label_cutoff: datetime
     calibration_method: Literal["sigmoid", "isotonic"] = "sigmoid"
+    operating_capacity_fraction: float = Field(default=0.10, gt=0, le=1)
+    decision_threshold: float = Field(default=0.5, ge=0, le=1)
     random_seed: int = 42
 
 
 class RegressionTrainRequest(BaseModel):
     run_id: str | None = Field(default=None, max_length=256)
+    dataset_id: str | None = Field(default=None, max_length=256)
+    dataset_hash: str | None = Field(default=None, pattern=r"^[a-fA-F0-9]{64}$")
+    feature_schema_version: str | None = Field(default=None, max_length=128)
+    label_schema_version: str | None = Field(default=None, max_length=128)
     task: RegressionTask
     horizon: Literal["90d", "180d"]
     rows: list[PointInTimeRow] = Field(min_length=30, max_length=250_000)
