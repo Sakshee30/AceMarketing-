@@ -143,6 +143,17 @@ class CausalForestRequest(BaseModel):
     minimum_overlap: float = Field(default=0.05, gt=0, lt=0.5)
 
 
+class MeridianBudgetScenario(BaseModel):
+    total_budget: float | None = Field(default=None, gt=0)
+    minimum_allocation: dict[str, float] = Field(default_factory=dict)
+    maximum_allocation: dict[str, float] = Field(default_factory=dict)
+    max_change_fraction: float = Field(default=0.30, ge=0, le=1)
+    confidence_level: float = Field(default=0.90, gt=0, lt=1)
+    start_date: str | None = Field(default=None, max_length=32)
+    end_date: str | None = Field(default=None, max_length=32)
+    batch_size: int = Field(default=100, ge=1, le=10_000)
+
+
 class MeridianFitRequest(BaseModel):
     run_id: str | None = Field(default=None, max_length=256)
     geos: list[str] = Field(min_length=1, max_length=500)
@@ -162,6 +173,7 @@ class MeridianFitRequest(BaseModel):
     n_adapt: int = Field(default=500, ge=100, le=5_000)
     n_burnin: int = Field(default=250, ge=50, le=2_500)
     n_keep: int = Field(default=500, ge=100, le=5_000)
+    budget_scenario: MeridianBudgetScenario | None = None
     random_seed: int = 42
 
 
