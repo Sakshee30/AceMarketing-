@@ -40,6 +40,8 @@ jobs:
           node-version: 20
       - name: Install dependencies
         run: npm install
+      - name: Prepare database schema for integration tests
+        run: npm run migrate
       - name: Audit production dependencies
         run: npm run security:audit
       - name: Enforce frontend architecture boundaries
