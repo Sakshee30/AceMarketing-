@@ -786,6 +786,12 @@ def forecast_challenger(request) -> dict[str, Any]:
 
     timestamps = [point.timestamp for point in history]
     values = np.asarray([float(point.value) for point in history], dtype=float)
+    historical_covariates = {}
+    for item in request.historical_covariates:
+        timestamp = str(item.get("timestamp") or "")
+        if timestamp:
+            historical_covariates[timestamp] = dict(item)
+
     rows = []
     targets = []
     for index in range(max(request.lags), len(values)):
@@ -800,10 +806,13 @@ def forecast_challenger(request) -> dict[str, Any]:
                     "dayofyear": int(ts.timetuple().tm_yday),
                 }
             )
+        for key, value in historical_covariates.get(timestamps[index].isoformat(), {}).items():
+            if key not in {"id", "timestamp", "target"} and isinstance(value, (int, float)):
+                row[f"cov_{key}"] = float(value)
         rows.append(row)
         targets.append(float(values[index]))
 
-    frame = pd.DataFrame(rows)
+    frame = pd.DataFrame(rows).fillna(0.0)
     targets_arr = np.asarray(targets, dtype=float)
     holdout = max(request.horizon, min(max(8, int(len(frame) * 0.2)), max(8, len(frame) // 3)))
     if len(frame) - holdout < 20:
@@ -858,7 +867,7 @@ def forecast_challenger(request) -> dict[str, Any]:
         covariates = known_covariates.get(future_timestamp.isoformat(), {})
         for key, value in covariates.items():
             if key not in {"id", "timestamp", "target"} and isinstance(value, (int, float)):
-                feature_row[str(key)] = float(value)
+                feature_row[f"cov_{key}"] = float(value)
         for column in frame.columns:
             feature_row.setdefault(column, 0.0)
         future_frame = pd.DataFrame([feature_row], columns=frame.columns)
