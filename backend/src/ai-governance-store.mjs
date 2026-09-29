@@ -132,7 +132,7 @@ export const persistTranscript=async({workspaceId,job,execution,route})=>{
   const {rows}=await pool.query(
     `INSERT INTO ace_ai_transcripts
       (id,workspace_id,job_id,asset_ref,provider,requested_model,resolved_model,language_metadata,speaker_metadata,timestamp_metadata,
-       transcript_text,redaction_status,review_status,evidence_refs,retention_until)
+       transcript_object_ref,transcript_text,redaction_status,review_status,evidence_refs,retention_until)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9::jsonb,$10::jsonb,$11,$12,'pending','unreviewed',$13::jsonb,
        CASE WHEN $14::int>0 THEN now()+($14::int*interval '1 day') ELSE NULL END)
      RETURNING *`,
