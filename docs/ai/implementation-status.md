@@ -4,6 +4,13 @@ Last updated: 2026-09-29
 
 This document records implementation state separately from provider access, training, evaluation, approval and deployment. A configured route or passing mock is not evidence of production qualification.
 
+## Repository baseline and branch state
+
+- Baseline merge-base recorded during implementation audit: `8a9fae93e9eb754b7a775ff7976e7b051c9a2976`.
+- Current working branch: `feature/multi-model-intelligence`.
+- The branch is intentionally not merged or force-pushed by this implementation workflow.
+- Test/build commands remain evidence only when they actually execute; unrun commands are not counted as passing.
+
 ## Implemented foundations
 
 - Central typed model assignment registry with hosted, pretrained, fitted, calibration and deterministic-baseline categories.
@@ -22,6 +29,10 @@ This document records implementation state separately from provider access, trai
 - Authenticated SSE job status streaming with bounded lifetime and terminal-state closure.
 - OpenAPI specification, operator lifecycle scripts, discriminated result contracts/tests, Kubernetes worker/ML/HPA/storage/network-policy assets.
 - Complete docs/ai runbook set covering architecture, verification, features/labels, APIs, evaluation, deployment, security and requirement coverage.
+- Tenant task policies with enable/disable state, exact approved requested-model identity, concurrency limits, monthly unit budgets and backend admission enforcement.
+- Durable object-store abstraction for transcripts/creative assets, transcript persistence, creative draft/review lifecycle, anomaly triage, versioned segment snapshots and persisted eligible ranking items.
+- Immutable high-risk activation proposals with evidence/model snapshots, proposal hash, expiry, creator/approver separation, stale-model rejection and explicit non-execution after approval.
+- Typed persisted forecast records, CausalForestDML incrementality records and Meridian health/diagnostic records with dedicated API/UI evidence surfaces.
 
 ## Hosted task endpoint
 
@@ -89,4 +100,4 @@ For Python service checks use the commands documented in `ml-service/pyproject.t
 
 ## Safety boundary
 
-No code path should treat missing ML output as permission to invent a numerical prediction with an LLM. Reviewer output is not action authorization. Generated creatives remain drafts until approved. Activation side effects continue to require the existing deterministic approval and consent boundary.
+No code path should treat missing ML output as permission to invent a numerical prediction with an LLM. Reviewer output is not action authorization. Generated creatives remain drafts until approved. Activation approval does not execute an advertising/provider action; provider-specific execution remains a separate boundary that must recheck current authorization, consent and limits.
