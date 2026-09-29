@@ -1,0 +1,81 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import {activationExecutionEnabled,validateActivationAdapterInput} from '../src/ai-activation-execution.mjs'
+import {hasPermission} from '../src/security.mjs'
+
+const withEnv=(key,value,fn)=>{
+  const previous=process.env[key]
+  if(value==null)delete process.env[key]
+  else process.env[key]=String(value)
+  try{return fn()}
+  finally{
+    if(previous==null)delete process.env[key]
+    else process.env[key]=previous
+  }
+}
+
+test('AI provider-side activation execution is disabled by default',()=>{
+  withEnv('AI_ACTIVATION_EXECUTION_ENABLED',null,()=>{
+    assert.equal(activationExecutionEnabled(),false)
+  })
+  withEnv('AI_ACTIVATION_EXECUTION_ENABLED','true',()=>{
+    assert.equal(activationExecutionEnabled(),true)
+  })
+})
+
+test('audience execution accepts only explicit existing consent-aware adapters',()=>{
+  assert.deepEqual(
+    validateActivationAdapterInput({
+      proposalType:'audience_sync',
+      payload:{providerAdapter:'meta_audience',audienceId:'aud_123'}
+    }),
+    {kind:'audience_sync',adapter:'meta_audience',audienceId:'aud_123'}
+  )
+  assert.throws(
+    ()=>validateActivationAdapterInput({
+      proposalType:'audience_sync',
+      payload:{providerAdapter:'unknown',audienceId:'aud_123'}
+    }),
+    /unsupported audience execution adapter/
+  )
+  assert.throws(
+    ()=>validateActivationAdapterInput({
+      proposalType:'audience_sync',
+      payload:{providerAdapter:'google_audience'}
+    }),
+    /audienceId/
+  )
+})
+
+test('CRM execution validates provider and lead reference before queueing',()=>{
+  assert.deepEqual(
+    validateActivationAdapterInput({
+      proposalType:'crm_writeback',
+      payload:{providerAdapter:'hubspot_crm',leadRef:'lead_123',fields:{recordId:'contact_1'}}
+    }),
+    {kind:'crm_writeback',adapter:'hubspot_crm',leadRef:'lead_123',fields:{recordId:'contact_1'}}
+  )
+  assert.throws(
+    ()=>validateActivationAdapterInput({
+      proposalType:'crm_writeback',
+      payload:{providerAdapter:'salesforce_crm'}
+    }),
+    /leadRef/
+  )
+})
+
+test('budget changes remain blocked without a verified provider-specific adapter',()=>{
+  assert.throws(
+    ()=>validateActivationAdapterInput({
+      proposalType:'budget_change',
+      payload:{providerAdapter:'google_ads',budget:1000}
+    }),
+    /budget_change execution is blocked/
+  )
+})
+
+test('execution permission is separated from propose and approve permissions',()=>{
+  assert.equal(hasPermission('admin','ai.activation.execute'),true)
+  assert.equal(hasPermission('operator','ai.activation.execute'),false)
+  assert.equal(hasPermission('analyst','ai.activation.execute'),false)
+})
