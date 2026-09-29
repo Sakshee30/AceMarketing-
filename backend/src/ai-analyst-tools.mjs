@@ -137,14 +137,30 @@ const anomalies=async(workspaceId,args)=>({
   limitation:'Anomaly scores are investigation signals, not fraud probabilities.'
 })
 
+export const projectExperimentEvidence=item=>({
+  id:item?.id||item?.experimentId||null,
+  name:item?.name||item?.title||null,
+  status:item?.status||null,
+  hypothesis:item?.hypothesis||null,
+  primaryMetric:item?.primaryMetric||item?.metric||null,
+  control:item?.control||item?.controlVariant||null,
+  treatment:item?.treatment||item?.treatmentVariant||null,
+  sampleSize:item?.sampleSize??item?.population??null,
+  effect:item?.effect??item?.lift??null,
+  interval:item?.interval??item?.confidenceInterval??null,
+  pValue:item?.pValue??null,
+  startedAt:item?.startedAt||item?.startAt||null,
+  endedAt:item?.endedAt||item?.endAt||null
+})
+
 const experimentResults=async(workspaceId,args)=>{
   const state=await workspaceState(workspaceId)
   const items=Array.isArray(state.experimentResults)?state.experimentResults:Array.isArray(state.experiments)?state.experiments:[]
   return {
     kind:'experiment',
     evidenceId:'experiments:'+workspaceId,
-    items:items.slice(0,args.limit),
-    limitation:items.length?'Returned exactly as persisted experiment records; assignment quality must be evaluated separately.':'No persisted experiment-result records are available.'
+    items:items.slice(0,args.limit).map(projectExperimentEvidence),
+    limitation:items.length?'Only approved aggregate experiment fields are exposed; assignment quality must be evaluated separately.':'No persisted experiment-result records are available.'
   }
 }
 
