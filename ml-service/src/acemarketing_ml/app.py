@@ -21,14 +21,13 @@ from .contracts import (
     RegressionTrainRequest,
     SegmentationRequest,
 )
-from .qualification import evaluate_forecast_candidates
 from .pipelines import (
     anomaly_detection,
     behavioral_segments,
     causal_forest_estimate,
-    forecast_challenger,
     chronos2_forecast,
     dependency_capabilities,
+    forecast_challenger,
     fit_meridian,
     seasonal_naive_forecast,
     score_artifact,
@@ -37,6 +36,7 @@ from .pipelines import (
     train_ranker,
     train_regression,
 )
+from .qualification import evaluate_forecast_candidates
 
 app = FastAPI(title="AceMarketing ML Service", version=__version__)
 
