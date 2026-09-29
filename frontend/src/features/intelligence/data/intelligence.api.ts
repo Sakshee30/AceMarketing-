@@ -2,6 +2,11 @@ import {api,streamAiJob} from '../../../lib/api'
 
 export const intelligenceApi={
   registry:(options?:{signal?:AbortSignal})=>api.aiRegistry(options),
+  policies:(options?:{signal?:AbortSignal})=>api.aiTaskPolicies(options),
+  savePolicy:(task:string,payload:Record<string,unknown>)=>api.saveAiTaskPolicy(task,payload),
+  transcripts:(options?:{signal?:AbortSignal})=>api.aiTranscripts(options),
+  creatives:(options?:{signal?:AbortSignal})=>api.aiCreativeAssets(options),
+  reviewCreative:(id:string,status:'in_review'|'approved'|'rejected',reason?:string)=>api.reviewAiCreativeAsset(id,{status,...(reason?{reason}:{})}),
   metrics:(options?:{signal?:AbortSignal})=>api.aiMetricCatalog(options),
   capabilities:(options?:{signal?:AbortSignal})=>api.aiMlCapabilities(options),
   score:(payload:Record<string,unknown>,operationId?:string)=>api.aiMlScore(payload,{operationId}),
