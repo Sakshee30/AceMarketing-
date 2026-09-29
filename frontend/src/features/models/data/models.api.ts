@@ -64,9 +64,78 @@ export type ModelValidation={
   warnings?:string[]
 }
 
+export type AiRegistryEntry={
+  task:string
+  kind:string
+  provider:string
+  requestedModel:string
+  resolvedModel?:string|null
+  readiness?:ModelReadiness|string
+  configurationStatus?:string
+  implementationStatus?:string
+  trainingStatus?:string
+  evaluationStatus?:string
+  approvalStatus?:string
+  deploymentStatus?:string
+  documentationVerified?:boolean
+  accessVerified?:boolean
+  artifactRevision?:string|null
+  artifactHash?:string|null
+  rollbackPredecessor?:string|null
+  evaluationReference?:string|null
+  promotedBy?:string|null
+  promotedAt?:string|null
+  warnings?:string[]
+}
+
+export type AiRegistryResponse={
+  schemaVersion?:string
+  generatedAt?:string
+  liveProviderCallsEnabled?:boolean
+  counts?:Record<string,number>
+  items?:AiRegistryEntry[]
+  tenantItems?:AiRegistryEntry[]
+  persistence?:string
+}
+
+export type AiEvaluation={
+  id:string
+  task:string
+  model_ref?:string
+  dataset_ref?:string|null
+  metrics?:Record<string,unknown>
+  thresholds?:Record<string,unknown>
+  sample_size?:number|null
+  qualified?:boolean|null
+  status:string
+  warnings?:string[]
+  policy_version?:string|null
+  qualification_details?:Record<string,unknown>
+  created_at?:string
+  completed_at?:string|null
+}
+
+export type AiEvaluationPolicy={
+  workspace_id?:string
+  task:string
+  version:string
+  thresholds:Record<string,unknown>
+  notes?:string|null
+  active?:boolean
+  created_by?:string|null
+  created_at?:string
+}
+
 export const modelsApi={
   list:(options?:{signal?:AbortSignal})=>sharedApi.models(options) as Promise<ModelsResponse>,
   create:(payload:Record<string,unknown>)=>sharedApi.createModel(payload) as Promise<{item:ModelCatalogItem}>,
   validation:(name:string,options?:{signal?:AbortSignal})=>sharedApi.modelValidation(name,options) as Promise<ModelValidation>,
-  run:(name:string)=>sharedApi.runModel(name) as Promise<ModelRun>
+  run:(name:string)=>sharedApi.runModel(name) as Promise<ModelRun>,
+  governance:(options?:{signal?:AbortSignal})=>sharedApi.aiRegistry(options) as Promise<AiRegistryResponse>,
+  evaluations:(task?:string,options?:{signal?:AbortSignal})=>sharedApi.aiEvaluations(task,options) as Promise<{items:AiEvaluation[];task?:string|null;generatedAt?:string}>,
+  policy:(task:string,options?:{signal?:AbortSignal})=>sharedApi.aiEvaluationPolicy(task,options) as Promise<{item:AiEvaluationPolicy|null;task:string}>,
+  savePolicy:(payload:{task:string;version:string;thresholds:Record<string,unknown>;notes?:string})=>sharedApi.saveAiEvaluationPolicy(payload) as Promise<{item:AiEvaluationPolicy}>,
+  qualify:(evaluationId:string)=>sharedApi.qualifyAiEvaluation(evaluationId) as Promise<{item:AiEvaluation}>,
+  promote:(task:string,evaluationId:string)=>sharedApi.promoteAiModel(task,evaluationId) as Promise<{item:Record<string,unknown>}>,
+  rollback:(task:string)=>sharedApi.rollbackAiModel(task) as Promise<{item:Record<string,unknown>}>
 }
