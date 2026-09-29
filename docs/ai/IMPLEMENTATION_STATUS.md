@@ -9,7 +9,7 @@ Status is intentionally split into implementation, provider-access verification,
 | OpenAI analyst adapter | yes | no | n/a | no | no | no |
 | Anthropic reviewer adapter | yes | no | n/a | no | no | no |
 | Google multimodal/image adapters | yes | no | n/a | no | no | no |
-| Google transcription/live voice | transport gate only | no | n/a | no | no | no |
+| Google transcription/live voice | transcription adapter + governed live session/WebSocket relay | no | n/a | no | no | no |
 | Voyage embeddings/rerank | yes | no | n/a | no | no | no |
 | CatBoost classification | yes | n/a | no tenant artifact | code-level only | no | no |
 | CatBoost future value | yes | n/a | no tenant artifact | code-level only | no | no |
@@ -24,4 +24,4 @@ Status is intentionally split into implementation, provider-access verification,
 
 ## Current blocking prerequisites
 
-Live providers require account credentials, explicit live-call enablement and task qualification. Reviewer activation requires live account access plus task evaluation/approval; the exact requested Anthropic identifier is now documented. Chronos, Meridian and EconML need their optional service profiles plus task-specific data/evaluation. None of these missing prerequisites are reported as successful completion.
+Live providers require account credentials, explicit live-call enablement and task qualification. Reviewer activation requires live account access plus task evaluation/approval; the exact requested Anthropic identifier is now documented. Chronos, Meridian and EconML code paths are implemented behind isolated service profiles; production qualification still needs the provisioned Chronos checkpoint and task-specific tenant data/evaluation. None of these missing prerequisites are reported as successful completion.
