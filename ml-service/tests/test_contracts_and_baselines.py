@@ -181,3 +181,32 @@ def test_forecast_challenger_rejects_incomplete_future_covariates(monkeypatch, t
     )
     with pytest.raises(ValueError, match="missing_future_covariates"):
         forecast_challenger(request)
+
+
+def test_classification_rejects_single_class_partitions(monkeypatch, tmp_path):
+    pytest.importorskip("catboost")
+    from acemarketing_ml.contracts import ClassificationTrainRequest
+    from acemarketing_ml.pipelines import train_classification
+
+    monkeypatch.setenv("ML_ARTIFACT_DIR", str(tmp_path))
+    monkeypatch.setenv("ML_ENV", "development")
+    cutoff = datetime(2026, 6, 1, tzinfo=UTC)
+    rows = [
+        PointInTimeRow(
+            entity_id=f"lead-{index}",
+            features={"score": index},
+            label=1,
+            feature_available_at=cutoff - timedelta(days=90-index),
+            prediction_cutoff=cutoff - timedelta(days=80-index),
+            label_observed_at=cutoff - timedelta(days=1),
+        )
+        for index in range(60)
+    ]
+    request = ClassificationTrainRequest(
+        task="lead_qualification",
+        rows=rows,
+        categorical_features=[],
+        label_cutoff=cutoff,
+    )
+    with pytest.raises(ValueError, match="insufficient_classes"):
+        train_classification(request)
