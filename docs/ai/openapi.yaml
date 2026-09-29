@@ -94,6 +94,18 @@ paths:
       responses:
         '200': {description: Job}
         '404': {description: Not found}
+  /ai/jobs/{id}/events:
+    get:
+      summary: Stream tenant-scoped durable AI job status as server-sent events
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        '200':
+          description: text/event-stream status events until terminal state or bounded stream timeout
+          content:
+            text/event-stream: {}
+        '404': {description: Job not found}
   /ai/jobs/{id}/cancel:
     post:
       summary: Request cancellation
