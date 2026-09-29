@@ -16,3 +16,12 @@
 | Anomaly/segments/ranking | ML service pipelines | API + result history | Python pipeline tests | tenant evaluation evidence |
 | Metrics | metric-catalog.mjs | Analyst contract panel | metric-catalog tests | source freshness |
 | Deployment | Compose specialist profiles | Models status | configuration | production infrastructure |
+
+| Job event stream | index.mjs SSE route | AI Intelligence live status | CI canonical check | production proxy timeout tuning |
+| Prediction scoring | ML score endpoint + artifact verification | AI Intelligence / Predictions | result contract tests | trained approved artifact |
+| Specialist UI | ML task routes | AI Intelligence / Specialists | service contract tests | task-specific tenant evidence |
+| Multimodal/transcription | hosted task adapters | AI Intelligence / Media | hosted input validation | provider access + authorized media |
+| Creative draft | creative_image hosted task | AI Intelligence / Creatives | hosted input validation | provider access + asset review persistence |
+| OpenAPI | docs/ai/openapi.yaml | n/a | CI canonical check | publish/version in deployment |
+| Operator lifecycle scripts | scripts/ai/* | n/a | check:ai-tools | operator token/workspace |
+| Kubernetes | deploy/k8s/* | n/a | CI canonical check | cluster secrets/storage classes/network egress |
