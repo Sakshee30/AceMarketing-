@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.tmp-tools/
+backend/data/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+
