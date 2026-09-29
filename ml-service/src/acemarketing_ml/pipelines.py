@@ -474,13 +474,30 @@ def chronos2_forecast(request) -> dict[str, Any]:
     if any(point.value is None for point in history):
         raise ValueError("history contains unknown observations; unknown values must not be treated as zero")
 
-    local_snapshot = snapshot_download(repo_id="amazon/chronos-2", revision=revision)
-    root = Path(local_snapshot)
+    configured_snapshot = os.getenv("CHRONOS2_SNAPSHOT_DIR", "").strip()
+    allow_download = os.getenv("CHRONOS2_ALLOW_DOWNLOAD", "false").lower() == "true"
+    environment = os.getenv("ML_ENV", "development").lower()
+    if configured_snapshot:
+        root = Path(configured_snapshot).expanduser().resolve()
+        if not root.exists() or not root.is_dir():
+            raise ValueError("CHRONOS2_SNAPSHOT_DIR does not point to a provisioned checkpoint directory")
+    else:
+        if environment == "production" or not allow_download:
+            raise ValueError(
+                "Chronos-2 checkpoint is not provisioned. Set CHRONOS2_SNAPSHOT_DIR to a pinned snapshot; "
+                "interactive model downloads are disabled."
+            )
+        local_snapshot = snapshot_download(repo_id="amazon/chronos-2", revision=revision)
+        root = Path(local_snapshot)
+
     digest = hashlib.sha256()
     for path in sorted(p for p in root.rglob("*") if p.is_file()):
         digest.update(str(path.relative_to(root)).encode("utf-8"))
         digest.update(path.read_bytes())
     snapshot_hash = digest.hexdigest()
+    expected_hash = os.getenv("CHRONOS2_EXPECTED_SHA256", "").strip().lower()
+    if expected_hash and snapshot_hash.lower() != expected_hash:
+        raise ValueError("Chronos-2 provisioned checkpoint hash does not match CHRONOS2_EXPECTED_SHA256")
 
     context_df = pd.DataFrame(
         {
