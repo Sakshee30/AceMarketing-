@@ -36,6 +36,7 @@ import { validateHostedTaskInput } from './ai-input-validation.mjs'
 import { evaluateAiTaskAdmission, getAiTaskPolicy, listAiTaskPolicies, listCreativeAssets, listTranscripts, reviewCreativeAsset, saveAiTaskPolicy } from './ai-governance-store.mjs'
 import { getSegmentMemberships, listAnomalyItems, listCausalRecords, listForecastRecords, listMarketingMixRecords, listRankingItems, listSegmentSnapshots, reviewAnomalyItem } from './ai-domain-results.mjs'
 import { approveAiActivationProposal, attachActivationProposalReviewerJob, createAiActivationProposal, listAiActivationProposals, markActivationProposalReviewerBlocked, rejectAiActivationProposal } from './ai-activation-proposals.mjs'
+import {queueAiActivationExecution} from './ai-activation-execution.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -459,6 +460,7 @@ const permissionForRequest=(method,path)=>{
   if(path.startsWith('/api/ai/task-policies')) return method==='GET'?'workspace.read':'ai.providers.manage'
   if(path.startsWith('/api/ai/activation-proposals')){
     if(method==='GET')return 'workspace.read'
+    if(path.endsWith('/execute'))return 'ai.activation.execute'
     if(path.endsWith('/approve')||path.endsWith('/reject'))return 'ai.activation.approve'
     return 'ai.activation.propose'
   }
@@ -4776,6 +4778,22 @@ const server = http.createServer(async (req,res)=>{
         return item?send(req,res,200,{item}):send(req,res,404,{error:'activation proposal not found or no longer pending'})
       }catch(error){
         return send(req,res,409,{error:error instanceof Error?error.message:'activation proposal rejection failed'})
+      }
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/activation-proposals\/[^/]+\/execute$/.test(url.pathname)) {
+      const id=decodeURIComponent(url.pathname.split('/')[4]||'')
+      try{
+        const execution=await queueAiActivationExecution({workspaceId,id,actor:authenticatedUser})
+        return send(req,res,202,{
+          item:execution.proposal,
+          jobId:execution.job?.id||null,
+          status:execution.job?.status||'queued',
+          note:'Approved activation execution was queued for a worker. The worker rechecks proposal freshness and the execution safety gate before any provider side effect.'
+        })
+      }catch(error){
+        const message=error instanceof Error?error.message:'activation proposal execution could not be queued'
+        const blocked=/disabled|unsupported|blocked/i.test(message)
+        return send(req,res,blocked?409:422,{error:message})
       }
     }
     if (req.method === 'GET' && url.pathname === '/api/ai/transcripts') {
