@@ -200,6 +200,23 @@ export const recordMlExecution=async({workspaceId,job,result})=>{
   }
 }
 
+export const recordProviderAccessVerification=async({workspaceId,task,resolvedModel=null,verified=false})=>{
+  if(!pool)throw new Error('DATABASE_URL is required to persist provider access verification')
+  await syncTenantRegistry(workspaceId)
+  const {rows}=await pool.query(
+    `UPDATE ace_ai_model_registry
+     SET access_verified=$3,
+         resolved_model=CASE WHEN $3 THEN COALESCE($4,resolved_model,requested_model) ELSE resolved_model END,
+         configuration_status=CASE WHEN $3 THEN 'configured' ELSE configuration_status END,
+         updated_at=now()
+     WHERE workspace_id=$1 AND task=$2
+     RETURNING *`,
+    [workspaceId,task,Boolean(verified),resolvedModel]
+  )
+  if(!rows[0])throw new Error('model registry entry not found')
+  return rows[0]
+}
+
 export const listEvaluations=async({workspaceId,task=null,limit=100})=>{
   if(!pool)return []
   const params=[workspaceId]
