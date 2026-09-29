@@ -313,6 +313,13 @@ paths:
       summary: Submit CatBoost forecast challenger
       parameters: [{$ref: '#/components/parameters/Workspace'}]
       responses: {'202': {description: Accepted}}
+  /ai/ml/forecast/qualify:
+    post:
+      summary: Compare forecast candidates against the declared baseline using predeclared qualification gates
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses:
+        '202': {description: Qualification job accepted}
+        '422': {description: Invalid candidate evidence or qualification policy}
   /ai/ml/incrementality:
     post:
       summary: Submit CausalForestDML analysis
