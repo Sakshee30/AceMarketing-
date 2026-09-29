@@ -843,6 +843,30 @@ def forecast_challenger(request) -> dict[str, Any]:
         and key not in known_future_keys
     }
 
+    if request.known_future_covariates:
+        if len(timestamps) < 2:
+            raise ValueError("insufficient_data: at least two timestamps are required")
+        step = timestamps[-1] - timestamps[-2]
+        if step.total_seconds() <= 0:
+            raise ValueError("history timestamps must be strictly increasing")
+        supplied = {}
+        for item in request.known_future_covariates:
+            timestamp = str(item.get("timestamp") or "")
+            if not timestamp:
+                raise ValueError("missing_future_covariates: each future covariate row requires timestamp")
+            if timestamp in supplied:
+                raise ValueError("missing_future_covariates: duplicate future covariate timestamp")
+            supplied[timestamp] = item
+        expected = [(timestamps[-1] + step * index).isoformat() for index in range(1, request.horizon + 1)]
+        missing = [timestamp for timestamp in expected if timestamp not in supplied]
+        if missing:
+            raise ValueError("missing_future_covariates: every forecast step must be supplied once future covariates are declared")
+        for timestamp in expected:
+            item = supplied[timestamp]
+            absent = [key for key in known_future_keys if not isinstance(item.get(key), (int, float))]
+            if absent:
+                raise ValueError("missing_future_covariates: declared numeric future covariates must be available for every forecast step")
+
     rows = []
     targets = []
     for index in range(max(request.lags), len(values)):
