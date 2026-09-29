@@ -47,7 +47,7 @@ export default function IntelligencePage(){
  const [creativePrompt,setCreativePrompt]=useState('')
  const [predictionPayload,setPredictionPayload]=useState('{"task":"lead_qualification","artifactId":"","rows":[]}')
  const [mediaDraft,setMediaDraft]=useState({task:'multimodal_extraction',payload:'{"prompt":"Extract structured evidence.","inlineData":{"mimeType":"image/png","data":""}}'})
- const [activationDraft,setActivationDraft]=useState({task:'forecast_primary',proposalType:'budget_change',providerAdapter:'google_ads',payload:'{"budget":1000}',evidenceRefs:'["result_or_report_id"]',expiresMinutes:30})
+ const [activationDraft,setActivationDraft]=useState({task:'forecast_primary',proposalType:'budget_change',providerAdapter:'google_ads_budget',payload:'{"campaignBudgetResourceName":"customers/1234567890/campaignBudgets/1234567890","expectedCurrentAmountMicros":100000000,"newAmountMicros":110000000,"sharedBudgetAcknowledged":false}',evidenceRefs:'["result_or_report_id"]',expiresMinutes:30})
 
  const load=async()=>{
   setLoading(true);setError('')
