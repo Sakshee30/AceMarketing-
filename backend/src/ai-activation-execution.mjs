@@ -187,7 +187,7 @@ export const executeAiActivationJob=async job=>{
   await updateExecution({workspaceId,id:proposalId,status:'running',jobId:job.id})
   try{
     const result=await executeAdapter(workspaceId,proposal)
-    const providerRequestId=String(result?.job||result?.externalId||'').slice(0,500)||null
+    const providerRequestId=String(result?.providerRequestId||result?.job||result?.externalId||'').slice(0,500)||null
     const receipt={
       schemaVersion:'ai-activation-execution-result.v1',
       provider:result?.provider||null,
