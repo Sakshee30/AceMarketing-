@@ -50,3 +50,38 @@ test('embedded local retrieval filters restricted chunks and propagates revocati
   const afterRevoke=await searchKnowledge({workspaceId,query:'revenue expansion',role:'viewer',limit:10})
   assert.equal(afterRevoke.some(item=>item.source_id===publicSource.source.id),false)
 })
+
+
+test('knowledge policy rejects malformed allowlists instead of widening access',()=>{
+  assert.throws(
+    ()=>normalizeKnowledgePolicy({allowedRoles:'admin'}),
+    /allowedRoles must be an array/
+  )
+})
+
+test('restricted chunks cannot crowd authorized matches out of embedded retrieval',async()=>{
+  const workspaceId='ws_knowledge_cap_'+Date.now()
+  for(let index=0;index<25;index++){
+    await ingestKnowledgeText({
+      workspaceId,
+      name:'Restricted '+index,
+      text:'sharedneedle restricted material '+index,
+      sourceLocation:'test://restricted/'+index,
+      documentVersion:'v1',
+      accessPolicy:{allowedRoles:['admin']},
+      actor:{userId:'test-admin'}
+    })
+  }
+  const allowed=await ingestKnowledgeText({
+    workspaceId,
+    name:'Allowed late result',
+    text:'sharedneedle viewer-visible material',
+    sourceLocation:'test://allowed',
+    documentVersion:'v1',
+    accessPolicy:{allowedRoles:['viewer']},
+    actor:{userId:'test-admin'}
+  })
+  const viewer=await searchKnowledge({workspaceId,query:'sharedneedle',role:'viewer',limit:1})
+  assert.equal(viewer.length,1)
+  assert.equal(viewer[0].source_id,allowed.source.id)
+})
