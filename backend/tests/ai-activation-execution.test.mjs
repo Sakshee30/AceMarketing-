@@ -64,13 +64,40 @@ test('CRM execution validates provider and lead reference before queueing',()=>{
   )
 })
 
-test('budget changes remain blocked without a verified provider-specific adapter',()=>{
+test('Google Ads budget execution requires immutable current/new micros and a scoped resource',()=>{
+  assert.deepEqual(
+    validateActivationAdapterInput({
+      proposalType:'budget_change',
+      payload:{
+        providerAdapter:'google_ads_budget',
+        campaignBudgetResourceName:'customers/123/campaignBudgets/456',
+        expectedCurrentAmountMicros:100000000,
+        newAmountMicros:110000000,
+        sharedBudgetAcknowledged:false
+      }
+    }),
+    {
+      kind:'budget_change',
+      adapter:'google_ads_budget',
+      campaignBudgetResourceName:'customers/123/campaignBudgets/456',
+      expectedCurrentAmountMicros:100000000,
+      newAmountMicros:110000000,
+      sharedBudgetAcknowledged:false
+    }
+  )
   assert.throws(
     ()=>validateActivationAdapterInput({
       proposalType:'budget_change',
-      payload:{providerAdapter:'google_ads',budget:1000}
+      payload:{providerAdapter:'google_ads_budget',campaignBudgetResourceName:'customers/123/campaignBudgets/456',newAmountMicros:110000000}
     }),
-    /budget_change execution is blocked/
+    /expectedCurrentAmountMicros/
+  )
+  assert.throws(
+    ()=>validateActivationAdapterInput({
+      proposalType:'budget_change',
+      payload:{providerAdapter:'unknown_budget',campaignBudgetResourceName:'customers/123/campaignBudgets/456',expectedCurrentAmountMicros:100000000,newAmountMicros:110000000}
+    }),
+    /unsupported budget execution adapter/
   )
 })
 
