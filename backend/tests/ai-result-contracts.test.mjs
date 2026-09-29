@@ -17,3 +17,13 @@ test('causal result cannot omit support state',()=>{
 test('generated approved assets require an explicit reviewer',()=>{
   assert.throws(()=>validateAiResultEnvelope({...base,task:'creative_image',resultType:'generated_asset',reviewStatus:'approved'}),/reviewer/)
 })
+
+
+test('marketing mix results remain distinct from causal estimates',()=>{
+  assert.doesNotThrow(()=>validateAiResultEnvelope({...base,task:'marketing_mix',resultType:'marketing_mix_analysis',healthStatus:'PASS',supported:true}))
+  assert.throws(()=>validateAiResultEnvelope({...base,task:'marketing_mix',resultType:'marketing_mix_analysis',healthStatus:'PASS'}),/supported/)
+})
+test('model evaluation requires metrics instead of generic confidence',()=>{
+  assert.doesNotThrow(()=>validateAiResultEnvelope({...base,resultType:'model_evaluation',metrics:{prAuc:0.7}}))
+  assert.throws(()=>validateAiResultEnvelope({...base,resultType:'model_evaluation'}),/metrics/)
+})
