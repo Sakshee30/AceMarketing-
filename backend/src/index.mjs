@@ -4964,6 +4964,48 @@ const server = http.createServer(async (req,res)=>{
       const job=await getJob({workspaceId,id})
       return job?send(req,res,200,{job}):send(req,res,404,{error:'AI job not found'})
     }
+    if (req.method === 'GET' && /^\/api\/ai\/jobs\/[^/]+\/events$/.test(url.pathname)) {
+      const parts=url.pathname.split('/')
+      const id=decodeURIComponent(parts[4]||'')
+      const initial=await getJob({workspaceId,id})
+      if(!initial)return send(req,res,404,{error:'AI job not found'})
+      res.writeHead(200,{
+        'Content-Type':'text/event-stream; charset=utf-8',
+        'Cache-Control':'no-cache, no-transform',
+        'Connection':'keep-alive',
+        'X-Accel-Buffering':'no'
+      })
+      let closed=false
+      let lastSignature=''
+      const terminal=new Set(['succeeded','completed','failed','cancelled','dead_letter','unknown'])
+      const writeEvent=(event,data)=>{
+        if(closed)return
+        res.write('event: '+event+'\n')
+        res.write('data: '+JSON.stringify(data)+'\n\n')
+      }
+      const emit=async()=>{
+        if(closed)return
+        const job=await getJob({workspaceId,id}).catch(()=>null)
+        if(!job){writeEvent('error',{error:'AI job disappeared from tenant scope'});closed=true;return res.end()}
+        const signature=JSON.stringify([job.status,job.updated_at,job.completed_at,job.last_error,job.cancel_requested_at])
+        if(signature!==lastSignature){
+          lastSignature=signature
+          writeEvent('status',{jobId:job.id,status:job.status,attempts:job.attempts,updatedAt:job.updated_at,completedAt:job.completed_at||null,lastError:job.last_error||null,cancelRequestedAt:job.cancel_requested_at||null})
+        }
+        if(terminal.has(String(job.status||'').toLowerCase())){writeEvent('complete',{jobId:job.id,status:job.status});closed=true;return res.end()}
+      }
+      req.on('close',()=>{closed=true})
+      writeEvent('ready',{jobId:id,status:initial.status})
+      await emit()
+      if(closed)return
+      const interval=setInterval(()=>void emit(),1000)
+      interval.unref?.()
+      const timeout=setTimeout(()=>{if(!closed){writeEvent('timeout',{jobId:id});closed=true;res.end()}},Number(process.env.AI_JOB_EVENT_STREAM_MAX_MS||120000))
+      timeout.unref?.()
+      res.on('close',()=>{closed=true;clearInterval(interval);clearTimeout(timeout)})
+      return
+    }
+
     if (req.method === 'POST' && /^\/api\/ai\/jobs\/[^/]+\/cancel$/.test(url.pathname)) {
       const parts=url.pathname.split('/')
       const id=decodeURIComponent(parts[4]||'')
