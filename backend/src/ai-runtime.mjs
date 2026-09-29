@@ -58,7 +58,18 @@ export const submitHostedAiJob=async({
     maxAttempts:Number(process.env.AI_JOB_MAX_ATTEMPTS||2),
     deadlineAt:deadline,
     inputSnapshot:snapshot,
-    resultSchemaVersion:'ai-result.v1'
+    resultSchemaVersion:'ai-result.v1',
+    aiUsageReservation:{
+      task,
+      provider:route.provider,
+      requestedModel:route.requestedModel,
+      reservedUnits:1
+    },
+    outboxEvent:{
+      eventType:'ai.job.accepted',
+      schemaVersion:'ai-job-event.v1',
+      payload:{task,provider:route.provider,requestedModel:route.requestedModel}
+    }
   })
   return {accepted:true,status:202,job,route}
 }
