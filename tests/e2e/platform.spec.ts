@@ -3,8 +3,18 @@ import {expect,test} from '@playwright/test'
 test.beforeEach(async({page,context},testInfo)=>{
   const raw=['ci',testInfo.project.name,testInfo.workerIndex,testInfo.parallelIndex,testInfo.retry,testInfo.title].join('_').toLowerCase().replace(/[^a-z0-9_-]+/g,'_')
   const workspaceId=raw.slice(0,60).replace(/_+$/,'')||'ci_workspace'
+  const login=await page.request.post('/api/auth/login',{
+    headers:{'Content-Type':'application/json','X-Workspace-ID':workspaceId},
+    data:{email:'owner@example.com',password:'browser-platform-password'}
+  })
+  expect(login.ok()).toBeTruthy()
+  const session=await login.json()
+  expect(typeof session?.token).toBe('string')
   await context.setExtraHTTPHeaders({'X-Workspace-ID':workspaceId})
-  await page.addInitScript((id)=>window.localStorage.setItem('ace_workspace_id',id),workspaceId)
+  await page.addInitScript(({id,token}:{id:string;token:string})=>{
+    window.localStorage.setItem('ace_workspace_id',id)
+    window.sessionStorage.setItem('ace_session_token',token)
+  },{id:workspaceId,token:session.token})
 })
 
 const dismissConsent=async(page:any)=>{
