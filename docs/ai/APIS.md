@@ -1,48 +1,57 @@
 # AI APIs
 
-All routes use existing AceMarketing authentication/workspace scoping. Long-running provider and specialist-model work is queued and returns stable job IDs.
+All routes use existing authentication/workspace scope and structured error behavior.
 
-## Registry, governance and results
-- `GET /api/ai/registry` — static capability registry plus tenant-persisted lifecycle state when PostgreSQL is available.
-- `GET /api/ai/results?task=<task>&limit=<n>`
-- `GET /api/ai/jobs/:id`
-- `POST /api/ai/jobs/:id/cancel`
-- `GET /api/ai/evaluations?task=<task>&limit=<n>`
-- `GET /api/ai/evaluation-policy?task=<task>`
-- `POST /api/ai/evaluation-policy` — owner/admin; predeclares task-specific qualification thresholds.
-- `POST /api/ai/evaluations/:id/qualify` — owner/admin; evaluates recorded metrics against the active predeclared policy.
-- `POST /api/ai/models/:task/promote` — owner/admin; requires a qualified evaluation ID.
-- `POST /api/ai/models/:task/rollback` — owner/admin; requires a recorded rollback predecessor.
+## Registry and governance
+- GET `/api/ai/registry`
+- POST `/api/ai/providers/:task/verify`
+- GET/POST `/api/ai/evaluation-policy`
+- GET `/api/ai/evaluations`
+- POST `/api/ai/evaluations/:id/qualify`
+- POST `/api/ai/models/:task/promote`
+- POST `/api/ai/models/:task/deploy`
+- POST `/api/ai/models/:task/undeploy`
+- POST `/api/ai/models/:task/rollback`
 
-Policy definition, qualification, approval and deployment remain separate lifecycle states. A saved settings object never implies model qualification.
+## Hosted execution
+- POST `/api/ai/analysis`
+- POST `/api/ai/tasks/:task/submit`
+- GET `/api/ai/jobs/:id`
+- POST `/api/ai/jobs/:id/cancel`
+- GET `/api/ai/results`
 
-## Hosted analysis
-- `GET /api/ai/analyst/tools` — list the fixed read-only analyst tool allowlist.
-- `POST /api/ai/analyst/tools/:name` — execute one tenant-scoped validated read-only tool; arbitrary SQL/network/shell access is not exposed.
-- `POST /api/ai/analysis` -> `202` plus stable job ID when the analyst route is active. The request may select a bounded tool set; server-side tool results are captured into the immutable evidence snapshot.
-- If documentation, credentials, evaluation, approval or deployment prerequisites are missing, the request is blocked with explicit readiness/prerequisites.
+Long work returns HTTP 202 plus durable job ID.
+
+## Data/training
+- GET/POST `/api/ai/datasets`
+- GET `/api/ai/datasets/:id`
+- POST `/api/ai/datasets/:id/train`
+- POST `/api/ai/datasets/:id/retire`
+
+## Specialist ML
+- GET `/api/ai/ml/capabilities`
+- POST `/api/ai/ml/train/classification`
+- POST `/api/ai/ml/train/regression`
+- POST `/api/ai/ml/score`
+- POST `/api/ai/ml/forecast/seasonal-naive`
+- POST `/api/ai/ml/forecast/chronos-2`
+- POST `/api/ai/ml/forecast/catboost-challenger`
+- POST `/api/ai/ml/incrementality`
+- POST `/api/ai/ml/marketing-mix`
+- POST `/api/ai/ml/anomalies`
+- POST `/api/ai/ml/segments`
+- POST `/api/ai/ml/rank`
+- POST `/api/ai/ml/rank/score`
 
 ## Knowledge
-- `GET /api/ai/knowledge`
-- `POST /api/ai/knowledge`
-- `POST /api/ai/knowledge/:id/revoke`
-- `POST /api/ai/knowledge/search` -> queued search job.
+- GET/POST `/api/ai/knowledge`
+- POST `/api/ai/knowledge/search`
+- POST `/api/ai/knowledge/:id/revoke`
 
-Knowledge retrieval uses workspace/role filtering before rendering. Voyage embedding/reranking is used only when those exact routes are active; otherwise PostgreSQL full-text retrieval is explicitly labelled.
+## Voice
+- POST `/api/ai/live-voice/sessions`
+- GET `/api/ai/live-voice/sessions/:id`
+- POST `/api/ai/live-voice/sessions/:id/terminate`
+- WebSocket `/api/ai/live-voice/ws?session=:id`
 
-## Specialist ML jobs
-- `GET /api/ai/ml/capabilities`
-- `POST /api/ai/ml/train/classification`
-- `POST /api/ai/ml/train/regression`
-- `POST /api/ai/ml/forecast/seasonal-naive`
-- `POST /api/ai/ml/forecast/chronos-2`
-- `POST /api/ai/ml/incrementality`
-- `POST /api/ai/ml/marketing-mix`
-- `POST /api/ai/ml/anomalies`
-- `POST /api/ai/ml/segments`
-- `POST /api/ai/ml/rank`
-
-The worker calls the authenticated internal Python service with `X-Internal-Token`. The browser never calls the ML service directly. ML execution records versioned results and evaluation evidence, but evidence is not automatically promoted.
-
-## Provider-specific media
-The requested Google transcription and live-voice identifiers are documented, but media upload and WebSocket session transport are separate capabilities from generic `generateContent`. They remain blocked until the provider-specific transport, storage/retention, and account-access prerequisites are satisfied.
+Browser callers must never receive provider secrets.

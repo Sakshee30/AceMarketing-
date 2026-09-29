@@ -1,16 +1,22 @@
-# AI security boundaries
+# AI security
 
-Tenant scope is derived from authenticated workspace context. Dedicated permissions cover analysis and training; owner remains the only wildcard role.
+## Tenant and authorization boundary
+All reads, datasets, jobs, artifacts, results, retrieval and model selection are tenant scoped. Backend permissions are rechecked at execution/side-effect boundaries.
 
-Provider credentials stay server-side. Internal ML calls require `X-Internal-Token`. Provider and ML URLs are configuration-owned, not user supplied. Activation egress additionally requires HTTPS and an explicit provider-host allowlist before a credentialed request is sent.
+## Secrets and network
+Provider credentials remain server-side and are injected from environment/secret management. Provider URLs are fixed/allowlisted by adapters; browser callers cannot supply arbitrary provider endpoints.
 
-Input snapshots and results are tenant scoped. Prompts, transcripts, embeddings, features and artifacts are treated as sensitive.
+## Prompt/retrieval safety
+Uploaded/retrieved text is data, never instruction authority. Analyst tools are typed and read-only; no unrestricted SQL/Mongo, shell or arbitrary network access is exposed.
 
-Production fitted artifacts require encrypted object storage. Generated artifacts are SHA-256 recorded and hash-verified before loading. S3-compatible storage uses server-side encryption and can use a configured endpoint/region.
+## Model/artifact safety
+Only approved registry artifacts with expected provenance/hash may be loaded. Unsafe serialized/executable uploads are not accepted. Cross-tenant training is disabled unless explicitly governed.
 
-Cross-tenant training is not implemented. External activation is separated into proposal, reviewer evidence, human approval and worker execution. Reviewer output is never authorization.
+## Activation
+AI reviewer output is not authorization. High-risk activation requires deterministic policy, immutable proposal/evidence snapshot, authorized approver, expiry, current consent/limits and provider-specific idempotent execution.
 
-Provider-side activation execution is disabled by default with `AI_ACTIVATION_EXECUTION_ENABLED=false`. Enabling it does not bypass authorization: the execute endpoint requires the dedicated `ai.activation.execute` permission, queues a durable worker job, and the worker rechecks proposal hash, expiry, evaluation/model snapshot and deployment state immediately before dispatch. Audience execution reuses the existing consent-aware Meta/Google audience adapters; CRM execution reuses the existing workspace-scoped HubSpot/Zoho/Salesforce writeback adapters. Google Ads budget execution is allowlisted only for an exact campaign-budget resource, re-reads the provider's current amount before mutation, rejects stale snapshots, enforces bounded percentage/absolute limits, and requires explicit acknowledgement when a budget is shared across campaigns. Provider timeouts/network ambiguity are treated as unknown outcomes that require reconciliation instead of blind retry.
+## Privacy
+Prompts, embeddings, transcripts, features and artifacts are sensitive. Revocation/deletion propagates to eligible derived retrieval state; historical model retraining obligations are tracked rather than claiming instantaneous unlearning.
 
-
-Credential-bearing hosted-model verification/execution and activation-provider requests use manual redirect handling; HTTP redirects are rejected rather than forwarding secrets to a new destination. Activation dispatch additionally uses a database-backed fence token and bounded lease. Model qualification, promotion, deployment, undeployment, rollback and registry synchronization do not change the task route while an activation dispatch lease is active. Terminal execution updates are fence-guarded so a stale worker cannot overwrite a newer owner.
+## High-risk activation proposals
+AI-originated recommendations that could affect spend, campaigns or audiences are stored as immutable proposal snapshots with evidence references, model/evaluation identity, deterministic policy result, hash and expiry. The proposal creator cannot approve the same proposal. Approval fails if the model/evaluation/artifact changed or the snapshot hash no longer matches. Approval does not itself call an advertising provider; provider-specific execution remains a separate adapter boundary that must recheck consent, limits and current authorization.
