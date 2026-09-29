@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "ai-result-contract.v1",
+  "discriminator": "resultType",
+  "commonRequired": [
+    "runId",
+    "workspaceId",
+    "task",
+    "status",
+    "resultType"
+  ],
+  "resultTypes": {
+    "observed_metric": [
+      "metric",
+      "value"
+    ],
+    "calibrated_probability": [
+      "probability",
+      "horizon",
+      "calibrationReference"
+    ],
+    "regression_estimate": [
+      "estimate",
+      "horizon"
+    ],
+    "forecast_distribution": [
+      "horizon"
+    ],
+    "causal_estimate": [
+      "estimand",
+      "supported"
+    ],
+    "marketing_mix_analysis": [
+      "healthStatus",
+      "supported"
+    ],
+    "model_evaluation": [
+      "metrics"
+    ],
+    "anomaly_score": [
+      "items"
+    ],
+    "cluster_assignment": [
+      "items"
+    ],
+    "ranking": [
+      "items"
+    ],
+    "transcript": [
+      "text"
+    ],
+    "generated_asset": [
+      "assetRef",
+      "reviewStatus"
+    ],
+    "provider_output": []
+  }
+}
