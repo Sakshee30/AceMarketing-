@@ -31,7 +31,9 @@ import { closeKnowledge, ingestKnowledgeText, listKnowledgeSources, revokeKnowle
 import { deployModel, getEvaluationPolicy, getTenantRegistry, listEvaluations, promoteModel, qualifyEvaluation, recordProviderAccessVerification, rollbackModel, syncTenantRegistry, undeployModel, upsertEvaluationPolicy } from './ai-registry-store.mjs'
 import { closeAiDatasets, createAiDataset, getAiDataset, listAiDatasets, retireAiDataset, trainingRequestFromDataset, trainingRequestFromDatasetWithHorizon } from './ai-datasets.mjs'
 import { metricCatalog } from './metric-catalog.mjs'
-import { closeLiveVoice, createLiveVoiceSession, getLiveVoiceSession, installLiveVoiceWebSocket, terminateLiveVoiceSession } from './live-voice.mjs'\nimport { validateHostedTaskInput } from './ai-input-validation.mjs'
+import { closeLiveVoice, createLiveVoiceSession, getLiveVoiceSession, installLiveVoiceWebSocket, terminateLiveVoiceSession } from './live-voice.mjs'
+import { validateHostedTaskInput } from './ai-input-validation.mjs'
+import { evaluateAiTaskAdmission, getAiTaskPolicy, listAiTaskPolicies, listCreativeAssets, listTranscripts, reviewCreativeAsset, saveAiTaskPolicy } from './ai-governance-store.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -452,6 +454,8 @@ const permissionForRequest=(method,path)=>{
   if(path.startsWith('/api/ai/knowledge')) return method==='GET'?'workspace.read':'ai.knowledge.write'
   if(path==='/api/ai/analysis') return 'ai.analysis.run'
   if(path.startsWith('/api/ai/tasks/')) return 'ai.analysis.run'
+  if(path.startsWith('/api/ai/task-policies')) return method==='GET'?'workspace.read':'ai.providers.manage'
+  if(path.startsWith('/api/ai/creative-assets')&&method!=='GET') return 'approvals.write'
   if(path.startsWith('/api/ai/datasets')&&method!=='GET') return 'ai.training.run'
   if(path.startsWith('/api/ai/ml/train/')||path==='/api/ai/ml/rank') return 'ai.training.run'
   if(path.startsWith('/api/ai/live-voice')) return 'calls.write'
@@ -4678,6 +4682,39 @@ const server = http.createServer(async (req,res)=>{
         return send(req,res,422,{error:error instanceof Error?error.message:'dataset training could not be submitted'})
       }
     }
+    if (req.method === 'GET' && url.pathname === '/api/ai/task-policies') {
+      const items=await listAiTaskPolicies(workspaceId)
+      return send(req,res,200,{items,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/task-policies\/[^/]+$/.test(url.pathname)) {
+      if(!['owner','admin'].includes(authenticatedUser?.role||''))return send(req,res,403,{error:'owner or admin role required'})
+      const task=decodeURIComponent(url.pathname.split('/')[4]||'')
+      const body=await readBody(req)
+      try{
+        const item=await saveAiTaskPolicy({workspaceId,task,input:body,actor:authenticatedUser})
+        return send(req,res,200,{item})
+      }catch(error){
+        return send(req,res,400,{error:error instanceof Error?error.message:'AI task policy could not be saved'})
+      }
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/transcripts') {
+      const items=await listTranscripts(workspaceId)
+      return send(req,res,200,{items,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/creative-assets') {
+      const items=await listCreativeAssets(workspaceId)
+      return send(req,res,200,{items,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/creative-assets\/[^/]+\/review$/.test(url.pathname)) {
+      const id=decodeURIComponent(url.pathname.split('/')[4]||'')
+      const body=await readBody(req)
+      try{
+        const item=await reviewCreativeAsset({workspaceId,id,status:String(body.status||''),actor:authenticatedUser,reason:body.reason||null})
+        return item?send(req,res,200,{item}):send(req,res,404,{error:'creative asset not found or no longer reviewable'})
+      }catch(error){
+        return send(req,res,400,{error:error instanceof Error?error.message:'creative review failed'})
+      }
+    }
     if (req.method === 'GET' && url.pathname === '/api/ai/registry') {
       const staticRegistry=registrySummary()
       let tenantItems=[]
@@ -4746,6 +4783,8 @@ const server = http.createServer(async (req,res)=>{
         await syncTenantRegistry(workspaceId)
         const registry=await getTenantRegistry(workspaceId)
         const route=registry.find(item=>item.task==='live_voice')
+        const liveAdmission=await evaluateAiTaskAdmission({workspaceId,task:'live_voice',requestedModel:route?.requestedModel||'',reservedUnits:1})
+        if(!liveAdmission.allowed)return send(req,res,429,{error:'live voice is blocked by tenant policy',prerequisites:liveAdmission.reasons,policy:liveAdmission.policy,usage:liveAdmission.usage})
         const missing=[]
         if(route?.documentationVerified!==true)missing.push('documentation verification')
         if(route?.accessVerified!==true)missing.push('provider access verification')
@@ -4923,6 +4962,8 @@ const server = http.createServer(async (req,res)=>{
       }
       const allowedTasks=new Set(['lead_qualification','paid_conversion','customer_churn','future_customer_value','forecast_baseline','forecast_primary','forecast_challenger','incrementality','marketing_mix','anomaly_detection','behavioral_segments','offer_ranking'])
       if(!allowedTasks.has(task))return send(req,res,400,{error:'unsupported ML task'})
+      const admission=await evaluateAiTaskAdmission({workspaceId,task,requestedModel:task,reservedUnits:1})
+      if(!admission.allowed)return send(req,res,429,{error:'ML task is blocked by tenant policy',prerequisites:admission.reasons,policy:admission.policy,usage:admission.usage})
       const requestKey=String(req.headers['idempotency-key']||req.requestId||randomUUID())
       const deadlineAt=new Date(Date.now()+Number(process.env.ML_JOB_DEADLINE_MS||15*60*1000)).toISOString()
       const job=await enqueueJob({
