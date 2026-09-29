@@ -35,7 +35,8 @@ const normalizeRow=(row,index)=>{
   const labelObservedRaw=row.label_observed_at??row.labelObservedAt??null
   const labelObservedAt=labelObservedRaw?instant(labelObservedRaw):null
   const labelRaw=row.label
-  const label=labelRaw===null||labelRaw===undefined?null:Number(labelRaw)
+  const labelBlank=typeof labelRaw==='string'&&labelRaw.trim()===''
+  const label=labelRaw===null||labelRaw===undefined||labelBlank?null:Number(labelRaw)
   if(label!==null&&!Number.isFinite(label))throw new Error('row '+index+' label must be numeric or null')
   return {
     entityId,
