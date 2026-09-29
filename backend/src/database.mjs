@@ -43,7 +43,12 @@ const createEmbeddedPool=async()=>{
         ''
       )
     }
-    db.public.none(sql)
+    try{
+      db.public.none(sql)
+    }catch(error){
+      const message=error instanceof Error?error.message:String(error)
+      throw new Error('embedded migration '+file+' failed: '+message,{cause:error})
+    }
   }
   const adapter=db.adapters.createPg()
   return new adapter.Pool()
