@@ -14,7 +14,7 @@ import { executeMlJob } from './ml-client.mjs'
 import { closeKnowledge, embedKnowledgeSourceJob, searchKnowledgeJob } from './knowledge.mjs'
 import { closeRegistryStore, recordMlExecution, syncTenantRegistry } from './ai-registry-store.mjs'
 import {executeAiActivationJob,reconcileStaleActivationDispatches} from './ai-activation-execution.mjs'
-import {recordDeploymentObservation} from './ai-deployment-controls.mjs'
+import {applyDeploymentHealthGuard,recordDeploymentObservation} from './ai-deployment-controls.mjs'
 
 if(!queueAvailable()) throw new Error('DATABASE_URL is required for the worker runtime')
 
@@ -158,15 +158,19 @@ const runBatch=async()=>{
     const deploymentDecision=job.payload?.deploymentDecision||{}
     const recordAiOutcome=outcome=>{
       if(!['ai_hosted_task','ml_task'].includes(job.kind))return Promise.resolve(null)
+      const task=String(job.payload?.task||'')
       return recordDeploymentObservation({
         workspaceId:job.workspace_id,
-        task:String(job.payload?.task||''),
+        task,
         mode:deploymentDecision.mode||'active',
         bucket:deploymentDecision.bucket??null,
         servedCandidate:deploymentDecision.servedCandidate!==false,
         outcome,
         latencyMs:Date.now()-startedAt,
         jobId:job.id
+      }).then(async observation=>{
+        await applyDeploymentHealthGuard({workspaceId:job.workspace_id,task}).catch(()=>null)
+        return observation
       }).catch(()=>null)
     }
     try{
