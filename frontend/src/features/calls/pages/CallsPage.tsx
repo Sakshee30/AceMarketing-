@@ -50,6 +50,7 @@ export default function CallsPage(){
  const [notice,setNotice]=useState<Notice>({kind:'',text:''})
  const [builder,setBuilder]=useState(false)
  const [liveStatus,setLiveStatus]=useState<'idle'|'connecting'|'active'|'ending'|'error'>('idle')
+ const liveStatusRef=useRef<'idle'|'connecting'|'active'|'ending'|'error'>('idle')
  const [liveSessionId,setLiveSessionId]=useState('')
  const liveSessionIdRef=useRef('')
  const liveSocket=useRef<WebSocket|null>(null)
@@ -76,6 +77,7 @@ export default function CallsPage(){
   finally{setLoading(false)}
  }
  useEffect(()=>{void load()},[])
+ useEffect(()=>{liveStatusRef.current=liveStatus},[liveStatus])
  useEffect(()=>()=>{void stopLiveVoice(false)},[])
 
  const rows=[...calls,...tracked]
@@ -125,11 +127,11 @@ export default function CallsPage(){
  }
  const stopLiveVoice=async(updateUi=true)=>{
   const id=liveSessionIdRef.current
-  if(updateUi)setLiveStatus('ending')
+  if(updateUi){liveStatusRef.current='ending';setLiveStatus('ending')}
   stopLocalLiveVoice()
   if(id)await callsApi.terminateLiveVoice(id).catch(()=>null)
   liveSessionIdRef.current=''
-  if(updateUi){setLiveSessionId('');setLiveStatus('idle')}
+  if(updateUi){setLiveSessionId('');liveStatusRef.current='idle';setLiveStatus('idle')}
  }
  const playLiveAudio=(data:string,mimeType:string)=>{
   const context=liveContext.current
@@ -153,8 +155,19 @@ export default function CallsPage(){
   if(liveMicStarted.current)return
   liveMicStarted.current=true
   const stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:true,noiseSuppression:true},video:false})
+  if(!liveSessionIdRef.current||liveSocket.current?.readyState!==WebSocket.OPEN){
+   stream.getTracks().forEach(track=>track.stop())
+   liveMicStarted.current=false
+   return
+  }
   const context=new AudioContext()
   await context.resume()
+  if(!liveSessionIdRef.current||liveSocket.current?.readyState!==WebSocket.OPEN){
+   stream.getTracks().forEach(track=>track.stop())
+   await context.close().catch(()=>{})
+   liveMicStarted.current=false
+   return
+  }
   const source=context.createMediaStreamSource(stream)
   const processor=context.createScriptProcessor(4096,1,1)
   const silent=context.createGain()
@@ -175,7 +188,7 @@ export default function CallsPage(){
  }
  const startLiveVoice=async()=>{
   if(liveStatus!=='idle'&&liveStatus!=='error')return
-  setLiveStatus('connecting');setNotice({kind:'',text:''})
+  liveStatusRef.current='connecting';setLiveStatus('connecting');setNotice({kind:'',text:''})
   try{
    const session:any=await callsApi.createLiveVoice()
    const sessionId=String(session?.item?.id||'')
@@ -192,7 +205,7 @@ export default function CallsPage(){
      const message=JSON.parse(String(event.data||'{}'))
      if(message.error){setNotice({kind:'error',text:String(message.error)});return}
      if(message.setupComplete){
-      setLiveStatus('active')
+      liveStatusRef.current='active';setLiveStatus('active')
       void startMicrophone().catch(error=>{
        setNotice({kind:'error',text:error?.message||'Microphone access failed.'})
        void stopLiveVoice()
@@ -214,12 +227,20 @@ export default function CallsPage(){
    }
    socket.onerror=()=>setNotice({kind:'error',text:'The live voice relay encountered a network error.'})
    socket.onclose=()=>{
-    stopLocalLiveVoice()
-    setLiveStatus(current=>current==='ending'?'idle':'error')
+    if(liveStatusRef.current==='ending'){
+     stopLocalLiveVoice()
+     liveStatusRef.current='idle'
+     setLiveStatus('idle')
+     return
+    }
+    void stopLiveVoice(false).finally(()=>{
+     liveStatusRef.current='error'
+     setLiveStatus('error')
+    })
    }
   }catch(error:any){
    stopLocalLiveVoice()
-   setLiveStatus('error')
+   liveStatusRef.current='error';setLiveStatus('error')
    setNotice({kind:'error',text:error?.message||'Live AI voice is unavailable. Check model qualification, deployment and provider access in Models.'})
   }
  }
