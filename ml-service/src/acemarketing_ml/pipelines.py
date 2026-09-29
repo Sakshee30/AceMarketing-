@@ -730,14 +730,6 @@ def score_artifact(request) -> dict[str, Any]:
         if calibrator is None:
             raise ValueError("classification artifact does not contain its fitted calibration component")
         probabilities = calibrator.predict_proba(frame)[:, 1]
-        model = artifact.get("model")
-        contributions = None
-        try:
-            contributions = model.get_feature_importance(
-                data=model.get_feature_importance if False else None
-            )
-        except Exception:
-            contributions = None
         for row, probability in zip(request.rows, probabilities, strict=True):
             items.append(
                 {
