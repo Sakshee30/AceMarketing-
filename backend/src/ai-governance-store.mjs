@@ -70,18 +70,46 @@ export const normalizeAiTaskPolicyInput=(task,input={})=>{
 export const saveAiTaskPolicy=async({workspaceId,task,input,actor})=>{
   const {enabled,approvedRequestedModel,maxConcurrentJobs,monthlyUnitBudget,featureFlags,policyVersion}=normalizeAiTaskPolicyInput(task,input)
   if(!pool)throw new Error('DATABASE_URL is required to persist AI task policy')
-  const {rows}=await pool.query(
-    `INSERT INTO ace_ai_task_policies
-      (workspace_id,task,enabled,approved_requested_model,max_concurrent_jobs,monthly_unit_budget,feature_flags,policy_version,updated_by)
-     VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9)
-     ON CONFLICT (workspace_id,task)
-     DO UPDATE SET enabled=EXCLUDED.enabled,approved_requested_model=EXCLUDED.approved_requested_model,
-       max_concurrent_jobs=EXCLUDED.max_concurrent_jobs,monthly_unit_budget=EXCLUDED.monthly_unit_budget,
-       feature_flags=EXCLUDED.feature_flags,policy_version=EXCLUDED.policy_version,updated_by=EXCLUDED.updated_by,updated_at=now()
-     RETURNING *`,
-    [workspaceId,task,enabled,approvedRequestedModel,maxConcurrentJobs,monthlyUnitBudget,JSON.stringify(featureFlags),policyVersion,actor?.userId||actor?.email||null]
-  )
-  return getAiTaskPolicy(workspaceId,rows[0].task)
+  const client=await pool.connect()
+  try{
+    await client.query('BEGIN')
+    const {rows}=await client.query(
+      `INSERT INTO ace_ai_task_policies
+        (workspace_id,task,enabled,approved_requested_model,max_concurrent_jobs,monthly_unit_budget,feature_flags,policy_version,updated_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9)
+       ON CONFLICT (workspace_id,task)
+       DO UPDATE SET enabled=EXCLUDED.enabled,approved_requested_model=EXCLUDED.approved_requested_model,
+         max_concurrent_jobs=EXCLUDED.max_concurrent_jobs,monthly_unit_budget=EXCLUDED.monthly_unit_budget,
+         feature_flags=EXCLUDED.feature_flags,policy_version=EXCLUDED.policy_version,updated_by=EXCLUDED.updated_by,updated_at=now()
+       RETURNING *`,
+      [workspaceId,task,enabled,approvedRequestedModel,maxConcurrentJobs,monthlyUnitBudget,JSON.stringify(featureFlags),policyVersion,actor?.userId||actor?.email||null]
+    )
+    if(!enabled){
+      await client.query(
+        `UPDATE ace_jobs
+         SET cancel_requested_at=COALESCE(cancel_requested_at,now()),
+             status=CASE WHEN status IN ('pending','retry') THEN 'cancelled' ELSE status END,
+             completed_at=CASE WHEN status IN ('pending','retry') THEN COALESCE(completed_at,now()) ELSE completed_at END,
+             last_error=CASE
+               WHEN status IN ('pending','retry') THEN COALESCE(last_error,'cancelled because AI task policy was disabled')
+               ELSE last_error
+             END,
+             updated_at=now()
+         WHERE workspace_id=$1
+           AND kind IN ('ai_hosted_task','ml_task')
+           AND COALESCE(payload->>'task','')=$2
+           AND status IN ('pending','retry','leased','unknown_outcome')`,
+        [workspaceId,task]
+      )
+    }
+    await client.query('COMMIT')
+    return getAiTaskPolicy(workspaceId,rows[0].task)
+  }catch(error){
+    await client.query('ROLLBACK').catch(()=>{})
+    throw error
+  }finally{
+    client.release()
+  }
 }
 
 export const evaluateAiTaskAdmission=async({workspaceId,task,requestedModel,reservedUnits=1})=>{
