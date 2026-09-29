@@ -55,6 +55,24 @@ export default function IntelligencePage(){
   finally{setLoading(false)}
  }
  useEffect(()=>{void load()},[])
+ useEffect(()=>{
+  const id=activeJob?.jobId
+  if(!id)return
+  const controller=new AbortController()
+  void intelligenceApi.streamJob(id,event=>{
+   if(event.event==='status'){
+    setActiveJob((current:any)=>current?.jobId===id?{...current,job:{...(current.job||{}),...event.data}}:current)
+   }
+   if(event.event==='complete'){
+    setActiveJob((current:any)=>current?.jobId===id?{...current,job:{...(current.job||{}),status:event.data?.status||'completed'}}:current)
+    void load()
+   }
+  },controller.signal).catch((error:any)=>{
+   if(controller.signal.aborted)return
+   setNotice({kind:'warning',text:error?.message||'Live job status stream disconnected. Manual refresh remains available.'})
+  })
+  return()=>controller.abort('job_changed')
+ },[activeJob?.jobId])
 
  const summary=useMemo(()=>({
   active:registry.filter(x=>x.readiness==='active').length,
