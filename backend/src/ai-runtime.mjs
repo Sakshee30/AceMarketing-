@@ -5,6 +5,7 @@ import { executeHostedTask, ProviderExecutionError } from './ai-providers.mjs'
 import { modelRegistryItem } from './ai-registry.mjs'
 import { getTenantRegistry, syncTenantRegistry } from './ai-registry-store.mjs'
 import { evaluateAiTaskAdmission, persistCreativeAsset, persistTranscript } from './ai-governance-store.mjs'
+import { recordRecommendationReviewFailure, recordRecommendationReviewResult } from './ai-recommendations.mjs'
 
 const { Pool }=pg
 const databaseUrl=process.env.DATABASE_URL||''
@@ -211,6 +212,14 @@ export const executeHostedAiJob=async job=>{
       catch(error){mediaPersistenceError=error instanceof Error?error.message:String(error)}
     }
     const result=await persistResult({workspaceId,job,execution,mediaPersistenceError})
+    if(task==='recommendation_reviewer'){
+      await recordRecommendationReviewResult({
+        workspaceId,
+        jobId:job.id,
+        resultId:result?.id||null,
+        summary:execution?.text||''
+      }).catch(()=>{})
+    }
     return {
       task,
       resultId:result?.id||null,
@@ -225,6 +234,13 @@ export const executeHostedAiJob=async job=>{
       ...(task==='analyst'?{text:execution.text||''}:{})
     }
   }catch(error){
+    if(task==='recommendation_reviewer'){
+      await recordRecommendationReviewFailure({
+        workspaceId,
+        jobId:job.id,
+        reason:error instanceof Error?error.message:String(error)
+      }).catch(()=>{})
+    }
     if(error instanceof ProviderExecutionError&&error.unknownOutcome){
       await providerRequestFinish({
         workspaceId,
