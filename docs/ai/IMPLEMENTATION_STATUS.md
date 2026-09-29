@@ -66,3 +66,10 @@ Dedicated live-provider and real-Chronos smoke commands are implemented and inte
 Tenant-scoped AI operations monitoring is now implemented through `backend/src/ai-monitoring.mjs` and `GET /api/ai/monitoring`. The snapshot reports queue state/age, cancellations and unknown outcomes, recent provider failures and latency, usage reservations, per-task result freshness, recorded evaluation/calibration/drift evidence, forecast interval coverage, anomaly false-positive feedback, and shadow/canary deployment health.
 
 The monitoring contract does not fabricate missing quality evidence. Feature drift, calibration, delayed-label performance and measured forecast coverage are reported only when their task evaluation/backtest actually records those measurements. Monetary provider cost remains explicitly `not_configured` until a governed pricing/cost ledger exists.
+
+
+## Feature-off and resilience closure
+
+Worker execution now rechecks tenant task policy, platform policy, exact requested model identity, and the current deployment traffic mode immediately before hosted or ML execution. A task disabled after queue admission is cancelled before the provider/model call; shadow-only and narrowed canary changes are also enforced at execution time.
+
+The resilience test suite verifies this fail-closed execution gate and asserts that durable AI queue state does not depend on Redis. Database-backed jobs remain authoritative; optional acceleration loss cannot silently create synthetic predictions. Queue/database unavailability continues to block durable AI work instead of reporting fake success.
