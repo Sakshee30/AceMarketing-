@@ -240,6 +240,11 @@ jobs:
           test -f frontend/src/features/intelligence/public.ts
           test -f frontend/src/features/intelligence/feature.manifest.ts
           test -f backend/src/ai-result-contracts.mjs
+          test -f backend/src/ai-governance-store.mjs
+          test -f backend/src/ai-object-store.mjs
+          test -f backend/tests/ai-governance-store.test.mjs
+          test -f backend/tests/ai-object-store.test.mjs
+          test -f backend/migrations/026_ai_task_policies_and_media_review.sql
           test -f backend/tests/ai-result-contracts.test.mjs
           test -f docs/ai/openapi.yaml
           test -f docs/ai/coverage-matrix.md
