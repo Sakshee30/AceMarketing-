@@ -15,11 +15,11 @@ const pool=databaseUrl?new Pool({
 }):null
 
 const hash=value=>createHash('sha256').update(String(value)).digest('hex')
-const normalizePolicy=value=>{
+export const normalizeKnowledgePolicy=value=>{
   const roles=Array.isArray(value?.allowedRoles)?value.allowedRoles.map(x=>String(x)).filter(Boolean).slice(0,20):[]
   return {allowedRoles:roles}
 }
-const canReadPolicy=(policy,role)=>{
+export const canReadKnowledgePolicy=(policy,role)=>{
   const allowed=Array.isArray(policy?.allowedRoles)?policy.allowedRoles:[]
   return !allowed.length||allowed.includes(role)||role==='owner'
 }
@@ -62,7 +62,7 @@ export const ingestKnowledgeText=async({
   const chunks=chunkText(raw)
   if(!chunks.length)throw new Error('knowledge text produced no chunks')
   const sourceId='know_'+randomUUID()
-  const policy=normalizePolicy(accessPolicy)
+  const policy=normalizeKnowledgePolicy(accessPolicy)
   const contentHash=hash(raw)
   const client=await pool.connect()
   let source
@@ -146,7 +146,7 @@ export const listKnowledgeSources=async({workspaceId,role})=>{
      ORDER BY created_at DESC LIMIT 500`,
     [workspaceId]
   )
-  return rows.filter(row=>canReadPolicy(row.access_policy,role))
+  return rows.filter(row=>canReadKnowledgePolicy(row.access_policy,role))
 }
 
 export const revokeKnowledgeSource=async({workspaceId,id})=>{
@@ -247,7 +247,7 @@ export const searchKnowledge=async({workspaceId,query,role,limit=10,queryVector=
      LIMIT 100`,
     [workspaceId,String(query).slice(0,1000)]
   )
-  const authorized=rows.filter(row=>canReadPolicy(row.access_policy,role)).map(row=>{
+  const authorized=rows.filter(row=>canReadKnowledgePolicy(row.access_policy,role)).map(row=>{
     const vectorScore=queryVector?cosine(queryVector,row.embedding):null
     return {...row,vectorScore,hybridScore:Number(row.lexical_rank||0)+(vectorScore==null?0:vectorScore)}
   }).sort((a,b)=>b.hybridScore-a.hybridScore).slice(0,Math.max(safeLimit,20))
