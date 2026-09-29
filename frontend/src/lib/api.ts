@@ -134,6 +134,7 @@ export const streamAiJob=async(id:string,onEvent:(event:{event:string;data:any})
       const chunk=await reader.read()
       if(chunk.done)break
       buffer+=decoder.decode(chunk.value,{stream:true})
+      buffer=buffer.replace(/\r\n/g,'\n')
       let boundary=buffer.indexOf('\n\n')
       while(boundary>=0){
         const block=buffer.slice(0,boundary)
