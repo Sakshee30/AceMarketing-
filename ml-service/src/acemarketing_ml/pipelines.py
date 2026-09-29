@@ -828,6 +828,21 @@ def forecast_challenger(request) -> dict[str, Any]:
         if timestamp:
             historical_covariates[timestamp] = dict(item)
 
+    known_future_keys = {
+        key
+        for item in request.known_future_covariates
+        for key, value in item.items()
+        if key not in {"id", "timestamp", "target"} and isinstance(value, (int, float))
+    }
+    historical_only_keys = {
+        key
+        for item in request.historical_covariates
+        for key, value in item.items()
+        if key not in {"id", "timestamp", "target"}
+        and isinstance(value, (int, float))
+        and key not in known_future_keys
+    }
+
     rows = []
     targets = []
     for index in range(max(request.lags), len(values)):
@@ -842,8 +857,15 @@ def forecast_challenger(request) -> dict[str, Any]:
                     "dayofyear": int(ts.timetuple().tm_yday),
                 }
             )
-        for key, value in historical_covariates.get(timestamps[index].isoformat(), {}).items():
-            if key not in {"id", "timestamp", "target"} and isinstance(value, (int, float)):
+        current_covariates = historical_covariates.get(timestamps[index].isoformat(), {})
+        prior_covariates = historical_covariates.get(timestamps[index - 1].isoformat(), {})
+        for key in known_future_keys:
+            value = current_covariates.get(key)
+            if isinstance(value, (int, float)):
+                row[f"cov_{key}"] = float(value)
+        for key in historical_only_keys:
+            value = prior_covariates.get(key)
+            if isinstance(value, (int, float)):
                 row[f"cov_{key}"] = float(value)
         rows.append(row)
         targets.append(float(values[index]))
@@ -901,8 +923,14 @@ def forecast_challenger(request) -> dict[str, Any]:
                 }
             )
         covariates = known_covariates.get(future_timestamp.isoformat(), {})
-        for key, value in covariates.items():
-            if key not in {"id", "timestamp", "target"} and isinstance(value, (int, float)):
+        for key in known_future_keys:
+            value = covariates.get(key)
+            if isinstance(value, (int, float)):
+                feature_row[f"cov_{key}"] = float(value)
+        latest_observed_covariates = historical_covariates.get(last_timestamp.isoformat(), {})
+        for key in historical_only_keys:
+            value = latest_observed_covariates.get(key)
+            if isinstance(value, (int, float)):
                 feature_row[f"cov_{key}"] = float(value)
         for column in frame.columns:
             feature_row.setdefault(column, 0.0)
