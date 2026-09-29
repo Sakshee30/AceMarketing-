@@ -1,16 +1,6 @@
 import {randomUUID} from 'node:crypto'
-import pg from 'pg'
+import {pool} from './database.mjs'
 import {recordAssistedEvent} from './attribution-store.mjs'
-
-const {Pool}=pg
-const databaseUrl=process.env.DATABASE_URL||''
-const pool=databaseUrl?new Pool({
-  connectionString:databaseUrl,
-  max:Number(process.env.EVENT_RULE_DB_POOL_MAX||5),
-  idleTimeoutMillis:Number(process.env.DB_IDLE_TIMEOUT_MS||30000),
-  connectionTimeoutMillis:Number(process.env.DB_CONNECT_TIMEOUT_MS||5000),
-  ...(process.env.DB_SSL==='require'?{ssl:{rejectUnauthorized:false}}:{})
-}):null
 
 const OPERATORS=new Set(['equals','not_equals','gt','gte','lt','lte','contains','exists','in'])
 const DESTINATIONS=new Set(['Google Ads','Meta Ads','LinkedIn Ads','Microsoft Ads / Bing Ads','Pinterest','TikTok Ads','X','ChatGPT Ads'])
