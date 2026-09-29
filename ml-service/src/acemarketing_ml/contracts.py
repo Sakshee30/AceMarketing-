@@ -79,6 +79,7 @@ class AnomalyRequest(BaseModel):
     run_id: str | None = Field(default=None, max_length=256)
     rows: list[MatrixRow] = Field(min_length=10, max_length=250_000)
     contamination: float = Field(default=0.02, gt=0, le=0.5)
+    minimum_volume: int = Field(default=30, ge=10, le=250_000)
     random_seed: int = 42
 
 
@@ -87,6 +88,8 @@ class SegmentationRequest(BaseModel):
     rows: list[MatrixRow] = Field(min_length=10, max_length=250_000)
     min_cluster_size: int = Field(default=5, ge=2, le=10_000)
     min_samples: int | None = Field(default=None, ge=1, le=10_000)
+    stability_jitter_fraction: float = Field(default=1e-6, ge=0, le=0.05)
+    random_seed: int = 42
 
 
 class RankingCandidate(BaseModel):
@@ -100,11 +103,13 @@ class RankingCandidate(BaseModel):
 class RankingGroup(BaseModel):
     group_id: str = Field(min_length=1, max_length=256)
     candidates: list[RankingCandidate] = Field(min_length=2, max_length=10_000)
+    observed_at: datetime | None = None
 
 
 class RankingTrainRequest(BaseModel):
     run_id: str | None = Field(default=None, max_length=256)
-    groups: list[RankingGroup] = Field(min_length=3, max_length=50_000)
+    groups: list[RankingGroup] = Field(min_length=4, max_length=50_000)
+    holdout_fraction: float = Field(default=0.20, ge=0.10, le=0.50)
     random_seed: int = 42
 
 
