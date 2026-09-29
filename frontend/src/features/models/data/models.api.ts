@@ -132,6 +132,7 @@ export const modelsApi={
   validation:(name:string,options?:{signal?:AbortSignal})=>sharedApi.modelValidation(name,options) as Promise<ModelValidation>,
   run:(name:string)=>sharedApi.runModel(name) as Promise<ModelRun>,
   governance:(options?:{signal?:AbortSignal})=>sharedApi.aiRegistry(options) as Promise<AiRegistryResponse>,
+  verifyAccess:(task:string)=>sharedApi.verifyAiProviderAccess(task) as Promise<{task:string;provider:string;requestedModel:string;resolvedModel?:string|null;accessVerified:boolean;note?:string}>,
   evaluations:(task?:string,options?:{signal?:AbortSignal})=>sharedApi.aiEvaluations(task,options) as Promise<{items:AiEvaluation[];task?:string|null;generatedAt?:string}>,
   policy:(task:string,options?:{signal?:AbortSignal})=>sharedApi.aiEvaluationPolicy(task,options) as Promise<{item:AiEvaluationPolicy|null;task:string}>,
   savePolicy:(payload:{task:string;version:string;thresholds:Record<string,unknown>;notes?:string})=>sharedApi.saveAiEvaluationPolicy(payload) as Promise<{item:AiEvaluationPolicy}>,
