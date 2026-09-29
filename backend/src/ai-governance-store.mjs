@@ -2,6 +2,7 @@ import {createHash,randomUUID} from 'node:crypto'
 import {pool} from './database.mjs'
 import {modelRegistryItem} from './ai-registry.mjs'
 import {aiObjectStoreStatus,storeAiObject,storeAiText} from './ai-object-store.mjs'
+import {enforceTenantPolicyWithinPlatform,platformTaskPolicy} from './ai-platform-policy.mjs'
 
 const readTaskUsage=async(workspaceId,task)=>{
   if(!pool)return {activeJobs:0,monthUnits:0,estimatedCost:null,costStatus:'not_configured'}
@@ -41,7 +42,8 @@ export const getAiTaskPolicy=async(workspaceId,task)=>{
   if(!pool)return {
     workspaceId,task,enabled:true,approvedRequestedModel:null,maxConcurrentJobs:4,
     monthlyUnitBudget:null,featureFlags:{},policyVersion:'implicit-v1',source:'implicit',
-    usage:{activeJobs:0,monthUnits:0,estimatedCost:null,costStatus:'not_configured'}
+    usage:{activeJobs:0,monthUnits:0,estimatedCost:null,costStatus:'not_configured'},
+    platformPolicy:platformTaskPolicy(task)
   }
   const {rows}=await pool.query(
     `SELECT * FROM ace_ai_task_policies WHERE workspace_id=$1 AND task=$2`,
@@ -50,7 +52,8 @@ export const getAiTaskPolicy=async(workspaceId,task)=>{
   if(!rows[0])return {
     workspaceId,task,enabled:true,approvedRequestedModel:null,maxConcurrentJobs:4,
     monthlyUnitBudget:null,featureFlags:{},policyVersion:'implicit-v1',source:'implicit',
-    usage:await readTaskUsage(workspaceId,task)
+    usage:await readTaskUsage(workspaceId,task),
+    platformPolicy:platformTaskPolicy(task)
   }
   const row=rows[0]
   return {
@@ -65,7 +68,8 @@ export const getAiTaskPolicy=async(workspaceId,task)=>{
     updatedBy:row.updated_by,
     updatedAt:row.updated_at,
     source:'persisted',
-    usage:await readTaskUsage(workspaceId,task)
+    usage:await readTaskUsage(workspaceId,task),
+    platformPolicy:platformTaskPolicy(task)
   }
 }
 
@@ -99,6 +103,7 @@ export const normalizeAiTaskPolicyInput=(task,input={})=>{
 
 export const saveAiTaskPolicy=async({workspaceId,task,input,actor})=>{
   const {enabled,approvedRequestedModel,maxConcurrentJobs,monthlyUnitBudget,featureFlags,policyVersion}=normalizeAiTaskPolicyInput(task,input)
+  enforceTenantPolicyWithinPlatform({task,enabled,approvedRequestedModel,maxConcurrentJobs,monthlyUnitBudget})
   if(!pool)throw new Error('DATABASE_URL is required to persist AI task policy')
   const client=await pool.connect()
   try{
@@ -146,6 +151,9 @@ export const evaluateAiTaskAdmission=async({workspaceId,task,requestedModel,rese
   const policy=await getAiTaskPolicy(workspaceId,task)
   if(!policy)return {allowed:false,reasons:['unknown AI task'],policy:null}
   const reasons=[]
+  const platform=platformTaskPolicy(task)
+  if(platform?.enabled===false)reasons.push('task disabled by platform policy')
+  if(platform?.allowedRequestedModel&&platform.allowedRequestedModel!==requestedModel)reasons.push('requested model is not allowed by platform policy')
   if(!policy.enabled)reasons.push('task disabled by tenant policy')
   if(policy.approvedRequestedModel&&policy.approvedRequestedModel!==requestedModel)reasons.push('requested model is not approved by tenant policy')
   if(['creative_image','call_transcription'].includes(task)){
@@ -173,9 +181,12 @@ export const evaluateAiTaskAdmission=async({workspaceId,task,requestedModel,rese
     )
     monthUnits=Number(usage.rows[0]?.units||0)
   }
-  if(activeJobs>=policy.maxConcurrentJobs)reasons.push('task concurrency limit reached')
-  if(policy.monthlyUnitBudget!=null&&monthUnits+Math.max(0,Number(reservedUnits||0))>policy.monthlyUnitBudget)reasons.push('task monthly unit budget exceeded')
-  return {allowed:reasons.length===0,reasons,policy,usage:{activeJobs,monthUnits,reservedUnits:Number(reservedUnits||0)}}
+  const effectiveConcurrent=Math.min(Number(policy.maxConcurrentJobs||1),Number(platform?.maxConcurrentJobs||policy.maxConcurrentJobs||1))
+  if(activeJobs>=effectiveConcurrent)reasons.push('task concurrency limit reached')
+  const budgetCandidates=[policy.monthlyUnitBudget,platform?.monthlyUnitBudget].filter(value=>value!=null).map(Number)
+  const effectiveBudget=budgetCandidates.length?Math.min(...budgetCandidates):null
+  if(effectiveBudget!=null&&monthUnits+Math.max(0,Number(reservedUnits||0))>effectiveBudget)reasons.push('task monthly unit budget exceeded')
+  return {allowed:reasons.length===0,reasons,policy,platformPolicy:platform,usage:{activeJobs,monthUnits,reservedUnits:Number(reservedUnits||0),effectiveConcurrent,effectiveBudget}}
 }
 
 const sha256=value=>createHash('sha256').update(value).digest('hex')
