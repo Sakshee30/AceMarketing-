@@ -173,9 +173,13 @@ test('expired activation dispatch is recorded as unknown and continues to block 
     `INSERT INTO ace_ai_activation_proposals
       (id,workspace_id,proposal_type,proposal_hash,evidence_snapshot,model_snapshot,policy_result,payload,status,expires_at,task,
        execution_status,execution_fence_token,execution_lease_until)
-     VALUES ($1,$2,'budget_change',$3,'{}'::jsonb,'{}'::jsonb,'{}'::jsonb,$4::jsonb,'approved',now()+interval '1 hour','forecast_primary',
-             'running','old-fence',now()-interval '1 minute')`,
-    [id,workspaceId,'hash_'+id,JSON.stringify({providerAdapter:'google_ads_budget'})]
+     VALUES ($1,$2,'budget_change',$3,'{}'::jsonb,'{}'::jsonb,'{}'::jsonb,$4::jsonb,'approved',$5::timestamptz,'forecast_primary',
+             'running','old-fence',$6::timestamptz)`,
+    [
+      id,workspaceId,'hash_'+id,JSON.stringify({providerAdapter:'google_ads_budget'}),
+      new Date(Date.now()+60*60*1000).toISOString(),
+      new Date(Date.now()-60*1000).toISOString()
+    ]
   )
   try{
     const reconciled=await reconcileStaleActivationDispatches({limit:10})
