@@ -213,6 +213,8 @@ export const embedKnowledgeSourceJob=async job=>{
   return {sourceId,chunks:rows.length,embeddingModel:route.requestedModel,dimensions,indexVersion,providerRequestId}
 }
 
+export const validKnowledgeVector=value=>Array.isArray(value)&&value.length>0&&value.every(item=>Number.isFinite(Number(item)))
+
 const cosine=(a,b)=>{
   if(!Array.isArray(a)||!Array.isArray(b)||a.length!==b.length||!a.length)return null
   let dot=0,aa=0,bb=0
@@ -279,7 +281,7 @@ export const searchKnowledge=async({workspaceId,query,role,limit=10,queryVector=
       [workspaceId,cleanQuery,role]
     )
     rows=result.rows
-    if(queryVector&&String(process.env.KNOWLEDGE_VECTOR_BACKEND||'').toLowerCase()==='postgres_pgvector'){
+    if(validKnowledgeVector(queryVector)&&String(process.env.KNOWLEDGE_VECTOR_BACKEND||'').toLowerCase()==='postgres_pgvector'){
       const vectorLiteral='['+queryVector.map(value=>Number(value)).join(',')+']'
       const vectorResult=await pool.query(
         `SELECT c.id,c.source_id,c.ordinal,c.section,c.source_offset,c.content,c.access_policy,c.embedding,
@@ -315,7 +317,7 @@ export const searchKnowledge=async({workspaceId,query,role,limit=10,queryVector=
       rows=[...merged.values()]
     }
   }
-  const useApplicationCosine=embeddedDatabase&&Boolean(queryVector)
+  const useApplicationCosine=embeddedDatabase&&validKnowledgeVector(queryVector)
   const authorized=rows.filter(row=>canReadKnowledgePolicy(row.access_policy,role)).map(row=>{
     const vectorScore=row.vector_score!=null?Number(row.vector_score):(useApplicationCosine?cosine(queryVector,row.embedding):null)
     return {...row,vectorScore,hybridScore:Number(row.lexical_rank||0)+(vectorScore==null?0:vectorScore)}
@@ -334,7 +336,8 @@ export const searchKnowledgeJob=async job=>{
   const embeddingRoute=modelRegistryItem('embedding')
   if(embeddingRoute?.readiness==='active'&&['application_cosine','postgres_pgvector'].includes(vectorBackend)){
     const embedded=await embedVoyage({texts:[query],inputType:'query'})
-    queryVector=embedded.embeddings?.[0]?.embedding||null
+    const candidateVector=embedded.embeddings?.[0]?.embedding||null
+    queryVector=validKnowledgeVector(candidateVector)?candidateVector:null
     providerRequestId=embedded.providerRequestId||providerRequestId
   }
   let candidates=await searchKnowledge({workspaceId:job.workspace_id,query,role,limit,queryVector})
