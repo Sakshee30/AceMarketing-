@@ -113,7 +113,7 @@ export const createAiActivationProposal=async({workspaceId,input,actor})=>{
   const {rows}=await pool.query(
     `INSERT INTO ace_ai_activation_proposals
       (id,workspace_id,proposal_type,proposal_hash,evidence_snapshot,model_snapshot,policy_result,payload,status,expires_at,task,created_by,policy_version)
-     VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7::jsonb,$8::jsonb,'pending_approval',$9::timestamptz,$10,$11,'ai-activation.v1')
+     VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7::jsonb,$8::jsonb,'pending_review',$9::timestamptz,$10,$11,'ai-activation.v1')
      ON CONFLICT (workspace_id,proposal_hash) DO UPDATE SET proposal_hash=EXCLUDED.proposal_hash
      RETURNING *`,
     [id,workspaceId,built.proposalType,built.proposalHash,JSON.stringify(built.evidenceSnapshot),JSON.stringify(built.modelSnapshot),
