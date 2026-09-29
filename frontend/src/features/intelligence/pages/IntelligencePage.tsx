@@ -39,6 +39,7 @@ export default function IntelligencePage(){
  const [question,setQuestion]=useState('')
  const [activeJob,setActiveJob]=useState<any>(null)
  const [forecastDraft,setForecastDraft]=useState({seriesId:'revenue',frequency:'D',horizon:7,seasonLength:7,history:'[]'})
+ const [forecastQualification,setForecastQualification]=useState('{"actual":[10,12,11,13],"candidates":[{"name":"seasonal_naive","kind":"baseline","point":[9,11,10,12]},{"name":"candidate","kind":"model","point":[10,12,11,13]}],"baseline_name":"seasonal_naive","minimum_relative_mae_improvement":0.05}')
  const [knowledgeDraft,setKnowledgeDraft]=useState({name:'',text:'',sourceLocation:'manual://workspace'})
  const [knowledgeQuery,setKnowledgeQuery]=useState('')
  const [datasetDraft,setDatasetDraft]=useState({task:'lead_qualification',rows:'[]',labelObservationCutoff:new Date().toISOString().slice(0,10)})
@@ -91,17 +92,6 @@ export default function IntelligencePage(){
  }
  useEffect(()=>{void load()},[])
  useEffect(()=>{
-  const submitForecastQualification=async()=>{
-   setBusy('forecast-qualification');setNotice({kind:'',text:''})
-   try{
-    const payload=JSON.parse(forecastQualification)
-    const response=await intelligenceApi.forecastQualification(payload,opId('forecast-qualification'))
-    watchJob(response.jobId)
-    setNotice({kind:'ok',text:'Forecast qualification accepted. Candidate evidence will be compared with the declared baseline; no model is promoted automatically.'})
-   }catch(e:any){setNotice({kind:'error',text:e?.message||'Forecast qualification could not be submitted.'})}
-   finally{setBusy('')}
-  }
-
   const id=activeJob?.jobId
   if(!id)return
   const controller=new AbortController()
@@ -244,6 +234,17 @@ export default function IntelligencePage(){
    setActiveJob(response)
    setNotice({kind:'ok',text:'Forecast job accepted. Results remain explicitly baseline/modelled/insufficient-data depending on worker output.'})
   }catch(e:any){setNotice({kind:'error',text:e?.message||'Forecast could not be submitted.'})}
+  finally{setBusy('')}
+ }
+
+ const submitForecastQualification=async()=>{
+  setBusy('forecast-qualification');setNotice({kind:'',text:''})
+  try{
+   const payload=JSON.parse(forecastQualification)
+   const response:any=await intelligenceApi.forecastQualification(payload,opId('forecast-qualification'))
+   setActiveJob(response)
+   setNotice({kind:'ok',text:'Forecast qualification accepted. Candidate evidence will be compared with the declared baseline; no model is promoted automatically.'})
+  }catch(e:any){setNotice({kind:'error',text:e?.message||'Forecast qualification could not be submitted.'})}
   finally{setBusy('')}
  }
 
