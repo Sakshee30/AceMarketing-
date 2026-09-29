@@ -213,6 +213,29 @@ export default function ModelsPage(){
     }
   }
 
+  const verifyAccess=async()=>{
+    if(!currentTask||governanceBusy)return
+    setGovernanceBusy('verify')
+    setNotice({kind:'',text:''})
+    try{
+      const response=await modelsApi.verifyAccess(currentTask)
+      setNotice({
+        kind:response.accessVerified?'ok':'error',
+        text:response.accessVerified
+          ?'Provider account/model access verified for this task. Evaluation, approval and deployment remain separate gates.'
+          :'Provider access could not be verified.'
+      })
+      await loadGovernance(currentTask)
+    }catch(error:any){
+      setNotice({
+        kind:'error',
+        text:error?.message||'Provider access verification is unavailable. It is disabled by default and requires an authorized bounded test configuration.'
+      })
+    }finally{
+      setGovernanceBusy('')
+    }
+  }
+
   const savePolicy=async()=>{
     if(!currentTask||governanceBusy)return
     let thresholds:Record<string,unknown>
@@ -435,6 +458,9 @@ export default function ModelsPage(){
             ['Task',tenantModel.task],
             ['Provider',tenantModel.provider],
             ['Requested model',tenantModel.requestedModel],
+            ['Resolved model',tenantModel.resolvedModel||'Not access-verified'],
+            ['Documentation',tenantModel.documentationVerified?'verified':'unverified'],
+            ['Account access',tenantModel.accessVerified?'verified':'not verified'],
             ['Configuration',tenantModel.configurationStatus||tenantModel.readiness||'—'],
             ['Training',tenantModel.trainingStatus||'—'],
             ['Evaluation',tenantModel.evaluationStatus||'—'],
@@ -443,6 +469,7 @@ export default function ModelsPage(){
           ].map(row=><div key={row[0]}><span>{row[0]}</span><b>{String(row[1]??'—')}</b></div>)}
         </div>
         <div className="approval-actions">
+          <button onClick={()=>void verifyAccess()} disabled={governanceBusy==='verify'||tenantModel.documentationVerified!==true}>{governanceBusy==='verify'?'Verifying…':tenantModel.accessVerified?'Re-verify provider access':'Verify provider access'}</button>
           <button onClick={()=>setPolicyOpen(true)} disabled={governanceBusy==='policy'}>Define evaluation policy</button>
           <button onClick={()=>void qualifyLatest()} disabled={!latestEvaluation||governanceBusy==='qualify'}>{governanceBusy==='qualify'?'Qualifying…':'Qualify latest evidence'}</button>
           <button className="approve" onClick={()=>void promoteLatest()} disabled={!latestEvaluation||latestEvaluation.qualified!==true||governanceBusy==='promote'}>{governanceBusy==='promote'?'Promoting…':'Approve qualified model'}</button>
