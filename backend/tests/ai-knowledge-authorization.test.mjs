@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {canReadKnowledgePolicy,ingestKnowledgeText,normalizeKnowledgePolicy,revokeKnowledgeSource,searchKnowledge} from '../src/knowledge.mjs'
+import {canReadKnowledgePolicy,ingestKnowledgeText,normalizeKnowledgePolicy,revokeKnowledgeSource,searchKnowledge,validKnowledgeVector} from '../src/knowledge.mjs'
 
 test('knowledge policy normalizes role allowlists without granting extra roles',()=>{
   const policy=normalizeKnowledgePolicy({allowedRoles:['admin','analyst','',null,'admin']})
@@ -84,4 +84,14 @@ test('restricted chunks cannot crowd authorized matches out of embedded retrieva
   const viewer=await searchKnowledge({workspaceId,query:'sharedneedle',role:'viewer',limit:1})
   assert.equal(viewer.length,1)
   assert.equal(viewer[0].source_id,allowed.source.id)
+})
+
+
+test('knowledge vector validation rejects malformed provider embeddings and allows lexical fallback',()=>{
+  assert.equal(validKnowledgeVector([0.1,0.2,0.3]),true)
+  assert.equal(validKnowledgeVector(['1','2']),true)
+  assert.equal(validKnowledgeVector([]),false)
+  assert.equal(validKnowledgeVector(null),false)
+  assert.equal(validKnowledgeVector([0.1,Number.NaN]),false)
+  assert.equal(validKnowledgeVector([0.1,'not-a-number']),false)
 })
