@@ -160,3 +160,25 @@ CREATE TABLE IF NOT EXISTS ace_ai_creative_assets (
 
 CREATE INDEX IF NOT EXISTS ace_ai_creative_assets_review_idx
   ON ace_ai_creative_assets (workspace_id,review_status,created_at DESC);
+
+
+CREATE TABLE IF NOT EXISTS ace_ai_outbox_events (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL,
+  job_id TEXT NOT NULL REFERENCES ace_jobs(id) ON DELETE CASCADE,
+  event_type TEXT NOT NULL,
+  schema_version TEXT NOT NULL,
+  payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+  status TEXT NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending','published','dead_letter')),
+  attempts INTEGER NOT NULL DEFAULT 0,
+  available_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  published_at TIMESTAMPTZ,
+  last_error TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (workspace_id,job_id,event_type)
+);
+
+CREATE INDEX IF NOT EXISTS ace_ai_outbox_ready_idx
+  ON ace_ai_outbox_events (status,available_at,created_at)
+  WHERE status='pending';
