@@ -238,6 +238,7 @@ jobs:
           test -f frontend/src/features/intelligence/data/contracts.ts
           test -f frontend/src/features/intelligence/pages/IntelligencePage.tsx
           test -f frontend/src/features/intelligence/public.ts
+          test -f frontend/src/features/intelligence/feature.manifest.ts
           test -f backend/src/ai-result-contracts.mjs
           test -f backend/tests/ai-result-contracts.test.mjs
           test -f docs/ai/openapi.yaml
