@@ -5,7 +5,7 @@ Documentation verification, credential/account access verification, evaluation q
 | Task | Requested implementation | Documentation state |
 |---|---|---|
 | analyst | OpenAI gpt-6-astra | recorded in registry; access separately verified |
-| recommendation_reviewer | Anthropic claude-fable-5-1 | explicitly blocked while exact identifier/capability verification is incomplete |
+| recommendation_reviewer | Anthropic claude-fable-5-1 | official Anthropic material documents the API identifier; live account access and qualification remain separate |
 | multimodal_extraction | Google gemini-3.8-flash | adapter implemented |
 | embedding | Voyage voyage-4-large | adapter implemented |
 | reranking | Voyage rerank-2.5 | adapter implemented |
@@ -26,4 +26,4 @@ Documentation verification, credential/account access verification, evaluation q
 | offer_ranking | LGBMRanker | grouped/exposure-aware evaluation required |
 | probability_calibration | CalibratedClassifierCV | fitted calibration component |
 
-Provider verification endpoint: `POST /api/ai/providers/:task/verify`. It is intended for explicitly authorized bounded tests only and does not qualify or deploy a route.
+Documentation verification sources checked 2026-09-29: OpenAI GPT-6 Astra model reference, Anthropic Claude Fable 5.1 product/API page, Google Gemini 3.8 Flash / 3.5 Transcribe / 3.8 Live Extended Thinking / 3 Pro Image model references, and Voyage embedding/reranker references. Documentation presence is not account access.\n\nProvider verification endpoint: `POST /api/ai/providers/:task/verify`. It is intended for explicitly authorized bounded tests only and does not qualify or deploy a route.
