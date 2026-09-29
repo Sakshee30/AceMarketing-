@@ -29,7 +29,7 @@ export default function CustomerBootstrap({back}:{back:()=>void}){
     }catch(error:any){
       if(current!==generation.current)return
       const status=Number(error?.status||0)
-      if(status===401){
+      if(status===401||status===403){
         clearSessionToken()
         setState({kind:'signed-out',message:signedOutMessage})
       }else{
@@ -49,7 +49,7 @@ export default function CustomerBootstrap({back}:{back:()=>void}){
     void resolveSession()
     const onPageShow=(event:PageTransitionEvent)=>{if(event.persisted)void resolveSession()}
     const onSession=(event:any)=>{
-      if(event?.detail?.state==='anonymous')setState({kind:'signed-out',message:signedOutMessage})
+      if(event?.detail?.state==='anonymous')void resolveSession()
       if(event?.detail?.state==='authenticated')void resolveSession()
     }
     window.addEventListener('pageshow',onPageShow)

@@ -467,7 +467,7 @@ const permissionForRequest=(method,path)=>{
   if(path.startsWith('/api/ai/datasets')&&method!=='GET') return 'ai.training.run'
   if(path.startsWith('/api/ai/ml/train/')||path==='/api/ai/ml/rank') return 'ai.training.run'
   if(path.startsWith('/api/ai/live-voice')) return 'calls.write'
-  if(path==='/api/ai/ml/score'||path==='/api/ai/ml/rank/score'||path==='/api/ai/ml/forecast/seasonal-naive'||path==='/api/ai/ml/forecast/chronos-2'||path==='/api/ai/ml/forecast/catboost-challenger'||path==='/api/ai/ml/incrementality'||path==='/api/ai/ml/marketing-mix'||path==='/api/ai/ml/anomalies'||path==='/api/ai/ml/segments') return 'ai.analysis.run'
+  if(path==='/api/ai/ml/score'||path==='/api/ai/ml/rank/score'||path==='/api/ai/ml/forecast/seasonal-naive'||path==='/api/ai/ml/forecast/chronos-2'||path==='/api/ai/ml/forecast/catboost-challenger'||path==='/api/ai/ml/forecast/qualify'||path==='/api/ai/ml/incrementality'||path==='/api/ai/ml/marketing-mix'||path==='/api/ai/ml/anomalies'||path==='/api/ai/ml/segments') return 'ai.analysis.run'
   if(path.includes('/api/ai/jobs/')) return 'ai.analysis.run'
   if(path.startsWith('/api/agents')||path.startsWith('/api/models/run')) return 'agents.write'
   if(path.startsWith('/api/audiences')) return 'audiences.write'
@@ -5024,6 +5024,7 @@ const server = http.createServer(async (req,res)=>{
       '/api/ai/ml/score':{operation:'artifact_score',taskFromBody:true},
       '/api/ai/ml/forecast/seasonal-naive':{operation:'forecast_baseline',task:'forecast_baseline'},
       '/api/ai/ml/forecast/chronos-2':{operation:'forecast_chronos',task:'forecast_primary'},
+      '/api/ai/ml/forecast/qualify':{operation:'forecast_qualification',task:'forecast_primary'},
       '/api/ai/ml/forecast/catboost-challenger':{operation:'forecast_challenger',task:'forecast_challenger'},
       '/api/ai/ml/incrementality':{operation:'incrementality',task:'incrementality'},
       '/api/ai/ml/marketing-mix':{operation:'marketing_mix',task:'marketing_mix'},

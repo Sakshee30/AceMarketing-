@@ -15,3 +15,7 @@ Production requires:
 - task-specific training/evaluation evidence before promotion.
 
 The ML container runs non-root and exposes only the internal network. Training remains isolated from the Node API request process.
+
+## Chronos-2 checkpoint provisioning
+
+Production forecasting does not download Chronos weights during an interactive request. Provision the pinned `amazon/chronos-2` revision before serving, mount it read-only into the forecast ML profile, set `CHRONOS2_SNAPSHOT_DIR`, set the exact `CHRONOS2_REVISION`, and set `CHRONOS2_EXPECTED_SHA256` to the verified repository snapshot hash. Keep `CHRONOS2_ALLOW_DOWNLOAD=false` in production. A missing directory, missing revision, or hash mismatch blocks inference rather than silently downloading or substituting a checkpoint.

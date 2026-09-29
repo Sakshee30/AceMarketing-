@@ -13,10 +13,11 @@ from .contracts import (
     CausalForestRequest,
     ChallengerForecastRequest,
     ClassificationTrainRequest,
+    ForecastQualificationRequest,
     ForecastRequest,
     MeridianFitRequest,
-    RankScoreRequest,
     RankingTrainRequest,
+    RankScoreRequest,
     RegressionTrainRequest,
     SegmentationRequest,
 )
@@ -24,17 +25,18 @@ from .pipelines import (
     anomaly_detection,
     behavioral_segments,
     causal_forest_estimate,
-    forecast_challenger,
     chronos2_forecast,
     dependency_capabilities,
     fit_meridian,
-    seasonal_naive_forecast,
+    forecast_challenger,
     score_artifact,
     score_ranker,
+    seasonal_naive_forecast,
     train_classification,
     train_ranker,
     train_regression,
 )
+from .qualification import evaluate_forecast_candidates
 
 app = FastAPI(title="AceMarketing ML Service", version=__version__)
 
@@ -156,4 +158,12 @@ def ranker_score_endpoint(request: RankScoreRequest):
     try:
         return score_ranker(request)
     except (ValueError, FileNotFoundError, RuntimeError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.post("/v1/evaluate/forecast-candidates", dependencies=[Depends(require_internal_token)])
+def evaluate_forecast_candidates_endpoint(request: ForecastQualificationRequest):
+    try:
+        return evaluate_forecast_candidates(request)
+    except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc

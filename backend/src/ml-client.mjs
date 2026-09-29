@@ -69,6 +69,7 @@ const operationPaths={
   forecast_baseline:'/v1/forecast/seasonal-naive',
   forecast_challenger:'/v1/forecast/catboost-challenger',
   forecast_chronos:'/v1/forecast/chronos-2',
+  forecast_qualification:'/v1/evaluate/forecast-candidates',
   incrementality:'/v1/causal/forest-dml',
   marketing_mix:'/v1/mmm/meridian',
   anomaly_detection:'/v1/anomalies/isolation-forest',

@@ -25,11 +25,12 @@ test('numerical assignments remain task-specific even when estimator classes rep
   assert.equal(byTask.get('incrementality')?.requestedModel,'econml.dml.CausalForestDML')
 })
 
-test('unverified requested model remains unavailable and unresolved',()=>{
+test('documented reviewer remains unresolved until tenant access and qualification exist',()=>{
   const reviewer=modelRegistrySnapshot().find(item=>item.task==='recommendation_reviewer')
-  assert.equal(reviewer?.documentationVerified,false)
+  assert.equal(reviewer?.documentationVerified,true)
   assert.equal(reviewer?.resolvedModel,null)
-  assert.equal(reviewer?.readiness,'unavailable')
+  assert.equal(reviewer?.accessVerified,false)
+  assert.ok(['unconfigured','disabled','evaluating'].includes(reviewer?.readiness))
 })
 
 test('deterministic forecast baseline remains explicitly labelled',()=>{

@@ -128,7 +128,7 @@ def train_classification(request) -> dict[str, Any]:
     probability = calibrator.predict_proba(x_test)[:, 1]
     predicted = (probability >= request.decision_threshold).astype(int)
     ranked = sorted(zip(probability.tolist(), y_test, strict=True), key=lambda item: item[0], reverse=True)
-    capacity_n = max(1, min(len(ranked), int(math.ceil(len(ranked) * request.operating_capacity_fraction))))
+    capacity_n = max(1, min(len(ranked), math.ceil(len(ranked) * request.operating_capacity_fraction)))
     top_positives = sum(label for _, label in ranked[:capacity_n])
     overall_rate = float(sum(y_test) / len(y_test))
     top_rate = float(top_positives / capacity_n)
@@ -474,13 +474,30 @@ def chronos2_forecast(request) -> dict[str, Any]:
     if any(point.value is None for point in history):
         raise ValueError("history contains unknown observations; unknown values must not be treated as zero")
 
-    local_snapshot = snapshot_download(repo_id="amazon/chronos-2", revision=revision)
-    root = Path(local_snapshot)
+    configured_snapshot = os.getenv("CHRONOS2_SNAPSHOT_DIR", "").strip()
+    allow_download = os.getenv("CHRONOS2_ALLOW_DOWNLOAD", "false").lower() == "true"
+    environment = os.getenv("ML_ENV", "development").lower()
+    if configured_snapshot:
+        root = Path(configured_snapshot).expanduser().resolve()
+        if not root.exists() or not root.is_dir():
+            raise ValueError("CHRONOS2_SNAPSHOT_DIR does not point to a provisioned checkpoint directory")
+    else:
+        if environment == "production" or not allow_download:
+            raise ValueError(
+                "Chronos-2 checkpoint is not provisioned. Set CHRONOS2_SNAPSHOT_DIR to a pinned snapshot; "
+                "interactive model downloads are disabled."
+            )
+        local_snapshot = snapshot_download(repo_id="amazon/chronos-2", revision=revision)
+        root = Path(local_snapshot)
+
     digest = hashlib.sha256()
     for path in sorted(p for p in root.rglob("*") if p.is_file()):
         digest.update(str(path.relative_to(root)).encode("utf-8"))
         digest.update(path.read_bytes())
     snapshot_hash = digest.hexdigest()
+    expected_hash = os.getenv("CHRONOS2_EXPECTED_SHA256", "").strip().lower()
+    if expected_hash and snapshot_hash.lower() != expected_hash:
+        raise ValueError("Chronos-2 provisioned checkpoint hash does not match CHRONOS2_EXPECTED_SHA256")
 
     context_df = pd.DataFrame(
         {
@@ -536,7 +553,7 @@ def causal_forest_estimate(request) -> dict[str, Any]:
 
     try:
         from econml.dml import CausalForestDML
-        from sklearn.ensemble import RandomForestRegressor
+        from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
     except ImportError as exc:
         raise ValueError("econml optional dependency is not installed") from exc
 
@@ -567,20 +584,36 @@ def causal_forest_estimate(request) -> dict[str, Any]:
     if len(x_test) < 20:
         raise ValueError("insufficient_evidence: holdout population is too small")
 
+    binary_treatment = set(unique_treatment).issubset({0.0, 1.0})
+    treatment_model = (
+        RandomForestClassifier(n_estimators=150, min_samples_leaf=5, random_state=request.random_seed)
+        if binary_treatment
+        else RandomForestRegressor(n_estimators=150, min_samples_leaf=5, random_state=request.random_seed)
+    )
     model = CausalForestDML(
         model_y=RandomForestRegressor(n_estimators=150, min_samples_leaf=5, random_state=request.random_seed),
-        model_t=RandomForestRegressor(n_estimators=150, min_samples_leaf=5, random_state=request.random_seed),
+        model_t=treatment_model,
         n_estimators=400,
         min_samples_leaf=10,
         max_depth=None,
-        discrete_treatment=False,
+        discrete_treatment=binary_treatment,
         random_state=request.random_seed,
     )
-    model.fit(y_train, t_train, X=x_train)
+    fit_kwargs = {"X": x_train}
+    group_values = [row.group_id for row in rows[:split]]
+    if all(value is not None for value in group_values) and len(set(group_values)) >= 2:
+        fit_kwargs["groups"] = np.asarray(group_values)
+    model.fit(y_train, t_train, **fit_kwargs)
     effects = np.asarray(model.effect(x_test), dtype=float)
     ate = float(effects.mean())
-    stderr = float(effects.std(ddof=1) / np.sqrt(max(1, len(effects))))
-    interval = [ate - 1.96 * stderr, ate + 1.96 * stderr]
+    try:
+        effect_lower, effect_upper = model.effect_interval(x_test, alpha=0.05)
+        interval = [float(np.mean(effect_lower)), float(np.mean(effect_upper))]
+        interval_method = "econml_effect_interval"
+    except (AttributeError, RuntimeError, ValueError):
+        stderr = float(effects.std(ddof=1) / np.sqrt(max(1, len(effects))))
+        interval = [ate - 1.96 * stderr, ate + 1.96 * stderr]
+        interval_method = "holdout_effect_mean_normal_approximation"
 
     return {
         "task": "incrementality",
@@ -591,7 +624,9 @@ def causal_forest_estimate(request) -> dict[str, Any]:
         "sampleSize": len(rows),
         "holdoutSize": len(x_test),
         "averageTreatmentEffect": ate,
-        "approximateInterval95": interval,
+        "interval95": interval,
+        "intervalMethod": interval_method,
+        "groupAwareCrossFitting": "groups" in fit_kwargs,
         "overlap": {
             "treatmentMin": float(treatment.min()),
             "treatmentMax": float(treatment.max()),
@@ -917,7 +952,7 @@ def forecast_challenger(request) -> dict[str, Any]:
         "mae": float(mean_absolute_error(y_test, holdout_prediction)),
         "rmse": float(math.sqrt(mean_squared_error(y_test, holdout_prediction))),
         "bias": float((holdout_prediction - y_test).mean()),
-        "testRows": int(len(y_test)),
+        "testRows": len(y_test),
     }
 
     known_covariates = {}
@@ -981,8 +1016,8 @@ def forecast_challenger(request) -> dict[str, Any]:
             "timezone": request.timezone,
             "lags": list(request.lags),
             "randomSeed": request.random_seed,
-            "trainingRows": int(len(x_train)),
-            "testRows": int(len(x_test)),
+            "trainingRows": len(x_train),
+            "testRows": len(x_test),
         },
     )
     return {

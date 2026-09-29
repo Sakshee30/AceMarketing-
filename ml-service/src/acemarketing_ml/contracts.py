@@ -194,6 +194,33 @@ class RankScoreRequest(BaseModel):
     prediction_cutoff: datetime
 
 
+class ForecastCandidate(BaseModel):
+    name: str = Field(min_length=1, max_length=128)
+    kind: Literal["baseline", "model", "ensemble"]
+    point: list[float] = Field(min_length=4, max_length=10_000)
+    lower: list[float] | None = Field(default=None, min_length=4, max_length=10_000)
+    upper: list[float] | None = Field(default=None, min_length=4, max_length=10_000)
+    quantiles: dict[str, list[float]] = Field(default_factory=dict)
+    nominal_coverage: float = Field(default=0.80, gt=0, lt=1)
+
+
+class ForecastQualificationRequest(BaseModel):
+    actual: list[float] = Field(min_length=4, max_length=10_000)
+    candidates: list[ForecastCandidate] = Field(min_length=2, max_length=16)
+    baseline_name: str = Field(min_length=1, max_length=128)
+    minimum_relative_mae_improvement: float = Field(default=0.0, ge=-1, le=1)
+    coverage_tolerance: float = Field(default=0.10, ge=0, le=0.5)
+
+    @model_validator(mode="after")
+    def validate_candidate_names(self):
+        names = [candidate.name for candidate in self.candidates]
+        if len(names) != len(set(names)):
+            raise ValueError("forecast candidate names must be unique")
+        if self.baseline_name not in names:
+            raise ValueError("baseline_name must refer to a supplied candidate")
+        return self
+
+
 class ChallengerForecastRequest(ForecastRequest):
     lags: list[int] = Field(default_factory=lambda: [1, 7, 14, 28], min_length=1, max_length=32)
     include_calendar_features: bool = True

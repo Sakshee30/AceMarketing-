@@ -114,6 +114,7 @@ export const getTenantRegistry=async workspaceId=>{
 }
 
 const resultTypeForExecution=(task,operation)=>{
+  if(operation==='forecast_qualification')return 'model_evaluation'
   if(['classification_train','regression_train','offer_ranking'].includes(operation))return 'model_evaluation'
   if(operation==='artifact_score'){
     if(['lead_qualification','paid_conversion','customer_churn'].includes(task))return 'calibrated_probability'
