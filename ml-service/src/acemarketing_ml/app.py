@@ -9,10 +9,13 @@ from fastapi import Depends, FastAPI, Header, HTTPException
 from . import __version__
 from .contracts import (
     AnomalyRequest,
+    ArtifactScoreRequest,
     CausalForestRequest,
+    ChallengerForecastRequest,
     ClassificationTrainRequest,
     ForecastRequest,
     MeridianFitRequest,
+    RankingScoreRequest,
     RankingTrainRequest,
     RegressionTrainRequest,
     SegmentationRequest,
@@ -21,10 +24,13 @@ from .pipelines import (
     anomaly_detection,
     behavioral_segments,
     causal_forest_estimate,
+    forecast_challenger,
     chronos2_forecast,
     dependency_capabilities,
     fit_meridian,
     seasonal_naive_forecast,
+    score_artifact,
+    score_ranker,
     train_classification,
     train_ranker,
     train_regression,
@@ -126,4 +132,28 @@ def ranker_endpoint(request: RankingTrainRequest):
     try:
         return train_ranker(request)
     except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.post("/v1/score/artifact", dependencies=[Depends(require_internal_token)])
+def score_artifact_endpoint(request: ArtifactScoreRequest):
+    try:
+        return score_artifact(request)
+    except (ValueError, FileNotFoundError, RuntimeError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.post("/v1/forecast/catboost-challenger", dependencies=[Depends(require_internal_token)])
+def forecast_challenger_endpoint(request: ChallengerForecastRequest):
+    try:
+        return forecast_challenger(request)
+    except (ValueError, RuntimeError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.post("/v1/rank/lgbm/score", dependencies=[Depends(require_internal_token)])
+def ranker_score_endpoint(request: RankingScoreRequest):
+    try:
+        return score_ranker(request)
+    except (ValueError, FileNotFoundError, RuntimeError) as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
