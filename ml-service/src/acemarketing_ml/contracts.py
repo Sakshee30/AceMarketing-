@@ -187,4 +187,5 @@ class RankScoreRequest(BaseModel):
 class ChallengerForecastRequest(ForecastRequest):
     lags: list[int] = Field(default_factory=lambda: [1, 7, 14, 28], min_length=1, max_length=32)
     include_calendar_features: bool = True
+    historical_covariates: list[dict[str, Any]] = Field(default_factory=list, max_length=100_000)
     random_seed: int = 42
