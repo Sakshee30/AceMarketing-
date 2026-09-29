@@ -13,28 +13,28 @@ const providerDocs={
     identifierVerified:true,
     capabilityVerified:true,
     verifiedAt:'2026-09-29',
-    source:'https://platform.openai.com/pricing',
+    source:'https://developers.openai.com/api/docs/models/gpt-6-astra',
     note:'gpt-6-astra is listed in official OpenAI API material; Responses-based execution is implemented. Account access remains separately unverified.'
   },
   anthropic:{
-    identifierVerified:false,
-    capabilityVerified:false,
+    identifierVerified:true,
+    capabilityVerified:true,
     verifiedAt:'2026-09-29',
-    source:'https://docs.anthropic.com/',
-    note:'The requested claude-fable-5-1 identifier was not found in official documentation during verification; substitution is forbidden.'
+    source:'https://www.anthropic.com/claude/fable',
+    note:'claude-fable-5-1 is documented for the Claude API. Account access and tenant qualification remain separate and unverified until an authorized live verification succeeds.'
   },
   google:{
     identifierVerified:true,
     capabilityVerified:true,
     verifiedAt:'2026-09-29',
-    source:'https://ai.google.dev/gemini-api/docs/models',
+    source:'https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash',
     note:'Requested Gemini identifiers are present in official documentation. Transcription requires Files + Interactions; live voice requires Live API transport. Account access is verified separately.'
   },
   voyage:{
     identifierVerified:true,
     capabilityVerified:true,
     verifiedAt:'2026-09-29',
-    source:'https://docs.voyageai.com/docs/embeddings',
+    source:'https://docs.voyageai.com/docs/embeddings; https://docs.voyageai.com/reference/reranker-api',
     note:'voyage-4-large and rerank-2.5 plus their REST endpoints are present in official Voyage documentation; live account access is verified separately.'
   },
   local_ml:{
