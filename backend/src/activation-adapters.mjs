@@ -291,13 +291,12 @@ const salesforceWriteback=async(workspaceId,lead,fields)=>{
   const instance=token.instance_url||process.env.SALESFORCE_INSTANCE_URL
   if(!recordId||!instance) throw new Error('Salesforce recordId and instance URL are required')
   const version=process.env.SALESFORCE_API_VERSION||'v65.0'
-  const result=await fetch(`${instance}/services/data/${version}/sobjects/Lead/${encodeURIComponent(recordId)}`,{
+  const result=await requestJson(`${instance}/services/data/${version}/sobjects/Lead/${encodeURIComponent(recordId)}`,{
     method:'PATCH',
     headers:{'Content-Type':'application/json','Authorization':'Bearer '+token.access_token},
     body:JSON.stringify({Ace_Lead_Score__c:lead.score,Ace_Lead_Grade__c:lead.grade,Ace_Intent__c:lead.intent||'',Ace_Source__c:lead.source||''})
   })
-  if(!result.ok) throw new Error('Salesforce writeback failed: '+result.status)
-  return {provider:'salesforce',externalId:String(recordId),status:result.status}
+  return {provider:'salesforce',externalId:String(recordId),status:result.status,providerRequestId:result.providerRequestId||null}
 }
 
 export const writebackLead=async(workspaceId,leadRef,provider,fields={})=>{
