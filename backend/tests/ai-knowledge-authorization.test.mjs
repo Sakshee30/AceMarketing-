@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {canReadKnowledgePolicy,ingestKnowledgeText,normalizeKnowledgePolicy,revokeKnowledgeSource,searchKnowledge,validKnowledgeVector} from '../src/knowledge.mjs'
+import {canReadKnowledgePolicy,ingestKnowledgeText,knowledgeVectorDimensionsMatch,normalizeKnowledgePolicy,revokeKnowledgeSource,searchKnowledge,validKnowledgeVector} from '../src/knowledge.mjs'
 
 test('knowledge policy normalizes role allowlists without granting extra roles',()=>{
   const policy=normalizeKnowledgePolicy({allowedRoles:['admin','analyst','',null,'admin']})
@@ -94,4 +94,11 @@ test('knowledge vector validation rejects malformed provider embeddings and allo
   assert.equal(validKnowledgeVector(null),false)
   assert.equal(validKnowledgeVector([0.1,Number.NaN]),false)
   assert.equal(validKnowledgeVector([0.1,'not-a-number']),false)
+})
+
+
+test('knowledge vector dimensions must match the stored embedding contract',()=>{
+  assert.equal(knowledgeVectorDimensionsMatch(3,[0.1,0.2,0.3]),true)
+  assert.equal(knowledgeVectorDimensionsMatch(2,[0.1,0.2,0.3]),false)
+  assert.equal(knowledgeVectorDimensionsMatch(null,[0.1,0.2,0.3]),false)
 })
