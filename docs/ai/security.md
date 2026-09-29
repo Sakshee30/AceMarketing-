@@ -17,3 +17,6 @@ AI reviewer output is not authorization. High-risk activation requires determini
 
 ## Privacy
 Prompts, embeddings, transcripts, features and artifacts are sensitive. Revocation/deletion propagates to eligible derived retrieval state; historical model retraining obligations are tracked rather than claiming instantaneous unlearning.
+
+## High-risk activation proposals
+AI-originated recommendations that could affect spend, campaigns or audiences are stored as immutable proposal snapshots with evidence references, model/evaluation identity, deterministic policy result, hash and expiry. The proposal creator cannot approve the same proposal. Approval fails if the model/evaluation/artifact changed or the snapshot hash no longer matches. Approval does not itself call an advertising provider; provider-specific execution remains a separate adapter boundary that must recheck consent, limits and current authorization.
