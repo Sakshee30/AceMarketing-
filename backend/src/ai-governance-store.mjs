@@ -3,6 +3,33 @@ import {pool} from './database.mjs'
 import {modelRegistryItem} from './ai-registry.mjs'
 import {aiObjectStoreStatus,storeAiObject,storeAiText} from './ai-object-store.mjs'
 
+const readTaskUsage=async(workspaceId,task)=>{
+  if(!pool)return {activeJobs:0,monthUnits:0,estimatedCost:null,costStatus:'not_configured'}
+  const [active,usage]=await Promise.all([
+    pool.query(
+      `SELECT count(*)::int AS count FROM ace_jobs
+       WHERE workspace_id=$1 AND kind IN ('ai_hosted_task','ml_task')
+         AND COALESCE(payload->>'task','')=$2
+         AND status IN ('pending','retry','leased','unknown_outcome')`,
+      [workspaceId,task]
+    ),
+    pool.query(
+      `SELECT COALESCE(sum(CASE WHEN status='committed' THEN COALESCE(actual_units,reserved_units,0) ELSE reserved_units END),0)::float8 AS units
+       FROM ace_ai_usage_reservations
+       WHERE workspace_id=$1 AND task=$2
+         AND created_at>=date_trunc('month',now())
+         AND status IN ('reserved','committed','unknown')`,
+      [workspaceId,task]
+    )
+  ])
+  return {
+    activeJobs:Number(active.rows[0]?.count||0),
+    monthUnits:Number(usage.rows[0]?.units||0),
+    estimatedCost:null,
+    costStatus:'not_configured'
+  }
+}
+
 const asInt=(value,fallback,min,max)=>{
   const n=Number(value)
   return Number.isInteger(n)&&n>=min&&n<=max?n:fallback
@@ -13,7 +40,8 @@ export const getAiTaskPolicy=async(workspaceId,task)=>{
   if(!route) return null
   if(!pool)return {
     workspaceId,task,enabled:true,approvedRequestedModel:null,maxConcurrentJobs:4,
-    monthlyUnitBudget:null,featureFlags:{},policyVersion:'implicit-v1',source:'implicit'
+    monthlyUnitBudget:null,featureFlags:{},policyVersion:'implicit-v1',source:'implicit',
+    usage:{activeJobs:0,monthUnits:0,estimatedCost:null,costStatus:'not_configured'}
   }
   const {rows}=await pool.query(
     `SELECT * FROM ace_ai_task_policies WHERE workspace_id=$1 AND task=$2`,
@@ -21,7 +49,8 @@ export const getAiTaskPolicy=async(workspaceId,task)=>{
   )
   if(!rows[0])return {
     workspaceId,task,enabled:true,approvedRequestedModel:null,maxConcurrentJobs:4,
-    monthlyUnitBudget:null,featureFlags:{},policyVersion:'implicit-v1',source:'implicit'
+    monthlyUnitBudget:null,featureFlags:{},policyVersion:'implicit-v1',source:'implicit',
+    usage:await readTaskUsage(workspaceId,task)
   }
   const row=rows[0]
   return {
