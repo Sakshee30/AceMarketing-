@@ -106,6 +106,57 @@ const request = async <T>(path: string, init?: AceRequestInit): Promise<T> => {
   return payload as T
 }
 
+export const streamAiJob=async(id:string,onEvent:(event:{event:string;data:any})=>void,signal?:AbortSignal)=>{
+  const runtime=getPublicRuntimeConfig()
+  const token=getToken()
+  const controller=new AbortController()
+  const abort=()=>{try{controller.abort((signal as any)?.reason||'caller_cancelled')}catch{}}
+  if(signal){
+    if(signal.aborted)abort()
+    else signal.addEventListener('abort',abort,{once:true})
+  }
+  try{
+    const response=await fetch(runtime.apiBasePath+'/ai/jobs/'+encodeURIComponent(id)+'/events',{
+      method:'GET',
+      signal:controller.signal,
+      headers:{
+        Accept:'text/event-stream',
+        'X-Workspace-ID':getWorkspace(),
+        ...(token?{Authorization:'Bearer '+token}:{})
+      }
+    })
+    if(!response.ok)throw new AceApiError('AI job stream failed: '+response.status,response.status,response.headers.get('x-request-id')||'',{})
+    if(!response.body)throw new AceApiError('AI job stream body is unavailable',0,'',{cause:'missing_stream'})
+    const reader=response.body.getReader()
+    const decoder=new TextDecoder()
+    let buffer=''
+    while(true){
+      const chunk=await reader.read()
+      if(chunk.done)break
+      buffer+=decoder.decode(chunk.value,{stream:true})
+      buffer=buffer.replace(/\r\n/g,'\n')
+      let boundary=buffer.indexOf('\n\n')
+      while(boundary>=0){
+        const block=buffer.slice(0,boundary)
+        buffer=buffer.slice(boundary+2)
+        let event='message'
+        let data=''
+        for(const line of block.split('\n')){
+          if(line.startsWith('event:'))event=line.slice(6).trim()
+          else if(line.startsWith('data:'))data+=line.slice(5).trim()
+        }
+        if(data){
+          try{onEvent({event,data:JSON.parse(data)})}
+          catch{onEvent({event,data})}
+        }
+        boundary=buffer.indexOf('\n\n')
+      }
+    }
+  }finally{
+    if(signal)signal.removeEventListener('abort',abort)
+  }
+}
+
 export const api = {
   health: () => request<{ ok: boolean; service: string }>('/health'),
   dashboardSummary: (options?:{signal?:AbortSignal}) => request('/dashboard-summary',{signal:options?.signal}),
@@ -234,13 +285,49 @@ export const api = {
   modelValidation: (name: string, options?:{signal?:AbortSignal}) => request('/models/validation?name=' + encodeURIComponent(name),{signal:options?.signal}),
   runModel: (name: string) => request('/models/run', { method: 'POST', body: JSON.stringify({ name }) }),
   aiRegistry: (options?:{signal?:AbortSignal}) => request('/ai/registry',{signal:options?.signal}),
+  aiTaskPolicies: (options?:{signal?:AbortSignal}) => request('/ai/task-policies',{signal:options?.signal}),
+  saveAiTaskPolicy: (task:string,payload:Record<string,unknown>) => request('/ai/task-policies/'+encodeURIComponent(task),{method:'POST',body:JSON.stringify(payload)}),
+  aiTranscripts: (options?:{signal?:AbortSignal}) => request('/ai/transcripts',{signal:options?.signal}),
+  aiCreativeAssets: (options?:{signal?:AbortSignal}) => request('/ai/creative-assets',{signal:options?.signal}),
+  aiAnomalies: (status?:string,options?:{signal?:AbortSignal}) => request('/ai/anomalies'+(status?'?status='+encodeURIComponent(status):''),{signal:options?.signal}),
+  reviewAiAnomaly: (resultId:string,entityId:string,payload:Record<string,unknown>) => request('/ai/anomalies/'+encodeURIComponent(resultId)+'/'+encodeURIComponent(entityId)+'/review',{method:'POST',body:JSON.stringify(payload)}),
+  aiSegments: (options?:{signal?:AbortSignal}) => request('/ai/segments',{signal:options?.signal}),
+  aiSegmentMembers: (snapshotId:string,options?:{signal?:AbortSignal}) => request('/ai/segments/'+encodeURIComponent(snapshotId)+'/members',{signal:options?.signal}),
+  aiRankings: (resultId?:string,options?:{signal?:AbortSignal}) => request('/ai/rankings'+(resultId?'?resultId='+encodeURIComponent(resultId):''),{signal:options?.signal}),
+  aiForecastRecords: (task?:string,options?:{signal?:AbortSignal}) => request('/ai/forecast-records'+(task?'?task='+encodeURIComponent(task):''),{signal:options?.signal}),
+  aiCausalRecords: (options?:{signal?:AbortSignal}) => request('/ai/causal-records',{signal:options?.signal}),
+  aiMarketingMixRecords: (options?:{signal?:AbortSignal}) => request('/ai/marketing-mix-records',{signal:options?.signal}),
+  reviewAiCreativeAsset: (id:string,payload:{status:'in_review'|'approved'|'rejected';reason?:string}) => request('/ai/creative-assets/'+encodeURIComponent(id)+'/review',{method:'POST',body:JSON.stringify(payload)}),
+  aiActivationProposals: (status?:string,options?:{signal?:AbortSignal}) => request('/ai/activation-proposals'+(status?'?status='+encodeURIComponent(status):''),{signal:options?.signal}),
+  createAiActivationProposal: (payload:Record<string,unknown>) => request('/ai/activation-proposals',{method:'POST',body:JSON.stringify(payload)}),
+  approveAiActivationProposal: (id:string) => request('/ai/activation-proposals/'+encodeURIComponent(id)+'/approve',{method:'POST',body:JSON.stringify({})}),
+  rejectAiActivationProposal: (id:string,reason?:string) => request('/ai/activation-proposals/'+encodeURIComponent(id)+'/reject',{method:'POST',body:JSON.stringify({reason:reason||'Rejected by reviewer'})}),
+  aiAnalysis: (question:string,options?:{signal?:AbortSignal;operationId?:string}) => request('/ai/analysis',{method:'POST',signal:options?.signal,headers:options?.operationId?{'Idempotency-Key':options.operationId}:undefined,body:JSON.stringify({question})}),
+  aiMetricCatalog: (options?:{signal?:AbortSignal}) => request('/ai/metrics/catalog',{signal:options?.signal}),
+  aiMlCapabilities: (options?:{signal?:AbortSignal}) => request('/ai/ml/capabilities',{signal:options?.signal}),
+  aiMlScore: (payload:Record<string,unknown>,options?:{operationId?:string}) => request('/ai/ml/score',{method:'POST',headers:options?.operationId?{'Idempotency-Key':options.operationId}:undefined,body:JSON.stringify(payload)}),
+  aiMlSeasonalForecast: (payload:Record<string,unknown>,options?:{operationId?:string}) => request('/ai/ml/forecast/seasonal-naive',{method:'POST',headers:options?.operationId?{'Idempotency-Key':options.operationId}:undefined,body:JSON.stringify(payload)}),
+  aiMlChronosForecast: (payload:Record<string,unknown>,options?:{operationId?:string}) => request('/ai/ml/forecast/chronos-2',{method:'POST',headers:options?.operationId?{'Idempotency-Key':options.operationId}:undefined,body:JSON.stringify(payload)}),
+  aiMlForecastChallenger: (payload:Record<string,unknown>,options?:{operationId?:string}) => request('/ai/ml/forecast/catboost-challenger',{method:'POST',headers:options?.operationId?{'Idempotency-Key':options.operationId}:undefined,body:JSON.stringify(payload)}),
+  aiMlMarketingMix: (payload:Record<string,unknown>,options?:{operationId?:string}) => request('/ai/ml/marketing-mix',{method:'POST',headers:options?.operationId?{'Idempotency-Key':options.operationId}:undefined,body:JSON.stringify(payload)}),
+  aiMlIncrementality: (payload:Record<string,unknown>,options?:{operationId?:string}) => request('/ai/ml/incrementality',{method:'POST',headers:options?.operationId?{'Idempotency-Key':options.operationId}:undefined,body:JSON.stringify(payload)}),
+  aiMlAnomalies: (payload:Record<string,unknown>,options?:{operationId?:string}) => request('/ai/ml/anomalies',{method:'POST',headers:options?.operationId?{'Idempotency-Key':options.operationId}:undefined,body:JSON.stringify(payload)}),
+  aiMlSegments: (payload:Record<string,unknown>,options?:{operationId?:string}) => request('/ai/ml/segments',{method:'POST',headers:options?.operationId?{'Idempotency-Key':options.operationId}:undefined,body:JSON.stringify(payload)}),
+  aiMlRank: (payload:Record<string,unknown>,options?:{operationId?:string}) => request('/ai/ml/rank',{method:'POST',headers:options?.operationId?{'Idempotency-Key':options.operationId}:undefined,body:JSON.stringify(payload)}),
+  retireAiDataset: (id:string) => request('/ai/datasets/'+encodeURIComponent(id)+'/retire',{method:'POST',body:JSON.stringify({})}),
+  revokeAiKnowledge: (id:string) => request('/ai/knowledge/'+encodeURIComponent(id)+'/revoke',{method:'POST',body:JSON.stringify({})}),
   verifyAiProviderAccess: (task:string) => request('/ai/providers/'+encodeURIComponent(task)+'/verify',{method:'POST',body:JSON.stringify({})}),
   aiEvaluations: (task?:string,options?:{signal?:AbortSignal}) => request('/ai/evaluations'+(task?'?task='+encodeURIComponent(task):''),{signal:options?.signal}),
   aiEvaluationPolicy: (task:string,options?:{signal?:AbortSignal}) => request('/ai/evaluation-policy?task='+encodeURIComponent(task),{signal:options?.signal}),
   saveAiEvaluationPolicy: (payload:Record<string,unknown>) => request('/ai/evaluation-policy',{method:'POST',body:JSON.stringify(payload)}),
   qualifyAiEvaluation: (evaluationId:string) => request('/ai/evaluations/'+encodeURIComponent(evaluationId)+'/qualify',{method:'POST',body:JSON.stringify({})}),
   promoteAiModel: (task:string,evaluationId:string) => request('/ai/models/'+encodeURIComponent(task)+'/promote',{method:'POST',body:JSON.stringify({evaluationId})}),
+  deployAiModel: (task:string) => request('/ai/models/'+encodeURIComponent(task)+'/deploy',{method:'POST',body:JSON.stringify({})}),
+  undeployAiModel: (task:string) => request('/ai/models/'+encodeURIComponent(task)+'/undeploy',{method:'POST',body:JSON.stringify({})}),
   rollbackAiModel: (task:string) => request('/ai/models/'+encodeURIComponent(task)+'/rollback',{method:'POST',body:JSON.stringify({})}),
+  createLiveVoiceSession: () => request('/ai/live-voice/sessions',{method:'POST',body:JSON.stringify({})}),
+  liveVoiceSession: (id:string) => request('/ai/live-voice/sessions/'+encodeURIComponent(id)),
+  terminateLiveVoiceSession: (id:string) => request('/ai/live-voice/sessions/'+encodeURIComponent(id)+'/terminate',{method:'POST',body:JSON.stringify({})}),
   attribution: () => request('/attribution'),
   reports: () => request('/reports'),
   cohorts: (months=6) => request('/cohorts?months='+months),

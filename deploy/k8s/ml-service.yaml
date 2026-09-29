@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: acemarketing-ml-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: acemarketing-ml-service}
+  template:
+    metadata:
+      labels: {app: acemarketing-ml-service}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: {type: RuntimeDefault}
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: ml-service
+          image: acemarketing-ml:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - {name: http, containerPort: 8000}
+          envFrom:
+            - secretRef: {name: acemarketing-ai-secrets}
+            - configMapRef: {name: acemarketing-ai-config}
+          readinessProbe:
+            httpGet: {path: /health, port: http}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet: {path: /health, port: http}
+            initialDelaySeconds: 20
+            periodSeconds: 20
+            timeoutSeconds: 3
+          resources:
+            requests: {cpu: "500m", memory: "1Gi"}
+            limits: {cpu: "2", memory: "4Gi"}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: ["ALL"]}
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
+            - {name: artifacts, mountPath: /var/lib/acemarketing-ml/artifacts}
+      volumes:
+        - name: tmp
+          emptyDir: {sizeLimit: 2Gi}
+        - name: artifacts
+          persistentVolumeClaim: {claimName: acemarketing-ml-artifacts}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: acemarketing-ml-service
+spec:
+  selector: {app: acemarketing-ml-service}
+  ports:
+    - {name: http, port: 8000, targetPort: http}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: acemarketing-ml-artifacts
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests: {storage: 20Gi}
+---
+# ReadWriteOnce artifact PVC intentionally caps horizontal scaling at one replica.
+# Use a shared RWX volume or object-store-only serving layout before increasing this.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: acemarketing-ml-service
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: acemarketing-ml-service
+  minReplicas: 1
+  maxReplicas: 1
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: {type: Utilization, averageUtilization: 70}

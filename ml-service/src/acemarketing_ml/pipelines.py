@@ -126,7 +126,26 @@ def train_classification(request) -> dict[str, Any]:
     calibrator.fit(x_cal, y_cal)
 
     probability = calibrator.predict_proba(x_test)[:, 1]
-    predicted = (probability >= 0.5).astype(int)
+    predicted = (probability >= request.decision_threshold).astype(int)
+    ranked = sorted(zip(probability.tolist(), y_test, strict=True), key=lambda item: item[0], reverse=True)
+    capacity_n = max(1, min(len(ranked), int(math.ceil(len(ranked) * request.operating_capacity_fraction))))
+    top_positives = sum(label for _, label in ranked[:capacity_n])
+    overall_rate = float(sum(y_test) / len(y_test))
+    top_rate = float(top_positives / capacity_n)
+    lift_at_capacity = float(top_rate / overall_rate) if overall_rate > 0 else None
+    reliability = []
+    for lower in [0.0, 0.2, 0.4, 0.6, 0.8]:
+        upper = lower + 0.2
+        indexes = [index for index, value in enumerate(probability) if lower <= float(value) < upper or (upper >= 1.0 and float(value) == 1.0)]
+        if not indexes:
+            continue
+        reliability.append({
+            "lower": lower,
+            "upper": min(1.0, upper),
+            "count": len(indexes),
+            "meanProbability": float(sum(float(probability[index]) for index in indexes) / len(indexes)),
+            "observedRate": float(sum(y_test[index] for index in indexes) / len(indexes)),
+        })
     metrics = {
         "precision": float(precision_score(y_test, predicted, zero_division=0)),
         "recall": float(recall_score(y_test, predicted, zero_division=0)),
@@ -134,7 +153,11 @@ def train_classification(request) -> dict[str, Any]:
         "logLoss": float(log_loss(y_test, probability, labels=[0, 1])),
         "brier": float(brier_score_loss(y_test, probability)),
         "testRows": len(y_test),
-        "positiveRate": float(sum(y_test) / len(y_test)),
+        "positiveRate": overall_rate,
+        "decisionThreshold": request.decision_threshold,
+        "operatingCapacityFraction": request.operating_capacity_fraction,
+        "liftAtCapacity": lift_at_capacity,
+        "reliability": reliability,
     }
 
     artifact_id = request.run_id or f"{request.task}_{uuid4().hex}"
@@ -158,6 +181,10 @@ def train_classification(request) -> dict[str, Any]:
             "testRows": len(test),
             "labelCutoff": request.label_cutoff.isoformat(),
             "randomSeed": request.random_seed,
+            "datasetId": request.dataset_id,
+            "datasetHash": request.dataset_hash,
+            "featureSchemaVersion": request.feature_schema_version,
+            "labelSchemaVersion": request.label_schema_version,
         },
     )
     return {
@@ -207,10 +234,15 @@ def train_regression(request) -> dict[str, Any]:
     )
     prediction = np.asarray(model.predict(x_test), dtype=float)
     residual = prediction - y_test
+    baseline_value = float(np.mean(y_train))
+    baseline_prediction = np.full_like(y_test, baseline_value, dtype=float)
     metrics = {
         "mae": float(mean_absolute_error(y_test, prediction)),
         "rmse": float(math.sqrt(mean_squared_error(y_test, prediction))),
         "bias": float(residual.mean()),
+        "baselineMae": float(mean_absolute_error(y_test, baseline_prediction)),
+        "baselineRmse": float(math.sqrt(mean_squared_error(y_test, baseline_prediction))),
+        "baselineValue": baseline_value,
         "testRows": len(y_test),
     }
     artifact_id = request.run_id or f"{request.task}_{request.horizon}_{uuid4().hex}"
@@ -227,6 +259,10 @@ def train_regression(request) -> dict[str, Any]:
             "testRows": len(test),
             "labelCutoff": request.label_cutoff.isoformat(),
             "randomSeed": request.random_seed,
+            "datasetId": request.dataset_id,
+            "datasetHash": request.dataset_hash,
+            "featureSchemaVersion": request.feature_schema_version,
+            "labelSchemaVersion": request.label_schema_version,
         },
     )
     return {
@@ -694,4 +730,317 @@ def fit_meridian(request) -> dict[str, Any]:
             ),
         },
         "warning": "MMM estimates depend on model specification, priors, controls and identification assumptions; attribution is not relabelled as causal incrementality.",
+    }
+
+
+def _prediction_frame(rows, feature_names, categorical_features):
+    import pandas as pd
+
+    frame = pd.DataFrame(
+        [{name: row.features.get(name) for name in feature_names} for row in rows],
+        columns=feature_names,
+    )
+    categorical = set(categorical_features)
+    for name in feature_names:
+        if name in categorical:
+            frame[name] = frame[name].fillna("__missing__").astype(str)
+        else:
+            frame[name] = pd.to_numeric(frame[name], errors="coerce")
+    return frame
+
+
+def score_artifact(request) -> dict[str, Any]:
+    artifact = ArtifactStore().load_verified_joblib(request.artifact_id, request.artifact_sha256)
+    artifact_task = str(artifact.get("task") or "")
+    if artifact_task != request.task:
+        raise ValueError("artifact task does not match requested task")
+    feature_names = list(artifact.get("features") or [])
+    categorical = list(artifact.get("categoricalFeatures") or [])
+    if not feature_names:
+        raise ValueError("artifact does not contain a serving feature schema")
+    frame = _prediction_frame(request.rows, feature_names, categorical)
+
+    items = []
+    if request.task in {"lead_qualification", "paid_conversion", "customer_churn"}:
+        calibrator = artifact.get("calibrator")
+        if calibrator is None:
+            raise ValueError("classification artifact does not contain its fitted calibration component")
+        probabilities = calibrator.predict_proba(frame)[:, 1]
+        for row, probability in zip(request.rows, probabilities, strict=True):
+            items.append(
+                {
+                    "entityId": row.entity_id,
+                    "probability": float(probability),
+                    "horizon": request.horizon,
+                }
+            )
+        result_type = "calibrated_probability"
+    else:
+        if request.horizon and str(artifact.get("horizon") or "") != request.horizon:
+            raise ValueError("artifact horizon does not match requested horizon")
+        model = artifact.get("model")
+        if model is None:
+            raise ValueError("regression artifact does not contain a fitted model")
+        estimates = model.predict(frame)
+        for row, estimate in zip(request.rows, estimates, strict=True):
+            items.append(
+                {
+                    "entityId": row.entity_id,
+                    "estimate": float(estimate),
+                    "horizon": str(artifact.get("horizon") or request.horizon or ""),
+                }
+            )
+        result_type = "regression_estimate"
+
+    return {
+        "task": request.task,
+        "status": "served_from_verified_artifact",
+        "resultType": result_type,
+        "artifact": {
+            "artifactId": request.artifact_id,
+            "sha256": request.artifact_sha256.lower(),
+        },
+        "predictionCutoff": request.prediction_cutoff.isoformat(),
+        "items": items,
+        "warnings": [
+            "Feature contributions, when separately exposed, are associative model explanations and are not causal effects."
+        ],
+    }
+
+
+def forecast_challenger(request) -> dict[str, Any]:
+    import numpy as np
+    import pandas as pd
+    from catboost import CatBoostRegressor
+    from sklearn.metrics import mean_absolute_error, mean_squared_error
+
+    history = sorted(request.history, key=lambda point: point.timestamp)
+    if any(point.value is None for point in history):
+        raise ValueError("history contains unknown observations; unknown values must not be treated as zero")
+    if len(history) < max(request.lags) + max(12, request.horizon):
+        raise ValueError("insufficient_data: lagged challenger needs more history for training and holdout evaluation")
+
+    timestamps = [point.timestamp for point in history]
+    values = np.asarray([float(point.value) for point in history], dtype=float)
+    historical_covariates = {}
+    for item in request.historical_covariates:
+        timestamp = str(item.get("timestamp") or "")
+        if timestamp:
+            historical_covariates[timestamp] = dict(item)
+
+    known_future_keys = {
+        key
+        for item in request.known_future_covariates
+        for key, value in item.items()
+        if key not in {"id", "timestamp", "target"} and isinstance(value, (int, float))
+    }
+    historical_only_keys = {
+        key
+        for item in request.historical_covariates
+        for key, value in item.items()
+        if key not in {"id", "timestamp", "target"}
+        and isinstance(value, (int, float))
+        and key not in known_future_keys
+    }
+
+    if request.known_future_covariates:
+        if len(timestamps) < 2:
+            raise ValueError("insufficient_data: at least two timestamps are required")
+        step = timestamps[-1] - timestamps[-2]
+        if step.total_seconds() <= 0:
+            raise ValueError("history timestamps must be strictly increasing")
+        supplied = {}
+        for item in request.known_future_covariates:
+            timestamp = str(item.get("timestamp") or "")
+            if not timestamp:
+                raise ValueError("missing_future_covariates: each future covariate row requires timestamp")
+            if timestamp in supplied:
+                raise ValueError("missing_future_covariates: duplicate future covariate timestamp")
+            supplied[timestamp] = item
+        expected = [(timestamps[-1] + step * index).isoformat() for index in range(1, request.horizon + 1)]
+        missing = [timestamp for timestamp in expected if timestamp not in supplied]
+        if missing:
+            raise ValueError("missing_future_covariates: every forecast step must be supplied once future covariates are declared")
+        for timestamp in expected:
+            item = supplied[timestamp]
+            absent = [key for key in known_future_keys if not isinstance(item.get(key), (int, float))]
+            if absent:
+                raise ValueError("missing_future_covariates: declared numeric future covariates must be available for every forecast step")
+
+    rows = []
+    targets = []
+    for index in range(max(request.lags), len(values)):
+        row = {f"lag_{lag}": float(values[index - lag]) for lag in request.lags}
+        if request.include_calendar_features:
+            ts = timestamps[index]
+            row.update(
+                {
+                    "dow": int(ts.weekday()),
+                    "month": int(ts.month),
+                    "day": int(ts.day),
+                    "dayofyear": int(ts.timetuple().tm_yday),
+                }
+            )
+        current_covariates = historical_covariates.get(timestamps[index].isoformat(), {})
+        prior_covariates = historical_covariates.get(timestamps[index - 1].isoformat(), {})
+        for key in known_future_keys:
+            value = current_covariates.get(key)
+            if isinstance(value, (int, float)):
+                row[f"cov_{key}"] = float(value)
+        for key in historical_only_keys:
+            value = prior_covariates.get(key)
+            if isinstance(value, (int, float)):
+                row[f"cov_{key}"] = float(value)
+        rows.append(row)
+        targets.append(float(values[index]))
+
+    frame = pd.DataFrame(rows).fillna(0.0)
+    targets_arr = np.asarray(targets, dtype=float)
+    holdout = max(request.horizon, min(max(8, int(len(frame) * 0.2)), max(8, len(frame) // 3)))
+    if len(frame) - holdout < 20:
+        raise ValueError("insufficient_data: lagged challenger leaves fewer than 20 training rows")
+    x_train, x_test = frame.iloc[:-holdout], frame.iloc[-holdout:]
+    y_train, y_test = targets_arr[:-holdout], targets_arr[-holdout:]
+
+    model = CatBoostRegressor(
+        iterations=500,
+        depth=6,
+        learning_rate=0.05,
+        loss_function="MAE",
+        random_seed=request.random_seed,
+        verbose=False,
+        allow_writing_files=False,
+    )
+    model.fit(x_train, y_train, verbose=False)
+    holdout_prediction = np.asarray(model.predict(x_test), dtype=float)
+    metrics = {
+        "mae": float(mean_absolute_error(y_test, holdout_prediction)),
+        "rmse": float(math.sqrt(mean_squared_error(y_test, holdout_prediction))),
+        "bias": float((holdout_prediction - y_test).mean()),
+        "testRows": int(len(y_test)),
+    }
+
+    known_covariates = {}
+    for item in request.known_future_covariates:
+        timestamp = str(item.get("timestamp") or "")
+        if timestamp:
+            known_covariates[timestamp] = dict(item)
+
+    working_values = list(values)
+    forecast = []
+    last_timestamp = timestamps[-1]
+    if len(timestamps) < 2:
+        raise ValueError("insufficient_data: at least two timestamps are required")
+    step = timestamps[-1] - timestamps[-2]
+    if step.total_seconds() <= 0:
+        raise ValueError("history timestamps must be strictly increasing")
+    for horizon_index in range(1, request.horizon + 1):
+        future_timestamp = last_timestamp + step * horizon_index
+        feature_row = {f"lag_{lag}": float(working_values[-lag]) for lag in request.lags}
+        if request.include_calendar_features:
+            feature_row.update(
+                {
+                    "dow": int(future_timestamp.weekday()),
+                    "month": int(future_timestamp.month),
+                    "day": int(future_timestamp.day),
+                    "dayofyear": int(future_timestamp.timetuple().tm_yday),
+                }
+            )
+        covariates = known_covariates.get(future_timestamp.isoformat(), {})
+        for key in known_future_keys:
+            value = covariates.get(key)
+            if isinstance(value, (int, float)):
+                feature_row[f"cov_{key}"] = float(value)
+        latest_observed_covariates = historical_covariates.get(last_timestamp.isoformat(), {})
+        for key in historical_only_keys:
+            value = latest_observed_covariates.get(key)
+            if isinstance(value, (int, float)):
+                feature_row[f"cov_{key}"] = float(value)
+        for column in frame.columns:
+            feature_row.setdefault(column, 0.0)
+        future_frame = pd.DataFrame([feature_row], columns=frame.columns)
+        prediction = float(model.predict(future_frame)[0])
+        forecast.append({"timestamp": future_timestamp.isoformat(), "point": prediction})
+        working_values.append(prediction)
+
+    artifact_id = request.run_id or f"forecast_challenger_{uuid4().hex}"
+    artifact = ArtifactStore().save_joblib(
+        artifact_id,
+        {
+            "task": "forecast_challenger",
+            "model": model,
+            "features": list(frame.columns),
+            "lags": list(request.lags),
+            "frequency": request.frequency,
+        },
+        {
+            "task": "forecast_challenger",
+            "kind": "catboost_lag_regressor",
+            "seriesId": request.series_id,
+            "frequency": request.frequency,
+            "timezone": request.timezone,
+            "lags": list(request.lags),
+            "randomSeed": request.random_seed,
+            "trainingRows": int(len(x_train)),
+            "testRows": int(len(x_test)),
+        },
+    )
+    return {
+        "task": "forecast_challenger",
+        "status": "evaluated_not_promoted",
+        "artifact": artifact,
+        "seriesId": request.series_id,
+        "horizon": request.horizon,
+        "frequency": request.frequency,
+        "timezone": request.timezone,
+        "pointForecast": forecast,
+        "metrics": metrics,
+        "intervals": None,
+        "warning": "Recursive lag forecasts are predictive only; future covariates are accepted only when explicitly supplied as known at forecast time.",
+        "promotion": {"approved": False, "reason": "Compare against seasonal-naive and Chronos on predeclared rolling-origin criteria before promotion."},
+    }
+
+
+def score_ranker(request) -> dict[str, Any]:
+    import pandas as pd
+
+    artifact = ArtifactStore().load_verified_joblib(request.artifact_id, request.artifact_sha256)
+    if str(artifact.get("task") or "") != "offer_ranking":
+        raise ValueError("artifact is not an offer-ranking artifact")
+    model = artifact.get("model")
+    feature_names = list(artifact.get("features") or [])
+    if model is None or not feature_names:
+        raise ValueError("ranker artifact is missing model or feature schema")
+
+    groups = []
+    for group in request.groups:
+        eligible = [candidate for candidate in group.candidates if candidate.eligible]
+        if not eligible:
+            groups.append({"groupId": group.group_id, "items": []})
+            continue
+        frame = pd.DataFrame(
+            [{name: candidate.features.get(name, 0.0) for name in feature_names} for candidate in eligible],
+            columns=feature_names,
+        ).fillna(0.0)
+        scores = model.predict(frame)
+        items = sorted(
+            [
+                {"candidateId": candidate.candidate_id, "score": float(score)}
+                for candidate, score in zip(eligible, scores, strict=True)
+            ],
+            key=lambda item: item["score"],
+            reverse=True,
+        )
+        for position, item in enumerate(items, start=1):
+            item["rank"] = position
+        groups.append({"groupId": group.group_id, "items": items})
+
+    return {
+        "task": "offer_ranking",
+        "status": "served_from_verified_artifact",
+        "resultType": "ranking",
+        "artifact": {"artifactId": request.artifact_id, "sha256": request.artifact_sha256.lower()},
+        "predictionCutoff": request.prediction_cutoff.isoformat(),
+        "groups": groups,
+        "warning": "Eligibility and consent exclusions are applied before ranking; ranking scores do not prove incremental lift.",
     }

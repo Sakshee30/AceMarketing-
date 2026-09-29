@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import pg from 'pg'
 import { modelRegistrySnapshot } from './ai-registry.mjs'
+import { persistDomainResult } from './ai-domain-results.mjs'
 
 const { Pool }=pg
 const databaseUrl=process.env.DATABASE_URL||''
@@ -112,11 +113,16 @@ export const getTenantRegistry=async workspaceId=>{
   })
 }
 
-const resultTypeForTask=task=>{
-  if(['lead_qualification','paid_conversion','customer_churn'].includes(task))return 'calibrated_probability'
-  if(task==='future_customer_value')return 'regression_estimate'
+const resultTypeForExecution=(task,operation)=>{
+  if(['classification_train','regression_train','offer_ranking'].includes(operation))return 'model_evaluation'
+  if(operation==='artifact_score'){
+    if(['lead_qualification','paid_conversion','customer_churn'].includes(task))return 'calibrated_probability'
+    if(task==='future_customer_value')return 'regression_estimate'
+  }
+  if(operation==='offer_ranking_score')return 'ranking'
   if(task.startsWith('forecast_'))return 'forecast_distribution'
-  if(task==='incrementality'||task==='marketing_mix')return 'causal_estimate'
+  if(task==='incrementality')return 'causal_estimate'
+  if(task==='marketing_mix')return 'marketing_mix_analysis'
   if(task==='anomaly_detection')return 'anomaly_score'
   if(task==='behavioral_segments')return 'cluster_assignment'
   if(task==='offer_ranking')return 'ranking'
@@ -134,6 +140,7 @@ export const recordMlExecution=async({workspaceId,job,result})=>{
   if(!pool)return null
   await syncTenantRegistry(workspaceId)
   const task=String(result?.task||job.payload?.task||'')
+  const operation=String(job.payload?.operation||'')
   if(!task)throw new Error('ML result task is required')
   const payload=result?.result||result
   const artifact=payload?.artifact||null
@@ -151,12 +158,13 @@ export const recordMlExecution=async({workspaceId,job,result})=>{
          source_snapshot,target,horizon,warnings,evidence_refs,payload,usage)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'ml-result.v1',$10::jsonb,$11,$12,$13::jsonb,'[]'::jsonb,$14::jsonb,NULL)`,
       [
-        resultId,workspaceId,job.id,task,blocked?'blocked':'completed',resultTypeForTask(task),
+        resultId,workspaceId,job.id,task,blocked?'blocked':'completed',resultTypeForExecution(task,operation),
         null,null,artifact?.artifactId||null,JSON.stringify(job.input_snapshot||{}),
         payload?.target||null,payload?.horizon||null,JSON.stringify(warnings),
         JSON.stringify(payload)
       ]
     )
+    await persistDomainResult(client,{workspaceId,resultId,task,operation,payload})
     if(evalId){
       const metrics=evaluationMetrics(payload)
       await client.query(
@@ -373,6 +381,55 @@ export const qualifyEvaluation=async({workspaceId,evaluationId,actor=null})=>{
   }finally{
     client.release()
   }
+}
+
+export const deployModel=async({workspaceId,task,actor=null})=>{
+  if(!pool)throw new Error('DATABASE_URL is required for deployment state')
+  await syncTenantRegistry(workspaceId)
+  const client=await pool.connect()
+  try{
+    await client.query('BEGIN')
+    const {rows}=await client.query(
+      `SELECT * FROM ace_ai_model_registry WHERE workspace_id=$1 AND task=$2 FOR UPDATE`,
+      [workspaceId,task]
+    )
+    const current=rows[0]
+    if(!current)throw new Error('model registry entry not found')
+    if(current.documentation_verified!==true)throw new Error('model documentation verification is incomplete')
+    if(current.evaluation_status!=='qualified')throw new Error('model has not passed its predeclared evaluation gate')
+    if(current.approval_status!=='approved')throw new Error('model has not been approved')
+    if(current.kind==='hosted_model'&&current.access_verified!==true)throw new Error('hosted provider access is not verified')
+    if(current.kind!=='hosted_model'&&current.kind!=='deterministic_baseline'&&!current.artifact_revision){
+      throw new Error('fitted model has no registered artifact revision')
+    }
+    const {rows:updated}=await client.query(
+      `UPDATE ace_ai_model_registry
+       SET deployment_status='deployed',updated_at=now()
+       WHERE workspace_id=$1 AND task=$2
+       RETURNING *`,
+      [workspaceId,task]
+    )
+    await client.query('COMMIT')
+    return {...updated[0],deploymentActor:actor?.userId||null}
+  }catch(error){
+    await client.query('ROLLBACK').catch(()=>{})
+    throw error
+  }finally{
+    client.release()
+  }
+}
+
+export const undeployModel=async({workspaceId,task,actor=null})=>{
+  if(!pool)throw new Error('DATABASE_URL is required for deployment state')
+  const {rows}=await pool.query(
+    `UPDATE ace_ai_model_registry
+     SET deployment_status='not_deployed',updated_at=now()
+     WHERE workspace_id=$1 AND task=$2
+     RETURNING *`,
+    [workspaceId,task]
+  )
+  if(!rows[0])throw new Error('model registry entry not found')
+  return {...rows[0],deploymentActor:actor?.userId||null}
 }
 
 export const rollbackModel=async({workspaceId,task,actor=null})=>{

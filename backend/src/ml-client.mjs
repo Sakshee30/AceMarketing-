@@ -1,5 +1,11 @@
-const baseUrl=()=>String(process.env.ML_SERVICE_URL||'').replace(/\/$/,'')
-const authToken=()=>String(process.env.ML_SERVICE_AUTH_TOKEN||'')
+const serviceUrl=profile=>{
+  const envName=profile==='forecasting'?'ML_FORECAST_SERVICE_URL':profile==='causal'?'ML_CAUSAL_SERVICE_URL':profile==='mmm'?'ML_MMM_SERVICE_URL':'ML_SERVICE_URL'
+  return String(process.env[envName]||process.env.ML_SERVICE_URL||'').replace(/\/$/,'')
+}
+const authToken=profile=>{
+  const envName=profile==='forecasting'?'ML_FORECAST_SERVICE_AUTH_TOKEN':profile==='causal'?'ML_CAUSAL_SERVICE_AUTH_TOKEN':profile==='mmm'?'ML_MMM_SERVICE_AUTH_TOKEN':'ML_SERVICE_AUTH_TOKEN'
+  return String(process.env[envName]||process.env.ML_SERVICE_AUTH_TOKEN||'')
+}
 const timeoutMs=()=>Number(process.env.ML_SERVICE_TIMEOUT_MS||120000)
 
 export class MlServiceError extends Error{
@@ -11,18 +17,30 @@ export class MlServiceError extends Error{
   }
 }
 
-export const mlServiceConfigured=()=>Boolean(baseUrl()&&authToken())
+const operationProfile=operation=>{
+  if(operation==='forecast_chronos')return 'forecasting'
+  if(operation==='incrementality')return 'causal'
+  if(operation==='marketing_mix')return 'mmm'
+  return 'core'
+}
 
-const requestJson=async(path,{method='GET',body=null}={})=>{
-  if(!mlServiceConfigured()) throw new MlServiceError('ML service is not configured',{status:503})
+export const mlServiceConfigured=(operation=null)=>{
+  const profile=operation?operationProfile(operation):'core'
+  return Boolean(serviceUrl(profile)&&authToken(profile))
+}
+
+const requestJson=async(path,{method='GET',body=null,profile='core'}={})=>{
+  const baseUrl=serviceUrl(profile)
+  const token=authToken(profile)
+  if(!baseUrl||!token) throw new MlServiceError('ML service profile '+profile+' is not configured',{status:503})
   const controller=new AbortController()
   const timeout=setTimeout(()=>controller.abort('ml_service_timeout'),timeoutMs())
   try{
-    const response=await fetch(baseUrl()+path,{
+    const response=await fetch(baseUrl+path,{
       method,
       headers:{
         'Content-Type':'application/json',
-        'X-Internal-Token':authToken()
+        'X-Internal-Token':token
       },
       ...(body===null?{}:{body:JSON.stringify(body)}),
       signal:controller.signal
@@ -47,23 +65,28 @@ export const getMlCapabilities=()=>requestJson('/v1/capabilities')
 const operationPaths={
   classification_train:'/v1/train/classification',
   regression_train:'/v1/train/regression',
+  artifact_score:'/v1/score/artifact',
   forecast_baseline:'/v1/forecast/seasonal-naive',
+  forecast_challenger:'/v1/forecast/catboost-challenger',
   forecast_chronos:'/v1/forecast/chronos-2',
   incrementality:'/v1/causal/forest-dml',
   marketing_mix:'/v1/mmm/meridian',
   anomaly_detection:'/v1/anomalies/isolation-forest',
   behavioral_segments:'/v1/segments/hdbscan',
-  offer_ranking:'/v1/rank/lgbm'
+  offer_ranking:'/v1/rank/lgbm',
+  offer_ranking_score:'/v1/rank/lgbm/score'
 }
 
 export const executeMlJob=async job=>{
   const operation=String(job.payload?.operation||'')
   const path=operationPaths[operation]
   if(!path) throw new MlServiceError('unsupported ML job operation: '+operation,{status:400})
+  const profile=operationProfile(operation)
   const body={...(job.payload?.request||{}),run_id:job.id}
-  const result=await requestJson(path,{method:'POST',body})
+  const result=await requestJson(path,{method:'POST',body,profile})
   return {
     operation,
+    profile,
     task:String(job.payload?.task||result?.task||''),
     result,
     resultSchemaVersion:'ml-result.v1'

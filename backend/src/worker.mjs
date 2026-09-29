@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { closeQueue, completeJob, failJob, heartbeatJob, leaseJobs, markUnknownOutcome, queueAvailable } from './queue.mjs'
+import { closeQueue, completeJob, failJob, heartbeatJob, leaseJobs, markUnknownOutcome, queueAvailable, reconcileAiUsageReservation } from './queue.mjs'
 import { deliverSignal } from './providers.mjs'
 import { syncAudienceProvider, writebackLead } from './activation-adapters.mjs'
 import { closeLeadOps, updateActivationRun, updateAudienceSyncState } from './lead-ops.mjs'
@@ -26,6 +26,18 @@ const reportSchedulePollMs=Number(process.env.REPORT_SCHEDULER_POLL_MS||30000)
 let lastAudienceSchedulePoll=0
 let lastReportSchedulePoll=0
 let stopping=false
+
+const usageUnitsFromResult=result=>{
+  const usage=result?.usage
+  if(!usage||typeof usage!=='object')return null
+  const candidates=[
+    usage.total_tokens,usage.totalTokens,usage.totalTokenCount,
+    usage.input_tokens!=null&&usage.output_tokens!=null?Number(usage.input_tokens)+Number(usage.output_tokens):null,
+    usage.promptTokenCount!=null&&usage.candidatesTokenCount!=null?Number(usage.promptTokenCount)+Number(usage.candidatesTokenCount):null
+  ]
+  const value=candidates.map(Number).find(Number.isFinite)
+  return Number.isFinite(value)?Math.max(0,value):null
+}
 
 const updateDelivery=async(workspaceId,deliveryId,patch)=>withWorkspace(workspaceId,()=>mutateState(s=>{
   const item=(s.signalDeliveries||[]).find(x=>x.id===deliveryId)
@@ -150,7 +162,8 @@ const runBatch=async()=>{
         workerId,
         fencingToken:job.fencing_token,
         externalRequestId:result?.providerRequestId||null,
-        resultSchemaVersion:job.result_schema_version||null
+        resultSchemaVersion:job.result_schema_version||null,
+        actualUnits:usageUnitsFromResult(result)
       })
     }catch(error){
       if(error instanceof ProviderExecutionError&&error.unknownOutcome){
@@ -161,10 +174,16 @@ const runBatch=async()=>{
           externalRequestId:error.providerRequestId||null,
           errorMessage:error.message
         }).catch(()=>{})
+        if(['ai_hosted_task','ml_task'].includes(job.kind)){
+          await reconcileAiUsageReservation({workspaceId:job.workspace_id,jobId:job.id,actualUnits:null,status:'unknown'}).catch(()=>{})
+        }
         continue
       }
       const failed=await failJob(job.id,error instanceof Error?error.message:String(error),{workerId,fencingToken:job.fencing_token})
       const message=error instanceof Error?error.message:String(error)
+      if(failed?.status==='dead_letter'&&['ai_hosted_task','ml_task'].includes(job.kind)){
+        await reconcileAiUsageReservation({workspaceId:job.workspace_id,jobId:job.id,actualUnits:null,status:'released'}).catch(()=>{})
+      }
       if(job.payload?.deliveryId){
         await updateDelivery(job.workspace_id,job.payload.deliveryId,{status:failed?.status==='dead_letter'?'dead_letter':'retrying',attempts:job.attempts,lastError:message,nextAttemptAt:failed?.available_at||null}).catch(()=>{})
       }

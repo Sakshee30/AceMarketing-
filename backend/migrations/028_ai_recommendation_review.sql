@@ -1,0 +1,1 @@
+-- Compatibility migration marker. Reviewer-governance columns moved to 029_ai_recommendation_review.sql so activation governance remains the authoritative 028 migration.

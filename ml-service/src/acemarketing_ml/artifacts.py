@@ -132,8 +132,12 @@ class ArtifactStore:
         try:
             if not path.exists():
                 raise FileNotFoundError("artifact not found")
-            digest = hashlib.sha256(path.read_bytes()).hexdigest()
-            if digest != expected_sha256:
+            recorded_sha256 = str(metadata.get("sha256") or "").lower()
+            expected = str(expected_sha256 or "").lower()
+            if not recorded_sha256 or recorded_sha256 != expected:
+                raise RuntimeError("artifact metadata hash does not match requested hash")
+            digest = hashlib.sha256(path.read_bytes()).hexdigest().lower()
+            if digest != recorded_sha256:
                 raise RuntimeError("artifact hash verification failed")
             return joblib.load(path)
         finally:

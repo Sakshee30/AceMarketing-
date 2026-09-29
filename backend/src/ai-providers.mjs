@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { modelRegistryItem } from './ai-registry.mjs'
+import { aiPromptTemplate } from './ai-prompts.mjs'
 
 const requestTimeoutMs=Number(process.env.AI_PROVIDER_TIMEOUT_MS||45000)
 
@@ -116,9 +117,10 @@ const normalizeOpenAIText=response=>{
 
 export const runOpenAIAnalyst=async({question,evidence,instructions})=>{
   const route=requireLiveRoute('analyst')
+  const prompt=aiPromptTemplate('analyst')
   const payload={
     model:route.requestedModel,
-    instructions:String(instructions||'Return a concise grounded analysis using only supplied evidence. Distinguish observed facts, predictions, causal estimates and hypotheses.'),
+    instructions:String(instructions||prompt.system),
     input:[
       {
         role:'user',
@@ -154,7 +156,53 @@ export const runOpenAIAnalyst=async({question,evidence,instructions})=>{
     requestFingerprint:result.requestFingerprint,
     text:normalizeOpenAIText(result.json),
     usage:result.json?.usage||null,
-    rawStatus:result.json?.status||'completed'
+    rawStatus:result.json?.status||'completed',
+    promptVersion:prompt.version
+  }
+}
+
+const normalizeAnthropicText=response=>(response?.content||[])
+  .filter(item=>item?.type==='text'&&typeof item?.text==='string')
+  .map(item=>item.text)
+  .join('\n')
+  .trim()
+
+export const runAnthropicReviewer=async({recommendation,evidence,policy})=>{
+  const route=requireLiveRoute('recommendation_reviewer')
+  const prompt=aiPromptTemplate('recommendation_reviewer')
+  const result=await postJson({
+    provider:'anthropic',
+    task:'recommendation_reviewer',
+    url:process.env.ANTHROPIC_MESSAGES_URL||'https://api.anthropic.com/v1/messages',
+    headers:{
+      'x-api-key':process.env.ANTHROPIC_API_KEY,
+      'anthropic-version':process.env.ANTHROPIC_API_VERSION||'2023-06-01'
+    },
+    body:{
+      model:route.requestedModel,
+      max_tokens:1200,
+      system:prompt.system,
+      messages:[{
+        role:'user',
+        content:JSON.stringify({
+          recommendation:recommendation||{},
+          evidence:evidence||{},
+          policy:policy||{},
+          requirements:{noSelfApproval:true,noInventedNumbers:true,abstainWhenUnsupported:true}
+        })
+      }]
+    }
+  })
+  return {
+    provider:'anthropic',
+    requestedModel:route.requestedModel,
+    resolvedModel:result.json?.model||route.requestedModel,
+    providerRequestId:result.providerRequestId||result.json?.id||null,
+    requestFingerprint:result.requestFingerprint,
+    text:normalizeAnthropicText(result.json),
+    usage:result.json?.usage||null,
+    rawStatus:result.json?.stop_reason||'completed',
+    promptVersion:prompt.version
   }
 }
 
@@ -232,6 +280,62 @@ export const extractWithGemini=async({prompt,inlineData})=>{
   })
 }
 
+const normalizeGoogleText=response=>{
+  const chunks=[]
+  for(const candidate of response?.candidates||[]){
+    for(const part of candidate?.content?.parts||[]){
+      if(typeof part?.text==='string')chunks.push(part.text)
+    }
+  }
+  return chunks.join('\n').trim()
+}
+
+export const transcribeGoogleAudio=async({
+  fileUri,
+  mimeType,
+  diarization=true,
+  wordTimestamps=true,
+  languageCodes=[]
+})=>{
+  const route=requireLiveRoute('call_transcription')
+  const uri=String(fileUri||'').trim()
+  const mime=String(mimeType||'').trim().toLowerCase()
+  if(!/^https:\/\/generativelanguage\.googleapis\.com\/v1beta\/files\//.test(uri)){
+    throw new ProviderExecutionError('transcription requires an authorized Gemini Files API URI',{provider:'google',task:'call_transcription',status:400})
+  }
+  if(!/^audio\/[a-z0-9.+-]+$/i.test(mime)){
+    throw new ProviderExecutionError('transcription requires a validated audio MIME type',{provider:'google',task:'call_transcription',status:400})
+  }
+  const transcriptionConfig={
+    mode:'VERBATIM',
+    languageCodes:(Array.isArray(languageCodes)?languageCodes:[]).map(value=>String(value)).filter(Boolean).slice(0,8),
+    diarization:Boolean(diarization),
+    wordTimestamp:Boolean(wordTimestamps)
+  }
+  const result=await postJson({
+    provider:'google',
+    task:'call_transcription',
+    url:(process.env.GOOGLE_AI_BASE_URL||'https://generativelanguage.googleapis.com/v1beta')+
+      '/models/'+encodeURIComponent(route.requestedModel)+':generateContent?key='+encodeURIComponent(process.env.GOOGLE_AI_API_KEY),
+    headers:{},
+    body:{
+      contents:[{role:'user',parts:[{fileData:{fileUri:uri,mimeType:mime}}]}],
+      generationConfig:{audioTranscriptionConfig:transcriptionConfig}
+    }
+  })
+  return {
+    provider:'google',
+    requestedModel:route.requestedModel,
+    resolvedModel:result.json?.modelVersion||route.requestedModel,
+    providerRequestId:result.providerRequestId||null,
+    requestFingerprint:result.requestFingerprint,
+    text:normalizeGoogleText(result.json),
+    response:result.json,
+    usage:result.json?.usageMetadata||null,
+    transcriptionConfig
+  }
+}
+
 export const generateCreativeImage=async({prompt})=>googleGenerateContent({
   task:'creative_image',
   contents:[{role:'user',parts:[{text:String(prompt||'').slice(0,12000)}]}],
@@ -295,13 +399,11 @@ export const executeHostedTask=async({task,input})=>{
   if(task==='reranking') return rerankVoyage(input||{})
   if(task==='multimodal_extraction') return extractWithGemini(input||{})
   if(task==='creative_image') return generateCreativeImage(input||{})
-  if(task==='recommendation_reviewer'){
+  if(task==='recommendation_reviewer') return runAnthropicReviewer(input||{})
+  if(task==='call_transcription') return transcribeGoogleAudio(input||{})
+  if(task==='live_voice'){
     requireLiveRoute(task)
-    throw new ProviderExecutionError('recommendation reviewer is blocked until the exact requested Anthropic identifier is documentation-verified',{provider:'anthropic',task,status:503})
-  }
-  if(task==='call_transcription'||task==='live_voice'){
-    requireLiveRoute(task)
-    throw new ProviderExecutionError('this capability requires its provider-specific streaming/media transport; generic JSON execution is intentionally blocked',{provider:'google',task,status:501})
+    throw new ProviderExecutionError('live voice requires the provider Live API WebSocket/session transport and is intentionally blocked from generic HTTP execution',{provider:'google',task,status:501})
   }
   throw new ProviderExecutionError('hosted task is not implemented: '+String(task),{task,status:400})
 }

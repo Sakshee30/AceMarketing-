@@ -1,4 +1,4 @@
-import {useEffect,useState} from 'react'
+import {useEffect,useRef,useState} from 'react'
 import {Activity,CalendarDays,CheckCircle2,ChevronRight,PhoneCall,PhoneIncoming,ShieldCheck,Target,X} from 'lucide-react'
 import {callsApi} from '../data/calls.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -6,6 +6,35 @@ import {LoadingState} from '../../../components/system/FrontendStates'
 import {useDirtyWork} from '../../../lib/dirty-work'
 
 type Notice={kind:'ok'|'error'|'unknown'|'',text:string}
+
+const downsamplePcm16=(input:Float32Array,inputRate:number,targetRate=16000)=>{
+ if(inputRate<=0||targetRate<=0)return new Int16Array()
+ const ratio=inputRate/targetRate
+ const length=Math.max(1,Math.floor(input.length/ratio))
+ const output=new Int16Array(length)
+ for(let index=0;index<length;index++){
+  const start=Math.floor(index*ratio)
+  const end=Math.max(start+1,Math.min(input.length,Math.floor((index+1)*ratio)))
+  let sum=0
+  for(let cursor=start;cursor<end;cursor++)sum+=input[cursor]||0
+  const sample=Math.max(-1,Math.min(1,sum/Math.max(1,end-start)))
+  output[index]=sample<0?Math.round(sample*32768):Math.round(sample*32767)
+ }
+ return output
+}
+const pcmToBase64=(pcm:Int16Array)=>{
+ const bytes=new Uint8Array(pcm.buffer,pcm.byteOffset,pcm.byteLength)
+ let binary=''
+ for(let index=0;index<bytes.length;index++)binary+=String.fromCharCode(bytes[index])
+ return btoa(binary)
+}
+const base64ToPcm=(value:string)=>{
+ const binary=atob(value)
+ const buffer=new ArrayBuffer(binary.length)
+ const bytes=new Uint8Array(buffer)
+ for(let index=0;index<binary.length;index++)bytes[index]=binary.charCodeAt(index)
+ return new Int16Array(buffer)
+}
 const unknownOutcome=(error:any)=>['timeout','network'].includes(String(error?.details?.cause||''))
 
 function PageHead({crumb,title,sub,action,onAction,disabled=false}:{crumb:string,title:string,sub:string,action?:string,onAction?:()=>void,disabled?:boolean}){return <div className="page-head"><div><span>{crumb}</span><h1 tabIndex={-1}>{title}</h1><p>{sub}</p></div>{action&&<button className="app-primary" disabled={disabled} onClick={onAction}>{action}</button>}</div>}
@@ -20,6 +49,17 @@ export default function CallsPage(){
  const [loading,setLoading]=useState(true)
  const [notice,setNotice]=useState<Notice>({kind:'',text:''})
  const [builder,setBuilder]=useState(false)
+ const [liveStatus,setLiveStatus]=useState<'idle'|'connecting'|'active'|'ending'|'error'>('idle')
+ const liveStatusRef=useRef<'idle'|'connecting'|'active'|'ending'|'error'>('idle')
+ const [liveSessionId,setLiveSessionId]=useState('')
+ const liveSessionIdRef=useRef('')
+ const liveSocket=useRef<WebSocket|null>(null)
+ const liveStream=useRef<MediaStream|null>(null)
+ const liveContext=useRef<AudioContext|null>(null)
+ const liveProcessor=useRef<ScriptProcessorNode|null>(null)
+ const livePlaybackAt=useRef(0)
+ const livePlaybackSources=useRef<AudioBufferSourceNode[]>([])
+ const liveMicStarted=useRef(false)
 
  useDirtyWork({key:'qualification-call-draft',label:'Voice qualification draft',dirty:builder,scope:'feature'})
 
@@ -37,6 +77,8 @@ export default function CallsPage(){
   finally{setLoading(false)}
  }
  useEffect(()=>{void load()},[])
+ useEffect(()=>{liveStatusRef.current=liveStatus},[liveStatus])
+ useEffect(()=>()=>{void stopLiveVoice(false)},[])
 
  const rows=[...calls,...tracked]
  const visibleRows=rows.slice(0,200)
@@ -62,6 +104,147 @@ export default function CallsPage(){
   }catch(error:any){setNotice(unknownOutcome(error)?{kind:'unknown',text:'Qualification-call admission outcome is unknown. Refresh authoritative call state before submitting the same run again.'}:{kind:'error',text:error?.message||'Qualification call could not be queued.'})}
   finally{setBusy('')}
  }
+ const stopLocalLiveVoice=()=>{
+  liveMicStarted.current=false
+  livePlaybackSources.current.forEach(source=>{try{source.stop()}catch{}})
+  livePlaybackSources.current=[]
+  if(liveProcessor.current){
+   try{liveProcessor.current.disconnect()}catch{}
+   liveProcessor.current.onaudioprocess=null
+   liveProcessor.current=null
+  }
+  liveStream.current?.getTracks().forEach(track=>track.stop())
+  liveStream.current=null
+  if(liveSocket.current){
+   try{liveSocket.current.close(1000,'client ended session')}catch{}
+   liveSocket.current=null
+  }
+  if(liveContext.current){
+   void liveContext.current.close().catch(()=>{})
+   liveContext.current=null
+  }
+  livePlaybackAt.current=0
+ }
+ const stopLiveVoice=async(updateUi=true)=>{
+  const id=liveSessionIdRef.current
+  if(updateUi){liveStatusRef.current='ending';setLiveStatus('ending')}
+  stopLocalLiveVoice()
+  if(id)await callsApi.terminateLiveVoice(id).catch(()=>null)
+  liveSessionIdRef.current=''
+  if(updateUi){setLiveSessionId('');liveStatusRef.current='idle';setLiveStatus('idle')}
+ }
+ const playLiveAudio=(data:string,mimeType:string)=>{
+  const context=liveContext.current
+  if(!context||!data)return
+  const pcm=base64ToPcm(data)
+  if(!pcm.length)return
+  const rate=Number(/rate=(\d+)/i.exec(mimeType||'')?.[1]||24000)
+  const audioBuffer=context.createBuffer(1,pcm.length,rate)
+  const channel=audioBuffer.getChannelData(0)
+  for(let index=0;index<pcm.length;index++)channel[index]=pcm[index]/32768
+  const source=context.createBufferSource()
+  source.buffer=audioBuffer
+  source.connect(context.destination)
+  const startAt=Math.max(context.currentTime+0.02,livePlaybackAt.current||0)
+  livePlaybackAt.current=startAt+audioBuffer.duration
+  livePlaybackSources.current.push(source)
+  source.onended=()=>{livePlaybackSources.current=livePlaybackSources.current.filter(item=>item!==source)}
+  source.start(startAt)
+ }
+ const startMicrophone=async()=>{
+  if(liveMicStarted.current)return
+  liveMicStarted.current=true
+  const stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:true,noiseSuppression:true},video:false})
+  if(!liveSessionIdRef.current||liveSocket.current?.readyState!==WebSocket.OPEN){
+   stream.getTracks().forEach(track=>track.stop())
+   liveMicStarted.current=false
+   return
+  }
+  const context=new AudioContext()
+  await context.resume()
+  if(!liveSessionIdRef.current||liveSocket.current?.readyState!==WebSocket.OPEN){
+   stream.getTracks().forEach(track=>track.stop())
+   await context.close().catch(()=>{})
+   liveMicStarted.current=false
+   return
+  }
+  const source=context.createMediaStreamSource(stream)
+  const processor=context.createScriptProcessor(4096,1,1)
+  const silent=context.createGain()
+  silent.gain.value=0
+  source.connect(processor)
+  processor.connect(silent)
+  silent.connect(context.destination)
+  liveStream.current=stream
+  liveContext.current=context
+  liveProcessor.current=processor
+  processor.onaudioprocess=event=>{
+   const socket=liveSocket.current
+   if(!socket||socket.readyState!==WebSocket.OPEN)return
+   const pcm=downsamplePcm16(event.inputBuffer.getChannelData(0),context.sampleRate,16000)
+   if(!pcm.length)return
+   socket.send(JSON.stringify({realtimeInput:{audio:{data:pcmToBase64(pcm),mimeType:'audio/pcm;rate=16000'}}}))
+  }
+ }
+ const startLiveVoice=async()=>{
+  if(liveStatus!=='idle'&&liveStatus!=='error')return
+  liveStatusRef.current='connecting';setLiveStatus('connecting');setNotice({kind:'',text:''})
+  try{
+   const session:any=await callsApi.createLiveVoice()
+   const sessionId=String(session?.item?.id||'')
+   const token=String(session?.sessionToken||'')
+   const path=String(session?.websocketPath||'')
+   if(!sessionId||!token||!path)throw new Error('Live voice session admission did not return a complete relay configuration.')
+   liveSessionIdRef.current=sessionId
+   setLiveSessionId(sessionId)
+   const scheme=window.location.protocol==='https:'?'wss:':'ws:'
+   const socket=new WebSocket(scheme+'//'+window.location.host+path,['ace-live-v1',token])
+   liveSocket.current=socket
+   socket.onmessage=event=>{
+    try{
+     const message=JSON.parse(String(event.data||'{}'))
+     if(message.error){setNotice({kind:'error',text:String(message.error)});return}
+     if(message.setupComplete){
+      liveStatusRef.current='active';setLiveStatus('active')
+      void startMicrophone().catch(error=>{
+       setNotice({kind:'error',text:error?.message||'Microphone access failed.'})
+       void stopLiveVoice()
+      })
+     }
+     if(message.serverContent?.interrupted){
+      livePlaybackSources.current.forEach(source=>{try{source.stop()}catch{}})
+      livePlaybackSources.current=[]
+      livePlaybackAt.current=liveContext.current?.currentTime||0
+     }
+     const parts=message.serverContent?.modelTurn?.parts||[]
+     for(const part of parts){
+      const media=part.inlineData||part.inline_data
+      if(media?.data&&String(media?.mimeType||media?.mime_type||'').toLowerCase().startsWith('audio/pcm')){
+       playLiveAudio(String(media.data),String(media.mimeType||media.mime_type||'audio/pcm;rate=24000'))
+      }
+     }
+    }catch{}
+   }
+   socket.onerror=()=>setNotice({kind:'error',text:'The live voice relay encountered a network error.'})
+   socket.onclose=()=>{
+    if(liveStatusRef.current==='ending'){
+     stopLocalLiveVoice()
+     liveStatusRef.current='idle'
+     setLiveStatus('idle')
+     return
+    }
+    void stopLiveVoice(false).finally(()=>{
+     liveStatusRef.current='error'
+     setLiveStatus('error')
+    })
+   }
+  }catch(error:any){
+   stopLocalLiveVoice()
+   liveStatusRef.current='error';setLiveStatus('error')
+   setNotice({kind:'error',text:error?.message||'Live AI voice is unavailable. Check model qualification, deployment and provider access in Models.'})
+  }
+ }
+
  const connected=tracked.filter(item=>['answered','completed','connected','qualified'].includes(String(item.status).toLowerCase())).length
  const qualified=calls.filter(item=>String(item.status).toLowerCase().includes('succeed')||String(item.status).toLowerCase().includes('qualified')).length
  const coverage=(field:string)=>tracked.length?Math.round(tracked.filter((item:any)=>Boolean(item[field])).length/tracked.length*100):0
@@ -77,6 +260,16 @@ export default function CallsPage(){
  <div className="source-conflict-note"><PhoneCall/><div><b>{current.kind==='tracked'?'Provider event captured':'Qualification execution'}</b><p>{current.kind==='tracked'?('Provider: '+(current.provider||'telephony')+(current.campaign?' · Campaign: '+current.campaign:'')+(current.keyword?' · Keyword: '+current.keyword:'')+(current.creative?' · Creative: '+current.creative:'')):(current.lastError?'Last error: '+current.lastError:'Execution state comes from the durable agent worker; no synthetic transcript is shown.')}</p></div></div>
  <div className="call-schedule-box"><label>Consultation time<input type="datetime-local" value={scheduleAt} onChange={event=>setScheduleAt(event.target.value)}/></label><button className="approve" disabled={!scheduleAt||busy==='schedule'} onClick={()=>void schedule()}><CalendarDays/>{busy==='schedule'?'Scheduling…':'Schedule consultation'}</button></div>
  <div className="approval-actions">{current.kind==='agent'&&<button disabled={busy==='retry:'+current.id} onClick={()=>void retry(current.id)}>{busy==='retry:'+current.id?'Queuing…':'Retry / follow up'}</button>}</div></div>:<div className="app-panel call-detail"><div className="empty-delivery-state"><PhoneCall/><div><b>Select a call</b><small>Live call detail will appear after an agent run or telephony event is recorded.</small></div></div></div>}</div>
+ <div className="app-panel">
+  <div className="panel-head"><div><h3>Live AI voice</h3><p>Bidirectional PCM voice through the tenant-governed Gemini Live route. No provider key is exposed to the browser.</p></div><span className={liveStatus==='active'?'healthy':'status'}>{liveStatus}</span></div>
+  <div className="source-conflict-note"><ShieldCheck/><div><b>Governed session boundary</b><p>Live voice starts only after the exact model route is provider-verified, evaluated, approved and deployed. Sessions are bounded, reconnect-limited and never place autonomous outbound calls.</p></div></div>
+  <div className="approval-actions">
+   {liveStatus==='idle'||liveStatus==='error'
+    ?<button className="approve" onClick={()=>void startLiveVoice()}><PhoneCall/>Start live AI voice</button>
+    :<button onClick={()=>void stopLiveVoice()} disabled={liveStatus==='ending'}>{liveStatus==='ending'?'Ending…':'End live voice'}</button>}
+   {liveSessionId&&<span>Session {liveSessionId.slice(0,18)}</span>}
+  </div>
+ </div>
  <button className="app-primary" onClick={()=>setBuilder(true)}><PhoneIncoming/>Start voice qualification</button>
  {builder&&<AccessibleDialog ariaLabel="Start voice qualification" onClose={()=>setBuilder(false)}><form className="connector-card qualification-builder" onSubmit={createQualification}><div className="connector-modal-head"><div><PhoneIncoming/><div><b>Start voice qualification</b><small>Create a persisted agent run and queue provider-backed execution.</small></div></div><button type="button" aria-label="Close voice qualification" onClick={()=>setBuilder(false)}><X/></button></div><label>Lead reference<input name="lead" required placeholder="lead_123 or customer name"/></label><label>Phone number<input name="phone" required placeholder="+91..."/></label><div className="two-col"><label>Source<input name="source" defaultValue="Website lead"/></label><label>Initial intent score<input name="intent" type="number" min="0" max="100" defaultValue="50"/></label></div><label>Trigger<select name="trigger"><option value="manual_qualification">Manual qualification</option><option value="lead_created">Lead created</option><option value="high_intent">High-intent lead</option><option value="follow_up">Follow-up retry</option></select></label><div className="source-conflict-note"><ShieldCheck/><div><b>Execution boundary</b><p>The run is persisted immediately. A configured voice qualification transport is required for the worker to complete the external call; otherwise retry/failure evidence remains visible in this workspace.</p></div></div><div className="audience-builder-actions"><button type="button" onClick={()=>setBuilder(false)}>Cancel</button><button className="app-primary" disabled={busy==='create'} type="submit">{busy==='create'?'Queuing…':'Queue qualification call'}</button></div></form></AccessibleDialog>}
  </>

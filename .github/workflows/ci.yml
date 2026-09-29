@@ -46,6 +46,10 @@ jobs:
         run: npm run frontend:architecture
       - name: Validate frontend and backend
         run: npm run check:all
+      - name: Run AI backend unit checks
+        run: npm run test:ai-backend
+      - name: Run AI lifecycle script syntax checks
+        run: npm run check:ai-tools
       - name: Build production frontend
         run: npm run build
       - name: Build standalone customer application
@@ -230,6 +234,44 @@ jobs:
           test -f frontend/src/features/models/pages/ModelsPage.tsx
           test -f frontend/src/features/models/public.ts
           test -f frontend/src/features/models/feature.manifest.ts
+          test -f frontend/src/features/intelligence/data/intelligence.api.ts
+          test -f frontend/src/features/intelligence/data/contracts.ts
+          test -f frontend/src/features/intelligence/pages/IntelligencePage.tsx
+          test -f frontend/src/features/intelligence/public.ts
+          test -f frontend/src/features/intelligence/feature.manifest.ts
+          test -f backend/src/ai-result-contracts.mjs
+          test -f backend/src/ai-platform-policy.mjs
+          test -f backend/src/ai-activation-proposals.mjs
+          test -f backend/src/ai-domain-results.mjs
+          test -f backend/tests/ai-activation-proposals.test.mjs
+          test -f backend/migrations/028_ai_activation_proposal_governance.sql
+          test -f backend/migrations/029_ai_forecast_causal_records.sql
+          test -f backend/src/ai-governance-store.mjs
+          test -f backend/src/ai-object-store.mjs
+          test -f backend/tests/ai-governance-store.test.mjs
+          test -f backend/tests/ai-object-store.test.mjs
+          test -f backend/migrations/026_ai_task_policies_and_media_review.sql
+          test -f backend/migrations/027_ai_domain_result_persistence.sql
+          test -f backend/tests/ai-result-contracts.test.mjs
+          test -f backend/tests/ai-registry.test.mjs
+          test -f backend/tests/ai-contract-manifest.test.mjs
+          test -f backend/tests/ai-platform-policy.test.mjs
+          test -f docs/ai/task-map.md
+          test -f configs/ai/result-schema-v1.json
+          test -f docs/ai/openapi.yaml
+          test -f docs/ai/coverage-matrix.md
+          test -f deploy/k8s/ai-worker.yaml
+          test -f deploy/k8s/ml-service.yaml
+          test -f deploy/k8s/ai-network-policy.yaml
+          test -f scripts/ai/provider-verify.mjs
+          test -f scripts/ai/dataset-readiness.mjs
+          test -f scripts/ai/train.mjs
+          test -f scripts/ai/evaluate.mjs
+          test -f scripts/ai/score.mjs
+          test -f scripts/ai/backtest.mjs
+          test -f scripts/ai/promote.mjs
+          test -f scripts/ai/rollback.mjs
+          test -f scripts/ai/delete.mjs
           test -f frontend/src/features/planner/data/planner.api.ts
           test -f frontend/src/features/planner/pages/PlannerPage.tsx
           test -f frontend/src/features/planner/public.ts

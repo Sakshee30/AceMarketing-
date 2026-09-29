@@ -5,5 +5,8 @@ export const callsApi={
   events:()=>api.callEvents(),
   retry:(id:string)=>api.retryQualificationCall(id),
   createMeeting:(payload:Record<string,unknown>)=>api.createMeeting(payload),
-  createQualification:(payload:Record<string,unknown>)=>api.createQualificationCall(payload)
+  createQualification:(payload:Record<string,unknown>)=>api.createQualificationCall(payload),
+  createLiveVoice:()=>api.createLiveVoiceSession(),
+  liveVoiceStatus:(id:string)=>api.liveVoiceSession(id),
+  terminateLiveVoice:(id:string)=>api.terminateLiveVoiceSession(id)
 }

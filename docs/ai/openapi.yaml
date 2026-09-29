@@ -1,0 +1,450 @@
+openapi: 3.1.0
+info:
+  title: AceMarketing AI Intelligence API
+  version: 1.0.0
+  description: Governed tenant-scoped AI/ML endpoints. Long-running operations return 202 with durable job IDs.
+servers:
+  - url: /api
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Workspace:
+      name: X-Workspace-ID
+      in: header
+      required: true
+      schema: {type: string, pattern: '^[A-Za-z0-9_-]{1,64}$'}
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: {type: string}
+        requestId: {type: [string, 'null']}
+        prerequisites:
+          type: array
+          items: {type: string}
+    JobAccepted:
+      type: object
+      required: [jobId, status]
+      properties:
+        jobId: {type: string}
+        status: {type: string}
+        task: {type: [string, 'null']}
+        operation: {type: [string, 'null']}
+        resultSchemaVersion: {type: [string, 'null']}
+paths:
+  /ai/task-policies:
+    get:
+      summary: List effective tenant AI task policies and budgets
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'200': {description: Task policies}}
+  /ai/task-policies/{task}:
+    post:
+      summary: Save tenant AI task enablement, model pin, concurrency and monthly unit budget
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: task, in: path, required: true, schema: {type: string}}
+      responses:
+        '200': {description: Saved}
+        '400': {description: Invalid policy or model substitution attempt}
+  /ai/transcripts:
+    get:
+      summary: List tenant transcript records and object-store references
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'200': {description: Transcript records}}
+  /ai/creative-assets:
+    get:
+      summary: List generated creative drafts and review state
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'200': {description: Creative assets}}
+  /ai/creative-assets/{id}/review:
+    post:
+      summary: Move a generated creative through review without activating advertising
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: {type: string, enum: [in_review, approved, rejected]}
+                reason: {type: string, maxLength: 2000}
+      responses:
+        '200': {description: Review state updated}
+        '404': {description: Asset not found or no longer reviewable}
+  /ai/registry:
+    get:
+      summary: List tenant AI model registry and lifecycle state
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses:
+        '200': {description: Registry}
+  /ai/providers/{task}/verify:
+    post:
+      summary: Run bounded privileged provider/model access verification
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: task, in: path, required: true, schema: {type: string}}
+      responses:
+        '200': {description: Verified access}
+        '503': {description: Provider verification unavailable, content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}}
+  /ai/analysis:
+    post:
+      summary: Submit grounded analyst work
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [question]
+              properties:
+                question: {type: string, maxLength: 8000}
+      responses:
+        '202': {description: Accepted, content: {application/json: {schema: {$ref: '#/components/schemas/JobAccepted'}}}}
+        '409': {description: Governance blocked, content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}}
+  /ai/tasks/{task}/submit:
+    post:
+      summary: Submit a governed hosted-model task
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: task, in: path, required: true, schema: {type: string, enum: [analyst, recommendation_reviewer, multimodal_extraction, embedding, reranking, call_transcription, creative_image]}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        '202': {description: Accepted, content: {application/json: {schema: {$ref: '#/components/schemas/JobAccepted'}}}}
+        '400': {description: Invalid input}
+        '409': {description: Governance blocked}
+  /ai/jobs/{id}:
+    get:
+      summary: Read durable AI job status
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        '200': {description: Job}
+        '404': {description: Not found}
+  /ai/jobs/{id}/events:
+    get:
+      summary: Stream tenant-scoped durable AI job status as server-sent events
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        '200':
+          description: text/event-stream status events until terminal state or bounded stream timeout
+          content:
+            text/event-stream: {}
+        '404': {description: Job not found}
+  /ai/jobs/{id}/cancel:
+    post:
+      summary: Request cancellation
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        '200': {description: Cancellation recorded}
+  /ai/results:
+    get:
+      summary: List persisted typed AI/ML results
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: task, in: query, required: false, schema: {type: string}}
+        - {name: limit, in: query, required: false, schema: {type: integer, minimum: 1, maximum: 200}}
+      responses:
+        '200': {description: Results}
+  /ai/datasets:
+    get:
+      summary: List point-in-time datasets
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'200': {description: Datasets}}
+    post:
+      summary: Create immutable point-in-time dataset
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'201': {description: Created}, '422': {description: Invalid dataset}}
+  /ai/datasets/{id}/train:
+    post:
+      summary: Submit tenant model training
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        '202': {description: Accepted, content: {application/json: {schema: {$ref: '#/components/schemas/JobAccepted'}}}}
+  /ai/datasets/{id}/retire:
+    post:
+      summary: Retire dataset without deleting lineage
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses: {'200': {description: Retired}}
+  /ai/evaluations:
+    get:
+      summary: List task evaluations
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'200': {description: Evaluations}}
+  /ai/evaluation-policy:
+    get:
+      summary: Read active evaluation policy
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: task, in: query, required: true, schema: {type: string}}
+      responses: {'200': {description: Policy}}
+    post:
+      summary: Save versioned evaluation thresholds
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'200': {description: Saved}}
+  /ai/evaluations/{id}/qualify:
+    post:
+      summary: Apply predeclared qualification gate
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses: {'200': {description: Qualification result}, '409': {description: Gate failed}}
+  /ai/models/{task}/promote:
+    post:
+      summary: Promote qualified model evidence
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: task, in: path, required: true, schema: {type: string}}
+      responses: {'200': {description: Promoted}, '409': {description: Promotion blocked}}
+  /ai/models/{task}/deploy:
+    post:
+      summary: Deploy approved tenant route
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: task, in: path, required: true, schema: {type: string}}
+      responses: {'200': {description: Deployed}, '409': {description: Deployment blocked}}
+  /ai/models/{task}/undeploy:
+    post:
+      summary: Disable new executions without deleting history
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: task, in: path, required: true, schema: {type: string}}
+      responses: {'200': {description: Undeployed}}
+  /ai/models/{task}/rollback:
+    post:
+      summary: Roll back to recorded predecessor
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: task, in: path, required: true, schema: {type: string}}
+      responses: {'200': {description: Rolled back}, '409': {description: Rollback blocked}}
+  /ai/knowledge:
+    get:
+      summary: List authorized knowledge sources
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'200': {description: Sources}}
+    post:
+      summary: Ingest tenant knowledge
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'201': {description: Stored}}
+  /ai/knowledge/search:
+    post:
+      summary: Submit authorized retrieval and reranking
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses:
+        '202': {description: Accepted, content: {application/json: {schema: {$ref: '#/components/schemas/JobAccepted'}}}}
+  /ai/knowledge/{id}/revoke:
+    post:
+      summary: Revoke source from new retrieval
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses: {'200': {description: Revoked}}
+  /ai/ml/capabilities:
+    get:
+      summary: Inspect specialist runtime dependency state
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'200': {description: Capabilities}}
+  /ai/ml/train/classification:
+    post:
+      summary: Submit bounded CatBoost classification training
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses:
+        '202': {description: Accepted, content: {application/json: {schema: {$ref: '#/components/schemas/JobAccepted'}}}}
+        '422': {description: Invalid or insufficient training input}
+  /ai/ml/train/regression:
+    post:
+      summary: Submit bounded CatBoost future-value training
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses:
+        '202': {description: Accepted, content: {application/json: {schema: {$ref: '#/components/schemas/JobAccepted'}}}}
+        '422': {description: Invalid or insufficient training input}
+  /ai/ml/score:
+    post:
+      summary: Submit verified-artifact customer scoring
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses:
+        '202': {description: Accepted, content: {application/json: {schema: {$ref: '#/components/schemas/JobAccepted'}}}}
+        '409': {description: Model lifecycle or policy blocks scoring}
+        '422': {description: Invalid artifact or scoring request}
+  /ai/ml/rank/score:
+    post:
+      summary: Submit verified LGBMRanker artifact scoring for eligible candidates
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses:
+        '202': {description: Accepted, content: {application/json: {schema: {$ref: '#/components/schemas/JobAccepted'}}}}
+        '409': {description: Model lifecycle or policy blocks ranking}
+        '422': {description: Invalid artifact or ranking request}
+  /ai/ml/forecast/seasonal-naive:
+    post:
+      summary: Submit deterministic forecast baseline
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'202': {description: Accepted}}
+  /ai/ml/forecast/chronos-2:
+    post:
+      summary: Submit Chronos-2 forecast
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'202': {description: Accepted}}
+  /ai/ml/forecast/catboost-challenger:
+    post:
+      summary: Submit CatBoost forecast challenger
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'202': {description: Accepted}}
+  /ai/ml/incrementality:
+    post:
+      summary: Submit CausalForestDML analysis
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'202': {description: Accepted}}
+  /ai/ml/marketing-mix:
+    post:
+      summary: Submit Meridian marketing-mix analysis
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'202': {description: Accepted}}
+  /ai/ml/anomalies:
+    post:
+      summary: Submit IsolationForest anomaly analysis
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'202': {description: Accepted}}
+  /ai/ml/segments:
+    post:
+      summary: Submit HDBSCAN segmentation
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'202': {description: Accepted}}
+  /ai/ml/rank:
+    post:
+      summary: Submit LightGBM ranking training/evaluation
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'202': {description: Accepted}}
+  /ai/live-voice/sessions:
+    post:
+      summary: Create governed live voice session
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'201': {description: Session created}, '409': {description: Governance blocked}}
+  /ai/live-voice/sessions/{id}:
+    get:
+      summary: Read governed live voice session state
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        '200': {description: Session state}
+        '404': {description: Session not found}
+  /ai/live-voice/sessions/{id}/terminate:
+    post:
+      summary: Terminate live voice session
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        '200': {description: Session terminated}
+        '404': {description: Session not found}
+
+  /ai/activation-proposals:
+    get:
+      summary: List tenant-scoped AI activation proposals
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: status, in: query, required: false, schema: {type: string}}
+        - {name: limit, in: query, required: false, schema: {type: integer, minimum: 1, maximum: 500}}
+      responses: {'200': {description: Activation proposals}}
+    post:
+      summary: Create immutable high-risk activation proposal
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses:
+        '201': {description: Proposal created; no provider side effect executed}
+        '409': {description: Proposal blocked by governance or stale model state}
+  /ai/activation-proposals/{id}/approve:
+    post:
+      summary: Approve a fresh immutable activation proposal with separation of duties
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        '200': {description: Proposal approved; approval does not execute provider action}
+        '409': {description: Expired, stale, tampered, self-approved or otherwise blocked}
+  /ai/activation-proposals/{id}/reject:
+    post:
+      summary: Reject pending activation proposal
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        '200': {description: Proposal rejected}
+        '404': {description: Proposal not found or no longer pending}
+
+  /ai/anomalies:
+    get:
+      summary: List persisted anomaly items for investigation
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: status, in: query, required: false, schema: {type: string}}
+        - {name: limit, in: query, required: false, schema: {type: integer, minimum: 1, maximum: 1000}}
+      responses: {'200': {description: Anomaly items}}
+  /ai/anomalies/{resultId}/{entityId}/review:
+    post:
+      summary: Update anomaly investigation state and feedback
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: resultId, in: path, required: true, schema: {type: string}}
+        - {name: entityId, in: path, required: true, schema: {type: string}}
+      responses: {'200': {description: Reviewed}, '404': {description: Not found}}
+  /ai/segments:
+    get:
+      summary: List versioned HDBSCAN segment snapshots
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'200': {description: Segment snapshots}}
+  /ai/segments/{snapshotId}/members:
+    get:
+      summary: List membership for one versioned segment snapshot
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: snapshotId, in: path, required: true, schema: {type: string}}
+      responses: {'200': {description: Segment memberships}}
+  /ai/rankings:
+    get:
+      summary: List persisted eligible ranked offers
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: resultId, in: query, required: false, schema: {type: string}}
+      responses: {'200': {description: Ranking items}}
+  /ai/forecast-records:
+    get:
+      summary: List typed persisted forecast evidence
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: task, in: query, required: false, schema: {type: string}}
+        - {name: limit, in: query, required: false, schema: {type: integer, minimum: 1, maximum: 500}}
+      responses: {'200': {description: Forecast records}}
+  /ai/causal-records:
+    get:
+      summary: List typed incrementality evidence
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'200': {description: Causal records}}
+  /ai/marketing-mix-records:
+    get:
+      summary: List typed Meridian evidence and diagnostics
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'200': {description: Marketing-mix records}}

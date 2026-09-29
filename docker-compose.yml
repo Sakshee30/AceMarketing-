@@ -80,6 +80,71 @@ services:
     networks: [ace_internal]
     expose: ["8000"]
 
+  ml-forecasting:
+    profiles: ["ai-forecasting"]
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.ml-specialist
+      args:
+        ML_EXTRA: forecasting
+    restart: unless-stopped
+    environment:
+      ML_ENV: production
+      ML_SERVICE_AUTH_TOKEN: ${ML_FORECAST_SERVICE_AUTH_TOKEN:-${ML_SERVICE_AUTH_TOKEN:-}}
+      ML_ARTIFACT_DIR: /var/lib/acemarketing-ml/artifacts
+      ML_ARTIFACT_S3_BUCKET: ${ML_ARTIFACT_S3_BUCKET:-}
+      ML_ARTIFACT_S3_PREFIX: ${ML_ARTIFACT_S3_PREFIX:-acemarketing/ml-artifacts}
+      ML_ARTIFACT_S3_ENDPOINT: ${ML_ARTIFACT_S3_ENDPOINT:-}
+      ML_ARTIFACT_S3_REGION: ${ML_ARTIFACT_S3_REGION:-}
+      CHRONOS2_REVISION: ${CHRONOS2_REVISION:-}
+      CHRONOS2_DEVICE: ${CHRONOS2_DEVICE:-cpu}
+    volumes:
+      - ml_artifacts:/var/lib/acemarketing-ml/artifacts
+    networks: [ace_internal]
+    expose: ["8000"]
+
+  ml-causal:
+    profiles: ["ai-causal"]
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.ml-specialist
+      args:
+        ML_EXTRA: causal
+    restart: unless-stopped
+    environment:
+      ML_ENV: production
+      ML_SERVICE_AUTH_TOKEN: ${ML_CAUSAL_SERVICE_AUTH_TOKEN:-${ML_SERVICE_AUTH_TOKEN:-}}
+      ML_ARTIFACT_DIR: /var/lib/acemarketing-ml/artifacts
+      ML_ARTIFACT_S3_BUCKET: ${ML_ARTIFACT_S3_BUCKET:-}
+      ML_ARTIFACT_S3_PREFIX: ${ML_ARTIFACT_S3_PREFIX:-acemarketing/ml-artifacts}
+      ML_ARTIFACT_S3_ENDPOINT: ${ML_ARTIFACT_S3_ENDPOINT:-}
+      ML_ARTIFACT_S3_REGION: ${ML_ARTIFACT_S3_REGION:-}
+    volumes:
+      - ml_artifacts:/var/lib/acemarketing-ml/artifacts
+    networks: [ace_internal]
+    expose: ["8000"]
+
+  ml-mmm:
+    profiles: ["ai-mmm"]
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.ml-specialist
+      args:
+        ML_EXTRA: mmm
+    restart: unless-stopped
+    environment:
+      ML_ENV: production
+      ML_SERVICE_AUTH_TOKEN: ${ML_MMM_SERVICE_AUTH_TOKEN:-${ML_SERVICE_AUTH_TOKEN:-}}
+      ML_ARTIFACT_DIR: /var/lib/acemarketing-ml/artifacts
+      ML_ARTIFACT_S3_BUCKET: ${ML_ARTIFACT_S3_BUCKET:-}
+      ML_ARTIFACT_S3_PREFIX: ${ML_ARTIFACT_S3_PREFIX:-acemarketing/ml-artifacts}
+      ML_ARTIFACT_S3_ENDPOINT: ${ML_ARTIFACT_S3_ENDPOINT:-}
+      ML_ARTIFACT_S3_REGION: ${ML_ARTIFACT_S3_REGION:-}
+    volumes:
+      - ml_artifacts:/var/lib/acemarketing-ml/artifacts
+    networks: [ace_internal]
+    expose: ["8000"]
+
   web:
     build:
       context: .

@@ -138,5 +138,7 @@ export const modelsApi={
   savePolicy:(payload:{task:string;version:string;thresholds:Record<string,unknown>;notes?:string})=>sharedApi.saveAiEvaluationPolicy(payload) as Promise<{item:AiEvaluationPolicy}>,
   qualify:(evaluationId:string)=>sharedApi.qualifyAiEvaluation(evaluationId) as Promise<{item:AiEvaluation}>,
   promote:(task:string,evaluationId:string)=>sharedApi.promoteAiModel(task,evaluationId) as Promise<{item:Record<string,unknown>}>,
+  deploy:(task:string)=>sharedApi.deployAiModel(task) as Promise<{item:Record<string,unknown>}>,
+  undeploy:(task:string)=>sharedApi.undeployAiModel(task) as Promise<{item:Record<string,unknown>}>,
   rollback:(task:string)=>sharedApi.rollbackAiModel(task) as Promise<{item:Record<string,unknown>}>
 }
