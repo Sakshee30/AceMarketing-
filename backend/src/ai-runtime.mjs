@@ -5,7 +5,7 @@ import { executeHostedTask, ProviderExecutionError } from './ai-providers.mjs'
 import { modelRegistryItem } from './ai-registry.mjs'
 import { getTenantRegistry, syncTenantRegistry } from './ai-registry-store.mjs'
 import { evaluateAiTaskAdmission, persistCreativeAsset, persistTranscript } from './ai-governance-store.mjs'
-import { recordRecommendationReviewFailure, recordRecommendationReviewResult } from './ai-recommendations.mjs'
+import { recordActivationProposalReviewerFailure, recordActivationProposalReviewerResult } from './ai-activation-proposals.mjs'
 
 const { Pool }=pg
 const databaseUrl=process.env.DATABASE_URL||''
@@ -213,7 +213,7 @@ export const executeHostedAiJob=async job=>{
     }
     const result=await persistResult({workspaceId,job,execution,mediaPersistenceError})
     if(task==='recommendation_reviewer'){
-      await recordRecommendationReviewResult({
+      await recordActivationProposalReviewerResult({
         workspaceId,
         jobId:job.id,
         resultId:result?.id||null,
@@ -235,7 +235,7 @@ export const executeHostedAiJob=async job=>{
     }
   }catch(error){
     if(task==='recommendation_reviewer'){
-      await recordRecommendationReviewFailure({
+      await recordActivationProposalReviewerFailure({
         workspaceId,
         jobId:job.id,
         reason:error instanceof Error?error.message:String(error)
