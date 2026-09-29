@@ -279,9 +279,45 @@ export const searchKnowledge=async({workspaceId,query,role,limit=10,queryVector=
       [workspaceId,cleanQuery,role]
     )
     rows=result.rows
+    if(queryVector&&String(process.env.KNOWLEDGE_VECTOR_BACKEND||'').toLowerCase()==='postgres_pgvector'){
+      const vectorLiteral='['+queryVector.map(value=>Number(value)).join(',')+']'
+      const vectorResult=await pool.query(
+        `SELECT c.id,c.source_id,c.ordinal,c.section,c.source_offset,c.content,c.access_policy,c.embedding,
+                c.embedding_model,c.embedding_dimensions,c.index_version,s.name source_name,s.source_location,
+                0::double precision lexical_rank,
+                1-(c.embedding::text::vector <=> $2::vector) vector_score
+         FROM ace_ai_knowledge_chunks c
+         JOIN ace_ai_knowledge_sources s ON s.id=c.source_id AND s.workspace_id=c.workspace_id
+         WHERE c.workspace_id=$1
+           AND c.revoked_at IS NULL
+           AND s.revoked_at IS NULL
+           AND s.deleted_at IS NULL
+           AND c.embedding IS NOT NULL
+           AND (
+             $3='owner'
+             OR NOT (c.access_policy ? 'allowedRoles')
+             OR jsonb_array_length(COALESCE(c.access_policy->'allowedRoles','[]'::jsonb))=0
+             OR EXISTS (
+               SELECT 1
+               FROM jsonb_array_elements_text(COALESCE(c.access_policy->'allowedRoles','[]'::jsonb)) allowed_role(value)
+               WHERE allowed_role.value=$3
+             )
+           )
+         ORDER BY c.embedding::text::vector <=> $2::vector
+         LIMIT 100`,
+        [workspaceId,vectorLiteral,role]
+      )
+      const merged=new Map(rows.map(row=>[row.id,row]))
+      for(const row of vectorResult.rows){
+        const existing=merged.get(row.id)
+        merged.set(row.id,existing?{...row,...existing,vector_score:row.vector_score}:{...row})
+      }
+      rows=[...merged.values()]
+    }
   }
+  const useApplicationCosine=embeddedDatabase&&Boolean(queryVector)
   const authorized=rows.filter(row=>canReadKnowledgePolicy(row.access_policy,role)).map(row=>{
-    const vectorScore=queryVector?cosine(queryVector,row.embedding):null
+    const vectorScore=row.vector_score!=null?Number(row.vector_score):(useApplicationCosine?cosine(queryVector,row.embedding):null)
     return {...row,vectorScore,hybridScore:Number(row.lexical_rank||0)+(vectorScore==null?0:vectorScore)}
   }).sort((a,b)=>b.hybridScore-a.hybridScore).slice(0,Math.max(safeLimit,20))
   return authorized
@@ -294,8 +330,9 @@ export const searchKnowledgeJob=async job=>{
   if(!query)throw new Error('knowledge search query is required')
   let queryVector=null
   let providerRequestId=null
+  const vectorBackend=embeddedDatabase?'application_cosine':String(process.env.KNOWLEDGE_VECTOR_BACKEND||'disabled').toLowerCase()
   const embeddingRoute=modelRegistryItem('embedding')
-  if(embeddingRoute?.readiness==='active'){
+  if(embeddingRoute?.readiness==='active'&&['application_cosine','postgres_pgvector'].includes(vectorBackend)){
     const embedded=await embedVoyage({texts:[query],inputType:'query'})
     queryVector=embedded.embeddings?.[0]?.embedding||null
     providerRequestId=embedded.providerRequestId||providerRequestId
@@ -328,9 +365,10 @@ export const searchKnowledgeJob=async job=>{
       evidenceId:'knowledge:'+item.id
     })),
     embeddingUsed:Boolean(queryVector),
+    vectorBackend,
     rerankingUsed:rerankRoute?.readiness==='active',
     providerRequestId,
-    warning:queryVector?null:'Semantic vector search is not active; result set is PostgreSQL full-text retrieval only.'
+    warning:queryVector?null:'Semantic vector search is not active; retrieval is lexical plus any approved reranking only.'
   }
 }
 
