@@ -56,10 +56,19 @@ export function RouteAnnouncer({
   titlePrefix?:string
 }){
   const last=useRef('')
+  const mounted=useRef(false)
   useEffect(()=>{
     if(!label||last.current===label)return
+    const initial=!mounted.current
+    mounted.current=true
     last.current=label
     document.title=label+' · '+titlePrefix
+
+    // Preserve the browser's natural first-tab order on initial mount so the
+    // skip link remains the first keyboard destination. Focus the page heading
+    // only for subsequent in-app route changes.
+    if(initial)return
+
     const id=window.setTimeout(()=>{
       if(!focusSelector)return
       const target=document.querySelector<HTMLElement>(focusSelector)

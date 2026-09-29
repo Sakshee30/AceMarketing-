@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -40,6 +44,8 @@ jobs:
           node-version: 20
       - name: Install dependencies
         run: npm install
+      - name: Prepare database schema for integration tests
+        run: npm run migrate
       - name: Audit production dependencies
         run: npm run security:audit
       - name: Enforce frontend architecture boundaries
@@ -48,6 +54,12 @@ jobs:
         run: npm run check:all
       - name: Run AI backend unit checks
         run: npm run test:ai-backend
+      - name: Verify embedded local AI storage and retrieval path
+        env:
+          DATABASE_URL: ""
+          NODE_ENV: test
+        run: node --test backend/tests/ai-durable-jobs.test.mjs backend/tests/ai-knowledge-authorization.test.mjs
+
       - name: Run AI lifecycle script syntax checks
         run: npm run check:ai-tools
       - name: Build production frontend

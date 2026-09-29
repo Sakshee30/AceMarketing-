@@ -46,7 +46,7 @@ const getJson=async({provider,task,url,headers={}})=>{
   const controller=new AbortController()
   const timeout=setTimeout(()=>controller.abort('provider_timeout'),Math.min(requestTimeoutMs,15000))
   try{
-    const response=await fetch(url,{method:'GET',headers,signal:controller.signal})
+    const response=await fetch(url,{method:'GET',headers,redirect:'manual',signal:controller.signal})
     const providerRequestId=response.headers.get('x-request-id')||response.headers.get('request-id')||response.headers.get('x-goog-request-id')||null
     if(!response.ok){
       throw new ProviderExecutionError(await safeProviderError(response),{provider,task,status:response.status,providerRequestId,unknownOutcome:false})
@@ -75,6 +75,7 @@ const postJson=async({provider,task,url,headers,body})=>{
       method:'POST',
       headers:{'Content-Type':'application/json',...headers},
       body:JSON.stringify(body),
+      redirect:'manual',
       signal:controller.signal
     })
     const providerRequestId=response.headers.get('x-request-id')||response.headers.get('request-id')||response.headers.get('x-goog-request-id')||null
@@ -105,7 +106,7 @@ const postJson=async({provider,task,url,headers,body})=>{
 }
 
 const normalizeOpenAIText=response=>{
-  if(typeof response?.output_text==='string') return response.output_text
+  if(typeof response?.output_text==='string') return response.output_text.trim()
   const chunks=[]
   for(const item of response?.output||[]){
     for(const content of item?.content||[]){
@@ -148,13 +149,17 @@ export const runOpenAIAnalyst=async({question,evidence,instructions})=>{
     headers:{Authorization:'Bearer '+process.env.OPENAI_API_KEY},
     body:payload
   })
+  const text=normalizeOpenAIText(result.json)
+  if(!text){
+    throw new ProviderExecutionError('OpenAI analyst returned no usable text output',{provider:'openai',task:'analyst',status:502,providerRequestId:result.providerRequestId||result.json?.id||null,unknownOutcome:false})
+  }
   return {
     provider:'openai',
     requestedModel:route.requestedModel,
     resolvedModel:result.json?.model||route.requestedModel,
     providerRequestId:result.providerRequestId||result.json?.id||null,
     requestFingerprint:result.requestFingerprint,
-    text:normalizeOpenAIText(result.json),
+    text,
     usage:result.json?.usage||null,
     rawStatus:result.json?.status||'completed',
     promptVersion:prompt.version
@@ -193,13 +198,17 @@ export const runAnthropicReviewer=async({recommendation,evidence,policy})=>{
       }]
     }
   })
+  const text=normalizeAnthropicText(result.json)
+  if(!text){
+    throw new ProviderExecutionError('Anthropic reviewer returned no usable text output',{provider:'anthropic',task:'recommendation_reviewer',status:502,providerRequestId:result.providerRequestId||result.json?.id||null,unknownOutcome:false})
+  }
   return {
     provider:'anthropic',
     requestedModel:route.requestedModel,
     resolvedModel:result.json?.model||route.requestedModel,
     providerRequestId:result.providerRequestId||result.json?.id||null,
     requestFingerprint:result.requestFingerprint,
-    text:normalizeAnthropicText(result.json),
+    text,
     usage:result.json?.usage||null,
     rawStatus:result.json?.stop_reason||'completed',
     promptVersion:prompt.version
@@ -342,6 +351,35 @@ export const generateCreativeImage=async({prompt})=>googleGenerateContent({
   generationConfig:{responseModalities:['TEXT','IMAGE']}
 })
 
+export const verifyAnthropicModelAccess=async({task='recommendation_reviewer',requestedModel})=>{
+  const model=String(requestedModel||'').trim()
+  if(!model)throw new ProviderExecutionError('Anthropic requested model is required',{provider:'anthropic',task,status:400})
+  if(!process.env.ANTHROPIC_API_KEY)throw new ProviderExecutionError('Anthropic credential is not configured',{provider:'anthropic',task,status:503})
+  const base=String(process.env.ANTHROPIC_MODELS_URL||'https://api.anthropic.com/v1/models').replace(/\/$/,'')
+  let endpoint
+  try{endpoint=new URL(base)}
+  catch{throw new ProviderExecutionError('Anthropic models endpoint is invalid',{provider:'anthropic',task,status:400})}
+  if(endpoint.protocol!=='https:'){
+    throw new ProviderExecutionError('Anthropic models endpoint must use HTTPS',{provider:'anthropic',task,status:400})
+  }
+  const result=await getJson({
+    provider:'anthropic',task,
+    url:base+'/'+encodeURIComponent(model),
+    headers:{
+      'x-api-key':process.env.ANTHROPIC_API_KEY,
+      'anthropic-version':process.env.ANTHROPIC_API_VERSION||'2023-06-01'
+    }
+  })
+  const resolved=String(result.json?.id||'').trim()
+  if(!resolved){
+    throw new ProviderExecutionError('Anthropic access check returned no model identifier',{provider:'anthropic',task,status:502,providerRequestId:result.providerRequestId||null})
+  }
+  if(resolved!==model){
+    throw new ProviderExecutionError('Anthropic access check resolved a different model identifier; silent substitution is forbidden',{provider:'anthropic',task,status:409,providerRequestId:result.providerRequestId||null})
+  }
+  return {provider:'anthropic',task,requestedModel:model,resolvedModel:resolved,providerRequestId:result.providerRequestId||null,accessVerified:true}
+}
+
 export const verifyProviderAccess=async task=>{
   if(process.env.AI_PROVIDER_TESTS_ENABLED!=='true'){
     throw new ProviderExecutionError('provider access verification is disabled; set AI_PROVIDER_TESTS_ENABLED=true only for an authorized bounded test',{task,status:503})
@@ -359,6 +397,9 @@ export const verifyProviderAccess=async task=>{
       headers:{Authorization:'Bearer '+process.env.OPENAI_API_KEY}
     })
     return {provider:'openai',task,requestedModel:route.requestedModel,resolvedModel:result.json?.id||route.requestedModel,providerRequestId:result.providerRequestId||null,accessVerified:true}
+  }
+  if(route.provider==='anthropic'){
+    return verifyAnthropicModelAccess({task,requestedModel:route.requestedModel})
   }
   if(route.provider==='google'){
     if(!process.env.GOOGLE_AI_API_KEY)throw new ProviderExecutionError('Google AI credential is not configured',{provider:'google',task,status:503})

@@ -20,6 +20,37 @@ const safeType=value=>{
   return clean
 }
 
+export const validateActivationProposalPolicy=({proposalType,payload})=>{
+  const type=String(proposalType||'').trim()
+  const body=payload&&typeof payload==='object'&&!Array.isArray(payload)?payload:{}
+  const adapter=String(body.providerAdapter||'').trim().toLowerCase()
+  if(type!=='budget_change')return {kind:type,adapter,bounded:true}
+  if(!['google_ads_budget','google_ads'].includes(adapter)){
+    throw new Error('budget_change requires the verified google_ads_budget provider adapter')
+  }
+  const resourceName=String(body.campaignBudgetResourceName||'').trim()
+  if(!/^customers\/\d+\/campaignBudgets\/\d+$/.test(resourceName)){
+    throw new Error('budget_change requires a valid campaignBudgetResourceName')
+  }
+  const current=Number(body.expectedCurrentAmountMicros)
+  const proposed=Number(body.newAmountMicros)
+  if(!Number.isSafeInteger(current)||current<=0)throw new Error('budget_change requires positive integer expectedCurrentAmountMicros')
+  if(!Number.isSafeInteger(proposed)||proposed<=0)throw new Error('budget_change requires positive integer newAmountMicros')
+  const maxChangePct=Number(process.env.AI_ACTIVATION_MAX_BUDGET_CHANGE_PCT||20)
+  if(!Number.isFinite(maxChangePct)||maxChangePct<=0||maxChangePct>100){
+    throw new Error('AI_ACTIVATION_MAX_BUDGET_CHANGE_PCT must be greater than 0 and at most 100')
+  }
+  const changePct=Math.abs(proposed-current)/current*100
+  if(changePct>maxChangePct+Number.EPSILON)throw new Error('budget_change exceeds configured percentage limit')
+  const absoluteRaw=String(process.env.AI_ACTIVATION_MAX_DAILY_BUDGET_MICROS||'').trim()
+  if(absoluteRaw){
+    const absoluteCap=Number(absoluteRaw)
+    if(!Number.isSafeInteger(absoluteCap)||absoluteCap<=0)throw new Error('AI_ACTIVATION_MAX_DAILY_BUDGET_MICROS must be a positive safe integer')
+    if(proposed>absoluteCap)throw new Error('budget_change exceeds configured absolute daily cap')
+  }
+  return {kind:type,adapter:'google_ads_budget',bounded:true,changePct,maxChangePct,resourceName}
+}
+
 export const buildActivationProposalInput=({task,proposalType,payload,evidenceSnapshot,modelSnapshot,expiresAt,createdBy})=>{
   const cleanTask=String(task||'').trim()
   if(!cleanTask)throw new Error('task required')
@@ -35,8 +66,9 @@ export const buildActivationProposalInput=({task,proposalType,payload,evidenceSn
   const now=Date.now()
   if(!Number.isFinite(expiry.getTime())||expiry.getTime()<=now)throw new Error('expiresAt must be in the future')
   if(expiry.getTime()-now>24*60*60*1000)throw new Error('activation proposal expiry cannot exceed 24 hours')
+  const policyValidation=validateActivationProposalPolicy({proposalType:cleanType,payload:cleanPayload})
   const immutable={task:cleanTask,proposalType:cleanType,payload:cleanPayload,evidenceSnapshot:evidence,modelSnapshot:model,expiresAt:expiry.toISOString()}
-  return {...immutable,proposalHash:hashProposal(immutable),createdBy:createdBy||null}
+  return {...immutable,proposalHash:hashProposal(immutable),createdBy:createdBy||null,policyValidation}
 }
 
 const currentRoute=async(workspaceId,task)=>{
@@ -106,8 +138,10 @@ export const createAiActivationProposal=async({workspaceId,input,actor})=>{
       modelDeployed:true,
       evidencePresent:true,
       providerAdapterDeclared:true,
-      expiryBounded:true
-    }
+      expiryBounded:true,
+      payloadWithinConfiguredBounds:true
+    },
+    payloadPolicy:built.policyValidation
   }
   const id='aiprop_'+randomUUID()
   const {rows}=await pool.query(

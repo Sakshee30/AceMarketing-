@@ -13,6 +13,7 @@ import { ProviderExecutionError } from './ai-providers.mjs'
 import { executeMlJob } from './ml-client.mjs'
 import { closeKnowledge, embedKnowledgeSourceJob, searchKnowledgeJob } from './knowledge.mjs'
 import { closeRegistryStore, recordMlExecution, syncTenantRegistry } from './ai-registry-store.mjs'
+import {executeAiActivationJob,reconcileStaleActivationDispatches} from './ai-activation-execution.mjs'
 
 if(!queueAvailable()) throw new Error('DATABASE_URL is required for the worker runtime')
 
@@ -45,6 +46,9 @@ const updateDelivery=async(workspaceId,deliveryId,patch)=>withWorkspace(workspac
 }))
 
 const handle=async job=>{
+  if(job.kind==='ai_activation_execution'){
+    return executeAiActivationJob(job)
+  }
   if(job.kind==='knowledge_embedding'){
     return embedKnowledgeSourceJob(job)
   }
@@ -135,6 +139,9 @@ const handle=async job=>{
 }
 
 const runBatch=async()=>{
+  await reconcileStaleActivationDispatches({limit:25}).catch(error=>{
+    console.error('[worker] activation reconciliation failed',error instanceof Error?error.message:error)
+  })
   if(Date.now()-lastAudienceSchedulePoll>=audienceSchedulePollMs){
     lastAudienceSchedulePoll=Date.now()
     await runDueAudienceSchedules(audienceScheduleBatch)

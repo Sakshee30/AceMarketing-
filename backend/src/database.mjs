@@ -35,7 +35,34 @@ const createEmbeddedPool=async()=>{
     let sql=await readFile(join(migrationsDir,file),'utf8')
     // pg-mem does not implement PostgreSQL's regex CHECK operator; runtime validation remains active.
     if(file==='001_workspace_state.sql')sql=sql.replace(/,\s*CHECK \(workspace_id ~ '[^']+'\)/,'')
-    db.public.none(sql)
+    // pg-mem gives the original inline job-status CHECK an generated name, so
+    // migration 022 cannot drop it by PostgreSQL's production constraint name.
+    // Expand the embedded copy up front to the final migrated state.
+    if(file==='002_job_queue.sql'){
+      sql=sql.replace(
+        "CHECK (status IN ('pending','leased','retry','succeeded','dead_letter'))",
+        "CHECK (status IN ('pending','leased','retry','succeeded','dead_letter','cancelled','unknown_outcome'))"
+      )
+    }
+    // Preserve the production PostgreSQL GIN/FTS index, but omit it only from
+    // the embedded pg-mem schema because pg-mem does not implement tsvector/GIN.
+    if(file==='023_ai_knowledge.sql'){
+      sql=sql.replace(
+        /CREATE INDEX IF NOT EXISTS ace_ai_knowledge_chunks_fts_idx[\s\S]*?WHERE revoked_at IS NULL;\s*/m,
+        ''
+      )
+    }
+    // pg-mem's parser rejects comment-only compatibility marker files.
+    // Production migration tooling may retain those markers, but embedded setup
+    // should simply skip files with no executable SQL.
+    const executableSql=sql.replace(/--.*$/gm,'').trim()
+    if(!executableSql)continue
+    try{
+      db.public.none(sql)
+    }catch(error){
+      const message=error instanceof Error?error.message:String(error)
+      throw new Error('embedded migration '+file+' failed: '+message,{cause:error})
+    }
   }
   const adapter=db.adapters.createPg()
   return new adapter.Pool()

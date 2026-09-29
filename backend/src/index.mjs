@@ -36,6 +36,8 @@ import { validateHostedTaskInput } from './ai-input-validation.mjs'
 import { evaluateAiTaskAdmission, getAiTaskPolicy, listAiTaskPolicies, listCreativeAssets, listTranscripts, reviewCreativeAsset, saveAiTaskPolicy } from './ai-governance-store.mjs'
 import { getSegmentMemberships, listAnomalyItems, listCausalRecords, listForecastRecords, listMarketingMixRecords, listRankingItems, listSegmentSnapshots, reviewAnomalyItem } from './ai-domain-results.mjs'
 import { approveAiActivationProposal, attachActivationProposalReviewerJob, createAiActivationProposal, listAiActivationProposals, markActivationProposalReviewerBlocked, rejectAiActivationProposal } from './ai-activation-proposals.mjs'
+import {queueAiActivationExecution} from './ai-activation-execution.mjs'
+import {analystToolNames,executeAnalystTool,executeAnalystToolSet} from './ai-analyst-tools.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -452,6 +454,7 @@ const permissionForRequest=(method,path)=>{
   }
   if(path.startsWith('/api/members')||path.startsWith('/api/invitations')) return 'members.write'
   if(path.startsWith('/api/integrations')||path.startsWith('/api/custom-integrations')) return 'integrations.write'
+  if(path.startsWith('/api/ai/analyst/tools')) return 'ai.analysis.run'
   if(path==='/api/ai/knowledge/search') return 'ai.analysis.run'
   if(path.startsWith('/api/ai/knowledge')) return method==='GET'?'workspace.read':'ai.knowledge.write'
   if(path==='/api/ai/analysis') return 'ai.analysis.run'
@@ -459,6 +462,7 @@ const permissionForRequest=(method,path)=>{
   if(path.startsWith('/api/ai/task-policies')) return method==='GET'?'workspace.read':'ai.providers.manage'
   if(path.startsWith('/api/ai/activation-proposals')){
     if(method==='GET')return 'workspace.read'
+    if(path.endsWith('/execute'))return 'ai.activation.execute'
     if(path.endsWith('/approve')||path.endsWith('/reject'))return 'ai.activation.approve'
     return 'ai.activation.propose'
   }
@@ -4778,6 +4782,22 @@ const server = http.createServer(async (req,res)=>{
         return send(req,res,409,{error:error instanceof Error?error.message:'activation proposal rejection failed'})
       }
     }
+    if (req.method === 'POST' && /^\/api\/ai\/activation-proposals\/[^/]+\/execute$/.test(url.pathname)) {
+      const id=decodeURIComponent(url.pathname.split('/')[4]||'')
+      try{
+        const execution=await queueAiActivationExecution({workspaceId,id,actor:authenticatedUser})
+        return send(req,res,202,{
+          item:execution.proposal,
+          jobId:execution.job?.id||null,
+          status:execution.job?.status||'queued',
+          note:'Approved activation execution was queued for a worker. The worker rechecks proposal freshness and the execution safety gate before any provider side effect.'
+        })
+      }catch(error){
+        const message=error instanceof Error?error.message:'activation proposal execution could not be queued'
+        const blocked=/disabled|unsupported|blocked/i.test(message)
+        return send(req,res,blocked?409:422,{error:message})
+      }
+    }
     if (req.method === 'GET' && url.pathname === '/api/ai/transcripts') {
       const items=await listTranscripts(workspaceId)
       return send(req,res,200,{items,generatedAt:new Date().toISOString()})
@@ -5187,6 +5207,19 @@ const server = http.createServer(async (req,res)=>{
       const job=await requestJobCancellation({workspaceId,id})
       return job?send(req,res,200,{job}):send(req,res,404,{error:'cancellable AI job not found'})
     }
+    if (req.method === 'GET' && url.pathname === '/api/ai/analyst/tools') {
+      return send(req,res,200,{items:analystToolNames(),schemaVersion:'analyst-tool-catalog.v1'})
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/analyst\/tools\/[^/]+$/.test(url.pathname)) {
+      const tool=decodeURIComponent(url.pathname.split('/')[5]||'')
+      const body=await readBody(req)
+      try{
+        const item=await executeAnalystTool({workspaceId,name:tool,args:body,principal:authenticatedUser})
+        return send(req,res,200,{item})
+      }catch(error){
+        return send(req,res,400,{error:error instanceof Error?error.message:'analyst tool execution failed'})
+      }
+    }
     if (req.method === 'POST' && /^\/api\/ai\/tasks\/[^/]+\/submit$/.test(url.pathname)) {
       const task=decodeURIComponent(url.pathname.split('/')[4]||'')
       if(task==='live_voice')return send(req,res,400,{error:'live_voice uses the dedicated session endpoint'})
@@ -5226,6 +5259,24 @@ const server = http.createServer(async (req,res)=>{
       const question=String(body.question||'').trim()
       if(!question)return send(req,res,400,{error:'question required'})
       if(question.length>8000)return send(req,res,400,{error:'question exceeds 8000 characters'})
+      const requestedTools=Array.isArray(body.tools)
+        ?body.tools.slice(0,9)
+        :[
+          {name:'campaign_performance',args:{limit:20}},
+          {name:'funnel_comparison',args:{limit:50}},
+          {name:'customer_aggregates',args:{limit:25}},
+          {name:'attribution_summary',args:{}},
+          {name:'forecasts',args:{limit:20}},
+          {name:'prediction_explanations',args:{limit:20}},
+          {name:'anomalies',args:{limit:20}},
+          {name:'experiment_results',args:{limit:20}}
+        ]
+      let analystTools=[]
+      try{
+        analystTools=await executeAnalystToolSet({workspaceId,requests:requestedTools,principal:authenticatedUser})
+      }catch(error){
+        return send(req,res,400,{error:error instanceof Error?error.message:'invalid analyst tool request'})
+      }
       const [leadStats,attr,state]=await Promise.all([
         leadOpsStats(workspaceId).catch(()=>({available:false,total:0,averageScore:0})),
         attributionStats(workspaceId).catch(()=>({available:false,matchedEvents:0,unmatchedEvents:0,assistedEvents:0})),
@@ -5261,7 +5312,8 @@ const server = http.createServer(async (req,res)=>{
           connectedConnectors:connectors.filter(x=>['connected','healthy','active'].includes(String(x.status||'').toLowerCase())).length,
           signalDeliveries:deliveries.length,
           deliveryFailures:deliveries.filter(x=>['failed','dead_letter'].includes(String(x.status||'').toLowerCase())).length
-        }
+        },
+        analystTools
       }
       const submission=await submitHostedAiJob({
         workspaceId,

@@ -320,6 +320,21 @@ paths:
       responses:
         '202': {description: Qualification job accepted}
         '422': {description: Invalid candidate evidence or qualification policy}
+  /ai/analyst/tools:
+    get:
+      summary: List fixed read-only analyst tools
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'200': {description: Analyst tool catalog}}
+  /ai/analyst/tools/{name}:
+    post:
+      summary: Execute one validated tenant-scoped read-only analyst tool
+      description: Only the server-side allowlist is accepted; no arbitrary SQL, raw database filters, shell, or network tools are exposed.
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: name, in: path, required: true, schema: {type: string}}
+      responses:
+        '200': {description: Tool result with immutable evidence metadata}
+        '400': {description: Unsupported tool or invalid arguments}
   /ai/ml/incrementality:
     post:
       summary: Submit CausalForestDML analysis
@@ -401,6 +416,17 @@ paths:
       responses:
         '200': {description: Proposal rejected}
         '404': {description: Proposal not found or no longer pending}
+  /ai/activation-proposals/{id}/execute:
+    post:
+      summary: Queue execution of a separately approved activation proposal
+      description: Requires ai.activation.execute. Server-side execution is disabled unless AI_ACTIVATION_EXECUTION_ENABLED=true. The worker revalidates proposal integrity, expiry and model freshness before using an allowlisted provider adapter.
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        '202': {description: Execution job queued}
+        '409': {description: Execution disabled, unsupported adapter, stale proposal or policy block}
+        '422': {description: Invalid execution request}
 
   /ai/anomalies:
     get:

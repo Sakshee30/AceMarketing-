@@ -21,7 +21,34 @@ Status is intentionally split into implementation, provider-access verification,
 | IsolationForest | yes | n/a | per-run fit | code-level only | no | optional service |
 | sklearn HDBSCAN | yes | n/a | per-run fit | code-level only | no | optional service |
 | LightGBM Ranker | yes | n/a | no tenant artifact | code-level only | no | no |
+| governed activation execution | yes; durable worker + allowlisted audience/CRM/Google Ads budget adapters | n/a | n/a | code-level/failure-path tests | requires separate human approval | default-off; no provider action activated |
 
 ## Current blocking prerequisites
 
-Live providers require account credentials, explicit live-call enablement and task qualification. Reviewer activation requires live account access plus task evaluation/approval; the exact requested Anthropic identifier is now documented. Chronos, Meridian and EconML code paths are implemented behind isolated service profiles; production qualification still needs the provisioned Chronos checkpoint and task-specific tenant data/evaluation. None of these missing prerequisites are reported as successful completion.
+Live providers require account credentials, explicit live-call enablement and task qualification. Reviewer activation remains blocked because the exact requested `claude-fable-5-1` identifier is not currently verified in official Anthropic documentation; live account access and task evaluation/approval remain separate later gates. Chronos, Meridian and EconML code paths are implemented behind isolated service profiles; production qualification still needs the provisioned Chronos checkpoint and task-specific tenant data/evaluation. Provider-side activation execution is implemented but disabled by default; consent-aware audience sync, CRM writeback and a bounded Google Ads campaign-budget adapter are allowlisted. The budget adapter re-reads the exact budget resource, rejects stale approved amounts, enforces configured percentage/absolute caps, and requires explicit acknowledgement for shared budgets. None of these missing prerequisites are reported as successful completion.
+
+## Final code-level hardening
+
+The activation boundary now includes a database-backed dispatch lease/fence, delayed durable-job publication, fence-guarded finalization, model-lifecycle mutation guards, credentialed redirect rejection, and strict shared-budget reference-count validation. Knowledge retrieval validates provider vectors before pgvector/application-cosine use and degrades malformed vectors to authorized lexical retrieval instead of fabricating or failing semantic results. These controls do not turn external credentials, tenant evaluation evidence or production deployment into completed states.
+
+## Final review hardening
+
+The final safety review gaps are implemented in code:
+
+- Analyst experiment evidence is projected through a fixed aggregate allowlist so arbitrary persisted fields are not exposed to the hosted analyst.
+- Knowledge semantic retrieval requires query/stored embedding dimension compatibility; incompatible vectors fall back to authorized lexical retrieval rather than being mixed.
+- Expired activation dispatch leases are atomically converted to an explicit unknown external outcome, their stale fence is invalidated, and model lifecycle changes remain blocked while that unknown outcome exists.
+- The worker runs bounded stale-dispatch reconciliation before leasing new work.
+- Migration `032_ai_activation_unknown_outcome.sql` persists the unknown-outcome state without pretending provider completion.
+
+These controls still do not qualify providers, train tenant artifacts, approve models, or deploy production infrastructure without the required external evidence.
+
+## Specialist model evaluation hardening
+
+The specialist ML service now records additional task-specific evidence required by the implementation specification:
+
+- IsolationForest deduplicates repeated entity IDs, enforces a configurable minimum-volume gate, and reports its decision threshold, flagged rate, and false-positive feedback capability.
+- HDBSCAN reports cluster/noise counts, membership strength when available, and a deterministic small-perturbation adjusted-Rand stability diagnostic. Cluster IDs remain explicitly version-specific.
+- LightGBM ranking trains only on exposed candidates and evaluates NDCG on held-out groups. When group timestamps are supplied, the holdout is time ordered; otherwise the input group order is preserved and reported. Position-context coverage is also reported.
+- These evaluation signals remain evidence for qualification and do not automatically promote or deploy an artifact.
+

@@ -1,19 +1,23 @@
 import { randomUUID } from 'node:crypto'
-import pg from 'pg'
+import {pool} from './database.mjs'
 import { modelRegistrySnapshot } from './ai-registry.mjs'
 import { persistDomainResult } from './ai-domain-results.mjs'
 
-const { Pool }=pg
-const databaseUrl=process.env.DATABASE_URL||''
-const pool=databaseUrl?new Pool({
-  connectionString:databaseUrl,
-  max:Number(process.env.AI_REGISTRY_DB_POOL_MAX||5),
-  idleTimeoutMillis:Number(process.env.DB_IDLE_TIMEOUT_MS||30000),
-  connectionTimeoutMillis:Number(process.env.DB_CONNECT_TIMEOUT_MS||5000),
-  ...(process.env.DB_SSL==='require'?{ssl:{rejectUnauthorized:false}}:{})
-}):null
-
 const staticByTask=()=>new Map(modelRegistrySnapshot().map(item=>[item.task,item]))
+
+export const assertNoActiveActivationDispatch=async(client,{workspaceId,task})=>{
+  const {rows}=await client.query(
+    `SELECT id,execution_job_id,execution_lease_until
+     FROM ace_ai_activation_proposals
+     WHERE workspace_id=$1 AND task=$2
+       AND (execution_status='running' OR execution_outcome_state='unknown')
+     LIMIT 1`,
+    [workspaceId,task]
+  )
+  if(rows[0]){
+    throw new Error('model lifecycle change is blocked while an activation dispatch lease is active')
+  }
+}
 
 export const syncTenantRegistry=async workspaceId=>{
   if(!pool)return []
@@ -22,6 +26,14 @@ export const syncTenantRegistry=async workspaceId=>{
   try{
     await client.query('BEGIN')
     for(const item of items){
+      const activeDispatch=await client.query(
+        `SELECT 1 FROM ace_ai_activation_proposals
+         WHERE workspace_id=$1 AND task=$2
+           AND (execution_status='running' OR execution_outcome_state='unknown')
+         LIMIT 1`,
+        [workspaceId,item.task]
+      )
+      if(activeDispatch.rows[0])continue
       await client.query(
         `INSERT INTO ace_ai_model_registry
           (workspace_id,task,kind,provider,requested_model,resolved_model,input_schema_version,output_schema_version,
@@ -253,6 +265,7 @@ export const promoteModel=async({workspaceId,task,actor,evaluationId})=>{
     const evaluation=evalResult.rows[0]
     if(!evaluation)throw new Error('evaluation not found')
     if(evaluation.qualified!==true)throw new Error('evaluation has not passed its predeclared qualification threshold')
+    await assertNoActiveActivationDispatch(client,{workspaceId,task})
     const previous=await client.query(
       `SELECT artifact_revision FROM ace_ai_model_registry WHERE workspace_id=$1 AND task=$2 FOR UPDATE`,
       [workspaceId,task]
@@ -350,6 +363,7 @@ export const qualifyEvaluation=async({workspaceId,evaluationId,actor=null})=>{
     )
     const policy=policyResult.rows[0]
     if(!policy)throw new Error('no predeclared active evaluation policy exists for this task')
+    await assertNoActiveActivationDispatch(client,{workspaceId,task:evaluation.task})
     const details={}
     let qualified=true
     for(const [metric,rule] of Object.entries(policy.thresholds||{})){
@@ -396,6 +410,7 @@ export const deployModel=async({workspaceId,task,actor=null})=>{
     )
     const current=rows[0]
     if(!current)throw new Error('model registry entry not found')
+    await assertNoActiveActivationDispatch(client,{workspaceId,task})
     if(current.documentation_verified!==true)throw new Error('model documentation verification is incomplete')
     if(current.evaluation_status!=='qualified')throw new Error('model has not passed its predeclared evaluation gate')
     if(current.approval_status!=='approved')throw new Error('model has not been approved')
@@ -422,15 +437,26 @@ export const deployModel=async({workspaceId,task,actor=null})=>{
 
 export const undeployModel=async({workspaceId,task,actor=null})=>{
   if(!pool)throw new Error('DATABASE_URL is required for deployment state')
-  const {rows}=await pool.query(
-    `UPDATE ace_ai_model_registry
-     SET deployment_status='not_deployed',updated_at=now()
-     WHERE workspace_id=$1 AND task=$2
-     RETURNING *`,
-    [workspaceId,task]
-  )
-  if(!rows[0])throw new Error('model registry entry not found')
-  return {...rows[0],deploymentActor:actor?.userId||null}
+  const client=await pool.connect()
+  try{
+    await client.query('BEGIN')
+    await assertNoActiveActivationDispatch(client,{workspaceId,task})
+    const {rows}=await client.query(
+      `UPDATE ace_ai_model_registry
+       SET deployment_status='not_deployed',updated_at=now()
+       WHERE workspace_id=$1 AND task=$2
+       RETURNING *`,
+      [workspaceId,task]
+    )
+    if(!rows[0])throw new Error('model registry entry not found')
+    await client.query('COMMIT')
+    return {...rows[0],deploymentActor:actor?.userId||null}
+  }catch(error){
+    await client.query('ROLLBACK').catch(()=>{})
+    throw error
+  }finally{
+    client.release()
+  }
 }
 
 export const rollbackModel=async({workspaceId,task,actor=null})=>{
@@ -444,6 +470,7 @@ export const rollbackModel=async({workspaceId,task,actor=null})=>{
     )
     const current=rows[0]
     if(!current)throw new Error('model registry entry not found')
+    await assertNoActiveActivationDispatch(client,{workspaceId,task})
     if(!current.rollback_predecessor)throw new Error('no rollback predecessor recorded')
     const {rows:updated}=await client.query(
       `UPDATE ace_ai_model_registry
@@ -463,4 +490,4 @@ export const rollbackModel=async({workspaceId,task,actor=null})=>{
   }
 }
 
-export const closeRegistryStore=async()=>{if(pool)await pool.end()}
+export const closeRegistryStore=async()=>{}
