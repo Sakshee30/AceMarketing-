@@ -31,7 +31,7 @@ import { closeKnowledge, ingestKnowledgeText, listKnowledgeSources, revokeKnowle
 import { deployModel, getEvaluationPolicy, getTenantRegistry, listEvaluations, promoteModel, qualifyEvaluation, recordProviderAccessVerification, rollbackModel, syncTenantRegistry, undeployModel, upsertEvaluationPolicy } from './ai-registry-store.mjs'
 import { closeAiDatasets, createAiDataset, getAiDataset, listAiDatasets, retireAiDataset, trainingRequestFromDataset, trainingRequestFromDatasetWithHorizon } from './ai-datasets.mjs'
 import { metricCatalog } from './metric-catalog.mjs'
-import { closeLiveVoice, createLiveVoiceSession, getLiveVoiceSession, installLiveVoiceWebSocket, terminateLiveVoiceSession } from './live-voice.mjs'
+import { closeLiveVoice, createLiveVoiceSession, getLiveVoiceSession, installLiveVoiceWebSocket, terminateLiveVoiceSession } from './live-voice.mjs'\nimport { validateHostedTaskInput } from './ai-input-validation.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -450,7 +450,7 @@ const permissionForRequest=(method,path)=>{
   if(path.startsWith('/api/integrations')||path.startsWith('/api/custom-integrations')) return 'integrations.write'
   if(path==='/api/ai/knowledge/search') return 'ai.analysis.run'
   if(path.startsWith('/api/ai/knowledge')) return method==='GET'?'workspace.read':'ai.knowledge.write'
-  if(path==='/api/ai/analysis') return 'ai.analysis.run'
+  if(path==='/api/ai/analysis') return 'ai.analysis.run'\n  if(path.startsWith('/api/ai/tasks/')) return 'ai.analysis.run'
   if(path.startsWith('/api/ai/datasets')&&method!=='GET') return 'ai.training.run'
   if(path.startsWith('/api/ai/ml/train/')||path==='/api/ai/ml/rank') return 'ai.training.run'
   if(path.startsWith('/api/ai/live-voice')) return 'calls.write'
@@ -4935,6 +4935,40 @@ const server = http.createServer(async (req,res)=>{
       const id=decodeURIComponent(parts[4]||'')
       const job=await requestJobCancellation({workspaceId,id})
       return job?send(req,res,200,{job}):send(req,res,404,{error:'cancellable AI job not found'})
+    }
+    if (req.method === 'POST' && /^\\/api\\/ai\\/tasks\\/[^/]+\\/submit$/.test(url.pathname)) {
+      const task=decodeURIComponent(url.pathname.split('/')[4]||'')
+      if(task==='live_voice')return send(req,res,400,{error:'live_voice uses the dedicated session endpoint'})
+      const body=await readBody(req)
+      const validated=validateHostedTaskInput(task,body)
+      if(!validated.ok)return send(req,res,400,{error:validated.error,task})
+      const sourceSnapshot={
+        schemaVersion:'hosted-task-input.v1',
+        task,
+        capturedAt:new Date().toISOString(),
+        evidenceIds:Array.isArray(body.evidenceIds)?body.evidenceIds.map(String).slice(0,100):[],
+        clientMetadata:body.clientMetadata&&typeof body.clientMetadata==='object'?body.clientMetadata:{}
+      }
+      const submission=await submitHostedAiJob({
+        workspaceId,
+        task,
+        input:validated.input,
+        sourceSnapshot,
+        idempotencyKey:String(req.headers['idempotency-key']||req.requestId||randomUUID()),
+        actor:authenticatedUser
+      })
+      if(!submission.accepted){
+        return send(req,res,submission.status||409,{error:submission.error,task,readiness:submission.readiness||null,prerequisites:submission.prerequisites||[]})
+      }
+      return send(req,res,202,{
+        jobId:submission.job.id,
+        status:submission.job.status,
+        task,
+        provider:submission.route.provider,
+        requestedModel:submission.route.requestedModel,
+        readiness:submission.route.readiness,
+        resultSchemaVersion:'ai-result.v1'
+      })
     }
     if (req.method === 'POST' && url.pathname === '/api/ai/analysis') {
       const body=await readBody(req)
