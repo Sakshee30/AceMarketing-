@@ -60,7 +60,7 @@
     "e2e:soak": "playwright test --config=playwright.soak.config.ts",
     "frontend:telemetry:check": "playwright test --config=playwright.standalone.config.ts --grep 'performance telemetry|lab metrics'",
     "test:ai-backend": "node --test backend/tests/metric-catalog.test.mjs backend/tests/ai-input-validation.test.mjs backend/tests/ai-result-contracts.test.mjs",
-    "verify:ai-backend": "npm run check:backend && npm run test:ai-backend",
+    "verify:ai-backend": "npm run check:backend && npm run check:ai-tools && npm run test:ai-backend",
     "ai:provider-verify": "node scripts/ai/provider-verify.mjs",
     "ai:dataset-readiness": "node scripts/ai/dataset-readiness.mjs",
     "ai:train": "node scripts/ai/train.mjs",
@@ -68,7 +68,8 @@
     "ai:backtest": "node scripts/ai/backtest.mjs",
     "ai:promote": "node scripts/ai/promote.mjs",
     "ai:rollback": "node scripts/ai/rollback.mjs",
-    "ai:delete": "node scripts/ai/delete.mjs"
+    "ai:delete": "node scripts/ai/delete.mjs",
+    "check:ai-tools": "node --check scripts/ai/_client.mjs && node --check scripts/ai/provider-verify.mjs && node --check scripts/ai/dataset-readiness.mjs && node --check scripts/ai/train.mjs && node --check scripts/ai/evaluate.mjs && node --check scripts/ai/backtest.mjs && node --check scripts/ai/promote.mjs && node --check scripts/ai/rollback.mjs && node --check scripts/ai/delete.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.59.0",
