@@ -17,8 +17,8 @@ export const validateAiResultEnvelope=value=>{
   if(value.evidenceRefs!=null&&!Array.isArray(value.evidenceRefs))throw new Error('evidenceRefs must be an array')
 
   if(resultType==='calibrated_probability'){
-    const probability=Number(value.probability)
-    if(!Number.isFinite(probability)||probability<0||probability>1)throw new Error('probability must be between 0 and 1')
+    const probability=value.probability
+    if(typeof probability!=='number'||!Number.isFinite(probability)||probability<0||probability>1)throw new Error('probability must be a number between 0 and 1')
     requiredString(value.horizon,'horizon')
     requiredString(value.calibrationReference||value.calibration_reference,'calibrationReference')
   }
