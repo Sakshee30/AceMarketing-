@@ -268,6 +268,36 @@ paths:
       summary: Inspect specialist runtime dependency state
       parameters: [{$ref: '#/components/parameters/Workspace'}]
       responses: {'200': {description: Capabilities}}
+  /ai/ml/train/classification:
+    post:
+      summary: Submit bounded CatBoost classification training
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses:
+        '202': {description: Accepted, content: {application/json: {schema: {$ref: '#/components/schemas/JobAccepted'}}}}
+        '422': {description: Invalid or insufficient training input}
+  /ai/ml/train/regression:
+    post:
+      summary: Submit bounded CatBoost future-value training
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses:
+        '202': {description: Accepted, content: {application/json: {schema: {$ref: '#/components/schemas/JobAccepted'}}}}
+        '422': {description: Invalid or insufficient training input}
+  /ai/ml/score:
+    post:
+      summary: Submit verified-artifact customer scoring
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses:
+        '202': {description: Accepted, content: {application/json: {schema: {$ref: '#/components/schemas/JobAccepted'}}}}
+        '409': {description: Model lifecycle or policy blocks scoring}
+        '422': {description: Invalid artifact or scoring request}
+  /ai/ml/rank/score:
+    post:
+      summary: Submit verified LGBMRanker artifact scoring for eligible candidates
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses:
+        '202': {description: Accepted, content: {application/json: {schema: {$ref: '#/components/schemas/JobAccepted'}}}}
+        '409': {description: Model lifecycle or policy blocks ranking}
+        '422': {description: Invalid artifact or ranking request}
   /ai/ml/forecast/seasonal-naive:
     post:
       summary: Submit deterministic forecast baseline
@@ -313,6 +343,24 @@ paths:
       summary: Create governed live voice session
       parameters: [{$ref: '#/components/parameters/Workspace'}]
       responses: {'201': {description: Session created}, '409': {description: Governance blocked}}
+  /ai/live-voice/sessions/{id}:
+    get:
+      summary: Read governed live voice session state
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        '200': {description: Session state}
+        '404': {description: Session not found}
+  /ai/live-voice/sessions/{id}/terminate:
+    post:
+      summary: Terminate live voice session
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        '200': {description: Session terminated}
+        '404': {description: Session not found}
 
   /ai/activation-proposals:
     get:
