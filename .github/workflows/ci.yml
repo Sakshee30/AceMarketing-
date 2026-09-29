@@ -241,6 +241,7 @@ jobs:
           test -f frontend/src/features/intelligence/feature.manifest.ts
           test -f backend/src/ai-result-contracts.mjs
           test -f backend/src/ai-activation-proposals.mjs
+          test -f backend/src/ai-domain-results.mjs
           test -f backend/tests/ai-activation-proposals.test.mjs
           test -f backend/migrations/028_ai_activation_proposal_governance.sql
           test -f backend/src/ai-governance-store.mjs
@@ -249,6 +250,7 @@ jobs:
           test -f backend/tests/ai-object-store.test.mjs
           test -f backend/migrations/026_ai_task_policies_and_media_review.sql
           test -f backend/tests/ai-result-contracts.test.mjs
+          test -f backend/tests/ai-registry.test.mjs
           test -f docs/ai/openapi.yaml
           test -f docs/ai/coverage-matrix.md
           test -f deploy/k8s/ai-worker.yaml
