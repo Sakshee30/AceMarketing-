@@ -36,6 +36,8 @@ CREATE TABLE IF NOT EXISTS ace_ai_feature_snapshots (
   available_at TIMESTAMPTZ NOT NULL,
   prediction_cutoff TIMESTAMPTZ NOT NULL,
   features JSONB NOT NULL,
+  label_value NUMERIC,
+  label_observed_at TIMESTAMPTZ,
   provenance JSONB NOT NULL DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (workspace_id,task,entity_id,prediction_cutoff,feature_schema_version)
