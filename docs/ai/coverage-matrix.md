@@ -44,3 +44,11 @@
 | vector compatibility | `knowledge.mjs` requires matching embedding dimensions for pgvector/application cosine | `ai-knowledge-authorization.test.mjs` dimension contract test |
 | stale provider outcome reconciliation | migration 032 + `reconcileStaleActivationDispatches` + lifecycle guard | `ai-activation-execution.test.mjs` verifies expired dispatch becomes unknown and still blocks lifecycle changes |
 
+## Specialist evaluation closure
+
+| Requirement | Implementation | Evidence |
+|---|---|---|
+| anomaly minimum-volume / dedup / threshold evidence | `AnomalyRequest.minimum_volume` + IsolationForest post-processing | ML tests cover insufficient volume and duplicate suppression |
+| segmentation stability / noise handling | deterministic perturbation ARI, noise fraction and membership-strength diagnostics | ML test asserts stability output |
+| exposure-aware ranking evaluation | LightGBM trains on exposed candidates and evaluates on held-out groups, time ordered when timestamps exist | ML test verifies time-ordered train/holdout split and artifact creation |
+
