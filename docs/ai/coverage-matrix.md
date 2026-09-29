@@ -78,3 +78,15 @@
 | anomaly false positives | investigator triage feedback summarized as reviewed false-positive rate | requires human triage evidence |
 | canary health | deployment observations + `ai-deployment-controls.mjs` health | representative production evidence remains an external prerequisite |
 | admin surface | AI Intelligence / Administration monitoring panel | loading/error state uses the existing page-level state model |
+
+
+## Failure and recovery controls
+
+| Requirement | Implementation | Evidence |
+|---|---|---|
+| feature-off blocks new work | tenant/platform policy admission gate | governance tests |
+| feature-off stops already queued/leased work | policy disable marks queued work cancelled and worker rechecks policy before provider/model execution | `ai-resilience.test.mjs` |
+| shadow/canary changes after admission | worker execution gate rechecks current deployment mode/allocation | `ai-resilience.test.mjs` |
+| Redis loss | durable AI job, usage and result state remains database-backed with no Redis dependency in queue/worker execution | source-level resilience assertion |
+| database/queue unavailable | durable submission/worker startup fails closed rather than fabricating completion | existing queue/runtime guards + resilience coverage |
+| provider unknown outcome | explicit `unknown_outcome` state and reconciliation path | durable-job and activation execution tests |

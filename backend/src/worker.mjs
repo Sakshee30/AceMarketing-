@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { closeQueue, completeJob, failJob, heartbeatJob, leaseJobs, markUnknownOutcome, queueAvailable, reconcileAiUsageReservation } from './queue.mjs'
+import { closeQueue, completeJob, failJob, heartbeatJob, leaseJobs, markUnknownOutcome, queueAvailable, reconcileAiUsageReservation, requestJobCancellation } from './queue.mjs'
 import { deliverSignal } from './providers.mjs'
 import { syncAudienceProvider, writebackLead } from './activation-adapters.mjs'
 import { closeLeadOps, updateActivationRun, updateAudienceSyncState } from './lead-ops.mjs'
@@ -15,6 +15,7 @@ import { closeKnowledge, embedKnowledgeSourceJob, searchKnowledgeJob } from './k
 import { closeRegistryStore, recordMlExecution, syncTenantRegistry } from './ai-registry-store.mjs'
 import {executeAiActivationJob,reconcileStaleActivationDispatches} from './ai-activation-execution.mjs'
 import {applyDeploymentHealthGuard,recordDeploymentObservation} from './ai-deployment-controls.mjs'
+import {evaluateAiTaskWorkerExecution} from './ai-governance-store.mjs'
 
 if(!queueAvailable()) throw new Error('DATABASE_URL is required for the worker runtime')
 
@@ -46,6 +47,19 @@ const updateDelivery=async(workspaceId,deliveryId,patch)=>withWorkspace(workspac
   if(item) Object.assign(item,patch,{updatedAt:new Date().toISOString()})
 }))
 
+const assertAiExecutionStillAllowed=async job=>{
+  if(!['ai_hosted_task','ml_task'].includes(job.kind))return
+  const task=String(job.payload?.task||'')
+  const gate=await evaluateAiTaskWorkerExecution({
+    workspaceId:job.workspace_id,
+    task,
+    deploymentDecision:job.payload?.deploymentDecision||{}
+  })
+  if(gate.allowed)return
+  await requestJobCancellation({workspaceId:job.workspace_id,id:job.id})
+  throw new Error('AI task execution blocked before provider/model call: '+gate.reasons.join('; '))
+}
+
 const handle=async job=>{
   if(job.kind==='ai_activation_execution'){
     return executeAiActivationJob(job)
@@ -57,12 +71,14 @@ const handle=async job=>{
     return searchKnowledgeJob(job)
   }
   if(job.kind==='ml_task'){
+    await assertAiExecutionStillAllowed(job)
     await syncTenantRegistry(job.workspace_id)
     const result=await executeMlJob(job)
     const lifecycle=await recordMlExecution({workspaceId:job.workspace_id,job,result})
     return {...result,lifecycle}
   }
   if(job.kind==='ai_hosted_task'){
+    await assertAiExecutionStillAllowed(job)
     return executeHostedAiJob(job)
   }
   if(job.kind==='signal_delivery'){

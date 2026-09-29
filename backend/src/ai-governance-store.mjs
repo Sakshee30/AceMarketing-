@@ -3,7 +3,7 @@ import {pool} from './database.mjs'
 import {modelRegistryItem} from './ai-registry.mjs'
 import {aiObjectStoreStatus,storeAiObject,storeAiText} from './ai-object-store.mjs'
 import {enforceTenantPolicyWithinPlatform,platformTaskPolicy} from './ai-platform-policy.mjs'
-import {evaluateDeploymentTraffic} from './ai-deployment-controls.mjs'
+import {evaluateDeploymentTraffic,getDeploymentControl} from './ai-deployment-controls.mjs'
 
 const readTaskUsage=async(workspaceId,task)=>{
   if(!pool)return {activeJobs:0,monthUnits:0,estimatedCost:null,costStatus:'not_configured'}
@@ -100,6 +100,44 @@ export const normalizeAiTaskPolicyInput=(task,input={})=>{
   const policyVersion=String(input.policyVersion||'v1').trim().slice(0,120)
   if(!policyVersion)throw new Error('policyVersion required')
   return {route,enabled,approvedRequestedModel,maxConcurrentJobs:rawConcurrent,monthlyUnitBudget,featureFlags,policyVersion}
+}
+
+export const aiTaskWorkerExecutionDecision=({task,requestedModel,policy,platform,deploymentControl,deploymentDecision={}})=>{
+  const reasons=[]
+  if(!policy)reasons.push('unknown AI task policy')
+  if(platform?.enabled===false)reasons.push('task disabled by platform policy')
+  if(policy?.enabled===false)reasons.push('task disabled by tenant policy')
+  if(platform?.allowedRequestedModel&&platform.allowedRequestedModel!==requestedModel)reasons.push('requested model is not allowed by platform policy')
+  if(policy?.approvedRequestedModel&&policy.approvedRequestedModel!==requestedModel)reasons.push('requested model is not approved by tenant policy')
+
+  const mode=String(deploymentControl?.mode||'active')
+  if(mode==='off')reasons.push('deployment traffic is disabled')
+  if(mode==='shadow'&&deploymentDecision?.shadow!==true)reasons.push('deployment is shadow-only')
+  if(mode==='canary'){
+    const bucket=Number(deploymentDecision?.bucket)
+    const percent=Number(deploymentControl?.canaryPercent)
+    if(!Number.isFinite(bucket)||!Number.isFinite(percent)||bucket>=percent){
+      reasons.push('job is outside the current canary allocation')
+    }
+  }
+  return {allowed:reasons.length===0,reasons,task,requestedModel,mode}
+}
+
+export const evaluateAiTaskWorkerExecution=async({workspaceId,task,requestedModel=null,deploymentDecision={}})=>{
+  const route=modelRegistryItem(task)
+  if(!route)return {allowed:false,reasons:['unknown AI task'],task,requestedModel:null,mode:'off'}
+  const [policy,deploymentControl]=await Promise.all([
+    getAiTaskPolicy(workspaceId,task),
+    getDeploymentControl({workspaceId,task})
+  ])
+  return aiTaskWorkerExecutionDecision({
+    task,
+    requestedModel:requestedModel||route.requestedModel,
+    policy,
+    platform:platformTaskPolicy(task),
+    deploymentControl,
+    deploymentDecision
+  })
 }
 
 export const saveAiTaskPolicy=async({workspaceId,task,input,actor})=>{
