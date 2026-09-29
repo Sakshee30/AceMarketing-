@@ -17,7 +17,9 @@ All routes use existing AceMarketing authentication/workspace scoping. Long-runn
 Policy definition, qualification, approval and deployment remain separate lifecycle states. A saved settings object never implies model qualification.
 
 ## Hosted analysis
-- `POST /api/ai/analysis` -> `202` plus stable job ID when the analyst route is active.
+- `GET /api/ai/analyst/tools` — list the fixed read-only analyst tool allowlist.
+- `POST /api/ai/analyst/tools/:name` — execute one tenant-scoped validated read-only tool; arbitrary SQL/network/shell access is not exposed.
+- `POST /api/ai/analysis` -> `202` plus stable job ID when the analyst route is active. The request may select a bounded tool set; server-side tool results are captured into the immutable evidence snapshot.
 - If documentation, credentials, evaluation, approval or deployment prerequisites are missing, the request is blocked with explicit readiness/prerequisites.
 
 ## Knowledge
