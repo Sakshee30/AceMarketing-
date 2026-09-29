@@ -223,3 +223,82 @@ def test_shared_result_contract_manifest():
     assert "causal_estimate" in manifest["resultTypes"]
     assert "marketing_mix_analysis" in manifest["resultTypes"]
     assert "calibrationReference" in manifest["resultTypes"]["calibrated_probability"]
+
+
+def test_anomaly_minimum_volume_and_duplicate_suppression():
+    pytest.importorskip("sklearn")
+    from acemarketing_ml.contracts import AnomalyRequest, MatrixRow
+    from acemarketing_ml.pipelines import anomaly_detection
+
+    rows = [
+        MatrixRow(entity_id=f"entity-{index}", features={"value": float(index)})
+        for index in range(12)
+    ]
+    rows.append(MatrixRow(entity_id="entity-0", features={"value": 999.0}))
+    result = anomaly_detection(AnomalyRequest(rows=rows, minimum_volume=20))
+    assert result["status"] == "insufficient_data"
+    assert result["observedVolume"] == 12
+    assert result["suppressedDuplicates"] == 1
+
+
+def test_segmentation_reports_stability_diagnostics():
+    pytest.importorskip("sklearn")
+    from acemarketing_ml.contracts import MatrixRow, SegmentationRequest
+    from acemarketing_ml.pipelines import behavioral_segments
+
+    rows = []
+    for index in range(20):
+        base = 0.0 if index < 10 else 10.0
+        rows.append(
+            MatrixRow(
+                entity_id=f"entity-{index}",
+                features={"x": base + index * 0.01, "y": base + index * 0.02},
+            )
+        )
+    result = behavioral_segments(
+        SegmentationRequest(rows=rows, min_cluster_size=3, min_samples=2, stability_jitter_fraction=1e-6)
+    )
+    assert result["status"] == "evaluated_not_promoted"
+    assert "perturbationAdjustedRand" in result["stability"]
+    assert 0.0 <= result["stability"]["noiseFraction"] <= 1.0
+
+
+def test_ranker_evaluates_held_out_groups(monkeypatch, tmp_path):
+    pytest.importorskip("lightgbm")
+    from acemarketing_ml.contracts import RankingCandidate, RankingGroup, RankingTrainRequest
+    from acemarketing_ml.pipelines import train_ranker
+
+    monkeypatch.setenv("ML_ARTIFACT_DIR", str(tmp_path))
+    monkeypatch.setenv("ML_ENV", "development")
+    start = datetime(2026, 1, 1, tzinfo=UTC)
+    groups = []
+    for group_index in range(10):
+        groups.append(
+            RankingGroup(
+                group_id=f"group-{group_index}",
+                observed_at=start + timedelta(days=group_index),
+                candidates=[
+                    RankingCandidate(
+                        candidate_id=f"{group_index}-a",
+                        features={"quality": 1.0, "price": 0.2},
+                        relevance=3.0,
+                        exposed=True,
+                        position=1,
+                    ),
+                    RankingCandidate(
+                        candidate_id=f"{group_index}-b",
+                        features={"quality": 0.5, "price": 0.8},
+                        relevance=1.0,
+                        exposed=True,
+                        position=2,
+                    ),
+                ],
+            )
+        )
+    result = train_ranker(RankingTrainRequest(groups=groups, holdout_fraction=0.2))
+    assert result["status"] == "evaluated_not_promoted"
+    assert result["metrics"]["splitMethod"] == "time_ordered_group_holdout"
+    assert result["metrics"]["trainingGroups"] == 8
+    assert result["metrics"]["holdoutGroups"] == 2
+    assert result["metrics"]["exposureAware"] is True
+    assert result["artifact"]["sha256"]
