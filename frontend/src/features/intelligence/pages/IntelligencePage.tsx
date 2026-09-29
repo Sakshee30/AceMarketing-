@@ -21,6 +21,10 @@ export default function IntelligencePage(){
  const [datasets,setDatasets]=useState<any[]>([])
  const [knowledge,setKnowledge]=useState<any[]>([])
  const [results,setResults]=useState<any[]>([])
+ const [policies,setPolicies]=useState<any[]>([])
+ const [transcripts,setTranscripts]=useState<any[]>([])
+ const [creatives,setCreatives]=useState<any[]>([])
+ const [policyDrafts,setPolicyDrafts]=useState<Record<string,{enabled:boolean;maxConcurrentJobs:number;monthlyUnitBudget:string}>>({})
  const [loading,setLoading]=useState(true)
  const [error,setError]=useState('')
  const [notice,setNotice]=useState<Notice>({kind:'',text:''})
@@ -39,8 +43,11 @@ export default function IntelligencePage(){
  const load=async()=>{
   setLoading(true);setError('')
   try{
-   const [r,c,m,d,k,res]:any=await Promise.all([
+   const [r,p,t,cr,caps,m,d,k,res]:any=await Promise.all([
     intelligenceApi.registry(),
+    intelligenceApi.policies(),
+    intelligenceApi.transcripts(),
+    intelligenceApi.creatives(),
     intelligenceApi.capabilities().catch(()=>({items:[],configured:false})),
     intelligenceApi.metrics(),
     intelligenceApi.datasets(),
@@ -48,7 +55,11 @@ export default function IntelligencePage(){
     intelligenceApi.results(undefined,100)
    ])
    setRegistry(Array.isArray(r.tenantItems)&&r.tenantItems.length?r.tenantItems:(r.items||[]))
-   setCapabilities(c.items||[])
+   setPolicies(p.items||[])
+   setTranscripts(t.items||[])
+   setCreatives(cr.items||[])
+   setPolicyDrafts(Object.fromEntries((p.items||[]).map((item:any)=>[item.task,{enabled:item.enabled!==false,maxConcurrentJobs:Number(item.maxConcurrentJobs||4),monthlyUnitBudget:item.monthlyUnitBudget==null?'':String(item.monthlyUnitBudget)}])))
+   setCapabilities(caps.items||[])
    setMetrics(m)
    setDatasets(d.items||[])
    setKnowledge(k.items||[])
@@ -82,6 +93,34 @@ export default function IntelligencePage(){
   evaluated:registry.filter(x=>x.evaluationStatus==='qualified').length,
   datasets:datasets.length
  }),[registry,datasets])
+
+ const saveTaskPolicy=async(task:string)=>{
+  const draft=policyDrafts[task]
+  if(!draft)return
+  setBusy('policy:'+task);setNotice({kind:'',text:''})
+  try{
+   await intelligenceApi.savePolicy(task,{
+    enabled:draft.enabled,
+    maxConcurrentJobs:Number(draft.maxConcurrentJobs),
+    monthlyUnitBudget:draft.monthlyUnitBudget===''?null:Number(draft.monthlyUnitBudget),
+    approvedRequestedModel:registry.find((item:any)=>item.task===task)?.requestedModel||null,
+    policyVersion:'v1'
+   })
+   setNotice({kind:'ok',text:'Task policy saved. New work will obey the updated enablement, concurrency and monthly usage limits.'})
+   await load()
+  }catch(e:any){setNotice({kind:'error',text:e?.message||'Task policy could not be saved.'})}
+  finally{setBusy('')}
+ }
+
+ const reviewCreative=async(id:string,status:'in_review'|'approved'|'rejected')=>{
+  setBusy('creative-review:'+id);setNotice({kind:'',text:''})
+  try{
+   await intelligenceApi.reviewCreative(id,status,status==='rejected'?'Rejected during workspace review.':undefined)
+   setNotice({kind:'ok',text:'Creative review state updated. Approval changes review state only; it does not activate advertising.'})
+   await load()
+  }catch(e:any){setNotice({kind:'error',text:e?.message||'Creative review state could not be updated.'})}
+  finally{setBusy('')}
+ }
 
  const submitAnalysis=async()=>{
   if(!question.trim())return
@@ -281,9 +320,9 @@ export default function IntelligencePage(){
 
    {section==='Specialists'&&<div className="intel-grid two"><section className="app-panel"><div className="panel-head"><div><h3>Specialist numerical models</h3><p>Run task-specific ML paths. These models do not share an LLM fallback.</p></div><Target/></div><label>Task<select value={specialistDraft.task} onChange={e=>setSpecialistDraft(x=>({...x,task:e.target.value}))}><option value="marketing_mix">Marketing mix · Meridian</option><option value="incrementality">Incrementality · CausalForestDML</option><option value="anomaly_detection">Anomalies · IsolationForest</option><option value="behavioral_segments">Segments · HDBSCAN</option><option value="offer_ranking">Offer ranking · LGBMRanker</option></select></label><label className="intel-field">Validated request JSON<textarea value={specialistDraft.payload} onChange={e=>setSpecialistDraft(x=>({...x,payload:e.target.value}))} placeholder='{"rows":[]}'/></label><button className="app-primary" disabled={busy==='specialist'} onClick={()=>void submitSpecialist()}>{busy==='specialist'?'Submitting…':'Run specialist model'}</button></section><section className="app-panel"><div className="panel-head"><div><h3>Interpretation boundary</h3><p>Specialist outputs have distinct semantics and cannot be reduced to a generic confidence score.</p></div><ShieldCheck/></div><div className="intel-callout"><ShieldCheck/><div><b>Task-specific evidence</b><p>Marketing mix requires support and diagnostics. Incrementality requires a documented estimand and overlap. Anomalies are investigation signals, clusters are version-specific, and offline ranking scores do not prove incremental lift.</p></div></div></section></div>}
 
-   {section==='Media'&&<div className="intel-grid two"><section className="app-panel"><div className="panel-head"><div><h3>Multimodal & transcription</h3><p>Submit native provider tasks without exposing provider credentials to the browser.</p></div><FileSearch/></div><label>Task<select value={mediaDraft.task} onChange={e=>setMediaDraft(x=>({...x,task:e.target.value}))}><option value="multimodal_extraction">Multimodal extraction · Gemini</option><option value="call_transcription">Call transcription · Gemini</option><option value="embedding">Embedding · Voyage</option><option value="reranking">Reranking · Voyage</option></select></label><label className="intel-field">Validated request JSON<textarea value={mediaDraft.payload} onChange={e=>setMediaDraft(x=>({...x,payload:e.target.value}))}/></label><button className="app-primary" disabled={busy==='media'} onClick={()=>void submitMedia()}>{busy==='media'?'Submitting…':'Submit media task'}</button></section><section className="app-panel"><div className="panel-head"><div><h3>Provider-specific constraints</h3><p>Each task uses its native adapter and schema rather than a universal chat-completion payload.</p></div><ShieldCheck/></div><div className="intel-callout"><ShieldCheck/><div><b>Untrusted inputs stay data</b><p>Multimodal content, transcripts and retrieved text cannot override authorization or tool policy. Transcription requires an authorized provider file URI and validated audio MIME type.</p></div></div></section></div>}
+   {section==='Media'&&<div className="intel-grid two"><section className="app-panel"><div className="panel-head"><div><h3>Multimodal & transcription</h3><p>Submit native provider tasks without exposing provider credentials to the browser.</p></div><FileSearch/></div><label>Task<select value={mediaDraft.task} onChange={e=>setMediaDraft(x=>({...x,task:e.target.value}))}><option value="multimodal_extraction">Multimodal extraction · Gemini</option><option value="call_transcription">Call transcription · Gemini</option><option value="embedding">Embedding · Voyage</option><option value="reranking">Reranking · Voyage</option></select></label><label className="intel-field">Validated request JSON<textarea value={mediaDraft.payload} onChange={e=>setMediaDraft(x=>({...x,payload:e.target.value}))}/></label><button className="app-primary" disabled={busy==='media'} onClick={()=>void submitMedia()}>{busy==='media'?'Submitting…':'Submit media task'}</button><div className="panel-head"><div><h3>Persisted transcripts</h3><p>Completed transcription jobs are linked to their authorized provider asset reference.</p></div></div><div className="intel-list">{transcripts.length?transcripts.map((item:any)=><article key={item.id}><div><b>{item.id}</b><small>{item.language_metadata?.languageCodes?.join(', ')||'language unreported'} · {item.review_status||'unreviewed'} · {item.asset_ref||'asset unavailable'}</small><p>{String(item.transcript_text||'').slice(0,300)||'No transcript text persisted.'}</p></div></article>):<EmptyState title="No persisted transcripts" description="Completed authorized call transcription jobs will appear here."/>}</div></section><section className="app-panel"><div className="panel-head"><div><h3>Provider-specific constraints</h3><p>Each task uses its native adapter and schema rather than a universal chat-completion payload.</p></div><ShieldCheck/></div><div className="intel-callout"><ShieldCheck/><div><b>Untrusted inputs stay data</b><p>Multimodal content, transcripts and retrieved text cannot override authorization or tool policy. Transcription requires an authorized provider file URI and validated audio MIME type.</p></div></div></section></div>}
 
-   {section==='Creatives'&&<div className="intel-grid two"><section className="app-panel"><div className="panel-head"><div><h3>Creative draft generation</h3><p>Submit a governed image-generation job. Provider credentials stay server-side.</p></div><Sparkles/></div><label className="intel-field">Creative brief<textarea value={creativePrompt} onChange={e=>setCreativePrompt(e.target.value)} placeholder="Describe the approved brand-safe draft to generate."/></label><button className="app-primary" disabled={!creativePrompt.trim()||busy==='creative'} onClick={()=>void submitCreative()}>{busy==='creative'?'Submitting…':'Generate draft'}</button></section><section className="app-panel"><div className="panel-head"><div><h3>Review required</h3><p>Generation is not approval and is never treated as evidence of future advertising performance.</p></div><ShieldCheck/></div><div className="intel-callout"><ShieldCheck/><div><b>Draft-only lifecycle</b><p>Keep generated assets in draft/review state until an authorized reviewer approves them. Campaign activation remains outside the image model.</p></div></div></section></div>}
+   {section==='Creatives'&&<div className="intel-grid two"><section className="app-panel"><div className="panel-head"><div><h3>Creative draft generation</h3><p>Submit a governed image-generation job. Provider credentials stay server-side.</p></div><Sparkles/></div><label className="intel-field">Creative brief<textarea value={creativePrompt} onChange={e=>setCreativePrompt(e.target.value)} placeholder="Describe the approved brand-safe draft to generate."/></label><button className="app-primary" disabled={!creativePrompt.trim()||busy==='creative'} onClick={()=>void submitCreative()}>{busy==='creative'?'Submitting…':'Generate draft'}</button><div className="intel-list">{creatives.length?creatives.map((item:any)=><article key={item.id}><div><b>{item.id}</b><small>{item.review_status||item.reviewStatus||'draft'} · {item.requested_model||item.requestedModel||'—'} · v{item.version||1}</small></div><div className="intel-actions">{(item.review_status||item.reviewStatus)==='draft'&&<button disabled={busy==='creative-review:'+item.id} onClick={()=>void reviewCreative(item.id,'in_review')}>Send to review</button>}{(item.review_status||item.reviewStatus)==='in_review'&&<><button disabled={busy==='creative-review:'+item.id} onClick={()=>void reviewCreative(item.id,'approved')}>Approve</button><button disabled={busy==='creative-review:'+item.id} onClick={()=>void reviewCreative(item.id,'rejected')}>Reject</button></>}</div></article>):<EmptyState title="No generated creative records" description="Completed creative jobs with image output will be persisted as draft assets."/>}</div></section><section className="app-panel"><div className="panel-head"><div><h3>Review required</h3><p>Generation is not approval and is never treated as evidence of future advertising performance.</p></div><ShieldCheck/></div><div className="intel-callout"><ShieldCheck/><div><b>Draft-only lifecycle</b><p>Keep generated assets in draft/review state until an authorized reviewer approves them. Campaign activation remains outside the image model.</p></div></div></section></div>}
 
    {section==='Knowledge'&&<div className="intel-grid two"><section className="app-panel"><div className="panel-head"><div><h3>Knowledge ingestion</h3><p>Store versioned, tenant-scoped source text for governed retrieval.</p></div><BookOpen/></div><label>Name<input value={knowledgeDraft.name} onChange={e=>setKnowledgeDraft(x=>({...x,name:e.target.value}))}/></label><label>Source location<input value={knowledgeDraft.sourceLocation} onChange={e=>setKnowledgeDraft(x=>({...x,sourceLocation:e.target.value}))}/></label><label className="intel-field">Text<textarea value={knowledgeDraft.text} onChange={e=>setKnowledgeDraft(x=>({...x,text:e.target.value}))}/></label><button className="app-primary" disabled={busy==='knowledge'||!knowledgeDraft.name.trim()||!knowledgeDraft.text.trim()} onClick={()=>void ingestKnowledge()}>Ingest source</button><div className="intel-search"><input value={knowledgeQuery} onChange={e=>setKnowledgeQuery(e.target.value)} placeholder="Search authorized knowledge"/><button disabled={busy==='search'||!knowledgeQuery.trim()} onClick={()=>void searchKnowledge()}><FileSearch/>Search</button></div></section><section className="app-panel"><div className="panel-head"><div><h3>Sources</h3><p>Revocations remain visible for lineage and audit.</p></div></div><div className="intel-list">{knowledge.length?knowledge.map((item:any)=><article key={item.id}><div><b>{item.name||item.id}</b><small>{item.document_version||item.documentVersion||'v1'} · {item.status||'stored'}</small></div><button onClick={()=>void revokeKnowledge(item.id)} disabled={busy==='revoke:'+item.id}><Trash2/>Revoke</button></article>):<EmptyState title="No knowledge sources" description="Ingest a source to begin governed retrieval."/>}</div></section></div>}
 
@@ -291,7 +330,7 @@ export default function IntelligencePage(){
 
    {section==='Results'&&<section className="app-panel"><div className="panel-head"><div><h3>Persisted AI results</h3><p>Observed metrics, predictions, forecasts and provider outputs remain typed and versioned.</p></div><button onClick={()=>void load()}><RefreshCw/>Refresh</button></div><div className="intel-results">{results.length?results.map((item:any)=><article key={item.id}><div><b>{item.task}</b><span>{item.result_type||item.resultType||'result'} · {item.status}</span><small>{item.requested_model||item.requestedModel||'—'} → {item.resolved_model||item.resolvedModel||'—'}</small></div><pre>{short(item.payload)}</pre></article>):<EmptyState title="No persisted AI results" description="Completed governed jobs will appear here; queued work is not treated as a completed result."/>}</div></section>}
 
-   {section==='Administration'&&<div className="intel-grid two"><section className="app-panel"><div className="panel-head"><div><h3>Task registry</h3><p>Configuration, documentation, provider access, evaluation, approval and deployment remain separate.</p></div><ShieldCheck/></div><div className="intel-list registry">{registry.map((item:any)=><article key={item.task}><div><b>{item.task}</b><small>{item.provider} · {item.requestedModel}</small></div><span>{item.readiness||'unknown'}</span></article>)}</div></section><section className="app-panel"><div className="panel-head"><div><h3>Governance boundary</h3><p>Use Models for verification, qualification, promotion, deployment and rollback.</p></div><BrainCircuit/></div><div className="intel-callout"><ShieldCheck/><div><b>No implicit activation</b><p>Missing numerical models never fall back to LLM-generated numbers. Reviewer output never authorizes a side effect. Forecasting remains distinct from causal impact.</p></div></div><button onClick={()=>window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:'Models'}))}>Open Models administration</button></section></div>}
+   {section==='Administration'&&<div className="intel-grid two"><section className="app-panel"><div className="panel-head"><div><h3>Task registry & policy</h3><p>Configuration, provider access, evaluation, approval, deployment and tenant execution policy remain separate.</p></div><ShieldCheck/></div><div className="intel-list registry">{registry.map((item:any)=>{const draft=policyDrafts[item.task]||{enabled:true,maxConcurrentJobs:4,monthlyUnitBudget:''};return <article key={item.task}><div><b>{item.task}</b><small>{item.provider} · {item.requestedModel} · {item.readiness||'unknown'}</small><div className="intel-policy-row"><label><input type="checkbox" checked={draft.enabled} onChange={e=>setPolicyDrafts(x=>({...x,[item.task]:{...draft,enabled:e.target.checked}}))}/> Enabled</label><label>Concurrency<input type="number" min="1" max="1000" value={draft.maxConcurrentJobs} onChange={e=>setPolicyDrafts(x=>({...x,[item.task]:{...draft,maxConcurrentJobs:Number(e.target.value)}}))}/></label><label>Monthly units<input type="number" min="0" placeholder="No explicit cap" value={draft.monthlyUnitBudget} onChange={e=>setPolicyDrafts(x=>({...x,[item.task]:{...draft,monthlyUnitBudget:e.target.value}}))}/></label><button disabled={busy==='policy:'+item.task} onClick={()=>void saveTaskPolicy(item.task)}>{busy==='policy:'+item.task?'Saving…':'Save policy'}</button></div></div></article>})}</div></section><section className="app-panel"><div className="panel-head"><div><h3>Governance boundary</h3><p>Use Models for verification, qualification, promotion, deployment and rollback.</p></div><BrainCircuit/></div><div className="intel-callout"><ShieldCheck/><div><b>No implicit activation</b><p>Missing numerical models never fall back to LLM-generated numbers. Reviewer output never authorizes a side effect. Policy enablement does not qualify a model.</p></div></div><button onClick={()=>window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:'Models'}))}>Open Models administration</button></section></div>}
   </>}
  </>
 }
