@@ -1,17 +1,7 @@
 import { randomUUID } from 'node:crypto'
-import pg from 'pg'
+import {pool} from './database.mjs'
 import { modelRegistrySnapshot } from './ai-registry.mjs'
 import { persistDomainResult } from './ai-domain-results.mjs'
-
-const { Pool }=pg
-const databaseUrl=process.env.DATABASE_URL||''
-const pool=databaseUrl?new Pool({
-  connectionString:databaseUrl,
-  max:Number(process.env.AI_REGISTRY_DB_POOL_MAX||5),
-  idleTimeoutMillis:Number(process.env.DB_IDLE_TIMEOUT_MS||30000),
-  connectionTimeoutMillis:Number(process.env.DB_CONNECT_TIMEOUT_MS||5000),
-  ...(process.env.DB_SSL==='require'?{ssl:{rejectUnauthorized:false}}:{})
-}):null
 
 const staticByTask=()=>new Map(modelRegistrySnapshot().map(item=>[item.task,item]))
 
@@ -463,4 +453,4 @@ export const rollbackModel=async({workspaceId,task,actor=null})=>{
   }
 }
 
-export const closeRegistryStore=async()=>{if(pool)await pool.end()}
+export const closeRegistryStore=async()=>{}
