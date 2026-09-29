@@ -30,3 +30,16 @@ Live providers require account credentials, explicit live-call enablement and ta
 ## Final code-level hardening
 
 The activation boundary now includes a database-backed dispatch lease/fence, delayed durable-job publication, fence-guarded finalization, model-lifecycle mutation guards, credentialed redirect rejection, and strict shared-budget reference-count validation. Knowledge retrieval validates provider vectors before pgvector/application-cosine use and degrades malformed vectors to authorized lexical retrieval instead of fabricating or failing semantic results. These controls do not turn external credentials, tenant evaluation evidence or production deployment into completed states.
+
+## Final review hardening
+
+The final safety review gaps are implemented in code:
+
+- Analyst experiment evidence is projected through a fixed aggregate allowlist so arbitrary persisted fields are not exposed to the hosted analyst.
+- Knowledge semantic retrieval requires query/stored embedding dimension compatibility; incompatible vectors fall back to authorized lexical retrieval rather than being mixed.
+- Expired activation dispatch leases are atomically converted to an explicit unknown external outcome, their stale fence is invalidated, and model lifecycle changes remain blocked while that unknown outcome exists.
+- The worker runs bounded stale-dispatch reconciliation before leasing new work.
+- Migration `032_ai_activation_unknown_outcome.sql` persists the unknown-outcome state without pretending provider completion.
+
+These controls still do not qualify providers, train tenant artifacts, approve models, or deploy production infrastructure without the required external evidence.
+
