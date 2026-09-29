@@ -35,6 +35,7 @@ import { closeLiveVoice, createLiveVoiceSession, getLiveVoiceSession, installLiv
 import { validateHostedTaskInput } from './ai-input-validation.mjs'
 import { evaluateAiTaskAdmission, getAiTaskPolicy, listAiTaskPolicies, listCreativeAssets, listTranscripts, reviewCreativeAsset, saveAiTaskPolicy } from './ai-governance-store.mjs'
 import { getSegmentMemberships, listAnomalyItems, listRankingItems, listSegmentSnapshots, reviewAnomalyItem } from './ai-domain-results.mjs'
+import { approveAiActivationProposal, createAiActivationProposal, listAiActivationProposals, rejectAiActivationProposal } from './ai-activation-proposals.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -456,6 +457,11 @@ const permissionForRequest=(method,path)=>{
   if(path==='/api/ai/analysis') return 'ai.analysis.run'
   if(path.startsWith('/api/ai/tasks/')) return 'ai.analysis.run'
   if(path.startsWith('/api/ai/task-policies')) return method==='GET'?'workspace.read':'ai.providers.manage'
+  if(path.startsWith('/api/ai/activation-proposals')){
+    if(method==='GET')return 'workspace.read'
+    if(path.endsWith('/approve')||path.endsWith('/reject'))return 'ai.activation.approve'
+    return 'ai.activation.propose'
+  }
   if(path.startsWith('/api/ai/creative-assets')&&method!=='GET') return 'approvals.write'
   if(path.startsWith('/api/ai/anomalies')&&method!=='GET') return 'ai.evaluation.write'
   if(path.startsWith('/api/ai/datasets')&&method!=='GET') return 'ai.training.run'
@@ -4699,6 +4705,40 @@ const server = http.createServer(async (req,res)=>{
         return send(req,res,200,{item})
       }catch(error){
         return send(req,res,400,{error:error instanceof Error?error.message:'AI task policy could not be saved'})
+      }
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/activation-proposals') {
+      const status=url.searchParams.get('status')
+      const limit=Math.max(1,Math.min(Number(url.searchParams.get('limit')||100),500))
+      const items=await listAiActivationProposals({workspaceId,status:status||null,limit})
+      return send(req,res,200,{items,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/ai/activation-proposals') {
+      const body=await readBody(req)
+      try{
+        const item=await createAiActivationProposal({workspaceId,input:body,actor:authenticatedUser})
+        return send(req,res,201,{item})
+      }catch(error){
+        return send(req,res,409,{error:error instanceof Error?error.message:'activation proposal could not be created'})
+      }
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/activation-proposals\/[^/]+\/approve$/.test(url.pathname)) {
+      const id=decodeURIComponent(url.pathname.split('/')[4]||'')
+      try{
+        const item=await approveAiActivationProposal({workspaceId,id,actor:authenticatedUser})
+        return send(req,res,200,{item})
+      }catch(error){
+        return send(req,res,409,{error:error instanceof Error?error.message:'activation proposal approval failed'})
+      }
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/activation-proposals\/[^/]+\/reject$/.test(url.pathname)) {
+      const id=decodeURIComponent(url.pathname.split('/')[4]||'')
+      const body=await readBody(req)
+      try{
+        const item=await rejectAiActivationProposal({workspaceId,id,actor:authenticatedUser,reason:body.reason||null})
+        return item?send(req,res,200,{item}):send(req,res,404,{error:'activation proposal not found or no longer pending'})
+      }catch(error){
+        return send(req,res,409,{error:error instanceof Error?error.message:'activation proposal rejection failed'})
       }
     }
     if (req.method === 'GET' && url.pathname === '/api/ai/transcripts') {
