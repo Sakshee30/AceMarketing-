@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {activationExecutionEnabled,activationQueueStatusProcessable,validateActivationAdapterInput} from '../src/ai-activation-execution.mjs'
 import {hasPermission} from '../src/security.mjs'
+import {activationProviderForUrl} from '../src/activation-adapters.mjs'
 
 const withEnv=(key,value,fn)=>{
   const previous=process.env[key]
@@ -115,4 +116,14 @@ test('terminal durable job states cannot be relabelled as queued activation exec
   for(const status of ['pending','retry','leased']){
     assert.equal(activationQueueStatusProcessable(status),true,status)
   }
+})
+
+
+test('activation egress rejects plaintext and unapproved provider hosts',()=>{
+  assert.equal(activationProviderForUrl('https://googleads.googleapis.com/v25/customers/123/campaignBudgets:mutate'),'google')
+  assert.equal(activationProviderForUrl('https://graph.facebook.com/v26.0/act_123/customaudiences'),'meta')
+  assert.equal(activationProviderForUrl('https://tenant.my.salesforce.com/services/data/v65.0/sobjects/Lead/1'),'salesforce')
+  assert.throws(()=>activationProviderForUrl('http://googleads.googleapis.com/v25/test'),/HTTPS/)
+  assert.throws(()=>activationProviderForUrl('https://googleads.googleapis.com.evil.example/test'),/not allowlisted/)
+  assert.throws(()=>activationProviderForUrl('https://evilzoho.example/test'),/not allowlisted/)
 })
