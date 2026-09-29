@@ -320,6 +320,21 @@ paths:
       responses:
         '202': {description: Qualification job accepted}
         '422': {description: Invalid candidate evidence or qualification policy}
+  /ai/analyst/tools:
+    get:
+      summary: List fixed read-only analyst tools
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'200': {description: Analyst tool catalog}}
+  /ai/analyst/tools/{name}:
+    post:
+      summary: Execute one validated tenant-scoped read-only analyst tool
+      description: Only the server-side allowlist is accepted; no arbitrary SQL, raw database filters, shell, or network tools are exposed.
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: name, in: path, required: true, schema: {type: string}}
+      responses:
+        '200': {description: Tool result with immutable evidence metadata}
+        '400': {description: Unsupported tool or invalid arguments}
   /ai/ml/incrementality:
     post:
       summary: Submit CausalForestDML analysis
