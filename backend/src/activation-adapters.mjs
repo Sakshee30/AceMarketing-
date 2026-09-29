@@ -43,7 +43,7 @@ const requestJson=async(url,options={})=>{
   let submitted=false
   try{
     submitted=true
-    const response=await fetch(url,{...options,signal:controller.signal})
+    const response=await fetch(url,{...options,redirect:'manual',signal:controller.signal})
     const providerRequestId=response.headers.get('request-id')
       ||response.headers.get('x-request-id')
       ||response.headers.get('x-goog-request-id')
@@ -71,6 +71,8 @@ const requestJson=async(url,options={})=>{
     clearTimeout(timeout)
   }
 }
+
+export const activationRequestJson=requestJson
 
 const metaAudience=async(workspaceId,audienceId)=>{
   const bundle=await getAudienceBundle(workspaceId,audienceId)
@@ -176,7 +178,10 @@ export const changeGoogleAdsCampaignBudget=async(workspaceId,input={})=>{
   if(observedAmount!==expectedCurrentAmountMicros){
     throw new Error('stale budget proposal: current Google Ads amount no longer matches the approved snapshot')
   }
-  const referenceCount=Math.max(0,Number(current.referenceCount||0))
+  const referenceCount=Number(current.referenceCount??0)
+  if(!Number.isSafeInteger(referenceCount)||referenceCount<0){
+    throw new Error('Google Ads returned an invalid campaign budget referenceCount')
+  }
   if(referenceCount>1&&input.sharedBudgetAcknowledged!==true){
     throw new Error('shared campaign budget affects multiple campaigns; sharedBudgetAcknowledged=true is required')
   }
