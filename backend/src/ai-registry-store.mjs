@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import pg from 'pg'
 import { modelRegistrySnapshot } from './ai-registry.mjs'
+import { persistDomainResult } from './ai-domain-results.mjs'
 
 const { Pool }=pg
 const databaseUrl=process.env.DATABASE_URL||''
@@ -162,6 +163,7 @@ export const recordMlExecution=async({workspaceId,job,result})=>{
         JSON.stringify(payload)
       ]
     )
+    await persistDomainResult(client,{workspaceId,resultId,task,operation,payload})
     if(evalId){
       const metrics=evaluationMetrics(payload)
       await client.query(
