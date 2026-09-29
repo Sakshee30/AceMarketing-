@@ -59,7 +59,7 @@
     "platform-admin:verify": "npm run check:frontend && npm run build:platform-admin && npm run frontend:budget:control && npm run frontend:release:control",
     "e2e:soak": "playwright test --config=playwright.soak.config.ts",
     "frontend:telemetry:check": "playwright test --config=playwright.standalone.config.ts --grep 'performance telemetry|lab metrics'",
-    "test:ai-backend": "node --test backend/tests/metric-catalog.test.mjs backend/tests/ai-registry.test.mjs backend/tests/ai-input-validation.test.mjs backend/tests/ai-result-contracts.test.mjs backend/tests/ai-contract-manifest.test.mjs backend/tests/ai-platform-policy.test.mjs backend/tests/ai-governance-store.test.mjs backend/tests/ai-object-store.test.mjs backend/tests/ai-activation-proposals.test.mjs",
+    "test:ai-backend": "node --test backend/tests/metric-catalog.test.mjs backend/tests/ai-registry.test.mjs backend/tests/ai-input-validation.test.mjs backend/tests/ai-result-contracts.test.mjs backend/tests/ai-contract-manifest.test.mjs backend/tests/ai-platform-policy.test.mjs backend/tests/ai-governance-store.test.mjs backend/tests/ai-object-store.test.mjs backend/tests/ai-activation-proposals.test.mjs backend/tests/ai-provider-access.test.mjs backend/tests/ai-durable-jobs.test.mjs backend/tests/ai-knowledge-authorization.test.mjs",
     "verify:ai-backend": "npm run check:backend && npm run check:ai-tools && npm run test:ai-backend",
     "ai:provider-verify": "node scripts/ai/provider-verify.mjs",
     "ai:dataset-readiness": "node scripts/ai/dataset-readiness.mjs",
