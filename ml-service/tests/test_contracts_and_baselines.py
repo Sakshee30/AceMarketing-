@@ -4,7 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from acemarketing_ml.contracts import ForecastRequest, MetricPoint, PointInTimeRow
-from acemarketing_ml.pipelines import seasonal_naive_forecast
+from acemarketing_ml.pipelines import _eligible_supervised_rows, seasonal_naive_forecast
 
 
 def test_point_in_time_contract_rejects_future_feature():
@@ -116,3 +116,40 @@ def test_catboost_challenger_preserves_time_boundary(monkeypatch, tmp_path):
     assert len(result["pointForecast"]) == 7
     assert result["metrics"]["testRows"] > 0
     assert result["artifact"]["sha256"]
+
+
+def test_immature_labels_are_censored_and_not_forced_negative():
+    cutoff = datetime(2026, 6, 1, tzinfo=UTC)
+    rows = []
+    for index in range(40):
+        observed = cutoff - timedelta(days=1) if index < 39 else cutoff + timedelta(days=1)
+        rows.append(
+            PointInTimeRow(
+                entity_id=f"lead-{index}",
+                features={"score": index},
+                label=1 if index % 2 else 0,
+                feature_available_at=cutoff - timedelta(days=30),
+                prediction_cutoff=cutoff - timedelta(days=20),
+                label_observed_at=observed,
+            )
+        )
+    with pytest.raises(ValueError, match="insufficient_data"):
+        _eligible_supervised_rows(rows, cutoff)
+
+
+def test_unobserved_labels_are_censored():
+    cutoff = datetime(2026, 6, 1, tzinfo=UTC)
+    rows = [
+        PointInTimeRow(
+            entity_id=f"lead-{index}",
+            features={"score": index},
+            label=None if index == 0 else (1 if index % 2 else 0),
+            feature_available_at=cutoff - timedelta(days=30),
+            prediction_cutoff=cutoff - timedelta(days=20),
+            label_observed_at=None if index == 0 else cutoff - timedelta(days=1),
+        )
+        for index in range(41)
+    ]
+    eligible, censored = _eligible_supervised_rows(rows, cutoff)
+    assert len(eligible) == 40
+    assert censored == 1
