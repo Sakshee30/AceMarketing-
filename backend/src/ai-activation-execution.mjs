@@ -70,7 +70,7 @@ export const validateActivationAdapterInput=({proposalType,payload})=>{
   throw new Error('unsupported activation proposal type: '+type)
 }
 
-const updateExecution=async({workspaceId,id,status,jobId=null,actor=null,error=null,receipt=null,providerRequestId=null,fenceToken=null})=>{
+const updateExecution=async({workspaceId,id,status,jobId=null,actor=null,error=null,receipt=null,providerRequestId=null,fenceToken=null,outcomeState=null})=>{
   if(!pool)return null
   const {rows}=await pool.query(
     `UPDATE ace_ai_activation_proposals
@@ -82,11 +82,13 @@ const updateExecution=async({workspaceId,id,status,jobId=null,actor=null,error=n
          execution_receipt=COALESCE($7::jsonb,execution_receipt),
          provider_request_id=COALESCE($8,provider_request_id),
          execution_lease_until=CASE WHEN $3 IN ('succeeded','failed','blocked') THEN NULL ELSE execution_lease_until END,
-         executed_at=CASE WHEN $3='succeeded' THEN now() ELSE executed_at END
+         executed_at=CASE WHEN $3='succeeded' THEN now() ELSE executed_at END,
+         execution_outcome_state=COALESCE($10,execution_outcome_state),
+         execution_outcome_recorded_at=CASE WHEN $10::text IS NOT NULL THEN now() ELSE execution_outcome_recorded_at END
      WHERE workspace_id=$1 AND id=$2
        AND ($9::text IS NULL OR execution_fence_token=$9)
      RETURNING *`,
-    [workspaceId,id,status,jobId,actor,error?String(error).slice(0,4000):null,receipt?JSON.stringify(receipt):null,providerRequestId,fenceToken]
+    [workspaceId,id,status,jobId,actor,error?String(error).slice(0,4000):null,receipt?JSON.stringify(receipt):null,providerRequestId,fenceToken,outcomeState]
   )
   return rows[0]||null
 }
@@ -229,6 +231,49 @@ export const claimAiActivationDispatch=async({workspaceId,proposalId,jobId,expec
   }
 }
 
+export const reconcileStaleActivationDispatches=async({limit=25}={})=>{
+  if(!pool)return []
+  const safeLimit=Math.max(1,Math.min(Number(limit||25),100))
+  const client=await pool.connect()
+  try{
+    await client.query('BEGIN')
+    const stale=await client.query(
+      `SELECT id,workspace_id,task,execution_job_id,provider_request_id
+       FROM ace_ai_activation_proposals
+       WHERE execution_status='running'
+         AND execution_lease_until IS NOT NULL
+         AND execution_lease_until<now()
+       ORDER BY execution_lease_until ASC
+       LIMIT $1
+       FOR UPDATE`,
+      [safeLimit]
+    )
+    const reconciled=[]
+    for(const row of stale.rows){
+      const updated=await client.query(
+        `UPDATE ace_ai_activation_proposals
+         SET execution_status='blocked',
+             execution_outcome_state='unknown',
+             execution_outcome_recorded_at=now(),
+             execution_error=COALESCE(execution_error,'activation dispatch lease expired; external provider outcome is unknown and requires reconciliation'),
+             execution_fence_token=NULL,
+             execution_lease_until=NULL
+         WHERE id=$1 AND workspace_id=$2 AND execution_status='running'
+         RETURNING *`,
+        [row.id,row.workspace_id]
+      )
+      if(updated.rows[0])reconciled.push(updated.rows[0])
+    }
+    await client.query('COMMIT')
+    return reconciled
+  }catch(error){
+    await client.query('ROLLBACK').catch(()=>{})
+    throw error
+  }finally{
+    client.release()
+  }
+}
+
 const executeAdapter=async(workspaceId,proposal)=>{
   const validated=validateActivationAdapterInput({
     proposalType:proposal.proposal_type,
@@ -259,7 +304,7 @@ export const executeAiActivationJob=async job=>{
     if(current&&!['succeeded','failed','blocked'].includes(String(current.execution_status||''))){
       await updateExecution({
         workspaceId,id:proposalId,status:'blocked',jobId:job.id,
-        error:'AI activation execution was disabled before worker execution'
+        error:'AI activation execution was disabled before worker execution',outcomeState:'known'
       }).catch(()=>{})
     }
     throw new Error('AI activation execution was disabled before worker execution')
@@ -295,7 +340,7 @@ export const executeAiActivationJob=async job=>{
       completedAt:new Date().toISOString()
     }
     const updated=await updateExecution({
-      workspaceId,id:proposalId,status:'succeeded',jobId:job.id,receipt,providerRequestId,fenceToken
+      workspaceId,id:proposalId,status:'succeeded',jobId:job.id,receipt,providerRequestId,fenceToken,outcomeState:'known'
     })
     if(!updated)throw new ProviderExecutionError(
       'activation dispatch fence no longer owns proposal finalization; reconciliation is required',
@@ -308,7 +353,8 @@ export const executeAiActivationJob=async job=>{
       workspaceId,id:proposalId,status:unknownOutcome?'blocked':'failed',jobId:job.id,
       error:error instanceof Error?error.message:String(error),
       providerRequestId:error?.providerRequestId||null,
-      fenceToken
+      fenceToken,
+      outcomeState:unknownOutcome?'unknown':'known'
     }).catch(()=>{})
     throw error
   }
