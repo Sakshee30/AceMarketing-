@@ -37,6 +37,7 @@ export const intelligenceApi={
   revokeKnowledge:(id:string)=>api.revokeAiKnowledge(id),
   forecastBaseline:(payload:Record<string,unknown>,operationId?:string)=>api.aiMlSeasonalForecast(payload,{operationId}),
   forecastChronos:(payload:Record<string,unknown>,operationId?:string)=>api.aiMlChronosForecast(payload,{operationId}),
+  forecastQualification:(payload:Record<string,unknown>,operationId?:string)=>api.aiMlForecastQualification(payload,{operationId}),
   forecastChallenger:(payload:Record<string,unknown>,operationId?:string)=>api.aiMlForecastChallenger(payload,{operationId}),
   marketingMix:(payload:Record<string,unknown>,operationId?:string)=>api.aiMlMarketingMix(payload,{operationId}),
   incrementality:(payload:Record<string,unknown>,operationId?:string)=>api.aiMlIncrementality(payload,{operationId}),
