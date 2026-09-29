@@ -39,6 +39,49 @@ components:
         operation: {type: [string, 'null']}
         resultSchemaVersion: {type: [string, 'null']}
 paths:
+  /ai/task-policies:
+    get:
+      summary: List effective tenant AI task policies and budgets
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'200': {description: Task policies}}
+  /ai/task-policies/{task}:
+    post:
+      summary: Save tenant AI task enablement, model pin, concurrency and monthly unit budget
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: task, in: path, required: true, schema: {type: string}}
+      responses:
+        '200': {description: Saved}
+        '400': {description: Invalid policy or model substitution attempt}
+  /ai/transcripts:
+    get:
+      summary: List tenant transcript records and object-store references
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'200': {description: Transcript records}}
+  /ai/creative-assets:
+    get:
+      summary: List generated creative drafts and review state
+      parameters: [{$ref: '#/components/parameters/Workspace'}]
+      responses: {'200': {description: Creative assets}}
+  /ai/creative-assets/{id}/review:
+    post:
+      summary: Move a generated creative through review without activating advertising
+      parameters:
+        - {$ref: '#/components/parameters/Workspace'}
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: {type: string, enum: [in_review, approved, rejected]}
+                reason: {type: string, maxLength: 2000}
+      responses:
+        '200': {description: Review state updated}
+        '404': {description: Asset not found or no longer reviewable}
   /ai/registry:
     get:
       summary: List tenant AI model registry and lifecycle state
