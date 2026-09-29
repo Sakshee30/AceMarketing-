@@ -248,12 +248,13 @@ const attachRelay=async({client,id,item})=>{
 
   client.on('close',async()=>{
     try{if(provider.readyState===WebSocket.OPEN||provider.readyState===WebSocket.CONNECTING)provider.close(1000,'client disconnected')}catch{}
+    const current=await getSession(id).catch(()=>null)
+    const terminal=['terminated','expired','failed'].includes(String(current?.status||''))
     await updateSession(id,{
-      status:'disconnected',
+      ...(terminal?{}:{status:'disconnected',disconnectedAt:new Date().toISOString()}),
       inputBytes:record.inputBytes,
       outputBytes:record.outputBytes,
-      usage:record.usage,
-      disconnectedAt:new Date().toISOString()
+      usage:record.usage
     }).catch(()=>{})
     if(sessions.get(id)===record)sessions.delete(id)
   })
