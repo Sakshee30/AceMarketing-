@@ -128,7 +128,7 @@ def train_classification(request) -> dict[str, Any]:
     probability = calibrator.predict_proba(x_test)[:, 1]
     predicted = (probability >= request.decision_threshold).astype(int)
     ranked = sorted(zip(probability.tolist(), y_test, strict=True), key=lambda item: item[0], reverse=True)
-    capacity_n = max(1, min(len(ranked), int(math.ceil(len(ranked) * request.operating_capacity_fraction))))
+    capacity_n = max(1, min(len(ranked), math.ceil(len(ranked) * request.operating_capacity_fraction)))
     top_positives = sum(label for _, label in ranked[:capacity_n])
     overall_rate = float(sum(y_test) / len(y_test))
     top_rate = float(top_positives / capacity_n)
@@ -610,7 +610,7 @@ def causal_forest_estimate(request) -> dict[str, Any]:
         effect_lower, effect_upper = model.effect_interval(x_test, alpha=0.05)
         interval = [float(np.mean(effect_lower)), float(np.mean(effect_upper))]
         interval_method = "econml_effect_interval"
-    except Exception:
+    except (AttributeError, RuntimeError, ValueError):
         stderr = float(effects.std(ddof=1) / np.sqrt(max(1, len(effects))))
         interval = [ate - 1.96 * stderr, ate + 1.96 * stderr]
         interval_method = "holdout_effect_mean_normal_approximation"
@@ -952,7 +952,7 @@ def forecast_challenger(request) -> dict[str, Any]:
         "mae": float(mean_absolute_error(y_test, holdout_prediction)),
         "rmse": float(math.sqrt(mean_squared_error(y_test, holdout_prediction))),
         "bias": float((holdout_prediction - y_test).mean()),
-        "testRows": int(len(y_test)),
+        "testRows": len(y_test),
     }
 
     known_covariates = {}
@@ -1016,8 +1016,8 @@ def forecast_challenger(request) -> dict[str, Any]:
             "timezone": request.timezone,
             "lags": list(request.lags),
             "randomSeed": request.random_seed,
-            "trainingRows": int(len(x_train)),
-            "testRows": int(len(x_test)),
+            "trainingRows": len(x_train),
+            "testRows": len(x_test),
         },
     )
     return {
