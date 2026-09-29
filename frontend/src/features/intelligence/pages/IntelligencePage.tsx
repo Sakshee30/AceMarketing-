@@ -5,7 +5,7 @@ import {intelligenceApi} from '../data/intelligence.api'
 import './intelligence.css'
 
 type Notice={kind:'ok'|'error'|'warning'|'',text:string}
-type Section='Analyst'|'Forecasts'|'Knowledge'|'Datasets'|'Results'|'Administration'
+type Section='Analyst'|'Forecasts'|'Specialists'|'Creatives'|'Knowledge'|'Datasets'|'Results'|'Administration'
 
 const json=(value:any)=>JSON.stringify(value,null,2)
 const short=(value:any)=>typeof value==='string'?value:json(value)
@@ -31,6 +31,8 @@ export default function IntelligencePage(){
  const [knowledgeDraft,setKnowledgeDraft]=useState({name:'',text:'',sourceLocation:'manual://workspace'})
  const [knowledgeQuery,setKnowledgeQuery]=useState('')
  const [datasetDraft,setDatasetDraft]=useState({task:'lead_qualification',rows:'[]',labelObservationCutoff:new Date().toISOString().slice(0,10)})
+ const [specialistDraft,setSpecialistDraft]=useState({task:'marketing_mix',payload:'{}'})
+ const [creativePrompt,setCreativePrompt]=useState('')
 
  const load=async()=>{
   setLoading(true);setError('')
@@ -108,6 +110,38 @@ export default function IntelligencePage(){
    setActiveJob(response)
    setNotice({kind:'ok',text:'Forecast job accepted. Results remain explicitly baseline/modelled/insufficient-data depending on worker output.'})
   }catch(e:any){setNotice({kind:'error',text:e?.message||'Forecast could not be submitted.'})}
+  finally{setBusy('')}
+ }
+
+ const submitSpecialist=async()=>{
+  setBusy('specialist');setNotice({kind:'',text:''})
+  try{
+   const payload=JSON.parse(specialistDraft.payload)
+   if(!payload||typeof payload!=='object'||Array.isArray(payload))throw new Error('Specialist payload must be a JSON object.')
+   const operation=opId('specialist-'+specialistDraft.task)
+   const response:any=specialistDraft.task==='marketing_mix'
+    ?await intelligenceApi.marketingMix(payload,operation)
+    :specialistDraft.task==='incrementality'
+      ?await intelligenceApi.incrementality(payload,operation)
+      :specialistDraft.task==='anomaly_detection'
+        ?await intelligenceApi.anomalies(payload,operation)
+        :specialistDraft.task==='behavioral_segments'
+          ?await intelligenceApi.segments(payload,operation)
+          :await intelligenceApi.rank(payload,operation)
+   setActiveJob(response)
+   setNotice({kind:'ok',text:'Specialist model job accepted. Numerical and causal outputs remain subject to task-specific validation and evaluation.'})
+  }catch(e:any){setNotice({kind:'error',text:e?.message||'Specialist model job could not be submitted.'})}
+  finally{setBusy('')}
+ }
+
+ const submitCreative=async()=>{
+  if(!creativePrompt.trim())return
+  setBusy('creative');setNotice({kind:'',text:''})
+  try{
+   const response:any=await intelligenceApi.hostedTask('creative_image',{prompt:creativePrompt.trim()},opId('creative'))
+   setActiveJob(response)
+   setNotice({kind:'ok',text:'Creative generation accepted as a governed draft job. Generated assets are not approved or performance-qualified automatically.'})
+  }catch(e:any){setNotice({kind:'error',text:e?.message||'Creative generation could not be submitted.'})}
   finally{setBusy('')}
  }
 
@@ -191,13 +225,17 @@ export default function IntelligencePage(){
     <article className="stat"><div><span>Datasets</span><Database/></div><strong>{summary.datasets}</strong><small>Point-in-time snapshots</small></article>
    </div>
 
-   <nav className="intel-tabs" aria-label="AI intelligence sections">{(['Analyst','Forecasts','Knowledge','Datasets','Results','Administration'] as Section[]).map(item=><button key={item} className={section===item?'active':''} onClick={()=>setSection(item)}>{item}</button>)}</nav>
+   <nav className="intel-tabs" aria-label="AI intelligence sections">{(['Analyst','Forecasts','Specialists','Creatives','Knowledge','Datasets','Results','Administration'] as Section[]).map(item=><button key={item} className={section===item?'active':''} onClick={()=>setSection(item)}>{item}</button>)}</nav>
 
    {activeJob?.jobId&&<div className="app-panel intel-job"><div><b>Active job</b><span>{activeJob.task||activeJob.operation||'AI task'} · {activeJob.job?.status||activeJob.status||'queued'}</span><small>{activeJob.jobId}</small></div><div><button onClick={()=>void refreshJob()} disabled={busy==='job'}><RefreshCw/>{busy==='job'?'Refreshing…':'Refresh'}</button><button onClick={()=>void cancelJob()} disabled={busy==='cancel'}>Cancel</button></div></div>}
 
    {section==='Analyst'&&<div className="intel-grid two"><section className="app-panel"><div className="panel-head"><div><h3>Grounded analyst</h3><p>Uses only authorized workspace evidence and preserves evidence IDs.</p></div><Sparkles/></div><label className="intel-field">Question<textarea value={question} onChange={e=>setQuestion(e.target.value)} placeholder="Why did qualified lead conversion change this month?"/></label><button className="app-primary" disabled={!question.trim()||busy==='analysis'} onClick={()=>void submitAnalysis()}>{busy==='analysis'?'Submitting…':'Run governed analysis'}</button></section><section className="app-panel"><div className="panel-head"><div><h3>Metric contract</h3><p>Backend-defined metrics; no free-form arithmetic in model prose.</p></div><BarChart3/></div><pre className="intel-json">{short(metrics)}</pre></section></div>}
 
    {section==='Forecasts'&&<div className="intel-grid two"><section className="app-panel"><div className="panel-head"><div><h3>Forecast request</h3><p>Submit baseline, Chronos-2 or CatBoost challenger through bounded ML workers.</p></div><Activity/></div><div className="intel-row"><label>Series ID<input value={forecastDraft.seriesId} onChange={e=>setForecastDraft(x=>({...x,seriesId:e.target.value}))}/></label><label>Frequency<input value={forecastDraft.frequency} onChange={e=>setForecastDraft(x=>({...x,frequency:e.target.value}))}/></label><label>Horizon<input type="number" min="1" value={forecastDraft.horizon} onChange={e=>setForecastDraft(x=>({...x,horizon:Number(e.target.value)}))}/></label><label>Season length<input type="number" min="1" value={forecastDraft.seasonLength} onChange={e=>setForecastDraft(x=>({...x,seasonLength:Number(e.target.value)}))}/></label></div><label className="intel-field">History JSON<textarea value={forecastDraft.history} onChange={e=>setForecastDraft(x=>({...x,history:e.target.value}))} placeholder='[{"timestamp":"2026-09-01T00:00:00Z","value":120}]'/></label><div className="intel-actions"><button onClick={()=>void submitForecast('baseline')} disabled={busy==='forecast'}>Seasonal-naive baseline</button><button onClick={()=>void submitForecast('challenger')} disabled={busy==='forecast'}>CatBoost challenger</button><button className="app-primary" onClick={()=>void submitForecast('chronos')} disabled={busy==='forecast'}>Chronos-2</button></div></section><section className="app-panel"><div className="panel-head"><div><h3>ML capability state</h3><p>Dependency availability is distinct from training and qualification.</p></div><ShieldCheck/></div><div className="intel-list">{capabilities.length?capabilities.map((item:any)=><article key={item.task}><div><b>{item.task}</b><small>{item.implementation}</small></div><span>{item.dependencyAvailable===false?'dependency missing':item.trained?'trained':'not trained'}</span></article>):<EmptyState title="No ML capability response" description="Configure the ML service to inspect runtime dependency state."/>}</div></section></div>}
+
+   {section==='Specialists'&&<div className="intel-grid two"><section className="app-panel"><div className="panel-head"><div><h3>Specialist numerical models</h3><p>Run task-specific ML paths. These models do not share an LLM fallback.</p></div><Target/></div><label>Task<select value={specialistDraft.task} onChange={e=>setSpecialistDraft(x=>({...x,task:e.target.value}))}><option value="marketing_mix">Marketing mix · Meridian</option><option value="incrementality">Incrementality · CausalForestDML</option><option value="anomaly_detection">Anomalies · IsolationForest</option><option value="behavioral_segments">Segments · HDBSCAN</option><option value="offer_ranking">Offer ranking · LGBMRanker</option></select></label><label className="intel-field">Validated request JSON<textarea value={specialistDraft.payload} onChange={e=>setSpecialistDraft(x=>({...x,payload:e.target.value}))} placeholder='{"rows":[]}'/></label><button className="app-primary" disabled={busy==='specialist'} onClick={()=>void submitSpecialist()}>{busy==='specialist'?'Submitting…':'Run specialist model'}</button></section><section className="app-panel"><div className="panel-head"><div><h3>Interpretation boundary</h3><p>Specialist outputs have distinct semantics and cannot be reduced to a generic confidence score.</p></div><ShieldCheck/></div><div className="intel-callout"><ShieldCheck/><div><b>Task-specific evidence</b><p>Marketing mix requires support and diagnostics. Incrementality requires a documented estimand and overlap. Anomalies are investigation signals, clusters are version-specific, and offline ranking scores do not prove incremental lift.</p></div></div></section></div>}
+
+   {section==='Creatives'&&<div className="intel-grid two"><section className="app-panel"><div className="panel-head"><div><h3>Creative draft generation</h3><p>Submit a governed image-generation job. Provider credentials stay server-side.</p></div><Sparkles/></div><label className="intel-field">Creative brief<textarea value={creativePrompt} onChange={e=>setCreativePrompt(e.target.value)} placeholder="Describe the approved brand-safe draft to generate."/></label><button className="app-primary" disabled={!creativePrompt.trim()||busy==='creative'} onClick={()=>void submitCreative()}>{busy==='creative'?'Submitting…':'Generate draft'}</button></section><section className="app-panel"><div className="panel-head"><div><h3>Review required</h3><p>Generation is not approval and is never treated as evidence of future advertising performance.</p></div><ShieldCheck/></div><div className="intel-callout"><ShieldCheck/><div><b>Draft-only lifecycle</b><p>Keep generated assets in draft/review state until an authorized reviewer approves them. Campaign activation remains outside the image model.</p></div></div></section></div>}
 
    {section==='Knowledge'&&<div className="intel-grid two"><section className="app-panel"><div className="panel-head"><div><h3>Knowledge ingestion</h3><p>Store versioned, tenant-scoped source text for governed retrieval.</p></div><BookOpen/></div><label>Name<input value={knowledgeDraft.name} onChange={e=>setKnowledgeDraft(x=>({...x,name:e.target.value}))}/></label><label>Source location<input value={knowledgeDraft.sourceLocation} onChange={e=>setKnowledgeDraft(x=>({...x,sourceLocation:e.target.value}))}/></label><label className="intel-field">Text<textarea value={knowledgeDraft.text} onChange={e=>setKnowledgeDraft(x=>({...x,text:e.target.value}))}/></label><button className="app-primary" disabled={busy==='knowledge'||!knowledgeDraft.name.trim()||!knowledgeDraft.text.trim()} onClick={()=>void ingestKnowledge()}>Ingest source</button><div className="intel-search"><input value={knowledgeQuery} onChange={e=>setKnowledgeQuery(e.target.value)} placeholder="Search authorized knowledge"/><button disabled={busy==='search'||!knowledgeQuery.trim()} onClick={()=>void searchKnowledge()}><FileSearch/>Search</button></div></section><section className="app-panel"><div className="panel-head"><div><h3>Sources</h3><p>Revocations remain visible for lineage and audit.</p></div></div><div className="intel-list">{knowledge.length?knowledge.map((item:any)=><article key={item.id}><div><b>{item.name||item.id}</b><small>{item.document_version||item.documentVersion||'v1'} · {item.status||'stored'}</small></div><button onClick={()=>void revokeKnowledge(item.id)} disabled={busy==='revoke:'+item.id}><Trash2/>Revoke</button></article>):<EmptyState title="No knowledge sources" description="Ingest a source to begin governed retrieval."/>}</div></section></div>}
 
