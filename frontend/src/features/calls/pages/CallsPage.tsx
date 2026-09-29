@@ -51,6 +51,7 @@ export default function CallsPage(){
  const [builder,setBuilder]=useState(false)
  const [liveStatus,setLiveStatus]=useState<'idle'|'connecting'|'active'|'ending'|'error'>('idle')
  const [liveSessionId,setLiveSessionId]=useState('')
+ const liveSessionIdRef=useRef('')
  const liveSocket=useRef<WebSocket|null>(null)
  const liveStream=useRef<MediaStream|null>(null)
  const liveContext=useRef<AudioContext|null>(null)
@@ -123,10 +124,11 @@ export default function CallsPage(){
   livePlaybackAt.current=0
  }
  const stopLiveVoice=async(updateUi=true)=>{
-  const id=liveSessionId
+  const id=liveSessionIdRef.current
   if(updateUi)setLiveStatus('ending')
   stopLocalLiveVoice()
   if(id)await callsApi.terminateLiveVoice(id).catch(()=>null)
+  liveSessionIdRef.current=''
   if(updateUi){setLiveSessionId('');setLiveStatus('idle')}
  }
  const playLiveAudio=(data:string,mimeType:string)=>{
@@ -180,6 +182,7 @@ export default function CallsPage(){
    const token=String(session?.sessionToken||'')
    const path=String(session?.websocketPath||'')
    if(!sessionId||!token||!path)throw new Error('Live voice session admission did not return a complete relay configuration.')
+   liveSessionIdRef.current=sessionId
    setLiveSessionId(sessionId)
    const scheme=window.location.protocol==='https:'?'wss:':'ws:'
    const socket=new WebSocket(scheme+'//'+window.location.host+path,['ace-live-v1',token])
