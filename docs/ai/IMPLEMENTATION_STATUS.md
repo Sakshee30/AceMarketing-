@@ -21,7 +21,7 @@ Status is intentionally split into implementation, provider-access verification,
 | IsolationForest | yes | n/a | per-run fit | code-level only | no | optional service |
 | sklearn HDBSCAN | yes | n/a | per-run fit | code-level only | no | optional service |
 | LightGBM Ranker | yes | n/a | no tenant artifact | code-level only | no | no |
-| governed activation execution | yes; durable worker + allowlisted existing adapters | n/a | n/a | code-level/failure-path tests | requires separate human approval | default-off; no provider action activated |
+| governed activation execution | yes; durable worker + allowlisted audience/CRM/Google Ads budget adapters | n/a | n/a | code-level/failure-path tests | requires separate human approval | default-off; no provider action activated |
 
 ## Current blocking prerequisites
 
