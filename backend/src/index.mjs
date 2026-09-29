@@ -24,10 +24,11 @@ import { normalizeCallEvent, resolveCallWorkspace, verifyCallWebhook } from './c
 import { createCalendarEvent, updateCalendarEvent } from './calendar-provider.mjs'
 import { authMailConfigured, sendPasswordReset } from './auth-mailer.mjs'
 import { modelCatalogItems, registrySummary } from './ai-registry.mjs'
+import { verifyProviderAccess } from './ai-providers.mjs'
 import { closeAiRuntime, listAiResults, submitHostedAiJob } from './ai-runtime.mjs'
 import { getMlCapabilities, mlServiceConfigured } from './ml-client.mjs'
 import { closeKnowledge, ingestKnowledgeText, listKnowledgeSources, revokeKnowledgeSource } from './knowledge.mjs'
-import { getEvaluationPolicy, getTenantRegistry, listEvaluations, promoteModel, qualifyEvaluation, rollbackModel, syncTenantRegistry, upsertEvaluationPolicy } from './ai-registry-store.mjs'
+import { getEvaluationPolicy, getTenantRegistry, listEvaluations, promoteModel, qualifyEvaluation, recordProviderAccessVerification, rollbackModel, syncTenantRegistry, upsertEvaluationPolicy } from './ai-registry-store.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -4568,6 +4569,35 @@ const server = http.createServer(async (req,res)=>{
         persistence='static_fallback'
       }
       return send(req,res,200,{...staticRegistry,tenantItems,persistence})
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/providers\/[^/]+\/verify$/.test(url.pathname)) {
+      if(!['owner','admin'].includes(authenticatedUser?.role||''))return send(req,res,403,{error:'owner or admin role required'})
+      const task=decodeURIComponent(url.pathname.split('/')[4]||'')
+      try{
+        const verification=await verifyProviderAccess(task)
+        const registryEntry=await recordProviderAccessVerification({
+          workspaceId,
+          task,
+          resolvedModel:verification.resolvedModel||null,
+          verified:true
+        })
+        return send(req,res,200,{
+          task,
+          provider:verification.provider,
+          requestedModel:verification.requestedModel,
+          resolvedModel:verification.resolvedModel||null,
+          accessVerified:true,
+          usage:verification.usage||null,
+          registryEntry,
+          note:'Credential/model access was verified by an explicitly enabled bounded provider test. This does not qualify, approve or deploy the model.'
+        })
+      }catch(error){
+        return send(req,res,error?.status||503,{
+          error:error instanceof Error?error.message:'provider access verification failed',
+          task,
+          accessVerified:false
+        })
+      }
     }
     if (req.method === 'GET' && url.pathname === '/api/ai/evaluations') {
       const task=String(url.searchParams.get('task')||'').trim()||null
