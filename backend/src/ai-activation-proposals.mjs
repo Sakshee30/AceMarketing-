@@ -36,7 +36,10 @@ export const validateActivationProposalPolicy=({proposalType,payload})=>{
   const proposed=Number(body.newAmountMicros)
   if(!Number.isSafeInteger(current)||current<=0)throw new Error('budget_change requires positive integer expectedCurrentAmountMicros')
   if(!Number.isSafeInteger(proposed)||proposed<=0)throw new Error('budget_change requires positive integer newAmountMicros')
-  const maxChangePct=Math.max(0.1,Math.min(Number(process.env.AI_ACTIVATION_MAX_BUDGET_CHANGE_PCT||20),100))
+  const maxChangePct=Number(process.env.AI_ACTIVATION_MAX_BUDGET_CHANGE_PCT||20)
+  if(!Number.isFinite(maxChangePct)||maxChangePct<=0||maxChangePct>100){
+    throw new Error('AI_ACTIVATION_MAX_BUDGET_CHANGE_PCT must be greater than 0 and at most 100')
+  }
   const changePct=Math.abs(proposed-current)/current*100
   if(changePct>maxChangePct+Number.EPSILON)throw new Error('budget_change exceeds configured percentage limit')
   const absoluteRaw=String(process.env.AI_ACTIVATION_MAX_DAILY_BUDGET_MICROS||'').trim()
