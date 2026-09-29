@@ -22,15 +22,17 @@ const eligibleAudienceMembers=async(workspaceId,bundle)=>{
 const activationProviderTimeoutMs=()=>Math.max(1000,Math.min(Number(process.env.ACTIVATION_PROVIDER_TIMEOUT_MS||45000),120000))
 
 const providerForUrl=url=>{
-  try{
-    const host=new URL(url).hostname.toLowerCase()
-    if(host.endsWith('googleapis.com'))return 'google'
-    if(host.endsWith('facebook.com'))return 'meta'
-    if(host.endsWith('hubapi.com'))return 'hubspot'
-    if(host.includes('zoho'))return 'zoho'
-    if(host.includes('salesforce'))return 'salesforce'
-  }catch{}
-  return 'activation'
+  let parsed
+  try{parsed=new URL(url)}
+  catch{throw new Error('activation provider URL is invalid')}
+  if(parsed.protocol!=='https:')throw new Error('activation provider URL must use HTTPS')
+  const host=parsed.hostname.toLowerCase()
+  if(host==='googleads.googleapis.com')return 'google'
+  if(host==='graph.facebook.com')return 'meta'
+  if(host==='api.hubapi.com')return 'hubspot'
+  if(/^www\.zohoapis\.(com|eu|in|com\.au|jp|ca|sa)$/.test(host))return 'zoho'
+  if(host.endsWith('.salesforce.com'))return 'salesforce'
+  throw new Error('activation provider host is not allowlisted')
 }
 
 const requestJson=async(url,options={})=>{
