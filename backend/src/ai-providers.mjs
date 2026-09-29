@@ -41,6 +41,28 @@ const safeProviderError=async response=>{
   }
 }
 
+const getJson=async({provider,task,url,headers={}})=>{
+  const controller=new AbortController()
+  const timeout=setTimeout(()=>controller.abort('provider_timeout'),Math.min(requestTimeoutMs,15000))
+  try{
+    const response=await fetch(url,{method:'GET',headers,signal:controller.signal})
+    const providerRequestId=response.headers.get('x-request-id')||response.headers.get('request-id')||response.headers.get('x-goog-request-id')||null
+    if(!response.ok){
+      throw new ProviderExecutionError(await safeProviderError(response),{provider,task,status:response.status,providerRequestId,unknownOutcome:false})
+    }
+    const json=await response.json()
+    return {json,providerRequestId}
+  }catch(error){
+    if(error instanceof ProviderExecutionError)throw error
+    const aborted=controller.signal.aborted
+    throw new ProviderExecutionError(aborted?'provider verification timed out':'provider verification failed',{
+      provider,task,status:null,providerRequestId:null,unknownOutcome:false,cause:aborted?'timeout':'network'
+    })
+  }finally{
+    clearTimeout(timeout)
+  }
+}
+
 const postJson=async({provider,task,url,headers,body})=>{
   const controller=new AbortController()
   const timeout=setTimeout(()=>controller.abort('provider_timeout'),requestTimeoutMs)
@@ -215,6 +237,57 @@ export const generateCreativeImage=async({prompt})=>googleGenerateContent({
   contents:[{role:'user',parts:[{text:String(prompt||'').slice(0,12000)}]}],
   generationConfig:{responseModalities:['TEXT','IMAGE']}
 })
+
+export const verifyProviderAccess=async task=>{
+  if(process.env.AI_PROVIDER_TESTS_ENABLED!=='true'){
+    throw new ProviderExecutionError('provider access verification is disabled; set AI_PROVIDER_TESTS_ENABLED=true only for an authorized bounded test',{task,status:503})
+  }
+  const route=modelRegistryItem(task)
+  if(!route)throw new ProviderExecutionError('unknown AI task',{task,status:404})
+  if(!route.identifierVerified||!route.capabilityVerified){
+    throw new ProviderExecutionError('requested model capability is not documentation-verified',{provider:route.provider,task,status:503})
+  }
+  if(route.provider==='openai'){
+    if(!process.env.OPENAI_API_KEY)throw new ProviderExecutionError('OpenAI credential is not configured',{provider:'openai',task,status:503})
+    const result=await getJson({
+      provider:'openai',task,
+      url:'https://api.openai.com/v1/models/'+encodeURIComponent(route.requestedModel),
+      headers:{Authorization:'Bearer '+process.env.OPENAI_API_KEY}
+    })
+    return {provider:'openai',task,requestedModel:route.requestedModel,resolvedModel:result.json?.id||route.requestedModel,providerRequestId:result.providerRequestId||null,accessVerified:true}
+  }
+  if(route.provider==='google'){
+    if(!process.env.GOOGLE_AI_API_KEY)throw new ProviderExecutionError('Google AI credential is not configured',{provider:'google',task,status:503})
+    const base=process.env.GOOGLE_AI_BASE_URL||'https://generativelanguage.googleapis.com/v1beta'
+    const result=await getJson({
+      provider:'google',task,
+      url:base+'/models/'+encodeURIComponent(route.requestedModel)+'?key='+encodeURIComponent(process.env.GOOGLE_AI_API_KEY)
+    })
+    return {provider:'google',task,requestedModel:route.requestedModel,resolvedModel:String(result.json?.name||route.requestedModel).replace(/^models\//,''),providerRequestId:result.providerRequestId||null,accessVerified:true}
+  }
+  if(route.provider==='voyage'){
+    if(!process.env.VOYAGE_API_KEY)throw new ProviderExecutionError('Voyage credential is not configured',{provider:'voyage',task,status:503})
+    if(task==='embedding'){
+      const result=await postJson({
+        provider:'voyage',task,
+        url:process.env.VOYAGE_EMBEDDINGS_URL||'https://api.voyageai.com/v1/embeddings',
+        headers:{Authorization:'Bearer '+process.env.VOYAGE_API_KEY},
+        body:{model:route.requestedModel,input:['AceMarketing provider access verification'],input_type:'query'}
+      })
+      return {provider:'voyage',task,requestedModel:route.requestedModel,resolvedModel:result.json?.model||route.requestedModel,providerRequestId:result.providerRequestId||null,accessVerified:true,usage:result.json?.usage||null}
+    }
+    if(task==='reranking'){
+      const result=await postJson({
+        provider:'voyage',task,
+        url:process.env.VOYAGE_RERANK_URL||'https://api.voyageai.com/v1/rerank',
+        headers:{Authorization:'Bearer '+process.env.VOYAGE_API_KEY},
+        body:{model:route.requestedModel,query:'AceMarketing verification',documents:['AceMarketing verification document'],top_k:1}
+      })
+      return {provider:'voyage',task,requestedModel:route.requestedModel,resolvedModel:result.json?.model||route.requestedModel,providerRequestId:result.providerRequestId||null,accessVerified:true,usage:result.json?.usage||null}
+    }
+  }
+  throw new ProviderExecutionError('provider access verification is not implemented for this route',{provider:route.provider,task,status:501})
+}
 
 export const executeHostedTask=async({task,input})=>{
   if(task==='analyst') return runOpenAIAnalyst(input||{})
