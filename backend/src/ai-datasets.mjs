@@ -1,15 +1,5 @@
 import {createHash,randomUUID} from 'node:crypto'
-import pg from 'pg'
-
-const {Pool}=pg
-const databaseUrl=process.env.DATABASE_URL||''
-const pool=databaseUrl?new Pool({
-  connectionString:databaseUrl,
-  max:Number(process.env.AI_DATASET_DB_POOL_MAX||5),
-  idleTimeoutMillis:Number(process.env.DB_IDLE_TIMEOUT_MS||30000),
-  connectionTimeoutMillis:Number(process.env.DB_CONNECT_TIMEOUT_MS||5000),
-  ...(process.env.DB_SSL==='require'?{ssl:{rejectUnauthorized:false}}:{})
-}):null
+import {pool} from './database.mjs'
 
 const allowedTasks=new Set(['lead_qualification','paid_conversion','customer_churn','future_customer_value'])
 const safeJson=value=>JSON.stringify(value&&typeof value==='object'?value:{})
@@ -239,4 +229,4 @@ export const retireAiDataset=async({workspaceId,id})=>{
   return rows[0]||null
 }
 
-export const closeAiDatasets=async()=>{if(pool)await pool.end()}
+export const closeAiDatasets=async()=>{}
