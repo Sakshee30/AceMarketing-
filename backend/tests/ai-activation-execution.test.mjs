@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {activationExecutionEnabled,validateActivationAdapterInput} from '../src/ai-activation-execution.mjs'
+import {activationExecutionEnabled,activationQueueStatusProcessable,validateActivationAdapterInput} from '../src/ai-activation-execution.mjs'
 import {hasPermission} from '../src/security.mjs'
 
 const withEnv=(key,value,fn)=>{
@@ -78,4 +78,14 @@ test('execution permission is separated from propose and approve permissions',()
   assert.equal(hasPermission('admin','ai.activation.execute'),true)
   assert.equal(hasPermission('operator','ai.activation.execute'),false)
   assert.equal(hasPermission('analyst','ai.activation.execute'),false)
+})
+
+
+test('terminal durable job states cannot be relabelled as queued activation execution',()=>{
+  for(const status of ['failed','dead_letter','cancelled','succeeded','unknown','']){
+    assert.equal(activationQueueStatusProcessable(status),false,status)
+  }
+  for(const status of ['pending','retry','leased']){
+    assert.equal(activationQueueStatusProcessable(status),true,status)
+  }
 })
