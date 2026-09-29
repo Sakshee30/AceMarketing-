@@ -146,7 +146,11 @@ export const changeGoogleAdsCampaignBudget=async(workspaceId,input={})=>{
 
   const expectedCurrentAmountMicros=boundedBudgetMicros(input.expectedCurrentAmountMicros)
   const newAmountMicros=boundedBudgetMicros(input.newAmountMicros)
-  const maxChangePct=Math.max(0.1,Math.min(Number(process.env.AI_ACTIVATION_MAX_BUDGET_CHANGE_PCT||20),100))
+  const configuredMaxChangePct=Number(process.env.AI_ACTIVATION_MAX_BUDGET_CHANGE_PCT||20)
+  if(!Number.isFinite(configuredMaxChangePct)||configuredMaxChangePct<=0||configuredMaxChangePct>100){
+    throw new Error('AI_ACTIVATION_MAX_BUDGET_CHANGE_PCT must be greater than 0 and at most 100')
+  }
+  const maxChangePct=configuredMaxChangePct
   const absoluteCapRaw=String(process.env.AI_ACTIVATION_MAX_DAILY_BUDGET_MICROS||'').trim()
   if(absoluteCapRaw){
     const absoluteCap=boundedBudgetMicros(absoluteCapRaw)
