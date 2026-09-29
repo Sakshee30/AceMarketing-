@@ -97,8 +97,8 @@ export default function IntelligencePage(){
  },[activeJob?.jobId])
 
  const summary=useMemo(()=>({
-  active:registry.filter(x=>x.readiness==='active').length,
-  blocked:registry.filter(x=>!['active','approved'].includes(String(x.readiness||''))).length,
+  active:registry.filter(x=>x.evaluationStatus==='qualified'&&x.approvalStatus==='approved'&&x.deploymentStatus==='deployed').length,
+  blocked:registry.filter(x=>!(x.evaluationStatus==='qualified'&&x.approvalStatus==='approved'&&x.deploymentStatus==='deployed')).length,
   evaluated:registry.filter(x=>x.evaluationStatus==='qualified').length,
   datasets:datasets.length
  }),[registry,datasets])
