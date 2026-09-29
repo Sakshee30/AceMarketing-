@@ -148,3 +148,43 @@ class MeridianFitRequest(BaseModel):
     n_burnin: int = Field(default=250, ge=50, le=2_500)
     n_keep: int = Field(default=500, ge=100, le=5_000)
     random_seed: int = 42
+
+
+class PredictionRow(BaseModel):
+    entity_id: str = Field(min_length=1, max_length=256)
+    features: dict[str, Any]
+
+
+class ArtifactScoreRequest(BaseModel):
+    run_id: str | None = Field(default=None, max_length=256)
+    task: Literal["lead_qualification", "paid_conversion", "customer_churn", "future_customer_value"]
+    artifact_id: str = Field(min_length=1, max_length=256)
+    artifact_sha256: str = Field(pattern=r"^[a-fA-F0-9]{64}$")
+    rows: list[PredictionRow] = Field(min_length=1, max_length=50_000)
+    horizon: Literal["90d", "180d"] | None = None
+    prediction_cutoff: datetime
+
+
+class RankScoreCandidate(BaseModel):
+    candidate_id: str = Field(min_length=1, max_length=256)
+    features: dict[str, float]
+    eligible: bool = True
+
+
+class RankScoreGroup(BaseModel):
+    group_id: str = Field(min_length=1, max_length=256)
+    candidates: list[RankScoreCandidate] = Field(min_length=1, max_length=10_000)
+
+
+class RankScoreRequest(BaseModel):
+    run_id: str | None = Field(default=None, max_length=256)
+    artifact_id: str = Field(min_length=1, max_length=256)
+    artifact_sha256: str = Field(pattern=r"^[a-fA-F0-9]{64}$")
+    groups: list[RankScoreGroup] = Field(min_length=1, max_length=10_000)
+    prediction_cutoff: datetime
+
+
+class ChallengerForecastRequest(ForecastRequest):
+    lags: list[int] = Field(default_factory=lambda: [1, 7, 14, 28], min_length=1, max_length=32)
+    include_calendar_features: bool = True
+    random_seed: int = 42
