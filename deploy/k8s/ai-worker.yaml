@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: acemarketing-ai-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: acemarketing-ai-worker}
+  template:
+    metadata:
+      labels: {app: acemarketing-ai-worker}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: {type: RuntimeDefault}
+      terminationGracePeriodSeconds: 45
+      containers:
+        - name: worker
+          image: acemarketing-api:latest
+          imagePullPolicy: IfNotPresent
+          command: ["node","backend/src/worker.mjs"]
+          envFrom:
+            - secretRef: {name: acemarketing-ai-secrets}
+            - configMapRef: {name: acemarketing-ai-config}
+          resources:
+            requests: {cpu: "250m", memory: "384Mi"}
+            limits: {cpu: "1500m", memory: "1536Mi"}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: ["ALL"]}
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: tmp
+          emptyDir: {sizeLimit: 256Mi}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: acemarketing-ai-worker
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: acemarketing-ai-worker
+  minReplicas: 1
+  maxReplicas: 8
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: {type: Utilization, averageUtilization: 70}
