@@ -34,6 +34,7 @@ import { metricCatalog } from './metric-catalog.mjs'
 import { closeLiveVoice, createLiveVoiceSession, getLiveVoiceSession, installLiveVoiceWebSocket, terminateLiveVoiceSession } from './live-voice.mjs'
 import { validateHostedTaskInput } from './ai-input-validation.mjs'
 import { evaluateAiTaskAdmission, getAiTaskPolicy, listAiTaskPolicies, listCreativeAssets, listTranscripts, reviewCreativeAsset, saveAiTaskPolicy } from './ai-governance-store.mjs'
+import { getSegmentMemberships, listAnomalyItems, listRankingItems, listSegmentSnapshots, reviewAnomalyItem } from './ai-domain-results.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -456,6 +457,7 @@ const permissionForRequest=(method,path)=>{
   if(path.startsWith('/api/ai/tasks/')) return 'ai.analysis.run'
   if(path.startsWith('/api/ai/task-policies')) return method==='GET'?'workspace.read':'ai.providers.manage'
   if(path.startsWith('/api/ai/creative-assets')&&method!=='GET') return 'approvals.write'
+  if(path.startsWith('/api/ai/anomalies')&&method!=='GET') return 'ai.evaluation.write'
   if(path.startsWith('/api/ai/datasets')&&method!=='GET') return 'ai.training.run'
   if(path.startsWith('/api/ai/ml/train/')||path==='/api/ai/ml/rank') return 'ai.training.run'
   if(path.startsWith('/api/ai/live-voice')) return 'calls.write'
@@ -4996,6 +4998,41 @@ const server = http.createServer(async (req,res)=>{
         deadlineAt:job.deadline_at||deadlineAt,
         resultSchemaVersion:'ml-result.v1'
       })
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/anomalies') {
+      const status=String(url.searchParams.get('status')||'').trim()||null
+      const limit=Math.max(1,Math.min(Number(url.searchParams.get('limit')||200),1000))
+      const items=await listAnomalyItems({workspaceId,status,limit})
+      return send(req,res,200,{items,status,limit,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/anomalies\/[^/]+\/[^/]+\/review$/.test(url.pathname)) {
+      const parts=url.pathname.split('/')
+      const resultId=decodeURIComponent(parts[4]||'')
+      const entityId=decodeURIComponent(parts[5]||'')
+      const body=await readBody(req)
+      try{
+        const item=await reviewAnomalyItem({workspaceId,resultId,entityId,status:String(body.status||''),feedback:body.feedback||null,suppressedUntil:body.suppressedUntil||null,actor:authenticatedUser})
+        return item?send(req,res,200,{item}):send(req,res,404,{error:'anomaly item not found'})
+      }catch(error){
+        return send(req,res,400,{error:error instanceof Error?error.message:'anomaly review failed'})
+      }
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/segments') {
+      const limit=Math.max(1,Math.min(Number(url.searchParams.get('limit')||50),200))
+      const items=await listSegmentSnapshots({workspaceId,limit})
+      return send(req,res,200,{items,limit,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'GET' && /^\/api\/ai\/segments\/[^/]+\/members$/.test(url.pathname)) {
+      const snapshotId=decodeURIComponent(url.pathname.split('/')[4]||'')
+      const limit=Math.max(1,Math.min(Number(url.searchParams.get('limit')||1000),5000))
+      const items=await getSegmentMemberships({workspaceId,snapshotId,limit})
+      return send(req,res,200,{items,snapshotId,limit})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/rankings') {
+      const resultId=String(url.searchParams.get('resultId')||'').trim()||null
+      const limit=Math.max(1,Math.min(Number(url.searchParams.get('limit')||500),5000))
+      const items=await listRankingItems({workspaceId,resultId,limit})
+      return send(req,res,200,{items,resultId,limit,generatedAt:new Date().toISOString()})
     }
     if (req.method === 'GET' && url.pathname === '/api/ai/results') {
       const task=String(url.searchParams.get('task')||'').trim()||null
