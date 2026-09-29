@@ -51,6 +51,7 @@ test('skip link and visible focus are available across the compatibility shell',
   await authenticateWorkspace(page)
   await page.goto('/#/workspace?tab=Overview')
   await dismissConsent(page)
+  await page.evaluate(()=>{(document.activeElement as HTMLElement|null)?.blur()})
   await page.keyboard.press('Tab')
   const skip=page.getByRole('link',{name:'Skip to main content'})
   await expect(skip).toBeVisible()
