@@ -1,21 +1,11 @@
 import {createHmac,randomUUID,timingSafeEqual} from 'node:crypto'
-import pg from 'pg'
-
-const {Pool}=pg
-const databaseUrl=process.env.DATABASE_URL||''
+import {pool} from './database.mjs'
 const stripeSecret=process.env.STRIPE_SECRET_KEY||''
 const webhookSecret=process.env.STRIPE_WEBHOOK_SECRET||''
 const checkoutSuccessUrl=process.env.BILLING_CHECKOUT_SUCCESS_URL||''
 const checkoutCancelUrl=process.env.BILLING_CHECKOUT_CANCEL_URL||''
 const portalReturnUrl=process.env.BILLING_PORTAL_RETURN_URL||checkoutSuccessUrl
 const toleranceSeconds=Number(process.env.STRIPE_WEBHOOK_TOLERANCE_SECONDS||300)
-const pool=databaseUrl?new Pool({
-  connectionString:databaseUrl,
-  max:Number(process.env.BILLING_DB_POOL_MAX||10),
-  idleTimeoutMillis:Number(process.env.DB_IDLE_TIMEOUT_MS||30000),
-  connectionTimeoutMillis:Number(process.env.DB_CONNECT_TIMEOUT_MS||5000),
-  ...(process.env.DB_SSL==='require'?{ssl:{rejectUnauthorized:false}}:{})
-}):null
 
 const catalog=()=>{
   try{
