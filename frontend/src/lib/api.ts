@@ -106,6 +106,56 @@ const request = async <T>(path: string, init?: AceRequestInit): Promise<T> => {
   return payload as T
 }
 
+export const streamAiJob=async(id:string,onEvent:(event:{event:string;data:any})=>void,signal?:AbortSignal)=>{
+  const runtime=getPublicRuntimeConfig()
+  const token=getToken()
+  const controller=new AbortController()
+  const abort=()=>{try{controller.abort((signal as any)?.reason||'caller_cancelled')}catch{}}
+  if(signal){
+    if(signal.aborted)abort()
+    else signal.addEventListener('abort',abort,{once:true})
+  }
+  try{
+    const response=await fetch(runtime.apiBasePath+'/ai/jobs/'+encodeURIComponent(id)+'/events',{
+      method:'GET',
+      signal:controller.signal,
+      headers:{
+        Accept:'text/event-stream',
+        'X-Workspace-ID':getWorkspace(),
+        ...(token?{Authorization:'Bearer '+token}:{})
+      }
+    })
+    if(!response.ok)throw new AceApiError('AI job stream failed: '+response.status,response.status,response.headers.get('x-request-id')||'',{})
+    if(!response.body)throw new AceApiError('AI job stream body is unavailable',0,'',{cause:'missing_stream'})
+    const reader=response.body.getReader()
+    const decoder=new TextDecoder()
+    let buffer=''
+    while(true){
+      const chunk=await reader.read()
+      if(chunk.done)break
+      buffer+=decoder.decode(chunk.value,{stream:true})
+      let boundary=buffer.indexOf('\n\n')
+      while(boundary>=0){
+        const block=buffer.slice(0,boundary)
+        buffer=buffer.slice(boundary+2)
+        let event='message'
+        let data=''
+        for(const line of block.split('\n')){
+          if(line.startsWith('event:'))event=line.slice(6).trim()
+          else if(line.startsWith('data:'))data+=line.slice(5).trim()
+        }
+        if(data){
+          try{onEvent({event,data:JSON.parse(data)})}
+          catch{onEvent({event,data})}
+        }
+        boundary=buffer.indexOf('\n\n')
+      }
+    }
+  }finally{
+    if(signal)signal.removeEventListener('abort',abort)
+  }
+}
+
 export const api = {
   health: () => request<{ ok: boolean; service: string }>('/health'),
   dashboardSummary: (options?:{signal?:AbortSignal}) => request('/dashboard-summary',{signal:options?.signal}),
