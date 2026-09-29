@@ -23,32 +23,104 @@ export const enqueueJob=async({
   availableAt=null,
   deadlineAt=null,
   inputSnapshot=null,
-  resultSchemaVersion=null
+  resultSchemaVersion=null,
+  aiUsageReservation=null,
+  outboxEvent=null
 })=>{
   if(!pool) return null
   const id='job_'+randomUUID()
   const key=String(idempotencyKey||id)
+  const client=await pool.connect()
+  try{
+    await client.query('BEGIN')
+    const {rows}=await client.query(
+      `INSERT INTO ace_jobs
+        (id,workspace_id,kind,payload,status,attempts,max_attempts,available_at,idempotency_key,deadline_at,input_snapshot,result_schema_version)
+       VALUES ($1,$2,$3,$4::jsonb,'pending',0,$5,COALESCE($6::timestamptz,now()),$7,$8::timestamptz,$9::jsonb,$10)
+       ON CONFLICT (workspace_id,idempotency_key)
+       DO UPDATE SET updated_at=ace_jobs.updated_at
+       RETURNING *`,
+      [
+        id,
+        workspaceId,
+        kind,
+        JSON.stringify(payload||{}),
+        maxAttempts,
+        availableAt,
+        key,
+        deadlineAt,
+        inputSnapshot===null?null:JSON.stringify(inputSnapshot),
+        resultSchemaVersion
+      ]
+    )
+    const job=rows[0]
+    if(aiUsageReservation){
+      const reservationId='aiur_'+randomUUID()
+      await client.query(
+        `INSERT INTO ace_ai_usage_reservations
+          (id,workspace_id,job_id,task,provider,requested_model,reserved_units,status)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,'reserved')
+         ON CONFLICT (workspace_id,job_id) DO NOTHING`,
+        [
+          reservationId,
+          workspaceId,
+          job.id,
+          String(aiUsageReservation.task||kind).slice(0,160),
+          aiUsageReservation.provider?String(aiUsageReservation.provider).slice(0,120):null,
+          aiUsageReservation.requestedModel?String(aiUsageReservation.requestedModel).slice(0,256):null,
+          Math.max(0,Number(aiUsageReservation.reservedUnits||1))
+        ]
+      )
+    }
+    if(outboxEvent){
+      await client.query(
+        `INSERT INTO ace_ai_outbox_events
+          (id,workspace_id,job_id,event_type,schema_version,payload,status)
+         VALUES ($1,$2,$3,$4,$5,$6::jsonb,'pending')
+         ON CONFLICT (workspace_id,job_id,event_type) DO NOTHING`,
+        [
+          'aiob_'+randomUUID(),
+          workspaceId,
+          job.id,
+          String(outboxEvent.eventType||'ai.job.accepted').slice(0,160),
+          String(outboxEvent.schemaVersion||'ai-outbox.v1').slice(0,120),
+          JSON.stringify(outboxEvent.payload||{jobId:job.id,kind})
+        ]
+      )
+    }
+    await client.query('COMMIT')
+    return job
+  }catch(error){
+    await client.query('ROLLBACK').catch(()=>{})
+    throw error
+  }finally{
+    client.release()
+  }
+}
+
+export const reconcileAiUsageReservation=async({workspaceId,jobId,actualUnits=null,status='committed'})=>{
+  if(!pool)return null
+  const safeStatus=['committed','released','unknown'].includes(status)?status:'unknown'
   const {rows}=await pool.query(
-    `INSERT INTO ace_jobs
-      (id,workspace_id,kind,payload,status,attempts,max_attempts,available_at,idempotency_key,deadline_at,input_snapshot,result_schema_version)
-     VALUES ($1,$2,$3,$4::jsonb,'pending',0,$5,COALESCE($6::timestamptz,now()),$7,$8::timestamptz,$9::jsonb,$10)
-     ON CONFLICT (workspace_id,idempotency_key)
-     DO UPDATE SET updated_at=ace_jobs.updated_at
+    `UPDATE ace_ai_usage_reservations
+     SET actual_units=$3,status=$4,reconciled_at=now()
+     WHERE workspace_id=$1 AND job_id=$2 AND status='reserved'
      RETURNING *`,
-    [
-      id,
-      workspaceId,
-      kind,
-      JSON.stringify(payload||{}),
-      maxAttempts,
-      availableAt,
-      key,
-      deadlineAt,
-      inputSnapshot===null?null:JSON.stringify(inputSnapshot),
-      resultSchemaVersion
-    ]
+    [workspaceId,jobId,actualUnits==null?null:Math.max(0,Number(actualUnits)),safeStatus]
   )
-  return rows[0]
+  return rows[0]||null
+}
+
+export const markAiOutboxPublished=async({workspaceId,jobId,eventType})=>{
+  if(!pool)return null
+  const {rows}=await pool.query(
+    `UPDATE ace_ai_outbox_events
+     SET status='published',published_at=now(),attempts=attempts+1,last_error=NULL
+     WHERE workspace_id=$1 AND job_id=$2 AND event_type=$3 AND status='pending'
+     RETURNING *`,
+    [workspaceId,jobId,eventType]
+  )
+  return rows[0]||null
 }
 
 export const leaseJobs=async({workerId,limit=10})=>{
