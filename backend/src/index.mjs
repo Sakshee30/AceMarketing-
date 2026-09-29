@@ -23,7 +23,7 @@ import { parseWhatsAppWebhook, resolveWhatsAppWorkspace, sendWhatsAppMessage, ve
 import { normalizeCallEvent, resolveCallWorkspace, verifyCallWebhook } from './call-events.mjs'
 import { createCalendarEvent, updateCalendarEvent } from './calendar-provider.mjs'
 import { authMailConfigured, sendPasswordReset } from './auth-mailer.mjs'
-import { modelCatalogItems, registrySummary } from './ai-registry.mjs'
+import { modelCatalogItems, modelRegistryItem, registrySummary } from './ai-registry.mjs'
 import { verifyProviderAccess } from './ai-providers.mjs'
 import { closeAiRuntime, listAiResults, submitHostedAiJob } from './ai-runtime.mjs'
 import { getMlCapabilities, mlServiceConfigured } from './ml-client.mjs'
@@ -4647,6 +4647,8 @@ const server = http.createServer(async (req,res)=>{
         const dataset=await getAiDataset({workspaceId,id,includeRows:false})
         if(!dataset)return send(req,res,404,{error:'dataset not found'})
         const task=String(dataset.task||'')
+        const datasetAdmission=await evaluateAiTaskAdmission({workspaceId,task,requestedModel:modelRegistryItem(task)?.requestedModel||task,reservedUnits:1})
+        if(!datasetAdmission.allowed)return send(req,res,429,{error:'training task is blocked by tenant policy',prerequisites:datasetAdmission.reasons,policy:datasetAdmission.policy,usage:datasetAdmission.usage})
         const request=task==='future_customer_value'
           ?await trainingRequestFromDatasetWithHorizon({
             workspaceId,id,horizon:String(body.horizon||''),randomSeed:Number(body.randomSeed||42),categoricalFeatures:body.categoricalFeatures||[]
@@ -4962,7 +4964,7 @@ const server = http.createServer(async (req,res)=>{
       }
       const allowedTasks=new Set(['lead_qualification','paid_conversion','customer_churn','future_customer_value','forecast_baseline','forecast_primary','forecast_challenger','incrementality','marketing_mix','anomaly_detection','behavioral_segments','offer_ranking'])
       if(!allowedTasks.has(task))return send(req,res,400,{error:'unsupported ML task'})
-      const admission=await evaluateAiTaskAdmission({workspaceId,task,requestedModel:task,reservedUnits:1})
+      const admission=await evaluateAiTaskAdmission({workspaceId,task,requestedModel:modelRegistryItem(task)?.requestedModel||task,reservedUnits:1})
       if(!admission.allowed)return send(req,res,429,{error:'ML task is blocked by tenant policy',prerequisites:admission.reasons,policy:admission.policy,usage:admission.usage})
       const requestKey=String(req.headers['idempotency-key']||req.requestId||randomUUID())
       const deadlineAt=new Date(Date.now()+Number(process.env.ML_JOB_DEADLINE_MS||15*60*1000)).toISOString()
