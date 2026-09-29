@@ -2,6 +2,8 @@ import {api,streamAiJob} from '../../../lib/api'
 
 export const intelligenceApi={
   registry:(options?:{signal?:AbortSignal})=>api.aiRegistry(options),
+  deploymentControls:(options?:{signal?:AbortSignal})=>api.aiDeploymentControls(options),
+  saveDeploymentControl:(task:string,payload:Record<string,unknown>)=>api.saveAiDeploymentControl(task,payload),
   policies:(options?:{signal?:AbortSignal})=>api.aiTaskPolicies(options),
   activationProposals:(status?:string,options?:{signal?:AbortSignal})=>api.aiActivationProposals(status,options),
   createActivationProposal:(payload:Record<string,unknown>)=>api.createAiActivationProposal(payload),
@@ -45,5 +47,6 @@ export const intelligenceApi={
   anomalies:(payload:Record<string,unknown>,operationId?:string)=>api.aiMlAnomalies(payload,{operationId}),
   segments:(payload:Record<string,unknown>,operationId?:string)=>api.aiMlSegments(payload,{operationId}),
   rank:(payload:Record<string,unknown>,operationId?:string)=>api.aiMlRank(payload,{operationId}),
-  hostedTask:(task:string,payload:Record<string,unknown>,operationId?:string)=>api.submitAiTask(task,payload,{operationId})
+  hostedTask:(task:string,payload:Record<string,unknown>,operationId?:string)=>api.submitAiTask(task,payload,{operationId}),
+  shadowHostedTask:(task:string,payload:Record<string,unknown>,operationId?:string)=>api.submitAiTaskShadow(task,payload,{operationId})
 }
