@@ -148,13 +148,17 @@ export const runOpenAIAnalyst=async({question,evidence,instructions})=>{
     headers:{Authorization:'Bearer '+process.env.OPENAI_API_KEY},
     body:payload
   })
+  const text=normalizeOpenAIText(result.json)
+  if(!text){
+    throw new ProviderExecutionError('OpenAI analyst returned no usable text output',{provider:'openai',task:'analyst',status:502,providerRequestId:result.providerRequestId||result.json?.id||null,unknownOutcome:false})
+  }
   return {
     provider:'openai',
     requestedModel:route.requestedModel,
     resolvedModel:result.json?.model||route.requestedModel,
     providerRequestId:result.providerRequestId||result.json?.id||null,
     requestFingerprint:result.requestFingerprint,
-    text:normalizeOpenAIText(result.json),
+    text,
     usage:result.json?.usage||null,
     rawStatus:result.json?.status||'completed',
     promptVersion:prompt.version
@@ -193,13 +197,17 @@ export const runAnthropicReviewer=async({recommendation,evidence,policy})=>{
       }]
     }
   })
+  const text=normalizeAnthropicText(result.json)
+  if(!text){
+    throw new ProviderExecutionError('Anthropic reviewer returned no usable text output',{provider:'anthropic',task:'recommendation_reviewer',status:502,providerRequestId:result.providerRequestId||result.json?.id||null,unknownOutcome:false})
+  }
   return {
     provider:'anthropic',
     requestedModel:route.requestedModel,
     resolvedModel:result.json?.model||route.requestedModel,
     providerRequestId:result.providerRequestId||result.json?.id||null,
     requestFingerprint:result.requestFingerprint,
-    text:normalizeAnthropicText(result.json),
+    text,
     usage:result.json?.usage||null,
     rawStatus:result.json?.stop_reason||'completed',
     promptVersion:prompt.version
