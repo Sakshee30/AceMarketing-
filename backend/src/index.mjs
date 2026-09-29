@@ -4828,8 +4828,8 @@ const server = http.createServer(async (req,res)=>{
       '/api/ai/ml/rank/score':{operation:'offer_ranking_score',task:'offer_ranking'}
     }
     if(req.method==='POST'&&mlOperationByPath[url.pathname]){
-      if(!mlServiceConfigured()) return send(req,res,503,{error:'ML service is not configured'})
       const spec=mlOperationByPath[url.pathname]
+      if(!mlServiceConfigured(spec.operation)) return send(req,res,503,{error:'ML service profile for '+spec.operation+' is not configured'})
       const body=await readBody(req)
       const task=spec.taskFromBody?String(body.task||''):spec.task
       if(!task)return send(req,res,400,{error:'task required'})
