@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {activationProposalHash,assertActivationApprovalActor,assertActivationProposalFresh,buildActivationProposalInput} from '../src/ai-activation-proposals.mjs'
+import {activationProposalHash,assertActivationApprovalActor,assertActivationProposalFresh,buildActivationProposalInput,validateActivationProposalPolicy} from '../src/ai-activation-proposals.mjs'
 
 const route={
   task:'forecast_primary',
@@ -42,4 +42,28 @@ test('stale or tampered proposals are rejected',()=>{
   assert.doesNotThrow(()=>assertActivationProposalFresh({row,route}))
   assert.throws(()=>assertActivationProposalFresh({row:{...row,payload:{...row.payload,budget:200}},route}),/integrity/)
   assert.throws(()=>assertActivationProposalFresh({row,route:{...route,evaluationReference:'eval_2'}}),/stale: evaluation/)
+})
+
+
+test('budget activation proposal is rejected before review when deterministic change limits fail',()=>{
+  const valid={
+    proposalType:'budget_change',
+    payload:{
+      providerAdapter:'google_ads_budget',
+      campaignBudgetResourceName:'customers/123/campaignBudgets/456',
+      expectedCurrentAmountMicros:100000000,
+      newAmountMicros:110000000
+    }
+  }
+  const checked=validateActivationProposalPolicy(valid)
+  assert.equal(checked.bounded,true)
+  assert.equal(checked.changePct,10)
+
+  assert.throws(
+    ()=>validateActivationProposalPolicy({
+      ...valid,
+      payload:{...valid.payload,newAmountMicros:150000000}
+    }),
+    /percentage limit/
+  )
 })
