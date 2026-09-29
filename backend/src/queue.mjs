@@ -236,24 +236,53 @@ export const completeJob=async(id,result={},guard=null)=>{
     guard?.externalRequestId||null,
     guard?.resultSchemaVersion||null
   ]
-  const {rows}=await pool.query(
-    `UPDATE ace_jobs
-     SET status='succeeded',
-         result=$2::jsonb,
-         external_request_id=COALESCE($5,external_request_id),
-         result_schema_version=COALESCE($6,result_schema_version),
-         lease_owner=NULL,
-         leased_until=NULL,
-         heartbeat_at=now(),
-         updated_at=now(),
-         completed_at=now()
-     WHERE id=$1 AND cancel_requested_at IS NULL${extra}
-     RETURNING *`,
-    values
-  )
-  return rows[0]||null
+  const client=await pool.connect()
+  try{
+    await client.query('BEGIN')
+    const {rows}=await client.query(
+      `UPDATE ace_jobs
+       SET status='succeeded',
+           result=$2::jsonb,
+           external_request_id=COALESCE($5,external_request_id),
+           result_schema_version=COALESCE($6,result_schema_version),
+           lease_owner=NULL,
+           leased_until=NULL,
+           heartbeat_at=now(),
+           updated_at=now(),
+           completed_at=now()
+       WHERE id=$1 AND cancel_requested_at IS NULL${extra}
+       RETURNING *`,
+      values
+    )
+    const job=rows[0]||null
+    if(job&&['ai_hosted_task','ml_task'].includes(job.kind)){
+      const actualUnits=guard?.actualUnits==null?null:Math.max(0,Number(guard.actualUnits))
+      await client.query(
+        `UPDATE ace_ai_usage_reservations
+         SET actual_units=$2,status='committed',reconciled_at=now()
+         WHERE workspace_id=$1 AND job_id=$3 AND status='reserved'`,
+        [job.workspace_id,actualUnits,job.id]
+      )
+      await client.query(
+        `INSERT INTO ace_ai_outbox_events
+          (id,workspace_id,job_id,event_type,schema_version,payload,status)
+         VALUES ($1,$2,$3,'ai.job.completed','ai-job-event.v1',$4::jsonb,'pending')
+         ON CONFLICT (workspace_id,job_id,event_type) DO NOTHING`,
+        [
+          'aiob_'+randomUUID(),job.workspace_id,job.id,
+          JSON.stringify({jobId:job.id,kind:job.kind,status:'succeeded',resultSchemaVersion:job.result_schema_version||null})
+        ]
+      )
+    }
+    await client.query('COMMIT')
+    return job
+  }catch(error){
+    await client.query('ROLLBACK').catch(()=>{})
+    throw error
+  }finally{
+    client.release()
+  }
 }
-
 export const failJob=async(id,errorMessage,guard=null)=>{
   if(!pool) return null
   const extra=guardedWhere(guard)
