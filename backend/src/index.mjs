@@ -27,6 +27,7 @@ import { modelCatalogItems, registrySummary } from './ai-registry.mjs'
 import { closeAiRuntime, listAiResults, submitHostedAiJob } from './ai-runtime.mjs'
 import { getMlCapabilities, mlServiceConfigured } from './ml-client.mjs'
 import { closeKnowledge, ingestKnowledgeText, listKnowledgeSources, revokeKnowledgeSource } from './knowledge.mjs'
+import { getEvaluationPolicy, getTenantRegistry, listEvaluations, promoteModel, qualifyEvaluation, rollbackModel, syncTenantRegistry, upsertEvaluationPolicy } from './ai-registry-store.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -4555,7 +4556,87 @@ const server = http.createServer(async (req,res)=>{
       })
     }
     if (req.method === 'GET' && url.pathname === '/api/ai/registry') {
-      return send(req,res,200,registrySummary())
+      const staticRegistry=registrySummary()
+      let tenantItems=[]
+      let persistence='unavailable'
+      try{
+        await syncTenantRegistry(workspaceId)
+        tenantItems=await getTenantRegistry(workspaceId)
+        persistence='postgres'
+      }catch(error){
+        tenantItems=staticRegistry.items
+        persistence='static_fallback'
+      }
+      return send(req,res,200,{...staticRegistry,tenantItems,persistence})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/evaluations') {
+      const task=String(url.searchParams.get('task')||'').trim()||null
+      const limit=Math.max(1,Math.min(Number(url.searchParams.get('limit')||100),500))
+      const items=await listEvaluations({workspaceId,task,limit}).catch(()=>[])
+      return send(req,res,200,{items,task,limit,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/evaluation-policy') {
+      const task=String(url.searchParams.get('task')||'').trim()
+      if(!task)return send(req,res,400,{error:'task required'})
+      const item=await getEvaluationPolicy({workspaceId,task})
+      return send(req,res,200,{item,task})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/ai/evaluation-policy') {
+      if(!['owner','admin'].includes(authenticatedUser?.role||''))return send(req,res,403,{error:'owner or admin role required'})
+      const body=await readBody(req)
+      const task=String(body.task||'').trim()
+      const version=String(body.version||'').trim()
+      if(!task||!version)return send(req,res,400,{error:'task and version required'})
+      if(!body.thresholds||typeof body.thresholds!=='object'||Array.isArray(body.thresholds))return send(req,res,400,{error:'thresholds object required'})
+      try{
+        const item=await upsertEvaluationPolicy({
+          workspaceId,
+          task,
+          version:version.slice(0,120),
+          thresholds:body.thresholds,
+          notes:body.notes?String(body.notes).slice(0,2000):null,
+          actor:authenticatedUser
+        })
+        return send(req,res,200,{item})
+      }catch(error){
+        return send(req,res,400,{error:error instanceof Error?error.message:'evaluation policy could not be saved'})
+      }
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/evaluations\/[^/]+\/qualify$/.test(url.pathname)) {
+      if(!['owner','admin'].includes(authenticatedUser?.role||''))return send(req,res,403,{error:'owner or admin role required'})
+      const parts=url.pathname.split('/')
+      const evaluationId=decodeURIComponent(parts[4]||'')
+      try{
+        const item=await qualifyEvaluation({workspaceId,evaluationId,actor:authenticatedUser})
+        return send(req,res,200,{item})
+      }catch(error){
+        return send(req,res,409,{error:error instanceof Error?error.message:'evaluation qualification failed'})
+      }
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/models\/[^/]+\/promote$/.test(url.pathname)) {
+      if(!['owner','admin'].includes(authenticatedUser?.role||''))return send(req,res,403,{error:'owner or admin role required'})
+      const parts=url.pathname.split('/')
+      const task=decodeURIComponent(parts[4]||'')
+      const body=await readBody(req)
+      const evaluationId=String(body.evaluationId||'').trim()
+      if(!evaluationId)return send(req,res,400,{error:'evaluationId required'})
+      try{
+        const item=await promoteModel({workspaceId,task,evaluationId,actor:authenticatedUser})
+        return send(req,res,200,{item})
+      }catch(error){
+        return send(req,res,409,{error:error instanceof Error?error.message:'model promotion failed'})
+      }
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/models\/[^/]+\/rollback$/.test(url.pathname)) {
+      if(!['owner','admin'].includes(authenticatedUser?.role||''))return send(req,res,403,{error:'owner or admin role required'})
+      const parts=url.pathname.split('/')
+      const task=decodeURIComponent(parts[4]||'')
+      try{
+        const item=await rollbackModel({workspaceId,task,actor:authenticatedUser})
+        return send(req,res,200,{item})
+      }catch(error){
+        return send(req,res,409,{error:error instanceof Error?error.message:'model rollback failed'})
+      }
     }
     if (req.method === 'GET' && url.pathname === '/api/ai/knowledge') {
       const items=await listKnowledgeSources({workspaceId,role:authenticatedUser?.role||'viewer'})
