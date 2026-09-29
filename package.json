@@ -69,7 +69,8 @@
     "ai:promote": "node scripts/ai/promote.mjs",
     "ai:rollback": "node scripts/ai/rollback.mjs",
     "ai:delete": "node scripts/ai/delete.mjs",
-    "check:ai-tools": "node --check scripts/ai/_client.mjs && node --check scripts/ai/provider-verify.mjs && node --check scripts/ai/dataset-readiness.mjs && node --check scripts/ai/train.mjs && node --check scripts/ai/evaluate.mjs && node --check scripts/ai/backtest.mjs && node --check scripts/ai/promote.mjs && node --check scripts/ai/rollback.mjs && node --check scripts/ai/delete.mjs"
+    "check:ai-tools": "node --check scripts/ai/_client.mjs && node --check scripts/ai/provider-verify.mjs && node --check scripts/ai/dataset-readiness.mjs && node --check scripts/ai/train.mjs && node --check scripts/ai/evaluate.mjs && node --check scripts/ai/score.mjs && node --check scripts/ai/backtest.mjs && node --check scripts/ai/promote.mjs && node --check scripts/ai/rollback.mjs && node --check scripts/ai/delete.mjs",
+    "ai:score": "node scripts/ai/score.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.59.0",
