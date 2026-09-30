@@ -1,3 +1,21 @@
+import {createDependencyGuard} from './resilience.mjs'
+
+const guards=new Map()
+
+const guardFor=provider=>{
+  const key=String(provider||'provider')
+  if(!guards.has(key)){
+    guards.set(key,createDependencyGuard({
+      name:key,
+      concurrency:Number(process.env.PROVIDER_MAX_CONCURRENCY||25),
+      failureThreshold:Number(process.env.PROVIDER_CIRCUIT_FAILURE_THRESHOLD||5),
+      resetAfterMs:Number(process.env.PROVIDER_CIRCUIT_RESET_MS||30_000),
+      halfOpenSuccesses:Number(process.env.PROVIDER_CIRCUIT_HALF_OPEN_SUCCESSES||2)
+    }))
+  }
+  return guards.get(key)
+}
+
 export class ProviderTimeoutError extends Error{
   constructor(provider,timeoutMs){
     super(provider+' request exceeded '+timeoutMs+'ms')
@@ -17,14 +35,22 @@ export const withProviderDeadline=async(provider,operation,{timeoutMs=8000,signa
     if(signal.aborted)relay()
     else signal.addEventListener('abort',relay,{once:true})
   }
-  const timer=setTimeout(()=>controller.abort('provider_deadline_exceeded'),Math.max(250,Number(timeoutMs)||8000))
+  const boundedTimeout=Math.max(250,Number(timeoutMs)||8000)
+  const timer=setTimeout(()=>controller.abort('provider_deadline_exceeded'),boundedTimeout)
   try{
-    return await operation(controller.signal)
+    return await guardFor(provider).execute(()=>operation(controller.signal))
   }catch(error){
-    if(controller.signal.aborted&&!signal?.aborted)throw new ProviderTimeoutError(provider,Math.max(250,Number(timeoutMs)||8000))
+    if(controller.signal.aborted&&!signal?.aborted)throw new ProviderTimeoutError(provider,boundedTimeout)
     throw error
   }finally{
     clearTimeout(timer)
     signal?.removeEventListener('abort',relay)
   }
 }
+
+export const providerExecutionSnapshot=()=>Array.from(guards.entries()).map(([provider,guard])=>({
+  provider,
+  ...guard.snapshot()
+}))
+
+export const resetProviderExecutionGuards=()=>guards.clear()
