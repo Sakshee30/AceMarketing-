@@ -7,6 +7,8 @@ test('access policy keeps read and write permissions explicit',()=>{
   assert.equal(permissionForRequest('POST','/api/members/invite'),'members.write')
   assert.equal(permissionForRequest('POST','/api/api-keys'),'developer.write')
   assert.equal(permissionForRequest('GET','/api/dashboard-summary'),'workspace.read')
+  assert.equal(permissionForRequest('GET','/api/boards/board_1'),'boards.read')
+  assert.equal(permissionForRequest('POST','/api/boards/board_1/moves'),'boards.move')
   assert.equal(permissionForRequest('POST','/api/unknown-write'),'workspace.write')
 })
 
