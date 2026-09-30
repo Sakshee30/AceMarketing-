@@ -4,6 +4,12 @@ import path from 'node:path'
 const root=process.cwd()
 const failures=[]
 const required=[
+  'packages/contracts/http/platform.openapi.yaml',
+  'packages/contracts/events/platform-event.schema.json',
+  'packages/contracts/capabilities/capability.schema.json',
+  'scripts/contracts-check.mjs',
+  'tests/chaos/cache-outage.yaml',
+  'operations/runbooks/realtime-reconnect-storm.md',
   'config/schemas/platform.schema.json',
   'config/profiles/production-standard.yaml',
   'config/profiles/production-high-scale.yaml',
