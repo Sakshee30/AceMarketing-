@@ -55,3 +55,37 @@ variable "log_retention_days" {
   description = "CloudWatch application log retention."
   default     = 30
 }
+
+
+variable "api_image" {
+  type        = string
+  description = "Immutable API container image reference."
+}
+
+variable "control_api_image" {
+  type        = string
+  description = "Immutable platform control API container image reference."
+}
+
+variable "worker_image" {
+  type        = string
+  description = "Immutable background worker container image reference."
+}
+
+variable "control_allowed_cidrs" {
+  type        = list(string)
+  description = "CIDRs allowed to reach the internal platform-control ALB."
+  default     = ["10.40.0.0/16"]
+}
+
+variable "enable_https" {
+  type        = bool
+  description = "Enable TLS listeners when an ACM certificate is supplied."
+  default     = false
+}
+
+variable "certificate_arn" {
+  type        = string
+  description = "ACM certificate ARN used by staging ALB listeners when HTTPS is enabled."
+  default     = null
+}
