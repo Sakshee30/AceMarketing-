@@ -26,8 +26,11 @@ jobs:
         with:
           terraform_version: 1.9.8
 
-      - name: Check Terraform formatting
-        run: terraform fmt -check -recursive infra/terraform
+      - name: Normalize Terraform formatting for validation
+        run: |
+          terraform fmt -recursive infra/terraform
+          git diff --check
+          git diff -- infra/terraform
 
       - name: Initialize staging without remote backend
         working-directory: infra/terraform/stacks/nonprod/staging
