@@ -156,7 +156,25 @@ test('board creation produces default governed columns and remains tenant scoped
   assert.equal(own.some(board=>board.id===created.id),true)
   assert.equal(other.some(board=>board.id===created.id),false)
 
+  const evidence=await withTenantDbTransaction(workspaceId,async client=>{
+    const audit=(await client.query(
+      `SELECT COUNT(*)::int count FROM ace_platform_audit
+       WHERE workspace_id=$1 AND action='board.create' AND entity_id=$2`,
+      [workspaceId,created.id]
+    )).rows[0]
+    const outbox=(await client.query(
+      `SELECT COUNT(*)::int count FROM ace_outbox_events
+       WHERE workspace_id=$1 AND event_type='board.created' AND aggregate_id=$2`,
+      [workspaceId,created.id]
+    )).rows[0]
+    return {audit:Number(audit.count),outbox:Number(outbox.count)}
+  })
+  assert.equal(evidence.audit,1)
+  assert.equal(evidence.outbox,1)
+
   await withTenantDbTransaction(workspaceId,async client=>{
+    await client.query('DELETE FROM ace_outbox_events WHERE workspace_id=$1 AND aggregate_id=$2',[workspaceId,created.id])
+    await client.query('DELETE FROM ace_platform_audit WHERE workspace_id=$1 AND entity_id=$2',[workspaceId,created.id])
     await client.query('DELETE FROM ace_board_columns WHERE workspace_id=$1 AND board_id=$2',[workspaceId,created.id])
     await client.query('DELETE FROM ace_boards WHERE workspace_id=$1 AND id=$2',[workspaceId,created.id])
   })
