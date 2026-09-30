@@ -15,3 +15,27 @@
 .control-trust-banner>div:first-child{display:grid;gap:3px}
 .control-session{margin-left:auto;display:flex;align-items:center;gap:10px}
 .control-session>span{font-size:13px;color:#53647b}
+
+
+.control-change-form{margin-top:22px;border:1px solid #d8e0eb;border-radius:14px;padding:18px;display:grid;gap:16px;background:#f9fbfe}
+.control-change-form h2{margin:0;font-size:20px}
+.control-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.control-form-grid label{display:grid;gap:7px;font-weight:700;color:#263a56}
+.control-form-grid input,.control-form-grid select,.control-form-grid textarea{width:100%;border:1px solid #cbd4e2;border-radius:9px;padding:10px 11px;background:#fff;color:#132238;font:inherit}
+.control-form-wide{grid-column:1/-1}
+.control-change-form>button{justify-self:start;border:1px solid #233b62;border-radius:10px;background:#173154;color:#fff;padding:10px 14px;cursor:pointer}
+.control-change-board{margin-top:22px;display:grid;gap:14px}
+.control-change-card{border:1px solid #d8e0eb;border-radius:14px;padding:16px;background:#fff;display:grid;gap:12px}
+.control-change-card-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.control-change-card-head>div{display:grid;gap:4px}
+.control-change-card-head small{color:#617087}
+.control-change-state{font-size:12px;text-transform:uppercase;letter-spacing:.06em;border:1px solid #cbd4e2;border-radius:999px;padding:5px 9px;background:#f3f6fb;color:#394d69}
+.control-change-card p{margin:0;color:#53647b}
+.control-change-card dl{margin:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.control-change-card dl div{display:grid;gap:3px}
+.control-change-card dt{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#7a8798}
+.control-change-card dd{margin:0;color:#263a56;overflow-wrap:anywhere}
+.control-change-actions{display:flex;flex-wrap:wrap;gap:8px}
+.control-change-actions button{border:1px solid #c2cddd;border-radius:9px;background:#fff;color:#1f3553;padding:8px 11px;cursor:pointer}
+.control-change-actions button:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:800px){.control-form-grid,.control-change-card dl{grid-template-columns:1fr}.control-form-wide{grid-column:auto}.control-change-card-head{display:grid}}
