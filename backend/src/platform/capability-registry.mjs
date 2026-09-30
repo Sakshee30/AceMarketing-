@@ -1,5 +1,6 @@
 import {platformFeatureCatalog,validateFeatureCatalog} from './feature-catalog.mjs'
 import {modelRegistrySnapshot} from '../ai-registry.mjs'
+import {connectorCatalogSnapshot} from './connector-registry.mjs'
 
 const state=(desired,actual,reason=null)=>({desired,actual,reason})
 
@@ -106,6 +107,7 @@ export const capabilitySnapshot=()=>{
     releaseVersion:process.env.ACE_RELEASE_SHA||process.env.GITHUB_SHA||'unknown',
     features,
     providers:providerItems,
+    connectors:connectorCatalogSnapshot().items,
     aiProviders:ai.map(item=>({
       id:'ai:'+item.task,
       provider:item.provider,
@@ -146,6 +148,7 @@ export const providerSnapshot=()=>{
     generatedAt:snapshot.generatedAt,
     providers:[
       ...snapshot.providers,
+      ...snapshot.connectors.map(item=>({...item,capability:'connector',health:'tenant-scoped'})),
       ...snapshot.aiProviders
     ]
   }
