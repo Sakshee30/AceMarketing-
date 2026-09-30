@@ -348,12 +348,16 @@ jobs:
           test -f backend/src/platform/tenant-context.mjs
           test -f backend/src/platform/audit-store.mjs
           test -f backend/src/platform/feature-catalog.mjs
+          test -f backend/src/platform/outbox-relay.mjs
+          test -f backend/src/platform/provider-execution.mjs
           test -f backend/migrations/034_platform_reliability.sql
           test -f backend/migrations/035_platform_audit_catalog.sql
           test -f backend/tests/platform-foundation.test.mjs
           test -f backend/tests/platform-reliability.test.mjs
           test -f backend/tests/tenant-context.test.mjs
           test -f backend/tests/platform-audit-catalog.test.mjs
+          test -f backend/tests/outbox-relay.test.mjs
+          test -f backend/tests/provider-execution.test.mjs
           test -f scripts/backend-architecture-check.mjs
           test -f backend/src/store.mjs
           test -f backend/src/vault.mjs
