@@ -252,7 +252,8 @@ const server=http.createServer(async(req,res)=>{
         healthGates:body.healthGates,
         rollbackPlan:body.rollbackPlan,
         ticket:body.ticket,
-        risk:body.risk
+        risk:body.risk,
+        expectedVersion:body.expectedVersion
       })
       return json(res,200,item)
     }catch(error){
@@ -270,7 +271,8 @@ const server=http.createServer(async(req,res)=>{
         toState:String(body.toState||''),
         actor:session.sub,
         actorRole:session.role,
-        metadata:body.metadata||{}
+        metadata:body.metadata||{},
+        expectedVersion:body.expectedVersion
       })
       return json(res,200,item)
     }catch(error){
@@ -288,7 +290,8 @@ const server=http.createServer(async(req,res)=>{
         decision:String(body.decision||''),
         approver:session.sub,
         approverRole:session.role,
-        comment:body.comment||null
+        comment:body.comment||null,
+        expectedVersion:body.expectedVersion
       })
       return json(res,200,item)
     }catch(error){
@@ -305,7 +308,8 @@ const server=http.createServer(async(req,res)=>{
         id:decodeURIComponent(rollbackMatch[1]),
         actor:session.sub,
         actorRole:session.role,
-        reason:body.reason
+        reason:body.reason,
+        expectedVersion:body.expectedVersion
       })
       return json(res,200,item)
     }catch(error){
