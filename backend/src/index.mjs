@@ -40,6 +40,8 @@ import {queueAiActivationExecution} from './ai-activation-execution.mjs'
 import {analystToolNames,executeAnalystTool,executeAnalystToolSet} from './ai-analyst-tools.mjs'
 import {deploymentHealth,listDeploymentControls,saveDeploymentControl} from './ai-deployment-controls.mjs'
 import {aiMonitoringSnapshot} from './ai-monitoring.mjs'
+import {createRequestContext} from './platform/request-context.mjs'
+import {globalAdmission} from './platform/admission-control.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -546,8 +548,22 @@ const meteredMetricFor=(method,path)=>{
   return null
 }
 const server = http.createServer(async (req,res)=>{
-  const requestStartedAt=Date.now()
-  req.requestId=String(req.headers['x-request-id']||randomUUID())
+  const requestContext=createRequestContext({req})
+  req.context=requestContext
+  req.requestId=requestContext.requestId
+  const releaseAdmission=globalAdmission.acquire()
+  if(!releaseAdmission){
+    return send(req,res,503,{error:'server busy',code:'admission_capacity_exhausted',retryable:true},{'Retry-After':'1'})
+  }
+  let admissionReleased=false
+  const releaseAdmissionOnce=()=>{
+    if(admissionReleased)return
+    admissionReleased=true
+    releaseAdmission()
+  }
+  res.once('finish',releaseAdmissionOnce)
+  res.once('close',releaseAdmissionOnce)
+  const requestStartedAt=requestContext.startedAt
   const ip=String(req.headers['x-forwarded-for']||req.socket.remoteAddress||'unknown').split(',')[0].trim()
   const rate=limitRequest(ip)
   if(!rate.allowed) return send(req,res,429,{error:'rate limit exceeded'},{'Retry-After':String(Math.max(1,Math.ceil((rate.resetAt-Date.now())/1000)))})
