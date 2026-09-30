@@ -1,0 +1,27 @@
+schemaVersion: 1
+service: core-api
+owner: platform-api
+status: proposed-until-measured
+objectives:
+  availability:
+    target: 99.95
+    windowDays: 30
+    measurement: successful-valid-eligible-requests
+  boundedReadLatency:
+    p95Ms: 250
+    p99Ms: 800
+  transactionalWriteLatency:
+    p95Ms: 500
+    p99Ms: 1500
+signals:
+  - offered_rps
+  - admitted_rps
+  - successful_rps
+  - throttled_rps
+  - error_rate
+  - deadline_expiry
+  - db_pool_saturation
+rules:
+  - unauthorized_and_malformed_requests_are_not_successes
+  - legitimate_overload_inside_the_contract_counts_as_impact
+  - no_capacity_claim_without_qualification_evidence
