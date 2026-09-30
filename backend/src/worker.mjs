@@ -18,6 +18,7 @@ import {applyDeploymentHealthGuard,recordDeploymentObservation} from './ai-deplo
 import {evaluateAiTaskWorkerExecution} from './ai-governance-store.mjs'
 import {createDrainController} from './platform/drain-controller.mjs'
 import {dispatchWebhookDelivery} from './platform/webhook-delivery-worker.mjs'
+import {recordWebhookDeliveryAttempt} from './platform/webhook-delivery-store.mjs'
 
 if(!queueAvailable()) throw new Error('DATABASE_URL is required for the worker runtime')
 
@@ -244,6 +245,15 @@ const runBatch=async()=>{
       }
       if(job.payload?.deliveryId){
         await updateDelivery(job.workspace_id,job.payload.deliveryId,{status:failed?.status==='dead_letter'?'dead_letter':'retrying',attempts:job.attempts,lastError:message,nextAttemptAt:failed?.available_at||null}).catch(()=>{})
+      }
+      if(job.kind==='webhook_delivery'&&job.payload?.deliveryId&&failed?.status==='dead_letter'){
+        await recordWebhookDeliveryAttempt({
+          workspaceId:job.workspace_id,
+          deliveryId:job.payload.deliveryId,
+          outcome:'dead_letter',
+          errorCode:'webhook_retry_exhausted',
+          errorMessage:message
+        }).catch(()=>{})
       }
       if(job.kind==='audience_sync'&&job.payload?.activationRunId){
         const state=failed?.status==='dead_letter'?'failed':'retrying'
