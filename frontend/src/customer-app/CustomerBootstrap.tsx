@@ -4,40 +4,34 @@ import CustomerWorkspace from './CustomerWorkspace'
 import {api,AceApiError} from '../lib/api'
 import {LoadingState} from '../components/system/FrontendStates'
 import {clearSessionToken} from '../../../packages/client-core/src/session-authority'
-
-type BootstrapState=
-  |{kind:'session-resolving'}
-  |{kind:'signed-out';message:string}
-  |{kind:'access-ready';user:any}
-  |{kind:'recoverable-error';message:string;requestId?:string}
+import {bootstrapState,type BootstrapState} from './bootstrap-state'
 
 const signedOutMessage='Your session is not currently authorized for this customer workspace.'
 
 export default function CustomerBootstrap({back}:{back:()=>void}){
-  const [state,setState]=useState<BootstrapState>({kind:'session-resolving'})
+  const [state,setState]=useState<BootstrapState<any>>(bootstrapState.resolving())
   const generation=useRef(0)
 
   const resolveSession=useCallback(async()=>{
     const current=++generation.current
     const controller=new AbortController()
     const timer=window.setTimeout(()=>controller.abort('bootstrap_session_deadline'),12_000)
-    setState({kind:'session-resolving'})
+    setState(bootstrapState.resolving())
     try{
       const user:any=await api.me({signal:controller.signal})
       if(current!==generation.current)return
-      setState({kind:'access-ready',user})
+      setState(bootstrapState.ready(user))
     }catch(error:any){
       if(current!==generation.current)return
       const status=Number(error?.status||0)
       if(status===401||status===403){
         clearSessionToken()
-        setState({kind:'signed-out',message:signedOutMessage})
+        setState(bootstrapState.signedOut(signedOutMessage))
       }else{
-        setState({
-          kind:'recoverable-error',
-          message:error?.message||'The session could not be verified. Your sign-in state has not been changed.',
-          requestId:error instanceof AceApiError?error.requestId:undefined
-        })
+        setState(bootstrapState.recoverable(
+          error?.message||'The session could not be verified. Your sign-in state has not been changed.',
+          error instanceof AceApiError?error.requestId:undefined
+        ))
       }
     }finally{
       window.clearTimeout(timer)
