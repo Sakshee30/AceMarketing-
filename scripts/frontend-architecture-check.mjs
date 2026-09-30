@@ -578,6 +578,7 @@ if(fs.existsSync(acePlatform)){
 }
 
 const required=[
+  'frontend/customer-app/src/features/boards/pages/boards/BoardsPage.tsx',
   'frontend/customer-app/src/features/boards/pages/board-detail/BoardDetailPage.tsx',
   'frontend/customer-app/src/features/boards/data/mutations/useMoveCard.ts',
   'frontend/customer-app/src/features/boards/model/move-card.intent.ts',
@@ -944,3 +945,17 @@ if(failures.length){
   process.exit(1)
 }
 console.log('[frontend-architecture] PASS: frontend/server boundaries and migration ceiling verified.')
+
+
+const customerProvidersPath=path.join(root,'frontend','customer-app','src','app','providers','AppProviders.tsx')
+const legacyCustomerWorkspacePath=path.join(root,'frontend','src','customer-app','CustomerWorkspace.tsx')
+if(fs.existsSync(customerProvidersPath)&&fs.existsSync(legacyCustomerWorkspacePath)){
+  const providers=fs.readFileSync(customerProvidersPath,'utf8')
+  const workspace=fs.readFileSync(legacyCustomerWorkspacePath,'utf8')
+  if(providers.includes('new QueryClient(')&&workspace.includes('new QueryClient(')){
+    failures.push('customer app must not create a second QueryClientProvider/cache around the existing workspace cache owner.')
+  }
+  if(!workspace.includes("const Boards=lazy(")||!workspace.includes("['Boards',Table2]")){
+    failures.push('customer workspace must expose the governed Boards feature without replacing existing tabs.')
+  }
+}
