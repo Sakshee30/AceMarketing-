@@ -65,3 +65,56 @@ CREATE TABLE IF NOT EXISTS ace_board_operations (
 
 CREATE INDEX IF NOT EXISTS ace_board_operations_time_idx
   ON ace_board_operations (workspace_id,board_id,updated_at DESC);
+
+
+ALTER TABLE ace_boards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ace_boards FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS ace_boards_workspace_policy ON ace_boards;
+CREATE POLICY ace_boards_workspace_policy ON ace_boards
+  USING (
+    workspace_id = NULLIF(current_setting('app.workspace_id', true),'')
+    OR current_setting('app.system_worker', true) = 'true'
+  )
+  WITH CHECK (
+    workspace_id = NULLIF(current_setting('app.workspace_id', true),'')
+    OR current_setting('app.system_worker', true) = 'true'
+  );
+
+ALTER TABLE ace_board_columns ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ace_board_columns FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS ace_board_columns_workspace_policy ON ace_board_columns;
+CREATE POLICY ace_board_columns_workspace_policy ON ace_board_columns
+  USING (
+    workspace_id = NULLIF(current_setting('app.workspace_id', true),'')
+    OR current_setting('app.system_worker', true) = 'true'
+  )
+  WITH CHECK (
+    workspace_id = NULLIF(current_setting('app.workspace_id', true),'')
+    OR current_setting('app.system_worker', true) = 'true'
+  );
+
+ALTER TABLE ace_board_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ace_board_items FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS ace_board_items_workspace_policy ON ace_board_items;
+CREATE POLICY ace_board_items_workspace_policy ON ace_board_items
+  USING (
+    workspace_id = NULLIF(current_setting('app.workspace_id', true),'')
+    OR current_setting('app.system_worker', true) = 'true'
+  )
+  WITH CHECK (
+    workspace_id = NULLIF(current_setting('app.workspace_id', true),'')
+    OR current_setting('app.system_worker', true) = 'true'
+  );
+
+ALTER TABLE ace_board_operations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ace_board_operations FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS ace_board_operations_workspace_policy ON ace_board_operations;
+CREATE POLICY ace_board_operations_workspace_policy ON ace_board_operations
+  USING (
+    workspace_id = NULLIF(current_setting('app.workspace_id', true),'')
+    OR current_setting('app.system_worker', true) = 'true'
+  )
+  WITH CHECK (
+    workspace_id = NULLIF(current_setting('app.workspace_id', true),'')
+    OR current_setting('app.system_worker', true) = 'true'
+  );
