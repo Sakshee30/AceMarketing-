@@ -39,6 +39,8 @@ const required=[
   'backend/src/platform/billing-lifecycle.mjs',
   'backend/src/platform/object-lifecycle.mjs',
   'backend/src/platform/object-storage.mjs',
+  'backend/src/platform/search-port.mjs',
+  'backend/src/platform/document-processing.mjs',
   'backend/src/platform/egress-policy.mjs',
   'backend/src/platform/webhook-signing.mjs',
   'backend/src/platform/webhook-delivery-store.mjs',
@@ -61,6 +63,7 @@ const required=[
   'backend/migrations/049_workflow_durable_steps.sql',
   'backend/migrations/050_webhook_delivery.sql',
   'backend/migrations/051_billing_lifecycle.sql',
+  'backend/migrations/052_object_processing_search.sql',
   'backend/tests/platform-foundation.test.mjs',
   'backend/tests/platform-reliability.test.mjs',
   'backend/tests/tenant-context.test.mjs',
@@ -75,6 +78,8 @@ const required=[
   'backend/tests/usage-ledger.test.mjs',
   'backend/tests/billing-lifecycle.test.mjs',
   'backend/tests/object-lifecycle.test.mjs',
+  'backend/tests/search-port.test.mjs',
+  'backend/tests/document-processing.test.mjs',
   'backend/tests/egress-policy.test.mjs',
   'backend/tests/webhook-signing.test.mjs',
   'backend/tests/webhook-delivery.test.mjs',
@@ -105,6 +110,24 @@ for(const file of walk(backendRoot)){
   if(/from\s+['"][^'"]*frontend\//.test(content))failures.push(relative+': backend must not import frontend implementation')
   if(/BEGIN PRIVATE KEY|AWS_SECRET_ACCESS_KEY\s*=|sk-[A-Za-z0-9]{20,}/.test(content))failures.push(relative+': probable plaintext credential detected')
 }
+
+const objectLifecyclePath=path.join(root,'backend','src','platform','object-lifecycle.mjs')
+if(fs.existsSync(objectLifecyclePath)){
+  const source=fs.readFileSync(objectLifecyclePath,'utf8')
+  if(!source.includes('approved_storage_version'))failures.push('Approved objects must record the immutable storage version.')
+  if(!source.includes('approved_sha256'))failures.push('Approved objects must record the scanned immutable digest.')
+}
+const objectStoragePath=path.join(root,'backend','src','platform','object-storage.mjs')
+if(fs.existsSync(objectStoragePath)){
+  const source=fs.readFileSync(objectStoragePath,'utf8')
+  if(!source.includes('versionId'))failures.push('Approved downloads must pin immutable storage versions.')
+}
+const searchPortPath=path.join(root,'backend','src','platform','search-port.mjs')
+if(fs.existsSync(searchPortPath)){
+  const source=fs.readFileSync(searchPortPath,'utf8')
+  if(!source.includes('tenant-and-resource-policy-before-result'))failures.push('Search must enforce tenant/resource authorization before returning results.')
+}
+
 if(failures.length){
   console.error('Backend architecture check failed:\n- '+failures.join('\n- '))
   process.exit(1)
