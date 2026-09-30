@@ -62,6 +62,7 @@ import {beginProcessDrain,livenessState,markStartupComplete,readinessState,start
 import {runtimeRoleAllows,runtimeRolePolicy} from './platform/runtime-role.mjs'
 import {assertWorkspaceCell} from './platform/cell-placement.mjs'
 import {createBoard,getBoardOperation,getBoardSnapshot,listBoards} from './platform/board-store.mjs'
+import {moveCardController} from '../modules/boards/src/interfaces/http/move-card.controller.mjs'
 
 const runtimeRole=runtimeRolePolicy()
 
