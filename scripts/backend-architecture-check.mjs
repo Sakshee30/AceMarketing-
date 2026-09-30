@@ -17,11 +17,13 @@ const required=[
   'backend/src/platform/provider-execution.mjs',
   'backend/src/platform/access-policy.mjs',
   'backend/src/platform/workspace-access.mjs',
+  'backend/src/platform/forms-store.mjs',
   'backend/src/platform/egress-policy.mjs',
   'backend/src/platform/webhook-signing.mjs',
   'backend/migrations/034_platform_reliability.sql',
   'backend/migrations/035_platform_audit_catalog.sql',
   'backend/migrations/036_platform_rls.sql',
+  'backend/migrations/037_forms_custom_objects.sql',
   'backend/tests/platform-foundation.test.mjs',
   'backend/tests/platform-reliability.test.mjs',
   'backend/tests/tenant-context.test.mjs',
@@ -31,6 +33,7 @@ const required=[
   'backend/tests/provider-execution.test.mjs',
   'backend/tests/access-policy.test.mjs',
   'backend/tests/workspace-access.test.mjs',
+  'backend/tests/forms-store.test.mjs',
   'backend/tests/egress-policy.test.mjs',
   'backend/tests/webhook-signing.test.mjs'
 ]
