@@ -20,6 +20,7 @@ const required=[
   'backend/src/platform/capacity-budget.mjs',
   'backend/src/platform/custom-object-store.mjs',
   'backend/src/platform/worker-class.mjs',
+  'backend/src/platform/runtime-role.mjs',
   'backend/src/scheduler.mjs',
   'deploy/Dockerfile.control-api',  'backend/src/platform/problem-details.mjs',
   'backend/src/platform/request-context.mjs',
@@ -126,7 +127,8 @@ const required=[
   'backend/tests/drain-controller.test.mjs',
   'backend/tests/capacity-budget.test.mjs',
   'backend/tests/custom-object-store.test.mjs',
-  'backend/tests/worker-class.test.mjs'
+  'backend/tests/worker-class.test.mjs',
+  'backend/tests/runtime-role.test.mjs'
 ]
 for(const item of required)if(!fs.existsSync(path.join(root,item)))failures.push('missing required backend architecture foundation: '+item)
 
@@ -211,6 +213,12 @@ if(fs.existsSync(stagingMainPath)){
   if(!stagingMain.includes('module "security_baseline"')){
     failures.push('Staging must enable the AWS security evidence baseline.')
   }
+  if(!stagingMain.includes('module "integration_ingress_service"')){
+    failures.push('Staging must deploy provider integration ingress independently from the tenant API.')
+  }
+  if(!stagingMain.includes('ACE_RUNTIME_ROLE = "integration-ingress"')){
+    failures.push('The integration ingress service must use the restricted runtime role.')
+  }
   for(const role of ['module "worker_service"','module "webhook_worker_service"','module "ai_document_worker_service"','module "scheduler_service"']){
     if(!stagingMain.includes(role))failures.push('Staging must separate general, webhook, AI/document worker pools and scheduler: missing '+role)
   }
@@ -223,6 +231,9 @@ if(fs.existsSync(edgeSourcePath)){
   const edgeSource=fs.readFileSync(edgeSourcePath,'utf8')
   if(!edgeSource.includes('internal           = true')||!edgeSource.includes('aws_wafv2_web_acl')){
     failures.push('Staging must keep the platform control plane on a separate internal ALB and protect public API ingress with WAF.')
+  }
+  if(!edgeSource.includes('aws_lb_listener_rule" "integration_ingress')||!edgeSource.includes('aws_lb_target_group" "integration')){
+    failures.push('Provider webhook ingress must route to an isolated target group.')
   }
 }
 
