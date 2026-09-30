@@ -16,6 +16,7 @@ import { closeRegistryStore, recordMlExecution, syncTenantRegistry } from './ai-
 import {executeAiActivationJob,reconcileStaleActivationDispatches} from './ai-activation-execution.mjs'
 import {applyDeploymentHealthGuard,recordDeploymentObservation} from './ai-deployment-controls.mjs'
 import {evaluateAiTaskWorkerExecution} from './ai-governance-store.mjs'
+import {createDrainController} from './platform/drain-controller.mjs'
 
 if(!queueAvailable()) throw new Error('DATABASE_URL is required for the worker runtime')
 
@@ -29,6 +30,7 @@ const reportSchedulePollMs=Number(process.env.REPORT_SCHEDULER_POLL_MS||30000)
 let lastAudienceSchedulePoll=0
 let lastReportSchedulePoll=0
 let stopping=false
+const drainController=createDrainController()
 
 const usageUnitsFromResult=result=>{
   const usage=result?.usage
@@ -167,8 +169,11 @@ const runBatch=async()=>{
     lastReportSchedulePoll=Date.now()
     await runDueReportSchedules(reportScheduleBatch)
   }
+  if(stopping)return
   const jobs=await leaseJobs({workerId,limit:batchSize})
   for(const job of jobs){
+    const finishActive=drainController.beginTask()
+    if(!finishActive)break
     let heartbeatTimer=null
     const startedAt=Date.now()
     const deploymentDecision=job.payload?.deploymentDecision||{}
@@ -252,6 +257,7 @@ const runBatch=async()=>{
       }
     }finally{
       if(heartbeatTimer)clearInterval(heartbeatTimer)
+      finishActive()
     }
   }
 }
@@ -271,9 +277,13 @@ const loop=async()=>{
 const shutdown=async signal=>{
   if(stopping) return
   stopping=true
-  console.log(`${signal} received; stopping worker`)
+  drainController.beginDrain()
+  const drainTimeoutMs=Math.max(1000,Number(process.env.WORKER_DRAIN_TIMEOUT_MS||10_000))
+  console.log(`${signal} received; draining worker for up to ${drainTimeoutMs}ms`)
+  const drained=await drainController.waitForDrain(drainTimeoutMs)
+  if(!drained)console.error('[worker] drain deadline reached; leased work will recover through lease expiry/idempotency')
   await Promise.allSettled([closeQueue(),closeAiRuntime(),closeKnowledge(),closeRegistryStore(),closeStore(),closeLeadOps(),closeAudienceScheduler(),closeReportScheduler()])
-  process.exit(0)
+  process.exit(drained?0:1)
 }
 process.on('SIGTERM',()=>shutdown('SIGTERM'))
 process.on('SIGINT',()=>shutdown('SIGINT'))
