@@ -102,6 +102,7 @@ const required=[
   'infra/terraform/modules/edge/main.tf',
   'infra/terraform/modules/ecs-service/main.tf',
   'infra/terraform/modules/vpc-endpoints/main.tf',
+  'infra/terraform/modules/security-baseline/main.tf',
   'infra/terraform/modules/network/main.tf',
   'infra/terraform/modules/network/variables.tf',
   'infra/terraform/modules/network/outputs.tf',
@@ -203,6 +204,9 @@ if(fs.existsSync(stagingMainPath)){
   }
   if(!stagingMain.includes('module "vpc_endpoints"')){
     failures.push('Staging must use private AWS service endpoints for approved dependencies.')
+  }
+  if(!stagingMain.includes('module "security_baseline"')){
+    failures.push('Staging must enable the AWS security evidence baseline.')
   }
 }
 const edgeSourcePath=path.join(terraformRoot,'modules','edge','main.tf')
