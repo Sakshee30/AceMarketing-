@@ -227,10 +227,10 @@ if(fs.existsSync(stagingMainPath)){
   if(!stagingMain.includes('ACE_RUNTIME_ROLE = "integration-ingress"')){
     failures.push('The integration ingress service must use the restricted runtime role.')
   }
-  for(const role of ['module "worker_service"','module "webhook_worker_service"','module "ai_document_worker_service"','module "scheduler_service"']){
+  for(const role of ['module "worker_service"','module "workflow_worker_service"','module "webhook_worker_service"','module "ai_document_worker_service"','module "scheduler_service"']){
     if(!stagingMain.includes(role))failures.push('Staging must separate general, webhook, AI/document worker pools and scheduler: missing '+role)
   }
-  if(!stagingMain.includes('WORKER_CLASS = "general"')||!stagingMain.includes('WORKER_CLASS = "webhook"')||!stagingMain.includes('WORKER_CLASS = "ai-document"')){
+  if(!stagingMain.includes('WORKER_CLASS = "general"')||!stagingMain.includes('WORKER_CLASS = "workflow"')||!stagingMain.includes('WORKER_CLASS = "webhook"')||!stagingMain.includes('WORKER_CLASS = "ai-document"')){
     failures.push('Staging worker services must declare bounded worker classes.')
   }
 }
