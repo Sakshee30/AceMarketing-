@@ -30,16 +30,17 @@ export const upsertSearchDocument=async({
   title,
   body,
   accessPolicy={},
-  metadata={}
+  metadata={},
+  client=null
 })=>{
   if(!pool)throw new Error('search store unavailable')
   const normalizedBody=cleanText(body,2_000_000)
   if(!normalizedBody.trim())throw new Error('search document body is required')
   const normalizedTitle=cleanText(title||'Untitled',500)
   const digest=hash(normalizedBody)
-  return withTenantDbTransaction(workspaceId,async client=>{
+  const execute=async db=>{
     const id='search_'+randomUUID()
-    const {rows}=await client.query(
+    const {rows}=await db.query(
       `INSERT INTO ace_search_documents
         (id,workspace_id,source_type,source_id,source_version,title,body,access_policy,metadata,body_sha256)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9::jsonb,$10)
@@ -60,7 +61,9 @@ export const upsertSearchDocument=async({
       ]
     )
     return rows[0]
-  })
+  }
+  if(client)return execute(client)
+  return withTenantDbTransaction(workspaceId,execute)
 }
 
 export const deleteSearchProjection=async({workspaceId,sourceType,sourceId})=>{
