@@ -77,7 +77,7 @@ module "observability" {
 
   name               = var.environment
   log_retention_days = var.log_retention_days
-  services           = ["api", "control-api", "worker", "webhook-worker", "ai-document-worker", "scheduler"]
+  services           = ["api", "integration-ingress", "control-api", "worker", "webhook-worker", "ai-document-worker", "scheduler"]
   tags               = local.service_tags
 }
 
@@ -193,6 +193,12 @@ resource "aws_iam_role" "control_task" {
   tags               = merge(local.service_tags, { Service = "control-api" })
 }
 
+resource "aws_iam_role" "integration_task" {
+  name_prefix        = "ace-${var.environment}-integration-"
+  assume_role_policy = data.aws_iam_policy_document.ecs_task_assume.json
+  tags               = merge(local.service_tags, { Service = "integration-ingress" })
+}
+
 resource "aws_iam_role" "worker_task" {
   name_prefix        = "ace-${var.environment}-worker-"
   assume_role_policy = data.aws_iam_policy_document.ecs_task_assume.json
@@ -255,6 +261,26 @@ resource "aws_iam_role_policy" "control_task" {
   name   = "runtime-capabilities"
   role   = aws_iam_role.control_task.id
   policy = data.aws_iam_policy_document.control_task.json
+}
+
+data "aws_iam_policy_document" "integration_task" {
+  statement {
+    sid       = "RuntimeSecrets"
+    actions   = ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"]
+    resources = values(module.secrets.secret_arns)
+  }
+
+  statement {
+    sid       = "DecryptRuntimeSecrets"
+    actions   = ["kms:Decrypt"]
+    resources = [module.secrets.kms_key_arn]
+  }
+}
+
+resource "aws_iam_role_policy" "integration_task" {
+  name   = "runtime-capabilities"
+  role   = aws_iam_role.integration_task.id
+  policy = data.aws_iam_policy_document.integration_task.json
 }
 
 data "aws_iam_policy_document" "worker_task" {
@@ -351,6 +377,29 @@ module "api_service" {
   min_capacity       = 3
   max_capacity       = 30
   environment        = merge(local.common_runtime_environment, { ACE_SERVICE_NAME = "api" })
+  secrets            = local.common_runtime_secrets
+  tags               = local.service_tags
+}
+
+module "integration_ingress_service" {
+  source = "../../../modules/ecs-service"
+
+  name               = "ace-${var.environment}-integration-ingress"
+  cluster_arn        = module.compute.cluster_arn
+  subnet_ids         = module.network.application_subnet_ids
+  security_group_ids = [module.compute.task_security_group_id]
+  execution_role_arn = module.compute.execution_role_arn
+  task_role_arn      = aws_iam_role.integration_task.arn
+  image              = var.api_image
+  container_port     = 3001
+  target_group_arn   = module.edge.integration_target_group_arn
+  log_group_name     = module.observability.log_group_names["integration-ingress"]
+  aws_region         = var.aws_region
+  desired_count      = 2
+  min_capacity       = 2
+  max_capacity       = 20
+  cpu_target_percent = 60
+  environment        = merge(local.common_runtime_environment, { ACE_SERVICE_NAME = "integration-ingress", ACE_RUNTIME_ROLE = "integration-ingress" })
   secrets            = local.common_runtime_secrets
   tags               = local.service_tags
 }
