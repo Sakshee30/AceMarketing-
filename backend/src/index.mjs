@@ -50,8 +50,8 @@ import {validateOutboundDestination} from './platform/egress-policy.mjs'
 import {markInboxProcessed,recordInboxEvent} from './platform/reliability-store.mjs'
 import {createForm,getForm,listForms,listFormSubmissions,publishForm,submitForm} from './platform/forms-store.mjs'
 import {createCustomObject,createCustomObjectRecord,createCustomObjectVersion,getCustomObject,listCustomObjectRecords,listCustomObjects,publishCustomObject} from './platform/custom-object-store.mjs'
-import {createPolicyRule,createPolicyRuleVersion,evaluatePublishedPolicyRule,getPolicyRule,listPolicyRules,publishPolicyRule,simulatePolicyExpression} from './platform/policy-engine.mjs'
-import {cancelWorkflowExecution,createWorkflow,createWorkflowApproval,createWorkflowVersion,decideWorkflowApproval,getWorkflow,listWorkflowApprovals,listWorkflowExecutionSteps,listWorkflowExecutions,listWorkflows,publishWorkflow,retryWorkflowExecution,simulateWorkflowDefinition,startWorkflowExecution} from './platform/workflow-store.mjs'
+import {archivePolicyRule,createPolicyRule,createPolicyRuleVersion,evaluatePublishedPolicyRule,getPolicyRule,listPolicyRules,publishPolicyRule,simulatePolicyExpression} from './platform/policy-engine.mjs'
+import {archiveWorkflow,cancelWorkflowExecution,createWorkflow,createWorkflowApproval,createWorkflowVersion,decideWorkflowApproval,getWorkflow,listWorkflowApprovals,listWorkflowExecutionSteps,listWorkflowExecutions,listWorkflows,publishWorkflow,retryWorkflowExecution,simulateWorkflowDefinition,startWorkflowExecution} from './platform/workflow-store.mjs'
 import {workflowActionCatalog} from './platform/workflow-action-catalog.mjs'
 import {createDownloadGrant,createUploadIntent,listObjects,markObjectQuarantined,recordObjectScan,softDeleteObject} from './platform/object-lifecycle.mjs'
 import {runtimeGuardForRequest} from './platform/runtime-config-runtime.mjs'
@@ -6430,6 +6430,13 @@ const server = http.createServer(async (req,res)=>{
       await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'policy_rule.published',entityType:'policy_rule',entityId:rule.id,requestId:req.requestId,traceId:req.context?.traceId,metadata:{version:Number(rule.published_version||0)}}).catch(()=>{})
       return send(req,res,200,rule)
     }
+    const policyArchiveMatch=url.pathname.match(/^\/api\/policy-rules\/([^/]+)\/archive$/)
+    if(req.method==='POST'&&policyArchiveMatch){
+      const rule=await archivePolicyRule({workspaceId,id:decodeURIComponent(policyArchiveMatch[1])})
+      if(!rule)return send(req,res,404,{error:'policy rule not found'})
+      await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'policy_rule.archived',entityType:'policy_rule',entityId:rule.id,requestId:req.requestId,traceId:req.context?.traceId}).catch(()=>{})
+      return send(req,res,200,rule)
+    }
     const policyEvaluateMatch=url.pathname.match(/^\/api\/policy-rules\/([^/]+)\/evaluate$/)
     if(req.method==='POST'&&policyEvaluateMatch){
       const body=await readBody(req)
@@ -6504,6 +6511,17 @@ const server = http.createServer(async (req,res)=>{
         return send(req,res,201,workflow)
       }catch(error){
         return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'workflow version failed',code:error?.code||'workflow_version_failed'})
+      }
+    }
+    const workflowArchiveMatch=url.pathname.match(/^\/api\/workflows\/([^/]+)\/archive$/)
+    if(req.method==='POST'&&workflowArchiveMatch){
+      try{
+        const workflow=await archiveWorkflow({workspaceId,id:decodeURIComponent(workflowArchiveMatch[1]),actorId:req.user?.userId||null})
+        if(!workflow)return send(req,res,404,{error:'workflow not found'})
+        await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'workflow.archived',entityType:'workflow',entityId:workflow.id,requestId:req.requestId,traceId:req.context?.traceId}).catch(()=>{})
+        return send(req,res,200,workflow)
+      }catch(error){
+        return send(req,res,Number(error?.status||409),{error:error instanceof Error?error.message:'workflow archive failed',code:error?.code||'workflow_archive_failed'})
       }
     }
     const workflowPublishMatch=url.pathname.match(/^\/api\/workflows\/([^/]+)\/publish$/)
