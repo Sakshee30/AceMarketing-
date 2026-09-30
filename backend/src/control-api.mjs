@@ -6,19 +6,21 @@ import {pool,embeddedDatabase} from './database.mjs'
 import {capabilitySnapshot,dependencySnapshot,providerSnapshot} from './platform/capability-registry.mjs'
 import {platformFeatureCatalog} from './platform/feature-catalog.mjs'
 import {registrySummary} from './ai-registry.mjs'
+import {createPlatformChange,decidePlatformChange,getPlatformChange,listPlatformChanges,requestPlatformRollback,transitionPlatformChange,updatePlatformChangePlan} from './platform/control-change-store.mjs'
 
 const PORT=Number(process.env.CONTROL_PORT||3002)
 const IS_PROD=process.env.NODE_ENV==='production'
 const SESSION_SECRET=String(process.env.CONTROL_SESSION_SECRET||'')
 const ADMIN_EMAIL=String(process.env.CONTROL_ADMIN_EMAIL||'').trim().toLowerCase()
 const ADMIN_PASSWORD_HASH=String(process.env.CONTROL_ADMIN_PASSWORD_HASH||'')
+const ADMIN_ROLE=String(process.env.CONTROL_ADMIN_ROLE||'platform_admin')
 const COOKIE_NAME=IS_PROD?'__Host-ace_control_session':'ace_control_session'
 const loginLimit=createRateLimiter({windowMs:60_000,max:10})
 
 const b64url=value=>Buffer.from(value).toString('base64url')
 const createControlToken=email=>{
   const now=Math.floor(Date.now()/1000)
-  const payload={sub:email,userId:'platform-control',role:'platform_admin',aud:'platform-control',iat:now,exp:now+30*60}
+  const payload={sub:email,userId:'platform-control',role:ADMIN_ROLE,aud:'platform-control',iat:now,exp:now+30*60}
   const encoded=b64url(JSON.stringify(payload))
   const sig=createHmac('sha256',SESSION_SECRET).update(encoded).digest('base64url')
   return encoded+'.'+sig
@@ -54,6 +56,22 @@ const cookies=req=>Object.fromEntries(
 const currentSession=req=>{
   const payload=verifyToken(cookies(req)[COOKIE_NAME],SESSION_SECRET)
   return payload?.aud==='platform-control'?payload:null
+}
+
+const roleActions=Object.freeze({
+  platform_admin:new Set(['read','request','plan','transition','approve','rollback']),
+  approver:new Set(['read','approve']),
+  operator:new Set(['read','request','plan','transition','rollback']),
+  developer:new Set(['read','request','plan']),
+  infrastructure_engineer:new Set(['read','request','plan','transition','rollback']),
+  security_admin:new Set(['read','approve','rollback']),
+  viewer:new Set(['read'])
+})
+const canControl=(session,action)=>Boolean(roleActions[session?.role]?.has(action))
+const requireControl=(res,session,action)=>{
+  if(canControl(session,action))return true
+  json(res,403,{error:'platform control permission denied',action})
+  return false
 }
 
 const cookieHeader=token=>{
@@ -148,7 +166,7 @@ const observedPage=async page=>{
     }
   }
   if(page==='observability')return {schemaVersion:'platform-observability.v1',generatedAt:new Date().toISOString(),minimumSignalsRequired:true,releaseSha:safeEnvironment().releaseSha}
-  if(page==='changes')return {schemaVersion:'platform-changes.v1',generatedAt:new Date().toISOString(),mode:'read-only',pending:[],note:'Operational writes require validated change requests, approval, execution and verification.'}
+  if(page==='changes')return {schemaVersion:'platform-changes.v1',generatedAt:new Date().toISOString(),mode:'governed',items:await listPlatformChanges({limit:200})}
   if(page==='costs')return {schemaVersion:'platform-costs.v1',generatedAt:new Date().toISOString(),status:'not-connected',note:'Cost provider is optional; no synthetic cost values are reported.'}
   if(page==='backup-dr')return {schemaVersion:'platform-backup-dr.v1',generatedAt:new Date().toISOString(),status:'evidence-required',note:'Backup configuration and restore evidence must be supplied by the deployment profile.'}
   if(page==='drift')return {schemaVersion:'platform-drift.v1',generatedAt:new Date().toISOString(),desiredConfigVersion:safeEnvironment().configVersion,observedConfigVersion:safeEnvironment().configVersion,status:'no-runtime-drift-detected'}
@@ -187,6 +205,113 @@ const server=http.createServer(async(req,res)=>{
 
   const session=currentSession(req)
   if(!session)return json(res,401,{error:'platform control authentication required'})
+
+  if(url.pathname==='/control-api/changes'&&req.method==='POST'){
+    if(!requireControl(res,session,'request'))return
+    try{
+      const body=await readBody(req,64*1024)
+      const item=await createPlatformChange({
+        environment:body.environment,
+        scopeType:body.scopeType,
+        scopeId:body.scopeId||null,
+        requestedBy:session.sub,
+        requestedRole:session.role,
+        reason:body.reason,
+        ticket:body.ticket||null,
+        risk:body.risk||'medium',
+        oldState:body.oldState||{},
+        desiredState:body.desiredState||{},
+        impactReport:body.impactReport||{},
+        healthGates:Array.isArray(body.healthGates)?body.healthGates:[],
+        rollbackPlan:body.rollbackPlan||{}
+      })
+      return json(res,201,item)
+    }catch(error){
+      return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'change request creation failed'})
+    }
+  }
+
+  const changeMatch=url.pathname.match(/^\/control-api\/changes\/([^/]+)$/)
+  if(changeMatch&&req.method==='GET'){
+    if(!requireControl(res,session,'read'))return
+    const item=await getPlatformChange(decodeURIComponent(changeMatch[1]))
+    return item?json(res,200,item):json(res,404,{error:'change not found'})
+  }
+
+  const planMatch=url.pathname.match(/^\/control-api\/changes\/([^/]+)\/plan$/)
+  if(planMatch&&req.method==='PATCH'){
+    if(!requireControl(res,session,'plan'))return
+    try{
+      const body=await readBody(req,64*1024)
+      const item=await updatePlatformChangePlan({
+        id:decodeURIComponent(planMatch[1]),
+        actor:session.sub,
+        actorRole:session.role,
+        desiredState:body.desiredState,
+        impactReport:body.impactReport,
+        healthGates:body.healthGates,
+        rollbackPlan:body.rollbackPlan,
+        ticket:body.ticket,
+        risk:body.risk
+      })
+      return json(res,200,item)
+    }catch(error){
+      return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'change plan update failed'})
+    }
+  }
+
+  const transitionMatch=url.pathname.match(/^\/control-api\/changes\/([^/]+)\/transition$/)
+  if(transitionMatch&&req.method==='POST'){
+    if(!requireControl(res,session,'transition'))return
+    try{
+      const body=await readBody(req)
+      const item=await transitionPlatformChange({
+        id:decodeURIComponent(transitionMatch[1]),
+        toState:String(body.toState||''),
+        actor:session.sub,
+        actorRole:session.role,
+        metadata:body.metadata||{}
+      })
+      return json(res,200,item)
+    }catch(error){
+      return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'change transition failed'})
+    }
+  }
+
+  const decisionMatch=url.pathname.match(/^\/control-api\/changes\/([^/]+)\/decision$/)
+  if(decisionMatch&&req.method==='POST'){
+    if(!requireControl(res,session,'approve'))return
+    try{
+      const body=await readBody(req)
+      const item=await decidePlatformChange({
+        id:decodeURIComponent(decisionMatch[1]),
+        decision:String(body.decision||''),
+        approver:session.sub,
+        approverRole:session.role,
+        comment:body.comment||null
+      })
+      return json(res,200,item)
+    }catch(error){
+      return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'change approval failed'})
+    }
+  }
+
+  const rollbackMatch=url.pathname.match(/^\/control-api\/changes\/([^/]+)\/rollback$/)
+  if(rollbackMatch&&req.method==='POST'){
+    if(!requireControl(res,session,'rollback'))return
+    try{
+      const body=await readBody(req)
+      const item=await requestPlatformRollback({
+        id:decodeURIComponent(rollbackMatch[1]),
+        actor:session.sub,
+        actorRole:session.role,
+        reason:body.reason
+      })
+      return json(res,200,item)
+    }catch(error){
+      return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'rollback request failed'})
+    }
+  }
   const match=url.pathname.match(/^\/control-api\/([a-z0-9-]+)$/)
   if(req.method==='GET'&&match){
     try{return json(res,200,await observedPage(match[1]))}
