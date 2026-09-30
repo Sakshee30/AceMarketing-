@@ -1,5 +1,7 @@
 import {createHmac,randomUUID,timingSafeEqual} from 'node:crypto'
 import {pool} from './database.mjs'
+import {applyBillingSubscriptionChange,billingReconciliationHistory} from './platform/billing-lifecycle.mjs'
+export {billingReconciliationHistory} from './platform/billing-lifecycle.mjs'
 const stripeSecret=process.env.STRIPE_SECRET_KEY||''
 const webhookSecret=process.env.STRIPE_WEBHOOK_SECRET||''
 const checkoutSuccessUrl=process.env.BILLING_CHECKOUT_SUCCESS_URL||''
@@ -120,7 +122,7 @@ const statusMap=value=>({
   paused:'suspended',
   canceled:'cancelled',
   incomplete:'past_due',
-  incomplete_expired:'cancelled'
+  incomplete_expired:'expired'
 }[String(value)]||'active')
 
 const configuredPlanByPrice=priceId=>{
@@ -144,38 +146,18 @@ const workspaceFromObject=async object=>{
   return rows[0]?.workspace_id||null
 }
 
-const updateSubscription=async(workspaceId,patch={})=>{
-  if(!pool)return null
-  const current=await pool.query(`SELECT * FROM ace_workspace_subscriptions WHERE workspace_id=$1`,[workspaceId])
-  if(!current.rowCount){
-    await pool.query(
-      `INSERT INTO ace_workspace_subscriptions (workspace_id,plan_code,status,entitlements)
-       VALUES ($1,$2,$3,$4::jsonb)`,
-      [workspaceId,patch.planCode||'usage',patch.status||'active',JSON.stringify(patch.entitlements||{})]
-    )
-  }
-  const existing=(await pool.query(`SELECT * FROM ace_workspace_subscriptions WHERE workspace_id=$1`,[workspaceId])).rows[0]
-  const entitlements=patch.entitlements?{...(existing.entitlements||{}),...patch.entitlements}:existing.entitlements
-  const {rows}=await pool.query(
-    `UPDATE ace_workspace_subscriptions SET
-       plan_code=COALESCE($2,plan_code),
-       status=COALESCE($3,status),
-       entitlements=$4::jsonb,
-       billing_provider='stripe',
-       external_customer_id=COALESCE($5,external_customer_id),
-       external_subscription_id=COALESCE($6,external_subscription_id),
-       provider_price_id=COALESCE($7,provider_price_id),
-       current_period_start=COALESCE($8,current_period_start),
-       current_period_end=COALESCE($9,current_period_end),
-       trial_ends_at=$10,
-       cancel_at_period_end=COALESCE($11,cancel_at_period_end),
-       updated_at=now()
-     WHERE workspace_id=$1 RETURNING *`,
-    [workspaceId,patch.planCode||null,patch.status||null,JSON.stringify(entitlements||{}),patch.customerId||null,patch.subscriptionId||null,patch.priceId||null,patch.periodStart||null,patch.periodEnd||null,patch.trialEndsAt||null,patch.cancelAtPeriodEnd??null]
-  )
-  return rows[0]
+const updateSubscription=async(workspaceId,patch={},options={})=>{
+  const result=await applyBillingSubscriptionChange(workspaceId,{
+    ...patch,
+    billingProvider:'stripe'
+  },{
+    source:'stripe-webhook',
+    provider:'stripe',
+    providerEventId:options.providerEventId||null,
+    reason:options.reason||null
+  })
+  return result.item
 }
-
 const secondsDate=value=>value?new Date(Number(value)*1000).toISOString():null
 
 export const processStripeEvent=async event=>{
@@ -197,7 +179,7 @@ export const processStripeEvent=async event=>{
       if(!workspaceId)throw new Error('checkout session missing workspace metadata')
       const planCode=String(object.metadata?.plan_code||'')
       const plan=planCode?planConfig(planCode):null
-      await updateSubscription(workspaceId,{planCode:planCode||undefined,status:'active',entitlements:plan?.entitlements||undefined,customerId:object.customer||null,subscriptionId:object.subscription||null,priceId:plan?.priceId||null})
+      await updateSubscription(workspaceId,{planCode:planCode||undefined,status:'active',entitlements:plan?.entitlements||undefined,customerId:object.customer||null,subscriptionId:object.subscription||null,priceId:plan?.priceId||null},{providerEventId:event.id,reason:event.type})
     }else if(event.type.startsWith('customer.subscription.')){
       if(!workspaceId)throw new Error('subscription event could not be mapped to a workspace')
       const item=object.items?.data?.[0]
@@ -214,11 +196,11 @@ export const processStripeEvent=async event=>{
         periodEnd:secondsDate(item?.current_period_end||object.current_period_end),
         trialEndsAt:secondsDate(object.trial_end),
         cancelAtPeriodEnd:Boolean(object.cancel_at_period_end)
-      })
+      },{providerEventId:event.id,reason:event.type})
     }else if(event.type==='invoice.payment_failed'){
-      if(workspaceId)await updateSubscription(workspaceId,{status:'past_due',customerId:object.customer||null,subscriptionId:object.subscription||null})
+      if(workspaceId)await updateSubscription(workspaceId,{status:'past_due',customerId:object.customer||null,subscriptionId:object.subscription||null,reason:'payment_failed'},{providerEventId:event.id,reason:event.type})
     }else if(event.type==='invoice.paid'){
-      if(workspaceId)await updateSubscription(workspaceId,{status:'active',customerId:object.customer||null,subscriptionId:object.subscription||null})
+      if(workspaceId)await updateSubscription(workspaceId,{status:'active',customerId:object.customer||null,subscriptionId:object.subscription||null,reason:'payment_recovered'},{providerEventId:event.id,reason:event.type})
     }else{
       await pool.query(`UPDATE ace_billing_events SET status='ignored',processed_at=now() WHERE id=$1`,[eventRowId])
       return {ignored:true,workspaceId}
