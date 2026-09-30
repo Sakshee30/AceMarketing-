@@ -599,6 +599,15 @@ const required=[
   'packages/client-core/src/query/scope-key.ts',
   'packages/client-core/src/storage/draft-store.ts',
   'packages/client-core/src/realtime/realtime-client.ts',
+  'packages/interaction-core/src/drag/drag-controller.ts',
+  'packages/interaction-core/src/drag/drag-intent.ts',
+  'packages/interaction-core/src/accessibility/announcements.ts',
+  'packages/interaction-core/src/accessibility/move-actions.ts',
+  'packages/kanban-ui/src/BoardViewport.tsx',
+  'packages/kanban-ui/src/CardShell.tsx',
+  'packages/kanban-ui/src/MoveMenu.tsx',
+  'packages/kanban-ui/src/DragOverlay.tsx',
+  'packages/design-system/src/tokens/semantic-tokens.ts',
   'frontend/src/features/customer-360/data/customer-360.api.ts',
   'frontend/src/features/customer-360/pages/Customer360Page.tsx',
   'frontend/src/features/customer-360/public.ts',
@@ -862,6 +871,14 @@ const required=[
   'frontend/src/components/system/ConnectionStatus.tsx',
   'frontend/src/components/system/ChunkRecoveryNotice.tsx'
 ]
+const draftStorePath=path.join(root,'packages','client-core','src','draft-store.ts')
+if(fs.existsSync(draftStorePath)){
+  const draftStore=fs.readFileSync(draftStorePath,'utf8')
+  for(const token of ['owner:DraftOwner','expiresAt','createdAt','updatedAt','draft_storage_unavailable']){
+    if(!draftStore.includes(token))failures.push('Draft storage must keep scoped ownership and expiry metadata and honest storage failure handling: missing '+token)
+  }
+}
+
 for(const relative of required){
   if(!fs.existsSync(path.join(root,relative)))failures.push(relative+': required frontend architecture file missing')
 }
