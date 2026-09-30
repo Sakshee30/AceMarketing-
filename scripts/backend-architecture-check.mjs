@@ -19,6 +19,8 @@ const required=[
   'backend/src/platform/drain-controller.mjs',
   'backend/src/platform/capacity-budget.mjs',
   'backend/src/platform/custom-object-store.mjs',
+  'backend/src/platform/worker-class.mjs',
+  'backend/src/scheduler.mjs',
   'deploy/Dockerfile.control-api',  'backend/src/platform/problem-details.mjs',
   'backend/src/platform/request-context.mjs',
   'backend/src/platform/admission-control.mjs',
@@ -123,7 +125,8 @@ const required=[
   'backend/tests/process-health.test.mjs',
   'backend/tests/drain-controller.test.mjs',
   'backend/tests/capacity-budget.test.mjs',
-  'backend/tests/custom-object-store.test.mjs'
+  'backend/tests/custom-object-store.test.mjs',
+  'backend/tests/worker-class.test.mjs'
 ]
 for(const item of required)if(!fs.existsSync(path.join(root,item)))failures.push('missing required backend architecture foundation: '+item)
 
@@ -207,6 +210,12 @@ if(fs.existsSync(stagingMainPath)){
   }
   if(!stagingMain.includes('module "security_baseline"')){
     failures.push('Staging must enable the AWS security evidence baseline.')
+  }
+  for(const role of ['module "worker_service"','module "webhook_worker_service"','module "ai_document_worker_service"','module "scheduler_service"']){
+    if(!stagingMain.includes(role))failures.push('Staging must separate general, webhook, AI/document worker pools and scheduler: missing '+role)
+  }
+  if(!stagingMain.includes('WORKER_CLASS = "general"')||!stagingMain.includes('WORKER_CLASS = "webhook"')||!stagingMain.includes('WORKER_CLASS = "ai-document"')){
+    failures.push('Staging worker services must declare bounded worker classes.')
   }
 }
 const edgeSourcePath=path.join(terraformRoot,'modules','edge','main.tf')
