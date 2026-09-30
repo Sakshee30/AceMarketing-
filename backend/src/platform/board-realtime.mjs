@@ -13,7 +13,7 @@ const topicsFor=url=>{
   return new Set(raw.split(',').map(x=>x.trim()).filter(Boolean).slice(0,20))
 }
 
-const authorizeUpgrade=req=>{
+export const authorizeBoardRealtimeUpgrade=req=>{
   const url=new URL(req.url||'/','http://localhost')
   if(url.pathname!=='/api/realtime/ws')return null
   const secret=process.env.JWT_SECRET||(process.env.NODE_ENV==='production'?'':'dev-only-change-me')
@@ -84,7 +84,7 @@ const ensurePoller=()=>{
 export const installBoardRealtimeWebSocket=server=>{
   const wss=new WebSocketServer({noServer:true,maxPayload:64*1024,handleProtocols:protocols=>protocols.has('ace-realtime-v1')?'ace-realtime-v1':false})
   server.on('upgrade',(req,socket,head)=>{
-    const auth=authorizeUpgrade(req)
+    const auth=authorizeBoardRealtimeUpgrade(req)
     if(!auth)return
     if(auth.error){
       socket.write('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n')
