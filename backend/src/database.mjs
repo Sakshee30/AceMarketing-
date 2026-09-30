@@ -44,6 +44,12 @@ const createEmbeddedPool=async()=>{
         "CHECK (status IN ('pending','leased','retry','succeeded','dead_letter','cancelled','unknown_outcome'))"
       )
     }
+    if(file==='009_entitlements.sql'){
+      sql=sql.replace(
+        "CHECK (status IN ('reserved','committed','released'))",
+        "CHECK (status IN ('reserved','committed','accounted','released'))"
+      )
+    }
     // Preserve the production PostgreSQL GIN/FTS index, but omit it only from
     // the embedded pg-mem schema because pg-mem does not implement tsvector/GIN.
     if(file==='023_ai_knowledge.sql'){
@@ -57,6 +63,7 @@ const createEmbeddedPool=async()=>{
     if(file==='036_platform_rls.sql')continue
     if(file==='037_forms_custom_objects.sql')sql=sql.replace(/ALTER TABLE ace_forms ENABLE ROW LEVEL SECURITY;[\s\S]*$/m,'')
     if(file==='038_rules_workflows.sql')sql=sql.replace(/ALTER TABLE ace_policy_rules ENABLE ROW LEVEL SECURITY;[\s\S]*$/m,'')
+    if(file==='039_usage_ledger.sql')sql=sql.replace(/ALTER TABLE ace_usage_ledger ENABLE ROW LEVEL SECURITY;[\s\S]*$/m,'')
     // pg-mem's parser rejects comment-only compatibility marker files.
     // Production migration tooling may retain those markers, but embedded setup
     // should simply skip files with no executable SQL.
