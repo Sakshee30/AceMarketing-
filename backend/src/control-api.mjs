@@ -12,6 +12,7 @@ import {createEmergencyControl,latestRuntimeSnapshot,listEmergencyControls,publi
 import {advanceProviderMigration,createProviderMigration,listProviderMigrations,providerMigrationOverride,requestProviderRollback} from './platform/provider-migration-store.mjs'
 import {createRecoveryExercise,recordBackupEvidence,recoverySummary,updateRecoveryExercise} from './platform/recovery-evidence.mjs'
 import {providerExecutionSnapshot} from './platform/provider-execution.mjs'
+import {beginProcessDrain,livenessState,markStartupComplete,startupState} from './platform/process-health.mjs'
 import {globalAdmission} from './platform/admission-control.mjs'
 
 const PORT=Number(process.env.CONTROL_PORT||3002)
@@ -227,7 +228,24 @@ const observedPage=async page=>{
 const server=http.createServer(async(req,res)=>{
   const base='http://'+String(req.headers.host||'localhost')
   const url=new URL(req.url||'/',base)
-  if(req.method==='GET'&&url.pathname==='/healthz')return json(res,200,{ok:true,service:'platform-control-api'})
+  if(req.method==='GET'&&url.pathname==='/healthz'){
+    return json(res,200,{...livenessState(),service:'platform-control-api'})
+  }
+  if(req.method==='GET'&&url.pathname==='/startupz'){
+    const state=startupState()
+    return json(res,state.ok?200:503,{...state,service:'platform-control-api'})
+  }
+  if(req.method==='GET'&&url.pathname==='/readyz'){
+    const startup=startupState()
+    if(!startup.ok)return json(res,503,{...startup,service:'platform-control-api'})
+    const database=await dbHealth()
+    return json(res,database.status==='healthy'?200:503,{
+      ok:database.status==='healthy',
+      state:database.status==='healthy'?'ready':'dependency_unavailable',
+      database,
+      service:'platform-control-api'
+    })
+  }
 
   if(req.method==='GET'&&url.pathname==='/runtime-config/snapshot'){
     const token=String(req.headers['x-runtime-config-token']||'')
@@ -621,6 +639,22 @@ const server=http.createServer(async(req,res)=>{
 })
 
 const entry='file://'+process.argv[1]
-if(import.meta.url===entry)server.listen(PORT,'0.0.0.0',()=>console.log('Platform control API listening on '+PORT))
+if(import.meta.url===entry){
+  server.listen(PORT,'0.0.0.0',()=>{
+    markStartupComplete()
+    console.log('Platform control API listening on '+PORT)
+  })
+  const shutdown=signal=>{
+    beginProcessDrain()
+    console.log(signal+' received; draining platform control API')
+    server.close(async error=>{
+      await pool?.end?.().catch(()=>{})
+      process.exit(error?1:0)
+    })
+    setTimeout(()=>process.exit(1),10_000).unref()
+  }
+  process.on('SIGTERM',()=>shutdown('SIGTERM'))
+  process.on('SIGINT',()=>shutdown('SIGINT'))
+}
 
 export {observedPage,server}
