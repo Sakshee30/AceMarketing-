@@ -12,6 +12,7 @@ type ChangeItem={
   state:string
   requested_by:string
   updated_at:string
+  version:number
 }
 
 const nextState:Record<string,string|undefined>={
@@ -68,33 +69,33 @@ export default function ChangesPage({
     }finally{setBusy(null)}
   }
 
-  const transition=async(id:string,toState:string)=>{
+  const transition=async(id:string,toState:string,version:number)=>{
     setBusy(id+':'+toState)
     setMessage('')
     try{
-      const outcome=await controlApi.transitionChange(id,toState)
+      const outcome=await controlApi.transitionChange(id,toState,version)
       if(!outcome.ok){setMessage(outcome.message||'Change transition failed.');return}
       onRefresh()
     }finally{setBusy(null)}
   }
 
-  const decide=async(id:string,decision:'approved'|'rejected')=>{
+  const decide=async(id:string,decision:'approved'|'rejected',version:number)=>{
     setBusy(id+':'+decision)
     setMessage('')
     try{
-      const outcome=await controlApi.decideChange(id,decision)
+      const outcome=await controlApi.decideChange(id,decision,version)
       if(!outcome.ok){setMessage(outcome.message||'Change decision failed.');return}
       onRefresh()
     }finally{setBusy(null)}
   }
 
-  const rollback=async(id:string)=>{
+  const rollback=async(id:string,version:number)=>{
     const reason=window.prompt('Reason for rollback request?')
     if(!reason)return
     setBusy(id+':rollback')
     setMessage('')
     try{
-      const outcome=await controlApi.requestRollback(id,reason)
+      const outcome=await controlApi.requestRollback(id,reason,version)
       if(!outcome.ok){setMessage(outcome.message||'Rollback request failed.');return}
       onRefresh()
     }finally{setBusy(null)}
@@ -173,12 +174,12 @@ export default function ChangesPage({
             <div><dt>Updated</dt><dd>{new Date(item.updated_at).toLocaleString()}</dd></div>
           </dl>
           <div className="control-change-actions">
-            {next&&canTransition(role)&&<button type="button" disabled={busy!==null} onClick={()=>void transition(item.id,next)}>Advance to {next.replaceAll('_',' ')}</button>}
+            {next&&canTransition(role)&&<button type="button" disabled={busy!==null} onClick={()=>void transition(item.id,next,item.version)}>Advance to {next.replaceAll('_',' ')}</button>}
             {approval&&canApprove(role)&&<>
-              <button type="button" disabled={busy!==null} onClick={()=>void decide(item.id,'approved')}>Approve</button>
-              <button type="button" disabled={busy!==null} onClick={()=>void decide(item.id,'rejected')}>Reject</button>
+              <button type="button" disabled={busy!==null} onClick={()=>void decide(item.id,'approved',item.version)}>Approve</button>
+              <button type="button" disabled={busy!==null} onClick={()=>void decide(item.id,'rejected',item.version)}>Reject</button>
             </>}
-            {rollbackAllowed&&canTransition(role)&&<button type="button" disabled={busy!==null} onClick={()=>void rollback(item.id)}>Request rollback</button>}
+            {rollbackAllowed&&canTransition(role)&&<button type="button" disabled={busy!==null} onClick={()=>void rollback(item.id,item.version)}>Request rollback</button>}
           </div>
         </article>
       })}
