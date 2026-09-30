@@ -44,6 +44,21 @@ test('board move is durable idempotent tenant-scoped and version checked',{skip:
     )
   })
 
+  const unauthorizedCommand={
+    operationId:'op_unauthorized_'+suffix,
+    boardId,
+    itemId,
+    expectedItemVersion:1,
+    expectedPolicyVersion:1,
+    destinationColumnId:destination,
+    placement:{mode:'bottom'},
+    reason:'authorization default test'
+  }
+  await assert.rejects(
+    ()=>moveBoardItem({workspaceId,actorId:'user_test',command:unauthorizedCommand}),
+    error=>error?.code==='BOARD_MOVE_FORBIDDEN'
+  )
+
   const command={
     operationId:'op_'+suffix,
     boardId,
