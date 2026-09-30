@@ -85,6 +85,20 @@ const required=[
   'backend/tests/egress-policy.test.mjs',
   'backend/tests/webhook-signing.test.mjs',
   'backend/tests/webhook-delivery.test.mjs',
+  'infra/terraform/modules/database/main.tf',
+  'infra/terraform/modules/object-storage/main.tf',
+  'infra/terraform/modules/secrets/main.tf',
+  'infra/terraform/modules/observability/main.tf',
+  'infra/terraform/modules/backup/main.tf',
+  'infra/terraform/modules/compute/main.tf',
+  'infra/terraform/modules/queue/main.tf',
+  'deploy/Dockerfile.worker',
+  'operations/slo/core-api.yaml',
+  'operations/disaster-recovery/recovery-profile.yaml',
+  'operations/runbooks/database-failover.md',
+  'operations/runbooks/queue-backlog.md',
+  'operations/runbooks/bad-rollout.md',
+  'docs/evidence/release-report-template.md',
   'infra/terraform/modules/network/main.tf',
   'infra/terraform/modules/network/variables.tf',
   'infra/terraform/modules/network/outputs.tf',
@@ -174,6 +188,30 @@ if(fs.existsSync(terraformRoot)){
   if(!networkSource.includes('aws_subnet" "data')&&!networkSource.includes('resource "aws_subnet" "data"'))failures.push('Network baseline must include isolated data subnets.')
   const stagingVersions=fs.readFileSync(path.join(terraformRoot,'stacks','nonprod','staging','versions.tf'),'utf8')
   if(!stagingVersions.includes('backend "s3"'))failures.push('Staging Terraform must use a remote S3 state backend contract.')
+}
+
+
+for(const dockerfile of ['deploy/Dockerfile.api','deploy/Dockerfile.control-api','deploy/Dockerfile.worker']){
+  const source=fs.readFileSync(path.join(root,dockerfile),'utf8')
+  if(!source.includes('AS dependencies')||!source.includes('AS runtime')){
+    failures.push(dockerfile+': backend runtime image must use a multi-stage build.')
+  }
+  if(!source.includes('USER node')){
+    failures.push(dockerfile+': backend runtime image must run as non-root node user.')
+  }
+  if(!source.includes('npm ci --omit=dev')){
+    failures.push(dockerfile+': backend runtime dependencies must be installed from the lockfile.')
+  }
+}
+const releaseWorkflowPath=path.join(root,'.github','workflows','release.yml')
+if(fs.existsSync(releaseWorkflowPath)){
+  const source=fs.readFileSync(releaseWorkflowPath,'utf8')
+  if(!source.includes('--sbom=true')||!source.includes('--provenance=mode=max')){
+    failures.push('Release workflow must produce SBOM/provenance metadata for immutable images.')
+  }
+  if(!source.includes('release-manifest.json')||!source.includes('containerimage.digest')){
+    failures.push('Release workflow must record immutable image digests in release evidence.')
+  }
 }
 
 if(failures.length){
