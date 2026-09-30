@@ -310,8 +310,8 @@ resource "aws_iam_role_policy" "integration_task" {
 
 data "aws_iam_policy_document" "realtime_task" {
   statement {
-    sid       = "RuntimeSecrets"
-    actions   = ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"]
+    sid     = "RuntimeSecrets"
+    actions = ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"]
     resources = [
       module.secrets.secret_arns["runtime/database-url"],
       module.secrets.secret_arns["runtime/google-ai-api-key"]
