@@ -15,21 +15,68 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Normalize repository name
         id: repo
         shell: bash
         run: echo "name=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
-      - name: Build API image
-        run: docker build -f deploy/Dockerfile.api -t ghcr.io/${{ steps.repo.outputs.name }}/api:${{ github.sha }} .
-      - name: Build frontend image
-        run: docker build -f deploy/Dockerfile.frontend -t ghcr.io/${{ steps.repo.outputs.name }}/web:${{ github.sha }} .
-      - name: Push images
+
+      - name: Initialize BuildKit builder
+        run: docker buildx create --name ace-release --driver docker-container --use
+
+      - name: Build and push API image with SBOM and provenance
         run: |
-          docker push ghcr.io/${{ steps.repo.outputs.name }}/api:${{ github.sha }}
-          docker push ghcr.io/${{ steps.repo.outputs.name }}/web:${{ github.sha }}
+          docker buildx build             --platform linux/amd64             --file deploy/Dockerfile.api             --tag ghcr.io/${{ steps.repo.outputs.name }}/api:${{ github.sha }}             --sbom=true             --provenance=mode=max             --metadata-file api-metadata.json             --push .
+
+      - name: Build and push control API image with SBOM and provenance
+        run: |
+          docker buildx build             --platform linux/amd64             --file deploy/Dockerfile.control-api             --tag ghcr.io/${{ steps.repo.outputs.name }}/control-api:${{ github.sha }}             --sbom=true             --provenance=mode=max             --metadata-file control-api-metadata.json             --push .
+
+      - name: Build and push worker image with SBOM and provenance
+        run: |
+          docker buildx build             --platform linux/amd64             --file deploy/Dockerfile.worker             --tag ghcr.io/${{ steps.repo.outputs.name }}/worker:${{ github.sha }}             --sbom=true             --provenance=mode=max             --metadata-file worker-metadata.json             --push .
+
+      - name: Build and push frontend image with SBOM and provenance
+        run: |
+          docker buildx build             --platform linux/amd64             --file deploy/Dockerfile.frontend             --tag ghcr.io/${{ steps.repo.outputs.name }}/web:${{ github.sha }}             --sbom=true             --provenance=mode=max             --metadata-file web-metadata.json             --push .
+
+      - name: Create immutable release manifest
+        shell: bash
+        run: |
+          API_DIGEST=$(jq -r '."containerimage.digest"' api-metadata.json)
+          CONTROL_DIGEST=$(jq -r '."containerimage.digest"' control-api-metadata.json)
+          WORKER_DIGEST=$(jq -r '."containerimage.digest"' worker-metadata.json)
+          WEB_DIGEST=$(jq -r '."containerimage.digest"' web-metadata.json)
+          cat > release-manifest.json <<EOF
+          {
+            "schemaVersion": "ace.release.v1",
+            "commit": "${GITHUB_SHA}",
+            "ref": "${GITHUB_REF}",
+            "repository": "${GITHUB_REPOSITORY}",
+            "artifacts": {
+              "api": "ghcr.io/${{ steps.repo.outputs.name }}/api@${API_DIGEST}",
+              "controlApi": "ghcr.io/${{ steps.repo.outputs.name }}/control-api@${CONTROL_DIGEST}",
+              "worker": "ghcr.io/${{ steps.repo.outputs.name }}/worker@${WORKER_DIGEST}",
+              "web": "ghcr.io/${{ steps.repo.outputs.name }}/web@${WEB_DIGEST}"
+            },
+            "configurationVersion": "external-versioned-runtime-config",
+            "databaseMigrationSource": "backend/migrations"
+          }
+          EOF
+          cat release-manifest.json
+
+      - name: Upload release evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-evidence-${{ github.sha }}
+          path: |
+            release-manifest.json
+            *-metadata.json
+          if-no-files-found: error
