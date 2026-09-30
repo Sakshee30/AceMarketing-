@@ -8,10 +8,12 @@ const readMappings=[
 ]
 
 const writeMappings=[
+  [/^\/api\/boards$/,'boards.create'],
+  [/^\/api\/boards\/[^/]+\/moves$/,'boards.move'],
+  [/^\/api\/boards(?:\/|$)/,'boards.configure'],
   [/^\/api\/policy-rules(?:\/|$)/,'workspace.write'],
   [/^\/api\/workflows(?:\/|$)/,'approvals.write'],
   [/^\/api\/(forms|custom-objects)(?:\/|$)/,'workspace.write'],
-  [/^\/api\/boards(?:\/|$)/,'boards.move'],
   [/^\/api\/(members|invitations)(?:\/|$)/,'members.write'],
   [/^\/api\/(integrations|custom-integrations|webhook-subscriptions|webhook-deliveries)(?:\/|$)/,'integrations.write'],
   [/^\/api\/(agents|models\/run)(?:\/|$)/,'agents.write'],
