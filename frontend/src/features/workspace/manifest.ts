@@ -17,7 +17,7 @@ export type WorkspaceFeatureManifest = {
   telemetryId:string
   authRequired:true
   workspaceRequired:true
-  permission:'workspace.read'
+  permission:'workspace.read'|'boards.read'
   unsavedWork:'allow'|'confirm'
   implementation:'current-composition'|'feature-chunk'
   errorBoundary:'workspace-section'
@@ -96,7 +96,7 @@ export const workspaceFeatureManifest:readonly WorkspaceFeatureManifest[]=(Objec
       telemetryId:'workspace.'+id,
       authRequired:true as const,
       workspaceRequired:true as const,
-      permission:'workspace.read' as const,
+      permission:(label==='Boards'?'boards.read':'workspace.read') as WorkspaceFeatureManifest['permission'],
       unsavedWork:longFormFeatures.has(label)?'confirm' as const:'allow' as const,
       implementation:((label==='Launchpad'||label==='Overview'||label==='Boards'||label==='AdSync'||label==='ChatGPT Ads'||label==='Funnel'||label==='Leak Monitor'||label==='Events'||label==='Deep Links'||label==='Sites'||label==='Fingerprinting'||label==='Live Sync'||label==='Data Hub'||label==='Matchback'||label==='POS & Stores'||label==='Journeys'||label==='Identity'||label==='Attribution'||label==='Grouped Performance'||label==='Enrich'||label==='Lead Grading'||label==='Behavior'||label==='Approvals'||label==='Monitoring'||label==='Alerts'||label==='Reports'||label==='Executive Briefs'||label==='Integrations'||label==='Data Flows'||label==='Audiences'||label==='Planner'||label==='Models'||label==='AI Intelligence'||label==='Settings'||label==='Compliance'||label==='Developers'||label==='Delivery'||label==='Real-Time Activation'||label==='Personalization'||label==='Exclusions'||label==='Adjustments'||label==='Diagnostics'||label==='Match Quality'||label==='Reconciliation'||label==='Fraud')?'feature-chunk':'current-composition') as WorkspaceFeatureManifest['implementation'],
       errorBoundary:'workspace-section' as const
