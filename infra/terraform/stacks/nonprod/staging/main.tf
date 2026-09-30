@@ -4,14 +4,13 @@ module "network" {
   name                = "ace-${var.environment}"
   vpc_cidr            = var.vpc_cidr
   availability_zones  = var.availability_zones
-  enable_nat_gateway  = var.enable_nat_gateway
+  enable_nat_gateway = var.enable_nat_gateway
 
   tags = {
     BlastRadius = "nonproduction"
     CostCenter  = "ace-marketing"
   }
 }
-
 
 locals {
   service_tags = {
@@ -139,31 +138,30 @@ resource "aws_iam_role_policy" "application_runtime" {
   policy = data.aws_iam_policy_document.application_runtime.json
 }
 
-
 module "edge" {
   source = "../../../modules/edge"
 
-  name                     = "ace-${var.environment}"
-  vpc_id                   = module.network.vpc_id
-  public_subnet_ids        = module.network.public_subnet_ids
-  application_subnet_ids   = module.network.application_subnet_ids
-  task_security_group_id   = module.compute.task_security_group_id
-  allowed_control_cidrs    = var.control_allowed_cidrs
-  enable_https             = var.enable_https
-  certificate_arn          = var.certificate_arn
-  tags                     = local.service_tags
+  name                   = "ace-${var.environment}"
+  vpc_id                 = module.network.vpc_id
+  public_subnet_ids      = module.network.public_subnet_ids
+  application_subnet_ids = module.network.application_subnet_ids
+  task_security_group_id = module.compute.task_security_group_id
+  allowed_control_cidrs  = var.control_allowed_cidrs
+  enable_https           = var.enable_https
+  certificate_arn        = var.certificate_arn
+  tags                   = local.service_tags
 }
 
 module "vpc_endpoints" {
   source = "../../../modules/vpc-endpoints"
 
-  name                       = "ace-${var.environment}"
-  vpc_id                     = module.network.vpc_id
-  aws_region                 = var.aws_region
-  application_subnet_ids     = module.network.application_subnet_ids
+  name                        = "ace-${var.environment}"
+  vpc_id                      = module.network.vpc_id
+  aws_region                  = var.aws_region
+  application_subnet_ids      = module.network.application_subnet_ids
   application_route_table_ids = module.network.application_route_table_ids
-  allowed_security_group_ids = [module.compute.task_security_group_id]
-  tags                       = local.service_tags
+  allowed_security_group_ids  = [module.compute.task_security_group_id]
+  tags                        = local.service_tags
 }
 
 data "aws_iam_policy_document" "ecs_task_assume" {
@@ -384,12 +382,12 @@ module "worker_service" {
   image              = var.worker_image
   log_group_name     = module.observability.log_group_names["worker"]
   aws_region         = var.aws_region
-  desired_count      = 3
-  min_capacity       = 3
-  max_capacity       = 24
-  cpu_target_percent      = 65
+  desired_count            = 3
+  min_capacity             = 3
+  max_capacity             = 24
+  cpu_target_percent       = 65
   readonly_root_filesystem = false
-  environment             = merge(local.common_runtime_environment, { ACE_SERVICE_NAME = "worker" })
-  secrets            = local.common_runtime_secrets
-  tags               = local.service_tags
+  environment              = merge(local.common_runtime_environment, { ACE_SERVICE_NAME = "worker" })
+  secrets                  = local.common_runtime_secrets
+  tags                     = local.service_tags
 }
