@@ -23,21 +23,24 @@ test('platform change plan becomes immutable after approval',{skip:!pool},async(
     healthGates:[{name:'api-health',required:true}],
     rollbackPlan:{action:'restore previous feature state'}
   })
-  await transitionPlatformChange({id:change.id,toState:'validating',actor:'operator@example.test',actorRole:'operator'})
-  await transitionPlatformChange({id:change.id,toState:'impact_analysis',actor:'operator@example.test',actorRole:'operator'})
+  const validating=await transitionPlatformChange({id:change.id,toState:'validating',actor:'operator@example.test',actorRole:'operator',expectedVersion:change.version})
+  const impact=await transitionPlatformChange({id:change.id,toState:'impact_analysis',actor:'operator@example.test',actorRole:'operator',expectedVersion:validating.version})
   await updatePlatformChangePlan({
     id:change.id,
     actor:'operator@example.test',
     actorRole:'operator',
-    impactReport:{dependencies:['persistence'],validated:true}
+    impactReport:{dependencies:['persistence'],validated:true},
+    expectedVersion:impact.version
   })
-  await transitionPlatformChange({id:change.id,toState:'waiting_approval',actor:'operator@example.test',actorRole:'operator'})
+  const planned=await getPlatformChange(change.id)
+  const waiting=await transitionPlatformChange({id:change.id,toState:'waiting_approval',actor:'operator@example.test',actorRole:'operator',expectedVersion:planned.version})
   await assert.rejects(
     ()=>decidePlatformChange({
       id:change.id,
       decision:'approved',
       approver:'requester@example.test',
-      approverRole:'approver'
+      approverRole:'approver',
+      expectedVersion:waiting.version
     }),
     /separate approver/
   )
@@ -46,7 +49,8 @@ test('platform change plan becomes immutable after approval',{skip:!pool},async(
     decision:'approved',
     approver:'approver@example.test',
     approverRole:'approver',
-    comment:'validated for test'
+    comment:'validated for test',
+    expectedVersion:waiting.version
   })
   assert.equal(approved.state,'approved')
   assert.ok(approved.approved_plan_digest)
@@ -55,7 +59,8 @@ test('platform change plan becomes immutable after approval',{skip:!pool},async(
       id:change.id,
       actor:'operator@example.test',
       actorRole:'operator',
-      desiredState:{enabled:false}
+      desiredState:{enabled:false},
+      expectedVersion:approved.version
     }),
     /immutable/
   )
@@ -79,7 +84,8 @@ test('change state machine rejects fabricated completion',{skip:!pool},async()=>
       id:change.id,
       toState:'completed',
       actor:'operator@example.test',
-      actorRole:'operator'
+      actorRole:'operator',
+      expectedVersion:change.version
     }),
     /invalid change transition/
   )
