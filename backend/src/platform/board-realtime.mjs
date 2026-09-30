@@ -6,6 +6,8 @@ const clientsByWorkspace=new Map()
 const workspaceCursor=new Map()
 let pollTimer=null
 
+const parseProtocols=header=>String(header||'').split(',').map(value=>value.trim()).filter(Boolean)
+
 const topicsFor=url=>{
   const raw=String(url.searchParams.get('topics')||'board.item.moved')
   return new Set(raw.split(',').map(x=>x.trim()).filter(Boolean).slice(0,20))
@@ -15,7 +17,10 @@ const authorizeUpgrade=req=>{
   const url=new URL(req.url||'/','http://localhost')
   if(url.pathname!=='/api/realtime/ws')return null
   const secret=process.env.JWT_SECRET||(process.env.NODE_ENV==='production'?'':'dev-only-change-me')
-  const token=String(url.searchParams.get('access_token')||'')
+  const protocols=parseProtocols(req.headers['sec-websocket-protocol'])
+  const token=protocols.includes('ace-realtime-v1')
+    ?String(protocols.find(value=>value!=='ace-realtime-v1')||'')
+    :String(url.searchParams.get('access_token')||'')
   const actor=verifyToken(token,secret)
   if(!actor)return {error:'invalid or expired access token'}
   const requestedWorkspace=String(url.searchParams.get('workspace_id')||actor.workspaceId||'')
@@ -77,7 +82,7 @@ const ensurePoller=()=>{
 }
 
 export const installBoardRealtimeWebSocket=server=>{
-  const wss=new WebSocketServer({noServer:true,maxPayload:64*1024})
+  const wss=new WebSocketServer({noServer:true,maxPayload:64*1024,handleProtocols:protocols=>protocols.has('ace-realtime-v1')?'ace-realtime-v1':false})
   server.on('upgrade',(req,socket,head)=>{
     const auth=authorizeUpgrade(req)
     if(!auth)return
