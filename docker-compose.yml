@@ -47,6 +47,30 @@ services:
     networks: [ace_internal]
     expose: ["3001"]
 
+
+  control-api:
+    profiles: ["control"]
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.control-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ace}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-acemarketing}
+      NODE_ENV: production
+      CONTROL_PORT: 3002
+      CONTROL_ADMIN_EMAIL: ${CONTROL_ADMIN_EMAIL:-}
+      CONTROL_ADMIN_PASSWORD_HASH: ${CONTROL_ADMIN_PASSWORD_HASH:-}
+      CONTROL_SESSION_SECRET: ${CONTROL_SESSION_SECRET:-}
+      ACE_RELEASE_SHA: ${ACE_RELEASE_SHA:-}
+      ACE_CONFIG_VERSION: ${ACE_CONFIG_VERSION:-}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks: [ace_internal]
+    expose: ["3002"]
+
   worker:
     build:
       context: .
@@ -147,6 +171,20 @@ services:
       - ml_artifacts:/var/lib/acemarketing-ml/artifacts
     networks: [ace_internal]
     expose: ["8000"]
+
+
+  platform-admin:
+    profiles: ["control"]
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.platform-admin
+    restart: unless-stopped
+    depends_on:
+      control-api:
+        condition: service_healthy
+    ports:
+      - "${ACE_CONTROL_HTTP_PORT:-8081}:80"
+    networks: [ace_internal]
 
   web:
     build:
