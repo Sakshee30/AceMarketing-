@@ -61,8 +61,8 @@ test('workflow validator rejects cycles and unreachable nodes',()=>{
 })
 
 test('production persistence tests are enabled when PostgreSQL is available',{skip:embeddedDatabase||!pool},async()=>{
-  const {createPolicyRule,createPolicyRuleVersion,publishPolicyRule,evaluatePublishedPolicyRule}=await import('../src/platform/policy-engine.mjs')
-  const {cancelWorkflowExecution,createWorkflow,createWorkflowVersion,publishWorkflow,startWorkflowExecution,createWorkflowApproval,decideWorkflowApproval,listWorkflowExecutionSteps,retryWorkflowExecution}=await import('../src/platform/workflow-store.mjs')
+  const {archivePolicyRule,createPolicyRule,createPolicyRuleVersion,publishPolicyRule,evaluatePublishedPolicyRule}=await import('../src/platform/policy-engine.mjs')
+  const {archiveWorkflow,cancelWorkflowExecution,createWorkflow,createWorkflowVersion,publishWorkflow,startWorkflowExecution,createWorkflowApproval,decideWorkflowApproval,listWorkflowExecutionSteps,retryWorkflowExecution}=await import('../src/platform/workflow-store.mjs')
   const workspaceId='ws_policy_workflow_test'
   const rule=await createPolicyRule({workspaceId,name:'Admin only',expression:{op:'eq',path:'actor.role',value:'admin'},actorId:'u1'})
   await publishPolicyRule({workspaceId,id:rule.id})
@@ -77,6 +77,10 @@ test('production persistence tests are enabled when PostgreSQL is available',{sk
   const decisionV2=await evaluatePublishedPolicyRule({workspaceId,id:rule.id,input:{actor:{role:'owner'}}})
   assert.equal(decisionV2.decision,true)
   assert.equal(Number(decisionV2.ruleVersion),2)
+  const archivedRule=await archivePolicyRule({workspaceId,id:rule.id})
+  assert.equal(archivedRule.status,'archived')
+  const revokedDecision=await evaluatePublishedPolicyRule({workspaceId,id:rule.id,input:{actor:{role:'admin'}}})
+  assert.equal(revokedDecision,null)
 
   const workflow=await createWorkflow({
     workspaceId,
@@ -122,6 +126,10 @@ test('production persistence tests are enabled when PostgreSQL is available',{sk
   assert.equal(Number(actionV2.latest_version),2)
   await publishWorkflow({workspaceId,id:actionWorkflow.id})
   const actionExecution=await startWorkflowExecution({workspaceId,id:actionWorkflow.id,actorId:'u1'})
+  await assert.rejects(
+    ()=>archiveWorkflow({workspaceId,id:actionWorkflow.id,actorId:'u1'}),
+    error=>error?.code==='workflow_active_executions'
+  )
   assert.equal(Number(actionExecution.workflow_version),2)
   const steps=await listWorkflowExecutionSteps({workspaceId,executionId:actionExecution.id})
   assert.equal(steps.length,4)
@@ -133,4 +141,8 @@ test('production persistence tests are enabled when PostgreSQL is available',{sk
   const retried=await retryWorkflowExecution({workspaceId,executionId:actionExecution.id,actorId:'u2'})
   assert.equal(retried.status,'running')
   assert.equal(Number(retried.attempts),1)
+  const cancelledAgain=await cancelWorkflowExecution({workspaceId,executionId:actionExecution.id,actorId:'u1'})
+  assert.equal(cancelledAgain.status,'cancelled')
+  const archivedWorkflow=await archiveWorkflow({workspaceId,id:actionWorkflow.id,actorId:'u1'})
+  assert.equal(archivedWorkflow.status,'archived')
 })
