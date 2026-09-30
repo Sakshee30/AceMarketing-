@@ -77,7 +77,7 @@ module "observability" {
 
   name               = var.environment
   log_retention_days = var.log_retention_days
-  services           = ["api", "control-api", "worker", "document-worker"]
+  services           = ["api", "control-api", "worker", "webhook-worker", "ai-document-worker", "scheduler"]
   tags               = local.service_tags
 }
 
@@ -394,7 +394,75 @@ module "worker_service" {
   max_capacity             = 24
   cpu_target_percent       = 65
   readonly_root_filesystem = false
-  environment              = merge(local.common_runtime_environment, { ACE_SERVICE_NAME = "worker" })
+  environment              = merge(local.common_runtime_environment, { ACE_SERVICE_NAME = "worker", WORKER_CLASS = "general", WORKER_RUN_SCHEDULERS = "false" })
+  secrets                  = local.common_runtime_secrets
+  tags                     = local.service_tags
+}
+
+
+module "webhook_worker_service" {
+  source = "../../../modules/ecs-service"
+
+  name                     = "ace-${var.environment}-webhook-worker"
+  cluster_arn              = module.compute.cluster_arn
+  subnet_ids               = module.network.application_subnet_ids
+  security_group_ids       = [module.compute.task_security_group_id]
+  execution_role_arn       = module.compute.execution_role_arn
+  task_role_arn            = aws_iam_role.worker_task.arn
+  image                    = var.worker_image
+  log_group_name           = module.observability.log_group_names["webhook-worker"]
+  aws_region               = var.aws_region
+  desired_count            = 2
+  min_capacity             = 2
+  max_capacity             = 12
+  cpu_target_percent       = 60
+  readonly_root_filesystem = true
+  environment              = merge(local.common_runtime_environment, { ACE_SERVICE_NAME = "webhook-worker", WORKER_CLASS = "webhook", WORKER_RUN_SCHEDULERS = "false" })
+  secrets                  = local.common_runtime_secrets
+  tags                     = local.service_tags
+}
+
+module "ai_document_worker_service" {
+  source = "../../../modules/ecs-service"
+
+  name                     = "ace-${var.environment}-ai-document-worker"
+  cluster_arn              = module.compute.cluster_arn
+  subnet_ids               = module.network.application_subnet_ids
+  security_group_ids       = [module.compute.task_security_group_id]
+  execution_role_arn       = module.compute.execution_role_arn
+  task_role_arn            = aws_iam_role.worker_task.arn
+  image                    = var.worker_image
+  log_group_name           = module.observability.log_group_names["ai-document-worker"]
+  aws_region               = var.aws_region
+  desired_count            = 2
+  min_capacity             = 2
+  max_capacity             = 12
+  cpu_target_percent       = 65
+  readonly_root_filesystem = false
+  environment              = merge(local.common_runtime_environment, { ACE_SERVICE_NAME = "ai-document-worker", WORKER_CLASS = "ai-document", WORKER_RUN_SCHEDULERS = "false" })
+  secrets                  = local.common_runtime_secrets
+  tags                     = local.service_tags
+}
+
+module "scheduler_service" {
+  source = "../../../modules/ecs-service"
+
+  name                     = "ace-${var.environment}-scheduler"
+  cluster_arn              = module.compute.cluster_arn
+  subnet_ids               = module.network.application_subnet_ids
+  security_group_ids       = [module.compute.task_security_group_id]
+  execution_role_arn       = module.compute.execution_role_arn
+  task_role_arn            = aws_iam_role.worker_task.arn
+  image                    = var.worker_image
+  command                  = ["node", "backend/src/scheduler.mjs"]
+  log_group_name           = module.observability.log_group_names["scheduler"]
+  aws_region               = var.aws_region
+  desired_count            = 1
+  min_capacity             = 1
+  max_capacity             = 1
+  cpu_target_percent       = 70
+  readonly_root_filesystem = true
+  environment              = merge(local.common_runtime_environment, { ACE_SERVICE_NAME = "scheduler" })
   secrets                  = local.common_runtime_secrets
   tags                     = local.service_tags
 }
