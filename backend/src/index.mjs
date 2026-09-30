@@ -48,6 +48,7 @@ import {permissionForRequest as centralizedPermissionForRequest} from './platfor
 import {assertWorkspaceMembership,seedWorkspaceCreator} from './platform/workspace-access.mjs'
 import {validateOutboundDestination} from './platform/egress-policy.mjs'
 import {markInboxProcessed,recordInboxEvent} from './platform/reliability-store.mjs'
+import {createWebhookSubscription,createWebhookTestDelivery,listWebhookDeliveries,listWebhookDeliveryAttempts,listWebhookSubscriptions,replayWebhookDelivery,setWebhookSubscriptionStatus} from './platform/webhook-delivery-store.mjs'
 import {createForm,getForm,listForms,listFormSubmissions,publishForm,submitForm} from './platform/forms-store.mjs'
 import {createCustomObject,createCustomObjectRecord,createCustomObjectVersion,getCustomObject,listCustomObjectRecords,listCustomObjects,publishCustomObject} from './platform/custom-object-store.mjs'
 import {archivePolicyRule,createPolicyRule,createPolicyRuleVersion,evaluatePublishedPolicyRule,getPolicyRule,listPolicyRules,publishPolicyRule,simulatePolicyExpression} from './platform/policy-engine.mjs'
@@ -1612,6 +1613,96 @@ const server = http.createServer(async (req,res)=>{
         s.audit=s.audit.slice(0,1000)
       })
       return send(req,res,201,{item})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/webhook-subscriptions'){
+      return send(req,res,200,{items:await listWebhookSubscriptions({workspaceId})})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/webhook-subscriptions'){
+      const body=await readBody(req)
+      try{
+        const created=await createWebhookSubscription({
+          workspaceId,
+          name:body.name,
+          destinationUrl:body.destinationUrl,
+          eventTypes:body.eventTypes,
+          signingSecret:body.signingSecret||null,
+          signingKeyId:body.signingKeyId||null,
+          maxAttempts:body.maxAttempts,
+          retryWindowSeconds:body.retryWindowSeconds,
+          actorId:req.user?.userId||null
+        })
+        await appendAuditRecord({
+          workspaceId,actorId:req.user?.userId,action:'webhook.subscription_created',
+          entityType:'webhook_subscription',entityId:created.subscription.id,
+          requestId:req.requestId,traceId:req.context?.traceId,
+          metadata:{destination:new URL(created.subscription.destinationUrl).hostname,eventTypes:created.subscription.eventTypes}
+        }).catch(()=>{})
+        return send(req,res,201,created)
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'webhook subscription creation failed',code:error?.code||'webhook_subscription_create_failed'})
+      }
+    }
+    const webhookSubscriptionStatusMatch=url.pathname.match(/^\/api\/webhook-subscriptions\/([^/]+)\/status$/)
+    if(req.method==='POST'&&webhookSubscriptionStatusMatch){
+      const body=await readBody(req)
+      try{
+        const subscription=await setWebhookSubscriptionStatus({
+          workspaceId,id:decodeURIComponent(webhookSubscriptionStatusMatch[1]),status:body.status
+        })
+        if(!subscription)return send(req,res,404,{error:'webhook subscription not found'})
+        await appendAuditRecord({
+          workspaceId,actorId:req.user?.userId,action:'webhook.subscription_status_changed',
+          entityType:'webhook_subscription',entityId:subscription.id,
+          requestId:req.requestId,traceId:req.context?.traceId,metadata:{status:subscription.status}
+        }).catch(()=>{})
+        return send(req,res,200,subscription)
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'webhook status change failed',code:error?.code||'webhook_status_change_failed'})
+      }
+    }
+    const webhookSubscriptionTestMatch=url.pathname.match(/^\/api\/webhook-subscriptions\/([^/]+)\/test$/)
+    if(req.method==='POST'&&webhookSubscriptionTestMatch){
+      try{
+        const delivery=await createWebhookTestDelivery({
+          workspaceId,subscriptionId:decodeURIComponent(webhookSubscriptionTestMatch[1]),actorId:req.user?.userId||null
+        })
+        if(!delivery)return send(req,res,404,{error:'webhook subscription not found'})
+        await appendAuditRecord({
+          workspaceId,actorId:req.user?.userId,action:'webhook.test_queued',
+          entityType:'webhook_delivery',entityId:delivery.id,
+          requestId:req.requestId,traceId:req.context?.traceId
+        }).catch(()=>{})
+        return send(req,res,202,delivery)
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'webhook test delivery failed',code:error?.code||'webhook_test_failed'})
+      }
+    }
+    if(req.method==='GET'&&url.pathname==='/api/webhook-deliveries'){
+      return send(req,res,200,{items:await listWebhookDeliveries({
+        workspaceId,
+        subscriptionId:url.searchParams.get('subscriptionId')||null,
+        status:url.searchParams.get('status')||null,
+        limit:Number(url.searchParams.get('limit')||100)
+      })})
+    }
+    const webhookAttemptsMatch=url.pathname.match(/^\/api\/webhook-deliveries\/([^/]+)\/attempts$/)
+    if(req.method==='GET'&&webhookAttemptsMatch){
+      return send(req,res,200,{items:await listWebhookDeliveryAttempts({workspaceId,deliveryId:decodeURIComponent(webhookAttemptsMatch[1])})})
+    }
+    const webhookReplayMatch=url.pathname.match(/^\/api\/webhook-deliveries\/([^/]+)\/replay$/)
+    if(req.method==='POST'&&webhookReplayMatch){
+      try{
+        const delivery=await replayWebhookDelivery({workspaceId,deliveryId:decodeURIComponent(webhookReplayMatch[1]),actorId:req.user?.userId||null})
+        if(!delivery)return send(req,res,404,{error:'webhook delivery not found'})
+        await appendAuditRecord({
+          workspaceId,actorId:req.user?.userId,action:'webhook.delivery_replayed',
+          entityType:'webhook_delivery',entityId:delivery.id,
+          requestId:req.requestId,traceId:req.context?.traceId,metadata:{replayOf:delivery.replayOf}
+        }).catch(()=>{})
+        return send(req,res,202,delivery)
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'webhook replay failed',code:error?.code||'webhook_replay_failed'})
+      }
     }
     if (req.method === 'GET' && url.pathname === '/api/custom-integrations') return send(req,res,200,{items:await listCustomIntegrations(workspaceId)})
     if (req.method === 'POST' && url.pathname === '/api/custom-integrations/test') {
