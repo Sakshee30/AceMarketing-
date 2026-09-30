@@ -13,8 +13,8 @@ variable "availability_zones" {
   description = "Availability zones used by the stack."
 
   validation {
-    condition     = length(var.availability_zones) >= 2
-    error_message = "At least two availability zones are required."
+    condition     = length(var.availability_zones) >= 3
+    error_message = "At least three availability zones are required by the baseline network profile."
   }
 }
 
