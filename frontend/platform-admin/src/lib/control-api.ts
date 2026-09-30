@@ -25,6 +25,15 @@ export type PlatformChangeRequest={
   rollbackPlan?:Record<string,unknown>
 }
 
+export type EmergencyControlRequest={
+  environment?:string
+  scopeType:'platform'|'region'|'cell'|'tenant'|'workspace'|'service'|'feature'
+  scopeId?:string
+  controlType:'stop_uploads'|'pause_integrations'|'suspend_ai'|'disable_signup'|'read_only'
+  reason:string
+  durationMinutes:number
+}
+
 type ControlMutationResult={ok:boolean;data?:Record<string,unknown>;message?:string}
 
 const safeJson=async(response:Response)=>{
@@ -108,6 +117,39 @@ export const controlApi={
       })
       const data=await safeJson(response)
       return response.ok?{ok:true,data:data||{}}:{ok:false,message:data?.error||'Rollback request failed.'}
+    }catch{return {ok:false,message:'Control API could not be reached.'}}
+  },
+  createEmergency:async(input:EmergencyControlRequest):Promise<ControlMutationResult>=>{
+    try{
+      const response=await request('/control-api/emergency',{
+        method:'POST',
+        body:JSON.stringify(input),
+        headers:{'Idempotency-Key':newIdempotencyKey()}
+      })
+      const data=await safeJson(response)
+      return response.ok?{ok:true,data:data||{}}:{ok:false,message:data?.error||'Emergency control failed.'}
+    }catch{return {ok:false,message:'Control API could not be reached.'}}
+  },
+  revokeEmergency:async(id:string,expectedVersion:number,environment?:string):Promise<ControlMutationResult>=>{
+    try{
+      const response=await request('/control-api/emergency/'+encodeURIComponent(id)+'/revoke',{
+        method:'POST',
+        body:JSON.stringify({expectedVersion,environment}),
+        headers:{'Idempotency-Key':newIdempotencyKey()}
+      })
+      const data=await safeJson(response)
+      return response.ok?{ok:true,data:data||{}}:{ok:false,message:data?.error||'Emergency control revoke failed.'}
+    }catch{return {ok:false,message:'Control API could not be reached.'}}
+  },
+  publishRuntimeConfig:async(input:{environment:string;features?:Record<string,string>;providerOverrides?:Record<string,unknown>;admission?:Record<string,unknown>;sourceChangeId?:string}):Promise<ControlMutationResult>=>{
+    try{
+      const response=await request('/control-api/runtime-config/publish',{
+        method:'POST',
+        body:JSON.stringify(input),
+        headers:{'Idempotency-Key':newIdempotencyKey()}
+      })
+      const data=await safeJson(response)
+      return response.ok?{ok:true,data:data||{}}:{ok:false,message:data?.error||'Runtime configuration publication failed.'}
     }catch{return {ok:false,message:'Control API could not be reached.'}}
   },
   read:async(page:string):Promise<ControlReadResult>=>{
