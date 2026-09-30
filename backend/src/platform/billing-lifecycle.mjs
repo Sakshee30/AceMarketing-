@@ -135,7 +135,7 @@ export const applyBillingSubscriptionChange=async(workspaceId,patch={},options={
         `INSERT INTO ace_billing_reconciliation_records
           (id,workspace_id,provider,provider_event_id,source,previous_status,next_status,previous_plan_code,next_plan_code,entitlements_version,outcome,detail)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'applied',$11::jsonb)
-         ON CONFLICT (provider,provider_event_id) DO NOTHING`,
+         ON CONFLICT (provider,provider_event_id) WHERE provider_event_id IS NOT NULL DO NOTHING`,
         [
           'br_'+randomUUID(),workspaceId,provider,providerEventId,source,
           current.status,next.status,current.plan_code,next.plan_code,Number(next.entitlements_version||1),
