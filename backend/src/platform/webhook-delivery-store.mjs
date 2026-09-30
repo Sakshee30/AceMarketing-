@@ -123,6 +123,12 @@ export const setWebhookSubscriptionStatus=async({workspaceId,id,status})=>{
          WHERE workspace_id=$1 AND subscription_id=$2 AND status IN ('pending','queued','retrying')`,
         [workspaceId,id]
       )
+    }else if(normalized==='disabled'){
+      await client.query(
+        `UPDATE ace_webhook_deliveries SET status='cancelled',updated_at=now()
+         WHERE workspace_id=$1 AND subscription_id=$2 AND status IN ('pending','queued','retrying','paused')`,
+        [workspaceId,id]
+      )
     }else if(normalized==='active'){
       resumed=(await client.query(
         `UPDATE ace_webhook_deliveries SET status='pending',next_retry_at=now(),updated_at=now()
@@ -168,7 +174,7 @@ export const enqueueWebhookDelivery=async({
     )).rows[0]
     if(!subscription)return null
     const configured=Array.isArray(subscription.event_types)?subscription.event_types:[]
-    if(!configured.includes(cleanEventType)&&!configured.includes('*'))throw Object.assign(new Error('event type is not enabled for this webhook subscription'),{status:409,code:'webhook_event_not_subscribed'})
+    if(cleanEventType!=='test.delivery'&&!configured.includes(cleanEventType)&&!configured.includes('*'))throw Object.assign(new Error('event type is not enabled for this webhook subscription'),{status:409,code:'webhook_event_not_subscribed'})
     const initialStatus=subscription.status==='active'?'pending':'paused'
     const deadlineAt=new Date(Date.now()+Number(subscription.retry_window_seconds)*1000).toISOString()
     const id='webhook_delivery_'+randomUUID()
@@ -251,7 +257,7 @@ export const loadWebhookDeliveryForDispatch=async({workspaceId,deliveryId})=>wit
      FROM ace_webhook_deliveries d
      JOIN ace_webhook_subscriptions s ON s.workspace_id=d.workspace_id AND s.id=d.subscription_id
      WHERE d.workspace_id=$1 AND d.id=$2
-     FOR UPDATE OF d`,
+     FOR UPDATE`,
     [workspaceId,deliveryId]
   )
   const row=rows[0]
