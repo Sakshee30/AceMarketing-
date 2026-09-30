@@ -10,3 +10,16 @@
 /deploy/ @Sakshee30
 /.github/workflows/ @Sakshee30
 /frontend/platform-admin/ @Sakshee30
+/backend/apps/ @Sakshee30
+/backend/modules/ @Sakshee30
+/packages/contracts/ @Sakshee30
+/config/ @Sakshee30
+/tests/architecture/ @Sakshee30
+/tests/security/ @Sakshee30
+/tests/chaos/ @Sakshee30
+/operations/ @Sakshee30
+/frontend/customer-app/ @Sakshee30
+/packages/client-core/ @Sakshee30
+/packages/interaction-core/ @Sakshee30
+/packages/kanban-ui/ @Sakshee30
+/packages/design-system/ @Sakshee30
