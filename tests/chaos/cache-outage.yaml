@@ -1,0 +1,30 @@
+apiVersion: ace.testing/v1
+kind: ChaosExperiment
+metadata:
+  name: cache-outage-bounded-bypass
+spec:
+  purpose: Verify cache loss does not bypass authorization or overload the database.
+  preconditions:
+    - production-like dataset loaded
+    - database connection budget recorded
+    - load generator capacity verified
+  fault:
+    target: cache
+    mode: unavailable
+    durationSeconds: 300
+  workload:
+    profile: core-traffic
+    offeredLoadMultiplier: 1.0
+  assertions:
+    - tenantIsolationRemainsEnforced: true
+    - authorizationRemainsEnforced: true
+    - acceptedWritesRemainDurable: true
+    - databaseConnectionBudgetMustNotBeExceeded: true
+    - overloadMayShedWithHonest429Or503: true
+    - noFallbackToProcessMemoryForBusinessTruth: true
+  evidence:
+    required:
+      - latency-and-goodput-report
+      - database-saturation-metrics
+      - error-classification
+      - recovery-timeline
