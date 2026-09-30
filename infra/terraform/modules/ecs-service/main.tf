@@ -1,13 +1,13 @@
 locals {
   tags = merge(var.tags, { ManagedBy = "terraform", Module = "ecs-service", Service = var.name })
   container = {
-    name      = var.name
-    image     = var.image
-    essential = true
+    name                   = var.name
+    image                  = var.image
+    essential              = true
     readonlyRootFilesystem = var.readonly_root_filesystem
     linuxParameters = {
       initProcessEnabled = true
-      capabilities = { drop = ["ALL"] }
+      capabilities       = { drop = ["ALL"] }
     }
     portMappings = var.container_port == null ? [] : [{
       containerPort = var.container_port
@@ -72,6 +72,7 @@ resource "aws_ecs_service" "this" {
 
   dynamic "load_balancer" {
     for_each = var.target_group_arn == null ? [] : [1]
+
     content {
       target_group_arn = var.target_group_arn
       container_name   = var.name
