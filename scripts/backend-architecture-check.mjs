@@ -4,6 +4,10 @@ import path from 'node:path'
 const root=process.cwd()
 const failures=[]
 const required=[
+  'operations/runbooks/board-move-recovery.md',
+  'tests/load/board-move.js',
+  'backend/adapters/redis/cache.redis.ts',
+  'backend/adapters/sqs/job-queue.sqs.ts',
   'backend/adapters/s3/object-storage.s3.ts',
   'backend/adapters/postgres/connection-pool.ts',
   'backend/platform/health/capability-health.ts',
@@ -351,3 +355,25 @@ if(failures.length){
   process.exit(1)
 }
 console.log('Backend architecture boundaries verified.')
+
+
+const sqsAdapterPath=path.join(root,'backend','adapters','sqs','job-queue.sqs.ts')
+if(fs.existsSync(sqsAdapterPath)){
+  const source=fs.readFileSync(sqsAdapterPath,'utf8')
+  if(!source.includes('synchronousProductionFallback:false')){
+    failures.push('SQS canonical adapter must reject synchronous production fallback.')
+  }
+  if(!source.includes('durableIntentAuthority')){
+    failures.push('SQS canonical adapter must declare the durable intent authority.')
+  }
+}
+const redisAdapterPath=path.join(root,'backend','adapters','redis','cache.redis.ts')
+if(fs.existsSync(redisAdapterPath)){
+  const source=fs.readFileSync(redisAdapterPath,'utf8')
+  if(!source.includes('authoritative:false')){
+    failures.push('Redis cache adapter must remain non-authoritative.')
+  }
+  if(!source.includes("fallback:'bounded-bypass'")){
+    failures.push('Redis cache adapter must expose bounded-bypass semantics.')
+  }
+}
