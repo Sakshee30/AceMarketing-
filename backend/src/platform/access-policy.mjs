@@ -11,7 +11,7 @@ const writeMappings=[
   [/^\/api\/workflows(?:\/|$)/,'approvals.write'],
   [/^\/api\/(forms|custom-objects)(?:\/|$)/,'workspace.write'],
   [/^\/api\/(members|invitations)(?:\/|$)/,'members.write'],
-  [/^\/api\/(integrations|custom-integrations)(?:\/|$)/,'integrations.write'],
+  [/^\/api\/(integrations|custom-integrations|webhook-subscriptions|webhook-deliveries)(?:\/|$)/,'integrations.write'],
   [/^\/api\/(agents|models\/run)(?:\/|$)/,'agents.write'],
   [/^\/api\/audiences(?:\/|$)/,'audiences.write'],
   [/^\/api\/approvals(?:\/|$)/,'approvals.write'],
