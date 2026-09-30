@@ -86,6 +86,15 @@ export const platformModuleRegistry=Object.freeze([
     events:['rule.published']
   }),
   moduleDefinition({
+    id:'boards',owner:'platform-work',
+    permissions:['boards.read','boards.create','boards.move','boards.configure'],
+    capabilities:['board-view','non-drag-move','versioned-move-contract','idempotent-move'],
+    contracts:['board','board-column','board-item-placement','board-move'],
+    migrations:['055_boards.sql'],
+    implementationFiles:['backend/src/platform/board-store.mjs'],
+    events:['board.item.moved']
+  }),
+  moduleDefinition({
     id:'workflows',owner:'platform-workflows',
     permissions:['workflows.read','workflows.manage','workflows.execute'],
     capabilities:['durable-workflow-execution','workflow-approvals','workflow-retry'],

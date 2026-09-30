@@ -4,6 +4,12 @@ import path from 'node:path'
 const root=process.cwd()
 const failures=[]
 const required=[
+  'tests/security/tenant-isolation.spec.ts',
+  'tests/e2e/board-move-recovery.spec.ts',
+  'backend/tests/board-store.test.mjs',
+  'backend/migrations/055_boards.sql',
+  'backend/src/platform/board-store.mjs',
+  'backend/modules/boards/module.manifest.mjs',
   'tooling/generators/backend-module.ts',
   'tests/security/tenant-isolation.test.mjs',
   'tests/security/cross-tenant-platform-isolation.test.mjs',
