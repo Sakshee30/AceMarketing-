@@ -17,6 +17,7 @@ import {executeAiActivationJob,reconcileStaleActivationDispatches} from './ai-ac
 import {applyDeploymentHealthGuard,recordDeploymentObservation} from './ai-deployment-controls.mjs'
 import {evaluateAiTaskWorkerExecution} from './ai-governance-store.mjs'
 import {createDrainController} from './platform/drain-controller.mjs'
+import {dispatchWebhookDelivery} from './platform/webhook-delivery-worker.mjs'
 
 if(!queueAvailable()) throw new Error('DATABASE_URL is required for the worker runtime')
 
@@ -63,6 +64,9 @@ const assertAiExecutionStillAllowed=async job=>{
 }
 
 const handle=async job=>{
+  if(job.kind==='webhook_delivery'){
+    return dispatchWebhookDelivery({workspaceId:job.workspace_id,deliveryId:job.payload?.deliveryId})
+  }
   if(job.kind==='ai_activation_execution'){
     return executeAiActivationJob(job)
   }
