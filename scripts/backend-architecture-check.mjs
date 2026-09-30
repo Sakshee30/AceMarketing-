@@ -14,6 +14,7 @@ const required=[
   'backend/src/platform/feature-catalog.mjs',
   'backend/src/platform/outbox-relay.mjs',
   'backend/src/platform/provider-execution.mjs',
+  'backend/src/platform/access-policy.mjs',
   'backend/migrations/034_platform_reliability.sql',
   'backend/migrations/035_platform_audit_catalog.sql',
   'backend/tests/platform-foundation.test.mjs',
@@ -21,7 +22,8 @@ const required=[
   'backend/tests/tenant-context.test.mjs',
   'backend/tests/platform-audit-catalog.test.mjs',
   'backend/tests/outbox-relay.test.mjs',
-  'backend/tests/provider-execution.test.mjs'
+  'backend/tests/provider-execution.test.mjs',
+  'backend/tests/access-policy.test.mjs'
 ]
 for(const item of required)if(!fs.existsSync(path.join(root,item)))failures.push('missing required backend architecture foundation: '+item)
 
