@@ -9,6 +9,7 @@ import {registrySummary} from './ai-registry.mjs'
 import {createPlatformChange,decidePlatformChange,getPlatformChange,listPlatformChanges,requestPlatformRollback,transitionPlatformChange,updatePlatformChangePlan} from './platform/control-change-store.mjs'
 import {beginControlCommand,finishControlCommand} from './platform/control-idempotency.mjs'
 import {createEmergencyControl,latestRuntimeSnapshot,listEmergencyControls,publishRuntimeSnapshot,revokeEmergencyControl,verifyRuntimeSnapshot} from './platform/runtime-configuration.mjs'
+import {advanceProviderMigration,createProviderMigration,listProviderMigrations,providerMigrationOverride,requestProviderRollback} from './platform/provider-migration-store.mjs'
 
 const PORT=Number(process.env.CONTROL_PORT||3002)
 const IS_PROD=process.env.NODE_ENV==='production'
@@ -62,11 +63,11 @@ const currentSession=req=>{
 }
 
 const roleActions=Object.freeze({
-  platform_admin:new Set(['read','request','plan','transition','approve','rollback','emergency','publish']),
+  platform_admin:new Set(['read','request','plan','transition','approve','rollback','emergency','publish','migrate']),
   approver:new Set(['read','approve']),
   operator:new Set(['read','request','plan','transition','rollback']),
   developer:new Set(['read','request','plan']),
-  infrastructure_engineer:new Set(['read','request','plan','transition','rollback','publish']),
+  infrastructure_engineer:new Set(['read','request','plan','transition','rollback','publish','migrate']),
   security_admin:new Set(['read','approve','rollback','emergency']),
   viewer:new Set(['read'])
 })
@@ -157,7 +158,7 @@ const observedPage=async page=>{
   }
   if(page==='capabilities')return capabilities
   if(page==='features')return {schemaVersion:'platform-features.v1',generatedAt:new Date().toISOString(),items:capabilities.features}
-  if(page==='providers')return providerSnapshot()
+  if(page==='providers')return {...providerSnapshot(),migrations:await listProviderMigrations({limit:200})}
   if(page==='dependencies')return dependencySnapshot()
   if(page==='environments')return {schemaVersion:'platform-environment.v1',generatedAt:new Date().toISOString(),environment:safeEnvironment()}
   if(page==='health')return {
@@ -366,6 +367,94 @@ const server=http.createServer(async(req,res)=>{
       })
     })
   }
+  if(url.pathname==='/control-api/provider-migrations'&&req.method==='POST'){
+    if(!requireControl(res,session,'migrate'))return
+    let body
+    try{body=await readBody(req,64*1024)}
+    catch(error){return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'invalid provider migration request'})}
+    return runControlMutation({
+      req,res,session,operation:'provider-migration.create',body,successStatus:201,
+      execute:()=>createProviderMigration({
+        capability:body.capability,
+        environment:body.environment||process.env.NODE_ENV||'development',
+        fromProvider:body.fromProvider,
+        toProvider:body.toProvider,
+        strategy:body.strategy||'shadow',
+        compatibilityReport:body.compatibilityReport||{},
+        cutoverBoundary:body.cutoverBoundary||{},
+        rollbackPlan:body.rollbackPlan||{},
+        requestedBy:session.sub,
+        sourceChangeId:body.sourceChangeId||null
+      })
+    })
+  }
+
+  const providerMigrationMatch=url.pathname.match(/^\/control-api\/provider-migrations\/([^/]+)\/transition$/)
+  if(providerMigrationMatch&&req.method==='POST'){
+    if(!requireControl(res,session,'migrate'))return
+    let body
+    try{body=await readBody(req,64*1024)}
+    catch(error){return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'invalid provider migration transition'})}
+    const id=decodeURIComponent(providerMigrationMatch[1])
+    return runControlMutation({
+      req,res,session,operation:'provider-migration.transition:'+id,body,
+      execute:async()=>{
+        const migration=await advanceProviderMigration({
+          id,
+          toState:String(body.toState||''),
+          trafficPercent:body.trafficPercent,
+          compatibilityReport:body.compatibilityReport,
+          cutoverBoundary:body.cutoverBoundary,
+          actor:session.sub,
+          expectedVersion:body.expectedVersion,
+          failureReason:body.failureReason||null
+        })
+        const latest=await latestRuntimeSnapshot(migration.environment)
+        const providerOverrides={
+          ...(latest?.payload?.providerOverrides||{}),
+          [migration.capability]:providerMigrationOverride(migration)
+        }
+        const snapshot=await publishRuntimeSnapshot({
+          environment:migration.environment,
+          providerOverrides,
+          createdBy:session.sub
+        })
+        return {migration,snapshotVersion:snapshot.version,snapshotLeaseExpiresAt:snapshot.leaseExpiresAt}
+      }
+    })
+  }
+
+  const providerRollbackMatch=url.pathname.match(/^\/control-api\/provider-migrations\/([^/]+)\/rollback$/)
+  if(providerRollbackMatch&&req.method==='POST'){
+    if(!requireControl(res,session,'migrate'))return
+    let body
+    try{body=await readBody(req)}
+    catch(error){return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'invalid provider rollback request'})}
+    const id=decodeURIComponent(providerRollbackMatch[1])
+    return runControlMutation({
+      req,res,session,operation:'provider-migration.rollback:'+id,body,
+      execute:async()=>{
+        const migration=await requestProviderRollback({
+          id,
+          actor:session.sub,
+          expectedVersion:body.expectedVersion,
+          reason:body.reason||null
+        })
+        const latest=await latestRuntimeSnapshot(migration.environment)
+        const providerOverrides={
+          ...(latest?.payload?.providerOverrides||{}),
+          [migration.capability]:providerMigrationOverride(migration)
+        }
+        const snapshot=await publishRuntimeSnapshot({
+          environment:migration.environment,
+          providerOverrides,
+          createdBy:session.sub
+        })
+        return {migration,snapshotVersion:snapshot.version,snapshotLeaseExpiresAt:snapshot.leaseExpiresAt}
+      }
+    })
+  }
+
   if(url.pathname==='/control-api/runtime-config/publish'&&req.method==='POST'){
     if(!requireControl(res,session,'publish'))return
     let body
