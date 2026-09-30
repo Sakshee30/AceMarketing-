@@ -1,5 +1,6 @@
 import {createHash,randomUUID} from 'node:crypto'
 import {pool,embeddedDatabase} from './database.mjs'
+import {recordUsageLedgerEvent} from './platform/usage-ledger.mjs'
 const evalIntervalMs=Number(process.env.MONITORING_EVAL_INTERVAL_MS||60000)
 const retentionDays=Number(process.env.API_METRIC_RETENTION_DAYS||30)
 
@@ -160,7 +161,7 @@ export const evaluateMonitoring=async workspaceId=>{
   return opened
 }
 
-export const recordApiTelemetry=async(workspaceId,{requestId,method,path,statusCode,latencyMs})=>{
+export const recordApiTelemetry=async(workspaceId,{requestId,method,path,statusCode,latencyMs,usageReservationId=null})=>{
   if(!pool||!workspaceId||!path.startsWith('/api/'))return
   await pool.query(
     `INSERT INTO ace_api_metrics (workspace_id,request_id,method,path,status_code,latency_ms)
@@ -176,6 +177,18 @@ export const recordApiTelemetry=async(workspaceId,{requestId,method,path,statusC
      ON CONFLICT (workspace_id,usage_date) DO UPDATE SET ${updates}`,
     [workspaceId]
   )
+  if(statusCode<400&&usage){
+    await recordUsageLedgerEvent({
+      workspaceId,
+      eventId:'api:'+String(requestId)+':'+usage,
+      metric:usage,
+      quantity:1,
+      requestId:String(requestId),
+      reservationId:usageReservationId,
+      source:'api',
+      metadata:{method:String(method),path:String(path)}
+    }).catch(()=>{})
+  }
   const previous=lastEval.get(workspaceId)||0
   if(Date.now()-previous>=evalIntervalMs){
     lastEval.set(workspaceId,Date.now())
