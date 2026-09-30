@@ -1,9 +1,9 @@
 module "network" {
   source = "../../../modules/network"
 
-  name                = "ace-${var.environment}"
-  vpc_cidr            = var.vpc_cidr
-  availability_zones  = var.availability_zones
+  name               = "ace-${var.environment}"
+  vpc_cidr           = var.vpc_cidr
+  availability_zones = var.availability_zones
   enable_nat_gateway = var.enable_nat_gateway
 
   tags = {
@@ -25,9 +25,9 @@ locals {
 module "compute" {
   source = "../../../modules/compute"
 
-  name    = "ace-${var.environment}"
-  vpc_id  = module.network.vpc_id
-  tags    = local.service_tags
+  name   = "ace-${var.environment}"
+  vpc_id = module.network.vpc_id
+  tags   = local.service_tags
 }
 
 module "database" {
@@ -373,15 +373,15 @@ module "control_api_service" {
 module "worker_service" {
   source = "../../../modules/ecs-service"
 
-  name               = "ace-${var.environment}-worker"
-  cluster_arn        = module.compute.cluster_arn
-  subnet_ids         = module.network.application_subnet_ids
-  security_group_ids = [module.compute.task_security_group_id]
-  execution_role_arn = module.compute.execution_role_arn
-  task_role_arn      = aws_iam_role.worker_task.arn
-  image              = var.worker_image
-  log_group_name     = module.observability.log_group_names["worker"]
-  aws_region         = var.aws_region
+  name                     = "ace-${var.environment}-worker"
+  cluster_arn              = module.compute.cluster_arn
+  subnet_ids               = module.network.application_subnet_ids
+  security_group_ids       = [module.compute.task_security_group_id]
+  execution_role_arn       = module.compute.execution_role_arn
+  task_role_arn            = aws_iam_role.worker_task.arn
+  image                    = var.worker_image
+  log_group_name           = module.observability.log_group_names["worker"]
+  aws_region               = var.aws_region
   desired_count            = 3
   min_capacity             = 3
   max_capacity             = 24
