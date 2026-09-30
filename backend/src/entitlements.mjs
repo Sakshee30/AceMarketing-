@@ -1,6 +1,7 @@
 import {randomUUID} from 'node:crypto'
 import {pool} from './database.mjs'
 import {effectiveUsageForMetric,finalizeUsageReservation,reconcileExpiredUsageReservations,reserveUsageCapacity} from './platform/usage-ledger.mjs'
+import {applyBillingSubscriptionChange,billingAccessPolicy} from './platform/billing-lifecycle.mjs'
 
 const numberEnv=(name,fallback)=>{
   const value=Number(process.env[name])
@@ -14,6 +15,13 @@ const defaultEntitlements=()=>({
   agent_actions:numberEnv('PLAN_LIMIT_AGENT_ACTIONS',50000),
   audience_syncs:numberEnv('PLAN_LIMIT_AUDIENCE_SYNCS',500),
   custom_integration_tests:numberEnv('PLAN_LIMIT_CUSTOM_INTEGRATION_TESTS',1000),
+  request_units:numberEnv('PLAN_LIMIT_REQUEST_UNITS',0),
+  storage_bytes:numberEnv('PLAN_LIMIT_STORAGE_BYTES',0),
+  records:numberEnv('PLAN_LIMIT_RECORDS',0),
+  files:numberEnv('PLAN_LIMIT_FILES',0),
+  workflow_steps:numberEnv('PLAN_LIMIT_WORKFLOW_STEPS',0),
+  external_sends:numberEnv('PLAN_LIMIT_EXTERNAL_SENDS',0),
+  ai_tokens:numberEnv('PLAN_LIMIT_AI_TOKENS',0),
   members:numberEnv('PLAN_LIMIT_MEMBERS',25),
   custom_integrations:numberEnv('PLAN_LIMIT_CUSTOM_INTEGRATIONS',25)
 })
@@ -38,7 +46,7 @@ export const subscriptionSummary=async workspaceId=>{
   if(!pool)return {available:false}
   const sub=await ensureSubscription(workspaceId)
   const ent=sub.entitlements||{}
-  const metrics=['tracked_events','assisted_events','signal_dispatches','agent_actions','audience_syncs','custom_integration_tests']
+  const metrics=['tracked_events','assisted_events','signal_dispatches','agent_actions','audience_syncs','custom_integration_tests','request_units','storage_bytes','records','files','workflow_steps','external_sends','ai_tokens']
   const usage={}
   await reconcileExpiredUsageReservations({
     workspaceId,
@@ -67,6 +75,10 @@ export const subscriptionSummary=async workspaceId=>{
     periodStart:sub.current_period_start,
     periodEnd:sub.current_period_end,
     trialEndsAt:sub.trial_ends_at,
+    graceEndsAt:sub.grace_ends_at||null,
+    entitlementsVersion:Number(sub.entitlements_version||1),
+    billingStateReason:sub.billing_state_reason||null,
+    accessPolicy:billingAccessPolicy(sub.status),
     billingProvider:sub.billing_provider,
     externalCustomerId:sub.external_customer_id,
     paymentConfigured:Boolean(sub.billing_provider&&sub.external_customer_id),
@@ -115,7 +127,7 @@ export const resourceCountAllowed=async(workspaceId,resource)=>{
 
 export const updateWorkspaceEntitlements=async(workspaceId,input={})=>{
   if(!pool)return null
-  const allowed=['tracked_events','assisted_events','signal_dispatches','agent_actions','audience_syncs','custom_integration_tests','members','custom_integrations']
+  const allowed=['tracked_events','assisted_events','signal_dispatches','agent_actions','audience_syncs','custom_integration_tests','request_units','storage_bytes','records','files','workflow_steps','external_sends','ai_tokens','members','custom_integrations']
   const clean={}
   for(const key of allowed){
     if(input.entitlements?.[key]!=null){
@@ -124,14 +136,18 @@ export const updateWorkspaceEntitlements=async(workspaceId,input={})=>{
       clean[key]=Math.floor(value)
     }
   }
-  const sub=await ensureSubscription(workspaceId)
-  const merged={...(sub.entitlements||{}),...clean}
-  const {rows}=await pool.query(
-    `UPDATE ace_workspace_subscriptions SET plan_code=COALESCE($2,plan_code),status=COALESCE($3,status),entitlements=$4::jsonb,updated_at=now()
-     WHERE workspace_id=$1 RETURNING *`,
-    [workspaceId,input.planCode||null,input.status||null,JSON.stringify(merged)]
-  )
-  return rows[0]
+  await ensureSubscription(workspaceId)
+  const result=await applyBillingSubscriptionChange(workspaceId,{
+    ...(input.planCode?{planCode:String(input.planCode)}:{}),
+    ...(input.status?{status:String(input.status)}:{}),
+    entitlements:clean,
+    ...(input.graceEndsAt?{graceEndsAt:input.graceEndsAt}:{}),
+    ...(input.reason?{reason:String(input.reason)}:{})
+  },{
+    source:'workspace-entitlement-admin',
+    reason:input.reason||'entitlement configuration updated'
+  })
+  return result.item
 }
 
 export const closeEntitlements=async()=>{if(pool)await pool.end()}
