@@ -44,6 +44,7 @@ import {bindActorToRequestContext,createRequestContext} from './platform/request
 import {globalAdmission} from './platform/admission-control.mjs'
 import {assertActorWorkspace,requestedWorkspaceId,tenantExecutionScope} from './platform/tenant-context.mjs'
 import {appendAuditRecord,listAuditRecords} from './platform/audit-store.mjs'
+import {permissionForRequest as centralizedPermissionForRequest} from './platform/access-policy.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -454,47 +455,7 @@ const events = [
   {name:'Enrolment',source:'CRM / Billing',destinations:['Google Ads','Meta Ads','LinkedIn Ads'],latency:'real-time',status:'active'},
 ]
 
-const permissionForRequest=(method,path)=>{
-  if(path==='/api/auth/logout'||path==='/api/auth/me') return 'workspace.read'
-  if(method==='GET'){
-    if(path.startsWith('/api/members')) return 'members.read'
-    if(path.startsWith('/api/reports')||path.startsWith('/api/attribution')||path.startsWith('/api/journeys')) return 'reports.read'
-    if(path.startsWith('/api/monitoring')||path.startsWith('/api/alerts')||path.startsWith('/api/connector-health')) return 'monitoring.read'
-    return 'workspace.read'
-  }
-  if(path.startsWith('/api/members')||path.startsWith('/api/invitations')) return 'members.write'
-  if(path.startsWith('/api/integrations')||path.startsWith('/api/custom-integrations')) return 'integrations.write'
-  if(path.startsWith('/api/ai/analyst/tools')) return 'ai.analysis.run'
-  if(path==='/api/ai/knowledge/search') return 'ai.analysis.run'
-  if(path.startsWith('/api/ai/knowledge')) return method==='GET'?'workspace.read':'ai.knowledge.write'
-  if(path==='/api/ai/analysis') return 'ai.analysis.run'
-  if(path.startsWith('/api/ai/tasks/')&&path.endsWith('/shadow')) return 'ai.evaluation.write'
-  if(path.startsWith('/api/ai/tasks/')) return 'ai.analysis.run'
-  if(path.startsWith('/api/ai/deployment-controls')) return method==='GET'?'workspace.read':'ai.providers.manage'
-  if(path.startsWith('/api/ai/task-policies')) return method==='GET'?'workspace.read':'ai.providers.manage'
-  if(path.startsWith('/api/ai/activation-proposals')){
-    if(method==='GET')return 'workspace.read'
-    if(path.endsWith('/execute'))return 'ai.activation.execute'
-    if(path.endsWith('/approve')||path.endsWith('/reject'))return 'ai.activation.approve'
-    return 'ai.activation.propose'
-  }
-  if(path.startsWith('/api/ai/creative-assets')&&method!=='GET') return 'approvals.write'
-  if(path.startsWith('/api/ai/anomalies')&&method!=='GET') return 'ai.evaluation.write'
-  if(path.startsWith('/api/ai/datasets')&&method!=='GET') return 'ai.training.run'
-  if(path.startsWith('/api/ai/ml/train/')||path==='/api/ai/ml/rank') return 'ai.training.run'
-  if(path.startsWith('/api/ai/live-voice')) return 'calls.write'
-  if(path==='/api/ai/ml/score'||path==='/api/ai/ml/rank/score'||path==='/api/ai/ml/forecast/seasonal-naive'||path==='/api/ai/ml/forecast/chronos-2'||path==='/api/ai/ml/forecast/catboost-challenger'||path==='/api/ai/ml/forecast/qualify'||path==='/api/ai/ml/incrementality'||path==='/api/ai/ml/marketing-mix'||path==='/api/ai/ml/anomalies'||path==='/api/ai/ml/segments') return 'ai.analysis.run'
-  if(path.includes('/api/ai/jobs/')) return 'ai.analysis.run'
-  if(path.startsWith('/api/agents')||path.startsWith('/api/models/run')) return 'agents.write'
-  if(path.startsWith('/api/audiences')) return 'audiences.write'
-  if(path.startsWith('/api/approvals')) return 'approvals.write'
-  if(path.startsWith('/api/follow-ups')) return 'followups.write'
-  if(path.startsWith('/api/qualification-calls')) return 'calls.write'
-  if(path.startsWith('/api/meetings')) return 'meetings.write'
-  if(path.startsWith('/api/signal-deliveries')) return 'delivery.write'
-  if(path.startsWith('/api/api-keys')||path.startsWith('/api/webhooks')) return 'developer.write'
-  return 'workspace.write'
-}
+const permissionForRequest=(method,path)=>centralizedPermissionForRequest(method,path)
 
 const readRawBody = req => new Promise((resolve,reject)=>{
   const chunks=[]
