@@ -1,6 +1,7 @@
 const readMappings=[
   [/^\/api\/(policy-rules|workflows)(?:\/|$)/,'workspace.read'],
   [/^\/api\/(forms|custom-objects)(?:\/|$)/,'workspace.read'],
+  [/^\/api\/boards(?:\/|$)/,'boards.read'],
   [/^\/api\/members(?:\/|$)/,'members.read'],
   [/^\/api\/(reports|attribution|journeys)(?:\/|$)/,'reports.read'],
   [/^\/api\/(monitoring|alerts|connector-health)(?:\/|$)/,'monitoring.read']
@@ -10,6 +11,7 @@ const writeMappings=[
   [/^\/api\/policy-rules(?:\/|$)/,'workspace.write'],
   [/^\/api\/workflows(?:\/|$)/,'approvals.write'],
   [/^\/api\/(forms|custom-objects)(?:\/|$)/,'workspace.write'],
+  [/^\/api\/boards(?:\/|$)/,'boards.move'],
   [/^\/api\/(members|invitations)(?:\/|$)/,'members.write'],
   [/^\/api\/(integrations|custom-integrations|webhook-subscriptions|webhook-deliveries)(?:\/|$)/,'integrations.write'],
   [/^\/api\/(agents|models\/run)(?:\/|$)/,'agents.write'],
