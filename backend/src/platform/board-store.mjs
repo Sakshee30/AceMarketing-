@@ -136,7 +136,7 @@ export const moveBoardItem=async({
   workspaceId,
   actorId,
   command,
-  authorize=()=>true,
+  authorize=()=>false,
   requestId=null,
   correlationId=null
 })=>{
@@ -296,3 +296,70 @@ export const moveBoardItem=async({
     return result
   })
 }
+
+
+export const getBoardOperation=async({workspaceId,boardId,operationId})=>
+  withTenantDbTransaction(workspaceId,async client=>{
+    const {rows}=await client.query(
+      `SELECT operation_id,status,result,error_code,created_at,updated_at
+       FROM ace_board_operations
+       WHERE workspace_id=$1 AND board_id=$2 AND operation_id=$3`,
+      [workspaceId,String(boardId),String(operationId)]
+    )
+    const row=rows[0]
+    if(!row)return null
+    return {
+      operationId:row.operation_id,
+      status:row.status,
+      result:row.result||null,
+      errorCode:row.error_code||null,
+      createdAt:row.created_at,
+      updatedAt:row.updated_at
+    }
+  })
+
+export const getBoardSnapshot=async({workspaceId,boardId})=>
+  withTenantDbTransaction(workspaceId,async client=>{
+    const board=(await client.query(
+      `SELECT id,name,status,policy_version,ordering_revision,version,created_at,updated_at
+       FROM ace_boards
+       WHERE workspace_id=$1 AND id=$2`,
+      [workspaceId,String(boardId)]
+    )).rows[0]
+    if(!board)return null
+    const [columnsResult,itemsResult]=await Promise.all([
+      client.query(
+        `SELECT id,state_key,name,position,wip_limit,version
+         FROM ace_board_columns
+         WHERE workspace_id=$1 AND board_id=$2
+         ORDER BY position,id`,
+        [workspaceId,String(boardId)]
+      ),
+      client.query(
+        `SELECT item_id,resource_type,resource_id,column_id,rank,item_version,policy_version,metadata
+         FROM ace_board_items
+         WHERE workspace_id=$1 AND board_id=$2
+         ORDER BY column_id,rank,item_id`,
+        [workspaceId,String(boardId)]
+      )
+    ])
+    return {
+      id:board.id,
+      name:board.name,
+      status:board.status,
+      policyVersion:Number(board.policy_version),
+      orderingRevision:Number(board.ordering_revision),
+      version:Number(board.version),
+      createdAt:board.created_at,
+      updatedAt:board.updated_at,
+      columns:columnsResult.rows.map(row=>({
+        id:row.id,stateKey:row.state_key,name:row.name,position:Number(row.position),
+        wipLimit:row.wip_limit==null?null:Number(row.wip_limit),version:Number(row.version)
+      })),
+      items:itemsResult.rows.map(row=>({
+        id:row.item_id,resourceType:row.resource_type,resourceId:row.resource_id,columnId:row.column_id,
+        rank:String(row.rank),itemVersion:Number(row.item_version),policyVersion:Number(row.policy_version),
+        metadata:row.metadata||{}
+      }))
+    }
+  })
