@@ -163,6 +163,8 @@ jobs:
           test -f backend/src/platform/capacity-budget.mjs
           test -f backend/src/platform/custom-object-store.mjs
           test -f backend/src/platform/workflow-action-catalog.mjs
+          test -f backend/src/platform/webhook-delivery-store.mjs
+          test -f backend/src/platform/webhook-delivery-worker.mjs
           test -f backend/migrations/041_platform_control_changes.sql
           test -f backend/migrations/042_platform_change_versioning.sql
           test -f backend/migrations/043_platform_control_idempotency.sql
@@ -172,6 +174,7 @@ jobs:
           test -f backend/migrations/047_recovery_evidence.sql
           test -f backend/migrations/048_custom_objects.sql
           test -f backend/migrations/049_workflow_durable_steps.sql
+          test -f backend/migrations/050_webhook_delivery.sql
           test -f backend/tests/control-change-store.test.mjs
           test -f backend/tests/control-idempotency.test.mjs
           test -f backend/tests/runtime-configuration.test.mjs
@@ -423,6 +426,7 @@ jobs:
           test -f backend/tests/object-lifecycle.test.mjs
           test -f backend/tests/egress-policy.test.mjs
           test -f backend/tests/webhook-signing.test.mjs
+          test -f backend/tests/webhook-delivery.test.mjs
           test -f scripts/backend-architecture-check.mjs
           test -f backend/src/store.mjs
           test -f backend/src/vault.mjs
