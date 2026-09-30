@@ -60,6 +60,7 @@ import {querySearch,searchCapabilityProfile} from './platform/search-port.mjs'
 import {runtimeGuardForRequest} from './platform/runtime-config-runtime.mjs'
 import {beginProcessDrain,livenessState,markStartupComplete,readinessState,startupState} from './platform/process-health.mjs'
 import {runtimeRoleAllows,runtimeRolePolicy} from './platform/runtime-role.mjs'
+import {assertWorkspaceCell} from './platform/cell-placement.mjs'
 
 const runtimeRole=runtimeRolePolicy()
 
@@ -571,6 +572,18 @@ const server = http.createServer(async (req,res)=>{
     workspaceId=requestedWorkspaceId(req,{defaultWorkspaceId:process.env.DEFAULT_WORKSPACE_ID||'ws_default'})
   }catch(error){
     return send(req,res,400,{error:error instanceof Error?error.message:'invalid workspace scope',code:error?.code||'invalid_workspace_scope'})
+  }
+  if(String(process.env.CELL_ROUTING_REQUIRED||'false').toLowerCase()==='true'){
+    try{
+      await assertWorkspaceCell({
+        workspaceId,
+        expectedCell:process.env.ACE_CELL_ID||'',
+        expectedRegion:process.env.ACE_CELL_REGION||null,
+        routingEpoch:req.headers['x-ace-routing-epoch']||null
+      })
+    }catch(error){
+      return send(req,res,Number(error?.status||503),{error:error instanceof Error?error.message:'workspace placement unavailable',code:error?.code||'cell_placement_unavailable'})
+    }
   }
   if(url.pathname==='/api/consent'){
     if(req.method==='GET'){
