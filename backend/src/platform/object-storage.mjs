@@ -80,11 +80,12 @@ export const createQuarantineUploadUrl=({key,workspaceId,sha256,expiresSeconds=6
   }
 })
 
-export const createApprovedDownloadUrl=({key,filename,expiresSeconds=300})=>presign({
+export const createApprovedDownloadUrl=({key,filename,versionId=null,expiresSeconds=300})=>presign({
   method:'GET',
   key,
   expiresSeconds,
   extraQuery:{
+    ...(versionId?{versionId:String(versionId)}:{}),
     'response-content-disposition':'attachment; filename="'+String(filename||'download').replace(/["\r\n]/g,'')+'"'
   }
 })
