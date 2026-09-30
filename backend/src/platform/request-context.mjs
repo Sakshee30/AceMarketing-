@@ -41,3 +41,13 @@ export const assertRequestBudget=(context,minimumMs=1)=>{
   }
   return remaining
 }
+
+export const bindActorToRequestContext=(context,{actor=null,workspaceId=null,tenantId=null}={})=>Object.freeze({
+  ...context,
+  actorId:actor?.userId||actor?.sub||context?.actorId||null,
+  actorType:actor?.service?'service':(actor?'user':context?.actorType||'user'),
+  sessionId:actor?.jti||context?.sessionId||null,
+  role:actor?.role||context?.role||null,
+  workspaceId:workspaceId||actor?.workspaceId||context?.workspaceId||null,
+  tenantId:tenantId||workspaceId||actor?.workspaceId||context?.tenantId||null
+})
