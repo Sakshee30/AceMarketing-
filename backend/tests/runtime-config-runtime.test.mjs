@@ -20,6 +20,7 @@ test('data-plane runtime guard blocks suspended AI admission',{skip:!pool},async
   process.env.RUNTIME_CONFIG_SIGNING_SECRET='runtime-config-test-secret'
   process.env.ACE_RUNTIME_ENVIRONMENT='guard-ai-'+Date.now()
   const emergency=await createEmergencyControl({
+    environment:process.env.ACE_RUNTIME_ENVIRONMENT,
     scopeType:'workspace',
     scopeId:'ws_runtime_ai',
     controlType:'suspend_ai',
@@ -50,6 +51,7 @@ test('data-plane read-only emergency blocks workspace writes but not reads',{ski
   process.env.RUNTIME_CONFIG_SIGNING_SECRET='runtime-config-test-secret'
   process.env.ACE_RUNTIME_ENVIRONMENT='guard-read-only-'+Date.now()
   const emergency=await createEmergencyControl({
+    environment:process.env.ACE_RUNTIME_ENVIRONMENT,
     scopeType:'workspace',
     scopeId:'ws_read_only',
     controlType:'read_only',
