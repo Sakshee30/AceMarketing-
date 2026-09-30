@@ -10,6 +10,7 @@ export type RealtimeEnvelope<T=unknown>={
 type RealtimeOptions={
   url:string
   token?:string|null
+  tokenTransport?:'query'|'subprotocol'
   onEvent:(event:RealtimeEnvelope)=>void
   onState?:(state:'connecting'|'open'|'closed'|'error')=>void
   reconnect?:boolean
@@ -34,8 +35,9 @@ export const createRealtimeClient=(options:RealtimeOptions)=>{
     if(stopped)return
     options.onState?.('connecting')
     const url=new URL(options.url,window.location.href)
-    if(options.token)url.searchParams.set('access_token',options.token)
-    socket=new WebSocket(url)
+    if(options.token&&options.tokenTransport!=='subprotocol')url.searchParams.set('access_token',options.token)
+    const protocols=options.token&&options.tokenTransport==='subprotocol'?['ace-realtime-v1',options.token]:undefined
+    socket=new WebSocket(url,protocols)
     socket.onopen=()=>{
       attempt=0
       options.onState?.('open')
