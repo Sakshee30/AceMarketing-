@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {createHash,randomUUID} from 'node:crypto'
+import {embeddedDatabase} from '../src/database.mjs'
 import {
   reserveIdempotency,completeIdempotency,appendOutboxEvent,claimOutboxEvents,
   markOutboxPublished,recordInboxEvent,markInboxProcessed
@@ -8,7 +9,7 @@ import {
 
 const workspaceId='ws_test_reliability'
 
-test('idempotency preserves the first request fingerprint and completed response',async()=>{
+test('idempotency preserves the first request fingerprint and completed response',{skip:embeddedDatabase},async()=>{
   const operationId='test.operation.'+randomUUID()
   const key='key-'+randomUUID()
   const hash=createHash('sha256').update('same-request').digest('hex')
@@ -24,7 +25,7 @@ test('idempotency preserves the first request fingerprint and completed response
   )
 })
 
-test('outbox leasing fences publication to the lease owner',async()=>{
+test('outbox leasing fences publication to the lease owner',{skip:embeddedDatabase},async()=>{
   const id='outbox_'+randomUUID()
   await appendOutboxEvent({id,workspaceId,eventType:'test.created',payload:{id}})
   const worker='worker_'+randomUUID()
@@ -36,7 +37,7 @@ test('outbox leasing fences publication to the lease owner',async()=>{
   assert.equal(published.status,'published')
 })
 
-test('inbox deduplicates provider events and detects payload conflicts',async()=>{
+test('inbox deduplicates provider events and detects payload conflicts',{skip:embeddedDatabase},async()=>{
   const source='test-provider'
   const eventId='evt_'+randomUUID()
   const payloadHash=createHash('sha256').update('payload').digest('hex')
