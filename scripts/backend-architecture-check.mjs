@@ -12,6 +12,7 @@ const required=[
   'packages/contracts/capabilities/capability.schema.json',
   'scripts/contracts-check.mjs',
   'tests/chaos/cache-outage.yaml',
+  'tests/load/core-traffic.js',
   'operations/runbooks/realtime-reconnect-storm.md',
   'config/schemas/platform.schema.json',
   'config/profiles/production-standard.yaml',
