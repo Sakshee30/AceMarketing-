@@ -290,10 +290,7 @@ export const installLiveVoiceWebSocket=server=>{
   server.on('upgrade',async(req,socket,head)=>{
     try{
       const auth=await authorizeUpgrade(req)
-      if(!auth){
-        socket.destroy()
-        return
-      }
+      if(!auth)return
       if(auth.error){
         socket.write('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n')
         socket.destroy()
