@@ -114,7 +114,7 @@ resource "aws_lb_target_group" "control" {
   }
 
   deregistration_delay = 30
-  slow_start           = 15
+  slow_start           = 30
   tags                 = local.tags
 }
 
