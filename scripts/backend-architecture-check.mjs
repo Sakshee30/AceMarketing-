@@ -6,6 +6,7 @@ const failures=[]
 const required=[
   'backend/src/control-api.mjs',
   'backend/src/platform/capability-registry.mjs',
+  'backend/src/platform/capability-manifest.mjs',
   'backend/src/platform/connector-registry.mjs',
   'backend/src/platform/control-change-store.mjs',
   'backend/src/platform/control-idempotency.mjs',
@@ -64,6 +65,7 @@ const required=[
   'backend/migrations/050_webhook_delivery.sql',
   'backend/migrations/051_billing_lifecycle.sql',
   'backend/migrations/052_object_processing_search.sql',
+  'backend/migrations/053_provider_migration_evidence.sql',
   'backend/tests/platform-foundation.test.mjs',
   'backend/tests/platform-reliability.test.mjs',
   'backend/tests/tenant-context.test.mjs',
@@ -84,6 +86,7 @@ const required=[
   'backend/tests/webhook-signing.test.mjs',
   'backend/tests/webhook-delivery.test.mjs',
   'backend/tests/control-capability.test.mjs',
+  'backend/tests/capability-manifest.test.mjs',
   'backend/tests/connector-registry.test.mjs',
   'backend/tests/control-change-store.test.mjs',
   'backend/tests/control-idempotency.test.mjs',
@@ -126,6 +129,22 @@ const searchPortPath=path.join(root,'backend','src','platform','search-port.mjs'
 if(fs.existsSync(searchPortPath)){
   const source=fs.readFileSync(searchPortPath,'utf8')
   if(!source.includes('tenant-and-resource-policy-before-result'))failures.push('Search must enforce tenant/resource authorization before returning results.')
+}
+
+
+const capabilityManifestPath=path.join(root,'backend','src','platform','capability-manifest.mjs')
+if(fs.existsSync(capabilityManifestPath)){
+  const source=fs.readFileSync(capabilityManifestPath,'utf8')
+  for(const requiredToken of ['REQUIRED','OPTIONAL','DEGRADED','DISABLED']){
+    if(!source.includes(requiredToken))failures.push('Capability manifest must model '+requiredToken+' state.')
+  }
+  if(!source.includes('requiresCapacityEvidence'))failures.push('Capability fallbacks must carry capacity-evidence semantics where required.')
+}
+const providerMigrationPath=path.join(root,'backend','src','platform','provider-migration-store.mjs')
+if(fs.existsSync(providerMigrationPath)){
+  const source=fs.readFileSync(providerMigrationPath,'utf8')
+  if(!source.includes('point_of_no_return_at'))failures.push('Provider migration store must preserve point-of-no-return semantics.')
+  if(!source.includes('verification_evidence'))failures.push('Provider migration store must preserve verification evidence.')
 }
 
 if(failures.length){
