@@ -102,12 +102,13 @@ export const publishRuntimeSnapshot=async({
   const client=await pool.connect()
   try{
     await client.query('BEGIN')
+    const leaseExpiresAt=new Date(Date.now()+90_000).toISOString()
     const inserted=await client.query(
       `INSERT INTO ace_runtime_config_snapshots
         (id,environment,payload,checksum,signature,signing_key_id,lease_expires_at,source_change_id,created_by)
-       VALUES ($1,$2,$3::jsonb,$4,'pending',$5,now()+interval '90 seconds',$6,$7)
+       VALUES ($1,$2,$3::jsonb,$4,'pending',$5,$6,$7,$8)
        RETURNING version,created_at,lease_expires_at`,
-      [id,payload.environment,JSON.stringify(payload),checksum,signingKeyId(),sourceChangeId,createdBy]
+      [id,payload.environment,JSON.stringify(payload),checksum,signingKeyId(),leaseExpiresAt,sourceChangeId,createdBy]
     )
     const meta=inserted.rows[0]
     const signedEnvelope={
