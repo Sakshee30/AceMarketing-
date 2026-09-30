@@ -9,6 +9,7 @@ const required=[
   'backend/src/platform/control-change-store.mjs',
   'backend/src/platform/control-idempotency.mjs',
   'backend/src/platform/runtime-configuration.mjs',
+  'backend/src/platform/runtime-config-runtime.mjs',
   'deploy/Dockerfile.control-api',  'backend/src/platform/problem-details.mjs',
   'backend/src/platform/request-context.mjs',
   'backend/src/platform/admission-control.mjs',
@@ -59,7 +60,8 @@ const required=[
   'backend/tests/control-capability.test.mjs',
   'backend/tests/control-change-store.test.mjs',
   'backend/tests/control-idempotency.test.mjs',
-  'backend/tests/runtime-configuration.test.mjs'
+  'backend/tests/runtime-configuration.test.mjs',
+  'backend/tests/runtime-config-runtime.test.mjs'
 ]
 for(const item of required)if(!fs.existsSync(path.join(root,item)))failures.push('missing required backend architecture foundation: '+item)
 
