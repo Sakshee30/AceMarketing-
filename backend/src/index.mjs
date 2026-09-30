@@ -43,6 +43,7 @@ import {aiMonitoringSnapshot} from './ai-monitoring.mjs'
 import {bindActorToRequestContext,createRequestContext} from './platform/request-context.mjs'
 import {globalAdmission} from './platform/admission-control.mjs'
 import {assertActorWorkspace,requestedWorkspaceId,tenantExecutionScope} from './platform/tenant-context.mjs'
+import {appendAuditRecord,listAuditRecords} from './platform/audit-store.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -1266,6 +1267,7 @@ const server = http.createServer(async (req,res)=>{
         s.audit.unshift({id:randomUUID(),action:'auth.workspace_session_started',entityId:req.user.userId,sourceWorkspaceId:workspaceId,at:now})
         s.audit=s.audit.slice(0,1000)
       }))
+      await appendAuditRecord({workspaceId:targetWorkspaceId,actorId:req.user.userId,action:'auth.workspace_switched',entityType:'workspace',entityId:targetWorkspaceId,requestId:req.requestId,traceId:req.context?.traceId,metadata:{sourceWorkspaceId:workspaceId}})
       return send(req,res,200,{token,workspaceId:targetWorkspaceId,expiresIn:ttl})
     }
     if (req.method === 'GET' && url.pathname === '/api/members') {
@@ -5944,8 +5946,10 @@ const server = http.createServer(async (req,res)=>{
       return item?send(req,res,201,item):send(req,res,409,{error:'workspace name already exists'})
     }
     if (req.method === 'GET' && url.pathname === '/api/audit-log') {
+      const durable=await listAuditRecords({workspaceId,limit:250}).catch(()=>[])
+      if(durable.length)return send(req,res,200,{items:durable,source:'durable'})
       const state=await getState()
-      return send(req,res,200,{items:(state.audit||[]).slice(0,250)})
+      return send(req,res,200,{items:(state.audit||[]).slice(0,250),source:'compatibility'})
     }
     if (req.method === 'GET' && url.pathname === '/api/api-keys') {
       const state=await getState()
@@ -5976,6 +5980,7 @@ const server = http.createServer(async (req,res)=>{
         s.audit.unshift({id:randomUUID(),action:'api_key.created',entityId:record.id,name:record.name,at:createdAt})
         s.audit=s.audit.slice(0,1000)
       })
+      await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'api_key.created',entityType:'api_key',entityId:record.id,requestId:req.requestId,traceId:req.context?.traceId,metadata:{name:record.name,prefix:record.prefix}})
       return send(req,res,201,{id:record.id,name:record.name,prefix:record.prefix,key:secret,createdAt,notice:'Store this key now; only its SHA-256 fingerprint is persisted.'})
     }
     if (req.method === 'POST' && url.pathname === '/api/api-keys/revoke') {
@@ -5994,6 +5999,7 @@ const server = http.createServer(async (req,res)=>{
         s.audit.unshift({id:randomUUID(),action:'api_key.revoked',entityId:id,at:revokedAt})
         s.audit=s.audit.slice(0,1000)
       })
+      await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'api_key.revoked',entityType:'api_key',entityId:id,requestId:req.requestId,traceId:req.context?.traceId})
       return send(req,res,200,{id,status:'revoked',revokedAt})
     }
     return send(req,res,404,{error:'not found'})
