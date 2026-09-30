@@ -2,6 +2,7 @@ import {platformFeatureCatalog,validateFeatureCatalog} from './feature-catalog.m
 import {modelRegistrySnapshot} from '../ai-registry.mjs'
 import {connectorCatalogSnapshot} from './connector-registry.mjs'
 import {capabilityManifestSnapshot} from './capability-manifest.mjs'
+import {moduleRegistrySnapshot} from './module-registry.mjs'
 
 const state=(desired,actual,reason=null)=>({desired,actual,reason})
 
@@ -110,6 +111,7 @@ export const capabilitySnapshot=()=>{
     providers:providerItems,
     connectors:connectorCatalogSnapshot().items,
     capabilityContracts:capabilityManifestSnapshot().items,
+    modules:moduleRegistrySnapshot().items,
     aiProviders:ai.map(item=>({
       id:'ai:'+item.task,
       provider:item.provider,
