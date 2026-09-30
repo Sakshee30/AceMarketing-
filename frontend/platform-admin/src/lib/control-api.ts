@@ -25,6 +25,18 @@ export type PlatformChangeRequest={
   rollbackPlan?:Record<string,unknown>
 }
 
+export type ProviderMigrationRequest={
+  capability:string
+  environment:string
+  fromProvider:string
+  toProvider:string
+  strategy:'shadow'|'canary'|'dual_route'|'cutover'
+  compatibilityReport?:Record<string,unknown>
+  cutoverBoundary?:Record<string,unknown>
+  rollbackPlan?:Record<string,unknown>
+  sourceChangeId?:string
+}
+
 export type EmergencyControlRequest={
   environment?:string
   scopeType:'platform'|'region'|'cell'|'tenant'|'workspace'|'service'|'feature'
@@ -117,6 +129,39 @@ export const controlApi={
       })
       const data=await safeJson(response)
       return response.ok?{ok:true,data:data||{}}:{ok:false,message:data?.error||'Rollback request failed.'}
+    }catch{return {ok:false,message:'Control API could not be reached.'}}
+  },
+  createProviderMigration:async(input:ProviderMigrationRequest):Promise<ControlMutationResult>=>{
+    try{
+      const response=await request('/control-api/provider-migrations',{
+        method:'POST',
+        body:JSON.stringify(input),
+        headers:{'Idempotency-Key':newIdempotencyKey()}
+      })
+      const data=await safeJson(response)
+      return response.ok?{ok:true,data:data||{}}:{ok:false,message:data?.error||'Provider migration creation failed.'}
+    }catch{return {ok:false,message:'Control API could not be reached.'}}
+  },
+  transitionProviderMigration:async(id:string,input:{toState:string;expectedVersion:number;trafficPercent?:number;compatibilityReport?:Record<string,unknown>;cutoverBoundary?:Record<string,unknown>;failureReason?:string}):Promise<ControlMutationResult>=>{
+    try{
+      const response=await request('/control-api/provider-migrations/'+encodeURIComponent(id)+'/transition',{
+        method:'POST',
+        body:JSON.stringify(input),
+        headers:{'Idempotency-Key':newIdempotencyKey()}
+      })
+      const data=await safeJson(response)
+      return response.ok?{ok:true,data:data||{}}:{ok:false,message:data?.error||'Provider migration transition failed.'}
+    }catch{return {ok:false,message:'Control API could not be reached.'}}
+  },
+  rollbackProviderMigration:async(id:string,expectedVersion:number,reason:string):Promise<ControlMutationResult>=>{
+    try{
+      const response=await request('/control-api/provider-migrations/'+encodeURIComponent(id)+'/rollback',{
+        method:'POST',
+        body:JSON.stringify({expectedVersion,reason}),
+        headers:{'Idempotency-Key':newIdempotencyKey()}
+      })
+      const data=await safeJson(response)
+      return response.ok?{ok:true,data:data||{}}:{ok:false,message:data?.error||'Provider rollback request failed.'}
     }catch{return {ok:false,message:'Control API could not be reached.'}}
   },
   createEmergency:async(input:EmergencyControlRequest):Promise<ControlMutationResult>=>{
