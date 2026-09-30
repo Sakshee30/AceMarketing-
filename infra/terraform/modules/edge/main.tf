@@ -23,6 +23,13 @@ resource "aws_security_group" "api_alb" {
     security_groups = [var.task_security_group_id]
   }
 
+  egress {
+    from_port       = var.realtime_port
+    to_port         = var.realtime_port
+    protocol        = "tcp"
+    security_groups = [var.task_security_group_id]
+  }
+
   tags = local.tags
 }
 
@@ -118,6 +125,28 @@ resource "aws_lb_target_group" "integration" {
   tags                 = merge(local.tags, { TrustBoundary = "integration-ingress" })
 }
 
+resource "aws_lb_target_group" "realtime" {
+  name        = substr("${var.name}-realtime-tg", 0, 32)
+  port        = var.realtime_port
+  protocol    = "HTTP"
+  target_type = "ip"
+  vpc_id      = var.vpc_id
+
+  health_check {
+    enabled             = true
+    path                = var.realtime_health_path
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    timeout             = 5
+    interval            = 15
+    matcher             = "200-399"
+  }
+
+  deregistration_delay = 30
+  slow_start           = 30
+  tags                 = merge(local.tags, { TrustBoundary = "realtime" })
+}
+
 resource "aws_lb_target_group" "control" {
   name        = substr("${var.name}-ctl-tg", 0, 32)
   port        = var.control_port
@@ -151,6 +180,24 @@ resource "aws_lb_listener" "api" {
     type             = "forward"
     target_group_arn = aws_lb_target_group.api.arn
   }
+}
+
+resource "aws_lb_listener_rule" "realtime" {
+  listener_arn = aws_lb_listener.api.arn
+  priority     = 5
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.realtime.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/api/ai/live-voice/ws*"]
+    }
+  }
+
+  tags = merge(local.tags, { TrustBoundary = "realtime" })
 }
 
 resource "aws_lb_listener_rule" "integration_ingress" {
@@ -267,5 +314,14 @@ resource "aws_vpc_security_group_ingress_rule" "tasks_from_control_alb" {
   referenced_security_group_id = aws_security_group.control_alb.id
   from_port                    = var.control_port
   to_port                      = var.control_port
+  ip_protocol                  = "tcp"
+}
+
+
+resource "aws_vpc_security_group_ingress_rule" "tasks_from_realtime_alb" {
+  security_group_id            = var.task_security_group_id
+  referenced_security_group_id = aws_security_group.api_alb.id
+  from_port                    = var.realtime_port
+  to_port                      = var.realtime_port
   ip_protocol                  = "tcp"
 }
