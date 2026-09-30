@@ -4,6 +4,7 @@ import path from 'node:path'
 const root=process.cwd()
 const failures=[]
 const required=[
+  'tests/architecture/dependency-boundaries.test.ts',
   'operations/runbooks/board-move-recovery.md',
   'tests/load/board-move.js',
   'backend/adapters/redis/cache.redis.ts',
