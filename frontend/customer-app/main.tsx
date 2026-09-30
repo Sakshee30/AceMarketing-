@@ -11,6 +11,7 @@ import {installAceTracking} from '../../packages/client-core/src/tracking'
 import {installFrontendPerformanceMonitoring} from '../../packages/client-core/src/frontend-performance'
 import {installBeforeUnloadDirtyWorkGuard} from '../src/lib/dirty-work'
 import {SkipLink,AccessibilityRoot} from '../../packages/design-system/src/Accessibility'
+import {normalizeCustomerHash,parseCustomerRoute} from '../src/customer-app/navigation'
 import '../src/foundation.css'
 import '../src/ace-platform.css'
 
@@ -23,17 +24,18 @@ const publicSiteTarget=()=>{
 }
 
 function CustomerApp(){
-  const [hash,setHash]=useState(()=>window.location.hash||'#/workspace')
+  const [hash,setHash]=useState(()=>normalizeCustomerHash(window.location.hash))
   useEffect(()=>{
     if(!window.location.hash)window.history.replaceState(null,'','#/workspace')
-    const sync=()=>setHash(window.location.hash||'#/workspace')
+    const sync=()=>setHash(normalizeCustomerHash(window.location.hash))
     window.addEventListener('hashchange',sync)
     return()=>window.removeEventListener('hashchange',sync)
   },[])
   const openApp=()=>{if(window.location.hash!=='#/workspace')window.location.hash='#/workspace';setHash('#/workspace')}
   const back=()=>window.location.assign(publicSiteTarget())
-  if(hash.startsWith('#/login'))return <LoginPage back={back} openApp={openApp}/>
-  if(!hash.startsWith('#/workspace'))return <LoadingState title="Opening workspace" description="Redirecting to the authenticated customer application."/>
+  const route=parseCustomerRoute(hash)
+  if(route.kind==='login')return <LoginPage back={back} openApp={openApp}/>
+  if(route.kind!=='workspace')return <LoadingState title="Opening workspace" description="Redirecting to the authenticated customer application."/>
   return <CustomerWorkspace back={back}/>
 }
 
