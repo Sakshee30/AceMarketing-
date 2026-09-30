@@ -6,6 +6,7 @@ const failures=[]
 const required=[
   'backend/src/control-api.mjs',
   'backend/src/platform/capability-registry.mjs',
+  'backend/src/platform/connector-registry.mjs',
   'backend/src/platform/control-change-store.mjs',
   'backend/src/platform/control-idempotency.mjs',
   'backend/src/platform/runtime-configuration.mjs',
@@ -75,6 +76,7 @@ const required=[
   'backend/tests/webhook-signing.test.mjs',
   'backend/tests/webhook-delivery.test.mjs',
   'backend/tests/control-capability.test.mjs',
+  'backend/tests/connector-registry.test.mjs',
   'backend/tests/control-change-store.test.mjs',
   'backend/tests/control-idempotency.test.mjs',
   'backend/tests/runtime-configuration.test.mjs',
