@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://acemarketing.local/contracts/capability.schema.json",
+  "title": "AceMarketing Capability Contract",
+  "type": "object",
+  "required": [
+    "id",
+    "criticality",
+    "desired",
+    "actual",
+    "fallback"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "criticality": {
+      "enum": [
+        "locked",
+        "required",
+        "product",
+        "optional",
+        "required-when-enabled"
+      ]
+    },
+    "desired": {
+      "enum": [
+        "enabled",
+        "read_only",
+        "draining",
+        "disabled",
+        "degraded"
+      ]
+    },
+    "actual": {
+      "enum": [
+        "enabled",
+        "read_only",
+        "draining",
+        "disabled",
+        "degraded",
+        "configured",
+        "unconfigured"
+      ]
+    },
+    "fallback": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "owner": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 160
+    },
+    "reason": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 1000
+    },
+    "requiresCapacityEvidence": {
+      "type": "boolean"
+    },
+    "configurationVersion": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 160
+    }
+  },
+  "additionalProperties": true
+}
