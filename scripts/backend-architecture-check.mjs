@@ -14,6 +14,7 @@ const required=[
   'backend/src/platform/resilience.mjs',
   'backend/src/platform/recovery-evidence.mjs',
   'backend/src/platform/process-health.mjs',
+  'backend/src/platform/drain-controller.mjs',
   'deploy/Dockerfile.control-api',  'backend/src/platform/problem-details.mjs',
   'backend/src/platform/request-context.mjs',
   'backend/src/platform/admission-control.mjs',
@@ -72,7 +73,8 @@ const required=[
   'backend/tests/provider-migration.test.mjs',
   'backend/tests/resilience.test.mjs',
   'backend/tests/recovery-evidence.test.mjs',
-  'backend/tests/process-health.test.mjs'
+  'backend/tests/process-health.test.mjs',
+  'backend/tests/drain-controller.test.mjs'
 ]
 for(const item of required)if(!fs.existsSync(path.join(root,item)))failures.push('missing required backend architecture foundation: '+item)
 
