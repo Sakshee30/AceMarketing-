@@ -363,3 +363,63 @@ export const getBoardSnapshot=async({workspaceId,boardId})=>
       }))
     }
   })
+
+
+export const listBoards=async({workspaceId,limit=100})=>
+  withTenantDbTransaction(workspaceId,async client=>{
+    const {rows}=await client.query(
+      `SELECT id,name,status,policy_version,ordering_revision,version,created_at,updated_at
+       FROM ace_boards
+       WHERE workspace_id=$1
+       ORDER BY updated_at DESC,id
+       LIMIT $2`,
+      [workspaceId,Math.max(1,Math.min(500,Number(limit)||100))]
+    )
+    return rows.map(row=>({
+      id:row.id,
+      name:row.name,
+      status:row.status,
+      policyVersion:Number(row.policy_version),
+      orderingRevision:Number(row.ordering_revision),
+      version:Number(row.version),
+      createdAt:row.created_at,
+      updatedAt:row.updated_at
+    }))
+  })
+
+export const createBoard=async({workspaceId,actorId,name})=>{
+  const normalizedName=String(name||'').trim()
+  if(normalizedName.length<2||normalizedName.length>120){
+    throw Object.assign(new Error('board name must contain 2 to 120 characters'),{status:400,code:'BOARD_NAME_INVALID'})
+  }
+  const boardId='board_'+randomUUID()
+  const columns=[
+    {id:'col_'+randomUUID(),stateKey:'backlog',name:'Backlog',position:1},
+    {id:'col_'+randomUUID(),stateKey:'in_progress',name:'In progress',position:2},
+    {id:'col_'+randomUUID(),stateKey:'done',name:'Done',position:3}
+  ]
+  return withTenantDbTransaction(workspaceId,async client=>{
+    const board=(await client.query(
+      `INSERT INTO ace_boards(id,workspace_id,name,created_by)
+       VALUES($1,$2,$3,$4)
+       RETURNING *`,
+      [boardId,workspaceId,normalizedName,actorId||null]
+    )).rows[0]
+    for(const column of columns){
+      await client.query(
+        `INSERT INTO ace_board_columns(id,workspace_id,board_id,state_key,name,position)
+         VALUES($1,$2,$3,$4,$5,$6)`,
+        [column.id,workspaceId,boardId,column.stateKey,column.name,column.position]
+      )
+    }
+    return {
+      id:board.id,
+      name:board.name,
+      status:board.status,
+      policyVersion:Number(board.policy_version),
+      orderingRevision:Number(board.ordering_revision),
+      version:Number(board.version),
+      columns
+    }
+  })
+}
