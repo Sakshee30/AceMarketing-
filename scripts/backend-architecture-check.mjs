@@ -6,6 +6,7 @@ const failures=[]
 const required=[
   'tooling/generators/backend-module.ts',
   'tests/security/tenant-isolation.test.mjs',
+  'tests/security/cross-tenant-platform-isolation.test.mjs',
   'packages/contracts/http/platform.openapi.yaml',
   'packages/contracts/events/platform-event.schema.json',
   'packages/contracts/capabilities/capability.schema.json',
