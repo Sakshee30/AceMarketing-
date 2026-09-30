@@ -1,6 +1,8 @@
 import {useEffect,useState} from 'react'
 import {useMutation,useQuery,useQueryClient} from '@tanstack/react-query'
 import {createHttpClient} from '../../../../../../../packages/client-core/src/http/http-client'
+import {createRealtimeClient} from '../../../../../../../packages/client-core/src/realtime/realtime-client'
+import {customerSessionLifecycle} from '../../../../app/session/session-lifecycle'
 import BoardDetailPage from '../board-detail/BoardDetailPage'
 
 type BoardSummary={
@@ -22,6 +24,30 @@ export default function BoardsPage({workspaceId}:{workspaceId:string}){
     queryKey:['boards',workspaceId],
     queryFn:()=>http.get<{items:BoardSummary[]}>('/api/boards',{headers:{'X-Workspace-ID':workspaceId}})
   })
+  useEffect(()=>{
+    const token=customerSessionLifecycle.token()
+    if(!token)return
+    const configured=String(import.meta.env.VITE_REALTIME_URL||'').trim()
+    const fallback=window.location.hostname==='localhost'
+      ?'ws://localhost:3003/api/realtime/ws'
+      :(window.location.protocol==='https:'?'wss://':'ws://')+window.location.host+'/api/realtime/ws'
+    const realtimeUrl=new URL(configured||fallback,window.location.href)
+    realtimeUrl.searchParams.set('workspace_id',workspaceId)
+    realtimeUrl.searchParams.set('topics','board.created')
+    const client=createRealtimeClient({
+      url:realtimeUrl.toString(),
+      token,
+      tokenTransport:'subprotocol',
+      onEvent:event=>{
+        if(event.type==='board.created'){
+          void queryClient.invalidateQueries({queryKey:['boards',workspaceId]})
+        }
+      }
+    })
+    client.connect()
+    return()=>client.close()
+  },[workspaceId,queryClient])
+
   const createMutation=useMutation({
     mutationFn:(boardName:string)=>http.post<{item:BoardSummary}>(
       '/api/boards',
