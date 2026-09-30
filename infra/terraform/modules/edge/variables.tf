@@ -20,6 +20,10 @@ variable "control_health_path" {
   type    = string
   default = "/healthz"
 }
+variable "integration_health_path" {
+  type    = string
+  default = "/healthz"
+}
 variable "certificate_arn" {
   type    = string
   default = null
