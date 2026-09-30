@@ -1,9 +1,11 @@
+import {boundedRetryDelay,shouldRetryBoundedRead} from './query-policy'
+import {scopeKey} from './scope-key'
+
 export const customerQueryKeys={
-  session:(sessionGeneration:number)=>['customer-session',sessionGeneration] as const,
-  workspaces:(sessionGeneration:number)=>['customer-session',sessionGeneration,'workspaces'] as const,
-  dashboard:(sessionGeneration:number,workspaceId:string,workspaceGeneration:number)=>[
-    'customer-session',sessionGeneration,'workspace',workspaceId,'generation',workspaceGeneration,'dashboard-summary'
-  ] as const
+  session:(sessionGeneration:number)=>scopeKey({sessionGeneration},'customer-session'),
+  workspaces:(sessionGeneration:number)=>scopeKey({sessionGeneration},'workspaces'),
+  dashboard:(sessionGeneration:number,workspaceId:string,workspaceGeneration:number)=>
+    scopeKey({sessionGeneration,workspaceId,workspaceGeneration},'dashboard-summary')
 }
 
 export const currentWorkspaceScopeId=()=>{
@@ -11,16 +13,6 @@ export const currentWorkspaceScopeId=()=>{
   return window.localStorage.getItem('ace_workspace_id')||'ws_default'
 }
 
-export const shouldRetryCustomerRead=(failureCount:number,error:any)=>{
-  if(failureCount>=2)return false
-  const status=Number(error?.status||0)
-  if(status===401||status===403||status===404||status===409||status===422)return false
-  if(status===429||status>=500||status===0)return true
-  return false
-}
+export const shouldRetryCustomerRead=(failureCount:number,error:any)=>shouldRetryBoundedRead(failureCount,error)
 
-export const customerRetryDelay=(attempt:number)=>{
-  const base=Math.min(2000,250*Math.pow(2,attempt))
-  const jitter=Math.floor(Math.random()*100)
-  return base+jitter
-}
+export const customerRetryDelay=(attempt:number)=>boundedRetryDelay(attempt)
