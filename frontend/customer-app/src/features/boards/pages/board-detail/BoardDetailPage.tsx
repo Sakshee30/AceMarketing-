@@ -46,7 +46,7 @@ export default function BoardDetailPage({workspaceId,boardId}:{workspaceId:strin
   useEffect(()=>{
     const token=customerSessionLifecycle.token()
     if(!token)return
-    const configured=String(import.meta.env.VITE_REALTIME_URL||'').trim()
+    const configured=String((import.meta as ImportMeta & {env?:Record<string,string|undefined>}).env?.VITE_REALTIME_URL||'').trim()
     const fallback=window.location.hostname==='localhost'
       ?'ws://localhost:3003/api/realtime/ws'
       :(window.location.protocol==='https:'?'wss://':'ws://')+window.location.host+'/api/realtime/ws'
