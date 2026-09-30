@@ -29,7 +29,7 @@ const workerId=process.env.WORKER_ID||('worker_'+randomUUID())
 const workerPolicy=workerClassPolicy()
 const ownsOutboxRelay=['all','general'].includes(workerPolicy.workerClass)
 if(ownsOutboxRelay){
-  registerOutboxHandler('board.item.moved',async event=>{
+  const publishBoardRealtimeEvent=async event=>{
     const payload=event.payload||{}
     await appendRealtimeEvent({
       id:String(payload.eventId||event.id),
@@ -39,7 +39,9 @@ if(ownsOutboxRelay){
       resourceId:event.aggregateId||payload.resourceId||null,
       payload
     })
-  })
+  }
+  registerOutboxHandler('board.item.moved',publishBoardRealtimeEvent)
+  registerOutboxHandler('board.created',publishBoardRealtimeEvent)
 }
 const runEmbeddedSchedulers=String(process.env.WORKER_RUN_SCHEDULERS??'true').toLowerCase()!=='false'
 const batchSize=Number(process.env.WORKER_BATCH_SIZE||10)
