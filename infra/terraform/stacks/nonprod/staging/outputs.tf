@@ -38,3 +38,28 @@ output "backup_vault_name" {
 output "service_log_groups" {
   value = module.observability.log_group_names
 }
+
+
+output "api_alb_dns_name" {
+  value = module.edge.api_alb_dns_name
+}
+
+output "control_alb_dns_name" {
+  value = module.edge.control_alb_dns_name
+}
+
+output "api_service_name" {
+  value = module.api_service.service_name
+}
+
+output "control_api_service_name" {
+  value = module.control_api_service.service_name
+}
+
+output "worker_service_name" {
+  value = module.worker_service.service_name
+}
+
+output "vpc_endpoint_ids" {
+  value = module.vpc_endpoints.interface_endpoint_ids
+}
