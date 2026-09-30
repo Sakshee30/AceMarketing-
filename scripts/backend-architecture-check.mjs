@@ -21,6 +21,7 @@ const required=[
   'backend/src/platform/custom-object-store.mjs',
   'backend/src/platform/worker-class.mjs',
   'backend/src/platform/runtime-role.mjs',
+  'backend/src/platform/cell-placement.mjs',
   'backend/src/scheduler.mjs',
   'backend/src/realtime.mjs',
   'deploy/Dockerfile.control-api',  'backend/src/platform/problem-details.mjs',
@@ -133,7 +134,9 @@ const required=[
   'backend/tests/custom-object-store.test.mjs',
   'backend/tests/worker-class.test.mjs',
   'backend/tests/runtime-role.test.mjs',
-  'backend/tests/worker-leasing.test.mjs'
+  'backend/tests/worker-leasing.test.mjs',
+  'backend/tests/cell-placement.test.mjs',
+  'backend/migrations/053_cell_placement.sql'
 ]
 for(const item of required)if(!fs.existsSync(path.join(root,item)))failures.push('missing required backend architecture foundation: '+item)
 
