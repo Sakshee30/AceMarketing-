@@ -1,5 +1,13 @@
 import {embeddedDatabase,pool} from '../database.mjs'
 
+const validatedWorkspaceId=value=>{
+  const id=String(value||'').trim()
+  if(!/^[A-Za-z0-9_-]{1,64}$/.test(id)){
+    throw Object.assign(new Error('workspaceId must be a bounded opaque identifier'),{status:400,code:'invalid_workspace_id'})
+  }
+  return id
+}
+
 const setLocalContext=async(client,{workspaceId=null,systemWorker=false}={})=>{
   if(embeddedDatabase)return
   await client.query(
@@ -10,11 +18,11 @@ const setLocalContext=async(client,{workspaceId=null,systemWorker=false}={})=>{
 
 export const withTenantDbTransaction=async(workspaceId,operation)=>{
   if(!pool)throw new Error('database unavailable')
-  if(!workspaceId)throw new Error('workspaceId is required')
+  const tenantWorkspaceId=validatedWorkspaceId(workspaceId)
   const client=await pool.connect()
   try{
     await client.query('BEGIN')
-    await setLocalContext(client,{workspaceId})
+    await setLocalContext(client,{workspaceId:tenantWorkspaceId})
     const result=await operation(client)
     await client.query('COMMIT')
     return result
