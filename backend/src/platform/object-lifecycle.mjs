@@ -3,6 +3,7 @@ import {extname} from 'node:path'
 import {embeddedDatabase,pool} from '../database.mjs'
 import {withTenantDbTransaction} from './tenant-db.mjs'
 import {createApprovedDownloadUrl,createQuarantineUploadUrl,objectStorageConfigured} from './object-storage.mjs'
+import {deleteSearchProjection} from './search-port.mjs'
 
 const DEFAULT_MAX_BYTES=Number(process.env.OBJECT_MAX_UPLOAD_BYTES||25*1024*1024)
 const WORKSPACE_MAX_BYTES=Number(process.env.OBJECT_WORKSPACE_MAX_BYTES||5*1024*1024*1024)
@@ -277,7 +278,7 @@ export const createDownloadGrant=async({workspaceId,objectId,role='viewer',actor
 }
 
 export const softDeleteObject=async({workspaceId,objectId,actorId=null})=>{
-  return withTenantDbTransaction(workspaceId,async client=>{
+  const deleted=await withTenantDbTransaction(workspaceId,async client=>{
     const object=(await client.query(
       `SELECT * FROM ace_objects WHERE workspace_id=$1 AND id=$2 FOR UPDATE`,
       [workspaceId,objectId]
@@ -294,4 +295,6 @@ export const softDeleteObject=async({workspaceId,objectId,actorId=null})=>{
     )
     return rows[0]||null
   })
+  if(deleted)await deleteSearchProjection({workspaceId,sourceType:'object',sourceId:objectId})
+  return deleted
 }
