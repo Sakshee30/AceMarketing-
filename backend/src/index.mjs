@@ -645,6 +645,7 @@ const server = http.createServer(async (req,res)=>{
         await markInboxProcessed({
           source:'whatsapp',
           eventId:String(event.id)+':'+String(event.kind||'event')+':'+String(event.status||''),
+          workspaceId,
           result:{received:true}
         }).catch(()=>{})
       }
@@ -713,6 +714,7 @@ const server = http.createServer(async (req,res)=>{
         await markInboxProcessed({
           source:'calls:'+String(event.provider||'provider'),
           eventId:String(event.id),
+          workspaceId,
           result:{received:true}
         }).catch(()=>{})
       }
