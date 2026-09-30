@@ -48,6 +48,6 @@ test('inbox deduplicates provider events and detects payload conflicts',{skip:em
     ()=>recordInboxEvent({source,eventId,workspaceId,payloadHash:'different'}),
     error=>error?.code==='inbox_event_conflict'
   )
-  const processed=await markInboxProcessed({source,eventId,result:{ok:true}})
+  const processed=await markInboxProcessed({source,eventId,workspaceId,result:{ok:true}})
   assert.ok(processed.processed_at)
 })
