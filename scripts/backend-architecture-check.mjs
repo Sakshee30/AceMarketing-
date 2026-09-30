@@ -221,6 +221,9 @@ if(fs.existsSync(stagingMainPath)){
   if(!stagingMain.includes('module "integration_ingress_service"')){
     failures.push('Staging must deploy provider integration ingress independently from the tenant API.')
   }
+  if(!stagingMain.includes('module "realtime_service"')){
+    failures.push('Staging must deploy the realtime WebSocket runtime independently from the tenant API.')
+  }
   if(!stagingMain.includes('ACE_RUNTIME_ROLE = "integration-ingress"')){
     failures.push('The integration ingress service must use the restricted runtime role.')
   }
@@ -239,6 +242,9 @@ if(fs.existsSync(edgeSourcePath)){
   }
   if(!edgeSource.includes('aws_lb_listener_rule" "integration_ingress')||!edgeSource.includes('aws_lb_target_group" "integration')){
     failures.push('Provider webhook ingress must route to an isolated target group.')
+  }
+  if(!edgeSource.includes('aws_lb_listener_rule" "realtime')||!edgeSource.includes('aws_lb_target_group" "realtime')){
+    failures.push('Live WebSocket traffic must route to the isolated realtime target group.')
   }
 }
 
