@@ -96,6 +96,28 @@ resource "aws_lb_target_group" "api" {
   tags                 = local.tags
 }
 
+resource "aws_lb_target_group" "integration" {
+  name        = substr("${var.name}-ingress-tg", 0, 32)
+  port        = var.api_port
+  protocol    = "HTTP"
+  target_type = "ip"
+  vpc_id      = var.vpc_id
+
+  health_check {
+    enabled             = true
+    path                = var.integration_health_path
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    timeout             = 5
+    interval            = 15
+    matcher             = "200-399"
+  }
+
+  deregistration_delay = 30
+  slow_start           = 30
+  tags                 = merge(local.tags, { TrustBoundary = "integration-ingress" })
+}
+
 resource "aws_lb_target_group" "control" {
   name        = substr("${var.name}-ctl-tg", 0, 32)
   port        = var.control_port
@@ -129,6 +151,28 @@ resource "aws_lb_listener" "api" {
     type             = "forward"
     target_group_arn = aws_lb_target_group.api.arn
   }
+}
+
+resource "aws_lb_listener_rule" "integration_ingress" {
+  listener_arn = aws_lb_listener.api.arn
+  priority     = 10
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.integration.arn
+  }
+
+  condition {
+    path_pattern {
+      values = [
+        "/api/billing/webhook",
+        "/api/webhooks/whatsapp",
+        "/api/webhooks/calls"
+      ]
+    }
+  }
+
+  tags = merge(local.tags, { TrustBoundary = "integration-ingress" })
 }
 
 resource "aws_lb_listener" "control" {
