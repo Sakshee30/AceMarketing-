@@ -20,11 +20,27 @@ import {createDrainController} from './platform/drain-controller.mjs'
 import {dispatchWebhookDelivery} from './platform/webhook-delivery-worker.mjs'
 import {recordWebhookDeliveryAttempt} from './platform/webhook-delivery-store.mjs'
 import {workerClassPolicy} from './platform/worker-class.mjs'
+import {registerOutboxHandler,runOutboxRelayBatch} from './platform/outbox-relay.mjs'
+import {appendRealtimeEvent} from './platform/realtime-event-store.mjs'
 
 if(!queueAvailable()) throw new Error('DATABASE_URL is required for the worker runtime')
 
 const workerId=process.env.WORKER_ID||('worker_'+randomUUID())
 const workerPolicy=workerClassPolicy()
+const ownsOutboxRelay=['all','general'].includes(workerPolicy.workerClass)
+if(ownsOutboxRelay){
+  registerOutboxHandler('board.item.moved',async event=>{
+    const payload=event.payload||{}
+    await appendRealtimeEvent({
+      id:String(payload.eventId||event.id),
+      workspaceId:event.workspaceId,
+      eventType:event.eventType,
+      resourceType:event.aggregateType||payload.resourceType||'board-item',
+      resourceId:event.aggregateId||payload.resourceId||null,
+      payload
+    })
+  })
+}
 const runEmbeddedSchedulers=String(process.env.WORKER_RUN_SCHEDULERS??'true').toLowerCase()!=='false'
 const batchSize=Number(process.env.WORKER_BATCH_SIZE||10)
 const pollMs=Number(process.env.WORKER_POLL_MS||1000)
@@ -166,6 +182,11 @@ const handle=async job=>{
 }
 
 const runBatch=async()=>{
+  if(ownsOutboxRelay){
+    await runOutboxRelayBatch({workerId:workerId+'_outbox',limit:50,leaseSeconds:30}).catch(error=>{
+      console.error('[worker] outbox relay failed',error instanceof Error?error.message:error)
+    })
+  }
   await reconcileStaleActivationDispatches({limit:25}).catch(error=>{
     console.error('[worker] activation reconciliation failed',error instanceof Error?error.message:error)
   })
