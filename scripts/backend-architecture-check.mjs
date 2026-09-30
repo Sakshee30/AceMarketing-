@@ -44,6 +44,7 @@ const required=[
   'backend/migrations/043_platform_control_idempotency.sql',
   'backend/migrations/044_runtime_configuration.sql',
   'backend/migrations/045_provider_migrations.sql',
+  'backend/migrations/046_emergency_environment_scope.sql',
   'backend/tests/platform-foundation.test.mjs',
   'backend/tests/platform-reliability.test.mjs',
   'backend/tests/tenant-context.test.mjs',
