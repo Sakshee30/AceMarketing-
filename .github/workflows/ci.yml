@@ -48,6 +48,8 @@ jobs:
         run: npm run migrate
       - name: Audit production dependencies
         run: npm run security:audit
+      - name: Validate database and admission capacity budgets
+        run: npm run capacity:budget
       - name: Enforce frontend architecture boundaries
         run: npm run frontend:architecture
       - name: Enforce backend architecture boundaries
@@ -127,6 +129,7 @@ jobs:
           npm run smoke
           npm run security:smoke
           npm run load:smoke
+          npm run capacity:smoke
           npm run e2e
           npm run e2e:standalone
           npm run frontend:telemetry:check
@@ -157,6 +160,7 @@ jobs:
           test -f backend/src/platform/recovery-evidence.mjs
           test -f backend/src/platform/process-health.mjs
           test -f backend/src/platform/drain-controller.mjs
+          test -f backend/src/platform/capacity-budget.mjs
           test -f backend/migrations/041_platform_control_changes.sql
           test -f backend/migrations/042_platform_change_versioning.sql
           test -f backend/migrations/043_platform_control_idempotency.sql
@@ -173,6 +177,7 @@ jobs:
           test -f backend/tests/recovery-evidence.test.mjs
           test -f backend/tests/process-health.test.mjs
           test -f backend/tests/drain-controller.test.mjs
+          test -f backend/tests/capacity-budget.test.mjs
           test -f backend/tests/control-capability.test.mjs
           test -f deploy/Dockerfile.control-api
           test -f vite.platform-admin.config.ts
@@ -466,6 +471,8 @@ jobs:
           test -f backend/scripts/restore.mjs
           test -f backend/scripts/security-smoke.mjs
           test -f backend/scripts/load-smoke.mjs
+          test -f backend/scripts/capacity-budget.mjs
+          test -f backend/scripts/capacity-smoke.mjs
           test -f deploy/Dockerfile.api
           test -f deploy/Dockerfile.frontend
           test -f deploy/nginx.conf
