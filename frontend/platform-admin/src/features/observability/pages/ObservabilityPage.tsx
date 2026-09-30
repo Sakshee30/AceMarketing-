@@ -13,6 +13,8 @@ export default function ObservabilityPage({result,loading,onRefresh}:{result:Con
   const admission=(data.apiAdmission||{}) as Record<string,unknown>
   const database=(data.database||{}) as Record<string,unknown>
   const recovery=(data.recovery||{}) as Record<string,unknown>
+  const capacityBudget=(data.capacityBudget||{}) as Record<string,unknown>
+  const databaseBudget=(capacityBudget.database||{}) as Record<string,unknown>
   return <section className="control-page" aria-busy={loading?'true':undefined}>
     <header className="control-page-head">
       <div><span>PLATFORM CONTROL CENTER</span><h1>Observability</h1><p>Release/config correlation, API admission saturation, database health, provider circuits and recovery evidence.</p></div>
@@ -35,6 +37,10 @@ export default function ObservabilityPage({result,loading,onRefresh}:{result:Con
       <article className="control-feature-card">
         <div className="control-feature-card-head"><div><strong>Recovery evidence</strong><small>Backup & DR exercises</small></div><span className="control-change-state">{String(recovery.passed??0)} passed</span></div>
         <p>{String(recovery.exercises??0)} exercises · {String(recovery.failed??0)} failed/manual-recovery · {String(recovery.backupRecords??0)} backup evidence records.</p>
+      </article>
+      <article className="control-feature-card">
+        <div className="control-feature-card-head"><div><strong>Database connection budget</strong><small>{String(capacityBudget.profile||'unspecified')} profile</small></div><span className="control-change-state">{capacityBudget.valid===true?'valid':'review'}</span></div>
+        <p>{String(databaseBudget.committed??'—')} committed / {String(databaseBudget.usable??'—')} usable connections · {String(databaseBudget.remaining??'—')} reserve headroom after committed pools.</p>
       </article>
     </div>
 
