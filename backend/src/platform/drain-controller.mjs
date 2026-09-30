@@ -47,7 +47,6 @@ export const createDrainController=()=> {
       const onDrained=()=>finish(true)
       waiters.add(onDrained)
       const timer=setTimeout(()=>finish(false),bounded)
-      timer.unref?.()
     })
   }
 
