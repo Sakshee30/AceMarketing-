@@ -289,6 +289,33 @@ export const decideWorkflowApproval=async({workspaceId,approvalId,actorId,decisi
   return updated
 })
 
+export const archiveWorkflow=async({workspaceId,id,actorId=null})=>withTenantDbTransaction(workspaceId,async client=>{
+  const workflow=(await client.query(
+    `SELECT * FROM ace_workflows WHERE workspace_id=$1 AND id=$2 FOR UPDATE`,
+    [workspaceId,id]
+  )).rows[0]
+  if(!workflow)return null
+  const active=(await client.query(
+    `SELECT count(*)::int AS count FROM ace_workflow_executions
+     WHERE workspace_id=$1 AND workflow_id=$2 AND status IN ('running','waiting','compensating')`,
+    [workspaceId,id]
+  )).rows[0]
+  if(Number(active?.count||0)>0){
+    throw Object.assign(new Error('workflow has active executions and cannot be archived'),{status:409,code:'workflow_active_executions'})
+  }
+  await client.query(
+    `UPDATE ace_workflow_versions SET status='retired'
+     WHERE workspace_id=$1 AND workflow_id=$2 AND status='published'`,
+    [workspaceId,id]
+  )
+  const {rows}=await client.query(
+    `UPDATE ace_workflows SET status='archived',updated_at=now()
+     WHERE workspace_id=$1 AND id=$2 RETURNING *`,
+    [workspaceId,id]
+  )
+  return {...rows[0],archivedBy:actorId}
+})
+
 export const listWorkflows=async({workspaceId,limit=100})=>withTenantDbTransaction(workspaceId,async client=>{
   const {rows}=await client.query(
     `SELECT id,name,status,latest_version,published_version,created_by,created_at,updated_at
