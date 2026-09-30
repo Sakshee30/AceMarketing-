@@ -24,7 +24,7 @@ export type WorkspaceFeatureManifest = {
 }
 
 const groupTabs:Record<WorkspaceFeatureGroupId,readonly string[]>={
-  workspace:['Overview','Launchpad'],
+  workspace:['Overview','Launchpad','Boards'],
   tracking:['AdSync','ChatGPT Ads','Funnel','Leak Monitor','Events','Adjustments','Diagnostics','Match Quality','Reconciliation','Fraud','Deep Links','Sites','Fingerprinting','Live Sync','Data Hub','Customer 360','Offline Attribution','Matchback','POS & Stores'],
   measurement:['Journeys','Identity','Models','AI Intelligence','Attribution','Planner','Reports','Grouped Performance','Executive Briefs'],
   conversion:['Enrich','Lead Grading','Behavior','Feed','Agents','Routing','Follow-ups','Calls','Meetings','Feedback','Approvals','Ask Ace'],
