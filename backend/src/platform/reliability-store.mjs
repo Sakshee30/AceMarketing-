@@ -71,7 +71,7 @@ export const appendOutboxEvent=async({
   })
 }
 
-export const claimOutboxEvents=async({workerId,limit=25,leaseSeconds=30})=>{
+export const claimOutboxEvents=async({workerId,limit=25,leaseSeconds=30,eventTypes=[]})=>{
   if(!pool)return []
   return withSystemDbTransaction(async client=>{
     const {rows}=await client.query(
@@ -82,6 +82,7 @@ export const claimOutboxEvents=async({workerId,limit=25,leaseSeconds=30})=>{
            (status='leased' AND leased_until<now())
          )
          AND available_at<=now()
+         AND (cardinality($4::text[])=0 OR event_type = ANY($4::text[]))
          ORDER BY available_at,created_at
          FOR UPDATE SKIP LOCKED
          LIMIT $1
@@ -91,7 +92,7 @@ export const claimOutboxEvents=async({workerId,limit=25,leaseSeconds=30})=>{
        FROM picked
        WHERE e.id=picked.id
        RETURNING e.*`,
-      [Math.max(1,Math.min(250,Number(limit)||25)),workerId,Math.max(5,Number(leaseSeconds)||30)]
+      [Math.max(1,Math.min(250,Number(limit)||25)),workerId,Math.max(5,Number(leaseSeconds)||30),(eventTypes||[]).map(String).filter(Boolean).slice(0,100)]
     )
     return rows
   })
