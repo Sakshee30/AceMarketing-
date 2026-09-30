@@ -1,5 +1,5 @@
 locals {
-  tags = merge(var.tags, { ManagedBy = "terraform", Module = "edge" })
+  tags              = merge(var.tags, { ManagedBy = "terraform", Module = "edge" })
   listener_port     = var.enable_https ? 443 : 80
   listener_protocol = var.enable_https ? "HTTPS" : "HTTP"
 }
@@ -122,8 +122,8 @@ resource "aws_lb_listener" "api" {
   load_balancer_arn = aws_lb.api.arn
   port              = local.listener_port
   protocol          = local.listener_protocol
-  certificate_arn = var.enable_https ? var.certificate_arn : null
-  ssl_policy      = var.enable_https ? "ELBSecurityPolicy-TLS13-1-2-2021-06" : null
+  certificate_arn   = var.enable_https ? var.certificate_arn : null
+  ssl_policy        = var.enable_https ? "ELBSecurityPolicy-TLS13-1-2-2021-06" : null
 
   default_action {
     type             = "forward"
@@ -136,6 +136,7 @@ resource "aws_lb_listener" "control" {
   port              = local.listener_port
   protocol          = local.listener_protocol
   certificate_arn   = var.enable_https ? var.certificate_arn : null
+  ssl_policy        = var.enable_https ? "ELBSecurityPolicy-TLS13-1-2-2021-06" : null
 
   default_action {
     type             = "forward"
