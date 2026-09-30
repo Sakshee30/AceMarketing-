@@ -39,6 +39,17 @@ const assertDb=()=>{
   if(!pool)throw Object.assign(new Error('control change store unavailable'),{status:503,code:'control_store_unavailable'})
 }
 
+const assertExpectedVersion=(current,expectedVersion)=>{
+  if(expectedVersion===undefined||expectedVersion===null)return
+  if(Number(expectedVersion)!==Number(current.version)){
+    throw Object.assign(new Error('change version conflict; refresh observed state before retrying'),{
+      status:409,
+      code:'change_version_conflict',
+      currentVersion:Number(current.version)
+    })
+  }
+}
+
 const addEvent=async(client,{changeId,actor,actorRole,eventType,fromState=null,toState=null,metadata={}})=>{
   await client.query(
     `INSERT INTO ace_platform_change_events
@@ -130,7 +141,7 @@ export const createPlatformChange=async({
 }
 
 export const updatePlatformChangePlan=async({
-  id,actor,actorRole,desiredState,impactReport,healthGates,rollbackPlan,ticket,risk
+  id,actor,actorRole,desiredState,impactReport,healthGates,rollbackPlan,ticket,risk,expectedVersion
 })=>{
   assertDb()
   const client=await pool.connect()
@@ -138,6 +149,7 @@ export const updatePlatformChangePlan=async({
     await client.query('BEGIN')
     const current=(await client.query('SELECT * FROM ace_platform_changes WHERE id=$1 FOR UPDATE',[id])).rows[0]
     if(!current)throw Object.assign(new Error('change not found'),{status:404})
+    assertExpectedVersion(current,expectedVersion)
     if(['approved','provisioning','deploying','verifying','stabilizing','completed','rollback_requested','rolling_back','rolled_back'].includes(current.state)){
       throw Object.assign(new Error('approved or executing change plan is immutable; create a new change or rollback request'),{status:409})
     }
@@ -159,7 +171,7 @@ export const updatePlatformChangePlan=async({
     const {rows}=await client.query(
       `UPDATE ace_platform_changes SET
         desired_state=$2::jsonb,impact_report=$3::jsonb,health_gates=$4::jsonb,rollback_plan=$5::jsonb,
-        ticket=$6,risk=$7,plan_digest=$8,updated_at=now()
+        ticket=$6,risk=$7,plan_digest=$8,updated_at=now(),version=version+1
        WHERE id=$1 RETURNING *`,
       [
         id,JSON.stringify(nextDesired||{}),JSON.stringify(nextImpact||{}),
@@ -176,7 +188,7 @@ export const updatePlatformChangePlan=async({
   }finally{client.release()}
 }
 
-export const transitionPlatformChange=async({id,toState,actor,actorRole,metadata={}})=>{
+export const transitionPlatformChange=async({id,toState,actor,actorRole,metadata={},expectedVersion})=>{
   assertDb()
   if(!allowedStates.has(toState))throw Object.assign(new Error('invalid change state'),{status:400})
   const client=await pool.connect()
@@ -184,6 +196,7 @@ export const transitionPlatformChange=async({id,toState,actor,actorRole,metadata
     await client.query('BEGIN')
     const current=(await client.query('SELECT * FROM ace_platform_changes WHERE id=$1 FOR UPDATE',[id])).rows[0]
     if(!current)throw Object.assign(new Error('change not found'),{status:404})
+    assertExpectedVersion(current,expectedVersion)
     const allowed=transitions[current.state]||[]
     if(!allowed.includes(toState))throw Object.assign(new Error('invalid change transition: '+current.state+' -> '+toState),{status:409})
     if(toState==='approved'){
@@ -197,7 +210,7 @@ export const transitionPlatformChange=async({id,toState,actor,actorRole,metadata
     const completedAt=toState==='completed'?new Date().toISOString():null
     const failureReason=toState==='failed'?cleanText(metadata?.reason||'change execution failed',2000):current.failure_reason
     const {rows}=await client.query(
-      `UPDATE ace_platform_changes SET state=$2,updated_at=now(),
+      `UPDATE ace_platform_changes SET state=$2,updated_at=now(),version=version+1,
         completed_at=CASE WHEN $2='completed' THEN now() ELSE completed_at END,
         failure_reason=$3
        WHERE id=$1 RETURNING *`,
@@ -212,7 +225,7 @@ export const transitionPlatformChange=async({id,toState,actor,actorRole,metadata
   }finally{client.release()}
 }
 
-export const decidePlatformChange=async({id,decision,approver,approverRole,comment=null})=>{
+export const decidePlatformChange=async({id,decision,approver,approverRole,comment=null,expectedVersion})=>{
   assertDb()
   if(!['approved','rejected'].includes(decision))throw Object.assign(new Error('invalid approval decision'),{status:400})
   const client=await pool.connect()
@@ -220,6 +233,7 @@ export const decidePlatformChange=async({id,decision,approver,approverRole,comme
     await client.query('BEGIN')
     const current=(await client.query('SELECT * FROM ace_platform_changes WHERE id=$1 FOR UPDATE',[id])).rows[0]
     if(!current)throw Object.assign(new Error('change not found'),{status:404})
+    assertExpectedVersion(current,expectedVersion)
     if(current.state!=='waiting_approval')throw Object.assign(new Error('change is not waiting for approval'),{status:409})
     if(current.requested_by===approver&&['high','critical'].includes(current.risk)){
       throw Object.assign(new Error('high-risk change requires a separate approver'),{status:403})
@@ -236,7 +250,7 @@ export const decidePlatformChange=async({id,decision,approver,approverRole,comme
       `UPDATE ace_platform_changes SET state=$2,plan_digest=$3,
         approved_plan_digest=CASE WHEN $2='approved' THEN $3 ELSE approved_plan_digest END,
         approved_at=CASE WHEN $2='approved' THEN now() ELSE approved_at END,
-        updated_at=now()
+        updated_at=now(),version=version+1
        WHERE id=$1 RETURNING *`,
       [id,next,planDigest]
     )
@@ -249,9 +263,9 @@ export const decidePlatformChange=async({id,decision,approver,approverRole,comme
   }finally{client.release()}
 }
 
-export const requestPlatformRollback=async({id,actor,actorRole,reason})=>{
+export const requestPlatformRollback=async({id,actor,actorRole,reason,expectedVersion})=>{
   return transitionPlatformChange({
-    id,toState:'rollback_requested',actor,actorRole,
+    id,toState:'rollback_requested',actor,actorRole,expectedVersion,
     metadata:{reason:cleanText(reason||'rollback requested',2000)}
   })
 }
