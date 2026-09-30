@@ -205,6 +205,24 @@ resource "aws_iam_role" "worker_task" {
   tags               = merge(local.service_tags, { Service = "worker" })
 }
 
+resource "aws_iam_role" "webhook_worker_task" {
+  name_prefix        = "ace-${var.environment}-webhook-worker-"
+  assume_role_policy = data.aws_iam_policy_document.ecs_task_assume.json
+  tags               = merge(local.service_tags, { Service = "webhook-worker" })
+}
+
+resource "aws_iam_role" "ai_document_worker_task" {
+  name_prefix        = "ace-${var.environment}-ai-document-worker-"
+  assume_role_policy = data.aws_iam_policy_document.ecs_task_assume.json
+  tags               = merge(local.service_tags, { Service = "ai-document-worker" })
+}
+
+resource "aws_iam_role" "scheduler_task" {
+  name_prefix        = "ace-${var.environment}-scheduler-"
+  assume_role_policy = data.aws_iam_policy_document.ecs_task_assume.json
+  tags               = merge(local.service_tags, { Service = "scheduler" })
+}
+
 data "aws_iam_policy_document" "api_task" {
   statement {
     sid = "Objects"
@@ -324,6 +342,106 @@ resource "aws_iam_role_policy" "worker_task" {
   name   = "runtime-capabilities"
   role   = aws_iam_role.worker_task.id
   policy = data.aws_iam_policy_document.worker_task.json
+}
+
+data "aws_iam_policy_document" "webhook_worker_task" {
+  statement {
+    sid = "DurableJobs"
+    actions = [
+      "sqs:ReceiveMessage",
+      "sqs:DeleteMessage",
+      "sqs:ChangeMessageVisibility",
+      "sqs:GetQueueAttributes"
+    ]
+    resources = [module.queue.queue_arn, module.queue.dead_letter_queue_arn]
+  }
+
+  statement {
+    sid       = "RuntimeSecrets"
+    actions   = ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"]
+    resources = values(module.secrets.secret_arns)
+  }
+
+  statement {
+    sid       = "DecryptRuntimeSecrets"
+    actions   = ["kms:Decrypt"]
+    resources = [module.secrets.kms_key_arn]
+  }
+}
+
+resource "aws_iam_role_policy" "webhook_worker_task" {
+  name   = "runtime-capabilities"
+  role   = aws_iam_role.webhook_worker_task.id
+  policy = data.aws_iam_policy_document.webhook_worker_task.json
+}
+
+data "aws_iam_policy_document" "ai_document_worker_task" {
+  statement {
+    sid = "Objects"
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectVersion",
+      "s3:PutObject",
+      "s3:AbortMultipartUpload",
+      "s3:ListBucket"
+    ]
+    resources = [module.object_storage.bucket_arn, "${module.object_storage.bucket_arn}/*"]
+  }
+
+  statement {
+    sid = "DurableJobs"
+    actions = [
+      "sqs:ReceiveMessage",
+      "sqs:DeleteMessage",
+      "sqs:ChangeMessageVisibility",
+      "sqs:GetQueueAttributes"
+    ]
+    resources = [module.queue.queue_arn, module.queue.dead_letter_queue_arn]
+  }
+
+  statement {
+    sid       = "RuntimeSecrets"
+    actions   = ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"]
+    resources = values(module.secrets.secret_arns)
+  }
+
+  statement {
+    sid       = "DecryptRuntimeSecrets"
+    actions   = ["kms:Decrypt"]
+    resources = [module.secrets.kms_key_arn]
+  }
+}
+
+resource "aws_iam_role_policy" "ai_document_worker_task" {
+  name   = "runtime-capabilities"
+  role   = aws_iam_role.ai_document_worker_task.id
+  policy = data.aws_iam_policy_document.ai_document_worker_task.json
+}
+
+data "aws_iam_policy_document" "scheduler_task" {
+  statement {
+    sid       = "JobAdmission"
+    actions   = ["sqs:SendMessage", "sqs:GetQueueAttributes"]
+    resources = [module.queue.queue_arn]
+  }
+
+  statement {
+    sid       = "RuntimeSecrets"
+    actions   = ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"]
+    resources = values(module.secrets.secret_arns)
+  }
+
+  statement {
+    sid       = "DecryptRuntimeSecrets"
+    actions   = ["kms:Decrypt"]
+    resources = [module.secrets.kms_key_arn]
+  }
+}
+
+resource "aws_iam_role_policy" "scheduler_task" {
+  name   = "runtime-capabilities"
+  role   = aws_iam_role.scheduler_task.id
+  policy = data.aws_iam_policy_document.scheduler_task.json
 }
 
 data "aws_iam_policy_document" "ecs_execution_secrets" {
@@ -457,7 +575,7 @@ module "webhook_worker_service" {
   subnet_ids               = module.network.application_subnet_ids
   security_group_ids       = [module.compute.task_security_group_id]
   execution_role_arn       = module.compute.execution_role_arn
-  task_role_arn            = aws_iam_role.worker_task.arn
+  task_role_arn            = aws_iam_role.webhook_worker_task.arn
   image                    = var.worker_image
   log_group_name           = module.observability.log_group_names["webhook-worker"]
   aws_region               = var.aws_region
@@ -479,7 +597,7 @@ module "ai_document_worker_service" {
   subnet_ids               = module.network.application_subnet_ids
   security_group_ids       = [module.compute.task_security_group_id]
   execution_role_arn       = module.compute.execution_role_arn
-  task_role_arn            = aws_iam_role.worker_task.arn
+  task_role_arn            = aws_iam_role.ai_document_worker_task.arn
   image                    = var.worker_image
   log_group_name           = module.observability.log_group_names["ai-document-worker"]
   aws_region               = var.aws_region
@@ -501,7 +619,7 @@ module "scheduler_service" {
   subnet_ids               = module.network.application_subnet_ids
   security_group_ids       = [module.compute.task_security_group_id]
   execution_role_arn       = module.compute.execution_role_arn
-  task_role_arn            = aws_iam_role.worker_task.arn
+  task_role_arn            = aws_iam_role.scheduler_task.arn
   image                    = var.worker_image
   command                  = ["node", "backend/src/scheduler.mjs"]
   log_group_name           = module.observability.log_group_names["scheduler"]
