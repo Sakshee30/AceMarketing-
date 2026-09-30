@@ -357,6 +357,8 @@ jobs:
           test -f backend/src/platform/policy-engine.mjs
           test -f backend/src/platform/workflow-store.mjs
           test -f backend/src/platform/usage-ledger.mjs
+          test -f backend/src/platform/object-lifecycle.mjs
+          test -f backend/src/platform/object-storage.mjs
           test -f backend/src/platform/egress-policy.mjs
           test -f backend/src/platform/webhook-signing.mjs
           test -f backend/migrations/034_platform_reliability.sql
@@ -365,6 +367,7 @@ jobs:
           test -f backend/migrations/037_forms_custom_objects.sql
           test -f backend/migrations/038_rules_workflows.sql
           test -f backend/migrations/039_usage_ledger.sql
+          test -f backend/migrations/040_object_lifecycle.sql
           test -f backend/tests/platform-foundation.test.mjs
           test -f backend/tests/platform-reliability.test.mjs
           test -f backend/tests/tenant-context.test.mjs
@@ -377,6 +380,7 @@ jobs:
           test -f backend/tests/forms-store.test.mjs
           test -f backend/tests/policy-workflow.test.mjs
           test -f backend/tests/usage-ledger.test.mjs
+          test -f backend/tests/object-lifecycle.test.mjs
           test -f backend/tests/egress-policy.test.mjs
           test -f backend/tests/webhook-signing.test.mjs
           test -f scripts/backend-architecture-check.mjs
