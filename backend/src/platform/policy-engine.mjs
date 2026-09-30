@@ -125,3 +125,23 @@ export const evaluatePublishedPolicyRule=async({workspaceId,id,input={},reasonCo
   )
   return {ruleId:id,ruleVersion:version,decision,reasonCode,evaluatorVersion:row.evaluator_version,inputSchemaVersion:Number(row.input_schema_version)}
 })
+
+export const listPolicyRules=async({workspaceId,limit=100})=>withTenantDbTransaction(workspaceId,async client=>{
+  const {rows}=await client.query(
+    `SELECT id,name,status,latest_version,published_version,created_by,created_at,updated_at
+     FROM ace_policy_rules WHERE workspace_id=$1 ORDER BY updated_at DESC LIMIT $2`,
+    [workspaceId,Math.max(1,Math.min(250,Number(limit)||100))]
+  )
+  return rows
+})
+
+export const getPolicyRule=async({workspaceId,id})=>withTenantDbTransaction(workspaceId,async client=>{
+  const rule=(await client.query('SELECT * FROM ace_policy_rules WHERE workspace_id=$1 AND id=$2',[workspaceId,id])).rows[0]
+  if(!rule)return null
+  const versions=(await client.query(
+    `SELECT version,input_schema_version,expression,expression_hash,evaluator_version,status,created_by,created_at,published_at
+     FROM ace_policy_rule_versions WHERE workspace_id=$1 AND rule_id=$2 ORDER BY version DESC`,
+    [workspaceId,id]
+  )).rows
+  return {...rule,versions}
+})
