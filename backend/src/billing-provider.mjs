@@ -1,6 +1,7 @@
 import {createHmac,randomUUID,timingSafeEqual} from 'node:crypto'
 import {pool} from './database.mjs'
 import {applyBillingSubscriptionChange,billingReconciliationHistory} from './platform/billing-lifecycle.mjs'
+import {withProviderDeadline} from './platform/provider-execution.mjs'
 export {billingReconciliationHistory} from './platform/billing-lifecycle.mjs'
 const stripeSecret=process.env.STRIPE_SECRET_KEY||''
 const webhookSecret=process.env.STRIPE_WEBHOOK_SECRET||''
@@ -29,11 +30,13 @@ const formBody=entries=>{
 
 const stripeRequest=async(path,body)=>{
   if(!stripeSecret)throw new Error('Stripe billing is not configured')
-  const response=await fetch('https://api.stripe.com'+path,{
+  const timeoutMs=Math.max(500,Math.min(30_000,Number(process.env.BILLING_PROVIDER_TIMEOUT_MS||8000)))
+  const response=await withProviderDeadline('stripe',signal=>fetch('https://api.stripe.com'+path,{
     method:'POST',
     headers:{Authorization:'Bearer '+stripeSecret,'Content-Type':'application/x-www-form-urlencoded'},
-    body:formBody(body)
-  })
+    body:formBody(body),
+    signal
+  }),{timeoutMs})
   const raw=await response.text()
   let data={}
   try{data=raw?JSON.parse(raw):{}}catch{data={raw:raw.slice(0,2000)}}
@@ -170,7 +173,8 @@ export const processStripeEvent=async event=>{
   if(!existing.rowCount){
     await pool.query(
       `INSERT INTO ace_billing_events (id,provider,provider_event_id,workspace_id,event_type,payload_summary,status)
-       VALUES ($1,'stripe',$2,$3,$4,$5::jsonb,'received')`,
+       VALUES ($1,'stripe',$2,$3,$4,$5::jsonb,'received')
+       ON CONFLICT (provider,provider_event_id) DO NOTHING`,
       [eventRowId,event.id,workspaceId,event.type,JSON.stringify({objectId:object.id||null,customer:object.customer||null,subscription:object.subscription||null})]
     )
   }
