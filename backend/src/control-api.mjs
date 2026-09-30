@@ -7,6 +7,7 @@ import {capabilitySnapshot,dependencySnapshot,providerSnapshot} from './platform
 import {platformFeatureCatalog} from './platform/feature-catalog.mjs'
 import {registrySummary} from './ai-registry.mjs'
 import {createPlatformChange,decidePlatformChange,getPlatformChange,listPlatformChanges,requestPlatformRollback,transitionPlatformChange,updatePlatformChangePlan} from './platform/control-change-store.mjs'
+import {beginControlCommand,finishControlCommand} from './platform/control-idempotency.mjs'
 
 const PORT=Number(process.env.CONTROL_PORT||3002)
 const IS_PROD=process.env.NODE_ENV==='production'
@@ -72,6 +73,38 @@ const requireControl=(res,session,action)=>{
   if(canControl(session,action))return true
   json(res,403,{error:'platform control permission denied',action})
   return false
+}
+
+const runControlMutation=async({req,res,session,operation,body,successStatus=200,execute})=>{
+  let command
+  try{
+    command=await beginControlCommand({
+      actor:String(session.sub||'platform-control'),
+      key:req.headers['idempotency-key'],
+      operation,
+      requestBody:body
+    })
+  }catch(error){
+    return json(res,Number(error?.status||400),{
+      error:error instanceof Error?error.message:'control command idempotency check failed',
+      code:error?.code||'control_idempotency_failed'
+    })
+  }
+  if(command.replay)return json(res,command.responseStatus,command.responseBody,{'Idempotency-Replayed':'true'})
+  try{
+    const result=await execute()
+    await finishControlCommand({id:command.command.id,responseStatus:successStatus,responseBody:result}).catch(()=>{})
+    return json(res,successStatus,result)
+  }catch(error){
+    const status=Number(error?.status||400)
+    const payload={
+      error:error instanceof Error?error.message:'control command failed',
+      ...(error?.code?{code:error.code}:{}),
+      ...(error?.currentVersion!==undefined?{currentVersion:error.currentVersion}:{})
+    }
+    await finishControlCommand({id:command.command.id,responseStatus:status,responseBody:payload}).catch(()=>{})
+    return json(res,status,payload)
+  }
 }
 
 const cookieHeader=token=>{
@@ -208,9 +241,12 @@ const server=http.createServer(async(req,res)=>{
 
   if(url.pathname==='/control-api/changes'&&req.method==='POST'){
     if(!requireControl(res,session,'request'))return
-    try{
-      const body=await readBody(req,64*1024)
-      const item=await createPlatformChange({
+    let body
+    try{body=await readBody(req,64*1024)}
+    catch(error){return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'invalid change request'})}
+    return runControlMutation({
+      req,res,session,operation:'change.create',body,successStatus:201,
+      execute:()=>createPlatformChange({
         environment:body.environment,
         scopeType:body.scopeType,
         scopeId:body.scopeId||null,
@@ -225,10 +261,7 @@ const server=http.createServer(async(req,res)=>{
         healthGates:Array.isArray(body.healthGates)?body.healthGates:[],
         rollbackPlan:body.rollbackPlan||{}
       })
-      return json(res,201,item)
-    }catch(error){
-      return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'change request creation failed'})
-    }
+    })
   }
 
   const changeMatch=url.pathname.match(/^\/control-api\/changes\/([^/]+)$/)
@@ -241,10 +274,14 @@ const server=http.createServer(async(req,res)=>{
   const planMatch=url.pathname.match(/^\/control-api\/changes\/([^/]+)\/plan$/)
   if(planMatch&&req.method==='PATCH'){
     if(!requireControl(res,session,'plan'))return
-    try{
-      const body=await readBody(req,64*1024)
-      const item=await updatePlatformChangePlan({
-        id:decodeURIComponent(planMatch[1]),
+    let body
+    try{body=await readBody(req,64*1024)}
+    catch(error){return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'invalid change plan'})}
+    const id=decodeURIComponent(planMatch[1])
+    return runControlMutation({
+      req,res,session,operation:'change.plan:'+id,body,
+      execute:()=>updatePlatformChangePlan({
+        id,
         actor:session.sub,
         actorRole:session.role,
         desiredState:body.desiredState,
@@ -255,66 +292,66 @@ const server=http.createServer(async(req,res)=>{
         risk:body.risk,
         expectedVersion:body.expectedVersion
       })
-      return json(res,200,item)
-    }catch(error){
-      return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'change plan update failed'})
-    }
+    })
   }
 
   const transitionMatch=url.pathname.match(/^\/control-api\/changes\/([^/]+)\/transition$/)
   if(transitionMatch&&req.method==='POST'){
     if(!requireControl(res,session,'transition'))return
-    try{
-      const body=await readBody(req)
-      const item=await transitionPlatformChange({
-        id:decodeURIComponent(transitionMatch[1]),
+    let body
+    try{body=await readBody(req)}
+    catch(error){return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'invalid change transition'})}
+    const id=decodeURIComponent(transitionMatch[1])
+    return runControlMutation({
+      req,res,session,operation:'change.transition:'+id,body,
+      execute:()=>transitionPlatformChange({
+        id,
         toState:String(body.toState||''),
         actor:session.sub,
         actorRole:session.role,
         metadata:body.metadata||{},
         expectedVersion:body.expectedVersion
       })
-      return json(res,200,item)
-    }catch(error){
-      return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'change transition failed'})
-    }
+    })
   }
 
   const decisionMatch=url.pathname.match(/^\/control-api\/changes\/([^/]+)\/decision$/)
   if(decisionMatch&&req.method==='POST'){
     if(!requireControl(res,session,'approve'))return
-    try{
-      const body=await readBody(req)
-      const item=await decidePlatformChange({
-        id:decodeURIComponent(decisionMatch[1]),
+    let body
+    try{body=await readBody(req)}
+    catch(error){return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'invalid change decision'})}
+    const id=decodeURIComponent(decisionMatch[1])
+    return runControlMutation({
+      req,res,session,operation:'change.decision:'+id,body,
+      execute:()=>decidePlatformChange({
+        id,
         decision:String(body.decision||''),
         approver:session.sub,
         approverRole:session.role,
         comment:body.comment||null,
         expectedVersion:body.expectedVersion
       })
-      return json(res,200,item)
-    }catch(error){
-      return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'change approval failed'})
-    }
+    })
   }
 
   const rollbackMatch=url.pathname.match(/^\/control-api\/changes\/([^/]+)\/rollback$/)
   if(rollbackMatch&&req.method==='POST'){
     if(!requireControl(res,session,'rollback'))return
-    try{
-      const body=await readBody(req)
-      const item=await requestPlatformRollback({
-        id:decodeURIComponent(rollbackMatch[1]),
+    let body
+    try{body=await readBody(req)}
+    catch(error){return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'invalid rollback request'})}
+    const id=decodeURIComponent(rollbackMatch[1])
+    return runControlMutation({
+      req,res,session,operation:'change.rollback:'+id,body,
+      execute:()=>requestPlatformRollback({
+        id,
         actor:session.sub,
         actorRole:session.role,
         reason:body.reason,
         expectedVersion:body.expectedVersion
       })
-      return json(res,200,item)
-    }catch(error){
-      return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'rollback request failed'})
-    }
+    })
   }
   const match=url.pathname.match(/^\/control-api\/([a-z0-9-]+)$/)
   if(req.method==='GET'&&match){
