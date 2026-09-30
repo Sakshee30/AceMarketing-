@@ -1,0 +1,67 @@
+schemaVersion: 1
+status: pending-evidence
+environment: staging
+region: replace-before-plan
+owner: platform-sre
+reviewedAt: null
+rules:
+  - id: cloudfront-rps
+    service: cloudfront
+    approvedLimit: null
+    requiredHeadroom: null
+    evidence: null
+  - id: alb-capacity
+    service: elastic-load-balancing
+    approvedLimit: null
+    requiredHeadroom: null
+    evidence: null
+  - id: waf-capacity
+    service: wafv2
+    approvedLimit: null
+    requiredHeadroom: null
+    evidence: null
+  - id: vpc-address-space
+    service: vpc
+    approvedLimit: null
+    requiredHeadroom: null
+    evidence: null
+  - id: ecs-task-scaling
+    service: ecs
+    approvedLimit: null
+    requiredHeadroom: null
+    evidence: null
+  - id: database-connections
+    service: rds
+    approvedLimit: null
+    requiredHeadroom: null
+    evidence: null
+  - id: queue-throughput
+    service: sqs
+    approvedLimit: null
+    requiredHeadroom: null
+    evidence: null
+  - id: object-storage
+    service: s3
+    approvedLimit: null
+    requiredHeadroom: null
+    evidence: null
+  - id: secrets-retrieval
+    service: secrets-manager
+    approvedLimit: null
+    requiredHeadroom: null
+    evidence: null
+  - id: kms-operations
+    service: kms
+    approvedLimit: null
+    requiredHeadroom: null
+    evidence: null
+  - id: telemetry-ingestion
+    service: observability
+    approvedLimit: null
+    requiredHeadroom: null
+    evidence: null
+  - id: email-provider
+    service: external-email
+    approvedLimit: null
+    requiredHeadroom: null
+    evidence: null
