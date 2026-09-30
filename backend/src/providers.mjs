@@ -1,6 +1,7 @@
 import { createHash, createHmac } from 'node:crypto'
 import { decryptSecret } from './vault.mjs'
 import { getState, withWorkspace } from './store.mjs'
+import {withProviderDeadline} from './platform/provider-execution.mjs'
 
 const sha=value=>createHash('sha256').update(String(value).trim().toLowerCase()).digest('hex')
 const credentialFor=async(workspaceId,connector)=>withWorkspace(workspaceId,async()=>{
@@ -12,7 +13,9 @@ const credentialFor=async(workspaceId,connector)=>withWorkspace(workspaceId,asyn
 
 const requestJson=async(url,options)=>{
   const started=Date.now()
-  const response=await fetch(url,options)
+  const providerHost=(()=>{try{return new URL(url).hostname}catch{return 'provider'}})()
+  const timeoutMs=Math.max(250,Number(process.env.PROVIDER_HTTP_TIMEOUT_MS||8000))
+  const response=await withProviderDeadline(providerHost,signal=>fetch(url,{...options,signal}),{timeoutMs})
   const text=await response.text()
   let body
   try{body=text?JSON.parse(text):{}}catch{body={raw:text.slice(0,2000)}}
