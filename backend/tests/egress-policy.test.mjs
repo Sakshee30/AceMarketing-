@@ -23,3 +23,12 @@ test('egress policy rejects embedded credentials and unsafe schemes',async()=>{
     error=>error?.code==='unsupported_outbound_scheme'
   )
 })
+
+
+test('egress policy blocks IPv4-mapped IPv6 and deprecated site-local ranges',()=>{
+  assert.equal(isBlockedOutboundIp('::ffff:7f00:1'),true)
+  assert.equal(isBlockedOutboundIp('::ffff:0a00:1'),true)
+  assert.equal(isBlockedOutboundIp('::ffff:c0a8:101'),true)
+  assert.equal(isBlockedOutboundIp('fec0::1'),true)
+  assert.equal(isBlockedOutboundIp('2606:4700:4700::1111'),false)
+})
