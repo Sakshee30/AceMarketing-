@@ -76,3 +76,16 @@ output "cloudtrail_arn" {
 output "guardduty_detector_id" {
   value = module.security_baseline.guardduty_detector_id
 }
+
+
+output "webhook_worker_service_name" {
+  value = module.webhook_worker_service.service_name
+}
+
+output "ai_document_worker_service_name" {
+  value = module.ai_document_worker_service.service_name
+}
+
+output "scheduler_service_name" {
+  value = module.scheduler_service.service_name
+}
