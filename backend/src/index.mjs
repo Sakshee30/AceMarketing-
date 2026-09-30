@@ -40,8 +40,9 @@ import {queueAiActivationExecution} from './ai-activation-execution.mjs'
 import {analystToolNames,executeAnalystTool,executeAnalystToolSet} from './ai-analyst-tools.mjs'
 import {deploymentHealth,listDeploymentControls,saveDeploymentControl} from './ai-deployment-controls.mjs'
 import {aiMonitoringSnapshot} from './ai-monitoring.mjs'
-import {createRequestContext} from './platform/request-context.mjs'
+import {bindActorToRequestContext,createRequestContext} from './platform/request-context.mjs'
 import {globalAdmission} from './platform/admission-control.mjs'
+import {assertActorWorkspace,requestedWorkspaceId,tenantExecutionScope} from './platform/tenant-context.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -570,7 +571,12 @@ const server = http.createServer(async (req,res)=>{
   const url = new URL(req.url, `http://localhost:${PORT}`)
   if (req.method === 'OPTIONS') return send(req,res,204,{})
   if (req.headers.origin && !resolveCorsOrigin(req.headers.origin,allowedOrigins)) return send(req,res,403,{error:'origin not allowed'})
-  let workspaceId=String(req.headers['x-workspace-id']||process.env.DEFAULT_WORKSPACE_ID||'ws_default')
+  let workspaceId
+  try{
+    workspaceId=requestedWorkspaceId(req,{defaultWorkspaceId:process.env.DEFAULT_WORKSPACE_ID||'ws_default'})
+  }catch(error){
+    return send(req,res,400,{error:error instanceof Error?error.message:'invalid workspace scope',code:error?.code||'invalid_workspace_scope'})
+  }
   if(url.pathname==='/api/consent'){
     if(req.method==='GET'){
       const subjectType=url.searchParams.get('subjectType')==='customer'?'customer':'visitor'
@@ -739,7 +745,9 @@ const server = http.createServer(async (req,res)=>{
     if(token){
       authenticatedUser=verifyToken(token,JWT_SECRET)
       if(!authenticatedUser) return send(req,res,401,{error:'unauthorized'})
-      if(authenticatedUser.workspaceId!==workspaceId) return send(req,res,403,{error:'token workspace mismatch'})
+      try{assertActorWorkspace(authenticatedUser,workspaceId)}catch(error){
+        return send(req,res,403,{error:'token workspace mismatch',code:error?.code||'workspace_scope_mismatch'})
+      }
     }else if(AUTH_REQUIRED||url.pathname==='/api/auth/me'){
       return send(req,res,401,{error:'unauthorized'})
     }
@@ -756,6 +764,8 @@ const server = http.createServer(async (req,res)=>{
       if(session.expiresAt&&Date.parse(session.expiresAt)<=Date.now()) return send(req,res,401,{error:'session expired'})
       authenticatedUser={...authenticatedUser,role:member.role,email:member.email,userId:member.id}
       req.user=authenticatedUser
+      req.tenantScope=tenantExecutionScope({actor:authenticatedUser,workspaceId})
+      req.context=bindActorToRequestContext(req.context,{actor:authenticatedUser,workspaceId,tenantId:req.tenantScope.tenantId})
       const permission=permissionForRequest(req.method||'GET',url.pathname)
       if(!hasPermission(member.role,permission)) return send(req,res,403,{error:'forbidden',permission,role:member.role})
     }
