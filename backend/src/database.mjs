@@ -56,6 +56,7 @@ const createEmbeddedPool=async()=>{
     // the RLS migration; embedded tests exercise the application tenant context.
     if(file==='036_platform_rls.sql')continue
     if(file==='037_forms_custom_objects.sql')sql=sql.replace(/ALTER TABLE ace_forms ENABLE ROW LEVEL SECURITY;[\s\S]*$/m,'')
+    if(file==='038_rules_workflows.sql')sql=sql.replace(/ALTER TABLE ace_policy_rules ENABLE ROW LEVEL SECURITY;[\s\S]*$/m,'')
     // pg-mem's parser rejects comment-only compatibility marker files.
     // Production migration tooling may retain those markers, but embedded setup
     // should simply skip files with no executable SQL.
