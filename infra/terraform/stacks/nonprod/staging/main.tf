@@ -78,7 +78,7 @@ module "observability" {
 
   name               = var.environment
   log_retention_days = var.log_retention_days
-  services           = ["api", "integration-ingress", "realtime", "control-api", "worker", "webhook-worker", "ai-document-worker", "scheduler"]
+  services           = ["api", "integration-ingress", "realtime", "control-api", "worker", "workflow-worker", "webhook-worker", "ai-document-worker", "scheduler"]
   tags               = local.service_tags
 }
 
@@ -210,6 +210,12 @@ resource "aws_iam_role" "worker_task" {
   name_prefix        = "ace-${var.environment}-worker-"
   assume_role_policy = data.aws_iam_policy_document.ecs_task_assume.json
   tags               = merge(local.service_tags, { Service = "worker" })
+}
+
+resource "aws_iam_role" "workflow_worker_task" {
+  name_prefix        = "ace-${var.environment}-workflow-worker-"
+  assume_role_policy = data.aws_iam_policy_document.ecs_task_assume.json
+  tags               = merge(local.service_tags, { Service = "workflow-worker" })
 }
 
 resource "aws_iam_role" "webhook_worker_task" {
@@ -372,6 +378,37 @@ resource "aws_iam_role_policy" "worker_task" {
   name   = "runtime-capabilities"
   role   = aws_iam_role.worker_task.id
   policy = data.aws_iam_policy_document.worker_task.json
+}
+
+data "aws_iam_policy_document" "workflow_worker_task" {
+  statement {
+    sid = "DurableJobs"
+    actions = [
+      "sqs:ReceiveMessage",
+      "sqs:DeleteMessage",
+      "sqs:ChangeMessageVisibility",
+      "sqs:GetQueueAttributes"
+    ]
+    resources = [module.queue.queue_arn, module.queue.dead_letter_queue_arn]
+  }
+
+  statement {
+    sid       = "RuntimeSecrets"
+    actions   = ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"]
+    resources = values(module.secrets.secret_arns)
+  }
+
+  statement {
+    sid       = "DecryptRuntimeSecrets"
+    actions   = ["kms:Decrypt"]
+    resources = [module.secrets.kms_key_arn]
+  }
+}
+
+resource "aws_iam_role_policy" "workflow_worker_task" {
+  name   = "runtime-capabilities"
+  role   = aws_iam_role.workflow_worker_task.id
+  policy = data.aws_iam_policy_document.workflow_worker_task.json
 }
 
 data "aws_iam_policy_document" "webhook_worker_task" {
@@ -619,6 +656,28 @@ module "worker_service" {
   cpu_target_percent       = 65
   readonly_root_filesystem = false
   environment              = merge(local.common_runtime_environment, { ACE_SERVICE_NAME = "worker", WORKER_CLASS = "general", WORKER_RUN_SCHEDULERS = "false" })
+  secrets                  = local.common_runtime_secrets
+  tags                     = local.service_tags
+}
+
+module "workflow_worker_service" {
+  source = "../../../modules/ecs-service"
+
+  name                     = "ace-${var.environment}-workflow-worker"
+  cluster_arn              = module.compute.cluster_arn
+  subnet_ids               = module.network.application_subnet_ids
+  security_group_ids       = [module.compute.task_security_group_id]
+  execution_role_arn       = module.compute.execution_role_arn
+  task_role_arn            = aws_iam_role.workflow_worker_task.arn
+  image                    = var.worker_image
+  log_group_name           = module.observability.log_group_names["workflow-worker"]
+  aws_region               = var.aws_region
+  desired_count            = 2
+  min_capacity             = 2
+  max_capacity             = 16
+  cpu_target_percent       = 60
+  readonly_root_filesystem = true
+  environment              = merge(local.common_runtime_environment, { ACE_SERVICE_NAME = "workflow-worker", WORKER_CLASS = "workflow", WORKER_RUN_SCHEDULERS = "false" })
   secrets                  = local.common_runtime_secrets
   tags                     = local.service_tags
 }
