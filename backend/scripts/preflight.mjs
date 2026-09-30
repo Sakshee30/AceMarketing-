@@ -1,3 +1,4 @@
+import {assertCapacityBudget} from '../src/platform/capacity-budget.mjs'
 const required=[
   'DATABASE_URL','JWT_SECRET','ADMIN_EMAIL','ADMIN_PASSWORD_HASH','CORS_ALLOWED_ORIGINS',
   'CONNECTOR_ENCRYPTION_KEY','CONNECTOR_OAUTH_STATE_SECRET'
@@ -10,6 +11,7 @@ for(const key of ['JWT_SECRET','CONNECTOR_ENCRYPTION_KEY','CONNECTOR_OAUTH_STATE
 if(process.env.NODE_ENV!=='production')weak.push('NODE_ENV must be production')
 if(process.env.ALLOW_FILE_STORE_IN_PRODUCTION==='true')weak.push('ALLOW_FILE_STORE_IN_PRODUCTION should remain false')
 if((process.env.CUSTOM_INTEGRATION_ALLOW_HTTP||'false')==='true')weak.push('CUSTOM_INTEGRATION_ALLOW_HTTP should remain false')
+try{assertCapacityBudget()}catch(error){weak.push(error instanceof Error?error.message:'capacity budget invalid')}
 const agentTransportMissing=[]
 if(!process.env.VOICE_QUALIFICATION_WEBHOOK_URL&&!process.env.VOICE_AGENT_WEBHOOK_URL)agentTransportMissing.push('VOICE_QUALIFICATION_WEBHOOK_URL or VOICE_AGENT_WEBHOOK_URL')
 if(!process.env.MEETING_REMINDER_WEBHOOK_URL)agentTransportMissing.push('MEETING_REMINDER_WEBHOOK_URL')
