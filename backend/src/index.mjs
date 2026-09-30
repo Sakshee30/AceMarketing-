@@ -61,6 +61,7 @@ import {runtimeGuardForRequest} from './platform/runtime-config-runtime.mjs'
 import {beginProcessDrain,livenessState,markStartupComplete,readinessState,startupState} from './platform/process-health.mjs'
 import {runtimeRoleAllows,runtimeRolePolicy} from './platform/runtime-role.mjs'
 import {assertWorkspaceCell} from './platform/cell-placement.mjs'
+import {getBoardOperation,getBoardSnapshot,moveBoardItem} from './platform/board-store.mjs'
 
 const runtimeRole=runtimeRolePolicy()
 
@@ -6613,6 +6614,57 @@ const server = http.createServer(async (req,res)=>{
       const body=await readBody(req)
       const decision=await evaluatePublishedPolicyRule({workspaceId,id:decodeURIComponent(policyEvaluateMatch[1]),input:body.input||{}})
       return decision?send(req,res,200,decision):send(req,res,404,{error:'published policy rule not found'})
+    }
+
+    const boardSnapshotMatch=url.pathname.match(/^\/api\/boards\/([^/]+)$/)
+    if(req.method==='GET'&&boardSnapshotMatch){
+      try{
+        const snapshot=await getBoardSnapshot({workspaceId,boardId:decodeURIComponent(boardSnapshotMatch[1])})
+        return snapshot?send(req,res,200,snapshot):send(req,res,404,{error:'board not found',code:'BOARD_NOT_FOUND'})
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'board read failed',code:error?.code||'BOARD_READ_FAILED'})
+      }
+    }
+
+    const boardMoveMatch=url.pathname.match(/^\/api\/boards\/([^/]+)\/moves$/)
+    if(req.method==='POST'&&boardMoveMatch){
+      const body=await readBody(req)
+      const boardId=decodeURIComponent(boardMoveMatch[1])
+      try{
+        const result=await moveBoardItem({
+          workspaceId,
+          actorId:req.user?.userId||null,
+          requestId:req.requestId,
+          correlationId:req.context?.traceId||req.requestId,
+          command:{...body,boardId},
+          authorize:()=>Boolean(req.user?hasPermission(req.user.role,'boards.move'):!AUTH_REQUIRED)
+        })
+        return send(req,res,200,result)
+      }catch(error){
+        const status=Number(error?.status||500)
+        return send(req,res,status,{
+          error:error instanceof Error?error.message:'board move failed',
+          code:error?.code||'BOARD_MOVE_FAILED',
+          operationId:body?.operationId||null,
+          retryable:Boolean(error?.retryable),
+          ...(error?.currentVersion?{currentVersion:error.currentVersion}:{}),
+          ...(error?.currentPolicyVersion?{currentPolicyVersion:error.currentPolicyVersion}:{})
+        })
+      }
+    }
+
+    const boardOperationMatch=url.pathname.match(/^\/api\/boards\/([^/]+)\/operations\/([^/]+)$/)
+    if(req.method==='GET'&&boardOperationMatch){
+      try{
+        const operation=await getBoardOperation({
+          workspaceId,
+          boardId:decodeURIComponent(boardOperationMatch[1]),
+          operationId:decodeURIComponent(boardOperationMatch[2])
+        })
+        return operation?send(req,res,200,operation):send(req,res,404,{error:'board operation not found',code:'BOARD_OPERATION_NOT_FOUND'})
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'board operation lookup failed',code:error?.code||'BOARD_OPERATION_LOOKUP_FAILED'})
+      }
     }
 
     if(req.method==='GET'&&url.pathname==='/api/workflows/actions'){
