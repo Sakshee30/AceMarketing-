@@ -1,0 +1,26 @@
+schemaVersion: 1
+profile: core-regional-recovery
+status: proposed-until-exercised
+owner: platform-sre
+declaredObjectives:
+  rpoMinutes: 5
+  rtoMinutes: 60
+writerFencing:
+  required: true
+  mechanism: routing-epoch-and-authoritative-owner
+validation:
+  - database-row-consistency
+  - tenant-ownership
+  - object-version-integrity
+  - encryption-key-access
+  - application-compatibility
+  - idempotency-ledger
+  - outbox-inbox-progress
+  - search-rebuild
+  - critical-customer-journeys
+evidence:
+  actualRpoMinutes: null
+  actualRtoMinutes: null
+  lastExerciseAt: null
+  nextExerciseAt: null
+  result: not-run
