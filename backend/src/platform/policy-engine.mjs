@@ -167,6 +167,21 @@ export const evaluatePublishedPolicyRule=async({workspaceId,id,input={},reasonCo
   return {ruleId:id,ruleVersion:version,decision,reasonCode,evaluatorVersion:row.evaluator_version,inputSchemaVersion:Number(row.input_schema_version)}
 })
 
+export const archivePolicyRule=async({workspaceId,id})=>withTenantDbTransaction(workspaceId,async client=>{
+  const {rows}=await client.query(
+    `UPDATE ace_policy_rules SET status='archived',updated_at=now()
+     WHERE workspace_id=$1 AND id=$2 RETURNING *`,
+    [workspaceId,id]
+  )
+  if(!rows[0])return null
+  await client.query(
+    `UPDATE ace_policy_rule_versions SET status='retired'
+     WHERE workspace_id=$1 AND rule_id=$2 AND status='published'`,
+    [workspaceId,id]
+  )
+  return rows[0]
+})
+
 export const listPolicyRules=async({workspaceId,limit=100})=>withTenantDbTransaction(workspaceId,async client=>{
   const {rows}=await client.query(
     `SELECT id,name,status,latest_version,published_version,created_by,created_at,updated_at
