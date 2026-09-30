@@ -12,6 +12,10 @@ variable "control_port" {
   type    = number
   default = 3002
 }
+variable "realtime_port" {
+  type    = number
+  default = 3003
+}
 variable "api_health_path" {
   type    = string
   default = "/api/health"
@@ -21,6 +25,10 @@ variable "control_health_path" {
   default = "/healthz"
 }
 variable "integration_health_path" {
+  type    = string
+  default = "/healthz"
+}
+variable "realtime_health_path" {
   type    = string
   default = "/healthz"
 }
