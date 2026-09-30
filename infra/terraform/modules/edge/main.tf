@@ -147,13 +147,17 @@ resource "aws_wafv2_web_acl" "api" {
   name  = "${var.name}-api"
   scope = "REGIONAL"
 
-  default_action { allow {} }
+  default_action {
+    allow {}
+  }
 
   rule {
     name     = "AWSManagedCommon"
     priority = 10
 
-    override_action { none {} }
+    override_action {
+      none {}
+    }
 
     statement {
       managed_rule_group_statement {
@@ -173,7 +177,9 @@ resource "aws_wafv2_web_acl" "api" {
     name     = "RateLimit"
     priority = 20
 
-    action { block {} }
+    action {
+      block {}
+    }
 
     statement {
       rate_based_statement {
