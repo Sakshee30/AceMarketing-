@@ -99,6 +99,9 @@ const required=[
   'operations/runbooks/queue-backlog.md',
   'operations/runbooks/bad-rollout.md',
   'docs/evidence/release-report-template.md',
+  'infra/terraform/modules/edge/main.tf',
+  'infra/terraform/modules/ecs-service/main.tf',
+  'infra/terraform/modules/vpc-endpoints/main.tf',
   'infra/terraform/modules/network/main.tf',
   'infra/terraform/modules/network/variables.tf',
   'infra/terraform/modules/network/outputs.tf',
@@ -190,6 +193,25 @@ if(fs.existsSync(terraformRoot)){
   if(!stagingVersions.includes('backend "s3"'))failures.push('Staging Terraform must use a remote S3 state backend contract.')
 }
 
+
+
+const stagingMainPath=path.join(terraformRoot,'stacks','nonprod','staging','main.tf')
+if(fs.existsSync(stagingMainPath)){
+  const stagingMain=fs.readFileSync(stagingMainPath,'utf8')
+  if(!stagingMain.includes('module "edge"')||!stagingMain.includes('module "api_service"')||!stagingMain.includes('module "control_api_service"')||!stagingMain.includes('module "worker_service"')){
+    failures.push('Staging must compose separated edge, API, control API and worker services.')
+  }
+  if(!stagingMain.includes('module "vpc_endpoints"')){
+    failures.push('Staging must use private AWS service endpoints for approved dependencies.')
+  }
+}
+const edgeSourcePath=path.join(terraformRoot,'modules','edge','main.tf')
+if(fs.existsSync(edgeSourcePath)){
+  const edgeSource=fs.readFileSync(edgeSourcePath,'utf8')
+  if(!edgeSource.includes('internal           = true')||!edgeSource.includes('aws_wafv2_web_acl')){
+    failures.push('Staging must keep the platform control plane on a separate internal ALB and protect public API ingress with WAF.')
+  }
+}
 
 for(const dockerfile of ['deploy/Dockerfile.api','deploy/Dockerfile.control-api','deploy/Dockerfile.worker']){
   const source=fs.readFileSync(path.join(root,dockerfile),'utf8')
