@@ -4,6 +4,8 @@ import path from 'node:path'
 const root=process.cwd()
 const failures=[]
 const required=[
+  'backend/modules/boards/README.md',
+  'backend/modules/boards/src/interfaces/http/move-card.controller.mjs',
   'frontend/customer-app/src/features/boards/README.md',
   'backend/tests/board-realtime.test.mjs',
   'backend/modules/boards/src/application/commands/move-card/move-card.handler.mjs',
