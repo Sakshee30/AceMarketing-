@@ -858,6 +858,24 @@ if(fs.existsSync(kanbanUiPath)){
   if(source.includes('role="grid"'))failures.push('Kanban UI must not claim generic grid semantics without the matching keyboard model.')
 }
 
+
+const releaseWorkflowPath=path.join(root,'.github','workflows','release.yml')
+if(fs.existsSync(releaseWorkflowPath)){
+  const releaseWorkflow=fs.readFileSync(releaseWorkflowPath,'utf8')
+  for(const artifact of ['Dockerfile.customer-app','Dockerfile.public-site','Dockerfile.platform-admin']){
+    if(!releaseWorkflow.includes(artifact)){
+      failures.push('Release workflow must promote separate customer, public-site and platform-admin artifacts.')
+      break
+    }
+  }
+  for(const manifestKey of ['"customerApp"','"publicSite"','"platformAdmin"']){
+    if(!releaseWorkflow.includes(manifestKey)){
+      failures.push('Release manifest must record immutable digests for each frontend trust boundary.')
+      break
+    }
+  }
+}
+
 if(failures.length){
   console.error('[frontend-architecture] FAILED')
   for(const failure of failures)console.error(' - '+failure)
