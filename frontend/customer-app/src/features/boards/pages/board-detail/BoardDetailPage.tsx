@@ -56,6 +56,7 @@ export default function BoardDetailPage({workspaceId,boardId}:{workspaceId:strin
     const client=createRealtimeClient({
       url:realtimeUrl.toString(),
       token,
+      tokenTransport:'subprotocol',
       onEvent:event=>{
         if(event.type!=='board.item.moved')return
         const payload=event.payload as {data?:{boardId?:string},boardId?:string}
