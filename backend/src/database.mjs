@@ -66,6 +66,7 @@ const createEmbeddedPool=async()=>{
     if(file==='039_usage_ledger.sql')sql=sql.replace(/ALTER TABLE ace_usage_ledger ENABLE ROW LEVEL SECURITY;[\s\S]*$/m,'')
     if(file==='040_object_lifecycle.sql')sql=sql.replace(/ALTER TABLE ace_objects ENABLE ROW LEVEL SECURITY;[\s\S]*$/m,'')
     if(file==='048_custom_objects.sql')sql=sql.replace(/ALTER TABLE ace_custom_objects ENABLE ROW LEVEL SECURITY;[\s\S]*$/m,'')
+    if(file==='049_workflow_durable_steps.sql')sql=sql.replace(/ALTER TABLE ace_workflow_execution_steps ENABLE ROW LEVEL SECURITY;[\s\S]*$/m,'')
     // pg-mem's parser rejects comment-only compatibility marker files.
     // Production migration tooling may retain those markers, but embedded setup
     // should simply skip files with no executable SQL.
