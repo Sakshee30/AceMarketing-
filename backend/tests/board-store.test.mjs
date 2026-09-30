@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import {randomUUID} from 'node:crypto'
 import {embeddedDatabase,pool} from '../src/database.mjs'
 import {withTenantDbTransaction} from '../src/platform/tenant-db.mjs'
-import {moveBoardItem,validateBoardMoveCommand} from '../src/platform/board-store.mjs'
+import {createBoard,listBoards,moveBoardItem,validateBoardMoveCommand} from '../src/platform/board-store.mjs'
 
 const token=()=>randomUUID().replaceAll('-','')
 
@@ -138,5 +138,26 @@ test('board move is durable idempotent tenant-scoped and version checked',{skip:
     await client.query('DELETE FROM ace_board_items WHERE workspace_id=$1 AND board_id=$2',[workspaceId,boardId])
     await client.query('DELETE FROM ace_board_columns WHERE workspace_id=$1 AND board_id=$2',[workspaceId,boardId])
     await client.query('DELETE FROM ace_boards WHERE workspace_id=$1 AND id=$2',[workspaceId,boardId])
+  })
+})
+
+
+test('board creation produces default governed columns and remains tenant scoped',{skip:embeddedDatabase||!pool},async()=>{
+  const suffix=token()
+  const workspaceId='ws_board_create_'+suffix
+  const otherWorkspaceId='ws_board_create_other_'+suffix
+  const created=await createBoard({workspaceId,actorId:'user_test',name:'Campaign Operations'})
+  assert.equal(created.name,'Campaign Operations')
+  assert.equal(created.columns.length,3)
+  assert.deepEqual(created.columns.map(column=>column.stateKey),['backlog','in_progress','done'])
+
+  const own=await listBoards({workspaceId})
+  const other=await listBoards({workspaceId:otherWorkspaceId})
+  assert.equal(own.some(board=>board.id===created.id),true)
+  assert.equal(other.some(board=>board.id===created.id),false)
+
+  await withTenantDbTransaction(workspaceId,async client=>{
+    await client.query('DELETE FROM ace_board_columns WHERE workspace_id=$1 AND board_id=$2',[workspaceId,created.id])
+    await client.query('DELETE FROM ace_boards WHERE workspace_id=$1 AND id=$2',[workspaceId,created.id])
   })
 })
