@@ -52,6 +52,7 @@ import {createForm,getForm,listForms,listFormSubmissions,publishForm,submitForm}
 import {createPolicyRule,evaluatePublishedPolicyRule,getPolicyRule,listPolicyRules,publishPolicyRule} from './platform/policy-engine.mjs'
 import {createWorkflow,createWorkflowApproval,decideWorkflowApproval,getWorkflow,listWorkflowApprovals,listWorkflowExecutions,listWorkflows,publishWorkflow,startWorkflowExecution} from './platform/workflow-store.mjs'
 import {createDownloadGrant,createUploadIntent,listObjects,markObjectQuarantined,recordObjectScan,softDeleteObject} from './platform/object-lifecycle.mjs'
+import {runtimeGuardForRequest} from './platform/runtime-config-runtime.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -793,6 +794,29 @@ const server = http.createServer(async (req,res)=>{
       req.context=bindActorToRequestContext(req.context,{actor:authenticatedUser,workspaceId,tenantId:req.tenantScope.tenantId})
       const permission=permissionForRequest(req.method||'GET',url.pathname)
       if(!hasPermission(member.role,permission)) return send(req,res,403,{error:'forbidden',permission,role:member.role})
+    }
+    if(protectedRequest){
+      const runtimeDecision=await runtimeGuardForRequest({
+        method:req.method||'GET',
+        path:url.pathname,
+        workspaceId
+      }).catch(error=>({
+        allowed:false,
+        state:'degraded',
+        code:'runtime_config_unavailable',
+        reason:error instanceof Error?error.message:'runtime configuration could not be evaluated',
+        configurationVersion:null
+      }))
+      if(!runtimeDecision.allowed){
+        return send(req,res,503,{
+          error:runtimeDecision.reason||'operation unavailable under current runtime policy',
+          code:runtimeDecision.code||'runtime_policy_blocked',
+          state:runtimeDecision.state,
+          configurationVersion:runtimeDecision.configurationVersion,
+          retryable:['runtime_config_invalid','runtime_config_unavailable'].includes(runtimeDecision.code)
+        })
+      }
+      req.runtimeConfigurationVersion=runtimeDecision.configurationVersion||null
     }
     if (req.method === 'GET' && url.pathname === '/api/health') return send(req,res,200,{ok:true,service:'ace-marketing-api',time:new Date().toISOString(),requestId:req.requestId})
     if (req.method === 'GET' && url.pathname === '/api/dashboard-summary') {
