@@ -1,0 +1,189 @@
+const moduleDefinition=({
+  id,owner,permissions=[],capabilities=[],contracts=[],migrations=[],events=[],
+  implementationFiles=[],supportedProfiles=['local','minimal-production','standard-production','high-scale']
+})=>Object.freeze({
+  id,owner,permissions,capabilities,contracts,migrations,events,implementationFiles,
+  supportedProfiles,
+  implementationStatus:'composed',
+  networkService:false
+})
+
+export const platformModuleRegistry=Object.freeze([
+  moduleDefinition({
+    id:'identity',owner:'platform-security',
+    permissions:['identity.session.read','identity.session.manage'],
+    capabilities:['authentication','session-revocation'],
+    contracts:['session','account-recovery'],
+    implementationFiles:['backend/src/security.mjs','backend/src/platform/access-policy.mjs'],
+    events:['identity.session.revoked']
+  }),
+  moduleDefinition({
+    id:'workspaces',owner:'platform-core',
+    permissions:['workspace.read','workspace.manage'],
+    capabilities:['workspace-lifecycle','tenant-context'],
+    contracts:['workspace','membership-context'],
+    implementationFiles:['backend/src/platform/workspace-access.mjs','backend/src/platform/tenant-context.mjs'],
+    events:['workspace.changed']
+  }),
+  moduleDefinition({
+    id:'authorization',owner:'platform-security',
+    permissions:['access.evaluate','access.manage'],
+    capabilities:['resource-authorization','field-authorization','policy-delegation'],
+    contracts:['permission-evaluation','access-policy'],
+    implementationFiles:['backend/src/platform/access-policy.mjs','backend/src/platform/policy-engine.mjs'],
+    events:['authorization.policy.published']
+  }),
+  moduleDefinition({
+    id:'forms',owner:'platform-forms',
+    permissions:['forms.read','forms.manage','forms.submit'],
+    capabilities:['versioned-forms','submission-validation'],
+    contracts:['form-definition','form-submission'],
+    migrations:['037_forms_custom_objects.sql'],
+    implementationFiles:['backend/src/platform/forms-store.mjs'],
+    events:['form.published','form.submitted']
+  }),
+  moduleDefinition({
+    id:'custom-objects',owner:'platform-forms',
+    permissions:['objects.schema.manage','workspace.read'],
+    capabilities:['custom-object-schema','bounded-field-model'],
+    contracts:['custom-object-definition'],
+    migrations:['048_custom_objects.sql'],
+    implementationFiles:['backend/src/platform/custom-object-store.mjs'],
+    events:['custom-object.schema.changed']
+  }),
+  moduleDefinition({
+    id:'rules',owner:'platform-policy',
+    permissions:['rules.read','rules.manage','rules.evaluate'],
+    capabilities:['bounded-policy-evaluation','policy-simulation'],
+    contracts:['rule-definition','rule-evaluation'],
+    migrations:['038_rules_workflows.sql'],
+    implementationFiles:['backend/src/platform/policy-engine.mjs'],
+    events:['rule.published']
+  }),
+  moduleDefinition({
+    id:'workflows',owner:'platform-workflows',
+    permissions:['workflows.read','workflows.manage','workflows.execute'],
+    capabilities:['durable-workflow-execution','workflow-approvals','workflow-retry'],
+    contracts:['workflow-definition','workflow-execution','workflow-approval'],
+    migrations:['038_rules_workflows.sql','049_workflow_durable_steps.sql'],
+    implementationFiles:['backend/src/platform/workflow-store.mjs','backend/src/platform/workflow-action-catalog.mjs'],
+    events:['workflow.started','workflow.completed','workflow.failed']
+  }),
+  moduleDefinition({
+    id:'integrations',owner:'platform-integrations',
+    permissions:['integration.read','integration.manage'],
+    capabilities:['connector-lifecycle','provider-ingress'],
+    contracts:['connector-account','provider-callback'],
+    implementationFiles:['backend/src/platform/connector-registry.mjs','backend/src/custom-integrations.mjs'],
+    events:['integration.connected','integration.revoked']
+  }),
+  moduleDefinition({
+    id:'webhooks',owner:'platform-integrations',
+    permissions:['webhook.read','webhook.manage'],
+    capabilities:['signed-webhook-delivery','replay-protection','delivery-replay'],
+    contracts:['webhook-subscription','webhook-delivery'],
+    migrations:['050_webhook_delivery.sql'],
+    implementationFiles:['backend/src/platform/webhook-signing.mjs','backend/src/platform/webhook-delivery-store.mjs','backend/src/platform/webhook-delivery-worker.mjs'],
+    events:['webhook.delivery.completed']
+  }),
+  moduleDefinition({
+    id:'jobs',owner:'platform-runtime',
+    permissions:['job.read','job.manage'],
+    capabilities:['durable-jobs','outbox-relay','worker-leasing'],
+    contracts:['job','outbox-event'],
+    migrations:['034_platform_reliability.sql'],
+    implementationFiles:['backend/src/queue.mjs','backend/src/platform/outbox-relay.mjs','backend/src/platform/worker-class.mjs'],
+    events:['job.accepted','job.completed','job.failed']
+  }),
+  moduleDefinition({
+    id:'billing',owner:'platform-billing',
+    permissions:['billing.read','billing.manage','entitlement.read','entitlement.manage'],
+    capabilities:['usage-ledger','quota-reservation','billing-lifecycle'],
+    contracts:['subscription','usage-event','quota-reservation'],
+    migrations:['039_usage_ledger.sql','051_billing_lifecycle.sql'],
+    implementationFiles:['backend/src/platform/usage-ledger.mjs','backend/src/platform/billing-lifecycle.mjs'],
+    events:['billing.subscription.changed','usage.recorded']
+  }),
+  moduleDefinition({
+    id:'documents',owner:'platform-files',
+    permissions:['files.read','files.upload','files.manage'],
+    capabilities:['object-lifecycle','document-processing','authorized-search'],
+    contracts:['file-object','document-processing','search-result'],
+    migrations:['040_object_lifecycle.sql','052_object_processing_search.sql'],
+    implementationFiles:['backend/src/platform/object-lifecycle.mjs','backend/src/platform/object-storage.mjs','backend/src/platform/document-processing.mjs','backend/src/platform/search-port.mjs'],
+    events:['document.approved','document.indexed']
+  }),
+  moduleDefinition({
+    id:'audit',owner:'platform-security',
+    permissions:['audit.read','audit.export'],
+    capabilities:['durable-audit','sensitive-change-traceability'],
+    contracts:['audit-event'],
+    migrations:['035_platform_audit_catalog.sql'],
+    implementationFiles:['backend/src/platform/audit-store.mjs'],
+    events:['audit.recorded']
+  }),
+  moduleDefinition({
+    id:'capabilities',owner:'platform-operations',
+    permissions:['platform.capabilities.read','platform.capabilities.change'],
+    capabilities:['capability-registry','runtime-configuration','provider-migration'],
+    contracts:['capability-manifest','runtime-configuration','provider-migration'],
+    migrations:['041_platform_control_changes.sql','044_runtime_configuration.sql','045_provider_migrations.sql','053_provider_migration_evidence.sql'],
+    implementationFiles:['backend/src/platform/capability-registry.mjs','backend/src/platform/runtime-configuration.mjs','backend/src/platform/provider-migration-store.mjs'],
+    events:['platform.configuration.changed']
+  }),
+  moduleDefinition({
+    id:'cells',owner:'platform-operations',
+    permissions:['platform.placement.read','platform.placement.change'],
+    capabilities:['tenant-placement','routing-epoch-fencing'],
+    contracts:['tenant-placement'],
+    migrations:['054_cell_placement.sql'],
+    implementationFiles:['backend/src/platform/cell-placement.mjs'],
+    events:['tenant.placement.changed'],
+    supportedProfiles:['high-scale']
+  }),
+  moduleDefinition({
+    id:'ai',owner:'platform-ai',
+    permissions:['ai.read','ai.execute','ai.manage'],
+    capabilities:['model-registry','authorized-retrieval','governed-activation'],
+    contracts:['ai-request','ai-result','ai-activation'],
+    implementationFiles:['backend/src/ai-registry.mjs','backend/src/ai-runtime.mjs','backend/src/ai-activation-execution.mjs'],
+    events:['ai.execution.completed'],
+    supportedProfiles:['ai-enabled']
+  })
+])
+
+const byId=new Map(platformModuleRegistry.map(item=>[item.id,item]))
+
+export const platformModule=id=>byId.get(String(id||''))||null
+
+export const moduleRegistrySnapshot=()=>({
+  schemaVersion:'platform-modules.v1',
+  generatedAt:new Date().toISOString(),
+  items:platformModuleRegistry.map(item=>({
+    id:item.id,
+    owner:item.owner,
+    permissions:[...item.permissions],
+    capabilities:[...item.capabilities],
+    contracts:[...item.contracts],
+    migrations:[...item.migrations],
+    events:[...item.events],
+    supportedProfiles:[...item.supportedProfiles],
+    implementationStatus:item.implementationStatus,
+    networkService:item.networkService
+  }))
+})
+
+export const validateModuleRegistry=()=>{
+  const ids=new Set()
+  for(const item of platformModuleRegistry){
+    if(ids.has(item.id))throw new Error('duplicate platform module id: '+item.id)
+    ids.add(item.id)
+    if(!item.owner)throw new Error('module owner missing: '+item.id)
+    if(!item.permissions.length)throw new Error('module permissions missing: '+item.id)
+    if(!item.capabilities.length)throw new Error('module capabilities missing: '+item.id)
+    if(!item.contracts.length)throw new Error('module contracts missing: '+item.id)
+    if(!item.implementationFiles.length)throw new Error('module implementation files missing: '+item.id)
+    if(!item.supportedProfiles.length)throw new Error('module supported profiles missing: '+item.id)
+  }
+  return true
+}
