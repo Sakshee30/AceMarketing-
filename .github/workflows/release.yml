@@ -47,6 +47,18 @@ jobs:
         run: |
           docker buildx build             --platform linux/amd64             --file deploy/Dockerfile.frontend             --tag ghcr.io/${{ steps.repo.outputs.name }}/web:${{ github.sha }}             --sbom=true             --provenance=mode=max             --metadata-file web-metadata.json             --push .
 
+      - name: Build and push customer application image with SBOM and provenance
+        run: |
+          docker buildx build             --platform linux/amd64             --file deploy/Dockerfile.customer-app             --tag ghcr.io/${{ steps.repo.outputs.name }}/customer-app:${{ github.sha }}             --sbom=true             --provenance=mode=max             --metadata-file customer-app-metadata.json             --push .
+
+      - name: Build and push public website image with SBOM and provenance
+        run: |
+          docker buildx build             --platform linux/amd64             --file deploy/Dockerfile.public-site             --tag ghcr.io/${{ steps.repo.outputs.name }}/public-site:${{ github.sha }}             --sbom=true             --provenance=mode=max             --metadata-file public-site-metadata.json             --push .
+
+      - name: Build and push platform control frontend image with SBOM and provenance
+        run: |
+          docker buildx build             --platform linux/amd64             --file deploy/Dockerfile.platform-admin             --tag ghcr.io/${{ steps.repo.outputs.name }}/platform-admin:${{ github.sha }}             --sbom=true             --provenance=mode=max             --metadata-file platform-admin-metadata.json             --push .
+
       - name: Create immutable release manifest
         shell: bash
         run: |
@@ -54,6 +66,9 @@ jobs:
           CONTROL_DIGEST=$(jq -r '."containerimage.digest"' control-api-metadata.json)
           WORKER_DIGEST=$(jq -r '."containerimage.digest"' worker-metadata.json)
           WEB_DIGEST=$(jq -r '."containerimage.digest"' web-metadata.json)
+          CUSTOMER_APP_DIGEST=$(jq -r '."containerimage.digest"' customer-app-metadata.json)
+          PUBLIC_SITE_DIGEST=$(jq -r '."containerimage.digest"' public-site-metadata.json)
+          PLATFORM_ADMIN_DIGEST=$(jq -r '."containerimage.digest"' platform-admin-metadata.json)
           cat > release-manifest.json <<EOF
           {
             "schemaVersion": "ace.release.v1",
@@ -64,7 +79,10 @@ jobs:
               "api": "ghcr.io/${{ steps.repo.outputs.name }}/api@${API_DIGEST}",
               "controlApi": "ghcr.io/${{ steps.repo.outputs.name }}/control-api@${CONTROL_DIGEST}",
               "worker": "ghcr.io/${{ steps.repo.outputs.name }}/worker@${WORKER_DIGEST}",
-              "web": "ghcr.io/${{ steps.repo.outputs.name }}/web@${WEB_DIGEST}"
+              "web": "ghcr.io/${{ steps.repo.outputs.name }}/web@${WEB_DIGEST}",
+              "customerApp": "ghcr.io/${{ steps.repo.outputs.name }}/customer-app@${CUSTOMER_APP_DIGEST}",
+              "publicSite": "ghcr.io/${{ steps.repo.outputs.name }}/public-site@${PUBLIC_SITE_DIGEST}",
+              "platformAdmin": "ghcr.io/${{ steps.repo.outputs.name }}/platform-admin@${PLATFORM_ADMIN_DIGEST}"
             },
             "configurationVersion": "external-versioned-runtime-config",
             "databaseMigrationSource": "backend/migrations"
