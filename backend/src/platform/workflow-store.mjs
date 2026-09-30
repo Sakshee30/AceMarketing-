@@ -23,7 +23,6 @@ export const validateWorkflowDefinition=definition=>{
     const type=String(node?.type||'')
     if(!/^[A-Za-z0-9_-]{1,80}$/.test(id)||ids.has(id))throw Object.assign(new Error('workflow node ids must be unique and bounded'),{status:400,code:'invalid_workflow_node_id'})
     if(!nodeTypes.has(type))throw Object.assign(new Error('unsupported workflow node type: '+type),{status:400,code:'unsupported_workflow_node_type'})
-    if(type==='action')validateWorkflowActionConfig(node.config||{})
     ids.add(id)
   }
   const starts=nodes.filter(node=>node.type==='start')
@@ -50,6 +49,7 @@ export const validateWorkflowDefinition=definition=>{
   for(const node of nodes.filter(node=>node.type!=='end')){
     if((outgoing.get(node.id)||[]).length===0)throw Object.assign(new Error('workflow node has no terminal path: '+node.id),{status:400,code:'workflow_missing_path'})
   }
+  for(const node of nodes.filter(node=>node.type==='action'))validateWorkflowActionConfig(node.config||{})
   return {
     trigger:triggerTypes.has(String(definition.trigger))?String(definition.trigger):'manual',
     nodes:nodes.map(node=>({id:String(node.id),type:String(node.type),config:node.config&&typeof node.config==='object'?node.config:{}})),
