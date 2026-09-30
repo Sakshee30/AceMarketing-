@@ -25,6 +25,30 @@ export type PlatformChangeRequest={
   rollbackPlan?:Record<string,unknown>
 }
 
+export type RecoveryExerciseRequest={
+  environment:string
+  scenario:'process_loss'|'availability_zone_loss'|'database_failover'|'regional_disaster'|'data_corruption'|'tenant_restore'|'object_recovery'|'queue_reconciliation'|'credential_recovery'
+  declaredRpoMinutes?:number
+  declaredRtoMinutes?:number
+  incidentCommander?:string
+  nextExerciseAt?:string
+}
+
+export type BackupEvidenceRequest={
+  environment:string
+  resourceType:string
+  resourceRef:string
+  backupMode:string
+  retentionDays?:number
+  pitrEnabled?:boolean
+  objectVersioningEnabled?:boolean
+  encryptionVerified?:boolean
+  deletionProtectionVerified?:boolean
+  independentCopyVerified?:boolean
+  evidence?:Record<string,unknown>
+  observedAt?:string
+}
+
 export type ProviderMigrationRequest={
   capability:string
   environment:string
@@ -129,6 +153,33 @@ export const controlApi={
       })
       const data=await safeJson(response)
       return response.ok?{ok:true,data:data||{}}:{ok:false,message:data?.error||'Rollback request failed.'}
+    }catch{return {ok:false,message:'Control API could not be reached.'}}
+  },
+  createRecoveryExercise:async(input:RecoveryExerciseRequest):Promise<ControlMutationResult>=>{
+    try{
+      const response=await request('/control-api/recovery/exercises',{
+        method:'POST',body:JSON.stringify(input),headers:{'Idempotency-Key':newIdempotencyKey()}
+      })
+      const data=await safeJson(response)
+      return response.ok?{ok:true,data:data||{}}:{ok:false,message:data?.error||'Recovery exercise creation failed.'}
+    }catch{return {ok:false,message:'Control API could not be reached.'}}
+  },
+  updateRecoveryExercise:async(id:string,input:Record<string,unknown>):Promise<ControlMutationResult>=>{
+    try{
+      const response=await request('/control-api/recovery/exercises/'+encodeURIComponent(id),{
+        method:'PATCH',body:JSON.stringify(input),headers:{'Idempotency-Key':newIdempotencyKey()}
+      })
+      const data=await safeJson(response)
+      return response.ok?{ok:true,data:data||{}}:{ok:false,message:data?.error||'Recovery exercise update failed.'}
+    }catch{return {ok:false,message:'Control API could not be reached.'}}
+  },
+  recordBackupEvidence:async(input:BackupEvidenceRequest):Promise<ControlMutationResult>=>{
+    try{
+      const response=await request('/control-api/recovery/backup-evidence',{
+        method:'POST',body:JSON.stringify(input),headers:{'Idempotency-Key':newIdempotencyKey()}
+      })
+      const data=await safeJson(response)
+      return response.ok?{ok:true,data:data||{}}:{ok:false,message:data?.error||'Backup evidence recording failed.'}
     }catch{return {ok:false,message:'Control API could not be reached.'}}
   },
   createProviderMigration:async(input:ProviderMigrationRequest):Promise<ControlMutationResult>=>{
