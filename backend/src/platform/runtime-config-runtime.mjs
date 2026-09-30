@@ -49,7 +49,10 @@ export const runtimeGuardForRequest=async({method,path,workspaceId})=>{
 
   let featureId='workspaces'
   let operation='write'
-  if(path.startsWith('/api/ai/')){
+  if(path.startsWith('/api/boards/')){
+    featureId='boards'
+    operation='write'
+  }else if(path.startsWith('/api/ai/')){
     featureId='ai'
     operation='admit'
   }else if(path.startsWith('/api/files/')){
