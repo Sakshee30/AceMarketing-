@@ -398,14 +398,21 @@ const server=http.createServer(async(req,res)=>{
     catch(error){return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'invalid emergency control request'})}
     return runControlMutation({
       req,res,session,operation:'emergency.create',body,successStatus:201,
-      execute:()=>createEmergencyControl({
-        scopeType:body.scopeType,
-        scopeId:body.scopeId||null,
-        controlType:body.controlType,
-        reason:body.reason,
-        durationMinutes:body.durationMinutes,
-        createdBy:session.sub
-      })
+      execute:async()=>{
+        const control=await createEmergencyControl({
+          scopeType:body.scopeType,
+          scopeId:body.scopeId||null,
+          controlType:body.controlType,
+          reason:body.reason,
+          durationMinutes:body.durationMinutes,
+          createdBy:session.sub
+        })
+        const snapshot=await publishRuntimeSnapshot({
+          environment:body.environment||process.env.NODE_ENV||'development',
+          createdBy:session.sub
+        })
+        return {control,snapshotVersion:snapshot.version,snapshotLeaseExpiresAt:snapshot.leaseExpiresAt}
+      }
     })
   }
 
@@ -418,11 +425,18 @@ const server=http.createServer(async(req,res)=>{
     const id=decodeURIComponent(emergencyRevokeMatch[1])
     return runControlMutation({
       req,res,session,operation:'emergency.revoke:'+id,body,
-      execute:()=>revokeEmergencyControl({
-        id,
-        revokedBy:session.sub,
-        expectedVersion:body.expectedVersion
-      })
+      execute:async()=>{
+        const control=await revokeEmergencyControl({
+          id,
+          revokedBy:session.sub,
+          expectedVersion:body.expectedVersion
+        })
+        const snapshot=await publishRuntimeSnapshot({
+          environment:body.environment||process.env.NODE_ENV||'development',
+          createdBy:session.sub
+        })
+        return {control,snapshotVersion:snapshot.version,snapshotLeaseExpiresAt:snapshot.leaseExpiresAt}
+      }
     })
   }
 
