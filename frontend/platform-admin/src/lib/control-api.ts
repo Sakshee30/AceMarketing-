@@ -81,28 +81,28 @@ export const controlApi={
         :{ok:false,message:typeof data?.error==='string'?data.error:'Change request failed.'}
     }catch{return {ok:false,message:'Control API could not be reached.'}}
   },
-  transitionChange:async(id:string,toState:string):Promise<ControlMutationResult>=>{
+  transitionChange:async(id:string,toState:string,expectedVersion:number):Promise<ControlMutationResult>=>{
     try{
       const response=await request('/control-api/changes/'+encodeURIComponent(id)+'/transition',{
-        method:'POST',body:JSON.stringify({toState})
+        method:'POST',body:JSON.stringify({toState,expectedVersion})
       })
       const data=await safeJson(response)
       return response.ok?{ok:true,data:data||{}}:{ok:false,message:data?.error||'Change transition failed.'}
     }catch{return {ok:false,message:'Control API could not be reached.'}}
   },
-  decideChange:async(id:string,decision:'approved'|'rejected'):Promise<ControlMutationResult>=>{
+  decideChange:async(id:string,decision:'approved'|'rejected',expectedVersion:number):Promise<ControlMutationResult>=>{
     try{
       const response=await request('/control-api/changes/'+encodeURIComponent(id)+'/decision',{
-        method:'POST',body:JSON.stringify({decision})
+        method:'POST',body:JSON.stringify({decision,expectedVersion})
       })
       const data=await safeJson(response)
       return response.ok?{ok:true,data:data||{}}:{ok:false,message:data?.error||'Change decision failed.'}
     }catch{return {ok:false,message:'Control API could not be reached.'}}
   },
-  requestRollback:async(id:string,reason:string):Promise<ControlMutationResult>=>{
+  requestRollback:async(id:string,reason:string,expectedVersion:number):Promise<ControlMutationResult>=>{
     try{
       const response=await request('/control-api/changes/'+encodeURIComponent(id)+'/rollback',{
-        method:'POST',body:JSON.stringify({reason})
+        method:'POST',body:JSON.stringify({reason,expectedVersion})
       })
       const data=await safeJson(response)
       return response.ok?{ok:true,data:data||{}}:{ok:false,message:data?.error||'Rollback request failed.'}
