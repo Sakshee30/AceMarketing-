@@ -732,16 +732,34 @@ const server = http.createServer(async (req,res)=>{
     workspaceId=signed.workspaceId
   }
   if(!/^[A-Za-z0-9_-]{1,64}$/.test(workspaceId)) return send(req,res,400,{error:'invalid workspace id'})
-  res.once('finish',()=>{
-    recordApiTelemetry(workspaceId,{requestId:req.requestId,method:req.method||'GET',path:url.pathname,statusCode:res.statusCode,latencyMs:Date.now()-requestStartedAt}).catch(()=>{})
-  })
   let usageReservationId=null
   const meteredMetric=meteredMetricFor(req.method||'GET',url.pathname)
+  res.once('finish',()=>{
+    const success=res.statusCode<400
+    recordApiTelemetry(workspaceId,{
+      requestId:req.requestId,
+      method:req.method||'GET',
+      path:url.pathname,
+      statusCode:res.statusCode,
+      latencyMs:Date.now()-requestStartedAt,
+      usageReservationId:success?usageReservationId:null
+    }).catch(()=>{}).finally(()=>{
+      if(usageReservationId)finalizeReservation(workspaceId,usageReservationId,success).catch(()=>{})
+    })
+  })
   if(meteredMetric){
-    const capacity=await assertCapacity(workspaceId,meteredMetric,1,req.requestId).catch(()=>({allowed:true,reservationId:null}))
+    let capacity
+    try{
+      capacity=await assertCapacity(workspaceId,meteredMetric,1,req.requestId)
+    }catch(error){
+      return send(req,res,503,{
+        error:'usage quota check unavailable',
+        code:'quota_check_unavailable',
+        retryable:true
+      },{'Retry-After':'1'})
+    }
     if(!capacity.allowed) return send(req,res,429,{error:'usage quota exceeded',metric:meteredMetric,usage:capacity})
     usageReservationId=capacity.reservationId||null
-    res.once('finish',()=>finalizeReservation(usageReservationId,res.statusCode<400).catch(()=>{}))
   }
   let authenticatedUser=null
   const protectedRequest=url.pathname.startsWith('/api/')&&!isPublicRequest(req.method||'GET',url.pathname)
