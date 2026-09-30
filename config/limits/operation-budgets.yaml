@@ -1,0 +1,24 @@
+schemaVersion: 1
+budgets:
+  normalRead:
+    timeoutMs: 12000
+    retries: 2
+    retryOn: [timeout, transient, rate-limit, dependency-unavailable]
+  normalWrite:
+    timeoutMs: 12000
+    retries: 0
+    idempotencyRequiredForCriticalEffects: true
+  webhookDelivery:
+    timeoutMs: 8000
+    maxAttempts: 8
+    deadLetterRequired: true
+  workflowStep:
+    maxAttempts: 5
+    leaseSeconds: 60
+    idempotencyRequired: true
+  upload:
+    maxRequestBytes: 26214400
+    quarantineRequired: true
+  browser:
+    startupJavascriptGzipReviewBytes: 358400
+    startupCssGzipTargetBytes: 61440
