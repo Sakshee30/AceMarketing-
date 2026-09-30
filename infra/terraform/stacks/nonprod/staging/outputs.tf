@@ -89,3 +89,8 @@ output "ai_document_worker_service_name" {
 output "scheduler_service_name" {
   value = module.scheduler_service.service_name
 }
+
+
+output "integration_ingress_service_name" {
+  value = module.integration_ingress_service.service_name
+}
