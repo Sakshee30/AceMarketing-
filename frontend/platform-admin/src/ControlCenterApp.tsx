@@ -5,6 +5,7 @@ import './control.css'
 import {SkipLink} from '../../../packages/design-system/src/Accessibility'
 import ChangesPage from './features/changes/pages/ChangesPage'
 import EmergencyPage from './features/emergency/pages/EmergencyPage'
+import FeaturesPage from './features/features/pages/FeaturesPage'
 
 const keyFromHash=():ControlPageKey=>{
   const raw=(window.location.hash.replace(/^#\/?/,'').split('?')[0]||'overview') as ControlPageKey
@@ -123,7 +124,9 @@ export default function ControlCenterApp(){
         ?<ChangesPage result={result} loading={loading} onRefresh={()=>void refresh()} role={session.role}/>
         :active==='emergency'
           ?<EmergencyPage result={result} loading={loading} onRefresh={()=>void refresh()} role={session.role}/>
-          :<section className="control-page" aria-busy={loading?'true':undefined}>
+          :active==='features'
+            ?<FeaturesPage result={result} loading={loading} onRefresh={()=>void refresh()} role={session.role}/>
+            :<section className="control-page" aria-busy={loading?'true':undefined}>
           <header className="control-page-head"><div><span>PLATFORM CONTROL CENTER</span><h1>{page.label}</h1><p>{page.responsibility}</p></div><button type="button" onClick={()=>void refresh()} disabled={loading}>{loading?'Refreshing…':'Refresh observed state'}</button></header>
           {loading&&!result&&<div className="control-state"><strong>Loading observed state…</strong><p>No desired-state change is performed by this page.</p></div>}
           {result?.status==='forbidden'&&<div className="control-state control-state-warning" role="alert"><strong>Access denied</strong><p>{result.message}</p><small>Customer workspace credentials are intentionally not reused for this application.</small></div>}
