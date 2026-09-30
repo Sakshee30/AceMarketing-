@@ -94,3 +94,8 @@ output "scheduler_service_name" {
 output "integration_ingress_service_name" {
   value = module.integration_ingress_service.service_name
 }
+
+
+output "realtime_service_name" {
+  value = module.realtime_service.service_name
+}
