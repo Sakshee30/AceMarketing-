@@ -10,6 +10,7 @@ import {createPlatformChange,decidePlatformChange,getPlatformChange,listPlatform
 import {beginControlCommand,finishControlCommand} from './platform/control-idempotency.mjs'
 import {createEmergencyControl,latestRuntimeSnapshot,listEmergencyControls,publishRuntimeSnapshot,revokeEmergencyControl,verifyRuntimeSnapshot} from './platform/runtime-configuration.mjs'
 import {advanceProviderMigration,createProviderMigration,listProviderMigrations,providerMigrationOverride,requestProviderRollback} from './platform/provider-migration-store.mjs'
+import {createRecoveryExercise,recordBackupEvidence,recoverySummary,updateRecoveryExercise} from './platform/recovery-evidence.mjs'
 
 const PORT=Number(process.env.CONTROL_PORT||3002)
 const IS_PROD=process.env.NODE_ENV==='production'
@@ -63,11 +64,11 @@ const currentSession=req=>{
 }
 
 const roleActions=Object.freeze({
-  platform_admin:new Set(['read','request','plan','transition','approve','rollback','emergency','publish','migrate']),
+  platform_admin:new Set(['read','request','plan','transition','approve','rollback','emergency','publish','migrate','recovery']),
   approver:new Set(['read','approve']),
   operator:new Set(['read','request','plan','transition','rollback']),
   developer:new Set(['read','request','plan']),
-  infrastructure_engineer:new Set(['read','request','plan','transition','rollback','publish','migrate']),
+  infrastructure_engineer:new Set(['read','request','plan','transition','rollback','publish','migrate','recovery']),
   security_admin:new Set(['read','approve','rollback','emergency']),
   viewer:new Set(['read'])
 })
@@ -204,7 +205,7 @@ const observedPage=async page=>{
   if(page==='observability')return {schemaVersion:'platform-observability.v1',generatedAt:new Date().toISOString(),minimumSignalsRequired:true,releaseSha:safeEnvironment().releaseSha}
   if(page==='changes')return {schemaVersion:'platform-changes.v1',generatedAt:new Date().toISOString(),mode:'governed',items:await listPlatformChanges({limit:200})}
   if(page==='costs')return {schemaVersion:'platform-costs.v1',generatedAt:new Date().toISOString(),status:'not-connected',note:'Cost provider is optional; no synthetic cost values are reported.'}
-  if(page==='backup-dr')return {schemaVersion:'platform-backup-dr.v1',generatedAt:new Date().toISOString(),status:'evidence-required',note:'Backup configuration and restore evidence must be supplied by the deployment profile.'}
+  if(page==='backup-dr')return recoverySummary({environment:process.env.NODE_ENV||'development'})
   if(page==='drift')return {schemaVersion:'platform-drift.v1',generatedAt:new Date().toISOString(),desiredConfigVersion:safeEnvironment().configVersion,observedConfigVersion:safeEnvironment().configVersion,status:'no-runtime-drift-detected'}
   if(page==='audit')return {schemaVersion:'platform-audit-summary.v1',generatedAt:new Date().toISOString(),status:'available-through-durable-audit-store',note:'Control API intentionally exposes summary metadata only in this phase.'}
   if(page==='emergency')return {schemaVersion:'platform-emergency.v1',generatedAt:new Date().toISOString(),mode:'governed',items:await listEmergencyControls(),latestRuntimeSnapshot:await latestRuntimeSnapshot(process.env.NODE_ENV||'development')}
@@ -367,6 +368,75 @@ const server=http.createServer(async(req,res)=>{
       })
     })
   }
+  if(url.pathname==='/control-api/recovery/exercises'&&req.method==='POST'){
+    if(!requireControl(res,session,'recovery'))return
+    let body
+    try{body=await readBody(req,64*1024)}
+    catch(error){return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'invalid recovery exercise request'})}
+    return runControlMutation({
+      req,res,session,operation:'recovery.exercise.create',body,successStatus:201,
+      execute:()=>createRecoveryExercise({
+        environment:body.environment||process.env.NODE_ENV||'development',
+        scenario:body.scenario,
+        declaredRpoMinutes:body.declaredRpoMinutes,
+        declaredRtoMinutes:body.declaredRtoMinutes,
+        incidentCommander:body.incidentCommander||session.sub,
+        nextExerciseAt:body.nextExerciseAt||null,
+        createdBy:session.sub
+      })
+    })
+  }
+
+  const recoveryExerciseMatch=url.pathname.match(/^\/control-api\/recovery\/exercises\/([^/]+)$/)
+  if(recoveryExerciseMatch&&req.method==='PATCH'){
+    if(!requireControl(res,session,'recovery'))return
+    let body
+    try{body=await readBody(req,64*1024)}
+    catch(error){return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'invalid recovery exercise update'})}
+    const id=decodeURIComponent(recoveryExerciseMatch[1])
+    return runControlMutation({
+      req,res,session,operation:'recovery.exercise.update:'+id,body,
+      execute:()=>updateRecoveryExercise({
+        id,
+        state:body.state,
+        expectedVersion:body.expectedVersion,
+        measuredRpoMinutes:body.measuredRpoMinutes,
+        measuredRtoMinutes:body.measuredRtoMinutes,
+        integrityChecks:body.integrityChecks,
+        reconciliation:body.reconciliation,
+        gaps:body.gaps,
+        remediationOwner:body.remediationOwner,
+        nextExerciseAt:body.nextExerciseAt,
+        incidentCommander:body.incidentCommander
+      })
+    })
+  }
+
+  if(url.pathname==='/control-api/recovery/backup-evidence'&&req.method==='POST'){
+    if(!requireControl(res,session,'recovery'))return
+    let body
+    try{body=await readBody(req,64*1024)}
+    catch(error){return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'invalid backup evidence request'})}
+    return runControlMutation({
+      req,res,session,operation:'recovery.backup-evidence.create',body,successStatus:201,
+      execute:()=>recordBackupEvidence({
+        environment:body.environment||process.env.NODE_ENV||'development',
+        resourceType:body.resourceType,
+        resourceRef:body.resourceRef,
+        backupMode:body.backupMode,
+        retentionDays:body.retentionDays,
+        pitrEnabled:body.pitrEnabled,
+        objectVersioningEnabled:body.objectVersioningEnabled,
+        encryptionVerified:body.encryptionVerified,
+        deletionProtectionVerified:body.deletionProtectionVerified,
+        independentCopyVerified:body.independentCopyVerified,
+        evidence:body.evidence||{},
+        observedAt:body.observedAt||null,
+        createdBy:session.sub
+      })
+    })
+  }
+
   if(url.pathname==='/control-api/provider-migrations'&&req.method==='POST'){
     if(!requireControl(res,session,'migrate'))return
     let body
