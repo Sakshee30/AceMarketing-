@@ -98,6 +98,22 @@ const manifests=Object.freeze([
     state:'OPTIONAL'
   },
   {
+    id:'email-delivery',
+    contractVersion:1,
+    provider:'approved-email-adapter',
+    criticality:'optional',
+    scope:'workspace',
+    dependencies:['persistence'],
+    healthChecks:['credential-readiness','delivery-attempt','reconciliation'],
+    fallback:{mode:'queued-delay-or-unavailable',allowed:true},
+    capacity:{budget:'provider-rate-and-retry'},
+    configurationSchema:'config/capabilities/email.schema.json',
+    migrationClass:'external-provider',
+    owner:'platform-notifications',
+    telemetry:['delivery-latency','retry-rate','provider-errors','dead-letter-count'],
+    state:'OPTIONAL'
+  },
+  {
     id:'ai',
     contractVersion:1,
     provider:'approved-adapter',
