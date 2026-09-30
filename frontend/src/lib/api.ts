@@ -220,6 +220,18 @@ export const api = {
   customIntegrations: (options?:{signal?:AbortSignal}) => request('/custom-integrations',{signal:options?.signal}),
   testCustomIntegration: (payload: Record<string, unknown>) => request('/custom-integrations/test', { method: 'POST', body: JSON.stringify(payload) }),
   createCustomIntegration: (payload: Record<string, unknown>) => request('/custom-integrations', { method: 'POST', body: JSON.stringify(payload) }),
+  webhookSubscriptions: (options?:{signal?:AbortSignal}) => request('/webhook-subscriptions',{signal:options?.signal}),
+  createWebhookSubscription: (payload:Record<string,unknown>) => request('/webhook-subscriptions',{method:'POST',body:JSON.stringify(payload)}),
+  setWebhookSubscriptionStatus: (id:string,status:'active'|'paused'|'disabled') => request('/webhook-subscriptions/'+encodeURIComponent(id)+'/status',{method:'POST',body:JSON.stringify({status})}),
+  testWebhookSubscription: (id:string) => request('/webhook-subscriptions/'+encodeURIComponent(id)+'/test',{method:'POST',body:JSON.stringify({})}),
+  webhookDeliveries: (options?:{signal?:AbortSignal;subscriptionId?:string;status?:string}) => {
+    const params=new URLSearchParams()
+    if(options?.subscriptionId)params.set('subscriptionId',options.subscriptionId)
+    if(options?.status)params.set('status',options.status)
+    return request('/webhook-deliveries'+(params.toString()?'?'+params.toString():''),{signal:options?.signal})
+  },
+  webhookDeliveryAttempts: (id:string,options?:{signal?:AbortSignal}) => request('/webhook-deliveries/'+encodeURIComponent(id)+'/attempts',{signal:options?.signal}),
+  replayWebhookDelivery: (id:string) => request('/webhook-deliveries/'+encodeURIComponent(id)+'/replay',{method:'POST',body:JSON.stringify({})}),
   events: () => request('/events'),
   createEventRule: (payload: Record<string, unknown>) => request('/events/rules',{method:'POST',body:JSON.stringify(payload)}),
   toggleEventRule: (id:string,enabled:boolean) => request('/events/rules/toggle',{method:'POST',body:JSON.stringify({id,enabled})}),
