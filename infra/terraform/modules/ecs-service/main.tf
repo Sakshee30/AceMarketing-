@@ -4,7 +4,7 @@ locals {
     name      = var.name
     image     = var.image
     essential = true
-    readonlyRootFilesystem = true
+    readonlyRootFilesystem = var.readonly_root_filesystem
     linuxParameters = {
       initProcessEnabled = true
       capabilities = { drop = ["ALL"] }
