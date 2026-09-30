@@ -1,0 +1,127 @@
+name: Restore Exercise
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * 0'
+
+permissions:
+  contents: read
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ace
+          POSTGRES_PASSWORD: ace_restore_password
+          POSTGRES_DB: acemarketing
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ace -d acemarketing"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DB_SSL: disable
+      NODE_ENV: test
+      AUTH_REQUIRED: "false"
+      DEFAULT_WORKSPACE_ID: ws_default
+      CONNECTOR_ENCRYPTION_KEY: restore-exercise-only-key
+      RATE_LIMIT_PER_MINUTE: "20000"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Migrate source database
+        env:
+          DATABASE_URL: postgresql://ace:ace_restore_password@127.0.0.1:5432/acemarketing
+        run: npm run migrate
+
+      - name: Record source schema inventory
+        env:
+          PGPASSWORD: ace_restore_password
+        run: |
+          psql -h 127.0.0.1 -U ace -d acemarketing -Atc "select count(*) from information_schema.tables where table_schema='public';" > source-table-count.txt
+          psql -h 127.0.0.1 -U ace -d acemarketing -Atc "select table_name from information_schema.tables where table_schema='public' order by table_name;" > source-tables.txt
+
+      - name: Create backup
+        env:
+          DATABASE_URL: postgresql://ace:ace_restore_password@127.0.0.1:5432/acemarketing
+          BACKUP_DIR: restore-evidence
+        run: npm run backup
+
+      - name: Create isolated restore database
+        env:
+          PGPASSWORD: ace_restore_password
+        run: createdb -h 127.0.0.1 -U ace acemarketing_restore
+
+      - name: Restore latest backup
+        shell: bash
+        env:
+          DATABASE_URL: postgresql://ace:ace_restore_password@127.0.0.1:5432/acemarketing_restore
+          RESTORE_CONFIRM: "YES"
+        run: |
+          DUMP="$(ls -1t restore-evidence/*.dump | head -n 1)"
+          npm run restore -- "$DUMP"
+
+      - name: Verify restored schema inventory
+        env:
+          PGPASSWORD: ace_restore_password
+        run: |
+          psql -h 127.0.0.1 -U ace -d acemarketing_restore -Atc "select count(*) from information_schema.tables where table_schema='public';" > restored-table-count.txt
+          psql -h 127.0.0.1 -U ace -d acemarketing_restore -Atc "select table_name from information_schema.tables where table_schema='public' order by table_name;" > restored-tables.txt
+          diff -u source-table-count.txt restored-table-count.txt
+          diff -u source-tables.txt restored-tables.txt
+
+      - name: Start API from restored database and run smoke
+        shell: bash
+        env:
+          DATABASE_URL: postgresql://ace:ace_restore_password@127.0.0.1:5432/acemarketing_restore
+        run: |
+          node backend/src/index.mjs > /tmp/ace-restore-api.log 2>&1 &
+          echo $! > /tmp/ace-restore-api.pid
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:3001/api/health >/dev/null; then break; fi
+            sleep 1
+          done
+          npm run smoke
+          kill "$(cat /tmp/ace-restore-api.pid)"
+
+      - name: Write restore evidence summary
+        if: always()
+        run: |
+          mkdir -p restore-evidence
+          {
+            echo "commit=${GITHUB_SHA}"
+            echo "run_id=${GITHUB_RUN_ID}"
+            echo "completed_at=$(date -u +%FT%TZ)"
+            echo "source_tables=$(cat source-table-count.txt 2>/dev/null || echo unavailable)"
+            echo "restored_tables=$(cat restored-table-count.txt 2>/dev/null || echo unavailable)"
+          } > restore-evidence/restore-summary.txt
+
+      - name: Upload restore evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: restore-evidence-${{ github.sha }}
+          path: |
+            restore-evidence
+            source-table-count.txt
+            restored-table-count.txt
+            source-tables.txt
+            restored-tables.txt
+          if-no-files-found: warn
