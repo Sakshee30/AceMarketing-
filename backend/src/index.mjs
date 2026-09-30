@@ -62,7 +62,6 @@ import {beginProcessDrain,livenessState,markStartupComplete,readinessState,start
 import {runtimeRoleAllows,runtimeRolePolicy} from './platform/runtime-role.mjs'
 import {assertWorkspaceCell} from './platform/cell-placement.mjs'
 import {createBoard,getBoardOperation,getBoardSnapshot,listBoards} from './platform/board-store.mjs'
-import {handleMoveCard} from '../modules/boards/src/application/commands/move-card/move-card.handler.mjs'
 
 const runtimeRole=runtimeRolePolicy()
 
@@ -6655,13 +6654,14 @@ const server = http.createServer(async (req,res)=>{
       const body=await readBody(req)
       const boardId=decodeURIComponent(boardMoveMatch[1])
       try{
-        const result=await handleMoveCard({
+        const result=await moveCardController({
           workspaceId,
           actorId:req.user?.userId||null,
           requestId:req.requestId,
           correlationId:req.context?.traceId||req.requestId,
-          command:{...body,boardId},
-          authorize:()=>Boolean(req.user?hasPermission(req.user.role,'boards.move'):!AUTH_REQUIRED)
+          boardId,
+          body,
+          canMove:Boolean(req.user?hasPermission(req.user.role,'boards.move'):!AUTH_REQUIRED)
         })
         return send(req,res,200,result)
       }catch(error){
