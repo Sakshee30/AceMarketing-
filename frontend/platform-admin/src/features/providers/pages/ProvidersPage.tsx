@@ -27,7 +27,9 @@ type MigrationItem={
 
 const canMigrate=(role?:string)=>['platform_admin','infrastructure_engineer'].includes(role||'')
 
-const nextState=(item:MigrationItem)=>{
+type MigrationStep={state:string;trafficPercent?:number;compatibilityReport?:Record<string,unknown>;cutoverBoundary?:Record<string,unknown>}
+
+const nextState=(item:MigrationItem):MigrationStep|null=>{
   if(item.state==='draft')return {state:'validating'}
   if(item.state==='validating')return {state:'shadowing'}
   if(item.state==='shadowing')return {state:'canary',trafficPercent:10,compatibilityReport:{validated:true,source:'operator-confirmed'}}
