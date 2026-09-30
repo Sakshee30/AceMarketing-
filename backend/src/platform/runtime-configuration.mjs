@@ -80,16 +80,22 @@ export const buildRuntimePayload=async({
 
 export const publishRuntimeSnapshot=async({
   environment,
-  features={},
-  providerOverrides={},
-  admission={},
+  features=null,
+  providerOverrides=null,
+  admission=null,
   sourceChangeId=null,
   createdBy
 })=>{
   assertDb()
   const secret=signingSecret()
   if(!secret)throw Object.assign(new Error('runtime configuration signing secret is not configured'),{status:503,code:'runtime_config_signing_unavailable'})
-  const payload=await buildRuntimePayload({environment,features,providerOverrides,admission})
+  const previous=await latestRuntimeSnapshot(environment)
+  const payload=await buildRuntimePayload({
+    environment,
+    features:features??previous?.payload?.features??{},
+    providerOverrides:providerOverrides??previous?.payload?.providerOverrides??{},
+    admission:admission??previous?.payload?.admission??{}
+  })
   const checksum=sha(payload)
   const id='rcs_'+randomUUID()
   const client=await pool.connect()
