@@ -489,6 +489,7 @@ const server=http.createServer(async(req,res)=>{
       req,res,session,operation:'emergency.create',body,successStatus:201,
       execute:async()=>{
         const control=await createEmergencyControl({
+          environment:body.environment||process.env.NODE_ENV||'development',
           scopeType:body.scopeType,
           scopeId:body.scopeId||null,
           controlType:body.controlType,
