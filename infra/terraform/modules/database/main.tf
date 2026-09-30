@@ -33,6 +33,27 @@ resource "aws_vpc_security_group_ingress_rule" "application" {
   ip_protocol                  = "tcp"
 }
 
+data "aws_iam_policy_document" "rds_monitoring_assume" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["monitoring.rds.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "monitoring" {
+  name_prefix        = "${var.name}-rds-monitoring-"
+  assume_role_policy = data.aws_iam_policy_document.rds_monitoring_assume.json
+  tags               = local.tags
+}
+
+resource "aws_iam_role_policy_attachment" "monitoring" {
+  role       = aws_iam_role.monitoring.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
+}
+
 resource "aws_db_instance" "this" {
   identifier                     = "${var.name}-postgres"
   engine                         = "postgres"
@@ -58,6 +79,7 @@ resource "aws_db_instance" "this" {
   final_snapshot_identifier      = "${var.name}-postgres-final"
   performance_insights_enabled   = true
   monitoring_interval            = 60
+  monitoring_role_arn            = aws_iam_role.monitoring.arn
   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
   apply_immediately              = false
 
