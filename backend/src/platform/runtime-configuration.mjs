@@ -189,12 +189,13 @@ export const createEmergencyControl=async({
   if(!why)throw Object.assign(new Error('emergency control reason is required'),{status:400})
   const minutes=Math.max(5,Math.min(240,Number(durationMinutes)||30))
   const id='emg_'+randomUUID()
+  const expiresAt=new Date(Date.now()+minutes*60_000).toISOString()
   const {rows}=await pool.query(
     `INSERT INTO ace_emergency_controls
       (id,scope_type,scope_id,control_type,reason,created_by,expires_at)
-     VALUES ($1,$2,$3,$4,$5,$6,now()+($7::text||' minutes')::interval)
+     VALUES ($1,$2,$3,$4,$5,$6,$7)
      RETURNING *`,
-    [id,scope,scopeId?String(scopeId).trim():null,control,why.slice(0,4000),createdBy,String(minutes)]
+    [id,scope,scopeId?String(scopeId).trim():null,control,why.slice(0,4000),createdBy,expiresAt]
   )
   return rows[0]
 }
