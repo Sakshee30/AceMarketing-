@@ -14,6 +14,7 @@ import {createRecoveryExercise,recordBackupEvidence,recoverySummary,updateRecove
 import {providerExecutionSnapshot} from './platform/provider-execution.mjs'
 import {beginProcessDrain,livenessState,markStartupComplete,startupState} from './platform/process-health.mjs'
 import {globalAdmission} from './platform/admission-control.mjs'
+import {capacityBudgetFromEnvironment,evaluateCapacityBudget} from './platform/capacity-budget.mjs'
 
 const PORT=Number(process.env.CONTROL_PORT||3002)
 const IS_PROD=process.env.NODE_ENV==='production'
@@ -203,7 +204,8 @@ const observedPage=async page=>{
       database:process.env.DATABASE_URL?'configured':'unconfigured',
       objectStorage:capabilities.providers.find(x=>x.id==='object-storage')?.health||'unconfigured',
       durableJobs:capabilities.providers.find(x=>x.id==='queue')?.health||'unconfigured'
-    }
+    },
+    capacityBudget:evaluateCapacityBudget(capacityBudgetFromEnvironment())
   }
   if(page==='observability')return {
     schemaVersion:'platform-observability.v2',
@@ -214,7 +216,8 @@ const observedPage=async page=>{
     database:await dbHealth(),
     apiAdmission:globalAdmission.snapshot(),
     providerExecution:providerExecutionSnapshot(),
-    recovery:(await recoverySummary({environment:process.env.NODE_ENV||'development'})).evidenceCounts
+    recovery:(await recoverySummary({environment:process.env.NODE_ENV||'development'})).evidenceCounts,
+    capacityBudget:evaluateCapacityBudget(capacityBudgetFromEnvironment())
   }
   if(page==='changes')return {schemaVersion:'platform-changes.v1',generatedAt:new Date().toISOString(),mode:'governed',items:await listPlatformChanges({limit:200})}
   if(page==='costs')return {schemaVersion:'platform-costs.v1',generatedAt:new Date().toISOString(),status:'not-connected',note:'Cost provider is optional; no synthetic cost values are reported.'}
