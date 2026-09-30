@@ -14,9 +14,21 @@ export const createRequestContext=({req,actor=null,workspaceId=null,tenantId=nul
   const traceId=safeId(req?.headers?.['x-trace-id'])||requestId
   const startedAt=Date.now()
   const deadlineAt=startedAt+deadlineMs
+  const releaseVersion=safeId(process.env.ACE_RELEASE_SHA||process.env.GITHUB_SHA||'unknown')||'unknown'
+  const configurationVersion=safeId(process.env.ACE_CONFIG_VERSION||'unversioned')||'unversioned'
+  const service=safeId(process.env.ACE_SERVICE_NAME||'api')||'api'
+  const environment=safeId(process.env.ACE_RUNTIME_ENVIRONMENT||process.env.NODE_ENV||'development')||'development'
+  const region=safeId(process.env.AWS_REGION||process.env.ACE_REGION||'local')||'local'
+  const cell=safeId(process.env.ACE_CELL_ID||'default')||'default'
   return Object.freeze({
     requestId,
     traceId,
+    releaseVersion,
+    configurationVersion,
+    service,
+    environment,
+    region,
+    cell,
     startedAt,
     deadlineAt,
     deadlineMs,
