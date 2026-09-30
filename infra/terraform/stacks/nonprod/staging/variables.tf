@@ -36,3 +36,22 @@ variable "enable_nat_gateway" {
   description = "Whether staging private application subnets receive outbound NAT."
   default     = true
 }
+
+
+variable "database_instance_class" {
+  type        = string
+  description = "Staging PostgreSQL instance class."
+  default     = "db.t4g.medium"
+}
+
+variable "database_engine_version" {
+  type        = string
+  description = "Pinned PostgreSQL engine version for staging."
+  default     = "16.4"
+}
+
+variable "log_retention_days" {
+  type        = number
+  description = "CloudWatch application log retention."
+  default     = 30
+}
