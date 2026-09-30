@@ -4,6 +4,18 @@ import path from 'node:path'
 const root=process.cwd()
 const failures=[]
 const required=[
+  'backend/adapters/s3/object-storage.s3.ts',
+  'backend/adapters/postgres/connection-pool.ts',
+  'backend/platform/health/capability-health.ts',
+  'backend/platform/policy/production-policy.ts',
+  'backend/platform/capabilities/dependency-engine.ts',
+  'backend/platform/capabilities/provider-registry.ts',
+  'backend/platform/configuration/config-validator.ts',
+  'backend/platform/context/tenant-context.ts',
+  'backend/apps/realtime-gateway/src/bootstrap.ts',
+  'backend/apps/control-api/src/bootstrap.ts',
+  'backend/apps/domain-api/src/bootstrap.ts',
+  'backend/apps/customer-bff/src/bootstrap.ts',
   'backend/modules/boards/src/application/commands/move-card/move-card.handler.ts',
   'backend/modules/search/module.manifest.mjs',
   'backend/modules/usage/module.manifest.mjs',
