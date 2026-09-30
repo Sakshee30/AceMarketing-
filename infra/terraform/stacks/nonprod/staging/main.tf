@@ -88,6 +88,13 @@ module "backup" {
   tags = local.service_tags
 }
 
+module "security_baseline" {
+  source = "../../../modules/security-baseline"
+
+  name = "ace-${var.environment}"
+  tags = local.service_tags
+}
+
 data "aws_iam_policy_document" "application_runtime" {
   statement {
     sid = "ObjectStorage"
