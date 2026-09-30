@@ -1,0 +1,89 @@
+openapi: 3.1.0
+info:
+  title: AceMarketing Platform Foundation API
+  version: 1.0.0
+  description: >
+    Authoritative contract for reusable platform-foundation endpoints and envelopes.
+    Product-specific routes remain owned by their feature contracts during incremental migration.
+x-contract-scope: platform-foundation
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      responses:
+        '200':
+          description: Process health
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok]
+                properties:
+                  ok: { type: boolean }
+  /control-api/capabilities:
+    get:
+      operationId: getPlatformCapabilities
+      responses:
+        '200':
+          description: Redacted capability and module snapshot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CapabilitySnapshot'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+  /control-api/runtime-config/latest:
+    get:
+      operationId: getLatestRuntimeConfiguration
+      responses:
+        '200':
+          description: Latest signed runtime configuration metadata
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          $ref: '#/components/responses/Problem'
+components:
+  responses:
+    Problem:
+      description: RFC 9457 compatible problem response
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+  schemas:
+    ProblemDetails:
+      type: object
+      required: [type, title, status]
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        code: { type: string }
+        requestId: { type: string }
+        operationId: { type: string }
+        retryable: { type: boolean }
+    CapabilitySnapshot:
+      type: object
+      required: [schemaVersion, generatedAt, features, providers, modules]
+      properties:
+        schemaVersion: { type: string }
+        generatedAt: { type: string, format: date-time }
+        configurationVersion: { type: string }
+        releaseVersion: { type: string }
+        features:
+          type: array
+          items: { type: object }
+        providers:
+          type: array
+          items: { type: object }
+        modules:
+          type: array
+          items: { type: object }
