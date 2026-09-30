@@ -487,7 +487,11 @@ const server=http.createServer(async(req,res)=>{
         cutoverBoundary:body.cutoverBoundary||{},
         rollbackPlan:body.rollbackPlan||{},
         requestedBy:session.sub,
-        sourceChangeId:body.sourceChangeId||null
+        sourceChangeId:body.sourceChangeId||null,
+        dependencyInventory:body.dependencyInventory||{},
+        capacityEvidence:body.capacityEvidence||{},
+        verificationEvidence:body.verificationEvidence||{},
+        irreversibleSteps:Array.isArray(body.irreversibleSteps)?body.irreversibleSteps:[]
       })
     })
   }
@@ -510,7 +514,12 @@ const server=http.createServer(async(req,res)=>{
           cutoverBoundary:body.cutoverBoundary,
           actor:session.sub,
           expectedVersion:body.expectedVersion,
-          failureReason:body.failureReason||null
+          failureReason:body.failureReason||null,
+          dependencyInventory:body.dependencyInventory,
+          capacityEvidence:body.capacityEvidence,
+          verificationEvidence:body.verificationEvidence,
+          irreversibleSteps:body.irreversibleSteps,
+          pointOfNoReturn:body.pointOfNoReturn===true
         })
         const latest=await latestRuntimeSnapshot(migration.environment)
         const providerOverrides={
