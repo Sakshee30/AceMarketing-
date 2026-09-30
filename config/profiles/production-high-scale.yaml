@@ -1,0 +1,45 @@
+schemaVersion: 1
+profile: production-high-scale
+capacity:
+  registeredUsersTarget: 700000
+  dynamicRpsQualificationTarget: 50000
+  simultaneousActiveSessionsScenario: 70000
+  claimStatus: qualification-required
+platform:
+  database:
+    provider: postgres
+    required: true
+  cache:
+    enabled: true
+    provider: redis
+    fallback: bounded-bypass
+    fallbackBudgetProfile: cache-unavailable
+  queue:
+    provider: sqs
+    requiredForAcceptedJobs: true
+    onUnavailable: reject-new-admission
+  objectStorage:
+    provider: s3
+    required: true
+    onUnavailable: reject-upload-safely
+  search:
+    enabled: true
+    provider: opensearch
+    fallback: postgres-limited
+    fallbackBudgetProfile: search-degraded
+  ai:
+    enabled: false
+    onUnavailable: feature-disabled
+  audit:
+    requiredForSensitiveCommits: true
+    durableStore: postgres
+routing:
+  tenantCells:
+    enabled: true
+    requireRoutingEpoch: true
+    singleWriter: true
+security:
+  authentication: required
+  authorization: required
+  tenantIsolation: required
+  secretProvider: secrets-manager
