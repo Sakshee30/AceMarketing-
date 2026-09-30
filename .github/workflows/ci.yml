@@ -353,11 +353,13 @@ jobs:
           test -f backend/src/platform/provider-execution.mjs
           test -f backend/src/platform/access-policy.mjs
           test -f backend/src/platform/workspace-access.mjs
+          test -f backend/src/platform/forms-store.mjs
           test -f backend/src/platform/egress-policy.mjs
           test -f backend/src/platform/webhook-signing.mjs
           test -f backend/migrations/034_platform_reliability.sql
           test -f backend/migrations/035_platform_audit_catalog.sql
           test -f backend/migrations/036_platform_rls.sql
+          test -f backend/migrations/037_forms_custom_objects.sql
           test -f backend/tests/platform-foundation.test.mjs
           test -f backend/tests/platform-reliability.test.mjs
           test -f backend/tests/tenant-context.test.mjs
@@ -367,6 +369,7 @@ jobs:
           test -f backend/tests/provider-execution.test.mjs
           test -f backend/tests/access-policy.test.mjs
           test -f backend/tests/workspace-access.test.mjs
+          test -f backend/tests/forms-store.test.mjs
           test -f backend/tests/egress-policy.test.mjs
           test -f backend/tests/webhook-signing.test.mjs
           test -f scripts/backend-architecture-check.mjs
