@@ -52,6 +52,9 @@ const createEmbeddedPool=async()=>{
         ''
       )
     }
+    // pg-mem does not implement PostgreSQL row-level security. Production applies
+    // the RLS migration; embedded tests exercise the application tenant context.
+    if(file==='036_platform_rls.sql')continue
     // pg-mem's parser rejects comment-only compatibility marker files.
     // Production migration tooling may retain those markers, but embedded setup
     // should simply skip files with no executable SQL.
