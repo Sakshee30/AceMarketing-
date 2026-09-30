@@ -572,7 +572,7 @@ module "realtime_service" {
   max_capacity       = 12
   cpu_target_percent = 60
   environment        = merge(local.common_runtime_environment, { ACE_SERVICE_NAME = "realtime", REALTIME_PORT = "3003" })
-  secrets = {
+  secrets            = {
     DATABASE_URL      = module.secrets.secret_arns["runtime/database-url"]
     GOOGLE_AI_API_KEY = module.secrets.secret_arns["runtime/google-ai-api-key"]
   }
@@ -622,7 +622,6 @@ module "worker_service" {
   secrets                  = local.common_runtime_secrets
   tags                     = local.service_tags
 }
-
 
 module "webhook_worker_service" {
   source = "../../../modules/ecs-service"
