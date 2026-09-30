@@ -83,6 +83,8 @@ export const keyboardMoveDirection=(key:string)=>{
 
 export const isDragActivationKey=(key:string)=>key==='Enter'||key===' '
 
+export const isDragCancelKey=(key:string)=>key==='Escape'
+
 export const interactionAnnouncement=(input:{
   phase:DragPhase
   itemLabel:string
