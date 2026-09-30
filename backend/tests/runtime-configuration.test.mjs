@@ -1,4 +1,4 @@
-import test from 'node:test'
+import test,{after} from 'node:test'
 import assert from 'node:assert/strict'
 import {pool} from '../src/database.mjs'
 import {
@@ -9,6 +9,12 @@ import {
   revokeEmergencyControl,
   verifyRuntimeSnapshot
 } from '../src/platform/runtime-configuration.mjs'
+
+after(async()=>{
+  if(!pool)return
+  await pool.query("DELETE FROM ace_runtime_config_snapshots WHERE environment='test'")
+  await pool.query("DELETE FROM ace_emergency_controls WHERE environment='test'")
+})
 
 test('signed runtime snapshot verifies and locks safety features',{skip:!pool},async()=>{
   process.env.RUNTIME_CONFIG_SIGNING_SECRET='runtime-config-test-secret'
