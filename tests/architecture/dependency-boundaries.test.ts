@@ -1,0 +1,1 @@
+// Canonical TypeScript test path from the architecture manifest.\n// The executable node:test implementation remains in the adjacent .mjs file to preserve the current pipeline.\nimport './dependency-boundaries.test.mjs'\n
