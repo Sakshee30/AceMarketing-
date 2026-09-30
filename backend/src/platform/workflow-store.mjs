@@ -198,10 +198,9 @@ export const cancelWorkflowExecution=async({workspaceId,executionId,actorId=null
   if(['completed','cancelled'].includes(execution.status))return execution
   const updated=(await client.query(
     `UPDATE ace_workflow_executions
-     SET status='cancelled',updated_at=now(),completed_at=now(),
-         state=COALESCE(state,'{}'::jsonb)||$3::jsonb
+     SET status='cancelled',updated_at=now(),completed_at=now()
      WHERE workspace_id=$1 AND id=$2 RETURNING *`,
-    [workspaceId,executionId,JSON.stringify({cancelledBy:actorId,cancelledAt:new Date().toISOString()})]
+    [workspaceId,executionId]
   )).rows[0]
   await client.query(
     `UPDATE ace_workflow_execution_steps
@@ -234,15 +233,14 @@ export const retryWorkflowExecution=async({workspaceId,executionId,actorId=null,
   )
   const {rows}=await client.query(
     `UPDATE ace_workflow_executions
-     SET status='running',attempts=attempts+1,completed_at=NULL,updated_at=now(),
-         state=COALESCE(state,'{}'::jsonb)||$3::jsonb
+     SET status='running',attempts=attempts+1,completed_at=NULL,updated_at=now()
      WHERE workspace_id=$1 AND id=$2 RETURNING *`,
-    [workspaceId,executionId,JSON.stringify({retriedBy:actorId,retriedAt:new Date().toISOString()})]
+    [workspaceId,executionId]
   )
   return rows[0]
 })
 
-export const createWorkflowApprovalexport const createWorkflowApproval=async({workspaceId,executionId,nodeId,requestedBy=null,approverScope=null,policyVersion=null})=>withTenantDbTransaction(workspaceId,async client=>{
+export const createWorkflowApproval=async({workspaceId,executionId,nodeId,requestedBy=null,approverScope=null,policyVersion=null})=>withTenantDbTransaction(workspaceId,async client=>{
   const execution=(await client.query(
     `SELECT * FROM ace_workflow_executions WHERE workspace_id=$1 AND id=$2 FOR UPDATE`,
     [workspaceId,executionId]
