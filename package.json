@@ -72,7 +72,10 @@
     "ai:live-provider-smoke": "node scripts/ai/live-provider-smoke.mjs",
     "ai:checkpoint-smoke": "node scripts/ai/checkpoint-smoke.mjs",
     "check:ai-tools": "node --check scripts/ai/_client.mjs && node --check scripts/ai/provider-verify.mjs && node --check scripts/ai/dataset-readiness.mjs && node --check scripts/ai/train.mjs && node --check scripts/ai/evaluate.mjs && node --check scripts/ai/score.mjs && node --check scripts/ai/backtest.mjs && node --check scripts/ai/promote.mjs && node --check scripts/ai/rollback.mjs && node --check scripts/ai/delete.mjs && node --check scripts/ai/live-provider-smoke.mjs && node --check scripts/ai/checkpoint-smoke.mjs",
-    "ai:score": "node scripts/ai/score.mjs"
+    "ai:score": "node scripts/ai/score.mjs",
+    "backend:architecture": "node scripts/backend-architecture-check.mjs",
+    "test:backend-foundation": "node --test backend/tests/platform-foundation.test.mjs",
+    "backend:verify": "npm run backend:architecture && npm run check:backend && npm run test:backend-foundation"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.59.0",
