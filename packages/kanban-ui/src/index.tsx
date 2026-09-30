@@ -1,4 +1,4 @@
-import type {KeyboardEvent,ReactNode} from 'react'
+import {useId,type KeyboardEvent,type ReactNode} from 'react'
 
 export type MoveDestination={
   id:string
@@ -53,6 +53,7 @@ export function DragHandle({label,onActivate,onCancel,disabled=false}:{
   onCancel?:()=>void
   disabled?:boolean
 }){
+  const helpId=useId()
   const onKeyDown=(event:KeyboardEvent<HTMLButtonElement>)=>{
     if(disabled)return
     if(event.key==='Enter'||event.key===' '){
@@ -68,12 +69,12 @@ export function DragHandle({label,onActivate,onCancel,disabled=false}:{
     className="ace-drag-handle"
     disabled={disabled}
     aria-label={label}
-    aria-describedby="ace-drag-help"
+    aria-describedby={helpId}
     onClick={onActivate}
     onKeyDown={onKeyDown}
   >
     <span aria-hidden="true">⋮⋮</span>
-    <span id="ace-drag-help" className="sr-only">Press Enter or Space to choose a move destination. Escape cancels.</span>
+    <span id={helpId} className="sr-only">Press Enter or Space to choose a move destination. Escape cancels.</span>
   </button>
 }
 
