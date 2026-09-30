@@ -939,12 +939,6 @@ if(fs.existsSync(releaseWorkflowPath)){
   }
 }
 
-if(failures.length){
-  console.error('[frontend-architecture] FAILED')
-  for(const failure of failures)console.error(' - '+failure)
-  process.exit(1)
-}
-console.log('[frontend-architecture] PASS: frontend/server boundaries and migration ceiling verified.')
 
 
 const customerProvidersPath=path.join(root,'frontend','customer-app','src','app','providers','AppProviders.tsx')
@@ -959,3 +953,10 @@ if(fs.existsSync(customerProvidersPath)&&fs.existsSync(legacyCustomerWorkspacePa
     failures.push('customer workspace must expose the governed Boards feature without replacing existing tabs.')
   }
 }
+
+if(failures.length){
+  console.error('[frontend-architecture] FAILED')
+  for(const failure of failures)console.error(' - '+failure)
+  process.exit(1)
+}
+console.log('[frontend-architecture] PASS: frontend/server boundaries and migration ceiling verified.')
