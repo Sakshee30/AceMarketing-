@@ -1,5 +1,6 @@
 import {createHash,randomUUID} from 'node:crypto'
 import {withTenantDbTransaction} from './tenant-db.mjs'
+import {validateWorkflowActionConfig,workflowActionCatalog} from './workflow-action-catalog.mjs'
 
 const nodeTypes=new Set(['start','condition','action','approval','wait','end'])
 const triggerTypes=new Set(['event','schedule','api','manual'])
@@ -22,6 +23,7 @@ export const validateWorkflowDefinition=definition=>{
     const type=String(node?.type||'')
     if(!/^[A-Za-z0-9_-]{1,80}$/.test(id)||ids.has(id))throw Object.assign(new Error('workflow node ids must be unique and bounded'),{status:400,code:'invalid_workflow_node_id'})
     if(!nodeTypes.has(type))throw Object.assign(new Error('unsupported workflow node type: '+type),{status:400,code:'unsupported_workflow_node_type'})
+    if(type==='action')validateWorkflowActionConfig(node.config||{})
     ids.add(id)
   }
   const starts=nodes.filter(node=>node.type==='start')
@@ -56,6 +58,27 @@ export const validateWorkflowDefinition=definition=>{
   }
 }
 
+export const simulateWorkflowDefinition=definition=>{
+  const normalized=validateWorkflowDefinition(definition)
+  const actions=normalized.nodes.filter(node=>node.type==='action').map(node=>({
+    nodeId:node.id,
+    action:validateWorkflowActionConfig(node.config)
+  }))
+  return {
+    valid:true,
+    trigger:normalized.trigger,
+    nodes:normalized.nodes.length,
+    edges:normalized.edges.length,
+    approvals:normalized.nodes.filter(node=>node.type==='approval').length,
+    waits:normalized.nodes.filter(node=>node.type==='wait').length,
+    actions,
+    actionCatalogueVersion:1,
+    allowedActions:workflowActionCatalog().map(item=>item.id),
+    estimatedWorkUnits:normalized.nodes.length+actions.reduce((sum,item)=>sum+(item.action.timeoutMs>=5000?3:1),0),
+    definitionHash:workflowDefinitionHash(normalized)
+  }
+}
+
 export const createWorkflow=async({workspaceId,name,definition,actorId=null})=>{
   const cleanName=String(name||'').trim()
   if(cleanName.length<2||cleanName.length>160)throw Object.assign(new Error('workflow name must be 2-160 characters'),{status:400,code:'invalid_workflow_name'})
@@ -73,6 +96,26 @@ export const createWorkflow=async({workspaceId,name,definition,actorId=null})=>{
       [id,workspaceId,JSON.stringify(normalized),workflowDefinitionHash(normalized),actorId]
     )
     return {...rows[0],definition:normalized}
+  })
+}
+
+export const createWorkflowVersion=async({workspaceId,id,definition,actorId=null})=>{
+  const normalized=validateWorkflowDefinition(definition)
+  return withTenantDbTransaction(workspaceId,async client=>{
+    const workflow=(await client.query('SELECT * FROM ace_workflows WHERE workspace_id=$1 AND id=$2 FOR UPDATE',[workspaceId,id])).rows[0]
+    if(!workflow)return null
+    const version=Number(workflow.latest_version)+1
+    await client.query(
+      `INSERT INTO ace_workflow_versions(workflow_id,workspace_id,version,definition,definition_hash,status,created_by)
+       VALUES($1,$2,$3,$4::jsonb,$5,'draft',$6)`,
+      [id,workspaceId,version,JSON.stringify(normalized),workflowDefinitionHash(normalized),actorId]
+    )
+    const updated=(await client.query(
+      `UPDATE ace_workflows SET latest_version=$3,updated_at=now()
+       WHERE workspace_id=$1 AND id=$2 RETURNING *`,
+      [workspaceId,id,version]
+    )).rows[0]
+    return {...updated,version,definition:normalized}
   })
 }
 
@@ -113,10 +156,93 @@ export const startWorkflowExecution=async({workspaceId,id,actorId=null,triggerTy
      RETURNING *`,
     [executionId,workspaceId,id,version,startNode.id,triggerTypes.has(triggerType)?triggerType:'manual',triggerRef,correlationId,causationId,actorId,JSON.stringify({definitionHash:workflowDefinitionHash(definition)}),deadlineAt]
   )
+  const execution=rows[0]
+  for(const node of definition.nodes){
+    const action=node.type==='action'?validateWorkflowActionConfig(node.config||{}):null
+    await client.query(
+      `INSERT INTO ace_workflow_execution_steps
+        (id,workspace_id,execution_id,workflow_id,workflow_version,node_id,node_type,action_id,status,attempt,idempotency_key,input_json,started_at,completed_at)
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,0,$10,$11::jsonb,$12,$13)
+       ON CONFLICT (workspace_id,execution_id,node_id) DO NOTHING`,
+      [
+        'workflow_step_'+randomUUID(),workspaceId,executionId,id,version,node.id,node.type,action?.actionId||null,
+        node.type==='start'?'succeeded':'pending',
+        action?'workflow:'+executionId+':'+node.id:null,
+        JSON.stringify(action?.input||{}),
+        node.type==='start'?new Date().toISOString():null,
+        node.type==='start'?new Date().toISOString():null
+      ]
+    )
+  }
+  return execution
+})
+
+export const listWorkflowExecutionSteps=async({workspaceId,executionId})=>withTenantDbTransaction(workspaceId,async client=>{
+  const {rows}=await client.query(
+    `SELECT id,execution_id,workflow_id,workflow_version,node_id,node_type,action_id,status,attempt,idempotency_key,
+            input_json,output_json,error_code,error_message,lease_owner,lease_expires_at,started_at,completed_at,created_at,updated_at
+     FROM ace_workflow_execution_steps
+     WHERE workspace_id=$1 AND execution_id=$2
+     ORDER BY created_at ASC`,
+    [workspaceId,executionId]
+  )
+  return rows
+})
+
+export const cancelWorkflowExecution=async({workspaceId,executionId,actorId=null})=>withTenantDbTransaction(workspaceId,async client=>{
+  const execution=(await client.query(
+    `SELECT * FROM ace_workflow_executions WHERE workspace_id=$1 AND id=$2 FOR UPDATE`,
+    [workspaceId,executionId]
+  )).rows[0]
+  if(!execution)return null
+  if(['completed','cancelled'].includes(execution.status))return execution
+  const updated=(await client.query(
+    `UPDATE ace_workflow_executions
+     SET status='cancelled',updated_at=now(),completed_at=now(),
+         state=COALESCE(state,'{}'::jsonb)||$3::jsonb
+     WHERE workspace_id=$1 AND id=$2 RETURNING *`,
+    [workspaceId,executionId,JSON.stringify({cancelledBy:actorId,cancelledAt:new Date().toISOString()})]
+  )).rows[0]
+  await client.query(
+    `UPDATE ace_workflow_execution_steps
+     SET status='cancelled',updated_at=now(),completed_at=now(),lease_owner=NULL,lease_expires_at=NULL
+     WHERE workspace_id=$1 AND execution_id=$2 AND status IN ('pending','leased','waiting','failed')`,
+    [workspaceId,executionId]
+  )
+  return updated
+})
+
+export const retryWorkflowExecution=async({workspaceId,executionId,actorId=null,maxAttempts=5})=>withTenantDbTransaction(workspaceId,async client=>{
+  const execution=(await client.query(
+    `SELECT * FROM ace_workflow_executions WHERE workspace_id=$1 AND id=$2 FOR UPDATE`,
+    [workspaceId,executionId]
+  )).rows[0]
+  if(!execution)return null
+  if(!['failed','cancelled'].includes(execution.status)){
+    throw Object.assign(new Error('only failed or cancelled workflow executions can be retried'),{status:409,code:'workflow_retry_invalid_state'})
+  }
+  const attempts=Number(execution.attempts||0)
+  if(attempts>=Math.max(1,Number(maxAttempts)||5)){
+    throw Object.assign(new Error('workflow retry limit reached'),{status:409,code:'workflow_retry_limit'})
+  }
+  await client.query(
+    `UPDATE ace_workflow_execution_steps
+     SET status='pending',attempt=attempt+1,error_code=NULL,error_message=NULL,lease_owner=NULL,lease_expires_at=NULL,
+         started_at=NULL,completed_at=NULL,updated_at=now()
+     WHERE workspace_id=$1 AND execution_id=$2 AND status IN ('failed','cancelled')`,
+    [workspaceId,executionId]
+  )
+  const {rows}=await client.query(
+    `UPDATE ace_workflow_executions
+     SET status='running',attempts=attempts+1,completed_at=NULL,updated_at=now(),
+         state=COALESCE(state,'{}'::jsonb)||$3::jsonb
+     WHERE workspace_id=$1 AND id=$2 RETURNING *`,
+    [workspaceId,executionId,JSON.stringify({retriedBy:actorId,retriedAt:new Date().toISOString()})]
+  )
   return rows[0]
 })
 
-export const createWorkflowApproval=async({workspaceId,executionId,nodeId,requestedBy=null,approverScope=null,policyVersion=null})=>withTenantDbTransaction(workspaceId,async client=>{
+export const createWorkflowApprovalexport const createWorkflowApproval=async({workspaceId,executionId,nodeId,requestedBy=null,approverScope=null,policyVersion=null})=>withTenantDbTransaction(workspaceId,async client=>{
   const execution=(await client.query(
     `SELECT * FROM ace_workflow_executions WHERE workspace_id=$1 AND id=$2 FOR UPDATE`,
     [workspaceId,executionId]
