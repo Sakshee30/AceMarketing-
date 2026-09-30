@@ -8,6 +8,7 @@ import {platformFeatureCatalog} from './platform/feature-catalog.mjs'
 import {registrySummary} from './ai-registry.mjs'
 import {createPlatformChange,decidePlatformChange,getPlatformChange,listPlatformChanges,requestPlatformRollback,transitionPlatformChange,updatePlatformChangePlan} from './platform/control-change-store.mjs'
 import {beginControlCommand,finishControlCommand} from './platform/control-idempotency.mjs'
+import {createEmergencyControl,latestRuntimeSnapshot,listEmergencyControls,publishRuntimeSnapshot,revokeEmergencyControl,verifyRuntimeSnapshot} from './platform/runtime-configuration.mjs'
 
 const PORT=Number(process.env.CONTROL_PORT||3002)
 const IS_PROD=process.env.NODE_ENV==='production'
@@ -15,6 +16,7 @@ const SESSION_SECRET=String(process.env.CONTROL_SESSION_SECRET||'')
 const ADMIN_EMAIL=String(process.env.CONTROL_ADMIN_EMAIL||'').trim().toLowerCase()
 const ADMIN_PASSWORD_HASH=String(process.env.CONTROL_ADMIN_PASSWORD_HASH||'')
 const ADMIN_ROLE=String(process.env.CONTROL_ADMIN_ROLE||'platform_admin')
+const RUNTIME_CONFIG_TOKEN=String(process.env.RUNTIME_CONFIG_TOKEN||'')
 const COOKIE_NAME=IS_PROD?'__Host-ace_control_session':'ace_control_session'
 const loginLimit=createRateLimiter({windowMs:60_000,max:10})
 
@@ -60,12 +62,12 @@ const currentSession=req=>{
 }
 
 const roleActions=Object.freeze({
-  platform_admin:new Set(['read','request','plan','transition','approve','rollback']),
+  platform_admin:new Set(['read','request','plan','transition','approve','rollback','emergency','publish']),
   approver:new Set(['read','approve']),
   operator:new Set(['read','request','plan','transition','rollback']),
   developer:new Set(['read','request','plan']),
-  infrastructure_engineer:new Set(['read','request','plan','transition','rollback']),
-  security_admin:new Set(['read','approve','rollback']),
+  infrastructure_engineer:new Set(['read','request','plan','transition','rollback','publish']),
+  security_admin:new Set(['read','approve','rollback','emergency']),
   viewer:new Set(['read'])
 })
 const canControl=(session,action)=>Boolean(roleActions[session?.role]?.has(action))
@@ -204,7 +206,7 @@ const observedPage=async page=>{
   if(page==='backup-dr')return {schemaVersion:'platform-backup-dr.v1',generatedAt:new Date().toISOString(),status:'evidence-required',note:'Backup configuration and restore evidence must be supplied by the deployment profile.'}
   if(page==='drift')return {schemaVersion:'platform-drift.v1',generatedAt:new Date().toISOString(),desiredConfigVersion:safeEnvironment().configVersion,observedConfigVersion:safeEnvironment().configVersion,status:'no-runtime-drift-detected'}
   if(page==='audit')return {schemaVersion:'platform-audit-summary.v1',generatedAt:new Date().toISOString(),status:'available-through-durable-audit-store',note:'Control API intentionally exposes summary metadata only in this phase.'}
-  if(page==='emergency')return {schemaVersion:'platform-emergency.v1',generatedAt:new Date().toISOString(),mode:'read-only',availableActions:[],note:'Emergency mutations remain unavailable until approval and recovery contracts are implemented.'}
+  if(page==='emergency')return {schemaVersion:'platform-emergency.v1',generatedAt:new Date().toISOString(),mode:'governed',items:await listEmergencyControls(),latestRuntimeSnapshot:await latestRuntimeSnapshot(process.env.NODE_ENV||'development')}
   throw Object.assign(new Error('unknown control page'),{status:404})
 }
 
@@ -212,6 +214,17 @@ const server=http.createServer(async(req,res)=>{
   const base='http://'+String(req.headers.host||'localhost')
   const url=new URL(req.url||'/',base)
   if(req.method==='GET'&&url.pathname==='/healthz')return json(res,200,{ok:true,service:'platform-control-api'})
+
+  if(req.method==='GET'&&url.pathname==='/runtime-config/snapshot'){
+    const token=String(req.headers['x-runtime-config-token']||'')
+    if(!RUNTIME_CONFIG_TOKEN||token!==RUNTIME_CONFIG_TOKEN)return json(res,401,{error:'runtime configuration service authorization required'})
+    const environment=String(url.searchParams.get('environment')||process.env.NODE_ENV||'development')
+    const snapshot=await latestRuntimeSnapshot(environment)
+    if(!snapshot)return json(res,404,{error:'runtime configuration snapshot not found'})
+    const verification=verifyRuntimeSnapshot(snapshot)
+    if(!verification.valid)return json(res,503,{error:'runtime configuration snapshot is invalid',reason:verification.reason})
+    return json(res,200,snapshot)
+  }
 
   if(req.method==='POST'&&url.pathname==='/control-api/auth/login'){
     const ip=String(req.socket.remoteAddress||'unknown')
@@ -353,6 +366,66 @@ const server=http.createServer(async(req,res)=>{
       })
     })
   }
+  if(url.pathname==='/control-api/runtime-config/publish'&&req.method==='POST'){
+    if(!requireControl(res,session,'publish'))return
+    let body
+    try{body=await readBody(req,64*1024)}
+    catch(error){return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'invalid runtime configuration request'})}
+    return runControlMutation({
+      req,res,session,operation:'runtime-config.publish',body,
+      execute:()=>publishRuntimeSnapshot({
+        environment:body.environment||process.env.NODE_ENV||'development',
+        features:body.features||{},
+        providerOverrides:body.providerOverrides||{},
+        admission:body.admission||{},
+        sourceChangeId:body.sourceChangeId||null,
+        createdBy:session.sub
+      })
+    })
+  }
+
+  if(url.pathname==='/control-api/runtime-config/latest'&&req.method==='GET'){
+    if(!requireControl(res,session,'read'))return
+    const environment=String(url.searchParams.get('environment')||process.env.NODE_ENV||'development')
+    const snapshot=await latestRuntimeSnapshot(environment)
+    return json(res,200,{snapshot,verification:snapshot?verifyRuntimeSnapshot(snapshot):null})
+  }
+
+  if(url.pathname==='/control-api/emergency'&&req.method==='POST'){
+    if(!requireControl(res,session,'emergency'))return
+    let body
+    try{body=await readBody(req)}
+    catch(error){return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'invalid emergency control request'})}
+    return runControlMutation({
+      req,res,session,operation:'emergency.create',body,successStatus:201,
+      execute:()=>createEmergencyControl({
+        scopeType:body.scopeType,
+        scopeId:body.scopeId||null,
+        controlType:body.controlType,
+        reason:body.reason,
+        durationMinutes:body.durationMinutes,
+        createdBy:session.sub
+      })
+    })
+  }
+
+  const emergencyRevokeMatch=url.pathname.match(/^\/control-api\/emergency\/([^/]+)\/revoke$/)
+  if(emergencyRevokeMatch&&req.method==='POST'){
+    if(!requireControl(res,session,'emergency'))return
+    let body
+    try{body=await readBody(req)}
+    catch(error){return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'invalid emergency revoke request'})}
+    const id=decodeURIComponent(emergencyRevokeMatch[1])
+    return runControlMutation({
+      req,res,session,operation:'emergency.revoke:'+id,body,
+      execute:()=>revokeEmergencyControl({
+        id,
+        revokedBy:session.sub,
+        expectedVersion:body.expectedVersion
+      })
+    })
+  }
+
   const match=url.pathname.match(/^\/control-api\/([a-z0-9-]+)$/)
   if(req.method==='GET'&&match){
     try{return json(res,200,await observedPage(match[1]))}
