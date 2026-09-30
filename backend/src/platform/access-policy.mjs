@@ -1,4 +1,5 @@
 const readMappings=[
+  [/^\/api\/(policy-rules|workflows)(?:\/|$)/,'workspace.read'],
   [/^\/api\/forms(?:\/|$)/,'workspace.read'],
   [/^\/api\/members(?:\/|$)/,'members.read'],
   [/^\/api\/(reports|attribution|journeys)(?:\/|$)/,'reports.read'],
@@ -6,6 +7,8 @@ const readMappings=[
 ]
 
 const writeMappings=[
+  [/^\/api\/policy-rules(?:\/|$)/,'workspace.write'],
+  [/^\/api\/workflows(?:\/|$)/,'approvals.write'],
   [/^\/api\/forms(?:\/|$)/,'workspace.write'],
   [/^\/api\/(members|invitations)(?:\/|$)/,'members.write'],
   [/^\/api\/(integrations|custom-integrations)(?:\/|$)/,'integrations.write'],
