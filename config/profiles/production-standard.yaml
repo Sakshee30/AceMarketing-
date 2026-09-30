@@ -1,0 +1,31 @@
+schemaVersion: 1
+profile: production-standard
+platform:
+  database:
+    provider: postgres
+    required: true
+  cache:
+    enabled: true
+    provider: redis
+    fallback: bounded-bypass
+  queue:
+    provider: sqs
+    requiredForAcceptedJobs: true
+    onUnavailable: reject-new-admission
+  objectStorage:
+    provider: s3
+    required: true
+    onUnavailable: reject-upload-safely
+  search:
+    enabled: true
+    provider: postgres-limited
+  ai:
+    enabled: false
+  audit:
+    requiredForSensitiveCommits: true
+    durableStore: postgres
+security:
+  authentication: required
+  authorization: required
+  tenantIsolation: required
+  secretProvider: secrets-manager
