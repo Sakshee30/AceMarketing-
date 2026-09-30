@@ -1,10 +1,12 @@
 const readMappings=[
+  [/^\/api\/forms(?:\/|$)/,'workspace.read'],
   [/^\/api\/members(?:\/|$)/,'members.read'],
   [/^\/api\/(reports|attribution|journeys)(?:\/|$)/,'reports.read'],
   [/^\/api\/(monitoring|alerts|connector-health)(?:\/|$)/,'monitoring.read']
 ]
 
 const writeMappings=[
+  [/^\/api\/forms(?:\/|$)/,'workspace.write'],
   [/^\/api\/(members|invitations)(?:\/|$)/,'members.write'],
   [/^\/api\/(integrations|custom-integrations)(?:\/|$)/,'integrations.write'],
   [/^\/api\/(agents|models\/run)(?:\/|$)/,'agents.write'],
