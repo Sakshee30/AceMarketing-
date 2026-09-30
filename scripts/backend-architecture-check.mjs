@@ -131,7 +131,8 @@ const required=[
   'backend/tests/capacity-budget.test.mjs',
   'backend/tests/custom-object-store.test.mjs',
   'backend/tests/worker-class.test.mjs',
-  'backend/tests/runtime-role.test.mjs'
+  'backend/tests/runtime-role.test.mjs',
+  'backend/tests/worker-leasing.test.mjs'
 ]
 for(const item of required)if(!fs.existsSync(path.join(root,item)))failures.push('missing required backend architecture foundation: '+item)
 
