@@ -47,6 +47,7 @@ import {appendAuditRecord,listAuditRecords} from './platform/audit-store.mjs'
 import {permissionForRequest as centralizedPermissionForRequest} from './platform/access-policy.mjs'
 import {assertWorkspaceMembership,seedWorkspaceCreator} from './platform/workspace-access.mjs'
 import {validateOutboundDestination} from './platform/egress-policy.mjs'
+import {markInboxProcessed,recordInboxEvent} from './platform/reliability-store.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -589,6 +590,19 @@ const server = http.createServer(async (req,res)=>{
       const resolvedWorkspace=resolveWhatsAppWorkspace(events,req.headers['x-workspace-id'])
       if(!resolvedWorkspace) return send(req,res,400,{error:'unable to resolve workspace for WhatsApp phone number'})
       workspaceId=resolvedWorkspace
+      const payloadHash=createHash('sha256').update(raw).digest('hex')
+      const inboxRecords=[]
+      for(const event of events){
+        if(!event?.id)continue
+        const record=await recordInboxEvent({
+          source:'whatsapp',
+          eventId:String(event.id)+':'+String(event.kind||'event')+':'+String(event.status||''),
+          workspaceId,
+          payloadHash
+        }).catch(error=>{throw error})
+        inboxRecords.push({event,record})
+      }
+      const duplicateCount=inboxRecords.filter(item=>item.record?.processed_at).length
       await withWorkspace(workspaceId,async()=>{
         const now=new Date().toISOString()
         await mutateState(s=>{
@@ -626,7 +640,15 @@ const server = http.createServer(async (req,res)=>{
           }).catch(()=>null)
         }
       })
-      return send(req,res,200,{received:true,workspaceId,events:events.length})
+      for(const {event,record} of inboxRecords){
+        if(record?.processed_at||!event?.id)continue
+        await markInboxProcessed({
+          source:'whatsapp',
+          eventId:String(event.id)+':'+String(event.kind||'event')+':'+String(event.status||''),
+          result:{received:true}
+        }).catch(()=>{})
+      }
+      return send(req,res,200,{received:true,workspaceId,events:events.length,duplicates:duplicateCount})
     }catch(error){
       return send(req,res,400,{error:error instanceof Error?error.message:'invalid WhatsApp webhook'})
     }
@@ -642,7 +664,14 @@ const server = http.createServer(async (req,res)=>{
       if(!resolvedWorkspace) return send(req,res,400,{error:'unable to resolve workspace for call event'})
       workspaceId=resolvedWorkspace
       const event=normalizeCallEvent(body)
-      let duplicate=false
+      const payloadHash=createHash('sha256').update(raw).digest('hex')
+      const inboxRecord=await recordInboxEvent({
+        source:'calls:'+String(event.provider||'provider'),
+        eventId:String(event.id),
+        workspaceId,
+        payloadHash
+      })
+      let duplicate=Boolean(inboxRecord?.processed_at)
       await withWorkspace(workspaceId,async()=>{
         const now=new Date().toISOString()
         await mutateState(s=>{
@@ -680,6 +709,13 @@ const server = http.createServer(async (req,res)=>{
           }).catch(()=>null)
         }
       })
+      if(!inboxRecord?.processed_at){
+        await markInboxProcessed({
+          source:'calls:'+String(event.provider||'provider'),
+          eventId:String(event.id),
+          result:{received:true}
+        }).catch(()=>{})
+      }
       return send(req,res,200,{received:true,duplicate,workspaceId,eventId:event.id})
     }catch(error){
       return send(req,res,400,{error:error instanceof Error?error.message:'invalid call webhook'})
