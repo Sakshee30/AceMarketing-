@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import {workerClassPolicy,workerClassNames} from '../src/platform/worker-class.mjs'
 
 test('worker classes are explicit and bounded',()=>{
-  assert.deepEqual(workerClassNames(),['all','general','webhook','ai-document'])
+  assert.deepEqual(workerClassNames(),['all','general','workflow','webhook','ai-document'])
   assert.equal(workerClassPolicy('all').includeKinds,null)
 })
 
@@ -13,6 +13,13 @@ test('general worker excludes isolated provider and document work',()=>{
   assert.ok(policy.excludeKinds.includes('webhook_delivery'))
   assert.ok(policy.excludeKinds.includes('ml_task'))
   assert.ok(policy.excludeKinds.includes('knowledge_embedding'))
+})
+
+test('workflow worker leases durable workflow work only',()=>{
+  const policy=workerClassPolicy('workflow')
+  assert.ok(policy.includeKinds.includes('workflow_step'))
+  assert.ok(policy.includeKinds.includes('workflow_execution'))
+  assert.ok(policy.includeKinds.includes('workflow_approval'))
 })
 
 test('webhook worker leases webhook deliveries only',()=>{
