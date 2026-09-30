@@ -164,3 +164,47 @@ export const decideWorkflowApproval=async({workspaceId,approvalId,actorId,decisi
   )
   return updated
 })
+
+export const listWorkflows=async({workspaceId,limit=100})=>withTenantDbTransaction(workspaceId,async client=>{
+  const {rows}=await client.query(
+    `SELECT id,name,status,latest_version,published_version,created_by,created_at,updated_at
+     FROM ace_workflows WHERE workspace_id=$1 ORDER BY updated_at DESC LIMIT $2`,
+    [workspaceId,Math.max(1,Math.min(250,Number(limit)||100))]
+  )
+  return rows
+})
+
+export const getWorkflow=async({workspaceId,id})=>withTenantDbTransaction(workspaceId,async client=>{
+  const workflow=(await client.query('SELECT * FROM ace_workflows WHERE workspace_id=$1 AND id=$2',[workspaceId,id])).rows[0]
+  if(!workflow)return null
+  const versions=(await client.query(
+    `SELECT version,definition,definition_hash,status,created_by,created_at,published_at
+     FROM ace_workflow_versions WHERE workspace_id=$1 AND workflow_id=$2 ORDER BY version DESC`,
+    [workspaceId,id]
+  )).rows
+  return {...workflow,versions}
+})
+
+export const listWorkflowExecutions=async({workspaceId,workflowId=null,limit=100})=>withTenantDbTransaction(workspaceId,async client=>{
+  const params=[workspaceId,Math.max(1,Math.min(250,Number(limit)||100))]
+  const clause=workflowId?' AND workflow_id=$3':''
+  if(workflowId)params.push(workflowId)
+  const {rows}=await client.query(
+    `SELECT id,workflow_id,workflow_version,status,current_node_id,trigger_type,trigger_ref,correlation_id,causation_id,started_by,attempts,deadline_at,created_at,updated_at,completed_at
+     FROM ace_workflow_executions WHERE workspace_id=$1${clause} ORDER BY updated_at DESC LIMIT $2`,
+    params
+  )
+  return rows
+})
+
+export const listWorkflowApprovals=async({workspaceId,status=null,limit=100})=>withTenantDbTransaction(workspaceId,async client=>{
+  const params=[workspaceId,Math.max(1,Math.min(250,Number(limit)||100))]
+  const clause=status?' AND status=$3':''
+  if(status)params.push(status)
+  const {rows}=await client.query(
+    `SELECT id,execution_id,node_id,requested_by,approver_scope,status,decided_by,decision_comment,policy_version,requested_at,decided_at
+     FROM ace_workflow_approvals WHERE workspace_id=$1${clause} ORDER BY requested_at DESC LIMIT $2`,
+    params
+  )
+  return rows
+})
