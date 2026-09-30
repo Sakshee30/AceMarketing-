@@ -412,6 +412,28 @@ export const createBoard=async({workspaceId,actorId,name})=>{
         [column.id,workspaceId,boardId,column.stateKey,column.name,column.position]
       )
     }
+    const eventId='evt_'+randomUUID()
+    await client.query(
+      `INSERT INTO ace_platform_audit
+        (id,workspace_id,actor_id,actor_type,action,entity_type,entity_id,outcome,metadata)
+       VALUES($1,$2,$3,'user','board.create','board',$4,'success',$5::jsonb)`,
+      ['audit_'+randomUUID(),workspaceId,actorId||null,boardId,JSON.stringify({name:normalizedName,columnCount:columns.length})]
+    )
+    await client.query(
+      `INSERT INTO ace_outbox_events
+        (id,workspace_id,event_type,aggregate_type,aggregate_id,payload,status)
+       VALUES($1,$2,'board.created','board',$3,$4::jsonb,'pending')`,
+      [eventId,workspaceId,boardId,JSON.stringify({
+        eventId,
+        eventType:'board.created',
+        eventVersion:1,
+        workspaceId,
+        resourceType:'board',
+        resourceId:boardId,
+        source:'boards',
+        data:{boardId,name:normalizedName,columnCount:columns.length}
+      })]
+    )
     return {
       id:board.id,
       name:board.name,
