@@ -4,6 +4,11 @@ import path from 'node:path'
 const root=process.cwd()
 const failures=[]
 const required=[
+  'config/schemas/platform.schema.json',
+  'config/profiles/production-standard.yaml',
+  'config/profiles/production-high-scale.yaml',
+  'config/limits/operation-budgets.yaml',
+  'tests/architecture/dependency-boundaries.test.mjs',
   'backend/apps/customer-bff/src/bootstrap.mjs',
   'backend/apps/domain-api/src/bootstrap.mjs',
   'backend/apps/control-api/src/bootstrap.mjs',
