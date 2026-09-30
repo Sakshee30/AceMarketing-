@@ -39,3 +39,8 @@
 .control-change-actions button{border:1px solid #c2cddd;border-radius:9px;background:#fff;color:#1f3553;padding:8px 11px;cursor:pointer}
 .control-change-actions button:disabled{opacity:.55;cursor:not-allowed}
 @media(max-width:800px){.control-form-grid,.control-change-card dl{grid-template-columns:1fr}.control-form-wide{grid-column:auto}.control-change-card-head{display:grid}}
+
+
+.control-runtime-summary{margin-top:20px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;border:1px solid #bfd0e5;border-radius:12px;background:#f5f9ff;padding:14px 16px}
+.control-runtime-summary strong{margin-right:auto}
+.control-runtime-summary span{font-size:13px;color:#53647b}
