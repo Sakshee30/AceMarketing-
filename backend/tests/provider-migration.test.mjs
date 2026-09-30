@@ -129,3 +129,97 @@ test('provider cutover requires explicit boundary and moves to 100 percent',{ski
   const items=await listProviderMigrations({environment:'test'})
   assert.ok(items.some(item=>item.id===migration.id))
 })
+
+
+test('production cache migration requires capacity evidence',{skip:!pool},async()=>{
+  await assert.rejects(
+    ()=>createProviderMigration({
+      capability:'cache',
+      environment:'production',
+      fromProvider:'redis',
+      toProvider:'disabled',
+      requestedBy:'operator@example.test'
+    }),
+    /capacity evidence/
+  )
+  const migration=await createProviderMigration({
+    capability:'cache',
+    environment:'production',
+    fromProvider:'redis',
+    toProvider:'disabled',
+    requestedBy:'operator@example.test',
+    capacityEvidence:{validated:true,profile:'cache-unavailable'},
+    dependencyInventory:{consumers:['read-cache']}
+  })
+  assert.equal(migration.capability,'cache')
+  assert.equal(migration.capacity_evidence.validated,true)
+})
+
+test('production cutover requires verification evidence',{skip:!pool},async()=>{
+  const migration=await createProviderMigration({
+    capability:'search',
+    environment:'production',
+    fromProvider:'postgres-full-text',
+    toProvider:'opensearch',
+    requestedBy:'operator@example.test',
+    capacityEvidence:{validated:true},
+    dependencyInventory:{consumers:['search-api']}
+  })
+  const validating=await advanceProviderMigration({
+    id:migration.id,toState:'validating',actor:'operator@example.test',expectedVersion:migration.version
+  })
+  const shadow=await advanceProviderMigration({
+    id:migration.id,toState:'shadowing',actor:'operator@example.test',expectedVersion:validating.version
+  })
+  const canary=await advanceProviderMigration({
+    id:migration.id,toState:'canary',trafficPercent:10,
+    compatibilityReport:{validated:true,shadowQueries:100},
+    capacityEvidence:{validated:true},
+    dependencyInventory:{consumers:['search-api']},
+    actor:'operator@example.test',expectedVersion:shadow.version
+  })
+  await assert.rejects(
+    ()=>advanceProviderMigration({
+      id:migration.id,toState:'cutover',
+      compatibilityReport:{validated:true},
+      cutoverBoundary:{checkpoint:'search-index-v2'},
+      actor:'operator@example.test',expectedVersion:canary.version
+    }),
+    /verification evidence/
+  )
+})
+
+test('point of no return blocks automatic rollback',{skip:!pool},async()=>{
+  const migration=await createProviderMigration({
+    capability:'email-delivery',
+    environment:'test',
+    fromProvider:'smtp-a',
+    toProvider:'smtp-b',
+    requestedBy:'operator@example.test',
+    irreversibleSteps:['provider-side domain cutover']
+  })
+  const validating=await advanceProviderMigration({
+    id:migration.id,toState:'validating',actor:'operator@example.test',expectedVersion:migration.version
+  })
+  const shadow=await advanceProviderMigration({
+    id:migration.id,toState:'shadowing',actor:'operator@example.test',expectedVersion:validating.version
+  })
+  const canary=await advanceProviderMigration({
+    id:migration.id,toState:'canary',trafficPercent:10,
+    compatibilityReport:{validated:true},
+    actor:'operator@example.test',expectedVersion:shadow.version
+  })
+  const cutover=await advanceProviderMigration({
+    id:migration.id,toState:'cutover',
+    compatibilityReport:{validated:true},
+    cutoverBoundary:{checkpoint:'smtp-switch'},
+    pointOfNoReturn:true,
+    actor:'operator@example.test',expectedVersion:canary.version
+  })
+  await assert.rejects(
+    ()=>requestProviderRollback({
+      id:migration.id,actor:'operator@example.test',expectedVersion:cutover.version,reason:'unsafe rollback'
+    }),
+    /point of no return/
+  )
+})
