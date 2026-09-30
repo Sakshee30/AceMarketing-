@@ -21,6 +21,8 @@ const required=[
   'backend/src/platform/policy-engine.mjs',
   'backend/src/platform/workflow-store.mjs',
   'backend/src/platform/usage-ledger.mjs',
+  'backend/src/platform/object-lifecycle.mjs',
+  'backend/src/platform/object-storage.mjs',
   'backend/src/platform/egress-policy.mjs',
   'backend/src/platform/webhook-signing.mjs',
   'backend/migrations/034_platform_reliability.sql',
@@ -29,6 +31,7 @@ const required=[
   'backend/migrations/037_forms_custom_objects.sql',
   'backend/migrations/038_rules_workflows.sql',
   'backend/migrations/039_usage_ledger.sql',
+  'backend/migrations/040_object_lifecycle.sql',
   'backend/tests/platform-foundation.test.mjs',
   'backend/tests/platform-reliability.test.mjs',
   'backend/tests/tenant-context.test.mjs',
@@ -41,6 +44,7 @@ const required=[
   'backend/tests/forms-store.test.mjs',
   'backend/tests/policy-workflow.test.mjs',
   'backend/tests/usage-ledger.test.mjs',
+  'backend/tests/object-lifecycle.test.mjs',
   'backend/tests/egress-policy.test.mjs',
   'backend/tests/webhook-signing.test.mjs'
 ]
