@@ -50,6 +50,10 @@ jobs:
         run: npm run security:audit
       - name: Enforce frontend architecture boundaries
         run: npm run frontend:architecture
+      - name: Enforce backend architecture boundaries
+        run: npm run backend:architecture
+      - name: Run backend foundation tests
+        run: npm run test:backend-foundation
       - name: Validate frontend and backend
         run: npm run check:all
       - name: Run AI backend unit checks
@@ -167,6 +171,15 @@ jobs:
           test -f packages/client-core/src/session-authority.ts
           test -f packages/client-core/src/query-scope.ts
           test -f packages/client-core/src/mutation-lifecycle.ts
+          test -f packages/client-core/src/http/http-client.ts
+          test -f packages/client-core/src/http/problem-details.ts
+          test -f packages/client-core/src/realtime/realtime-client.ts
+          test -f packages/client-core/src/query-policy.ts
+          test -f packages/client-core/src/scope-key.ts
+          test -f packages/client-core/src/draft-store.ts
+          test -f frontend/src/customer-app/bootstrap-state.ts
+          test -f frontend/src/customer-app/session-lifecycle.ts
+          test -f frontend/src/customer-app/workspace-lifecycle.ts
           test -f frontend/src/features/launchpad/data/launchpad.keys.ts
           test -f frontend/src/features/approvals/data/approvals.keys.ts
           test -f frontend/src/features/integrations/data/integrations.keys.ts
@@ -325,6 +338,12 @@ jobs:
           test -f scripts/frontend-release-check.mjs
           test -f backend/src/index.mjs
           test -f backend/src/security.mjs
+          test -f backend/src/platform/problem-details.mjs
+          test -f backend/src/platform/request-context.mjs
+          test -f backend/src/platform/admission-control.mjs
+          test -f backend/src/platform/idempotency.mjs
+          test -f backend/tests/platform-foundation.test.mjs
+          test -f scripts/backend-architecture-check.mjs
           test -f backend/src/store.mjs
           test -f backend/src/vault.mjs
           test -f backend/src/queue.mjs
