@@ -11,6 +11,8 @@ import {beginControlCommand,finishControlCommand} from './platform/control-idemp
 import {createEmergencyControl,latestRuntimeSnapshot,listEmergencyControls,publishRuntimeSnapshot,revokeEmergencyControl,verifyRuntimeSnapshot} from './platform/runtime-configuration.mjs'
 import {advanceProviderMigration,createProviderMigration,listProviderMigrations,providerMigrationOverride,requestProviderRollback} from './platform/provider-migration-store.mjs'
 import {createRecoveryExercise,recordBackupEvidence,recoverySummary,updateRecoveryExercise} from './platform/recovery-evidence.mjs'
+import {providerExecutionSnapshot} from './platform/provider-execution.mjs'
+import {globalAdmission} from './platform/admission-control.mjs'
 
 const PORT=Number(process.env.CONTROL_PORT||3002)
 const IS_PROD=process.env.NODE_ENV==='production'
@@ -202,7 +204,17 @@ const observedPage=async page=>{
       durableJobs:capabilities.providers.find(x=>x.id==='queue')?.health||'unconfigured'
     }
   }
-  if(page==='observability')return {schemaVersion:'platform-observability.v1',generatedAt:new Date().toISOString(),minimumSignalsRequired:true,releaseSha:safeEnvironment().releaseSha}
+  if(page==='observability')return {
+    schemaVersion:'platform-observability.v2',
+    generatedAt:new Date().toISOString(),
+    minimumSignalsRequired:true,
+    releaseSha:safeEnvironment().releaseSha,
+    configVersion:safeEnvironment().configVersion,
+    database:await dbHealth(),
+    apiAdmission:globalAdmission.snapshot(),
+    providerExecution:providerExecutionSnapshot(),
+    recovery:(await recoverySummary({environment:process.env.NODE_ENV||'development'})).evidenceCounts
+  }
   if(page==='changes')return {schemaVersion:'platform-changes.v1',generatedAt:new Date().toISOString(),mode:'governed',items:await listPlatformChanges({limit:200})}
   if(page==='costs')return {schemaVersion:'platform-costs.v1',generatedAt:new Date().toISOString(),status:'not-connected',note:'Cost provider is optional; no synthetic cost values are reported.'}
   if(page==='backup-dr')return recoverySummary({environment:process.env.NODE_ENV||'development'})
