@@ -20,6 +20,8 @@ test('backend module registry is unique owned and navigable',()=>{
   assert.ok(platformModule('notifications'))
   assert.ok(platformModule('reporting'))
   assert.ok(platformModule('scheduling'))
+  assert.ok(platformModule('usage'))
+  assert.ok(platformModule('search'))
   assert.ok(platformModule('workflows'))
   assert.ok(platformModule('documents'))
   assert.ok(platformModule('cells'))
