@@ -61,7 +61,7 @@ import {runtimeGuardForRequest} from './platform/runtime-config-runtime.mjs'
 import {beginProcessDrain,livenessState,markStartupComplete,readinessState,startupState} from './platform/process-health.mjs'
 import {runtimeRoleAllows,runtimeRolePolicy} from './platform/runtime-role.mjs'
 import {assertWorkspaceCell} from './platform/cell-placement.mjs'
-import {getBoardOperation,getBoardSnapshot,moveBoardItem} from './platform/board-store.mjs'
+import {createBoard,getBoardOperation,getBoardSnapshot,listBoards,moveBoardItem} from './platform/board-store.mjs'
 
 const runtimeRole=runtimeRolePolicy()
 
@@ -6614,6 +6614,29 @@ const server = http.createServer(async (req,res)=>{
       const body=await readBody(req)
       const decision=await evaluatePublishedPolicyRule({workspaceId,id:decodeURIComponent(policyEvaluateMatch[1]),input:body.input||{}})
       return decision?send(req,res,200,decision):send(req,res,404,{error:'published policy rule not found'})
+    }
+
+    if(req.method==='GET'&&url.pathname==='/api/boards'){
+      try{
+        const items=await listBoards({workspaceId,limit:Number(url.searchParams.get('limit')||100)})
+        return send(req,res,200,{items})
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'board list failed',code:error?.code||'BOARD_LIST_FAILED'})
+      }
+    }
+
+    if(req.method==='POST'&&url.pathname==='/api/boards'){
+      const body=await readBody(req)
+      try{
+        const item=await createBoard({
+          workspaceId,
+          actorId:req.user?.userId||null,
+          name:body?.name
+        })
+        return send(req,res,201,{item})
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'board creation failed',code:error?.code||'BOARD_CREATE_FAILED'})
+      }
     }
 
     const boardSnapshotMatch=url.pathname.match(/^\/api\/boards\/([^/]+)$/)
