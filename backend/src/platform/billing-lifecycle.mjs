@@ -82,8 +82,15 @@ export const applyBillingSubscriptionChange=async(workspaceId,patch={},options={
         'SELECT * FROM ace_workspace_subscriptions WHERE workspace_id=$1 FOR UPDATE',
         [workspaceId]
       )).rows[0]
-      await insertEntitlementVersion(client,current,{source,reason:'initial subscription state',providerEventId})
     }
+
+    // Capture the current effective entitlement state once before any change. For
+    // repositories upgraded from the legacy schema this creates version 1 lazily.
+    await insertEntitlementVersion(client,current,{
+      source,
+      reason:reason||'baseline entitlement state',
+      providerEventId:null
+    })
 
     const nextStatus=patch.status?validateBillingStatus(patch.status):current.status
     const nextPlan=patch.planCode||current.plan_code
