@@ -155,6 +155,7 @@ jobs:
           test -f backend/src/platform/provider-migration-store.mjs
           test -f backend/src/platform/resilience.mjs
           test -f backend/src/platform/recovery-evidence.mjs
+          test -f backend/src/platform/process-health.mjs
           test -f backend/migrations/041_platform_control_changes.sql
           test -f backend/migrations/042_platform_change_versioning.sql
           test -f backend/migrations/043_platform_control_idempotency.sql
@@ -169,6 +170,7 @@ jobs:
           test -f backend/tests/provider-migration.test.mjs
           test -f backend/tests/resilience.test.mjs
           test -f backend/tests/recovery-evidence.test.mjs
+          test -f backend/tests/process-health.test.mjs
           test -f backend/tests/control-capability.test.mjs
           test -f deploy/Dockerfile.control-api
           test -f vite.platform-admin.config.ts
