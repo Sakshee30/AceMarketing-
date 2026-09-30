@@ -74,7 +74,7 @@ jobs:
         run: npm run build:customer-app
       - name: Verify standalone customer application budget
         env:
-          FRONTEND_BUDGET_MODE: report
+          FRONTEND_BUDGET_MODE: strict
         run: npm run frontend:budget:customer
       - name: Verify standalone customer application release assets
         run: npm run frontend:release:customer
@@ -82,7 +82,7 @@ jobs:
         run: npm run build:platform-admin
       - name: Verify platform control budget
         env:
-          FRONTEND_BUDGET_MODE: report
+          FRONTEND_BUDGET_MODE: strict
         run: npm run frontend:budget:control
       - name: Verify platform control release assets
         run: npm run frontend:release:control
@@ -92,7 +92,7 @@ jobs:
         run: npm run build:public-site
       - name: Verify standalone public website budget
         env:
-          FRONTEND_BUDGET_MODE: report
+          FRONTEND_BUDGET_MODE: strict
         run: npm run frontend:budget:public
       - name: Verify standalone public website release assets
         run: npm run frontend:release:public
@@ -102,7 +102,7 @@ jobs:
           grep -q "visibilitychange" frontend/src/DashboardQuickNav.tsx
       - name: Record frontend bundle budget evidence
         env:
-          FRONTEND_BUDGET_MODE: report
+          FRONTEND_BUDGET_MODE: strict
         run: npm run frontend:budget
       - name: Verify frontend release asset integrity
         run: npm run frontend:release
