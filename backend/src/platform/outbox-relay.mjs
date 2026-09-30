@@ -17,7 +17,7 @@ export const runOutboxRelayBatch=async({
   leaseSeconds=30,
   onUnhandled=null
 }={})=>{
-  const events=await claimOutboxEvents({workerId,limit,leaseSeconds})
+  const events=await claimOutboxEvents({workerId,limit,leaseSeconds,eventTypes:registeredOutboxEventTypes()})
   const results=[]
   for(const event of events){
     const handler=handlers.get(event.event_type)
