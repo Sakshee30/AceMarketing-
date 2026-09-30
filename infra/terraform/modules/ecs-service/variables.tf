@@ -67,3 +67,9 @@ variable "tags" {
   type    = map(string)
   default = {}
 }
+
+variable "readonly_root_filesystem" {
+  type        = bool
+  description = "Use a read-only container root filesystem when the workload is compatible."
+  default     = true
+}
