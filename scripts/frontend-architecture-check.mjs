@@ -398,8 +398,10 @@ if(fs.existsSync(acePlatform)){
       const html=fs.readFileSync(path.join(root,'frontend','customer-app','index.html'),'utf8')
       if(!html.includes('noindex,nofollow'))failures.push('Standalone customer app must remain excluded from public indexing.')
     }
-    if(!customerEntry.includes('installBeforeUnloadDirtyWorkGuard')){
-      failures.push('Standalone customer app must preserve dirty-work protection at bootstrap.')
+    const canonicalBootstrapPath=path.join(root,'frontend','customer-app','src','app','bootstrap','bootstrap.ts')
+    const canonicalBootstrap=fs.existsSync(canonicalBootstrapPath)?fs.readFileSync(canonicalBootstrapPath,'utf8'):''
+    if(!customerEntry.includes("import './src/main'")||!canonicalBootstrap.includes('installBeforeUnloadDirtyWorkGuard')){
+      failures.push('Standalone customer app must route through the canonical entry and preserve dirty-work protection at bootstrap.')
     }
   }
 
@@ -576,6 +578,27 @@ if(fs.existsSync(acePlatform)){
 }
 
 const required=[
+  'frontend/customer-app/src/main.tsx',
+  'frontend/customer-app/src/app/bootstrap/bootstrap.ts',
+  'frontend/customer-app/src/app/bootstrap/bootstrap-state.ts',
+  'frontend/customer-app/src/app/router/routes.ts',
+  'frontend/customer-app/src/app/router/route-contract.ts',
+  'frontend/customer-app/src/app/providers/AppProviders.tsx',
+  'frontend/customer-app/src/app/shell/CustomerShell.tsx',
+  'frontend/customer-app/src/app/recovery/AppErrorBoundary.tsx',
+  'frontend/customer-app/src/app/recovery/chunk-recovery.ts',
+  'frontend/customer-app/src/app/session/session-lifecycle.ts',
+  'frontend/customer-app/src/app/workspace/workspace-lifecycle.ts',
+  'frontend/customer-app/src/product/feature-registry.ts',
+  'frontend/customer-app/src/product/navigation.ts',
+  'frontend/customer-app/src/product/brand.ts',
+  'frontend/customer-app/src/compositions/onboarding/OnboardingJourney.tsx',
+  'packages/client-core/src/http/http-client.ts',
+  'packages/client-core/src/http/problem-details.ts',
+  'packages/client-core/src/query/query-policy.ts',
+  'packages/client-core/src/query/scope-key.ts',
+  'packages/client-core/src/storage/draft-store.ts',
+  'packages/client-core/src/realtime/realtime-client.ts',
   'frontend/src/features/customer-360/data/customer-360.api.ts',
   'frontend/src/features/customer-360/pages/Customer360Page.tsx',
   'frontend/src/features/customer-360/public.ts',
