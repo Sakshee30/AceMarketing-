@@ -151,6 +151,7 @@ jobs:
           test -f backend/src/platform/control-change-store.mjs
           test -f backend/src/platform/control-idempotency.mjs
           test -f backend/src/platform/runtime-configuration.mjs
+          test -f backend/src/platform/runtime-config-runtime.mjs
           test -f backend/migrations/041_platform_control_changes.sql
           test -f backend/migrations/042_platform_change_versioning.sql
           test -f backend/migrations/043_platform_control_idempotency.sql
@@ -158,6 +159,7 @@ jobs:
           test -f backend/tests/control-change-store.test.mjs
           test -f backend/tests/control-idempotency.test.mjs
           test -f backend/tests/runtime-configuration.test.mjs
+          test -f backend/tests/runtime-config-runtime.test.mjs
           test -f backend/tests/control-capability.test.mjs
           test -f deploy/Dockerfile.control-api
           test -f vite.platform-admin.config.ts
