@@ -99,3 +99,7 @@ output "integration_ingress_service_name" {
 output "realtime_service_name" {
   value = module.realtime_service.service_name
 }
+
+output "workflow_worker_service_name" {
+  value = module.workflow_worker_service.service_name
+}
