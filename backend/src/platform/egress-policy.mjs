@@ -7,6 +7,19 @@ const parseV4=ip=>{
   return parts
 }
 
+const mappedV4FromV6=ip=>{
+  const value=String(ip||'').toLowerCase().replace(/^\[|\]$/g,'')
+  if(!value.startsWith('::ffff:'))return null
+  const tail=value.slice('::ffff:'.length)
+  if(tail.includes('.'))return parseV4(tail)
+  const groups=tail.split(':').filter(Boolean)
+  if(groups.length!==2)return null
+  const high=Number.parseInt(groups[0],16)
+  const low=Number.parseInt(groups[1],16)
+  if(!Number.isInteger(high)||!Number.isInteger(low)||high<0||high>0xffff||low<0||low>0xffff)return null
+  return [(high>>8)&255,high&255,(low>>8)&255,low&255]
+}
+
 export const isBlockedOutboundIp=ip=>{
   const family=isIP(ip)
   if(family===4){
@@ -26,6 +39,20 @@ export const isBlockedOutboundIp=ip=>{
   }
   if(family===6){
     const value=String(ip).toLowerCase()
+    const mapped=mappedV4FromV6(value)
+    if(mapped){
+      const [a,b]=mapped
+      return (
+        a===0||
+        a===10||
+        a===127||
+        a>=224||
+        (a===169&&b===254)||
+        (a===172&&b>=16&&b<=31)||
+        (a===192&&b===168)||
+        (a===100&&b>=64&&b<=127)
+      )
+    }
     return (
       value==='::'||
       value==='::1'||
@@ -33,6 +60,10 @@ export const isBlockedOutboundIp=ip=>{
       value.startsWith('fe9')||
       value.startsWith('fea')||
       value.startsWith('feb')||
+      value.startsWith('fec')||
+      value.startsWith('fed')||
+      value.startsWith('fee')||
+      value.startsWith('fef')||
       value.startsWith('fc')||
       value.startsWith('fd')||
       value.startsWith('ff')||
