@@ -2,6 +2,7 @@ import {createHash,randomBytes,randomUUID,timingSafeEqual} from 'node:crypto'
 import {extname} from 'node:path'
 import {embeddedDatabase,pool} from '../database.mjs'
 import {withTenantDbTransaction} from './tenant-db.mjs'
+import {createApprovedDownloadUrl,createQuarantineUploadUrl,objectStorageConfigured} from './object-storage.mjs'
 
 const DEFAULT_MAX_BYTES=Number(process.env.OBJECT_MAX_UPLOAD_BYTES||25*1024*1024)
 const WORKSPACE_MAX_BYTES=Number(process.env.OBJECT_WORKSPACE_MAX_BYTES||5*1024*1024*1024)
@@ -97,9 +98,22 @@ export const createUploadIntent=async({workspaceId,name,mime,size,sha256:sha256H
       [id,workspaceId,objectKey,validated.filename,validated.declaredMime,validated.expectedSize,validated.expectedSha256,JSON.stringify(policy),actorId]
     )
     const grant=await createGrant(client,{workspaceId,objectId:id,purpose:'upload',createdBy:actorId,ttlSeconds:UPLOAD_GRANT_TTL_SECONDS})
+    let directUpload=null
+    if(objectStorageConfigured()){
+      directUpload=createQuarantineUploadUrl({
+        key:objectKey,
+        workspaceId,
+        sha256:validated.expectedSha256,
+        expiresSeconds:UPLOAD_GRANT_TTL_SECONDS
+      })
+    }else if(process.env.NODE_ENV==='production'){
+      throw new Error('durable object storage is not configured')
+    }
     return {
       object:rows[0],
       uploadGrant:{token:grant.token,expiresAt:grant.expiresAt},
+      directUpload,
+      storageConfigured:objectStorageConfigured(),
       constraints:{
         maxBytes:DEFAULT_MAX_BYTES,
         expectedSize:validated.expectedSize,
@@ -225,9 +239,15 @@ export const createDownloadGrant=async({workspaceId,objectId,role='viewer',actor
     if(!object||object.status!=='approved')throw new Error('approved object not found')
     if(!canReadObject(object.access_policy,role))throw new Error('object access denied')
     const grant=await createGrant(client,{workspaceId,objectId,purpose:'download',createdBy:actorId,ttlSeconds:DOWNLOAD_GRANT_TTL_SECONDS})
+    const directDownload=objectStorageConfigured()
+      ?createApprovedDownloadUrl({key:object.object_key,filename:object.original_name,expiresSeconds:DOWNLOAD_GRANT_TTL_SECONDS})
+      :null
+    if(process.env.NODE_ENV==='production'&&!directDownload)throw new Error('durable object storage is not configured')
     return {
       object:{id:object.id,name:object.original_name,mime:object.detected_mime||object.declared_mime,size:object.actual_size||object.expected_size},
-      downloadGrant:{token:grant.token,expiresAt:grant.expiresAt}
+      downloadGrant:{token:grant.token,expiresAt:grant.expiresAt},
+      directDownload,
+      storageConfigured:objectStorageConfigured()
     }
   })
 }
