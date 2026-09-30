@@ -85,6 +85,13 @@ const required=[
   'backend/tests/egress-policy.test.mjs',
   'backend/tests/webhook-signing.test.mjs',
   'backend/tests/webhook-delivery.test.mjs',
+  'infra/terraform/modules/network/main.tf',
+  'infra/terraform/modules/network/variables.tf',
+  'infra/terraform/modules/network/outputs.tf',
+  'infra/terraform/stacks/nonprod/staging/main.tf',
+  'infra/terraform/stacks/nonprod/staging/variables.tf',
+  'infra/terraform/stacks/nonprod/staging/versions.tf',
+  'operations/capacity/quota-register.yaml',
   'backend/tests/control-capability.test.mjs',
   'backend/tests/capability-manifest.test.mjs',
   'backend/tests/connector-registry.test.mjs',
@@ -145,6 +152,24 @@ if(fs.existsSync(providerMigrationPath)){
   const source=fs.readFileSync(providerMigrationPath,'utf8')
   if(!source.includes('point_of_no_return_at'))failures.push('Provider migration store must preserve point-of-no-return semantics.')
   if(!source.includes('verification_evidence'))failures.push('Provider migration store must preserve verification evidence.')
+}
+
+
+const terraformRoot=path.join(root,'infra','terraform')
+if(fs.existsSync(terraformRoot)){
+  const terraformFiles=walk(terraformRoot).filter(file=>file.endsWith('.tf'))
+  for(const file of terraformFiles){
+    const source=fs.readFileSync(file,'utf8')
+    const relative=path.relative(root,file)
+    if(/aws_access_key_id\s*=|aws_secret_access_key\s*=|BEGIN PRIVATE KEY/.test(source)){
+      failures.push(relative+': Terraform must not contain plaintext AWS credentials.')
+    }
+  }
+  const networkSource=fs.readFileSync(path.join(terraformRoot,'modules','network','main.tf'),'utf8')
+  if(!networkSource.includes('map_public_ip_on_launch = false'))failures.push('Public subnets must not automatically assign public IPs.')
+  if(!networkSource.includes('aws_subnet" "data')&&!networkSource.includes('resource "aws_subnet" "data"'))failures.push('Network baseline must include isolated data subnets.')
+  const stagingVersions=fs.readFileSync(path.join(terraformRoot,'stacks','nonprod','staging','versions.tf'),'utf8')
+  if(!stagingVersions.includes('backend "s3"'))failures.push('Staging Terraform must use a remote S3 state backend contract.')
 }
 
 if(failures.length){
