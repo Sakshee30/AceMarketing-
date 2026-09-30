@@ -35,6 +35,7 @@ test('signed runtime snapshot verifies and locks safety features',{skip:!pool},a
 test('emergency AI control is time bounded and reflected in signed snapshot',{skip:!pool},async()=>{
   process.env.RUNTIME_CONFIG_SIGNING_SECRET='runtime-config-test-secret'
   const emergency=await createEmergencyControl({
+    environment:'test',
     scopeType:'platform',
     controlType:'suspend_ai',
     reason:'test incident containment',
