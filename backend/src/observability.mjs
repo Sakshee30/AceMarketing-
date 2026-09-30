@@ -206,7 +206,10 @@ export const monitoringSnapshot=async workspaceId=>{
   const dayQuery=embeddedDatabase
     ?recentQuery
     :`SELECT COUNT(*)::int requests,COUNT(*) FILTER (WHERE status_code>=500)::int errors,COALESCE(percentile_disc(0.95) WITHIN GROUP (ORDER BY latency_ms),0)::int p95 FROM ace_api_metrics WHERE workspace_id=$1 AND created_at>=now()-interval '24 hours'`
-  const [recent,day,usage,rules,alerts]=await Promise.all([
+  const boardMoveQuery=embeddedDatabase
+    ?`SELECT COUNT(*)::int requests,COUNT(*) FILTER (WHERE status_code>=400)::int failures FROM ace_api_metrics WHERE workspace_id=$1 AND path LIKE '/api/boards/%/moves'`
+    :`SELECT COUNT(*)::int requests,COUNT(*) FILTER (WHERE status_code>=400)::int failures FROM ace_api_metrics WHERE workspace_id=$1 AND path LIKE '/api/boards/%/moves' AND created_at>=now()-interval '15 minutes'`
+  const [recent,day,usage,rules,alerts,boardMoves]=await Promise.all([
     pool.query(
       recentQuery,
       [workspaceId]
@@ -232,9 +235,10 @@ export const monitoringSnapshot=async workspaceId=>{
     pool.query(`SELECT i.*,r.window_minutes
                 FROM ace_alert_incidents i
                 LEFT JOIN ace_monitoring_rules r ON r.id=i.rule_id AND r.workspace_id=i.workspace_id
-                WHERE i.workspace_id=$1 ORDER BY i.detected_at DESC LIMIT 50`,[workspaceId])
+                WHERE i.workspace_id=$1 ORDER BY i.detected_at DESC LIMIT 50`,[workspaceId]),
+    pool.query(boardMoveQuery,[workspaceId])
   ])
-  const r=recent.rows[0],d=day.rows[0],u=usage.rows[0]
+  const r=recent.rows[0],d=day.rows[0],u=usage.rows[0],b=boardMoves.rows[0]||{}
   return {
     available:true,
     status:Number(r.errors||0)===0?'healthy':'degraded',
@@ -242,6 +246,8 @@ export const monitoringSnapshot=async workspaceId=>{
     eventsPerMinute:Number((Number(r.requests||0)/15).toFixed(1)),
     failedEventRate:Number(r.requests?((r.errors/r.requests)*100).toFixed(3):0),
     p95LatencyMs:Number(r.p95||0),
+    boardMoves15m:Number(b.requests||0),
+    boardMoveFailureRate:Number(b.requests?((b.failures/b.requests)*100).toFixed(3):0),
     last24h:{
       requests:Number(d.requests||0),
       errorRate:Number(d.requests?((d.errors/d.requests)*100).toFixed(3):0),
