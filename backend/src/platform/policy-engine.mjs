@@ -81,6 +81,47 @@ export const createPolicyRule=async({workspaceId,name,expression,inputSchemaVers
   })
 }
 
+export const createPolicyRuleVersion=async({workspaceId,id,expression,inputSchemaVersion=1,actorId=null})=>{
+  const normalized=validatePolicyExpression(expression)
+  return withTenantDbTransaction(workspaceId,async client=>{
+    const rule=(await client.query('SELECT * FROM ace_policy_rules WHERE workspace_id=$1 AND id=$2 FOR UPDATE',[workspaceId,id])).rows[0]
+    if(!rule)return null
+    const version=Number(rule.latest_version)+1
+    await client.query(
+      `INSERT INTO ace_policy_rule_versions(rule_id,workspace_id,version,input_schema_version,expression,expression_hash,evaluator_version,status,created_by)
+       VALUES($1,$2,$3,$4,$5::jsonb,$6,$7,'draft',$8)`,
+      [id,workspaceId,version,Number(inputSchemaVersion)||1,JSON.stringify(normalized),policyExpressionHash(normalized),POLICY_EVALUATOR_VERSION,actorId]
+    )
+    const updated=(await client.query(
+      `UPDATE ace_policy_rules SET latest_version=$3,updated_at=now()
+       WHERE workspace_id=$1 AND id=$2 RETURNING *`,
+      [workspaceId,id,version]
+    )).rows[0]
+    return {...updated,version,expression:normalized}
+  })
+}
+
+export const simulatePolicyExpression=({expression,input={}})=>{
+  const normalized=validatePolicyExpression(expression)
+  let decision=false
+  let reasonCode='policy_deny'
+  try{
+    decision=evaluatePolicyExpression(normalized,input)
+    reasonCode=decision?'policy_allow':'policy_deny'
+  }catch{
+    decision=false
+    reasonCode='policy_evaluation_failed'
+  }
+  return {
+    evaluatorVersion:POLICY_EVALUATOR_VERSION,
+    decision,
+    reasonCode,
+    expressionHash:policyExpressionHash(normalized),
+    inputFields:Object.keys(input&&typeof input==='object'&&!Array.isArray(input)?input:{}),
+    retainedInput:false
+  }
+}
+
 export const publishPolicyRule=async({workspaceId,id})=>withTenantDbTransaction(workspaceId,async client=>{
   const rule=(await client.query('SELECT * FROM ace_policy_rules WHERE workspace_id=$1 AND id=$2 FOR UPDATE',[workspaceId,id])).rows[0]
   if(!rule)return null
