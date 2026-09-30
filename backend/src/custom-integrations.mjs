@@ -1,35 +1,17 @@
 import {randomUUID} from 'node:crypto'
-import {lookup} from 'node:dns/promises'
-import {isIP} from 'node:net'
+import {validateOutboundDestination} from './platform/egress-policy.mjs'
 import {pool} from './database.mjs'
 import {connectorVaultReady,decryptSecret,encryptSecret} from './vault.mjs'
 const allowHttp=process.env.CUSTOM_INTEGRATION_ALLOW_HTTP==='true'
 const timeoutMs=Number(process.env.CUSTOM_INTEGRATION_TIMEOUT_MS||5000)
 
-const privateV4=ip=>{
-  const p=ip.split('.').map(Number)
-  if(p.length!==4||p.some(x=>!Number.isInteger(x)||x<0||x>255)) return true
-  const [a,b]=p
-  return a===0||a===10||a===127||a>=224||a===169&&b===254||a===172&&b>=16&&b<=31||a===192&&b===168||a===100&&b>=64&&b<=127
-}
-const privateV6=ip=>{
-  const x=String(ip).toLowerCase()
-  return x==='::'||x==='::1'||x.startsWith('fe8')||x.startsWith('fe9')||x.startsWith('fea')||x.startsWith('feb')||x.startsWith('fc')||x.startsWith('fd')||x.startsWith('::ffff:127.')||x.startsWith('::ffff:10.')||x.startsWith('::ffff:192.168.')||x.startsWith('::ffff:169.254.')
-}
-const blockedIp=ip=>isIP(ip)===4?privateV4(ip):isIP(ip)===6?privateV6(ip):true
+export const validateOutboundUrl=raw=>validateOutboundDestination(raw,{
+  allowHttp,
+  allowedPorts:[443],
+  allowHttpPorts:[80],
+  purpose:'custom integration URL'
+})
 
-export const validateOutboundUrl=async raw=>{
-  let url
-  try{url=new URL(String(raw))}catch{throw new Error('invalid integration URL')}
-  if(url.username||url.password) throw new Error('credentials must not be embedded in the URL')
-  if(url.protocol!=='https:'&&!(allowHttp&&url.protocol==='http:')) throw new Error('custom integration URL must use HTTPS')
-  const host=url.hostname.toLowerCase()
-  if(host==='localhost'||host.endsWith('.localhost')||host.endsWith('.local')) throw new Error('local network hosts are not allowed')
-  const resolved=isIP(host)?[{address:host,family:isIP(host)}]:await lookup(host,{all:true,verbatim:true})
-  if(!resolved.length) throw new Error('integration host did not resolve')
-  for(const item of resolved) if(blockedIp(item.address)) throw new Error('private, loopback, link-local, carrier-grade NAT and reserved IP ranges are blocked')
-  return {url,resolvedIps:[...new Set(resolved.map(x=>x.address))]}
-}
 
 const authHeaders=credential=>{
   if(!credential)return {}
