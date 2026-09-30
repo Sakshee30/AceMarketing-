@@ -1,6 +1,7 @@
 import http from 'node:http'
 import {installLiveVoiceWebSocket,closeLiveVoice} from './live-voice.mjs'
 import {createDrainController} from './platform/drain-controller.mjs'
+import {closeBoardRealtime,installBoardRealtimeWebSocket} from './platform/board-realtime.mjs'
 
 const port=Math.max(1,Number(process.env.REALTIME_PORT||3003))
 if(process.env.NODE_ENV==='production'&&!process.env.DATABASE_URL){
@@ -28,6 +29,7 @@ const server=http.createServer((req,res)=>{
 })
 
 installLiveVoiceWebSocket(server)
+installBoardRealtimeWebSocket(server)
 
 server.listen(port,()=>{
   console.log('AceMarketing realtime runtime started',{port})
@@ -39,7 +41,7 @@ const shutdown=async signal=>{
   drainController.beginDrain()
   console.log(signal+' received; draining realtime runtime')
   await new Promise(resolve=>server.close(()=>resolve()))
-  await closeLiveVoice().catch(()=>{})
+  await Promise.allSettled([closeLiveVoice(),closeBoardRealtime()])
 }
 
 for(const signal of ['SIGTERM','SIGINT']){
