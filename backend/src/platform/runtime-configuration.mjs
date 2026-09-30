@@ -31,7 +31,7 @@ const validateFeatureStates=features=>{
   }
 }
 
-const activeEmergencyControls=async()=>{
+const activeEmergencyControls=async environment=>{
   assertDb()
   await pool.query(
     `UPDATE ace_emergency_controls
@@ -39,10 +39,11 @@ const activeEmergencyControls=async()=>{
      WHERE state='active' AND expires_at<=now()`
   )
   return (await pool.query(
-    `SELECT id,scope_type,scope_id,control_type,reason,expires_at,created_at
+    `SELECT id,environment,scope_type,scope_id,control_type,reason,expires_at,created_at
      FROM ace_emergency_controls
-     WHERE state='active' AND expires_at>now()
-     ORDER BY created_at ASC`
+     WHERE state='active' AND expires_at>now() AND environment=$1
+     ORDER BY created_at ASC`,
+    [String(environment||process.env.NODE_ENV||'development')]
   )).rows
 }
 
@@ -55,7 +56,7 @@ export const buildRuntimePayload=async({
 }={})=>{
   const env=String(environment||process.env.NODE_ENV||'development').trim()
   validateFeatureStates(features)
-  const emergency=await activeEmergencyControls()
+  const emergency=await activeEmergencyControls(env)
   const normalizedFeatures=Object.fromEntries(platformFeatureCatalog.map(item=>[
     item.id,
     item.locked?'enabled':String(features[item.id]||'enabled')
@@ -186,9 +187,10 @@ export const verifyRuntimeSnapshot=snapshot=>{
 }
 
 export const createEmergencyControl=async({
-  scopeType,scopeId=null,controlType,reason,durationMinutes=30,createdBy
+  environment,scopeType,scopeId=null,controlType,reason,durationMinutes=30,createdBy
 })=>{
   assertDb()
+  const env=String(environment||process.env.NODE_ENV||'development').trim()
   const scope=String(scopeType||'').trim()
   const control=String(controlType||'').trim()
   const why=String(reason||'').trim()
@@ -201,10 +203,10 @@ export const createEmergencyControl=async({
   const expiresAt=new Date(Date.now()+minutes*60_000).toISOString()
   const {rows}=await pool.query(
     `INSERT INTO ace_emergency_controls
-      (id,scope_type,scope_id,control_type,reason,created_by,expires_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7)
+      (id,environment,scope_type,scope_id,control_type,reason,created_by,expires_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
      RETURNING *`,
-    [id,scope,scopeId?String(scopeId).trim():null,control,why.slice(0,4000),createdBy,expiresAt]
+    [id,env,scope,scopeId?String(scopeId).trim():null,control,why.slice(0,4000),createdBy,expiresAt]
   )
   return rows[0]
 }
@@ -232,12 +234,16 @@ export const revokeEmergencyControl=async({id,revokedBy,expectedVersion})=>{
   }finally{client.release()}
 }
 
-export const listEmergencyControls=async()=>{
-  await activeEmergencyControls()
-  return (await pool.query(
-    `SELECT * FROM ace_emergency_controls
-     ORDER BY created_at DESC LIMIT 200`
-  )).rows
+export const listEmergencyControls=async({environment=null}={})=>{
+  if(environment)await activeEmergencyControls(environment)
+  else await pool.query(`UPDATE ace_emergency_controls SET state='expired',version=version+1 WHERE state='active' AND expires_at<=now()`)
+  if(environment){
+    return (await pool.query(
+      `SELECT * FROM ace_emergency_controls WHERE environment=$1 ORDER BY created_at DESC LIMIT 200`,
+      [String(environment)]
+    )).rows
+  }
+  return (await pool.query(`SELECT * FROM ace_emergency_controls ORDER BY created_at DESC LIMIT 200`)).rows
 }
 
 export const evaluateRuntimeControl=({snapshot,featureId,scopeType,scopeId,operation='execute'})=>{
