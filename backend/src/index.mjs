@@ -59,6 +59,9 @@ import {indexExtractedObject,markObjectProcessingFailure} from './platform/docum
 import {querySearch,searchCapabilityProfile} from './platform/search-port.mjs'
 import {runtimeGuardForRequest} from './platform/runtime-config-runtime.mjs'
 import {beginProcessDrain,livenessState,markStartupComplete,readinessState,startupState} from './platform/process-health.mjs'
+import {runtimeRoleAllows,runtimeRolePolicy} from './platform/runtime-role.mjs'
+
+const runtimeRole=runtimeRolePolicy()
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -531,15 +534,18 @@ const server = http.createServer(async (req,res)=>{
   req.requestId=requestContext.requestId
   const healthUrl=new URL(req.url, `http://localhost:${PORT}`)
   if(req.method==='GET'&&healthUrl.pathname==='/healthz'){
-    return send(req,res,200,{...livenessState(),service:'ace-marketing-api',requestId:req.requestId})
+    return send(req,res,200,{...livenessState(),service:runtimeRole.role==='integration-ingress'?'ace-marketing-integration-ingress':'ace-marketing-api',requestId:req.requestId})
   }
   if(req.method==='GET'&&healthUrl.pathname==='/startupz'){
     const state=startupState()
-    return send(req,res,state.ok?200:503,{...state,service:'ace-marketing-api',requestId:req.requestId})
+    return send(req,res,state.ok?200:503,{...state,service:runtimeRole.role==='integration-ingress'?'ace-marketing-integration-ingress':'ace-marketing-api',requestId:req.requestId})
   }
   if(req.method==='GET'&&healthUrl.pathname==='/readyz'){
     const state=await readinessState({storageHealth})
-    return send(req,res,state.ok?200:503,{...state,service:'ace-marketing-api',requestId:req.requestId})
+    return send(req,res,state.ok?200:503,{...state,service:runtimeRole.role==='integration-ingress'?'ace-marketing-integration-ingress':'ace-marketing-api',requestId:req.requestId})
+  }
+  if(!runtimeRoleAllows({role:runtimeRole.role,method:req.method,path:healthUrl.pathname})){
+    return send(req,res,404,{error:'not found',code:'runtime_route_not_exposed'})
   }
   const releaseAdmission=globalAdmission.acquire()
   if(!releaseAdmission){
@@ -836,7 +842,7 @@ const server = http.createServer(async (req,res)=>{
       }
       req.runtimeConfigurationVersion=runtimeDecision.configurationVersion||null
     }
-    if (req.method === 'GET' && url.pathname === '/api/health') return send(req,res,200,{ok:true,service:'ace-marketing-api',time:new Date().toISOString(),requestId:req.requestId})
+    if (req.method === 'GET' && url.pathname === '/api/health') return send(req,res,200,{ok:true,service:runtimeRole.role==='integration-ingress'?'ace-marketing-integration-ingress':'ace-marketing-api',time:new Date().toISOString(),requestId:req.requestId})
     if (req.method === 'GET' && url.pathname === '/api/dashboard-summary') {
       const state=await getState()
       const safe=async(fn,fallback)=>{try{return await fn()}catch{return fallback}}
