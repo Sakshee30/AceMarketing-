@@ -4,6 +4,10 @@ import path from 'node:path'
 const root=process.cwd()
 const failures=[]
 const required=[
+  'backend/tests/realtime-event-store.test.mjs',
+  'backend/src/platform/board-realtime.mjs',
+  'backend/src/platform/realtime-event-store.mjs',
+  'backend/migrations/056_realtime_events.sql',
   'tests/architecture/dependency-boundaries.test.ts',
   'operations/runbooks/board-move-recovery.md',
   'tests/load/board-move.js',
