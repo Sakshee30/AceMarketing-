@@ -3,6 +3,7 @@ import {controlPages,type ControlPageKey} from './features/manifest'
 import {controlApi,type ControlReadResult,type ControlSession} from './lib/control-api'
 import './control.css'
 import {SkipLink} from '../../../packages/design-system/src/Accessibility'
+import ChangesPage from './features/changes/pages/ChangesPage'
 
 const keyFromHash=():ControlPageKey=>{
   const raw=(window.location.hash.replace(/^#\/?/,'').split('?')[0]||'overview') as ControlPageKey
@@ -117,14 +118,16 @@ export default function ControlCenterApp(){
         <div><strong>Separate trust boundary</strong><span>No customer token, workspace local-storage authority, plaintext secrets or arbitrary shell execution.</span></div>
         <div className="control-session"><span>{session.email}</span><button type="button" onClick={()=>void logout()} disabled={authLoading}>Sign out</button></div>
       </div>
-      <section className="control-page" aria-busy={loading?'true':undefined}>
-        <header className="control-page-head"><div><span>PLATFORM CONTROL CENTER</span><h1>{page.label}</h1><p>{page.responsibility}</p></div><button type="button" onClick={()=>void refresh()} disabled={loading}>{loading?'Refreshing…':'Refresh observed state'}</button></header>
-        {loading&&!result&&<div className="control-state"><strong>Loading observed state…</strong><p>No desired-state change is performed by this page.</p></div>}
-        {result?.status==='forbidden'&&<div className="control-state control-state-warning" role="alert"><strong>Access denied</strong><p>{result.message}</p><small>Customer workspace credentials are intentionally not reused for this application.</small></div>}
-        {result?.status==='unavailable'&&<div className="control-state control-state-warning" role="status"><strong>Control plane unavailable</strong><p>{result.message}</p><small>Healthy customer data-plane traffic must not depend on this read succeeding.</small></div>}
-        {result?.status==='ready'&&<div className="control-state control-state-ready"><strong>Observed state</strong><small>Observed {new Date(result.observedAt).toLocaleString()}</small><pre>{JSON.stringify(result.data||{},null,2)}</pre></div>}
-        <aside className="control-integrity-note"><strong>Read-only control surface</strong><p>Observed state is live. Operational writes remain unavailable until impact analysis, approval, orchestration, idempotency, verification and recovery contracts are implemented.</p></aside>
-      </section>
+      {active==='changes'
+        ?<ChangesPage result={result} loading={loading} onRefresh={()=>void refresh()} role={session.role}/>
+        :<section className="control-page" aria-busy={loading?'true':undefined}>
+          <header className="control-page-head"><div><span>PLATFORM CONTROL CENTER</span><h1>{page.label}</h1><p>{page.responsibility}</p></div><button type="button" onClick={()=>void refresh()} disabled={loading}>{loading?'Refreshing…':'Refresh observed state'}</button></header>
+          {loading&&!result&&<div className="control-state"><strong>Loading observed state…</strong><p>No desired-state change is performed by this page.</p></div>}
+          {result?.status==='forbidden'&&<div className="control-state control-state-warning" role="alert"><strong>Access denied</strong><p>{result.message}</p><small>Customer workspace credentials are intentionally not reused for this application.</small></div>}
+          {result?.status==='unavailable'&&<div className="control-state control-state-warning" role="status"><strong>Control plane unavailable</strong><p>{result.message}</p><small>Healthy customer data-plane traffic must not depend on this read succeeding.</small></div>}
+          {result?.status==='ready'&&<div className="control-state control-state-ready"><strong>Observed state</strong><small>Observed {new Date(result.observedAt).toLocaleString()}</small><pre>{JSON.stringify(result.data||{},null,2)}</pre></div>}
+          <aside className="control-integrity-note"><strong>Observed-state control surface</strong><p>Operational pages remain read-only unless their governed backend mutation contracts and recovery paths are explicitly implemented.</p></aside>
+        </section>}
     </main>
   </div></>
 }
