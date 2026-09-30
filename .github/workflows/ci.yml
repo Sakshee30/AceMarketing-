@@ -161,6 +161,7 @@ jobs:
           test -f backend/src/platform/process-health.mjs
           test -f backend/src/platform/drain-controller.mjs
           test -f backend/src/platform/capacity-budget.mjs
+          test -f backend/src/platform/custom-object-store.mjs
           test -f backend/migrations/041_platform_control_changes.sql
           test -f backend/migrations/042_platform_change_versioning.sql
           test -f backend/migrations/043_platform_control_idempotency.sql
@@ -168,6 +169,7 @@ jobs:
           test -f backend/migrations/045_provider_migrations.sql
           test -f backend/migrations/046_emergency_environment_scope.sql
           test -f backend/migrations/047_recovery_evidence.sql
+          test -f backend/migrations/048_custom_objects.sql
           test -f backend/tests/control-change-store.test.mjs
           test -f backend/tests/control-idempotency.test.mjs
           test -f backend/tests/runtime-configuration.test.mjs
@@ -178,6 +180,7 @@ jobs:
           test -f backend/tests/process-health.test.mjs
           test -f backend/tests/drain-controller.test.mjs
           test -f backend/tests/capacity-budget.test.mjs
+          test -f backend/tests/custom-object-store.test.mjs
           test -f backend/tests/control-capability.test.mjs
           test -f deploy/Dockerfile.control-api
           test -f vite.platform-admin.config.ts
