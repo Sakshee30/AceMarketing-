@@ -142,6 +142,7 @@ jobs:
           docker build -f deploy/Dockerfile.public-site -t ace-public-site:ci .
           docker build -f deploy/Dockerfile.platform-admin -t ace-platform-admin:ci .
           docker build -f deploy/Dockerfile.control-api -t ace-control-api:ci .
+          docker build -f deploy/Dockerfile.worker -t ace-worker:ci .
       - name: Verify canonical project structure
         run: |
           test -f frontend/src/AcePlatform.tsx
