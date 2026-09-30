@@ -4,6 +4,7 @@ import {createConcurrencyAdmission} from '../src/platform/admission-control.mjs'
 import {problemDetails} from '../src/platform/problem-details.mjs'
 import {createRequestContext,remainingRequestBudget} from '../src/platform/request-context.mjs'
 import {normalizeIdempotencyKey,requestFingerprint} from '../src/platform/idempotency.mjs'
+import {featureCatalogItem,validateFeatureCatalog} from '../src/platform/feature-catalog.mjs'
 
 test('request context never trusts malformed request IDs',()=>{
   const context=createRequestContext({req:{headers:{'x-request-id':'bad id with spaces'}},deadlineMs:1000})
@@ -34,4 +35,14 @@ test('idempotency keys and request fingerprints are deterministic',()=>{
   const left=requestFingerprint({method:'POST',path:'/x',workspaceId:'w1',body:{a:1}})
   const right=requestFingerprint({method:'POST',path:'/x',workspaceId:'w1',body:{a:1}})
   assert.equal(left,right)
+})
+
+
+test('feature catalog includes governed board capability',()=>{
+  assert.equal(validateFeatureCatalog(),true)
+  const boards=featureCatalogItem('boards')
+  assert.ok(boards)
+  assert.equal(boards.owner,'platform-work')
+  assert.ok(boards.permissions.includes('boards.move'))
+  assert.equal(boards.offBehaviour.newWork,'reject')
 })
