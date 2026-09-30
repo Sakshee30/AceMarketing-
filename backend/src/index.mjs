@@ -49,6 +49,8 @@ import {assertWorkspaceMembership,seedWorkspaceCreator} from './platform/workspa
 import {validateOutboundDestination} from './platform/egress-policy.mjs'
 import {markInboxProcessed,recordInboxEvent} from './platform/reliability-store.mjs'
 import {createForm,getForm,listForms,listFormSubmissions,publishForm,submitForm} from './platform/forms-store.mjs'
+import {createPolicyRule,evaluatePublishedPolicyRule,getPolicyRule,listPolicyRules,publishPolicyRule} from './platform/policy-engine.mjs'
+import {createWorkflow,createWorkflowApproval,decideWorkflowApproval,getWorkflow,listWorkflowApprovals,listWorkflowExecutions,listWorkflows,publishWorkflow,startWorkflowExecution} from './platform/workflow-store.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -6112,6 +6114,117 @@ const server = http.createServer(async (req,res)=>{
     if(req.method==='GET'&&submissionsMatch){
       const limit=Number(url.searchParams.get('limit')||100)
       return send(req,res,200,{items:await listFormSubmissions({workspaceId,id:decodeURIComponent(submissionsMatch[1]),limit})})
+    }
+
+
+    if(req.method==='GET'&&url.pathname==='/api/policy-rules'){
+      return send(req,res,200,{items:await listPolicyRules({workspaceId,limit:Number(url.searchParams.get('limit')||100)})})
+    }
+    if(req.method==='POST'&&url.pathname==='/api/policy-rules'){
+      const body=await readBody(req)
+      try{
+        const rule=await createPolicyRule({workspaceId,name:body.name,expression:body.expression,inputSchemaVersion:body.inputSchemaVersion,actorId:req.user?.userId||null})
+        await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'policy_rule.created',entityType:'policy_rule',entityId:rule.id,requestId:req.requestId,traceId:req.context?.traceId}).catch(()=>{})
+        return send(req,res,201,rule)
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'policy rule creation failed',code:error?.code||'policy_rule_create_failed'})
+      }
+    }
+    const policyMatch=url.pathname.match(/^\/api\/policy-rules\/([^/]+)$/)
+    if(req.method==='GET'&&policyMatch){
+      const rule=await getPolicyRule({workspaceId,id:decodeURIComponent(policyMatch[1])})
+      return rule?send(req,res,200,rule):send(req,res,404,{error:'policy rule not found'})
+    }
+    const policyPublishMatch=url.pathname.match(/^\/api\/policy-rules\/([^/]+)\/publish$/)
+    if(req.method==='POST'&&policyPublishMatch){
+      const rule=await publishPolicyRule({workspaceId,id:decodeURIComponent(policyPublishMatch[1])})
+      if(!rule)return send(req,res,404,{error:'policy rule not found'})
+      await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'policy_rule.published',entityType:'policy_rule',entityId:rule.id,requestId:req.requestId,traceId:req.context?.traceId,metadata:{version:Number(rule.published_version||0)}}).catch(()=>{})
+      return send(req,res,200,rule)
+    }
+    const policyEvaluateMatch=url.pathname.match(/^\/api\/policy-rules\/([^/]+)\/evaluate$/)
+    if(req.method==='POST'&&policyEvaluateMatch){
+      const body=await readBody(req)
+      const decision=await evaluatePublishedPolicyRule({workspaceId,id:decodeURIComponent(policyEvaluateMatch[1]),input:body.input||{}})
+      return decision?send(req,res,200,decision):send(req,res,404,{error:'published policy rule not found'})
+    }
+
+    if(req.method==='GET'&&url.pathname==='/api/workflows'){
+      return send(req,res,200,{items:await listWorkflows({workspaceId,limit:Number(url.searchParams.get('limit')||100)})})
+    }
+    if(req.method==='POST'&&url.pathname==='/api/workflows'){
+      const body=await readBody(req)
+      try{
+        const workflow=await createWorkflow({workspaceId,name:body.name,definition:body.definition,actorId:req.user?.userId||null})
+        await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'workflow.created',entityType:'workflow',entityId:workflow.id,requestId:req.requestId,traceId:req.context?.traceId}).catch(()=>{})
+        return send(req,res,201,workflow)
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'workflow creation failed',code:error?.code||'workflow_create_failed'})
+      }
+    }
+    if(req.method==='GET'&&url.pathname==='/api/workflows/executions'){
+      return send(req,res,200,{items:await listWorkflowExecutions({workspaceId,workflowId:url.searchParams.get('workflowId')||null,limit:Number(url.searchParams.get('limit')||100)})})
+    }
+    if(req.method==='GET'&&url.pathname==='/api/workflows/approvals'){
+      return send(req,res,200,{items:await listWorkflowApprovals({workspaceId,status:url.searchParams.get('status')||null,limit:Number(url.searchParams.get('limit')||100)})})
+    }
+    const workflowMatch=url.pathname.match(/^\/api\/workflows\/([^/]+)$/)
+    if(req.method==='GET'&&workflowMatch){
+      const workflow=await getWorkflow({workspaceId,id:decodeURIComponent(workflowMatch[1])})
+      return workflow?send(req,res,200,workflow):send(req,res,404,{error:'workflow not found'})
+    }
+    const workflowPublishMatch=url.pathname.match(/^\/api\/workflows\/([^/]+)\/publish$/)
+    if(req.method==='POST'&&workflowPublishMatch){
+      const workflow=await publishWorkflow({workspaceId,id:decodeURIComponent(workflowPublishMatch[1])})
+      if(!workflow)return send(req,res,404,{error:'workflow not found'})
+      await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'workflow.published',entityType:'workflow',entityId:workflow.id,requestId:req.requestId,traceId:req.context?.traceId,metadata:{version:Number(workflow.published_version||0)}}).catch(()=>{})
+      return send(req,res,200,workflow)
+    }
+    const workflowStartMatch=url.pathname.match(/^\/api\/workflows\/([^/]+)\/executions$/)
+    if(req.method==='POST'&&workflowStartMatch){
+      const body=await readBody(req)
+      const execution=await startWorkflowExecution({
+        workspaceId,
+        id:decodeURIComponent(workflowStartMatch[1]),
+        actorId:req.user?.userId||null,
+        triggerType:body.triggerType||'manual',
+        triggerRef:body.triggerRef||null,
+        correlationId:req.context?.requestId||null,
+        causationId:body.causationId||null,
+        deadlineAt:body.deadlineAt||null
+      })
+      return execution?send(req,res,202,execution):send(req,res,404,{error:'published workflow not found'})
+    }
+    const approvalCreateMatch=url.pathname.match(/^\/api\/workflows\/executions\/([^/]+)\/approvals$/)
+    if(req.method==='POST'&&approvalCreateMatch){
+      const body=await readBody(req)
+      const approval=await createWorkflowApproval({
+        workspaceId,
+        executionId:decodeURIComponent(approvalCreateMatch[1]),
+        nodeId:String(body.nodeId||''),
+        requestedBy:req.user?.userId||null,
+        approverScope:body.approverScope||null,
+        policyVersion:body.policyVersion||null
+      })
+      return approval?send(req,res,201,approval):send(req,res,404,{error:'workflow execution not found'})
+    }
+    const approvalDecisionMatch=url.pathname.match(/^\/api\/workflows\/approvals\/([^/]+)\/decision$/)
+    if(req.method==='POST'&&approvalDecisionMatch){
+      const body=await readBody(req)
+      try{
+        const approval=await decideWorkflowApproval({
+          workspaceId,
+          approvalId:decodeURIComponent(approvalDecisionMatch[1]),
+          actorId:req.user?.userId||null,
+          decision:body.decision,
+          comment:body.comment||''
+        })
+        if(!approval)return send(req,res,404,{error:'workflow approval not found'})
+        await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'workflow.approval_decided',entityType:'workflow_approval',entityId:approval.id,requestId:req.requestId,traceId:req.context?.traceId,metadata:{decision:approval.status}}).catch(()=>{})
+        return send(req,res,200,approval)
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'workflow approval failed',code:error?.code||'workflow_approval_failed'})
+      }
     }
 
     return send(req,res,404,{error:'not found'})
