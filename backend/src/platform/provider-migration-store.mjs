@@ -1,5 +1,6 @@
 import {randomUUID} from 'node:crypto'
 import {pool} from '../database.mjs'
+import {capabilityManifestById,providerChangePreflight} from './capability-manifest.mjs'
 
 const states=new Set([
   'draft','validating','shadowing','canary','cutover','verifying','stabilizing','completed',
@@ -58,7 +59,8 @@ export const listProviderMigrations=async({environment=null,limit=100}={})=>{
 
 export const createProviderMigration=async({
   capability,environment,fromProvider,toProvider,strategy='shadow',
-  compatibilityReport={},cutoverBoundary={},rollbackPlan={},requestedBy,sourceChangeId=null
+  compatibilityReport={},cutoverBoundary={},rollbackPlan={},requestedBy,sourceChangeId=null,
+  dependencyInventory={},capacityEvidence={},verificationEvidence={},irreversibleSteps=[]
 })=>{
   assertDb()
   const cap=clean(capability,120)
@@ -68,12 +70,31 @@ export const createProviderMigration=async({
   if(!cap||!env||!from||!to)throw Object.assign(new Error('capability, environment, fromProvider and toProvider are required'),{status:400})
   if(from===to)throw Object.assign(new Error('provider migration source and target must differ'),{status:400})
   if(!['shadow','canary','dual_route','cutover'].includes(strategy))throw Object.assign(new Error('invalid provider migration strategy'),{status:400})
+  const preflight=providerChangePreflight({
+    capability:cap,
+    fromProvider:from,
+    toProvider:to,
+    environment:env,
+    evidence:{
+      capacityValidated:capacityEvidence?.validated===true,
+      dataPolicyValidated:verificationEvidence?.dataPolicyValidated===true
+    }
+  })
+  if(!preflight.allowed){
+    throw Object.assign(new Error('provider migration preflight failed: '+preflight.reasons.join('; ')),{
+      status:409,
+      code:'provider_migration_preflight_failed',
+      reasons:preflight.reasons
+    })
+  }
+  const manifest=capabilityManifestById(cap)
   const id='pvm_'+randomUUID()
   const {rows}=await pool.query(
     `INSERT INTO ace_provider_migrations
       (id,capability,environment,from_provider,to_provider,strategy,
-       compatibility_report,cutover_boundary,rollback_plan,requested_by,source_change_id)
-     VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8::jsonb,$9::jsonb,$10,$11)
+       compatibility_report,cutover_boundary,rollback_plan,requested_by,source_change_id,
+       dependency_inventory,capacity_evidence,verification_evidence,irreversible_steps)
+     VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8::jsonb,$9::jsonb,$10,$11,$12::jsonb,$13::jsonb,$14::jsonb,$15::jsonb)
      RETURNING *`,
     [
       id,cap,env,from,to,strategy,
@@ -81,14 +102,19 @@ export const createProviderMigration=async({
       JSON.stringify(cutoverBoundary||{}),
       JSON.stringify(rollbackPlan||{}),
       clean(requestedBy,320),
-      sourceChangeId
+      sourceChangeId,
+      JSON.stringify({...(dependencyInventory||{}),declaredDependencies:manifest?.dependencies||[],migrationClass:manifest?.migrationClass||null}),
+      JSON.stringify(capacityEvidence||{}),
+      JSON.stringify(verificationEvidence||{}),
+      JSON.stringify(Array.isArray(irreversibleSteps)?irreversibleSteps:[])
     ]
   )
   return rows[0]
 }
 
 export const advanceProviderMigration=async({
-  id,toState,trafficPercent,compatibilityReport,cutoverBoundary,actor,expectedVersion,failureReason=null
+  id,toState,trafficPercent,compatibilityReport,cutoverBoundary,actor,expectedVersion,failureReason=null,
+  dependencyInventory,capacityEvidence,verificationEvidence,irreversibleSteps,pointOfNoReturn=false
 })=>{
   assertDb()
   if(!states.has(toState))throw Object.assign(new Error('invalid provider migration state'),{status:400})
@@ -104,6 +130,10 @@ export const advanceProviderMigration=async({
 
     const nextCompatibility=compatibilityReport===undefined?current.compatibility_report:compatibilityReport
     const nextBoundary=cutoverBoundary===undefined?current.cutover_boundary:cutoverBoundary
+    const nextDependencies=dependencyInventory===undefined?current.dependency_inventory:dependencyInventory
+    const nextCapacity=capacityEvidence===undefined?current.capacity_evidence:capacityEvidence
+    const nextVerification=verificationEvidence===undefined?current.verification_evidence:verificationEvidence
+    const nextIrreversible=irreversibleSteps===undefined?current.irreversible_steps:irreversibleSteps
     let nextTraffic=trafficPercent===undefined?Number(current.traffic_percent):Number(trafficPercent)
     if(!Number.isInteger(nextTraffic)||nextTraffic<0||nextTraffic>100){
       throw Object.assign(new Error('trafficPercent must be an integer between 0 and 100'),{status:400})
@@ -114,6 +144,18 @@ export const advanceProviderMigration=async({
       if(nextCompatibility?.validated!==true){
         throw Object.assign(new Error('validated compatibility report is required before canary traffic'),{status:409})
       }
+      if(current.environment==='production'){
+        if(!nextDependencies||Object.keys(nextDependencies).length===0){
+          throw Object.assign(new Error('production canary requires dependency inventory'),{status:409})
+        }
+        const manifest=capabilityManifestById(current.capability)
+        if(manifest?.fallback?.requiresCapacityEvidence&&nextCapacity?.validated!==true){
+          throw Object.assign(new Error('production canary requires validated capacity evidence'),{status:409})
+        }
+        if(manifest?.fallback?.requiresConsent&&nextVerification?.dataPolicyValidated!==true){
+          throw Object.assign(new Error('production canary requires data-policy evidence'),{status:409})
+        }
+      }
       if(nextTraffic<=0||nextTraffic>=100){
         throw Object.assign(new Error('canary traffic must be between 1 and 99 percent'),{status:400})
       }
@@ -123,6 +165,9 @@ export const advanceProviderMigration=async({
     }
     if(toState==='cutover'){
       if(nextCompatibility?.validated!==true)throw Object.assign(new Error('validated compatibility report is required before cutover'),{status:409})
+      if(current.environment==='production'&&nextVerification?.cutoverValidated!==true){
+        throw Object.assign(new Error('production cutover requires verification evidence'),{status:409})
+      }
       nextTraffic=100
       if(!nextBoundary||Object.keys(nextBoundary).length===0){
         throw Object.assign(new Error('cutover boundary is required before cutover'),{status:409})
@@ -135,7 +180,11 @@ export const advanceProviderMigration=async({
     const {rows}=await client.query(
       `UPDATE ace_provider_migrations SET
          state=$2,traffic_percent=$3,compatibility_report=$4::jsonb,cutover_boundary=$5::jsonb,
-         failure_reason=$6,version=version+1,updated_at=now(),
+         failure_reason=$6,dependency_inventory=$7::jsonb,capacity_evidence=$8::jsonb,
+         verification_evidence=$9::jsonb,irreversible_steps=$10::jsonb,
+         point_of_no_return_at=CASE WHEN $11::boolean THEN COALESCE(point_of_no_return_at,now()) ELSE point_of_no_return_at END,
+         stabilization_started_at=CASE WHEN $2='stabilizing' THEN COALESCE(stabilization_started_at,now()) ELSE stabilization_started_at END,
+         version=version+1,updated_at=now(),
          completed_at=CASE WHEN $2='completed' THEN now() ELSE completed_at END
        WHERE id=$1
        RETURNING *`,
@@ -143,7 +192,12 @@ export const advanceProviderMigration=async({
         id,toState,nextTraffic,
         JSON.stringify(nextCompatibility||{}),
         JSON.stringify(nextBoundary||{}),
-        reason||null
+        reason||null,
+        JSON.stringify(nextDependencies||{}),
+        JSON.stringify(nextCapacity||{}),
+        JSON.stringify(nextVerification||{}),
+        JSON.stringify(Array.isArray(nextIrreversible)?nextIrreversible:[]),
+        Boolean(pointOfNoReturn)
       ]
     )
     await client.query('COMMIT')
@@ -155,6 +209,14 @@ export const advanceProviderMigration=async({
 }
 
 export const requestProviderRollback=async({id,actor,expectedVersion,reason})=>{
+  assertDb()
+  const current=(await pool.query('SELECT point_of_no_return_at,irreversible_steps FROM ace_provider_migrations WHERE id=$1',[id])).rows[0]
+  if(current?.point_of_no_return_at){
+    throw Object.assign(new Error('provider migration point of no return has been crossed; manual recovery or forward repair is required'),{
+      status:409,
+      code:'provider_migration_irreversible'
+    })
+  }
   return advanceProviderMigration({
     id,
     toState:'rollback_requested',
