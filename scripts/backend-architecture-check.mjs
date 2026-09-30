@@ -8,7 +8,10 @@ const required=[
   'backend/src/platform/request-context.mjs',
   'backend/src/platform/admission-control.mjs',
   'backend/src/platform/idempotency.mjs',
-  'backend/tests/platform-foundation.test.mjs'
+  'backend/src/platform/reliability-store.mjs',
+  'backend/migrations/034_platform_reliability.sql',
+  'backend/tests/platform-foundation.test.mjs',
+  'backend/tests/platform-reliability.test.mjs'
 ]
 for(const item of required)if(!fs.existsSync(path.join(root,item)))failures.push('missing required backend architecture foundation: '+item)
 
