@@ -81,7 +81,7 @@ const createEmbeddedPool=async()=>{
           "ALTER TABLE ace_objects ADD COLUMN IF NOT EXISTS indexing_status TEXT NOT NULL DEFAULT 'not_started';",
           'ALTER TABLE ace_objects ADD COLUMN IF NOT EXISTS searchable_at TIMESTAMPTZ;',
           'ALTER TABLE ace_objects ADD COLUMN IF NOT EXISTS processing_error TEXT;'
-        ].join('\\n')+'\\n'
+        ].join('\n')+'\n'
       )
       sql=sql.replace(/ALTER TABLE ace_objects\s+DROP CONSTRAINT IF EXISTS ace_objects_extraction_status_check;[\s\S]*?CHECK \(extraction_status IN \([^;]+;\s*/m,'')
       sql=sql.replace(/ALTER TABLE ace_objects\s+DROP CONSTRAINT IF EXISTS ace_objects_indexing_status_check;[\s\S]*?CHECK \(indexing_status IN \([^;]+;\s*/m,'')
