@@ -33,6 +33,8 @@ const safeJson=async(response:Response)=>{
   try{return JSON.parse(text)}catch{return null}
 }
 
+const newIdempotencyKey=()=>globalThis.crypto?.randomUUID?.()||('ace-'+Date.now()+'-'+Math.random().toString(36).slice(2))
+
 const request=async(path:string,init:RequestInit={})=>fetch(path,{
   credentials:'include',
   ...init,
@@ -74,7 +76,7 @@ export const controlApi={
   },
   createChange:async(input:PlatformChangeRequest):Promise<ControlMutationResult>=>{
     try{
-      const response=await request('/control-api/changes',{method:'POST',body:JSON.stringify(input)})
+      const response=await request('/control-api/changes',{method:'POST',body:JSON.stringify(input),headers:{'Idempotency-Key':newIdempotencyKey()}})
       const data=await safeJson(response)
       return response.ok
         ?{ok:true,data:data&&typeof data==='object'?data:{}}
@@ -84,7 +86,7 @@ export const controlApi={
   transitionChange:async(id:string,toState:string,expectedVersion:number):Promise<ControlMutationResult>=>{
     try{
       const response=await request('/control-api/changes/'+encodeURIComponent(id)+'/transition',{
-        method:'POST',body:JSON.stringify({toState,expectedVersion})
+        method:'POST',body:JSON.stringify({toState,expectedVersion}),headers:{'Idempotency-Key':newIdempotencyKey()}
       })
       const data=await safeJson(response)
       return response.ok?{ok:true,data:data||{}}:{ok:false,message:data?.error||'Change transition failed.'}
@@ -93,7 +95,7 @@ export const controlApi={
   decideChange:async(id:string,decision:'approved'|'rejected',expectedVersion:number):Promise<ControlMutationResult>=>{
     try{
       const response=await request('/control-api/changes/'+encodeURIComponent(id)+'/decision',{
-        method:'POST',body:JSON.stringify({decision,expectedVersion})
+        method:'POST',body:JSON.stringify({decision,expectedVersion}),headers:{'Idempotency-Key':newIdempotencyKey()}
       })
       const data=await safeJson(response)
       return response.ok?{ok:true,data:data||{}}:{ok:false,message:data?.error||'Change decision failed.'}
@@ -102,7 +104,7 @@ export const controlApi={
   requestRollback:async(id:string,reason:string,expectedVersion:number):Promise<ControlMutationResult>=>{
     try{
       const response=await request('/control-api/changes/'+encodeURIComponent(id)+'/rollback',{
-        method:'POST',body:JSON.stringify({reason,expectedVersion})
+        method:'POST',body:JSON.stringify({reason,expectedVersion}),headers:{'Idempotency-Key':newIdempotencyKey()}
       })
       const data=await safeJson(response)
       return response.ok?{ok:true,data:data||{}}:{ok:false,message:data?.error||'Rollback request failed.'}
