@@ -180,6 +180,8 @@ jobs:
           test -f frontend/src/customer-app/bootstrap-state.ts
           test -f frontend/src/customer-app/session-lifecycle.ts
           test -f frontend/src/customer-app/workspace-lifecycle.ts
+          test -f frontend/src/customer-app/feature-registry.ts
+          test -f frontend/src/customer-app/navigation.ts
           test -f frontend/src/features/launchpad/data/launchpad.keys.ts
           test -f frontend/src/features/approvals/data/approvals.keys.ts
           test -f frontend/src/features/integrations/data/integrations.keys.ts
@@ -343,9 +345,11 @@ jobs:
           test -f backend/src/platform/admission-control.mjs
           test -f backend/src/platform/idempotency.mjs
           test -f backend/src/platform/reliability-store.mjs
+          test -f backend/src/platform/tenant-context.mjs
           test -f backend/migrations/034_platform_reliability.sql
           test -f backend/tests/platform-foundation.test.mjs
           test -f backend/tests/platform-reliability.test.mjs
+          test -f backend/tests/tenant-context.test.mjs
           test -f scripts/backend-architecture-check.mjs
           test -f backend/src/store.mjs
           test -f backend/src/vault.mjs
