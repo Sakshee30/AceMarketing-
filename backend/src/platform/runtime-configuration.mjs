@@ -7,6 +7,7 @@ const allowedEmergencyControls=new Set(['stop_uploads','pause_integrations','sus
 const allowedScopes=new Set(['platform','region','cell','tenant','workspace','service','feature'])
 
 const canonical=value=>{
+  if(value instanceof Date)return value.toISOString()
   if(value===null||typeof value!=='object')return value
   if(Array.isArray(value))return value.map(canonical)
   return Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonical(value[key])]))
@@ -193,6 +194,7 @@ export const createEmergencyControl=async({
   if(!allowedScopes.has(scope))throw Object.assign(new Error('invalid emergency control scope'),{status:400})
   if(!allowedEmergencyControls.has(control))throw Object.assign(new Error('invalid emergency control type'),{status:400})
   if(!why)throw Object.assign(new Error('emergency control reason is required'),{status:400})
+  if(scope!=='platform'&&!String(scopeId||'').trim())throw Object.assign(new Error('scopeId is required for non-platform emergency controls'),{status:400})
   const minutes=Math.max(5,Math.min(240,Number(durationMinutes)||30))
   const id='emg_'+randomUUID()
   const expiresAt=new Date(Date.now()+minutes*60_000).toISOString()
