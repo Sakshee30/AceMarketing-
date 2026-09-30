@@ -128,8 +128,8 @@ data "aws_iam_policy_document" "application_runtime" {
   }
 
   statement {
-    sid     = "RuntimeSecrets"
-    actions = ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"]
+    sid       = "RuntimeSecrets"
+    actions   = ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"]
     resources = concat(values(module.secrets.secret_arns), [module.database.master_user_secret_arn])
   }
 
