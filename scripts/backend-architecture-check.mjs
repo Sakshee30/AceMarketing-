@@ -22,6 +22,7 @@ const required=[
   'backend/src/platform/worker-class.mjs',
   'backend/src/platform/runtime-role.mjs',
   'backend/src/scheduler.mjs',
+  'backend/src/realtime.mjs',
   'deploy/Dockerfile.control-api',  'backend/src/platform/problem-details.mjs',
   'backend/src/platform/request-context.mjs',
   'backend/src/platform/admission-control.mjs',
