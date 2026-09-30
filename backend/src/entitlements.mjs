@@ -1,5 +1,6 @@
 import {randomUUID} from 'node:crypto'
 import {pool} from './database.mjs'
+import {effectiveUsageForMetric,finalizeUsageReservation,reconcileExpiredUsageReservations,reserveUsageCapacity} from './platform/usage-ledger.mjs'
 
 const numberEnv=(name,fallback)=>{
   const value=Number(process.env[name])
@@ -33,47 +34,30 @@ const ensureSubscription=async workspaceId=>{
   return rows[0]
 }
 
-const monthlyUsage=async(workspaceId,metric)=>{
-  const {rows}=await pool.query(
-    `SELECT COALESCE(SUM(CASE $2
-      WHEN 'tracked_events' THEN tracked_events
-      WHEN 'assisted_events' THEN assisted_events
-      WHEN 'signal_dispatches' THEN signal_dispatches
-      WHEN 'agent_actions' THEN agent_actions
-      WHEN 'audience_syncs' THEN audience_syncs
-      WHEN 'custom_integration_tests' THEN custom_integration_tests
-      ELSE 0 END),0)::bigint value
-     FROM ace_usage_daily
-     WHERE workspace_id=$1 AND usage_date>=date_trunc('month',CURRENT_DATE)::date`,
-    [workspaceId,metric]
-  )
-  return Number(rows[0]?.value||0)
-}
-
-const activeReservations=async(workspaceId,metric)=>{
-  const {rows}=await pool.query(
-    `SELECT COALESCE(SUM(quantity),0)::bigint value
-     FROM ace_usage_reservations
-     WHERE workspace_id=$1 AND metric=$2 AND period_start=date_trunc('month',CURRENT_DATE)::date AND status='reserved'`,
-    [workspaceId,metric]
-  )
-  return Number(rows[0]?.value||0)
-}
-
 export const subscriptionSummary=async workspaceId=>{
   if(!pool)return {available:false}
   const sub=await ensureSubscription(workspaceId)
   const ent=sub.entitlements||{}
   const metrics=['tracked_events','assisted_events','signal_dispatches','agent_actions','audience_syncs','custom_integration_tests']
   const usage={}
+  await reconcileExpiredUsageReservations({
+    workspaceId,
+    ttlMinutes:Number(process.env.USAGE_RESERVATION_TTL_MINUTES||30)
+  }).catch(()=>{})
   for(const metric of metrics){
-    const used=await monthlyUsage(workspaceId,metric)
-    const reserved=await activeReservations(workspaceId,metric)
+    const snapshot=await effectiveUsageForMetric({workspaceId,metric})
+    const used=Number(snapshot.used||0)
+    const reserved=Number(snapshot.reserved||0)
     const limit=Number(ent[metric]??0)
     usage[metric]={
-      used,reserved,limit,
+      used,
+      reserved,
+      limit,
       remaining:limit===0?null:Math.max(0,limit-used-reserved),
-      percent:limit===0?0:Number((((used+reserved)/limit)*100).toFixed(1))
+      percent:limit===0?0:Number((((used+reserved)/limit)*100).toFixed(1)),
+      freshness:'live',
+      ledgerUsed:Number(snapshot.ledger||0),
+      aggregateUsed:Number(snapshot.daily||0)
     }
   }
   return {
@@ -87,52 +71,30 @@ export const subscriptionSummary=async workspaceId=>{
     externalCustomerId:sub.external_customer_id,
     paymentConfigured:Boolean(sub.billing_provider&&sub.external_customer_id),
     entitlements:ent,
-    usage
+    usage,
+    usageFreshnessAt:new Date().toISOString()
   }
 }
 
 export const assertCapacity=async(workspaceId,metric,quantity=1,requestId=null)=>{
   if(!pool)return {allowed:true,reservationId:null}
   const sub=await ensureSubscription(workspaceId)
-  if(['suspended','cancelled'].includes(sub.status)) return {allowed:false,reason:'subscription_'+sub.status}
+  if(['suspended','cancelled','expired'].includes(sub.status)){
+    return {allowed:false,reason:'subscription_'+sub.status}
+  }
   const limit=Number(sub.entitlements?.[metric]??0)
-  if(limit===0) return {allowed:true,reservationId:null,unlimited:true}
-  const used=await monthlyUsage(workspaceId,metric)
-  const client=await pool.connect()
-  try{
-    await client.query('BEGIN')
-    await client.query(`SELECT workspace_id FROM ace_workspace_subscriptions WHERE workspace_id=$1 FOR UPDATE`,[workspaceId])
-    const reservedResult=await client.query(
-      `SELECT COALESCE(SUM(quantity),0)::bigint value FROM ace_usage_reservations
-       WHERE workspace_id=$1 AND metric=$2 AND period_start=date_trunc('month',CURRENT_DATE)::date AND status='reserved'`,
-      [workspaceId,metric]
-    )
-    const reserved=Number(reservedResult.rows[0]?.value||0)
-    if(used+reserved+quantity>limit){
-      await client.query('ROLLBACK')
-      return {allowed:false,reason:'quota_exceeded',metric,used,reserved,limit,requested:quantity}
-    }
-    const id='ur_'+randomUUID()
-    await client.query(
-      `INSERT INTO ace_usage_reservations (id,workspace_id,metric,quantity,period_start,status,request_id)
-       VALUES ($1,$2,$3,$4,date_trunc('month',CURRENT_DATE)::date,'reserved',$5)
-       ON CONFLICT (workspace_id,request_id,metric) WHERE request_id IS NOT NULL DO NOTHING`,
-      [id,workspaceId,metric,quantity,requestId]
-    )
-    await client.query('COMMIT')
-    return {allowed:true,reservationId:id,metric,used,reserved,limit}
-  }catch(error){
-    await client.query('ROLLBACK').catch(()=>{})
-    throw error
-  }finally{client.release()}
+  return reserveUsageCapacity({
+    workspaceId,
+    metric,
+    quantity,
+    requestId,
+    limit
+  })
 }
 
-export const finalizeReservation=async(id,success=true)=>{
-  if(!pool||!id)return
-  await pool.query(
-    `UPDATE ace_usage_reservations SET status=$2,updated_at=now() WHERE id=$1 AND status='reserved'`,
-    [id,success?'committed':'released']
-  )
+export const finalizeReservation=async(workspaceId,id,success=true)=>{
+  if(!pool||!id)return null
+  return finalizeUsageReservation({workspaceId,id,success})
 }
 
 export const resourceCountAllowed=async(workspaceId,resource)=>{
