@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://acemarketing.local/schemas/platform.schema.json",
+  "title": "AceMarketing platform profile",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "profile",
+    "platform",
+    "security"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "profile": {
+      "type": "string",
+      "minLength": 1
+    },
+    "platform": {
+      "type": "object",
+      "required": [
+        "database",
+        "queue",
+        "objectStorage",
+        "audit"
+      ],
+      "properties": {
+        "database": {
+          "type": "object",
+          "required": [
+            "provider",
+            "required"
+          ],
+          "properties": {
+            "provider": {
+              "enum": [
+                "postgres"
+              ]
+            },
+            "required": {
+              "const": true
+            }
+          }
+        },
+        "queue": {
+          "type": "object",
+          "required": [
+            "provider",
+            "requiredForAcceptedJobs",
+            "onUnavailable"
+          ],
+          "properties": {
+            "provider": {
+              "enum": [
+                "sqs",
+                "database"
+              ]
+            },
+            "requiredForAcceptedJobs": {
+              "const": true
+            },
+            "onUnavailable": {
+              "enum": [
+                "reject-new-admission",
+                "pause-admission"
+              ]
+            }
+          }
+        },
+        "objectStorage": {
+          "type": "object",
+          "required": [
+            "provider",
+            "required",
+            "onUnavailable"
+          ],
+          "properties": {
+            "provider": {
+              "enum": [
+                "s3"
+              ]
+            },
+            "required": {
+              "const": true
+            },
+            "onUnavailable": {
+              "enum": [
+                "reject-upload-safely"
+              ]
+            }
+          }
+        },
+        "audit": {
+          "type": "object",
+          "required": [
+            "requiredForSensitiveCommits",
+            "durableStore"
+          ],
+          "properties": {
+            "requiredForSensitiveCommits": {
+              "const": true
+            },
+            "durableStore": {
+              "enum": [
+                "postgres"
+              ]
+            }
+          }
+        },
+        "cache": {
+          "type": "object"
+        },
+        "search": {
+          "type": "object"
+        },
+        "ai": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": true
+    },
+    "security": {
+      "type": "object",
+      "required": [
+        "authentication",
+        "authorization",
+        "tenantIsolation",
+        "secretProvider"
+      ],
+      "properties": {
+        "authentication": {
+          "const": "required"
+        },
+        "authorization": {
+          "const": "required"
+        },
+        "tenantIsolation": {
+          "const": "required"
+        },
+        "secretProvider": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}
