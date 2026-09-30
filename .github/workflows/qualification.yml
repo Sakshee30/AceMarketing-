@@ -1,0 +1,47 @@
+name: Capacity Qualification
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Isolated qualification environment base URL'
+        required: true
+        type: string
+      target_rps:
+        description: 'Offered request rate'
+        required: true
+        default: '4000'
+        type: string
+      duration:
+        description: 'k6 duration'
+        required: true
+        default: '5m'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    environment: qualification
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: grafana/setup-k6-action@v1
+
+      - name: Run open-model qualification workload
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+          TARGET_RPS: ${{ inputs.target_rps }}
+          TEST_DURATION: ${{ inputs.duration }}
+          WORKSPACE_ID: ws_load_qualification
+        run: k6 run --summary-export=qualification-summary.json tests/load/qualification.js
+
+      - name: Upload qualification evidence
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: capacity-qualification-${{ github.sha }}
+          path: qualification-summary.json
+          if-no-files-found: warn
