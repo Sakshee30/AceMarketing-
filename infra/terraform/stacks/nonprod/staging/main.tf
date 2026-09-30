@@ -128,8 +128,8 @@ data "aws_iam_policy_document" "application_runtime" {
   }
 
   statement {
-    sid       = "RuntimeSecrets"
-    actions   = ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"]
+    sid     = "RuntimeSecrets"
+    actions = ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"]
     resources = concat(values(module.secrets.secret_arns), [module.database.master_user_secret_arn])
   }
 
@@ -572,7 +572,7 @@ module "realtime_service" {
   max_capacity       = 12
   cpu_target_percent = 60
   environment        = merge(local.common_runtime_environment, { ACE_SERVICE_NAME = "realtime", REALTIME_PORT = "3003" })
-  secrets            = {
+  secrets = {
     DATABASE_URL      = module.secrets.secret_arns["runtime/database-url"]
     GOOGLE_AI_API_KEY = module.secrets.secret_arns["runtime/google-ai-api-key"]
   }
