@@ -8,6 +8,7 @@ const DEFAULT_MAX_BYTES=Number(process.env.OBJECT_MAX_UPLOAD_BYTES||25*1024*1024
 const WORKSPACE_MAX_BYTES=Number(process.env.OBJECT_WORKSPACE_MAX_BYTES||5*1024*1024*1024)
 const UPLOAD_GRANT_TTL_SECONDS=Math.max(60,Math.min(3600,Number(process.env.OBJECT_UPLOAD_GRANT_TTL_SECONDS||600)))
 const DOWNLOAD_GRANT_TTL_SECONDS=Math.max(30,Math.min(900,Number(process.env.OBJECT_DOWNLOAD_GRANT_TTL_SECONDS||300)))
+const REQUIRE_VERSIONED_STORAGE=String(process.env.OBJECT_REQUIRE_VERSIONED_STORAGE??(process.env.NODE_ENV==='production'?'true':'false')).toLowerCase()!=='false'
 
 const allowedMime=new Set(String(process.env.OBJECT_ALLOWED_MIME_TYPES||
   'application/pdf,text/plain,text/csv,application/json,image/png,image/jpeg,image/webp'
@@ -199,16 +200,23 @@ export const recordObjectScan=async({workspaceId,objectId,result,evidence={},act
     if(!object)throw new Error('object not found')
     if(!['quarantined','verifying'].includes(object.status))throw new Error('object is not available for scanning')
     const approved=result==='clean'
+    if(approved&&REQUIRE_VERSIONED_STORAGE&&!object.storage_version){
+      throw new Error('clean scan cannot approve an object without an immutable storage version')
+    }
     const {rows}=await client.query(
       `UPDATE ace_objects SET
          scan_status=$3,
          scan_evidence=$4::jsonb,
          status=$5,
+         approved_storage_version=CASE WHEN $5='approved' THEN storage_version ELSE approved_storage_version END,
+         approved_sha256=CASE WHEN $5='approved' THEN actual_sha256 ELSE approved_sha256 END,
+         extraction_status=CASE WHEN $5='approved' THEN 'pending' ELSE extraction_status END,
+         indexing_status=CASE WHEN $5='approved' THEN 'not_started' ELSE indexing_status END,
          approved_at=CASE WHEN $5='approved' THEN now() ELSE approved_at END,
          updated_at=now()
        WHERE workspace_id=$1 AND id=$2
        RETURNING *`,
-      [workspaceId,objectId,result,JSON.stringify({...evidence,recordedBy:actorId||null}),approved?'approved':'rejected']
+      [workspaceId,objectId,result,JSON.stringify({...evidence,recordedBy:actorId||null,storageVersion:object.storage_version||null,sha256:object.actual_sha256||null}),approved?'approved':'rejected']
     )
     return rows[0]
   })
@@ -219,7 +227,8 @@ export const listObjects=async({workspaceId,role='viewer',limit=100})=>{
   return withTenantDbTransaction(workspaceId,async client=>{
     const {rows}=await client.query(
       `SELECT id,object_key,original_name,declared_mime,detected_mime,expected_size,actual_size,
-              expected_sha256,actual_sha256,storage_provider,storage_version,status,scan_status,
+              expected_sha256,actual_sha256,storage_provider,storage_version,approved_storage_version,approved_sha256,
+              status,scan_status,extraction_status,indexing_status,searchable_at,processing_error,
               access_policy,retention_until,legal_hold,created_by,created_at,updated_at,approved_at
        FROM ace_objects
        WHERE workspace_id=$1 AND status<>'deleted'
@@ -239,12 +248,27 @@ export const createDownloadGrant=async({workspaceId,objectId,role='viewer',actor
     if(!object||object.status!=='approved')throw new Error('approved object not found')
     if(!canReadObject(object.access_policy,role))throw new Error('object access denied')
     const grant=await createGrant(client,{workspaceId,objectId,purpose:'download',createdBy:actorId,ttlSeconds:DOWNLOAD_GRANT_TTL_SECONDS})
+    if(!object.approved_sha256||!object.approved_storage_version){
+      throw new Error('approved immutable object version is unavailable')
+    }
     const directDownload=objectStorageConfigured()
-      ?createApprovedDownloadUrl({key:object.object_key,filename:object.original_name,expiresSeconds:DOWNLOAD_GRANT_TTL_SECONDS})
+      ?createApprovedDownloadUrl({
+        key:object.object_key,
+        filename:object.original_name,
+        versionId:object.approved_storage_version,
+        expiresSeconds:DOWNLOAD_GRANT_TTL_SECONDS
+      })
       :null
     if(process.env.NODE_ENV==='production'&&!directDownload)throw new Error('durable object storage is not configured')
     return {
-      object:{id:object.id,name:object.original_name,mime:object.detected_mime||object.declared_mime,size:object.actual_size||object.expected_size},
+      object:{
+        id:object.id,
+        name:object.original_name,
+        mime:object.detected_mime||object.declared_mime,
+        size:object.actual_size||object.expected_size,
+        sha256:object.approved_sha256,
+        storageVersion:object.approved_storage_version
+      },
       downloadGrant:{token:grant.token,expiresAt:grant.expiresAt},
       directDownload,
       storageConfigured:objectStorageConfigured()
@@ -263,6 +287,7 @@ export const softDeleteObject=async({workspaceId,objectId,actorId=null})=>{
     if(object.retention_until&&Date.parse(object.retention_until)>Date.now())throw new Error('object retention period has not expired')
     const {rows}=await client.query(
       `UPDATE ace_objects SET status='deleted',deleted_at=now(),updated_at=now(),
+         extraction_status='deleted',indexing_status='deleted',searchable_at=NULL,
          scan_evidence=scan_evidence||$3::jsonb
        WHERE workspace_id=$1 AND id=$2 RETURNING id,status,deleted_at`,
       [workspaceId,objectId,JSON.stringify({deletedBy:actorId||null})]
