@@ -55,6 +55,8 @@ import {archivePolicyRule,createPolicyRule,createPolicyRuleVersion,evaluatePubli
 import {archiveWorkflow,cancelWorkflowExecution,createWorkflow,createWorkflowApproval,createWorkflowVersion,decideWorkflowApproval,getWorkflow,listWorkflowApprovals,listWorkflowExecutionSteps,listWorkflowExecutions,listWorkflows,publishWorkflow,retryWorkflowExecution,simulateWorkflowDefinition,startWorkflowExecution} from './platform/workflow-store.mjs'
 import {workflowActionCatalog} from './platform/workflow-action-catalog.mjs'
 import {createDownloadGrant,createUploadIntent,listObjects,markObjectQuarantined,recordObjectScan,softDeleteObject} from './platform/object-lifecycle.mjs'
+import {indexExtractedObject,markObjectProcessingFailure} from './platform/document-processing.mjs'
+import {querySearch,searchCapabilityProfile} from './platform/search-port.mjs'
 import {runtimeGuardForRequest} from './platform/runtime-config-runtime.mjs'
 import {beginProcessDrain,livenessState,markStartupComplete,readinessState,startupState} from './platform/process-health.mjs'
 
@@ -6285,6 +6287,65 @@ const server = http.createServer(async (req,res)=>{
         return send(req,res,400,{error:error instanceof Error?error.message:'object scan recording failed'})
       }
     }
+    const objectIndexMatch=url.pathname.match(/^\/api\/files\/([^/]+)\/index-extracted$/)
+    if(req.method==='POST'&&objectIndexMatch){
+      if(!OBJECT_WORKER_TOKEN)return send(req,res,503,{error:'document processing worker is not configured',code:'object_worker_unavailable'})
+      const supplied=String(req.headers['x-object-worker-token']||'')
+      const expected=Buffer.from(OBJECT_WORKER_TOKEN)
+      const actual=Buffer.from(supplied)
+      if(actual.length!==expected.length||!timingSafeEqual(actual,expected)){
+        return send(req,res,403,{error:'object worker authorization failed',code:'object_worker_forbidden'})
+      }
+      const body=await readBody(req)
+      const objectId=decodeURIComponent(objectIndexMatch[1])
+      try{
+        const item=await indexExtractedObject({
+          workspaceId,
+          objectId,
+          text:body.text,
+          evidence:body.evidence||{}
+        })
+        await appendAuditRecord({
+          workspaceId,
+          actorId:req.user?.userId||'document-worker',
+          action:'object.indexed',
+          entityType:'object',
+          entityId:objectId,
+          requestId:req.requestId,
+          traceId:req.context?.traceId,
+          metadata:{storageVersion:item.approved_storage_version,sha256:item.approved_sha256}
+        }).catch(()=>{})
+        return send(req,res,200,item)
+      }catch(error){
+        await markObjectProcessingFailure({
+          workspaceId,
+          objectId,
+          stage:'index',
+          error:error instanceof Error?error.message:'document indexing failed',
+          evidence:body.evidence||{}
+        }).catch(()=>{})
+        return send(req,res,400,{error:error instanceof Error?error.message:'document indexing failed'})
+      }
+    }
+
+    if(req.method==='GET'&&url.pathname==='/api/search'){
+      const query=url.searchParams.get('q')||''
+      const limit=Number(url.searchParams.get('limit')||20)
+      const sourceType=url.searchParams.get('sourceType')||null
+      try{
+        const result=await querySearch({
+          workspaceId,
+          query,
+          role:req.user?.role||'viewer',
+          limit,
+          sourceType
+        })
+        return send(req,res,200,result)
+      }catch(error){
+        return send(req,res,400,{error:error instanceof Error?error.message:'search failed',profile:searchCapabilityProfile()})
+      }
+    }
+
     const objectDownloadMatch=url.pathname.match(/^\/api\/files\/([^/]+)\/download-grant$/)
     if(req.method==='POST'&&objectDownloadMatch){
       try{
