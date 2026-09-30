@@ -36,6 +36,7 @@ const required=[
   'backend/migrations/039_usage_ledger.sql',
   'backend/migrations/040_object_lifecycle.sql',
   'backend/migrations/041_platform_control_changes.sql',
+  'backend/migrations/042_platform_change_versioning.sql',
   'backend/tests/platform-foundation.test.mjs',
   'backend/tests/platform-reliability.test.mjs',
   'backend/tests/tenant-context.test.mjs',
