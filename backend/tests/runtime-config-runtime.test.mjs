@@ -101,3 +101,22 @@ test('feature disabled state blocks matching data-plane mutation',{skip:!pool},a
   assert.equal(decision.allowed,false)
   assert.equal(decision.code,'feature_disabled')
 })
+
+
+test('board feature disabled state blocks move admission',{skip:!pool},async()=>{
+  process.env.RUNTIME_CONFIG_SIGNING_SECRET='runtime-config-test-secret'
+  process.env.ACE_RUNTIME_ENVIRONMENT='guard-boards-'+Date.now()
+  await publishRuntimeSnapshot({
+    environment:process.env.ACE_RUNTIME_ENVIRONMENT,
+    features:{boards:'disabled'},
+    createdBy:'platform-admin@example.test'
+  })
+  invalidateRuntimeConfigurationCache()
+  const decision=await runtimeGuardForRequest({
+    method:'POST',
+    path:'/api/boards/board_test/moves',
+    workspaceId:'ws_boards'
+  })
+  assert.equal(decision.allowed,false)
+  assert.equal(decision.code,'feature_disabled')
+})
