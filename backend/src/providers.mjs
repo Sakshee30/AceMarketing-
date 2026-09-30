@@ -2,6 +2,8 @@ import { createHash, createHmac } from 'node:crypto'
 import { decryptSecret } from './vault.mjs'
 import { getState, withWorkspace } from './store.mjs'
 import {withProviderDeadline} from './platform/provider-execution.mjs'
+import {validateOutboundDestination} from './platform/egress-policy.mjs'
+import {createWebhookSignature} from './platform/webhook-signing.mjs'
 
 const sha=value=>createHash('sha256').update(String(value).trim().toLowerCase()).digest('hex')
 const credentialFor=async(workspaceId,connector)=>withWorkspace(workspaceId,async()=>{
@@ -530,6 +532,10 @@ const deliverOpenAIAds=async(_workspaceId,signal)=>{
 const deliverWebhook=async(signal)=>{
   const endpoint=String(signal.webhookUrl||process.env.CUSTOM_WEBHOOK_URL||'')
   if(!endpoint) throw new Error('CUSTOM_WEBHOOK_URL is required')
+  const validated=await validateOutboundDestination(endpoint,{
+    allowHttp:process.env.NODE_ENV!=='production'&&process.env.CUSTOM_INTEGRATION_ALLOW_HTTP==='true',
+    purpose:'webhook destination'
+  })
   const body=JSON.stringify({
     id:signal.deliveryId,
     event:signal.event,
@@ -541,9 +547,18 @@ const deliverWebhook=async(signal)=>{
   })
   const timestamp=String(Math.floor(Date.now()/1000))
   const secret=process.env.CUSTOM_WEBHOOK_SECRET||''
-  const headers={'Content-Type':'application/json','X-Ace-Timestamp':timestamp}
-  if(secret) headers['X-Ace-Signature']='sha256='+createHmac('sha256',secret).update(timestamp+'.'+body).digest('hex')
-  const result=await requestJson(endpoint,{method:'POST',headers,body})
+  const headers={
+    'Content-Type':'application/json',
+    'X-Ace-Timestamp':timestamp,
+    'X-Ace-Delivery-Id':String(signal.deliveryId||'')
+  }
+  if(secret)headers['X-Ace-Signature']=createWebhookSignature({
+    secret,
+    timestamp,
+    deliveryId:signal.deliveryId||'',
+    body
+  })
+  const result=await requestJson(validated.url.toString(),{method:'POST',headers,body,redirect:'manual'})
   return {provider:'custom_webhook',...result}
 }
 
