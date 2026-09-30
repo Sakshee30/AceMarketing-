@@ -1,6 +1,8 @@
-import {useMemo,useState} from 'react'
-import {useQuery} from '@tanstack/react-query'
+import {useEffect,useMemo,useState} from 'react'
+import {useQuery,useQueryClient} from '@tanstack/react-query'
 import {createHttpClient} from '../../../../../../../packages/client-core/src/http/http-client'
+import {createRealtimeClient} from '../../../../../../../packages/client-core/src/realtime/realtime-client'
+import {customerSessionLifecycle} from '../../../../app/session/session-lifecycle'
 import {BoardViewport,CardShell,Column,DragHandle,InteractionStatus,MoveMenu} from '../../../../../../../packages/kanban-ui/src'
 import {createMoveCardOperationId} from '../../model/move-card.intent'
 import {BoardMoveUnknownOutcomeError,useMoveCard} from '../../data/mutations/useMoveCard'
@@ -32,6 +34,7 @@ const http=createHttpClient('')
 export default function BoardDetailPage({workspaceId,boardId}:{workspaceId:string;boardId:string}){
   const [movingItemId,setMovingItemId]=useState<string|null>(null)
   const [announcement,setAnnouncement]=useState('Board ready.')
+  const queryClient=useQueryClient()
   const boardQuery=useQuery({
     queryKey:['board',workspaceId,boardId],
     queryFn:()=>http.get<BoardSnapshot>(
@@ -40,6 +43,31 @@ export default function BoardDetailPage({workspaceId,boardId}:{workspaceId:strin
     )
   })
   const moveMutation=useMoveCard(workspaceId)
+  useEffect(()=>{
+    const token=customerSessionLifecycle.token()
+    if(!token)return
+    const configured=String(import.meta.env.VITE_REALTIME_URL||'').trim()
+    const fallback=window.location.hostname==='localhost'
+      ?'ws://localhost:3003/api/realtime/ws'
+      :(window.location.protocol==='https:'?'wss://':'ws://')+window.location.host+'/api/realtime/ws'
+    const realtimeUrl=new URL(configured||fallback,window.location.href)
+    realtimeUrl.searchParams.set('workspace_id',workspaceId)
+    realtimeUrl.searchParams.set('topics','board.item.moved')
+    const client=createRealtimeClient({
+      url:realtimeUrl.toString(),
+      token,
+      onEvent:event=>{
+        if(event.type!=='board.item.moved')return
+        const payload=event.payload as {data?:{boardId?:string},boardId?:string}
+        const changedBoardId=payload?.data?.boardId||payload?.boardId
+        if(changedBoardId&&changedBoardId!==boardId)return
+        void queryClient.invalidateQueries({queryKey:['board',workspaceId,boardId]})
+        setAnnouncement('Board updated from a confirmed realtime event.')
+      }
+    })
+    client.connect()
+    return()=>client.close()
+  },[workspaceId,boardId,queryClient])
   const board=boardQuery.data
   const itemsByColumn=useMemo(()=>{
     const grouped=new Map<string,BoardItem[]>()
