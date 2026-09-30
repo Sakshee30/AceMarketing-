@@ -578,6 +578,9 @@ if(fs.existsSync(acePlatform)){
 }
 
 const required=[
+  'frontend/customer-app/src/features/boards/pages/board-detail/BoardDetailPage.tsx',
+  'frontend/customer-app/src/features/boards/data/mutations/useMoveCard.ts',
+  'frontend/customer-app/src/features/boards/model/move-card.intent.ts',
   'tooling/generators/frontend-feature.ts',
   'frontend/customer-app/src/features/catalog.ts',
   'frontend/customer-app/src/features/account/feature.manifest.ts',
