@@ -4,7 +4,9 @@ import path from 'node:path'
 const root=process.cwd()
 const failures=[]
 const required=[
-  'backend/src/platform/problem-details.mjs',
+  'backend/src/control-api.mjs',
+  'backend/src/platform/capability-registry.mjs',
+  'deploy/Dockerfile.control-api',  'backend/src/platform/problem-details.mjs',
   'backend/src/platform/request-context.mjs',
   'backend/src/platform/admission-control.mjs',
   'backend/src/platform/idempotency.mjs',
@@ -46,7 +48,8 @@ const required=[
   'backend/tests/usage-ledger.test.mjs',
   'backend/tests/object-lifecycle.test.mjs',
   'backend/tests/egress-policy.test.mjs',
-  'backend/tests/webhook-signing.test.mjs'
+  'backend/tests/webhook-signing.test.mjs',
+  'backend/tests/control-capability.test.mjs'
 ]
 for(const item of required)if(!fs.existsSync(path.join(root,item)))failures.push('missing required backend architecture foundation: '+item)
 
