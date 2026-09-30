@@ -4,6 +4,7 @@ import path from 'node:path'
 const root=process.cwd()
 const failures=[]
 const required=[
+  'tests/security/tenant-isolation.test.mjs',
   'packages/contracts/http/platform.openapi.yaml',
   'packages/contracts/events/platform-event.schema.json',
   'packages/contracts/capabilities/capability.schema.json',
