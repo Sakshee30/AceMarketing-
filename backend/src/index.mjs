@@ -46,6 +46,7 @@ import {assertActorWorkspace,requestedWorkspaceId,tenantExecutionScope} from './
 import {appendAuditRecord,listAuditRecords} from './platform/audit-store.mjs'
 import {permissionForRequest as centralizedPermissionForRequest} from './platform/access-policy.mjs'
 import {assertWorkspaceMembership,seedWorkspaceCreator} from './platform/workspace-access.mjs'
+import {validateOutboundDestination} from './platform/egress-policy.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -4166,6 +4167,17 @@ const server = http.createServer(async (req,res)=>{
       const body=await readBody(req)
       const validationError=validateSignalDispatch(body)
       if(validationError) return send(req,res,400,{error:validationError})
+      if(String(body.destination||'').toLowerCase().includes('webhook')&&body.webhookUrl){
+        try{
+          const validatedWebhook=await validateOutboundDestination(body.webhookUrl,{
+            allowHttp:!IS_PROD&&process.env.CUSTOM_INTEGRATION_ALLOW_HTTP==='true',
+            purpose:'webhook destination'
+          })
+          body.webhookUrl=validatedWebhook.url.toString()
+        }catch(error){
+          return send(req,res,400,{error:error instanceof Error?error.message:'invalid webhook URL',code:error?.code||'invalid_webhook_destination'})
+        }
+      }
       if(!queueAvailable()) return send(req,res,503,{error:'signal delivery queue unavailable',required:'DATABASE_URL'})
       if(body.customerId||body.visitorId){
         const consent=await consentAllows(workspaceId,{subjectType:body.customerId?'customer':'visitor',subjectId:body.customerId||body.visitorId,category:'marketing'})
@@ -4284,11 +4296,17 @@ const server = http.createServer(async (req,res)=>{
       const event=String(body.event||'').trim()
       const target=String(body.url||'').trim()
       if(!event||!target) return send(req,res,400,{error:'event and url required'})
-      let parsed
-      try{parsed=new URL(target)}catch{return send(req,res,400,{error:'valid webhook URL required'})}
-      if(parsed.protocol!=='https:'&&!(!IS_PROD&&parsed.protocol==='http:')) return send(req,res,400,{error:'webhook URL must use HTTPS'})
+      let validatedTarget
+      try{
+        validatedTarget=await validateOutboundDestination(target,{
+          allowHttp:!IS_PROD&&process.env.CUSTOM_INTEGRATION_ALLOW_HTTP==='true',
+          purpose:'webhook destination'
+        })
+      }catch(error){
+        return send(req,res,400,{error:error instanceof Error?error.message:'invalid webhook URL',code:error?.code||'invalid_webhook_destination'})
+      }
       const now=new Date().toISOString()
-      const item={id:'wh_'+randomUUID(),event,url:parsed.toString(),status:'active',createdAt:now,updatedAt:now}
+      const item={id:'wh_'+randomUUID(),event,url:validatedTarget.url.toString(),status:'active',createdAt:now,updatedAt:now}
       await mutateState(s=>{
         s.webhookEndpoints=s.webhookEndpoints||[]
         s.webhookEndpoints.unshift(item)
