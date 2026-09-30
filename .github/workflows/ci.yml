@@ -138,6 +138,7 @@ jobs:
           docker build -f deploy/Dockerfile.customer-app -t ace-customer-app:ci .
           docker build -f deploy/Dockerfile.public-site -t ace-public-site:ci .
           docker build -f deploy/Dockerfile.platform-admin -t ace-platform-admin:ci .
+          docker build -f deploy/Dockerfile.control-api -t ace-control-api:ci .
       - name: Verify canonical project structure
         run: |
           test -f frontend/src/AcePlatform.tsx
@@ -145,6 +146,10 @@ jobs:
           test -f frontend/platform-admin/src/ControlCenterApp.tsx
           test -f frontend/platform-admin/src/features/manifest.ts
           test -f frontend/platform-admin/src/lib/control-api.ts
+          test -f backend/src/control-api.mjs
+          test -f backend/src/platform/capability-registry.mjs
+          test -f backend/tests/control-capability.test.mjs
+          test -f deploy/Dockerfile.control-api
           test -f vite.platform-admin.config.ts
           test -f deploy/Dockerfile.platform-admin
           test -f deploy/nginx.platform-admin.conf
