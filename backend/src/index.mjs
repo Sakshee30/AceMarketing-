@@ -53,6 +53,7 @@ import {createPolicyRule,evaluatePublishedPolicyRule,getPolicyRule,listPolicyRul
 import {createWorkflow,createWorkflowApproval,decideWorkflowApproval,getWorkflow,listWorkflowApprovals,listWorkflowExecutions,listWorkflows,publishWorkflow,startWorkflowExecution} from './platform/workflow-store.mjs'
 import {createDownloadGrant,createUploadIntent,listObjects,markObjectQuarantined,recordObjectScan,softDeleteObject} from './platform/object-lifecycle.mjs'
 import {runtimeGuardForRequest} from './platform/runtime-config-runtime.mjs'
+import {beginProcessDrain,livenessState,markStartupComplete,readinessState,startupState} from './platform/process-health.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -523,6 +524,18 @@ const server = http.createServer(async (req,res)=>{
   const requestContext=createRequestContext({req})
   req.context=requestContext
   req.requestId=requestContext.requestId
+  const healthUrl=new URL(req.url, `http://localhost:${PORT}`)
+  if(req.method==='GET'&&healthUrl.pathname==='/healthz'){
+    return send(req,res,200,{...livenessState(),service:'ace-marketing-api',requestId:req.requestId})
+  }
+  if(req.method==='GET'&&healthUrl.pathname==='/startupz'){
+    const state=startupState()
+    return send(req,res,state.ok?200:503,{...state,service:'ace-marketing-api',requestId:req.requestId})
+  }
+  if(req.method==='GET'&&healthUrl.pathname==='/readyz'){
+    const state=await readinessState({storageHealth})
+    return send(req,res,state.ok?200:503,{...state,service:'ace-marketing-api',requestId:req.requestId})
+  }
   const releaseAdmission=globalAdmission.acquire()
   if(!releaseAdmission){
     return send(req,res,503,{error:'server busy',code:'admission_capacity_exhausted',retryable:true},{'Retry-After':'1'})
@@ -6416,7 +6429,7 @@ installLiveVoiceWebSocket(server)
 server.keepAliveTimeout=65_000
 server.headersTimeout=66_000
 server.requestTimeout=30_000
-server.listen(PORT,()=>console.log(`AceMarketing API listening on http://localhost:${PORT}`))
-const shutdown=signal=>{console.log(`${signal} received; shutting down`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations(),closeObservability(),closeEntitlements(),closeBillingProvider(),closeConsentStore(),closePrivacyOps(),closeAudienceScheduler(),closeCohortAnalytics(),closeEventRules(),closeAiRuntime(),closeKnowledge(),closeAiDatasets(),closeLiveVoice()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
+server.listen(PORT,()=>{markStartupComplete();console.log(`AceMarketing API listening on http://localhost:${PORT}`)})
+const shutdown=signal=>{beginProcessDrain();console.log(`${signal} received; draining before shutdown`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations(),closeObservability(),closeEntitlements(),closeBillingProvider(),closeConsentStore(),closePrivacyOps(),closeAudienceScheduler(),closeCohortAnalytics(),closeEventRules(),closeAiRuntime(),closeKnowledge(),closeAiDatasets(),closeLiveVoice()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
 process.on('SIGTERM',()=>shutdown('SIGTERM'))
 process.on('SIGINT',()=>shutdown('SIGINT'))
