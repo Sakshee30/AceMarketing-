@@ -1,0 +1,53 @@
+name: Scheduled Security Review
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '43 4 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  security-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies from lockfile
+        run: npm ci
+
+      - name: Audit production dependencies
+        run: npm run security:audit
+
+      - name: Enforce frontend secret and boundary checks
+        run: npm run frontend:architecture
+
+      - name: Enforce backend security and architecture checks
+        run: npm run backend:architecture
+
+      - name: Syntax-check backend runtime
+        run: npm run check:backend
+
+      - name: Record review evidence
+        if: always()
+        run: |
+          mkdir -p security-review-evidence
+          npm audit --omit=dev --json > security-review-evidence/npm-audit.json || true
+          {
+            echo "commit=${GITHUB_SHA}"
+            echo "run_id=${GITHUB_RUN_ID}"
+            echo "reviewed_at=$(date -u +%FT%TZ)"
+          } > security-review-evidence/review-summary.txt
+
+      - name: Upload security review evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-review-${{ github.sha }}
+          path: security-review-evidence
+          if-no-files-found: warn
