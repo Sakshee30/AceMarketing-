@@ -10,8 +10,8 @@ export const integrationsFeatureManifest={
   permission:'workspace.read',
   releaseBoundary:'feature-chunk',
   requestBudget:{
-    initialRequests:3,
-    expectedPayload:'connector catalog, workspace custom connectors and recent WhatsApp activity',
+    initialRequests:5,
+    expectedPayload:'connector catalog, workspace custom connectors, WhatsApp activity, webhook subscriptions and delivery status',
     backgroundRefreshSeconds:0,
     streamSubscriptions:0,
     maxReadRetries:2
