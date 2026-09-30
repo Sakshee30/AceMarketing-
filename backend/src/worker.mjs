@@ -19,10 +19,13 @@ import {evaluateAiTaskWorkerExecution} from './ai-governance-store.mjs'
 import {createDrainController} from './platform/drain-controller.mjs'
 import {dispatchWebhookDelivery} from './platform/webhook-delivery-worker.mjs'
 import {recordWebhookDeliveryAttempt} from './platform/webhook-delivery-store.mjs'
+import {workerClassPolicy} from './platform/worker-class.mjs'
 
 if(!queueAvailable()) throw new Error('DATABASE_URL is required for the worker runtime')
 
 const workerId=process.env.WORKER_ID||('worker_'+randomUUID())
+const workerPolicy=workerClassPolicy()
+const runEmbeddedSchedulers=String(process.env.WORKER_RUN_SCHEDULERS??'true').toLowerCase()!=='false'
 const batchSize=Number(process.env.WORKER_BATCH_SIZE||10)
 const pollMs=Number(process.env.WORKER_POLL_MS||1000)
 const audienceScheduleBatch=Number(process.env.AUDIENCE_SCHEDULER_BATCH_SIZE||5)
@@ -166,16 +169,16 @@ const runBatch=async()=>{
   await reconcileStaleActivationDispatches({limit:25}).catch(error=>{
     console.error('[worker] activation reconciliation failed',error instanceof Error?error.message:error)
   })
-  if(Date.now()-lastAudienceSchedulePoll>=audienceSchedulePollMs){
+  if(runEmbeddedSchedulers&&Date.now()-lastAudienceSchedulePoll>=audienceSchedulePollMs){
     lastAudienceSchedulePoll=Date.now()
     await runDueAudienceSchedules(audienceScheduleBatch)
   }
-  if(Date.now()-lastReportSchedulePoll>=reportSchedulePollMs){
+  if(runEmbeddedSchedulers&&Date.now()-lastReportSchedulePoll>=reportSchedulePollMs){
     lastReportSchedulePoll=Date.now()
     await runDueReportSchedules(reportScheduleBatch)
   }
   if(stopping)return
-  const jobs=await leaseJobs({workerId,limit:batchSize})
+  const jobs=await leaseJobs({workerId,limit:batchSize,includeKinds:workerPolicy.includeKinds,excludeKinds:workerPolicy.excludeKinds})
   for(const job of jobs){
     const finishActive=drainController.beginTask()
     if(!finishActive)break
@@ -277,7 +280,7 @@ const runBatch=async()=>{
 }
 
 const loop=async()=>{
-  console.log(`AceMarketing worker ${workerId} started`)
+  console.log(`AceMarketing worker ${workerId} started`,{workerClass:workerPolicy.workerClass,runEmbeddedSchedulers})
   while(!stopping){
     try{
       await runBatch()
