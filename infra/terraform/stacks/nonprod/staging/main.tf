@@ -50,6 +50,7 @@ module "secrets" {
 
   name = "ace-${var.environment}"
   secret_names = [
+    "runtime/database-url",
     "runtime/connector-encryption",
     "runtime/session-signing",
     "runtime/webhook-signing"
