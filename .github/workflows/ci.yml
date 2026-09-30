@@ -148,6 +148,9 @@ jobs:
           test -f frontend/platform-admin/src/lib/control-api.ts
           test -f backend/src/control-api.mjs
           test -f backend/src/platform/capability-registry.mjs
+          test -f backend/src/platform/control-change-store.mjs
+          test -f backend/migrations/041_platform_control_changes.sql
+          test -f backend/tests/control-change-store.test.mjs
           test -f backend/tests/control-capability.test.mjs
           test -f deploy/Dockerfile.control-api
           test -f vite.platform-admin.config.ts
