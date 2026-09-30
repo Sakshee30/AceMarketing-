@@ -350,13 +350,6 @@ if(fs.existsSync(releaseWorkflowPath)){
   }
 }
 
-if(failures.length){
-  console.error('Backend architecture check failed:\n- '+failures.join('\n- '))
-  process.exit(1)
-}
-console.log('Backend architecture boundaries verified.')
-
-
 const sqsAdapterPath=path.join(root,'backend','adapters','sqs','job-queue.sqs.ts')
 if(fs.existsSync(sqsAdapterPath)){
   const source=fs.readFileSync(sqsAdapterPath,'utf8')
@@ -377,3 +370,10 @@ if(fs.existsSync(redisAdapterPath)){
     failures.push('Redis cache adapter must expose bounded-bypass semantics.')
   }
 }
+
+
+if(failures.length){
+  console.error('Backend architecture check failed:\n- '+failures.join('\n- '))
+  process.exit(1)
+}
+console.log('Backend architecture boundaries verified.')
