@@ -10,10 +10,14 @@ const required=[
   'backend/src/platform/idempotency.mjs',
   'backend/src/platform/reliability-store.mjs',
   'backend/src/platform/tenant-context.mjs',
+  'backend/src/platform/audit-store.mjs',
+  'backend/src/platform/feature-catalog.mjs',
   'backend/migrations/034_platform_reliability.sql',
+  'backend/migrations/035_platform_audit_catalog.sql',
   'backend/tests/platform-foundation.test.mjs',
   'backend/tests/platform-reliability.test.mjs',
-  'backend/tests/tenant-context.test.mjs'
+  'backend/tests/tenant-context.test.mjs',
+  'backend/tests/platform-audit-catalog.test.mjs'
 ]
 for(const item of required)if(!fs.existsSync(path.join(root,item)))failures.push('missing required backend architecture foundation: '+item)
 
