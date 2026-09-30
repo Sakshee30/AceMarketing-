@@ -68,6 +68,26 @@ const createEmbeddedPool=async()=>{
     if(file==='048_custom_objects.sql')sql=sql.replace(/ALTER TABLE ace_custom_objects ENABLE ROW LEVEL SECURITY;[\s\S]*$/m,'')
     if(file==='049_workflow_durable_steps.sql')sql=sql.replace(/ALTER TABLE ace_workflow_execution_steps ENABLE ROW LEVEL SECURITY;[\s\S]*$/m,'')
     if(file==='050_webhook_delivery.sql')sql=sql.replace(/ALTER TABLE ace_webhook_subscriptions ENABLE ROW LEVEL SECURITY;[\s\S]*$/m,'')
+    if(file==='052_object_processing_search.sql'){
+      // Keep the production PostgreSQL migration authoritative. The embedded
+      // pg-mem test database lacks multi-column ALTER, RLS and tsvector/GIN
+      // support, so express only the equivalent portable schema needed by tests.
+      sql=sql.replace(
+        /ALTER TABLE ace_objects[\s\S]*?ADD COLUMN IF NOT EXISTS processing_error TEXT;\s*/m,
+        [
+          'ALTER TABLE ace_objects ADD COLUMN IF NOT EXISTS approved_storage_version TEXT;',
+          'ALTER TABLE ace_objects ADD COLUMN IF NOT EXISTS approved_sha256 TEXT;',
+          "ALTER TABLE ace_objects ADD COLUMN IF NOT EXISTS extraction_status TEXT NOT NULL DEFAULT 'not_started';",
+          "ALTER TABLE ace_objects ADD COLUMN IF NOT EXISTS indexing_status TEXT NOT NULL DEFAULT 'not_started';",
+          'ALTER TABLE ace_objects ADD COLUMN IF NOT EXISTS searchable_at TIMESTAMPTZ;',
+          'ALTER TABLE ace_objects ADD COLUMN IF NOT EXISTS processing_error TEXT;'
+        ].join('\\n')+'\\n'
+      )
+      sql=sql.replace(/ALTER TABLE ace_objects\s+DROP CONSTRAINT IF EXISTS ace_objects_extraction_status_check;[\s\S]*?CHECK \(extraction_status IN \([^;]+;\s*/m,'')
+      sql=sql.replace(/ALTER TABLE ace_objects\s+DROP CONSTRAINT IF EXISTS ace_objects_indexing_status_check;[\s\S]*?CHECK \(indexing_status IN \([^;]+;\s*/m,'')
+      sql=sql.replace(/CREATE INDEX IF NOT EXISTS ace_search_documents_fts_idx[\s\S]*?WHERE deleted_at IS NULL;\s*/m,'')
+      sql=sql.replace(/ALTER TABLE ace_object_processing_events ENABLE ROW LEVEL SECURITY;[\s\S]*$/m,'')
+    }
     // pg-mem's parser rejects comment-only compatibility marker files.
     // Production migration tooling may retain those markers, but embedded setup
     // should simply skip files with no executable SQL.
