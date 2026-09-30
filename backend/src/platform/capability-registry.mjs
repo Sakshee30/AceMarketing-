@@ -150,7 +150,7 @@ export const providerSnapshot=()=>{
     generatedAt:snapshot.generatedAt,
     providers:[
       ...snapshot.providers,
-      ...snapshot.connectors.map(item=>({...item,capability:'connector',health:'tenant-scoped'})),
+      ...snapshot.connectors.map(item=>({...item,capability:'connector',configured:false,health:'unconfigured',configurationScope:'tenant-workspace'})),
       ...snapshot.aiProviders
     ],
     capabilityContracts:snapshot.capabilityContracts
