@@ -486,7 +486,7 @@ export const api = {
     return result
   },
   saveSettings: (payload: Record<string, unknown>) => request('/settings', { method: 'POST', body: JSON.stringify(payload) }),
-  webhookDeliveries: () => request('/webhooks/deliveries'),
+  legacyWebhookDeliveries: () => request('/webhooks/deliveries'),
   webhookEndpoints: () => request('/webhooks/endpoints'),
   createWebhookEndpoint: (payload: Record<string, unknown>) => request('/webhooks/endpoints', { method: 'POST', body: JSON.stringify(payload) }),
   retryWebhook: (id: string) => request('/webhooks/retry', { method: 'POST', body: JSON.stringify({ id }) }),
