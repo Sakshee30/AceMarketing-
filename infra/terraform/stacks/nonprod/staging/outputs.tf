@@ -63,3 +63,16 @@ output "worker_service_name" {
 output "vpc_endpoint_ids" {
   value = module.vpc_endpoints.interface_endpoint_ids
 }
+
+
+output "security_evidence_bucket" {
+  value = module.security_baseline.evidence_bucket_name
+}
+
+output "cloudtrail_arn" {
+  value = module.security_baseline.cloudtrail_arn
+}
+
+output "guardduty_detector_id" {
+  value = module.security_baseline.guardduty_detector_id
+}
