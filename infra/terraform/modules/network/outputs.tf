@@ -22,3 +22,8 @@ output "nat_gateway_ids" {
   value       = aws_nat_gateway.this[*].id
   description = "NAT gateway identifiers when enabled."
 }
+
+output "application_route_table_ids" {
+  value       = aws_route_table.application[*].id
+  description = "Private application route table identifiers."
+}
