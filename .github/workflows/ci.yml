@@ -158,6 +158,7 @@ jobs:
           test -f backend/migrations/043_platform_control_idempotency.sql
           test -f backend/migrations/044_runtime_configuration.sql
           test -f backend/migrations/045_provider_migrations.sql
+          test -f backend/migrations/046_emergency_environment_scope.sql
           test -f backend/tests/control-change-store.test.mjs
           test -f backend/tests/control-idempotency.test.mjs
           test -f backend/tests/runtime-configuration.test.mjs
