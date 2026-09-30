@@ -113,8 +113,11 @@ export const markAiOutboxPublished=async({workspaceId,jobId,eventType})=>{
   return rows[0]||null
 }
 
-export const leaseJobs=async({workerId,limit=10})=>{
+export const leaseJobs=async({workerId,limit=10,includeKinds=null,excludeKinds=null})=>{
   if(!pool) return []
+  const included=Array.isArray(includeKinds)&&includeKinds.length?[...new Set(includeKinds.map(String))]:null
+  const excluded=Array.isArray(excludeKinds)&&excludeKinds.length?[...new Set(excludeKinds.map(String))]:null
+  if(included&&excluded)throw new Error('leaseJobs cannot combine includeKinds and excludeKinds')
   const client=await pool.connect()
   try{
     await client.query('BEGIN')
@@ -153,6 +156,8 @@ export const leaseJobs=async({workerId,limit=10})=>{
            AND cancel_requested_at IS NULL
            AND (deadline_at IS NULL OR deadline_at>now())
            AND (leased_until IS NULL OR leased_until<now())
+           AND ($4::text[] IS NULL OR kind = ANY($4::text[]))
+           AND ($5::text[] IS NULL OR NOT (kind = ANY($5::text[])))
          ORDER BY available_at ASC, created_at ASC
          FOR UPDATE SKIP LOCKED
          LIMIT $1
@@ -168,7 +173,7 @@ export const leaseJobs=async({workerId,limit=10})=>{
        FROM picked
        WHERE j.id=picked.id
        RETURNING j.*`,
-      [limit,workerId,leaseMs]
+      [limit,workerId,leaseMs,included,excluded]
     )
     await client.query(
       `UPDATE ace_jobs
