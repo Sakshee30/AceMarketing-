@@ -157,7 +157,11 @@ if(fs.existsSync(providerMigrationPath)){
 
 const terraformRoot=path.join(root,'infra','terraform')
 if(fs.existsSync(terraformRoot)){
-  const terraformFiles=walk(terraformRoot).filter(file=>file.endsWith('.tf'))
+  const walkTerraform=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(entry=>{
+    const full=path.join(dir,entry.name)
+    return entry.isDirectory()?walkTerraform(full):(entry.name.endsWith('.tf')?[full]:[])
+  })
+  const terraformFiles=walkTerraform(terraformRoot)
   for(const file of terraformFiles){
     const source=fs.readFileSync(file,'utf8')
     const relative=path.relative(root,file)
