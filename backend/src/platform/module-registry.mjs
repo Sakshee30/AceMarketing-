@@ -26,12 +26,37 @@ export const platformModuleRegistry=Object.freeze([
     events:['workspace.changed']
   }),
   moduleDefinition({
+    id:'organizations',owner:'platform-core',
+    permissions:['organization.read','organization.manage'],
+    capabilities:['organization-lifecycle','organization-workspace-boundary'],
+    contracts:['organization','organization-membership'],
+    implementationFiles:['backend/src/store.mjs','backend/src/platform/workspace-access.mjs'],
+    events:['organization.changed']
+  }),
+  moduleDefinition({
+    id:'memberships',owner:'platform-security',
+    permissions:['memberships.read','memberships.manage'],
+    capabilities:['membership-lifecycle','invitation-lifecycle','revocation-freshness'],
+    contracts:['membership','invitation'],
+    implementationFiles:['backend/src/store.mjs','backend/src/security.mjs'],
+    events:['membership.changed','invitation.changed']
+  }),
+  moduleDefinition({
     id:'authorization',owner:'platform-security',
     permissions:['access.evaluate','access.manage'],
     capabilities:['resource-authorization','field-authorization','policy-delegation'],
     contracts:['permission-evaluation','access-policy'],
     implementationFiles:['backend/src/platform/access-policy.mjs','backend/src/platform/policy-engine.mjs'],
     events:['authorization.policy.published']
+  }),
+  moduleDefinition({
+    id:'entitlements',owner:'platform-billing',
+    permissions:['entitlement.read','entitlement.manage'],
+    capabilities:['plan-entitlements','quota-policy','usage-admission'],
+    contracts:['entitlement','quota-decision'],
+    migrations:['009_entitlements.sql','039_usage_ledger.sql'],
+    implementationFiles:['backend/src/entitlements.mjs','backend/src/platform/usage-ledger.mjs'],
+    events:['entitlement.changed','quota.reserved']
   }),
   moduleDefinition({
     id:'forms',owner:'platform-forms',
@@ -70,6 +95,15 @@ export const platformModuleRegistry=Object.freeze([
     events:['workflow.started','workflow.completed','workflow.failed']
   }),
   moduleDefinition({
+    id:'approvals',owner:'platform-workflows',
+    permissions:['approvals.read','approvals.decide'],
+    capabilities:['workflow-approval','separation-of-duties'],
+    contracts:['workflow-approval'],
+    migrations:['038_rules_workflows.sql','049_workflow_durable_steps.sql'],
+    implementationFiles:['backend/src/platform/workflow-store.mjs'],
+    events:['approval.requested','approval.decided']
+  }),
+  moduleDefinition({
     id:'integrations',owner:'platform-integrations',
     permissions:['integration.read','integration.manage'],
     capabilities:['connector-lifecycle','provider-ingress'],
@@ -94,6 +128,31 @@ export const platformModuleRegistry=Object.freeze([
     migrations:['034_platform_reliability.sql'],
     implementationFiles:['backend/src/queue.mjs','backend/src/platform/outbox-relay.mjs','backend/src/platform/worker-class.mjs'],
     events:['job.accepted','job.completed','job.failed']
+  }),
+  moduleDefinition({
+    id:'notifications',owner:'platform-notifications',
+    permissions:['notifications.read','notifications.manage'],
+    capabilities:['transactional-email','scheduled-report-delivery'],
+    contracts:['notification','notification-delivery'],
+    implementationFiles:['backend/src/auth-mailer.mjs','backend/src/report-scheduler.mjs'],
+    events:['notification.sent','notification.failed']
+  }),
+  moduleDefinition({
+    id:'reporting',owner:'platform-reporting',
+    permissions:['reports.read','reports.manage'],
+    capabilities:['scheduled-reports','cohort-analytics'],
+    contracts:['report-schedule','report-delivery'],
+    migrations:['015_report_scheduler.sql'],
+    implementationFiles:['backend/src/report-scheduler.mjs','backend/src/cohort-analytics.mjs'],
+    events:['report.scheduled','report.delivered']
+  }),
+  moduleDefinition({
+    id:'scheduling',owner:'platform-runtime',
+    permissions:['schedule.read','schedule.manage'],
+    capabilities:['durable-scheduling','lease-bounded-dispatch'],
+    contracts:['schedule','scheduled-job'],
+    implementationFiles:['backend/src/scheduler.mjs','backend/src/audience-scheduler.mjs','backend/src/report-scheduler.mjs'],
+    events:['schedule.due','schedule.dispatched']
   }),
   moduleDefinition({
     id:'billing',owner:'platform-billing',
