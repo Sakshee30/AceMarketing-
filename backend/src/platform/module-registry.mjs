@@ -164,6 +164,15 @@ export const platformModuleRegistry=Object.freeze([
     events:['schedule.due','schedule.dispatched']
   }),
   moduleDefinition({
+    id:'usage',owner:'platform-billing',
+    permissions:['usage.read','usage.manage'],
+    capabilities:['durable-metering','quota-reservation','usage-reconciliation'],
+    contracts:['usage-event','usage-reservation','usage-summary'],
+    migrations:['039_usage_ledger.sql'],
+    implementationFiles:['backend/src/platform/usage-ledger.mjs','backend/src/entitlements.mjs'],
+    events:['usage.recorded','usage.reconciled']
+  }),
+  moduleDefinition({
     id:'billing',owner:'platform-billing',
     permissions:['billing.read','billing.manage','entitlement.read','entitlement.manage'],
     capabilities:['usage-ledger','quota-reservation','billing-lifecycle'],
@@ -171,6 +180,15 @@ export const platformModuleRegistry=Object.freeze([
     migrations:['039_usage_ledger.sql','051_billing_lifecycle.sql'],
     implementationFiles:['backend/src/platform/usage-ledger.mjs','backend/src/platform/billing-lifecycle.mjs'],
     events:['billing.subscription.changed','usage.recorded']
+  }),
+  moduleDefinition({
+    id:'search',owner:'platform-search',
+    permissions:['search.read','search.manage'],
+    capabilities:['authorized-search','search-projection','deletion-propagation'],
+    contracts:['search-query','search-result','search-projection'],
+    migrations:['052_object_processing_search.sql'],
+    implementationFiles:['backend/src/platform/search-port.mjs'],
+    events:['search.projection.changed']
   }),
   moduleDefinition({
     id:'documents',owner:'platform-files',
