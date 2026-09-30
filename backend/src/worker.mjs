@@ -210,7 +210,7 @@ const runBatch=async()=>{
       })
       await recordAiOutcome('succeeded')
     }catch(error){
-      if(error instanceof ProviderExecutionError&&error.unknownOutcome){
+      if((error instanceof ProviderExecutionError&&error.unknownOutcome)||error?.unknownOutcome===true){
         await markUnknownOutcome({
           id:job.id,
           workerId,
@@ -220,6 +220,9 @@ const runBatch=async()=>{
         }).catch(()=>{})
         if(['ai_hosted_task','ml_task'].includes(job.kind)){
           await reconcileAiUsageReservation({workspaceId:job.workspace_id,jobId:job.id,actualUnits:null,status:'unknown'}).catch(()=>{})
+        }
+        if(job.payload?.deliveryId){
+          await updateDelivery(job.workspace_id,job.payload.deliveryId,{status:'unknown_outcome',attempts:job.attempts,lastError:error instanceof Error?error.message:String(error)}).catch(()=>{})
         }
         await recordAiOutcome('unknown')
         continue
