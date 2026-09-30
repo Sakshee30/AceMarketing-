@@ -51,6 +51,7 @@ import {markInboxProcessed,recordInboxEvent} from './platform/reliability-store.
 import {createForm,getForm,listForms,listFormSubmissions,publishForm,submitForm} from './platform/forms-store.mjs'
 import {createPolicyRule,evaluatePublishedPolicyRule,getPolicyRule,listPolicyRules,publishPolicyRule} from './platform/policy-engine.mjs'
 import {createWorkflow,createWorkflowApproval,decideWorkflowApproval,getWorkflow,listWorkflowApprovals,listWorkflowExecutions,listWorkflows,publishWorkflow,startWorkflowExecution} from './platform/workflow-store.mjs'
+import {createDownloadGrant,createUploadIntent,listObjects,markObjectQuarantined,recordObjectScan,softDeleteObject} from './platform/object-lifecycle.mjs'
 
 const CONNECTOR_PROVIDERS={
   'Google Ads':{
@@ -211,6 +212,7 @@ const AUTH_REQUIRED = process.env.AUTH_REQUIRED === 'true' || IS_PROD
 const JWT_SECRET = process.env.JWT_SECRET || (IS_PROD ? '' : 'dev-only-change-me')
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || ''
 const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || ''
+const OBJECT_WORKER_TOKEN = process.env.OBJECT_WORKER_TOKEN || ''
 const allowedOrigins = new Set((process.env.CORS_ALLOWED_ORIGINS || (IS_PROD ? '' : '*')).split(',').map(x=>x.trim()).filter(Boolean))
 if (IS_PROD && (!JWT_SECRET || JWT_SECRET.length < 32)) throw new Error('JWT_SECRET must be at least 32 characters in production')
 if (IS_PROD && CONNECTOR_STATE_SECRET.length < 32) throw new Error('CONNECTOR_OAUTH_STATE_SECRET must be at least 32 characters in production')
@@ -6058,6 +6060,140 @@ const server = http.createServer(async (req,res)=>{
       })
       await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'api_key.revoked',entityType:'api_key',entityId:id,requestId:req.requestId,traceId:req.context?.traceId})
       return send(req,res,200,{id,status:'revoked',revokedAt})
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/files') {
+      const limit=Number(url.searchParams.get('limit')||100)
+      return send(req,res,200,{items:await listObjects({workspaceId,role:req.user?.role||'viewer',limit})})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/files/upload-intents') {
+      const body=await readBody(req)
+      try{
+        const intent=await createUploadIntent({
+          workspaceId,
+          name:body.name,
+          mime:body.mime,
+          size:body.size,
+          sha256:body.sha256,
+          accessPolicy:body.accessPolicy||{},
+          actorId:req.user?.userId||null
+        })
+        await appendAuditRecord({
+          workspaceId,
+          actorId:req.user?.userId,
+          action:'object.upload_intent_created',
+          entityType:'object',
+          entityId:intent.object.id,
+          requestId:req.requestId,
+          traceId:req.context?.traceId,
+          metadata:{name:intent.object.original_name,size:Number(intent.object.expected_size)}
+        }).catch(()=>{})
+        return send(req,res,201,intent)
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{
+          error:error instanceof Error?error.message:'upload intent creation failed',
+          code:error?.code||'object_upload_intent_failed'
+        })
+      }
+    }
+    const objectQuarantineMatch=url.pathname.match(/^\/api\/files\/([^/]+)\/quarantine-confirm$/)
+    if(req.method==='POST'&&objectQuarantineMatch){
+      if(!OBJECT_WORKER_TOKEN)return send(req,res,503,{error:'object verification worker is not configured',code:'object_worker_unavailable'})
+      const supplied=String(req.headers['x-object-worker-token']||'')
+      const expected=Buffer.from(OBJECT_WORKER_TOKEN)
+      const actual=Buffer.from(supplied)
+      if(actual.length!==expected.length||!timingSafeEqual(actual,expected)){
+        return send(req,res,403,{error:'object worker authorization failed',code:'object_worker_forbidden'})
+      }
+      const body=await readBody(req)
+      try{
+        const result=await markObjectQuarantined({
+          workspaceId,
+          objectId:decodeURIComponent(objectQuarantineMatch[1]),
+          grantToken:body.grantToken,
+          actualSize:body.actualSize,
+          actualSha256:body.actualSha256,
+          detectedMime:body.detectedMime,
+          storageProvider:body.storageProvider||'s3',
+          storageVersion:body.storageVersion||null
+        })
+        return send(req,res,result.integrityMatched?200:422,result)
+      }catch(error){
+        return send(req,res,400,{error:error instanceof Error?error.message:'object quarantine confirmation failed'})
+      }
+    }
+    const objectScanMatch=url.pathname.match(/^\/api\/files\/([^/]+)\/scan-result$/)
+    if(req.method==='POST'&&objectScanMatch){
+      if(!OBJECT_WORKER_TOKEN)return send(req,res,503,{error:'object scanning worker is not configured',code:'object_worker_unavailable'})
+      const supplied=String(req.headers['x-object-worker-token']||'')
+      const expected=Buffer.from(OBJECT_WORKER_TOKEN)
+      const actual=Buffer.from(supplied)
+      if(actual.length!==expected.length||!timingSafeEqual(actual,expected)){
+        return send(req,res,403,{error:'object worker authorization failed',code:'object_worker_forbidden'})
+      }
+      const body=await readBody(req)
+      try{
+        const item=await recordObjectScan({
+          workspaceId,
+          objectId:decodeURIComponent(objectScanMatch[1]),
+          result:body.result,
+          evidence:body.evidence||{},
+          actorId:req.user?.userId||'object-worker'
+        })
+        await appendAuditRecord({
+          workspaceId,
+          actorId:req.user?.userId||'object-worker',
+          action:'object.scan_recorded',
+          entityType:'object',
+          entityId:item.id,
+          requestId:req.requestId,
+          traceId:req.context?.traceId,
+          metadata:{scanStatus:item.scan_status,status:item.status}
+        }).catch(()=>{})
+        return send(req,res,200,item)
+      }catch(error){
+        return send(req,res,400,{error:error instanceof Error?error.message:'object scan recording failed'})
+      }
+    }
+    const objectDownloadMatch=url.pathname.match(/^\/api\/files\/([^/]+)\/download-grant$/)
+    if(req.method==='POST'&&objectDownloadMatch){
+      try{
+        const grant=await createDownloadGrant({
+          workspaceId,
+          objectId:decodeURIComponent(objectDownloadMatch[1]),
+          role:req.user?.role||'viewer',
+          actorId:req.user?.userId||null
+        })
+        return send(req,res,201,grant)
+      }catch(error){
+        const message=error instanceof Error?error.message:'download grant failed'
+        const status=/denied/.test(message)?403:/not found/.test(message)?404:400
+        return send(req,res,status,{error:message})
+      }
+    }
+    const objectDeleteMatch=url.pathname.match(/^\/api\/files\/([^/]+)$/)
+    if(req.method==='DELETE'&&objectDeleteMatch){
+      if(!['owner','admin'].includes(req.user?.role||''))return send(req,res,403,{error:'owner or admin role required'})
+      try{
+        const item=await softDeleteObject({
+          workspaceId,
+          objectId:decodeURIComponent(objectDeleteMatch[1]),
+          actorId:req.user?.userId||null
+        })
+        if(!item)return send(req,res,404,{error:'object not found'})
+        await appendAuditRecord({
+          workspaceId,
+          actorId:req.user?.userId,
+          action:'object.deleted',
+          entityType:'object',
+          entityId:item.id,
+          requestId:req.requestId,
+          traceId:req.context?.traceId
+        }).catch(()=>{})
+        return send(req,res,200,item)
+      }catch(error){
+        return send(req,res,409,{error:error instanceof Error?error.message:'object deletion blocked'})
+      }
     }
 
     if (req.method === 'GET' && url.pathname === '/api/forms') {
