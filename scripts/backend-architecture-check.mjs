@@ -7,6 +7,7 @@ const required=[
   'backend/src/control-api.mjs',
   'backend/src/platform/capability-registry.mjs',
   'backend/src/platform/control-change-store.mjs',
+  'backend/src/platform/control-idempotency.mjs',
   'deploy/Dockerfile.control-api',  'backend/src/platform/problem-details.mjs',
   'backend/src/platform/request-context.mjs',
   'backend/src/platform/admission-control.mjs',
@@ -37,6 +38,7 @@ const required=[
   'backend/migrations/040_object_lifecycle.sql',
   'backend/migrations/041_platform_control_changes.sql',
   'backend/migrations/042_platform_change_versioning.sql',
+  'backend/migrations/043_platform_control_idempotency.sql',
   'backend/tests/platform-foundation.test.mjs',
   'backend/tests/platform-reliability.test.mjs',
   'backend/tests/tenant-context.test.mjs',
@@ -53,7 +55,8 @@ const required=[
   'backend/tests/egress-policy.test.mjs',
   'backend/tests/webhook-signing.test.mjs',
   'backend/tests/control-capability.test.mjs',
-  'backend/tests/control-change-store.test.mjs'
+  'backend/tests/control-change-store.test.mjs',
+  'backend/tests/control-idempotency.test.mjs'
 ]
 for(const item of required)if(!fs.existsSync(path.join(root,item)))failures.push('missing required backend architecture foundation: '+item)
 
