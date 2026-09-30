@@ -387,8 +387,9 @@ module "worker_service" {
   desired_count      = 3
   min_capacity       = 3
   max_capacity       = 24
-  cpu_target_percent = 65
-  environment        = merge(local.common_runtime_environment, { ACE_SERVICE_NAME = "worker" })
+  cpu_target_percent      = 65
+  readonly_root_filesystem = false
+  environment             = merge(local.common_runtime_environment, { ACE_SERVICE_NAME = "worker" })
   secrets            = local.common_runtime_secrets
   tags               = local.service_tags
 }
