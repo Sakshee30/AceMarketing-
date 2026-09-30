@@ -150,9 +150,9 @@ export const providerSnapshot=()=>{
     generatedAt:snapshot.generatedAt,
     providers:[
       ...snapshot.providers,
-      ...snapshot.capabilityContracts.map(item=>({...item,capability:item.id,health:'contract-defined'})),
       ...snapshot.connectors.map(item=>({...item,capability:'connector',health:'tenant-scoped'})),
       ...snapshot.aiProviders
-    ]
+    ],
+    capabilityContracts:snapshot.capabilityContracts
   }
 }
