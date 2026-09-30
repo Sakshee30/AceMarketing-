@@ -605,6 +605,8 @@ const required=[
   'packages/design-system/src/Accessibility.tsx',
   'packages/design-system/src/AccessibleDialog.tsx',
   'packages/localization/src/index.ts',
+  'packages/interaction-core/src/index.ts',
+  'packages/kanban-ui/src/index.tsx',
   'docs/project-annex/LOCALIZATION_TIMEZONE.md',
   'frontend/platform-admin/src/main.tsx',
   'frontend/platform-admin/src/ControlCenterApp.tsx',
@@ -839,6 +841,21 @@ const required=[
 ]
 for(const relative of required){
   if(!fs.existsSync(path.join(root,relative)))failures.push(relative+': required frontend architecture file missing')
+}
+
+
+const interactionCorePath=path.join(root,'packages','interaction-core','src','index.ts')
+if(fs.existsSync(interactionCorePath)){
+  const source=fs.readFileSync(interactionCorePath,'utf8')
+  if(!source.includes("'unknown-outcome'"))failures.push('Interaction core must preserve unknown-outcome state.')
+  if(!source.includes("key==='Escape'"))failures.push('Interaction core must support Escape cancellation.')
+}
+const kanbanUiPath=path.join(root,'packages','kanban-ui','src','index.tsx')
+if(fs.existsSync(kanbanUiPath)){
+  const source=fs.readFileSync(kanbanUiPath,'utf8')
+  if(!source.includes('export function MoveMenu'))failures.push('Kanban UI must provide a non-drag MoveMenu alternative.')
+  if(!source.includes('aria-live="polite"'))failures.push('Kanban UI must provide screen-reader move announcements.')
+  if(source.includes('role="grid"'))failures.push('Kanban UI must not claim generic grid semantics without the matching keyboard model.')
 }
 
 if(failures.length){
