@@ -1,0 +1,12 @@
+# Architecture-sensitive boundaries require explicit ownership review.
+# Replace or extend owner handles as the engineering team grows.
+
+/backend/src/security.mjs @Sakshee30
+/backend/src/platform/ @Sakshee30
+/backend/migrations/ @Sakshee30
+/backend/src/billing-provider.mjs @Sakshee30
+/backend/src/entitlements.mjs @Sakshee30
+/infra/terraform/ @Sakshee30
+/deploy/ @Sakshee30
+/.github/workflows/ @Sakshee30
+/frontend/platform-admin/ @Sakshee30
