@@ -41,6 +41,13 @@ const shutdown=code=>{
 }
 
 console.log('[run-local] deployment mode:',mode.name,mode.features)
+if(mode.features.ai){
+  env.ML_SERVICE_URL=env.ML_SERVICE_URL||'http://127.0.0.1:8000'
+  if(mode.features.aiForecasting)env.ML_FORECAST_SERVICE_URL=env.ML_FORECAST_SERVICE_URL||env.ML_SERVICE_URL
+  if(mode.features.aiCausal)env.ML_CAUSAL_SERVICE_URL=env.ML_CAUSAL_SERVICE_URL||env.ML_SERVICE_URL
+  if(mode.features.aiMmm)env.ML_MMM_SERVICE_URL=env.ML_MMM_SERVICE_URL||env.ML_SERVICE_URL
+  Object.assign(process.env,env)
+}
 if(args.get('skip-migrate')!=='true')await runOnce('migrations',process.execPath,['backend/scripts/migrate.mjs'])
 if(args.get('skip-preflight')!=='true')await runOnce('preflight',process.execPath,['backend/scripts/preflight.mjs'])
 
@@ -53,12 +60,6 @@ if(!skipBuild){
 if(!existsSync('dist/frontend/index.html'))throw new Error('dist/frontend/index.html missing; run npm run build:frontend or remove --skip-build')
 
 const runtimeEnv={...env}
-if(mode.features.ai){
-  runtimeEnv.ML_SERVICE_URL=runtimeEnv.ML_SERVICE_URL||'http://127.0.0.1:8000'
-  if(mode.features.aiForecasting)runtimeEnv.ML_FORECAST_SERVICE_URL=runtimeEnv.ML_FORECAST_SERVICE_URL||runtimeEnv.ML_SERVICE_URL
-  if(mode.features.aiCausal)runtimeEnv.ML_CAUSAL_SERVICE_URL=runtimeEnv.ML_CAUSAL_SERVICE_URL||runtimeEnv.ML_SERVICE_URL
-  if(mode.features.aiMmm)runtimeEnv.ML_MMM_SERVICE_URL=runtimeEnv.ML_MMM_SERVICE_URL||runtimeEnv.ML_SERVICE_URL
-}
 
 start('api',process.execPath,['backend/src/index.mjs'],runtimeEnv)
 start('worker',process.execPath,['backend/src/worker.mjs'],runtimeEnv)
