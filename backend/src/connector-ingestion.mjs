@@ -554,6 +554,101 @@ const syncPinterest=async(ctx)=>{
   return {...persisted,fetched:rows.length,streams:[stream]}
 }
 
+const microsoftReportDate=date=>({
+  Year:date.getUTCFullYear(),
+  Month:date.getUTCMonth()+1,
+  Day:date.getUTCDate()
+})
+
+const syncMicrosoftAds=async(ctx)=>{
+  const connector='Microsoft Ads / Bing Ads',stream='campaign_daily'
+  const token=await credential(ctx.workspaceId,connector)
+  const accountId=String(ctx.options.accountId||process.env.MICROSOFT_ADS_ACCOUNT_ID||'').trim()
+  const customerId=String(ctx.options.customerId||process.env.MICROSOFT_ADS_CUSTOMER_ID||'').trim()
+  const developerToken=String(process.env.MICROSOFT_ADS_DEVELOPER_TOKEN||'').trim()
+  if(!token.access_token||!accountId||!customerId||!developerToken){
+    throw new Error('Microsoft Ads reporting requires OAuth, account ID, customer ID, and developer token')
+  }
+  const numericAccount=Number(accountId)
+  if(!Number.isSafeInteger(numericAccount)||numericAccount<=0)throw new Error('MICROSOFT_ADS_ACCOUNT_ID must be a positive safe integer')
+  const r=await rangeFor({...ctx,connector,stream,defaultBackfillDays:90})
+  const base=String(process.env.MICROSOFT_ADS_REPORTING_BASE_URL||'https://reporting.api.bingads.microsoft.com/Reporting/v13').replace(/\/$/,'')
+  const headers={
+    Authorization:'Bearer '+token.access_token,
+    DeveloperToken:developerToken,
+    CustomerId:customerId,
+    CustomerAccountId:accountId,
+    'Content-Type':'application/json'
+  }
+  const reportTime={
+    CustomDateRangeStart:microsoftReportDate(r.start),
+    CustomDateRangeEnd:microsoftReportDate(r.end)
+  }
+  if(process.env.MICROSOFT_ADS_REPORT_TIMEZONE)reportTime.ReportTimeZone=String(process.env.MICROSOFT_ADS_REPORT_TIMEZONE)
+  const reportRequest={
+    Type:'CampaignPerformanceReportRequest',
+    ReportName:'AceMarketing Campaign Daily',
+    Format:'Csv',
+    FormatVersion:'2.0',
+    ExcludeColumnHeaders:false,
+    ExcludeReportHeader:true,
+    ExcludeReportFooter:true,
+    ReturnOnlyCompleteData:false,
+    Aggregation:'Daily',
+    Columns:['TimePeriod','AccountId','CampaignId','CampaignName','CurrencyCode','Impressions','Clicks','Spend','ConversionsQualified','Revenue'],
+    Scope:{AccountIds:[numericAccount]},
+    Time:reportTime
+  }
+  const submitted=await requestJson(base+'/GenerateReport/Submit',{
+    method:'POST',headers,body:JSON.stringify({ReportRequest:reportRequest}),allowedOrigins:[new URL(base).origin]
+  })
+  const reportRequestId=String(submitted.json?.ReportRequestId||'')
+  if(!reportRequestId){
+    throw new Error('Microsoft Ads reporting did not return ReportRequestId: '+JSON.stringify(submitted.json?.Errors||submitted.json||{}).slice(0,1500))
+  }
+  const pollMs=Math.max(1000,Math.min(Number(process.env.MICROSOFT_ADS_REPORT_POLL_MS||3000),30000))
+  const maxPolls=Math.max(1,Math.min(Number(process.env.MICROSOFT_ADS_REPORT_MAX_POLLS||100),600))
+  let downloadUrl=''
+  let finalStatus=''
+  for(let attempt=0;attempt<maxPolls;attempt++){
+    if(attempt>0)await sleep(pollMs)
+    const polled=await requestJson(base+'/GenerateReport/Poll',{
+      method:'POST',headers,body:JSON.stringify({ReportRequestId:reportRequestId}),allowedOrigins:[new URL(base).origin]
+    })
+    const state=polled.json?.ReportRequestStatus||{}
+    finalStatus=String(state.Status||'')
+    if(finalStatus.toLowerCase()==='success'){
+      downloadUrl=String(state.ReportDownloadUrl||'')
+      break
+    }
+    if(['error','failure','failed'].includes(finalStatus.toLowerCase())){
+      throw new Error('Microsoft Ads report failed: '+JSON.stringify(state).slice(0,1500))
+    }
+  }
+  if(!downloadUrl)throw new Error('Microsoft Ads report did not complete within polling budget; last status='+finalStatus)
+  const zip=await requestBuffer(downloadUrl)
+  const csv=unzipFirstFile(zip).toString('utf8')
+  const rows=parseCsv(csv)
+  const persisted=await persistAdRows({
+    workspaceId:ctx.workspaceId,connector,stream,accountId,rows,runId:ctx.runId,
+    map:row=>({
+      sourceId:[row.CampaignId,row.TimePeriod].join(':'),
+      campaignId:s(row.CampaignId),
+      campaignName:row.CampaignName||null,
+      day:reportDay(row.TimePeriod),
+      currency:row.CurrencyCode||null,
+      spend:reportNumber(row.Spend),
+      impressions:reportNumber(row.Impressions),
+      clicks:reportNumber(row.Clicks),
+      conversions:reportNumber(row.ConversionsQualified),
+      conversionValue:reportNumber(row.Revenue),
+      extra:{reportRequestId}
+    })
+  })
+  await saveCheckpoint({workspaceId:ctx.workspaceId,connector,stream,watermark:r.end.toISOString(),cursor:{reportRequestId,status:'success'}})
+  return {...persisted,fetched:rows.length,streams:[stream],transport:'microsoft_reporting_rest',reportRequestId}
+}
+
 const syncBridgeJson=async(ctx,{connector,stream,urlEnv,accountEnv,tokenField='access_token'})=>{
   const token=await credential(ctx.workspaceId,connector)
   const url=String(ctx.options.url||process.env[urlEnv]||'')
@@ -584,7 +679,7 @@ const adapters={
   'Zoho CRM':syncZoho,
   'TikTok Ads':syncTikTok,
   'Pinterest':syncPinterest,
-  'Microsoft Ads / Bing Ads':ctx=>syncBridgeJson(ctx,{connector:'Microsoft Ads / Bing Ads',stream:'campaign_daily',urlEnv:'MICROSOFT_ADS_REPORTING_URL',accountEnv:'MICROSOFT_ADS_ACCOUNT_ID'}),
+  'Microsoft Ads / Bing Ads':syncMicrosoftAds,
   'X':ctx=>syncBridgeJson(ctx,{connector:'X',stream:'campaign_daily',urlEnv:'X_ADS_REPORTING_URL',accountEnv:'X_ADS_ACCOUNT_ID'})
 }
 
