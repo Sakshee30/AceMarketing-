@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "ace-foundation-compatibility.v1",
+  "foundationVersion": "2.0.0",
+  "status": "active",
+  "runtime": {
+    "nodeMajor": 20,
+    "packageManager": "npm",
+    "database": "PostgreSQL-compatible"
+  },
+  "supportedProfiles": [
+    "local",
+    "minimal-production",
+    "standard-production",
+    "high-scale",
+    "regulated-enterprise",
+    "ai-enabled"
+  ],
+  "contracts": {
+    "http": "packages/contracts/http/platform.openapi.yaml",
+    "async": "packages/contracts/events/platform.asyncapi.yaml",
+    "compatibility": "packages/contracts/compatibility"
+  },
+  "deprecationPolicy": {
+    "minimumNoticeDays": 90,
+    "emergencySecurityException": true,
+    "removalRequiresMigrationGuide": true,
+    "removalRequiresCompatibilityTest": true
+  },
+  "referenceProduct": {
+    "repository": "Sakshee30/AceMarketing-",
+    "profile": "high-scale",
+    "verificationState": "repository-tested"
+  },
+  "requiredUpgradeEvidence": [
+    "architecture-boundary checks",
+    "contract compatibility checks",
+    "migration compatibility",
+    "security regression checks",
+    "frontend release compatibility",
+    "rollback or forward-repair instructions"
+  ]
+}
