@@ -38,10 +38,10 @@ export const platformOperationRegistry=Object.freeze([
   defineOperation({moduleId:'authorization',id:'evaluate-access',permission:'access.evaluate',contract:'permission-evaluation',handlerPath:'backend/modules/authorization/src/application/queries/evaluate-access/evaluate-access.handler.mjs',testPath:'backend/tests/canonical-operation-handlers.test.mjs',status:'canonical',audit:'security'}),
   legacy('authorization','publish-policy','access.manage','access-policy','backend/src/platform/policy-engine.mjs','backend/tests/policy-workflow.test.mjs',{audit:'security'}),
 
-  legacy('entitlements','evaluate-entitlement','entitlement.read','entitlement','backend/src/entitlements.mjs','backend/tests/usage-ledger.test.mjs'),
+  defineOperation({moduleId:'entitlements',id:'evaluate-entitlement',permission:'entitlement.read',contract:'entitlement',handlerPath:'backend/modules/entitlements/src/application/queries/evaluate-entitlement/evaluate-entitlement.handler.mjs',testPath:'backend/tests/canonical-data-foundation-handlers.test.mjs',status:'canonical'}),
   defineOperation({moduleId:'forms',id:'publish-form',permission:'forms.manage',contract:'form-definition',handlerPath:'backend/modules/forms/src/application/commands/publish-form/publish-form.handler.mjs',testPath:'backend/tests/canonical-operation-handlers.test.mjs',status:'canonical'}),
   defineOperation({moduleId:'forms',id:'submit-form',permission:'forms.submit',contract:'form-submission',handlerPath:'backend/modules/forms/src/application/commands/submit-form/submit-form.handler.mjs',testPath:'backend/tests/canonical-operation-handlers.test.mjs',status:'canonical'}),
-  legacy('custom-objects','define-object','objects.schema.manage','custom-object-definition','backend/src/platform/custom-object-store.mjs','backend/tests/custom-object-store.test.mjs'),
+  defineOperation({moduleId:'custom-objects',id:'define-object',permission:'objects.schema.manage',contract:'custom-object-definition',handlerPath:'backend/modules/custom-objects/src/application/commands/define-object/define-object.handler.mjs',testPath:'backend/tests/canonical-data-foundation-handlers.test.mjs',status:'canonical'}),
   defineOperation({moduleId:'rules',id:'simulate-rule',permission:'rules.evaluate',contract:'rule-evaluation',handlerPath:'backend/modules/rules/src/application/queries/simulate-rule/simulate-rule.handler.mjs',testPath:'backend/tests/canonical-operation-handlers.test.mjs',status:'canonical'}),
   defineOperation({moduleId:'rules',id:'publish-rule',permission:'workspace.write',contract:'rule-definition',handlerPath:'backend/modules/rules/src/application/commands/publish-rule/publish-rule.handler.mjs',testPath:'backend/tests/canonical-lifecycle-handlers.test.mjs',status:'canonical',audit:'required'}),
 
@@ -78,9 +78,9 @@ export const platformOperationRegistry=Object.freeze([
   legacy('billing','change-subscription','billing.manage','subscription','backend/src/platform/billing-lifecycle.mjs','backend/tests/billing-lifecycle.test.mjs',{audit:'financial'}),
   legacy('billing','reconcile-payment','billing.manage','subscription','backend/src/platform/billing-lifecycle.mjs','backend/tests/billing-lifecycle.test.mjs',{audit:'financial'}),
 
-  legacy('documents','authorize-upload','files.upload','file-object','backend/src/platform/object-storage.mjs','backend/tests/object-lifecycle.test.mjs',{audit:'security'}),
+  defineOperation({moduleId:'documents',id:'authorize-upload',permission:'files.upload',contract:'file-object',handlerPath:'backend/modules/documents/src/application/commands/authorize-upload/authorize-upload.handler.mjs',testPath:'backend/tests/canonical-data-foundation-handlers.test.mjs',status:'canonical',audit:'security'}),
   legacy('documents','approve-file','files.manage','file-object','backend/src/platform/object-lifecycle.mjs','backend/tests/object-lifecycle.test.mjs',{durability:'durable-job',audit:'security'}),
-  legacy('search','query-search','search.read','search-query','backend/src/platform/search-port.mjs','backend/tests/search-port.test.mjs'),
+  defineOperation({moduleId:'search',id:'query-search',permission:'search.read',contract:'search-query',handlerPath:'backend/modules/search/src/application/queries/query-search/query-search.handler.mjs',testPath:'backend/tests/canonical-data-foundation-handlers.test.mjs',status:'canonical'}),
   legacy('search','rebuild-index','search.manage','search-projection','backend/src/platform/search-port.mjs','backend/tests/search-port.test.mjs',{durability:'durable-job'}),
 
   legacy('audit','search-audit','audit.read','audit-event','backend/src/platform/audit-store.mjs','backend/tests/platform-audit-catalog.test.mjs',{audit:'locked'}),
