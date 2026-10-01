@@ -15,6 +15,9 @@ import {providerExecutionSnapshot} from './platform/provider-execution.mjs'
 import {beginProcessDrain,livenessState,markStartupComplete,startupState} from './platform/process-health.mjs'
 import {globalAdmission} from './platform/admission-control.mjs'
 import {capacityBudgetFromEnvironment,evaluateCapacityBudget} from './platform/capacity-budget.mjs'
+import {handleActivateConfig} from '../modules/capabilities/src/application/commands/activate-config/activate-config.handler.mjs'
+import {handleMigrateProvider} from '../modules/capabilities/src/application/commands/migrate-provider/migrate-provider.handler.mjs'
+import {handleMoveTenant} from '../modules/cells/src/application/commands/move-tenant/move-tenant.handler.mjs'
 
 const PORT=Number(process.env.CONTROL_PORT||3002)
 const IS_PROD=process.env.NODE_ENV==='production'
@@ -477,22 +480,7 @@ const server=http.createServer(async(req,res)=>{
     catch(error){return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'invalid provider migration request'})}
     return runControlMutation({
       req,res,session,operation:'provider-migration.create',body,successStatus:201,
-      execute:()=>createProviderMigration({
-        capability:body.capability,
-        environment:body.environment||process.env.NODE_ENV||'development',
-        fromProvider:body.fromProvider,
-        toProvider:body.toProvider,
-        strategy:body.strategy||'shadow',
-        compatibilityReport:body.compatibilityReport||{},
-        cutoverBoundary:body.cutoverBoundary||{},
-        rollbackPlan:body.rollbackPlan||{},
-        requestedBy:session.sub,
-        sourceChangeId:body.sourceChangeId||null,
-        dependencyInventory:body.dependencyInventory||{},
-        capacityEvidence:body.capacityEvidence||{},
-        verificationEvidence:body.verificationEvidence||{},
-        irreversibleSteps:Array.isArray(body.irreversibleSteps)?body.irreversibleSteps:[]
-      })
+      execute:()=>handleMigrateProvider({mode:'create',input:body,actorId:session.sub})
     })
   }
 
@@ -505,34 +493,7 @@ const server=http.createServer(async(req,res)=>{
     const id=decodeURIComponent(providerMigrationMatch[1])
     return runControlMutation({
       req,res,session,operation:'provider-migration.transition:'+id,body,
-      execute:async()=>{
-        const migration=await advanceProviderMigration({
-          id,
-          toState:String(body.toState||''),
-          trafficPercent:body.trafficPercent,
-          compatibilityReport:body.compatibilityReport,
-          cutoverBoundary:body.cutoverBoundary,
-          actor:session.sub,
-          expectedVersion:body.expectedVersion,
-          failureReason:body.failureReason||null,
-          dependencyInventory:body.dependencyInventory,
-          capacityEvidence:body.capacityEvidence,
-          verificationEvidence:body.verificationEvidence,
-          irreversibleSteps:body.irreversibleSteps,
-          pointOfNoReturn:body.pointOfNoReturn===true
-        })
-        const latest=await latestRuntimeSnapshot(migration.environment)
-        const providerOverrides={
-          ...(latest?.payload?.providerOverrides||{}),
-          [migration.capability]:providerMigrationOverride(migration)
-        }
-        const snapshot=await publishRuntimeSnapshot({
-          environment:migration.environment,
-          providerOverrides,
-          createdBy:session.sub
-        })
-        return {migration,snapshotVersion:snapshot.version,snapshotLeaseExpiresAt:snapshot.leaseExpiresAt}
-      }
+      execute:()=>handleMigrateProvider({mode:'transition',input:{...body,id},actorId:session.sub})
     })
   }
 
@@ -545,25 +506,7 @@ const server=http.createServer(async(req,res)=>{
     const id=decodeURIComponent(providerRollbackMatch[1])
     return runControlMutation({
       req,res,session,operation:'provider-migration.rollback:'+id,body,
-      execute:async()=>{
-        const migration=await requestProviderRollback({
-          id,
-          actor:session.sub,
-          expectedVersion:body.expectedVersion,
-          reason:body.reason||null
-        })
-        const latest=await latestRuntimeSnapshot(migration.environment)
-        const providerOverrides={
-          ...(latest?.payload?.providerOverrides||{}),
-          [migration.capability]:providerMigrationOverride(migration)
-        }
-        const snapshot=await publishRuntimeSnapshot({
-          environment:migration.environment,
-          providerOverrides,
-          createdBy:session.sub
-        })
-        return {migration,snapshotVersion:snapshot.version,snapshotLeaseExpiresAt:snapshot.leaseExpiresAt}
-      }
+      execute:()=>handleMigrateProvider({mode:'rollback',input:{...body,id},actorId:session.sub})
     })
   }
 
@@ -574,13 +517,31 @@ const server=http.createServer(async(req,res)=>{
     catch(error){return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'invalid runtime configuration request'})}
     return runControlMutation({
       req,res,session,operation:'runtime-config.publish',body,
-      execute:()=>publishRuntimeSnapshot({
+      execute:()=>handleActivateConfig({
         environment:body.environment||process.env.NODE_ENV||'development',
         features:body.features||{},
         providerOverrides:body.providerOverrides||{},
         admission:body.admission||{},
         sourceChangeId:body.sourceChangeId||null,
-        createdBy:session.sub
+        actorId:session.sub
+      })
+    })
+  }
+
+  if(url.pathname==='/control-api/cell-placements/move'&&req.method==='POST'){
+    if(!requireControl(res,session,'migrate'))return
+    let body
+    try{body=await readBody(req,64*1024)}
+    catch(error){return json(res,Number(error?.status||400),{error:error instanceof Error?error.message:'invalid tenant placement request'})}
+    return runControlMutation({
+      req,res,session,operation:'cell-placement.move:'+String(body.workspaceId||''),body,
+      execute:()=>handleMoveTenant({
+        workspaceId:body.workspaceId,
+        homeCell:body.homeCell,
+        homeRegion:body.homeRegion,
+        expectedRoutingEpoch:body.expectedRoutingEpoch,
+        state:body.state||'moving',
+        dedicated:body.dedicated===true
       })
     })
   }
