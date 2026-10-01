@@ -145,13 +145,13 @@ const SERVER_SECRET_CONNECTORS={
       {key:'access_token',label:'Conversions API access token',secret:true}
     ]
   },
-  'Microsoft Ads / Bing Ads':{
-    provider:'microsoft_ads',
+  'Microsoft Ads CAPI':{
+    provider:'microsoft_ads_capi',
     authType:'server_secret',
     capability:'native_server_capi',
     fields:[
       {key:'tag_id',label:'Microsoft UET tag ID',secret:false},
-      {key:'access_token',label:'Conversions API token',secret:true}
+      {key:'capi_token',label:'Microsoft UET CAPI token',secret:true}
     ]
   },
   'X':{
