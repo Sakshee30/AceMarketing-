@@ -1,6 +1,7 @@
 import {createHash,randomUUID} from 'node:crypto'
 import {pool} from './database.mjs'
 import {connectorCredential} from './connector-auth.mjs'\nimport {enqueueJob} from './queue.mjs'\nimport {withTenantDbTransaction,withSystemDbTransaction} from './platform/tenant-db.mjs'
+import {deploymentMode} from './platform/deployment-mode.mjs'
 
 const timeoutMs=()=>Math.max(1000,Math.min(Number(process.env.CONNECTOR_SYNC_HTTP_TIMEOUT_MS||30000),120000))
 const maxPages=()=>Math.max(1,Math.min(Number(process.env.CONNECTOR_SYNC_MAX_PAGES||100),1000))
@@ -414,6 +415,7 @@ const adapters={
 export const connectorReadCatalog=()=>Object.keys(adapters)
 
 export const runConnectorSync=async({workspaceId,connector,mode='incremental',start=null,end=null,options={}})=>{
+  if(!deploymentMode().features.providerReads)throw new Error('provider reads are disabled by deployment mode')
   if(!pool)throw new Error('DATABASE_URL is required for connector synchronization')
   if(!workspaceId)throw new Error('workspace scope required')
   const adapter=adapters[connector]
@@ -454,6 +456,7 @@ export const listConnectorSyncSchedules=async({workspaceId})=>{
 }
 
 export const saveConnectorSyncSchedule=async({workspaceId,connector,enabled=true,intervalMinutes=60,options={}})=>{
+  if(enabled&&!deploymentMode().features.providerReads)throw new Error('provider reads are disabled by deployment mode')
   if(!pool)throw new Error('DATABASE_URL is required for connector schedules')
   if(!connectorReadCatalog().includes(connector))throw new Error('connector does not support read synchronization')
   const interval=Math.max(5,Math.min(Number(intervalMinutes||60),10080))
