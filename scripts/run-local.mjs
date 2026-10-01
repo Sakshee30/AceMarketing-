@@ -62,12 +62,12 @@ if(mode.features.ai){
 
 start('api',process.execPath,['backend/src/index.mjs'],runtimeEnv)
 start('worker',process.execPath,['backend/src/worker.mjs'],runtimeEnv)
-start('web',process.execPath,['scripts/static-server.mjs','--dir=dist/frontend','--port='+(runtimeEnv.ACE_HTTP_PORT||'8080')],runtimeEnv)
+start('web',process.execPath,['scripts/static-server.mjs','--dir=dist/frontend','--port='+(runtimeEnv.ACE_HTTP_PORT||'8080'),'--api-target=http://127.0.0.1:'+(runtimeEnv.PORT||'3001')],runtimeEnv)
 
 if(mode.features.controlPlane){
   if(!existsSync('dist/platform-admin/index.html'))throw new Error('dist/platform-admin/index.html missing; run npm run build:platform-admin')
   start('control-api',process.execPath,['backend/src/control-api.mjs'],runtimeEnv)
-  start('platform-admin',process.execPath,['scripts/static-server.mjs','--dir=dist/platform-admin','--port='+(runtimeEnv.ACE_CONTROL_HTTP_PORT||'8081')],runtimeEnv)
+  start('platform-admin',process.execPath,['scripts/static-server.mjs','--dir=dist/platform-admin','--port='+(runtimeEnv.ACE_CONTROL_HTTP_PORT||'8081'),'--api-target=http://127.0.0.1:'+(runtimeEnv.CONTROL_PORT||'3002')],runtimeEnv)
 }
 
 if(mode.features.ai&&args.get('external-ml')!=='true'&&runtimeEnv.ACE_EXTERNAL_ML!=='true'){
