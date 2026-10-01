@@ -22,12 +22,13 @@ test('traceability maps each operation to existing implementation and test evide
     assert.ok(feature.endpoints.length>0,feature.id+' endpoint traceability missing')
     assert.ok(feature.eventContracts.length>=0)
     assert.ok(feature.dashboard,feature.id+' dashboard missing')
+    assert.ok(feature.featureReadme,feature.id+' feature README missing')
     for(const operation of feature.operations){
       assert.ok(operation.operationId,feature.id+' operationId missing')
       assert.ok(operation.requestSchemaId,feature.id+' request schema id missing')
       assert.ok(operation.permission,feature.id+' permission missing')
     }
-    for(const file of [...feature.handlers,...feature.tests]){
+    for(const file of [...feature.handlers,...feature.tests,feature.featureReadme,feature.runbook]){
       assert.equal(fs.existsSync(path.join(root,file)),true,feature.id+' evidence path missing: '+file)
     }
     assert.equal(fs.existsSync(path.join(root,feature.runbook)),true,feature.id+' runbook missing')
