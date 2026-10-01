@@ -2936,7 +2936,7 @@ const server = http.createServer(async (req,res)=>{
       })
     }
     if (req.method === 'GET' && url.pathname === '/api/data-hub') {
-      const [state,leadStats,attr]=await Promise.all([getState(),leadOpsStats(workspaceId),attributionStats(workspaceId)])
+      const [state,leadStats,attr,providerData]=await Promise.all([getState(),leadOpsStats(workspaceId),attributionStats(workspaceId),connectorDataSummary(workspaceId).catch(()=>({available:false,raw:[],campaigns:[],crm:[]}))])
       const now=Date.now()
       const sourceMap=new Map()
       const touch=(name,type,eventTime,count=1,status='healthy',fields=[])=>{
@@ -2962,6 +2962,12 @@ const server = http.createServer(async (req,res)=>{
       if(attr?.available)touch('Attribution store','measurement',new Date().toISOString(),Number(attr.assistedEvents||0)+Number(attr.activeClickSessions||0),'healthy',['click_id','session','event','match_method','value'])
       const deliveries=(state.signalDeliveries||[])
       if(deliveries.length)touch('Activation deliveries','activation',deliveries[0]?.updatedAt||deliveries[0]?.createdAt||null,deliveries.length,deliveries.some(x=>['failed','dead_letter'].includes(String(x.status||'').toLowerCase()))?'review':'healthy',['event','destination','status','attempts'])
+      for(const item of providerData.raw||[]){
+        touch(item.connector,'provider_sync',item.last_ingested_at,Number(item.rows||0),'healthy',[item.stream,'raw_record'])
+      }
+      for(const item of providerData.campaigns||[]){
+        if(!sourceMap.has(item.connector))touch(item.connector,'provider_campaigns',item.max_day,Number(item.rows||0),'healthy',['campaign','spend','impressions','clicks','conversions','conversion_value'])
+      }
       for(const health of state.connectorHealth||[]){
         if(!sourceMap.has(health.name))touch(health.name,'connector',health.checkedAt||health.updatedAt||null,0,['healthy','connected','active'].includes(String(health.status||'').toLowerCase())?'healthy':'review',['connection_state'])
       }
@@ -2983,7 +2989,7 @@ const server = http.createServer(async (req,res)=>{
         ...callEvents.slice(0,20).map(x=>({id:'call:'+x.id,time:x.endedAt||x.startedAt||x.receivedAt,source:'Telephony',kind:'call',operation:'append',status:'healthy'})),
         ...deliveries.slice(0,20).map(x=>({id:'delivery:'+x.id,time:x.updatedAt||x.createdAt,source:x.destination||'Activation',kind:x.event||'signal',operation:'deliver',status:['failed','dead_letter'].includes(String(x.status||'').toLowerCase())?'review':'healthy'}))
       ].filter(x=>x.time).sort((a,b)=>Date.parse(b.time)-Date.parse(a.time)).slice(0,50)
-      return send(req,res,200,{available:true,records,knownIdentities:Number(leadStats?.total||0),schemaHealth,quarantined,matchedEvents:Number(attr?.matchedEvents||0),sources,recent,generatedAt:new Date().toISOString()})
+      return send(req,res,200,{available:true,records,knownIdentities:Number(leadStats?.total||0),schemaHealth,quarantined,matchedEvents:Number(attr?.matchedEvents||0),sources,recent,providerData,generatedAt:new Date().toISOString()})
     }
     if (req.method === 'POST' && url.pathname === '/api/data-hub/rebuild') {
       const [state,leadStats,attr]=await Promise.all([getState(),leadOpsStats(workspaceId),attributionStats(workspaceId)])
