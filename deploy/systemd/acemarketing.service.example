@@ -1,0 +1,25 @@
+[Unit]
+Description=AceMarketing
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/acemarketing
+EnvironmentFile=/opt/acemarketing/.env
+ExecStart=/usr/bin/node /opt/acemarketing/scripts/run-local.mjs --mode=core --skip-build
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+KillMode=mixed
+User=acemarketing
+Group=acemarketing
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/acemarketing/backups /tmp
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
