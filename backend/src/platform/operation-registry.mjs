@@ -5,16 +5,21 @@ const freezeList=value=>Object.freeze([...(value||[])])
 const defineOperation=({
   id,moduleId,permission,contract,handlerPath,testPath,
   owner=null,status='legacy-mapped',durability='transactional',
-  audit='required',profiles=null,notes=''
+  audit='required',profiles=null,notes='',requestSchemaId=null
 })=>{
   const module=platformModule(moduleId)
   if(!module)throw new Error('operation references unknown module: '+moduleId+':'+id)
+  const normalizedId=String(id)
+  const normalizedModuleId=String(moduleId)
+  const normalizedContract=String(contract)
   return Object.freeze({
-    id:String(id),
-    moduleId:String(moduleId),
+    id:normalizedId,
+    operationId:normalizedModuleId+'.'+normalizedId,
+    requestSchemaId:String(requestSchemaId||normalizedContract+'.request'),
+    moduleId:normalizedModuleId,
     owner:owner||module.owner,
     permission:String(permission),
-    contract:String(contract),
+    contract:normalizedContract,
     handlerPath:String(handlerPath),
     testPath:String(testPath),
     status,
@@ -115,6 +120,8 @@ export const operationRegistrySnapshot=()=>({
   readiness:operationRegistryReadiness(),
   items:platformOperationRegistry.map(item=>({
     id:item.id,
+    operationId:item.operationId,
+    requestSchemaId:item.requestSchemaId,
     moduleId:item.moduleId,
     owner:item.owner,
     permission:item.permission,
@@ -139,6 +146,7 @@ export const validateOperationRegistry=()=>{
     coveredModules.add(item.moduleId)
     if(!moduleIds.has(item.moduleId))throw new Error('operation module missing: '+key)
     if(!item.owner||!item.permission||!item.contract)throw new Error('operation ownership/contract metadata missing: '+key)
+    if(!item.operationId||!item.requestSchemaId)throw new Error('operation traceability metadata missing: '+key)
     if(!item.handlerPath||!item.testPath)throw new Error('operation implementation evidence missing: '+key)
     if(!allowedStatus.has(item.status))throw new Error('unsupported operation migration status: '+key)
     if(!allowedDurability.has(item.durability))throw new Error('unsupported operation durability: '+key)
