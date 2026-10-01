@@ -86,6 +86,7 @@ const required=[
   'backend/tests/evidence-registry.test.mjs',
   'config/project-profile.json',
   'scripts/project-profile-check.mjs',
+  'backend/tests/project-profile.test.mjs',
   'backend/modules/jobs/src/application/commands/replay-dead-letter/replay-dead-letter.handler.mjs',
   'backend/modules/audit/src/application/queries/search-audit/search-audit.handler.mjs',
   'backend/modules/audit/src/application/commands/export-audit/export-audit.handler.mjs',
