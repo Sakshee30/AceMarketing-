@@ -15,7 +15,7 @@ import { billingConfigured, billingEventHistory, billingReconciliationHistory, c
 import { closeConsentStore, consentAllows, consentStats, getConsent, listConsentAudit, saveConsent } from './consent.mjs'
 import { closePrivacyOps, deleteSubject, exportSubject, listPrivacyRequests, purgeRetention, retentionPolicy } from './privacy-ops.mjs'
 import { closeAudienceScheduler, listAudienceRefreshRuns, listAudienceSchedules, saveAudienceSchedule } from './audience-scheduler.mjs'
-import { closeCohortAnalytics, cohortAnalytics } from './cohort-analytics.mjs'\nimport {connectorReadCatalog,listConnectorSyncRuns,connectorDataSummary} from './connector-ingestion.mjs'
+import { closeCohortAnalytics, cohortAnalytics } from './cohort-analytics.mjs'\nimport {connectorReadCatalog,listConnectorSyncRuns,connectorDataSummary,listConnectorSyncSchedules,saveConnectorSyncSchedule} from './connector-ingestion.mjs'
 import { closeReportScheduler, listReportDeliveries, listReportSchedules, queueReportNow, reportMailConfigured, saveReportSchedule } from './report-scheduler.mjs'
 import { closeEventRules, createEventRule, evaluateEventRules, eventRuleStats, listEventRuleRuns, listEventRules, markEventRuleActivation, setEventRuleEnabled } from './event-rules.mjs'
 import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, publicChallenges, publicCaseStudies, publicResources, publicResourceCenter } from './public-content.mjs'
@@ -1515,6 +1515,25 @@ const server = http.createServer(async (req,res)=>{
           tokenHealth:health
         }
       }),requests:(state.integrationRequests||[]).slice(0,100)})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/integrations/sync-schedules') {
+      const items=await listConnectorSyncSchedules({workspaceId})
+      return send(req,res,200,{items,readConnectors:connectorReadCatalog()})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/integrations/sync-schedules') {
+      const body=await readBody(req)
+      const connector=String(body.connector||'').trim()
+      if(!connectorReadCatalog().includes(connector))return send(req,res,400,{error:'connector does not support read synchronization',supported:connectorReadCatalog()})
+      try{
+        const item=await saveConnectorSyncSchedule({
+          workspaceId,
+          connector,
+          enabled:body.enabled!==false,
+          intervalMinutes:Number(body.intervalMinutes||60),
+          options:body.options&&typeof body.options==='object'?body.options:{}
+        })
+        return send(req,res,200,{item})
+      }catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'invalid connector schedule'})}
     }
     if (req.method === 'GET' && url.pathname === '/api/integrations/sync-runs') {
       const connector=String(url.searchParams.get('connector')||'').trim()||null
