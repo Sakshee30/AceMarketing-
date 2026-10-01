@@ -80,6 +80,8 @@ const required=[
   'backend/src/platform/feature-traceability.mjs',
   'backend/tests/feature-traceability.test.mjs',
   'docs/evidence/BACKEND_ARCHITECTURE_ACCEPTANCE.md',
+  'backend/src/platform/acceptance-register.mjs',
+  'backend/tests/acceptance-register.test.mjs',
   'backend/modules/jobs/src/application/commands/replay-dead-letter/replay-dead-letter.handler.mjs',
   'backend/modules/audit/src/application/queries/search-audit/search-audit.handler.mjs',
   'backend/modules/audit/src/application/commands/export-audit/export-audit.handler.mjs',
