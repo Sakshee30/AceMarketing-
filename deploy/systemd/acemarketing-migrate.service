@@ -1,0 +1,21 @@
+[Unit]
+Description=AceMarketing database migrations
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=acemarketing
+Group=acemarketing
+WorkingDirectory=/opt/acemarketing/current
+EnvironmentFile=/etc/acemarketing/acemarketing.env
+ExecStart=/usr/bin/node backend/scripts/migrate.mjs
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/opt/acemarketing /tmp
+TimeoutStartSec=300
+
+[Install]
+WantedBy=acemarketing-core.target
