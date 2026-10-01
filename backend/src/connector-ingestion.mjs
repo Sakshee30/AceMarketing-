@@ -509,6 +509,43 @@ export const runDueConnectorSyncSchedules=async({limit=10}={})=>{
   return {checked:rows.length,enqueued}
 }
 
+export const listConnectorCampaignFacts=async({workspaceId,limit=100,days=90})=>{
+  if(!pool)return []
+  const safeLimit=Math.max(1,Math.min(Number(limit||100),500))
+  const lookback=Math.max(1,Math.min(Number(days||90),730))
+  const cutoff=new Date(Date.now()-lookback*86400000).toISOString().slice(0,10)
+  const {rows}=await tenantQuery(workspaceId,
+    `SELECT connector,account_id,campaign_id,MAX(campaign_name) campaign_name,
+            SUM(spend)::numeric spend,SUM(impressions)::bigint impressions,SUM(clicks)::bigint clicks,
+            SUM(conversions)::numeric conversions,SUM(conversion_value)::numeric conversion_value,
+            SUM(sessions)::numeric sessions,SUM(users)::numeric users,MIN(day) first_day,MAX(day) last_day
+     FROM ace_campaign_daily
+     WHERE workspace_id=$1 AND day >= $2
+     GROUP BY connector,account_id,campaign_id
+     ORDER BY SUM(spend) DESC, SUM(conversion_value) DESC
+     LIMIT $3`,
+    [workspaceId,cutoff,safeLimit]
+  )
+  return rows.map(row=>({
+    id:row.connector+':'+row.account_id+':'+row.campaign_id,
+    connector:row.connector,
+    accountId:row.account_id,
+    campaignId:row.campaign_id,
+    name:row.campaign_name||row.campaign_id,
+    spend:n(row.spend),
+    impressions:n(row.impressions),
+    clicks:n(row.clicks),
+    leads:null,
+    customers:n(row.conversions),
+    conversions:n(row.conversions),
+    revenue:n(row.conversion_value),
+    sessions:n(row.sessions),
+    users:n(row.users),
+    firstDay:row.first_day,
+    lastDay:row.last_day
+  }))
+}
+
 export const connectorDataSummary=async(workspaceId)=>{
   if(!pool)return {available:false}
   const [campaigns,crm,raw,checkpoints]=await Promise.all([
