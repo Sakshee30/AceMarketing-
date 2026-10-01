@@ -1,0 +1,119 @@
+{
+  "generatedAt": "2026-10-01T05:22:11.926Z",
+  "mode": "synthetic-in-memory-no-external-egress",
+  "sourceRows": 2252,
+  "syntheticRows": 2252,
+  "score": {
+    "min": 0,
+    "max": 86,
+    "average": 41.87
+  },
+  "explanationCoveragePct": 99.96,
+  "gradeCounts": {
+    "D": 1799,
+    "C": 411,
+    "B": 40,
+    "A": 2
+  },
+  "invariants": {
+    "rowCountPreserved": true,
+    "uniqueIds": true,
+    "reservedEmails": true,
+    "syntheticNames": true,
+    "documentationIps": true,
+    "boundedScores": true,
+    "validGrades": true,
+    "driverContractsValid": true,
+    "noSourceContactCopied": true
+  },
+  "passed": true,
+  "sample": [
+    {
+      "externalLeadId": "synthetic_lead_00001",
+      "email": "lead00001@example.com",
+      "phone": "+919990000001",
+      "crmStage": "new",
+      "source": "google_ads",
+      "campaign": "NSA-CMA-HIGH-INTENT",
+      "course": "CMA USA",
+      "score": 0,
+      "grade": "D",
+      "drivers": [
+        {
+          "key": "journey_depth",
+          "label": "Journey depth",
+          "points": 8,
+          "evidence": "3 meaningful interactions"
+        },
+        {
+          "key": "whatsapp",
+          "label": "WhatsApp engagement",
+          "points": 12,
+          "evidence": "Two-way messaging"
+        },
+        {
+          "key": "call",
+          "label": "Call outcome",
+          "points": 14,
+          "evidence": "connected"
+        },
+        {
+          "key": "invalid_contact",
+          "label": "Invalid contact",
+          "points": -22,
+          "evidence": "Contact validation failed"
+        },
+        {
+          "key": "duplicate",
+          "label": "Duplicate lead",
+          "points": -14,
+          "evidence": "Duplicate identity"
+        },
+        {
+          "key": "fraud",
+          "label": "Fraud risk",
+          "points": -30,
+          "evidence": "75/100"
+        }
+      ]
+    },
+    {
+      "externalLeadId": "synthetic_lead_00002",
+      "email": "lead00002@example.com",
+      "phone": "+919990000002",
+      "crmStage": "new",
+      "source": "google_ads",
+      "campaign": "NSA-CMA-HIGH-INTENT",
+      "course": "CMA USA",
+      "score": 34,
+      "grade": "D",
+      "drivers": [
+        {
+          "key": "call",
+          "label": "Call outcome",
+          "points": 14,
+          "evidence": "connected"
+        }
+      ]
+    },
+    {
+      "externalLeadId": "synthetic_lead_00003",
+      "email": "lead00003@example.com",
+      "phone": "+919990000003",
+      "crmStage": "new",
+      "source": "google_ads",
+      "campaign": "NSA-CMA-NORTHSTAR",
+      "course": "CMA USA",
+      "score": 34,
+      "grade": "D",
+      "drivers": [
+        {
+          "key": "call",
+          "label": "Call outcome",
+          "points": 14,
+          "evidence": "connected"
+        }
+      ]
+    }
+  ]
+}

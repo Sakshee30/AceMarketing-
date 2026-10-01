@@ -1,0 +1,190 @@
+{
+  "generatedAt": "2026-10-01T05:25:14.749Z",
+  "commit": "local",
+  "surfaces": [
+    {
+      "name": "compatibility",
+      "dist": "dist/frontend",
+      "status": "built",
+      "entries": [
+        {
+          "key": "index.html",
+          "file": "assets/index-C2YpYHky.js"
+        }
+      ],
+      "totalJsGzipKb": 335.42,
+      "cssGzipKb": 47.99,
+      "largestJsChunks": [
+        {
+          "file": "assets/index-C2YpYHky.js",
+          "gzipKb": 52.8
+        },
+        {
+          "file": "assets/public-Dz-ffJaI.js",
+          "gzipKb": 24.92
+        },
+        {
+          "file": "assets/public-DMsq-8Yd.js",
+          "gzipKb": 20.19
+        },
+        {
+          "file": "assets/public-PyYWD0js.js",
+          "gzipKb": 13.54
+        },
+        {
+          "file": "assets/public-DE15RdYM.js",
+          "gzipKb": 8.85
+        },
+        {
+          "file": "assets/api-BQmJC9cY.js",
+          "gzipKb": 6.85
+        },
+        {
+          "file": "assets/public-CpOftqYR.js",
+          "gzipKb": 6.77
+        },
+        {
+          "file": "assets/public-CI9hNnWY.js",
+          "gzipKb": 6.76
+        },
+        {
+          "file": "assets/public-5jevi571.js",
+          "gzipKb": 6.28
+        },
+        {
+          "file": "assets/BoardsPage-Cqglm-SY.js",
+          "gzipKb": 4.89
+        }
+      ],
+      "targets": {
+        "initialJsGzipKb": 250,
+        "initialJsReviewGateKb": 350,
+        "initialCssGzipKb": 60
+      },
+      "note": "Build artifact evidence only. Core Web Vitals, long-session memory and assistive-technology evidence are recorded separately."
+    },
+    {
+      "name": "customer-app",
+      "dist": "dist/customer-app",
+      "status": "built",
+      "entries": [
+        {
+          "key": "index.html",
+          "file": "assets/index-CUDNR923.js"
+        }
+      ],
+      "totalJsGzipKb": 294.84,
+      "cssGzipKb": 46.28,
+      "largestJsChunks": [
+        {
+          "file": "assets/index-CUDNR923.js",
+          "gzipKb": 81.28
+        },
+        {
+          "file": "assets/public-BE4th4tu.js",
+          "gzipKb": 13.54
+        },
+        {
+          "file": "assets/public-DqlDCA-A.js",
+          "gzipKb": 8.76
+        },
+        {
+          "file": "assets/public-CjqqyEQB.js",
+          "gzipKb": 6.71
+        },
+        {
+          "file": "assets/public-CnG3LgxA.js",
+          "gzipKb": 6.69
+        },
+        {
+          "file": "assets/public-B41IXu74.js",
+          "gzipKb": 6.21
+        },
+        {
+          "file": "assets/BoardsPage-Dwx1mOLe.js",
+          "gzipKb": 4.79
+        },
+        {
+          "file": "assets/public-_A6b8rp8.js",
+          "gzipKb": 4.52
+        },
+        {
+          "file": "assets/public-CrfKDfp0.js",
+          "gzipKb": 4.5
+        },
+        {
+          "file": "assets/public-MrzWV2-R.js",
+          "gzipKb": 4.45
+        }
+      ],
+      "targets": {
+        "initialJsGzipKb": 250,
+        "initialJsReviewGateKb": 350,
+        "initialCssGzipKb": 60
+      },
+      "note": "Build artifact evidence only. Core Web Vitals, long-session memory and assistive-technology evidence are recorded separately."
+    },
+    {
+      "name": "public-site",
+      "dist": "dist/public-site",
+      "status": "built",
+      "entries": [
+        {
+          "key": "index.html",
+          "file": "assets/index-DwTZqhQu.js"
+        }
+      ],
+      "totalJsGzipKb": 76.78,
+      "cssGzipKb": 45.35,
+      "largestJsChunks": [
+        {
+          "file": "assets/index-DwTZqhQu.js",
+          "gzipKb": 76.78
+        }
+      ],
+      "targets": {
+        "initialJsGzipKb": 250,
+        "initialJsReviewGateKb": 350,
+        "initialCssGzipKb": 60
+      },
+      "note": "Build artifact evidence only. Core Web Vitals, long-session memory and assistive-technology evidence are recorded separately."
+    },
+    {
+      "name": "platform-admin",
+      "dist": "dist/platform-admin",
+      "status": "built",
+      "entries": [
+        {
+          "key": "index.html",
+          "file": "assets/index-CiCKhUC2.js"
+        }
+      ],
+      "totalJsGzipKb": 56.2,
+      "cssGzipKb": 2.02,
+      "largestJsChunks": [
+        {
+          "file": "assets/index-CiCKhUC2.js",
+          "gzipKb": 56.2
+        }
+      ],
+      "targets": {
+        "initialJsGzipKb": 250,
+        "initialJsReviewGateKb": 350,
+        "initialCssGzipKb": 60
+      },
+      "note": "Build artifact evidence only. Core Web Vitals, long-session memory and assistive-technology evidence are recorded separately."
+    }
+  ],
+  "publicSeoArtifacts": {
+    "sitemap": true,
+    "robots": true,
+    "routePolicy": true
+  },
+  "qualification": {
+    "buildAssets": "measured-by-this-script",
+    "browserMatrix": "measured-by-playwright-workflows",
+    "coreWebVitals": "requires lab/field measurement; not inferred from bundle size",
+    "longSessionMemory": "requires dedicated soak evidence",
+    "productionQualification": "not claimed by this artifact"
+  }
+}
