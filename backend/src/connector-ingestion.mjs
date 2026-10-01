@@ -573,6 +573,10 @@ const syncMicrosoftAds=async(ctx)=>{
   if(!Number.isSafeInteger(numericAccount)||numericAccount<=0)throw new Error('MICROSOFT_ADS_ACCOUNT_ID must be a positive safe integer')
   const r=await rangeFor({...ctx,connector,stream,defaultBackfillDays:90})
   const base=String(process.env.MICROSOFT_ADS_REPORTING_BASE_URL||'https://reporting.api.bingads.microsoft.com/Reporting/v13').replace(/\/$/,'')
+  const microsoftOrigin=new URL(base).origin
+  if(!['https://reporting.api.bingads.microsoft.com','https://reporting.api.sandbox.bingads.microsoft.com'].includes(microsoftOrigin)){
+    throw new Error('MICROSOFT_ADS_REPORTING_BASE_URL must use an official Microsoft Advertising reporting origin')
+  }
   const headers={
     Authorization:'Bearer '+token.access_token,
     DeveloperToken:developerToken,
@@ -833,3 +837,11 @@ export const connectorDataSummary=async(workspaceId)=>{
   ])
   return {available:true,campaigns:campaigns.rows,crm:crm.rows,raw:raw.rows,checkpoints:checkpoints.rows,generatedAt:nowIso()}
 }
+
+
+export const connectorParsingSupport=Object.freeze({
+  parseCsv,
+  unzipFirstFile,
+  reportDay,
+  reportNumber
+})
