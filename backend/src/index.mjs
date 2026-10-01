@@ -270,7 +270,7 @@ const defaultRateLimitPerMinute=IS_PROD?240:5_000
 const limitRequest=createRateLimiter({windowMs:60_000,max:Number(process.env.RATE_LIMIT_PER_MINUTE||defaultRateLimitPerMinute)})
 
 const integrations = [
-  'Zoho CRM','Salesforce','LeadSquared','Meritto','HubSpot','HighLevel','Microsoft Dynamics 365','Freshsales','Custom CRM',
+  'Ace Data Hub','Zoho CRM','Salesforce','LeadSquared','Meritto','HubSpot','HighLevel','Microsoft Dynamics 365','Freshsales','Custom CRM',
   'WhatsApp','Bitespeed','AiSensy','Gupshup','WATI','MoEngage','CleverTap','Mailchimp','Klaviyo','Brevo','Twilio SendGrid',
   'Exotel','Knowlarity','Tata Tele','MyOperator','Twilio',
   'Shopify','WooCommerce','Magento','WordPress','Typeform','React App','Custom Backend',
@@ -1498,6 +1498,9 @@ const server = http.createServer(async (req,res)=>{
       const tokenHealth=await connectorTokenHealth(workspaceId).catch(()=>[])
       const connections=state.connectorConnections||[]
       return send(req,res,200,{items:integrations.map(name=>{
+        if(name==='Ace Data Hub'){
+          return {name,status:'connected',provider:'ace',authType:'internal',capability:'canonical_destination',configured:true,readSupported:false,backfillSupported:false,incrementalSyncSupported:false,writeSupported:true,updatedAt:null,tokenHealth:null}
+        }
         if(name==='ChatGPT Ads'){
           const configured=Boolean(process.env.OPENAI_CONVERSIONS_API_KEY&&process.env.OPENAI_ADS_PIXEL_ID)
           return {name,status:configured?'connected':'needs_configuration',provider:'openai',authType:'server_secret',capability:'native_server_capi',configured,updatedAt:null,tokenHealth:null}
@@ -1605,6 +1608,8 @@ const server = http.createServer(async (req,res)=>{
         identityField:String(body.identityField||'email / phone / click id').slice(0,120),
         mode:['Real-time','Every 15 minutes','Hourly','Daily'].includes(body.mode)?body.mode:'Real-time',
         status:'paused',
+        executionSupported:false,
+        executionMode:null,
         lastTestAt:null,
         lastTestStatus:'not_tested',
         lastTestDetail:'Run a readiness test before activation.',
@@ -1637,15 +1642,20 @@ const server = http.createServer(async (req,res)=>{
         return false
       }
       const sourceReady=readiness(item.source)
-      const destinationReady=readiness(item.destination)
-      const passed=sourceReady&&destinationReady
+      const destinationReady=item.destination==='Ace Data Hub'?true:readiness(item.destination)
+      const executionSupported=connectorReadCatalog().includes(item.source)&&item.destination==='Ace Data Hub'
+      const passed=sourceReady&&destinationReady&&executionSupported
       const now=new Date().toISOString()
-      const detail=passed
-        ?'Source and destination are connected and ready for governed synchronization.'
-        :'Connect '+[!sourceReady?item.source:null,!destinationReady?item.destination:null].filter(Boolean).join(' and ')+' before activation.'
+      const detail=!sourceReady
+        ?'Connect '+item.source+' before activation.'
+        :!destinationReady
+          ?'Connect '+item.destination+' before activation.'
+          :!executionSupported
+            ?'This generic flow pair is not executable. Use Ace Data Hub as the destination for ingestion, or use Event Rules / Audiences / CRM writeback for governed cross-provider activation.'
+            :'Source is readable and Ace Data Hub is available. This flow will execute through durable connector sync jobs.'
       await mutateState(s=>{
         const flow=(s.integrationFlows||[]).find(x=>x.id===id)
-        if(flow){flow.lastTestAt=now;flow.lastTestStatus=passed?'passed':'needs_attention';flow.lastTestDetail=detail;flow.updatedAt=now}
+        if(flow){flow.executionSupported=executionSupported;flow.executionMode=executionSupported?'connector_sync':null;flow.lastTestAt=now;flow.lastTestStatus=passed?'passed':'needs_attention';flow.lastTestDetail=detail;flow.updatedAt=now}
         s.audit=s.audit||[]
         s.audit.unshift({id:randomUUID(),action:'integration_flow.tested',entityId:id,status:passed?'passed':'needs_attention',at:now})
         s.audit=s.audit.slice(0,1000)
@@ -1660,15 +1670,27 @@ const server = http.createServer(async (req,res)=>{
       const existing=(snapshot.integrationFlows||[]).find(x=>x.id===id)
       if(!existing) return send(req,res,404,{error:'integration flow not found'})
       if(enabled&&existing.lastTestStatus!=='passed') return send(req,res,409,{error:'flow must pass its readiness test before activation'})
+      if(enabled&&existing.executionSupported!==true) return send(req,res,409,{error:'flow pair does not have an executable runtime adapter'})
+      const cadenceMinutes={'Real-time':5,'Every 15 minutes':15,'Hourly':60,'Daily':1440}[existing.mode]||60
+      let schedule=null
+      if(existing.executionSupported===true){
+        schedule=await saveConnectorSyncSchedule({
+          workspaceId,
+          connector:existing.source,
+          enabled,
+          intervalMinutes:cadenceMinutes,
+          options:{integrationFlowId:id,destination:existing.destination,object:existing.object,trigger:existing.trigger}
+        })
+      }
       const now=new Date().toISOString()
       await mutateState(s=>{
         const flow=(s.integrationFlows||[]).find(x=>x.id===id)
-        if(flow){flow.status=enabled?'active':'paused';flow.updatedAt=now}
+        if(flow){flow.status=enabled?'active':'paused';flow.scheduleId=schedule?.id||flow.scheduleId||null;flow.updatedAt=now}
         s.audit=s.audit||[]
-        s.audit.unshift({id:randomUUID(),action:enabled?'integration_flow.activated':'integration_flow.paused',entityId:id,at:now})
+        s.audit.unshift({id:randomUUID(),action:enabled?'integration_flow.activated':'integration_flow.paused',entityId:id,scheduleId:schedule?.id||null,at:now})
         s.audit=s.audit.slice(0,1000)
       })
-      return send(req,res,200,{id,status:enabled?'active':'paused',updatedAt:now})
+      return send(req,res,200,{id,status:enabled?'active':'paused',schedule,updatedAt:now})
     }
     if (req.method === 'POST' && url.pathname === '/api/integration-requests') {
       const body=await readBody(req)
