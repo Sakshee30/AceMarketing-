@@ -134,14 +134,19 @@ export const streamAiJob=async(id:string,onEvent:(event:{event:string;data:any})
       const chunk=await reader.read()
       if(chunk.done)break
       buffer+=decoder.decode(chunk.value,{stream:true})
-      buffer=buffer.replace(/\r\n/g,'\n')
-      let boundary=buffer.indexOf('\n\n')
+      buffer=buffer.replace(/\r
+/g,'
+')
+      let boundary=buffer.indexOf('
+
+')
       while(boundary>=0){
         const block=buffer.slice(0,boundary)
         buffer=buffer.slice(boundary+2)
         let event='message'
         let data=''
-        for(const line of block.split('\n')){
+        for(const line of block.split('
+')){
           if(line.startsWith('event:'))event=line.slice(6).trim()
           else if(line.startsWith('data:'))data+=line.slice(5).trim()
         }
@@ -149,7 +154,9 @@ export const streamAiJob=async(id:string,onEvent:(event:{event:string;data:any})
           try{onEvent({event,data:JSON.parse(data)})}
           catch{onEvent({event,data})}
         }
-        boundary=buffer.indexOf('\n\n')
+        boundary=buffer.indexOf('
+
+')
       }
     }
   }finally{
@@ -210,7 +217,8 @@ export const api = {
   submitPublicConnectorRequest: (payload: Record<string, unknown>) => request<{ id: string; status: string; connector: string }>('/public/connector-requests', { method:'POST', body:JSON.stringify(payload) }),
   overview: () => request('/workspace/overview'),
   integrations: (options?:{signal?:AbortSignal}) => request('/integrations',{signal:options?.signal}),
-  requestIntegration: (payload: Record<string, unknown>) => request('/integration-requests',{method:'POST',body:JSON.stringify(payload)}),\n  connectorSyncRuns: (connector?:string,options?:{signal?:AbortSignal}) => request('/integrations/sync-runs'+(connector?'?connector='+encodeURIComponent(connector):''),{signal:options?.signal}),
+  requestIntegration: (payload: Record<string, unknown>) => request('/integration-requests',{method:'POST',body:JSON.stringify(payload)}),
+  connectorSyncRuns: (connector?:string,options?:{signal?:AbortSignal}) => request('/integrations/sync-runs'+(connector?'?connector='+encodeURIComponent(connector):''),{signal:options?.signal}),
   connectorDataSummary: (options?:{signal?:AbortSignal}) => request('/integrations/data-summary',{signal:options?.signal}),
   connectorSyncSchedules: (options?:{signal?:AbortSignal}) => request('/integrations/sync-schedules',{signal:options?.signal}),
   saveConnectorSyncSchedule: (payload:Record<string,unknown>) => request('/integrations/sync-schedules',{method:'POST',body:JSON.stringify(payload)}),
