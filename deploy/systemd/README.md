@@ -25,6 +25,7 @@ Create a dedicated account:
 ```bash
 sudo useradd --system --home /opt/acemarketing --shell /usr/sbin/nologin acemarketing
 sudo install -d -o acemarketing -g acemarketing /opt/acemarketing/releases /opt/acemarketing/backups
+sudo install -d -o acemarketing -g acemarketing /var/lib/acemarketing /var/lib/acemarketing/ml-artifacts
 sudo install -d -m 0750 /etc/acemarketing
 ```
 
@@ -50,7 +51,18 @@ npm run build:frontend
 npm run build:platform-admin   # standard/full only
 ```
 
-For a full local-ML deployment:
+For a full local-ML deployment, set the internal endpoints in `/etc/acemarketing/acemarketing.env`:
+
+```env
+ACE_DEPLOYMENT_MODE=full
+ML_SERVICE_URL=http://127.0.0.1:8000
+ML_FORECAST_SERVICE_URL=http://127.0.0.1:8000
+ML_CAUSAL_SERVICE_URL=http://127.0.0.1:8000
+ML_MMM_SERVICE_URL=http://127.0.0.1:8000
+ML_ARTIFACT_DIR=/var/lib/acemarketing/ml-artifacts
+```
+
+Then install the Python environment:
 
 ```bash
 python3 -m venv /opt/acemarketing/venv
