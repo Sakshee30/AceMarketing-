@@ -25,16 +25,16 @@ test('operation implementation and test paths exist',()=>{
   }
 })
 
-test('golden board move is canonical while remaining legacy mappings stay visible',()=>{
+test('golden board move is canonical and the registry migration is complete',()=>{
   const move=platformOperation('boards','move-card')
   assert.ok(move)
   assert.equal(move.status,'canonical')
   assert.equal(move.durability,'transactional-outbox')
   const readiness=operationRegistryReadiness()
   assert.ok(readiness.total>=platformModuleRegistry.length)
-  assert.ok(readiness.canonical>=1)
-  assert.ok(readiness.legacyMapped>=1)
-  assert.equal(readiness.migrationComplete,false)
+  assert.equal(readiness.canonical,readiness.total)
+  assert.equal(readiness.legacyMapped,0)
+  assert.equal(readiness.migrationComplete,true)
 })
 
 test('public operation snapshot omits implementation paths',()=>{
