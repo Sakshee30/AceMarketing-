@@ -59,6 +59,12 @@ jobs:
         run: npm run backend:architecture
       - name: Verify Docker-free systemd topology
         run: systemd-analyze verify deploy/systemd/*.service deploy/systemd/*.target
+      - name: Validate Docker Compose topology
+        shell: bash
+        run: |
+          cp backend/.env.example .env
+          docker compose config --quiet
+          rm -f .env
       - name: Validate product architecture profile
         run: npm run architecture:project-profile
       - name: Enforce migration and trust-boundary review impact
