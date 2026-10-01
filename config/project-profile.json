@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "ace-marketing-project-profile.v1",
+  "status": "implementation-profile",
+  "product": "AceMarketing",
+  "architectureStandard": {
+    "unified": "Unified SaaS Platform Architecture Standard v2.0",
+    "backend": "Reusable SaaS Backend Architecture & Engineering Standard v2.0"
+  },
+  "dataClassification": {
+    "default": "confidential",
+    "restrictedDomains": [
+      "identity",
+      "authorization",
+      "billing",
+      "documents",
+      "audit",
+      "ai"
+    ],
+    "publicDomains": [
+      "website"
+    ]
+  },
+  "enabledModules": [
+    "identity",
+    "workspaces",
+    "organizations",
+    "memberships",
+    "authorization",
+    "entitlements",
+    "forms",
+    "custom-objects",
+    "rules",
+    "boards",
+    "workflows",
+    "approvals",
+    "integrations",
+    "webhooks",
+    "jobs",
+    "notifications",
+    "reporting",
+    "scheduling",
+    "usage",
+    "billing",
+    "search",
+    "documents",
+    "audit",
+    "capabilities",
+    "cells",
+    "ai"
+  ],
+  "deploymentProfile": "high-scale",
+  "residency": {
+    "productionApproved": false,
+    "defaultRegion": "ap-south-1",
+    "policy": "Production residency is not approved until deployment/environment evidence is recorded."
+  },
+  "contractedLoad": {
+    "registeredUsersTarget": 700000,
+    "sustainedDynamicRpsTarget": 50000,
+    "qualificationStatus": "unverified",
+    "note": "Design and verification targets only; not benchmark results."
+  },
+  "availabilityObjectives": {
+    "coreApi": "99.95% proposed 30-day objective",
+    "qualificationStatus": "unverified"
+  },
+  "externalDependencies": [
+    "PostgreSQL-compatible transactional database",
+    "Durable object storage",
+    "Durable queue/job persistence",
+    "Email delivery provider when enabled",
+    "Configured integration providers",
+    "Configured AI/model providers when enabled"
+  ],
+  "retention": {
+    "policyDocument": "docs/project-annex/BACKEND_DEPLOYMENT_PROFILE.md",
+    "productionApproved": false,
+    "note": "Retention periods remain environment/product-policy dependent and require owner approval."
+  },
+  "approvedExceptions": [],
+  "evidence": {
+    "architectureAcceptance": "docs/evidence/BACKEND_ARCHITECTURE_ACCEPTANCE.md",
+    "backendProfile": "docs/project-annex/BACKEND_DEPLOYMENT_PROFILE.md"
+  }
+}
