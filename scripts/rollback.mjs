@@ -1,5 +1,6 @@
 import {readFile} from 'node:fs/promises'
 import {spawn} from 'node:child_process'
+import pg from 'pg'
 
 const manifestPath=process.argv[2]
 if(!manifestPath){
@@ -13,6 +14,34 @@ const artifacts=manifest.artifacts||{}
 for(const required of ['api','worker','web']){
   if(!artifacts[required])throw new Error('release manifest missing artifact: '+required)
 }
+
+const verifySchemaCompatibility=async()=>{
+  const databaseUrl=process.env.DATABASE_URL
+  const releaseHead=String(manifest.databaseMigrationHead||'').trim()
+  if(!databaseUrl||!releaseHead){
+    console.warn('[rollback] schema compatibility could not be verified because DATABASE_URL or databaseMigrationHead is missing')
+    return
+  }
+  const {Pool}=pg
+  const pool=new Pool({
+    connectionString:databaseUrl,
+    ...(process.env.DB_SSL==='require'?{ssl:{rejectUnauthorized:false}}:{})
+  })
+  try{
+    const exists=await pool.query("SELECT to_regclass('public.ace_schema_migrations') AS table_name")
+    if(!exists.rows[0]?.table_name)return
+    const {rows}=await pool.query('SELECT name FROM ace_schema_migrations ORDER BY name DESC LIMIT 1')
+    const currentHead=String(rows[0]?.name||'')
+    if(currentHead&&currentHead>releaseHead&&process.env.ROLLBACK_ALLOW_NEWER_SCHEMA!=='YES'){
+      throw new Error(
+        'database schema '+currentHead+' is newer than rollback release '+releaseHead+
+        '; verify forward-schema compatibility and set ROLLBACK_ALLOW_NEWER_SCHEMA=YES to proceed'
+      )
+    }
+    console.log('[rollback] schema check:',{currentHead,releaseHead})
+  }finally{await pool.end()}
+}
+await verifySchemaCompatibility()
 
 const env={
   ...process.env,
