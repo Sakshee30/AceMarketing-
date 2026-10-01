@@ -10,8 +10,8 @@ import { audienceOpsStats, closeLeadOps, createActivationRun, createAudience as 
 import { closeAgentOrchestrator, completeFollowUp as persistCompleteFollowUp, createAgentRun, createFollowUp, createMeeting, getMeeting, listAgentRuns, listFeedback as listPersistedFeedback, listFollowUps as listPersistedFollowUps, listMeetings as listPersistedMeetings, listRoutingDecisions, recordFeedback, rescheduleMeeting, routeLead, updateAgentRun } from './agent-orchestrator.mjs'
 import { closeCustomIntegrations, createCustomIntegration as persistCustomIntegration, listCustomIntegrations, testCustomIntegration as runCustomIntegrationTest } from './custom-integrations.mjs'
 import { closeObservability, listAlerts as listLiveAlerts, listMonitoringRules as listLiveMonitoringRules, monitoringSnapshot, recordApiTelemetry, resolveAlert as resolveLiveAlert, saveMonitoringRule } from './observability.mjs'
-import { assertCapacity, closeEntitlements, finalizeReservation, resourceCountAllowed, subscriptionSummary, updateWorkspaceEntitlements } from './entitlements.mjs'
-import { billingConfigured, billingEventHistory, billingReconciliationHistory, closeBillingProvider, createCheckoutSession, createPortalSession, processStripeEvent, verifyStripeWebhook } from './billing-provider.mjs'
+import { closeEntitlements, finalizeReservation, resourceCountAllowed, subscriptionSummary } from './entitlements.mjs'
+import { billingConfigured, billingEventHistory, billingReconciliationHistory, closeBillingProvider, createCheckoutSession, createPortalSession, verifyStripeWebhook } from './billing-provider.mjs'
 import { closeConsentStore, consentAllows, consentStats, getConsent, listConsentAudit, saveConsent } from './consent.mjs'
 import { closePrivacyOps, deleteSubject, exportSubject, listPrivacyRequests, purgeRetention, retentionPolicy } from './privacy-ops.mjs'
 import { closeAudienceScheduler, listAudienceRefreshRuns, listAudienceSchedules, saveAudienceSchedule } from './audience-scheduler.mjs'
@@ -80,6 +80,9 @@ import {handleAuthorizeUpload} from '../modules/documents/src/application/comman
 import {handleConnectProvider} from '../modules/integrations/src/application/commands/connect-provider/connect-provider.handler.mjs'
 import {handleReconcileIntegration} from '../modules/integrations/src/application/commands/reconcile-sync/reconcile-sync.handler.mjs'
 import {handleReplayWebhookDelivery} from '../modules/webhooks/src/application/commands/replay-delivery/replay-delivery.handler.mjs'
+import {handleReserveQuota} from '../modules/usage/src/application/commands/reserve-quota/reserve-quota.handler.mjs'
+import {handleChangeSubscription} from '../modules/billing/src/application/commands/change-subscription/change-subscription.handler.mjs'
+import {handleReconcilePayment} from '../modules/billing/src/application/commands/reconcile-payment/reconcile-payment.handler.mjs'
 
 const runtimeRole=runtimeRolePolicy()
 
@@ -625,7 +628,7 @@ const server = http.createServer(async (req,res)=>{
     try{
       const raw=await readRawBody(req)
       const event=verifyStripeWebhook(raw,req.headers['stripe-signature'])
-      const result=await processStripeEvent(event)
+      const result=await handleReconcilePayment({event})
       return send(req,res,200,{received:true,...result})
     }catch(error){
       return send(req,res,400,{error:error instanceof Error?error.message:'invalid billing webhook'})
@@ -809,7 +812,7 @@ const server = http.createServer(async (req,res)=>{
   if(meteredMetric){
     let capacity
     try{
-      capacity=await assertCapacity(workspaceId,meteredMetric,1,req.requestId)
+      capacity=await handleReserveQuota({workspaceId,metric:meteredMetric,quantity:1,requestId:req.requestId})
     }catch(error){
       return send(req,res,503,{
         error:'usage quota check unavailable',
@@ -4680,7 +4683,7 @@ const server = http.createServer(async (req,res)=>{
       if(req.user?.role!=='owner') return send(req,res,403,{error:'owner role required'})
       const body=await readBody(req)
       try{
-        await updateWorkspaceEntitlements(workspaceId,body)
+        await handleChangeSubscription({workspaceId,input:body})
         return send(req,res,200,await subscriptionSummary(workspaceId))
       }catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'invalid entitlements'})}
     }
