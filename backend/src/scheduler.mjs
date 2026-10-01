@@ -1,7 +1,8 @@
 import {randomUUID} from 'node:crypto'
-import {closeAudienceScheduler,runDueAudienceSchedules} from './audience-scheduler.mjs'
-import {closeReportScheduler,runDueReportSchedules} from './report-scheduler.mjs'
+import {closeAudienceScheduler} from './audience-scheduler.mjs'
+import {closeReportScheduler} from './report-scheduler.mjs'
 import {createDrainController} from './platform/drain-controller.mjs'
+import {handleEvaluateDueSchedule} from '../modules/scheduling/src/application/commands/evaluate-due-schedule/evaluate-due-schedule.handler.mjs'
 
 const schedulerId=process.env.SCHEDULER_ID||('scheduler_'+randomUUID())
 const pollMs=Math.max(1000,Number(process.env.SCHEDULER_POLL_MS||5000))
@@ -20,13 +21,17 @@ const runCycle=async()=>{
   if(!finish)return
   try{
     const now=Date.now()
-    if(now-lastAudiencePoll>=audienceEveryMs){
-      lastAudiencePoll=now
-      await runDueAudienceSchedules(audienceBatch)
-    }
-    if(now-lastReportPoll>=reportEveryMs){
-      lastReportPoll=now
-      await runDueReportSchedules(reportBatch)
+    const audienceDue=now-lastAudiencePoll>=audienceEveryMs
+    const reportDue=now-lastReportPoll>=reportEveryMs
+    if(audienceDue)lastAudiencePoll=now
+    if(reportDue)lastReportPoll=now
+    if(audienceDue||reportDue){
+      await handleEvaluateDueSchedule({
+        audienceLimit:audienceDue?audienceBatch:1,
+        reportLimit:reportDue?reportBatch:1,
+        runAudience:audienceDue?undefined:async()=>[],
+        runReports:reportDue?undefined:async()=>[]
+      })
     }
   }finally{
     finish()
