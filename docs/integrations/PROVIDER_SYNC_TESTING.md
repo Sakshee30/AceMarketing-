@@ -45,6 +45,7 @@ Supported connector names:
 - TikTok Ads
 - Pinterest
 - Microsoft Ads / Bing Ads
+- LinkedIn Ads
 - X
 
 ### Trigger an incremental read
@@ -106,6 +107,15 @@ Requires the GA4 OAuth connection plus:
 
 Reads the Analytics Data API report with campaign/source dimensions and sessions/users/key-events/revenue metrics.
 
+### LinkedIn Ads
+
+Requires LinkedIn OAuth with `r_ads_reporting` plus:
+
+- `LINKEDIN_AD_ACCOUNT_ID`
+- `LINKEDIN_MARKETING_VERSION`
+
+Reads daily campaign-level Ad Analytics and persists spend, impressions, clicks, conversions, and conversion value when available.
+
 ### HubSpot
 
 OAuth scopes include contacts, companies, and deals read access. Incremental reads use CRM search timestamps and durable per-object checkpoints.
@@ -138,12 +148,25 @@ Reads daily ad-account analytics.
 
 ### Microsoft Ads
 
-The existing repository credential is a conversion/UET credential and is not sufficient by itself for Microsoft Reporting API report generation/download. For testing, configure:
+Microsoft reporting uses delegated OAuth and the native Reporting v13 REST flow:
 
+1. submit `CampaignPerformanceReportRequest`,
+2. poll `GenerateReport/Poll`,
+3. download the provider ZIP,
+4. parse the CSV,
+5. persist raw + canonical daily campaign facts.
+
+Configure:
+
+- `MICROSOFT_ADS_OAUTH_CLIENT_ID`
+- `MICROSOFT_ADS_OAUTH_CLIENT_SECRET`
+- `MICROSOFT_ADS_DEVELOPER_TOKEN`
+- `MICROSOFT_ADS_CUSTOMER_ID`
 - `MICROSOFT_ADS_ACCOUNT_ID`
-- `MICROSOFT_ADS_REPORTING_URL`
 
-The reporting URL must be a governed HTTPS JSON bridge that returns normalized campaign rows. This preserves the connector runtime contract while the native SOAP asynchronous report downloader is qualified separately.
+The reporting OAuth credential is separate from `MICROSOFT_UET_TAG_ID` / `MICROSOFT_CAPI_TOKEN`, which are used only for server-side conversion delivery.
+
+Downloads are bounded by `CONNECTOR_SYNC_MAX_DOWNLOAD_BYTES`, redirects are revalidated through the outbound egress policy, and checkpoints advance only after the report is downloaded and persisted successfully.
 
 ### X Ads
 
