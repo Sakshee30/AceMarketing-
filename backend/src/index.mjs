@@ -92,6 +92,9 @@ import {handleUpdateOrganization} from '../modules/organizations/src/application
 import {handlePublishPolicy} from '../modules/authorization/src/application/commands/publish-policy/publish-policy.handler.mjs'
 import {handleRequestInference} from '../modules/ai/src/application/commands/request-inference/request-inference.handler.mjs'
 import {handleActivateModelResult} from '../modules/ai/src/application/commands/activate-model-result/activate-model-result.handler.mjs'
+import {handleReplayDeadLetter} from '../modules/jobs/src/application/commands/replay-dead-letter/replay-dead-letter.handler.mjs'
+import {handleSearchAudit} from '../modules/audit/src/application/queries/search-audit/search-audit.handler.mjs'
+import {handleExportAudit} from '../modules/audit/src/application/commands/export-audit/export-audit.handler.mjs'
 
 const runtimeRole=runtimeRolePolicy()
 
@@ -5462,6 +5465,16 @@ const server = http.createServer(async (req,res)=>{
       return
     }
 
+    if (req.method === 'POST' && /^\/api\/ai\/jobs\/[^/]+\/replay$/.test(url.pathname)) {
+      const parts=url.pathname.split('/')
+      const id=decodeURIComponent(parts[4]||'')
+      try{
+        const job=await handleReplayDeadLetter({workspaceId,jobId:id})
+        return send(req,res,202,{job})
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'dead-letter replay failed',code:error?.code||'dead_letter_replay_failed'})
+      }
+    }
     if (req.method === 'POST' && /^\/api\/ai\/jobs\/[^/]+\/cancel$/.test(url.pathname)) {
       const parts=url.pathname.split('/')
       const id=decodeURIComponent(parts[4]||'')
@@ -6147,10 +6160,28 @@ const server = http.createServer(async (req,res)=>{
       return item?send(req,res,201,item):send(req,res,409,{error:'workspace name already exists'})
     }
     if (req.method === 'GET' && url.pathname === '/api/audit-log') {
-      const durable=await listAuditRecords({workspaceId,limit:250}).catch(()=>[])
+      const durable=await handleSearchAudit({
+        workspaceId,
+        limit:Number(url.searchParams.get('limit')||250),
+        before:url.searchParams.get('before')||null
+      }).catch(()=>[])
       if(durable.length)return send(req,res,200,{items:durable,source:'durable'})
       const state=await getState()
       return send(req,res,200,{items:(state.audit||[]).slice(0,250),source:'compatibility'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/audit-log/export') {
+      try{
+        const job=await handleExportAudit({
+          workspaceId,
+          limit:Number(url.searchParams.get('limit')||500),
+          before:url.searchParams.get('before')||null,
+          actorId:req.user?.userId||null,
+          requestId:req.requestId
+        })
+        return send(req,res,202,{jobId:job.id,status:job.status,resultSchemaVersion:'audit-export.v1'})
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'audit export failed',code:error?.code||'audit_export_failed'})
+      }
     }
     if (req.method === 'GET' && url.pathname === '/api/api-keys') {
       const state=await getState()
