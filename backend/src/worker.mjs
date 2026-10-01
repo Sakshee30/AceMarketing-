@@ -17,7 +17,7 @@ import {executeAiActivationJob,reconcileStaleActivationDispatches} from './ai-ac
 import {applyDeploymentHealthGuard,recordDeploymentObservation} from './ai-deployment-controls.mjs'
 import {evaluateAiTaskWorkerExecution} from './ai-governance-store.mjs'
 import {createDrainController} from './platform/drain-controller.mjs'
-import {handleDeliverWebhook} from '../backend/modules/webhooks/src/application/commands/deliver-webhook/deliver-webhook.handler.mjs'
+import {handleDeliverWebhook} from '../modules/webhooks/src/application/commands/deliver-webhook/deliver-webhook.handler.mjs'
 import {recordWebhookDeliveryAttempt} from './platform/webhook-delivery-store.mjs'
 import {workerClassPolicy} from './platform/worker-class.mjs'
 import {registerOutboxHandler,runOutboxRelayBatch} from './platform/outbox-relay.mjs'
