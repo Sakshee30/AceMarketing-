@@ -59,14 +59,17 @@ if(mode.features.files){
 }else warnings.push('file/object-storage feature disabled by deployment mode')
 
 if(mode.features.ai){
-  requireAll('AI worker authentication',['ML_SERVICE_AUTH_TOKEN'])
+  requireAll('AI service',['ML_SERVICE_URL','ML_SERVICE_AUTH_TOKEN'])
   if(process.env.AI_LIVE_PROVIDER_CALLS==='true'){
     requireAny('hosted AI provider credential',['OPENAI_API_KEY','GOOGLE_AI_API_KEY','VOYAGE_API_KEY','ANTHROPIC_API_KEY'])
   }
 }
 if(mode.features.aiForecasting){
+  requireAll('forecast service',['ML_FORECAST_SERVICE_URL'])
   requireAll('Chronos checkpoint',['CHRONOS2_REVISION','CHRONOS2_SNAPSHOT_DIR','CHRONOS2_EXPECTED_SHA256'])
 }
+if(mode.features.aiCausal)requireAll('causal service',['ML_CAUSAL_SERVICE_URL'])
+if(mode.features.aiMmm)requireAll('marketing-mix service',['ML_MMM_SERVICE_URL'])
 if(mode.features.controlPlane){
   requireAll('control plane authentication',['CONTROL_ADMIN_EMAIL','CONTROL_ADMIN_PASSWORD_HASH','CONTROL_SESSION_SECRET'])
 }
