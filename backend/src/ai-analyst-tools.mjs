@@ -3,7 +3,7 @@ import {listAiResults} from './ai-runtime.mjs'
 import {listAnomalyItems,listForecastRecords} from './ai-domain-results.mjs'
 import {leadOpsStats,listLeadProfiles} from './lead-ops.mjs'
 import {searchKnowledge} from './knowledge.mjs'
-import {getState,withWorkspace} from './store.mjs'
+import {getState,withWorkspace} from './store.mjs'\nimport {listConnectorCampaignFacts} from './connector-ingestion.mjs'
 
 const TOOL_NAMES=new Set([
   'campaign_performance',
@@ -46,7 +46,9 @@ const workspaceState=workspaceId=>withWorkspace(workspaceId,()=>getState())
 
 const campaignPerformance=async(workspaceId,args)=>{
   const state=await workspaceState(workspaceId)
-  const campaigns=Array.isArray(state.campaigns)?state.campaigns:Array.isArray(state.campaignFacts)?state.campaignFacts:[]
+  const workspaceCampaigns=Array.isArray(state.campaigns)?state.campaigns:Array.isArray(state.campaignFacts)?state.campaignFacts:[]
+  const connectorFacts=await listConnectorCampaignFacts({workspaceId,limit:args.limit,days:90}).catch(()=>[])
+  const campaigns=connectorFacts.length?connectorFacts:workspaceCampaigns
   const deliveries=Array.isArray(state.signalDeliveries)?state.signalDeliveries:[]
   return {
     kind:'observed',
@@ -61,7 +63,7 @@ const campaignPerformance=async(workspaceId,args)=>{
       leads:item.leads??null,
       customers:item.customers??null,
       revenue:item.revenue??null,
-      currency:item.currency||null
+      currency:item.currency||null,\n      connector:item.connector||null,\n      conversions:item.conversions??null,\n      sessions:item.sessions??null,\n      users:item.users??null
     })),
     deliverySummary:{
       total:deliveries.length,
