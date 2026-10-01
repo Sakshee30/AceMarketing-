@@ -17,6 +17,16 @@ test('traceability maps each operation to existing implementation and test evide
   const root=process.cwd()
   for(const feature of platformFeatureTraceability){
     assert.ok(feature.operations.length>0,feature.id+' has no operations')
+    assert.ok(feature.description,feature.id+' description missing')
+    assert.ok(feature.configuration.length>0,feature.id+' configuration missing')
+    assert.ok(feature.endpoints.length>0,feature.id+' endpoint traceability missing')
+    assert.ok(feature.eventContracts.length>=0)
+    assert.ok(feature.dashboard,feature.id+' dashboard missing')
+    for(const operation of feature.operations){
+      assert.ok(operation.operationId,feature.id+' operationId missing')
+      assert.ok(operation.requestSchemaId,feature.id+' request schema id missing')
+      assert.ok(operation.permission,feature.id+' permission missing')
+    }
     for(const file of [...feature.handlers,...feature.tests]){
       assert.equal(fs.existsSync(path.join(root,file)),true,feature.id+' evidence path missing: '+file)
     }
@@ -40,9 +50,24 @@ test('public traceability snapshot omits private implementation paths from opera
     assert.ok(item.owner)
     assert.ok(item.permissions.length)
     assert.ok(item.operations.length)
+    assert.ok(item.description)
+    assert.ok(item.configuration.length)
+    assert.ok(item.endpoints.length)
+    assert.ok(item.dashboard)
     for(const operation of item.operations){
       assert.equal('handlerPath' in operation,false)
       assert.equal('testPath' in operation,false)
+      assert.ok(operation.operationId)
+      assert.ok(operation.requestSchemaId)
     }
+  }
+})
+
+
+test('migration-backed features expose concrete persistence tables where their migrations create tables',()=>{
+  for(const feature of platformFeatureTraceability){
+    if(feature.migrations.length===0)continue
+    const createsTables=feature.migrations.some(name=>name!=='053_provider_migration_evidence.sql')
+    if(createsTables)assert.ok(feature.tables.length>0,feature.id+' table traceability missing')
   }
 })
