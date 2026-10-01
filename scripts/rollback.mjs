@@ -23,6 +23,10 @@ const env={
 }
 if(artifacts.controlApi)env.ACE_CONTROL_API_IMAGE=String(artifacts.controlApi)
 if(artifacts.platformAdmin)env.ACE_PLATFORM_ADMIN_IMAGE=String(artifacts.platformAdmin)
+if(artifacts.ml)env.ACE_ML_IMAGE=String(artifacts.ml)
+if(artifacts.mlForecast)env.ACE_ML_FORECAST_IMAGE=String(artifacts.mlForecast)
+if(artifacts.mlCausal)env.ACE_ML_CAUSAL_IMAGE=String(artifacts.mlCausal)
+if(artifacts.mlMmm)env.ACE_ML_MMM_IMAGE=String(artifacts.mlMmm)
 
 console.log('[rollback] application rollback target:',manifest.commit||manifest.ref||manifestPath)
 console.log('[rollback] database migrations are NOT reversed automatically.')
