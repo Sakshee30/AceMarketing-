@@ -24,7 +24,7 @@ import { normalizeCallEvent, resolveCallWorkspace, verifyCallWebhook } from './c
 import { createCalendarEvent, updateCalendarEvent } from './calendar-provider.mjs'
 import { modelCatalogItems, modelRegistryItem, registrySummary } from './ai-registry.mjs'
 import { verifyProviderAccess } from './ai-providers.mjs'
-import { closeAiRuntime, listAiResults, submitHostedAiJob } from './ai-runtime.mjs'
+import { closeAiRuntime, listAiResults } from './ai-runtime.mjs'
 import { getMlCapabilities, mlServiceConfigured } from './ml-client.mjs'
 import { closeKnowledge, ingestKnowledgeText, listKnowledgeSources, revokeKnowledgeSource } from './knowledge.mjs'
 import { deployModel, getEvaluationPolicy, getTenantRegistry, listEvaluations, promoteModel, qualifyEvaluation, recordProviderAccessVerification, rollbackModel, syncTenantRegistry, undeployModel, upsertEvaluationPolicy } from './ai-registry-store.mjs'
@@ -35,7 +35,6 @@ import { validateHostedTaskInput } from './ai-input-validation.mjs'
 import { evaluateAiTaskAdmission, getAiTaskPolicy, listAiTaskPolicies, listCreativeAssets, listTranscripts, reviewCreativeAsset, saveAiTaskPolicy } from './ai-governance-store.mjs'
 import { getSegmentMemberships, listAnomalyItems, listCausalRecords, listForecastRecords, listMarketingMixRecords, listRankingItems, listSegmentSnapshots, reviewAnomalyItem } from './ai-domain-results.mjs'
 import { approveAiActivationProposal, attachActivationProposalReviewerJob, createAiActivationProposal, listAiActivationProposals, markActivationProposalReviewerBlocked, rejectAiActivationProposal } from './ai-activation-proposals.mjs'
-import {queueAiActivationExecution} from './ai-activation-execution.mjs'
 import {analystToolNames,executeAnalystTool,executeAnalystToolSet} from './ai-analyst-tools.mjs'
 import {deploymentHealth,listDeploymentControls,saveDeploymentControl} from './ai-deployment-controls.mjs'
 import {aiMonitoringSnapshot} from './ai-monitoring.mjs'
@@ -89,6 +88,10 @@ import {handleStartLogin} from '../modules/identity/src/application/commands/sta
 import {handleRecoverAccount} from '../modules/identity/src/application/commands/recover-account/recover-account.handler.mjs'
 import {handleApproveFile} from '../modules/documents/src/application/commands/approve-file/approve-file.handler.mjs'
 import {handleRebuildSearchIndex} from '../modules/search/src/application/commands/rebuild-index/rebuild-index.handler.mjs'
+import {handleUpdateOrganization} from '../modules/organizations/src/application/commands/update-organization/update-organization.handler.mjs'
+import {handlePublishPolicy} from '../modules/authorization/src/application/commands/publish-policy/publish-policy.handler.mjs'
+import {handleRequestInference} from '../modules/ai/src/application/commands/request-inference/request-inference.handler.mjs'
+import {handleActivateModelResult} from '../modules/ai/src/application/commands/activate-model-result/activate-model-result.handler.mjs'
 
 const runtimeRole=runtimeRolePolicy()
 
@@ -4951,7 +4954,7 @@ const server = http.createServer(async (req,res)=>{
       const body=await readBody(req)
       try{
         const item=await createAiActivationProposal({workspaceId,input:body,actor:authenticatedUser})
-        const reviewerSubmission=await submitHostedAiJob({
+        const reviewerSubmission=await handleRequestInference({
           workspaceId,
           task:'recommendation_reviewer',
           input:{
@@ -5015,7 +5018,7 @@ const server = http.createServer(async (req,res)=>{
     if (req.method === 'POST' && /^\/api\/ai\/activation-proposals\/[^/]+\/execute$/.test(url.pathname)) {
       const id=decodeURIComponent(url.pathname.split('/')[4]||'')
       try{
-        const execution=await queueAiActivationExecution({workspaceId,id,actor:authenticatedUser})
+        const execution=await handleActivateModelResult({workspaceId,proposalId:id,actor:authenticatedUser})
         return send(req,res,202,{
           item:execution.proposal,
           jobId:execution.job?.id||null,
@@ -5492,7 +5495,7 @@ const server = http.createServer(async (req,res)=>{
         clientMetadata:body.clientMetadata&&typeof body.clientMetadata==='object'?body.clientMetadata:{},
         shadow:true
       }
-      const submission=await submitHostedAiJob({
+      const submission=await handleRequestInference({
         workspaceId,
         task,
         input:validated.input,
@@ -5527,7 +5530,7 @@ const server = http.createServer(async (req,res)=>{
         evidenceIds:Array.isArray(body.evidenceIds)?body.evidenceIds.map(String).slice(0,100):[],
         clientMetadata:body.clientMetadata&&typeof body.clientMetadata==='object'?body.clientMetadata:{}
       }
-      const submission=await submitHostedAiJob({
+      const submission=await handleRequestInference({
         workspaceId,
         task,
         input:validated.input,
@@ -5610,7 +5613,7 @@ const server = http.createServer(async (req,res)=>{
         },
         analystTools
       }
-      const submission=await submitHostedAiJob({
+      const submission=await handleRequestInference({
         workspaceId,
         task:'analyst',
         input:{
@@ -6104,11 +6107,10 @@ const server = http.createServer(async (req,res)=>{
     if (req.method === 'POST' && url.pathname === '/api/settings') {
       const body=await readBody(req)
       try{
-        const saved=await handleUpdateWorkspace({
-          workspaceId,
-          patch:body,
-          actorId:req.user?.userId||null
-        })
+        const keys=Object.keys(body&&typeof body==='object'?body:{})
+        const saved=keys.length===1&&keys[0]==='organization'
+          ?await handleUpdateOrganization({workspaceId,organization:body.organization,actorId:req.user?.userId||null})
+          :await handleUpdateWorkspace({workspaceId,patch:body,actorId:req.user?.userId||null})
         return send(req,res,200,saved)
       }catch(error){
         return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'workspace settings update failed',code:error?.code||'workspace_settings_update_failed'})
@@ -6585,7 +6587,7 @@ const server = http.createServer(async (req,res)=>{
     }
     const policyPublishMatch=url.pathname.match(/^\/api\/policy-rules\/([^/]+)\/publish$/)
     if(req.method==='POST'&&policyPublishMatch){
-      const rule=await handlePublishRule({workspaceId,id:decodeURIComponent(policyPublishMatch[1])})
+      const rule=await handlePublishPolicy({workspaceId,id:decodeURIComponent(policyPublishMatch[1])})
       if(!rule)return send(req,res,404,{error:'policy rule not found'})
       await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'policy_rule.published',entityType:'policy_rule',entityId:rule.id,requestId:req.requestId,traceId:req.context?.traceId,metadata:{version:Number(rule.published_version||0)}}).catch(()=>{})
       return send(req,res,200,rule)
