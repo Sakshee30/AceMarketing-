@@ -1,6 +1,6 @@
 import {createHash,randomUUID} from 'node:crypto'
 import {pool} from './database.mjs'
-import {connectorCredential} from './connector-auth.mjs'\nimport {enqueueJob} from './queue.mjs'
+import {connectorCredential} from './connector-auth.mjs'\nimport {enqueueJob} from './queue.mjs'\nimport {withTenantDbTransaction,withSystemDbTransaction} from './platform/tenant-db.mjs'
 
 const timeoutMs=()=>Math.max(1000,Math.min(Number(process.env.CONNECTOR_SYNC_HTTP_TIMEOUT_MS||30000),120000))
 const maxPages=()=>Math.max(1,Math.min(Number(process.env.CONNECTOR_SYNC_MAX_PAGES||100),1000))
@@ -8,7 +8,7 @@ const sha=value=>createHash('sha256').update(typeof value==='string'?value:JSON.
 const isoDay=value=>new Date(value).toISOString().slice(0,10)
 const n=value=>Number.isFinite(Number(value))?Number(value):0
 const s=value=>value==null?'':String(value)
-const nowIso=()=>new Date().toISOString()
+const nowIso=()=>new Date().toISOString()\nconst tenantQuery=(workspaceId,text,params=[])=>withTenantDbTransaction(workspaceId,db=>db.query(text,params))\nconst systemQuery=(text,params=[])=>withSystemDbTransaction(db=>db.query(text,params))
 
 const requestJson=async(url,{method='GET',headers={},body=null,allowedOrigins=[]}={})=>{
   const parsed=new URL(url)
@@ -422,10 +422,10 @@ export const runConnectorSync=async({workspaceId,connector,mode='incremental',st
   const runId=await createRun({workspaceId,connector,mode,start,end})
   try{
     const stats=await adapter({workspaceId,connector,mode,start,end,options,runId})
-    await finishRun(runId,'succeeded',stats)
+    await finishRun(workspaceId,runId,'succeeded',stats)
     return {runId,connector,mode,status:'succeeded',...stats}
   }catch(error){
-    await finishRun(runId,'failed',{},error instanceof Error?error.message:String(error)).catch(()=>{})
+    await finishRun(workspaceId,runId,'failed',{},error instanceof Error?error.message:String(error)).catch(()=>{})
     throw error
   }
 }
@@ -483,7 +483,7 @@ export const runDueConnectorSyncSchedules=async({limit=10}={})=>{
   )
   let enqueued=0
   for(const row of rows){
-    const claimed=await pool.query(
+    const claimed=await systemQuery(
       `UPDATE ace_connector_sync_schedules
        SET next_run_at=now()+(interval_minutes*interval '1 minute'),last_enqueued_at=now(),updated_at=now()
        WHERE id=$1 AND enabled=true AND next_run_at=$2
@@ -503,7 +503,7 @@ export const runDueConnectorSyncSchedules=async({limit=10}={})=>{
     })
     if(job?.id){
       enqueued++
-      await pool.query('UPDATE ace_connector_sync_schedules SET last_job_id=$2 WHERE id=$1',[row.id,job.id])
+      await systemQuery('UPDATE ace_connector_sync_schedules SET last_job_id=$2 WHERE id=$1',[row.id,job.id])
     }
   }
   return {checked:rows.length,enqueued}
@@ -512,10 +512,10 @@ export const runDueConnectorSyncSchedules=async({limit=10}={})=>{
 export const connectorDataSummary=async(workspaceId)=>{
   if(!pool)return {available:false}
   const [campaigns,crm,raw,checkpoints]=await Promise.all([
-    pool.query('SELECT connector,COUNT(*)::int rows,MIN(day) min_day,MAX(day) max_day,SUM(spend)::numeric spend,SUM(conversion_value)::numeric conversion_value FROM ace_campaign_daily WHERE workspace_id=$1 GROUP BY connector ORDER BY connector',[workspaceId]),
-    pool.query('SELECT connector,object_type,COUNT(*)::int rows,MAX(source_updated_at) max_source_updated_at FROM ace_crm_records WHERE workspace_id=$1 GROUP BY connector,object_type ORDER BY connector,object_type',[workspaceId]),
-    pool.query('SELECT connector,stream,COUNT(*)::int rows,MAX(ingested_at) last_ingested_at FROM ace_connector_raw_records WHERE workspace_id=$1 GROUP BY connector,stream ORDER BY connector,stream',[workspaceId]),
-    pool.query('SELECT connector,stream,watermark,cursor,updated_at FROM ace_connector_checkpoints WHERE workspace_id=$1 ORDER BY connector,stream',[workspaceId])
+    tenantQuery(workspaceId,'SELECT connector,COUNT(*)::int rows,MIN(day) min_day,MAX(day) max_day,SUM(spend)::numeric spend,SUM(conversion_value)::numeric conversion_value FROM ace_campaign_daily WHERE workspace_id=$1 GROUP BY connector ORDER BY connector',[workspaceId]),
+    tenantQuery(workspaceId,'SELECT connector,object_type,COUNT(*)::int rows,MAX(source_updated_at) max_source_updated_at FROM ace_crm_records WHERE workspace_id=$1 GROUP BY connector,object_type ORDER BY connector,object_type',[workspaceId]),
+    tenantQuery(workspaceId,'SELECT connector,stream,COUNT(*)::int rows,MAX(ingested_at) last_ingested_at FROM ace_connector_raw_records WHERE workspace_id=$1 GROUP BY connector,stream ORDER BY connector,stream',[workspaceId]),
+    tenantQuery(workspaceId,'SELECT connector,stream,watermark,cursor,updated_at FROM ace_connector_checkpoints WHERE workspace_id=$1 ORDER BY connector,stream',[workspaceId])
   ])
   return {available:true,campaigns:campaigns.rows,crm:crm.rows,raw:raw.rows,checkpoints:checkpoints.rows,generatedAt:nowIso()}
 }
