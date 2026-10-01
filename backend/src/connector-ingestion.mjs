@@ -1,6 +1,6 @@
 import {createHash,randomUUID} from 'node:crypto'
 import {pool} from './database.mjs'
-import {connectorCredential} from './connector-auth.mjs'
+import {connectorCredential} from './connector-auth.mjs'\nimport {enqueueJob} from './queue.mjs'
 
 const timeoutMs=()=>Math.max(1000,Math.min(Number(process.env.CONNECTOR_SYNC_HTTP_TIMEOUT_MS||30000),120000))
 const maxPages=()=>Math.max(1,Math.min(Number(process.env.CONNECTOR_SYNC_MAX_PAGES||100),1000))
@@ -442,6 +442,71 @@ export const listConnectorSyncRuns=async({workspaceId,connector=null,limit=50})=
      FROM ace_connector_sync_runs WHERE ${where} ORDER BY created_at DESC LIMIT $${params.length}`,params
   )
   return rows
+}
+
+export const listConnectorSyncSchedules=async({workspaceId})=>{
+  if(!pool)return []
+  const {rows}=await pool.query(
+    'SELECT id,connector,enabled,interval_minutes,next_run_at,last_enqueued_at,last_job_id,options,created_at,updated_at FROM ace_connector_sync_schedules WHERE workspace_id=$1 ORDER BY connector',
+    [workspaceId]
+  )
+  return rows
+}
+
+export const saveConnectorSyncSchedule=async({workspaceId,connector,enabled=true,intervalMinutes=60,options={}})=>{
+  if(!pool)throw new Error('DATABASE_URL is required for connector schedules')
+  if(!connectorReadCatalog().includes(connector))throw new Error('connector does not support read synchronization')
+  const interval=Math.max(5,Math.min(Number(intervalMinutes||60),10080))
+  const id='css_'+sha([workspaceId,connector]).slice(0,32)
+  const {rows}=await pool.query(
+    `INSERT INTO ace_connector_sync_schedules(id,workspace_id,connector,enabled,interval_minutes,next_run_at,options,created_at,updated_at)
+     VALUES ($1,$2,$3,$4,$5,now(),$6::jsonb,now(),now())
+     ON CONFLICT(workspace_id,connector) DO UPDATE SET
+       enabled=EXCLUDED.enabled,interval_minutes=EXCLUDED.interval_minutes,options=EXCLUDED.options,
+       next_run_at=CASE WHEN ace_connector_sync_schedules.enabled=false AND EXCLUDED.enabled=true THEN now() ELSE ace_connector_sync_schedules.next_run_at END,
+       updated_at=now()
+     RETURNING id,connector,enabled,interval_minutes,next_run_at,last_enqueued_at,last_job_id,options,created_at,updated_at`,
+    [id,workspaceId,connector,Boolean(enabled),interval,JSON.stringify(options||{})]
+  )
+  return rows[0]
+}
+
+export const runDueConnectorSyncSchedules=async({limit=10}={})=>{
+  if(!pool)return {checked:0,enqueued:0}
+  const safeLimit=Math.max(1,Math.min(Number(limit||10),100))
+  const {rows}=await pool.query(
+    `SELECT id,workspace_id,connector,interval_minutes,next_run_at,options
+     FROM ace_connector_sync_schedules
+     WHERE enabled=true AND next_run_at<=now()
+     ORDER BY next_run_at ASC LIMIT $1`,
+    [safeLimit]
+  )
+  let enqueued=0
+  for(const row of rows){
+    const claimed=await pool.query(
+      `UPDATE ace_connector_sync_schedules
+       SET next_run_at=now()+(interval_minutes*interval '1 minute'),last_enqueued_at=now(),updated_at=now()
+       WHERE id=$1 AND enabled=true AND next_run_at=$2
+       RETURNING id,next_run_at`,
+      [row.id,row.next_run_at]
+    )
+    if(!claimed.rowCount)continue
+    const job=await enqueueJob({
+      workspaceId:row.workspace_id,
+      kind:'connector_sync',
+      payload:{connector:row.connector,mode:'incremental',start:null,end:null,options:row.options||{},scheduleId:row.id},
+      idempotencyKey:'connector-schedule:'+row.id+':'+new Date(row.next_run_at).toISOString(),
+      maxAttempts:Number(process.env.CONNECTOR_SYNC_MAX_ATTEMPTS||3),
+      deadlineAt:new Date(Date.now()+Number(process.env.CONNECTOR_SYNC_JOB_DEADLINE_MS||30*60*1000)).toISOString(),
+      inputSnapshot:{schemaVersion:'connector-sync.v1',connector:row.connector,mode:'incremental',scheduleId:row.id,capturedAt:new Date().toISOString()},
+      resultSchemaVersion:'connector-sync-result.v1'
+    })
+    if(job?.id){
+      enqueued++
+      await pool.query('UPDATE ace_connector_sync_schedules SET last_job_id=$2 WHERE id=$1',[row.id,job.id])
+    }
+  }
+  return {checked:rows.length,enqueued}
 }
 
 export const connectorDataSummary=async(workspaceId)=>{
