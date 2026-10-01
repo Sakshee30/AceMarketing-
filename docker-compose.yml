@@ -108,7 +108,7 @@ services:
     image: ${ACE_WORKER_IMAGE:-ace-marketing-worker:local}
     build:
       context: .
-      dockerfile: deploy/Dockerfile.api
+      dockerfile: deploy/Dockerfile.worker
     restart: unless-stopped
     env_file:
       - .env
