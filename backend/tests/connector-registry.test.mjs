@@ -16,7 +16,7 @@ test('connector catalog publishes bounded manifests without credential values',(
     assert.equal(validateConnectorManifest(item),true)
     assert.equal(ids.has(item.id),false)
     ids.add(item.id)
-    assert.equal(item.credentialStorage,'server-secret-reference-only')
+    assert.equal(item.credentialStorage,item.auth.type==='oauth2'?'encrypted-oauth-token':'server-secret-reference-only')
     assert.equal(item.connectionScope,'tenant-workspace')
     assert.ok(item.operations.length>0)
     assert.equal(JSON.stringify(item).includes('access_token'),false)
