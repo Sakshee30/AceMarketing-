@@ -81,6 +81,40 @@ CREATE INDEX IF NOT EXISTS ace_crm_records_updated_idx
   ON ace_crm_records(workspace_id,connector,object_type,source_updated_at DESC);
 
 ALTER TABLE ace_connector_sync_runs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ace_connector_sync_runs FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS ace_connector_sync_runs_workspace_policy ON ace_connector_sync_runs;
+CREATE POLICY ace_connector_sync_runs_workspace_policy ON ace_connector_sync_runs
+USING (workspace_id = NULLIF(current_setting('app.workspace_id', true),'') OR current_setting('app.system_worker', true) = 'true')
+WITH CHECK (workspace_id = NULLIF(current_setting('app.workspace_id', true),'') OR current_setting('app.system_worker', true) = 'true');
+
+ALTER TABLE ace_connector_checkpoints ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ace_connector_checkpoints FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS ace_connector_checkpoints_workspace_policy ON ace_connector_checkpoints;
+CREATE POLICY ace_connector_checkpoints_workspace_policy ON ace_connector_checkpoints
+USING (workspace_id = NULLIF(current_setting('app.workspace_id', true),'') OR current_setting('app.system_worker', true) = 'true')
+WITH CHECK (workspace_id = NULLIF(current_setting('app.workspace_id', true),'') OR current_setting('app.system_worker', true) = 'true');
+
+ALTER TABLE ace_connector_raw_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ace_connector_raw_records FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS ace_connector_raw_records_workspace_policy ON ace_connector_raw_records;
+CREATE POLICY ace_connector_raw_records_workspace_policy ON ace_connector_raw_records
+USING (workspace_id = NULLIF(current_setting('app.workspace_id', true),'') OR current_setting('app.system_worker', true) = 'true')
+WITH CHECK (workspace_id = NULLIF(current_setting('app.workspace_id', true),'') OR current_setting('app.system_worker', true) = 'true');
+
+ALTER TABLE ace_campaign_daily ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ace_campaign_daily FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS ace_campaign_daily_workspace_policy ON ace_campaign_daily;
+CREATE POLICY ace_campaign_daily_workspace_policy ON ace_campaign_daily
+USING (workspace_id = NULLIF(current_setting('app.workspace_id', true),'') OR current_setting('app.system_worker', true) = 'true')
+WITH CHECK (workspace_id = NULLIF(current_setting('app.workspace_id', true),'') OR current_setting('app.system_worker', true) = 'true');
+
+ALTER TABLE ace_crm_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ace_crm_records FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS ace_crm_records_workspace_policy ON ace_crm_records;
+CREATE POLICY ace_crm_records_workspace_policy ON ace_crm_records
+USING (workspace_id = NULLIF(current_setting('app.workspace_id', true),'') OR current_setting('app.system_worker', true) = 'true')
+WITH CHECK (workspace_id = NULLIF(current_setting('app.workspace_id', true),'') OR current_setting('app.system_worker', true) = 'true');
+
 ALTER TABLE ace_connector_checkpoints ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ace_connector_raw_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ace_campaign_daily ENABLE ROW LEVEL SECURITY;
