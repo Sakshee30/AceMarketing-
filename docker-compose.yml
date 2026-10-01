@@ -30,6 +30,30 @@ services:
     networks: [ace_internal]
     restart: "no"
 
+  preflight:
+    image: ${ACE_API_IMAGE:-ace-marketing-api:local}
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.api
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ace}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-acemarketing}
+      DB_SSL: disable
+      NODE_ENV: production
+      ALLOW_FILE_STORE_IN_PRODUCTION: "false"
+      ACE_DEPLOYMENT_MODE: ${ACE_DEPLOYMENT_MODE:-core}
+      ML_SERVICE_URL: ${ML_SERVICE_URL:-}
+      ML_FORECAST_SERVICE_URL: ${ML_FORECAST_SERVICE_URL:-}
+      ML_CAUSAL_SERVICE_URL: ${ML_CAUSAL_SERVICE_URL:-}
+      ML_MMM_SERVICE_URL: ${ML_MMM_SERVICE_URL:-}
+    command: ["node","backend/scripts/preflight.mjs"]
+    depends_on:
+      preflight:
+        condition: service_completed_successfully
+    networks: [ace_internal]
+    restart: "no"
+
   api:
     image: ${ACE_API_IMAGE:-ace-marketing-api:local}
     build:
@@ -49,7 +73,7 @@ services:
       ML_CAUSAL_SERVICE_URL: ${ML_CAUSAL_SERVICE_URL:-}
       ML_MMM_SERVICE_URL: ${ML_MMM_SERVICE_URL:-}
     depends_on:
-      migrate:
+      preflight:
         condition: service_completed_successfully
     networks: [ace_internal]
     expose: ["3001"]
@@ -75,7 +99,7 @@ services:
       ACE_CONFIG_VERSION: ${ACE_CONFIG_VERSION:-}
       ACE_DEPLOYMENT_MODE: ${ACE_DEPLOYMENT_MODE:-core}
     depends_on:
-      migrate:
+      preflight:
         condition: service_completed_successfully
     networks: [ace_internal]
     expose: ["3002"]
@@ -99,7 +123,7 @@ services:
       ML_MMM_SERVICE_URL: ${ML_MMM_SERVICE_URL:-}
     command: ["node","backend/src/worker.mjs"]
     depends_on:
-      migrate:
+      preflight:
         condition: service_completed_successfully
     networks: [ace_internal]
 
