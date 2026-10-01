@@ -17,8 +17,8 @@
   ],
   "contracts": {
     "http": "packages/contracts/http/platform.openapi.yaml",
-    "async": "packages/contracts/events/platform.asyncapi.yaml",
-    "compatibility": "packages/contracts/compatibility"
+    "async": "packages/contracts/events/platform-event.schema.json",
+    "capabilities": "packages/contracts/capabilities/capability.schema.json"
   },
   "deprecationPolicy": {
     "minimumNoticeDays": 90,
