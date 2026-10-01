@@ -10,5 +10,5 @@ export const handleActivateModelResult=async({
   const id=String(proposalId||'').trim()
   if(!scope)throw Object.assign(new Error('workspace scope required'),{status:400,code:'workspace_scope_required'})
   if(!id)throw Object.assign(new Error('activation proposal id required'),{status:400,code:'ai_activation_id_required'})
-  return queue({workspaceId:scope,proposalId:id,actor})
+  return queue({workspaceId:scope,id,actor})
 }
