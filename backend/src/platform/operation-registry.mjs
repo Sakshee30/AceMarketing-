@@ -33,8 +33,8 @@ export const platformOperationRegistry=Object.freeze([
   legacy('identity','recover-account','identity.session.manage','account-recovery','backend/src/security.mjs','backend/tests/platform-foundation.test.mjs',{audit:'security'}),
 
   legacy('organizations','update-organization','organization.manage','organization','backend/src/store.mjs','backend/tests/platform-foundation.test.mjs'),
-  legacy('workspaces','update-workspace','workspace.manage','workspace','backend/src/platform/workspace-access.mjs','backend/tests/workspace-access.test.mjs'),
-  legacy('memberships','remove-member','memberships.manage','membership','backend/src/security.mjs','backend/tests/workspace-access.test.mjs',{audit:'security'}),
+  defineOperation({moduleId:'workspaces',id:'update-workspace',permission:'workspace.write',contract:'workspace',handlerPath:'backend/modules/workspaces/src/application/commands/update-workspace/update-workspace.handler.mjs',testPath:'backend/tests/canonical-lifecycle-handlers.test.mjs',status:'canonical',audit:'required'}),
+  defineOperation({moduleId:'memberships',id:'remove-member',permission:'members.write',contract:'membership',handlerPath:'backend/modules/memberships/src/application/commands/remove-member/remove-member.handler.mjs',testPath:'backend/tests/canonical-lifecycle-handlers.test.mjs',status:'canonical',audit:'security'}),
   defineOperation({moduleId:'authorization',id:'evaluate-access',permission:'access.evaluate',contract:'permission-evaluation',handlerPath:'backend/modules/authorization/src/application/queries/evaluate-access/evaluate-access.handler.mjs',testPath:'backend/tests/canonical-operation-handlers.test.mjs',status:'canonical',audit:'security'}),
   legacy('authorization','publish-policy','access.manage','access-policy','backend/src/platform/policy-engine.mjs','backend/tests/policy-workflow.test.mjs',{audit:'security'}),
 
@@ -43,7 +43,7 @@ export const platformOperationRegistry=Object.freeze([
   defineOperation({moduleId:'forms',id:'submit-form',permission:'forms.submit',contract:'form-submission',handlerPath:'backend/modules/forms/src/application/commands/submit-form/submit-form.handler.mjs',testPath:'backend/tests/canonical-operation-handlers.test.mjs',status:'canonical'}),
   legacy('custom-objects','define-object','objects.schema.manage','custom-object-definition','backend/src/platform/custom-object-store.mjs','backend/tests/custom-object-store.test.mjs'),
   defineOperation({moduleId:'rules',id:'simulate-rule',permission:'rules.evaluate',contract:'rule-evaluation',handlerPath:'backend/modules/rules/src/application/queries/simulate-rule/simulate-rule.handler.mjs',testPath:'backend/tests/canonical-operation-handlers.test.mjs',status:'canonical'}),
-  legacy('rules','publish-rule','rules.manage','rule-definition','backend/src/platform/policy-engine.mjs','backend/tests/policy-workflow.test.mjs'),
+  defineOperation({moduleId:'rules',id:'publish-rule',permission:'workspace.write',contract:'rule-definition',handlerPath:'backend/modules/rules/src/application/commands/publish-rule/publish-rule.handler.mjs',testPath:'backend/tests/canonical-lifecycle-handlers.test.mjs',status:'canonical',audit:'required'}),
 
   defineOperation({
     moduleId:'boards',
@@ -58,9 +58,9 @@ export const platformOperationRegistry=Object.freeze([
     notes:'Golden vertical slice with idempotency, audit, outbox and realtime reconciliation.'
   }),
 
-  legacy('workflows','publish-workflow','workflows.manage','workflow-definition','backend/src/platform/workflow-store.mjs','backend/tests/policy-workflow.test.mjs'),
-  legacy('workflows','retry-step','workflows.execute','workflow-execution','backend/src/platform/workflow-store.mjs','backend/tests/policy-workflow.test.mjs',{durability:'durable-job'}),
-  legacy('approvals','decide-approval','approvals.decide','workflow-approval','backend/src/platform/workflow-store.mjs','backend/tests/policy-workflow.test.mjs',{audit:'security'}),
+  defineOperation({moduleId:'workflows',id:'publish-workflow',permission:'approvals.write',contract:'workflow-definition',handlerPath:'backend/modules/workflows/src/application/commands/publish-workflow/publish-workflow.handler.mjs',testPath:'backend/tests/canonical-lifecycle-handlers.test.mjs',status:'canonical',audit:'required'}),
+  defineOperation({moduleId:'workflows',id:'retry-step',permission:'approvals.write',contract:'workflow-execution',handlerPath:'backend/modules/workflows/src/application/commands/retry-step/retry-step.handler.mjs',testPath:'backend/tests/canonical-lifecycle-handlers.test.mjs',status:'canonical',durability:'durable-job',audit:'required'}),
+  defineOperation({moduleId:'approvals',id:'decide-approval',permission:'approvals.write',contract:'workflow-approval',handlerPath:'backend/modules/approvals/src/application/commands/decide-approval/decide-approval.handler.mjs',testPath:'backend/tests/canonical-lifecycle-handlers.test.mjs',status:'canonical',audit:'security'}),
 
   legacy('integrations','connect-provider','integration.manage','connector-account','backend/src/platform/connector-registry.mjs','backend/tests/connector-registry.test.mjs',{audit:'security'}),
   legacy('integrations','reconcile-sync','integration.manage','provider-callback','backend/src/custom-integrations.mjs','backend/tests/platform-foundation.test.mjs',{durability:'durable-job'}),
