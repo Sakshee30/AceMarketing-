@@ -1,0 +1,21 @@
+[Unit]
+Description=AceMarketing production preflight
+After=acemarketing-migrate.service
+Requires=acemarketing-migrate.service
+
+[Service]
+Type=oneshot
+User=acemarketing
+Group=acemarketing
+WorkingDirectory=/opt/acemarketing/current
+EnvironmentFile=/etc/acemarketing/acemarketing.env
+ExecStart=/usr/bin/node backend/scripts/preflight.mjs
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/opt/acemarketing /tmp
+TimeoutStartSec=120
+
+[Install]
+WantedBy=acemarketing-core.target
