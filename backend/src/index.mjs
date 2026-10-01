@@ -133,7 +133,8 @@ const SERVER_SECRET_CONNECTORS={
     capability:'native_server_capi',
     fields:[
       {key:'pixel_id',label:'Pixel / Event Source ID',secret:false},
-      {key:'access_token',label:'Events API access token',secret:true}
+      {key:'advertiser_id',label:'TikTok advertiser ID',secret:false},
+      {key:'access_token',label:'Events / Reporting API access token',secret:true}
     ]
   },
   'Pinterest':{
