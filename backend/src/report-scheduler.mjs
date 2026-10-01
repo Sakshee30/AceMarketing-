@@ -1,7 +1,7 @@
 import {randomUUID} from 'node:crypto'
 import nodemailer from 'nodemailer'
 import {pool} from './database.mjs'
-import {enqueueJob} from './queue.mjs'
+import {handleSubmitJob} from '../modules/jobs/src/application/commands/submit-job/submit-job.handler.mjs'
 import {cohortAnalytics} from './cohort-analytics.mjs'
 
 const cleanRecipients=value=>{
@@ -83,7 +83,7 @@ export const queueReportNow=async(workspaceId,scheduleId)=>{
   const schedule=rows[0]
   if(!schedule)throw new Error('report schedule not found')
   const delivery=await createDelivery(workspaceId,schedule)
-  const job=await enqueueJob({
+  const job=await handleSubmitJob({
     workspaceId,
     kind:'report_delivery',
     idempotencyKey:'report:'+delivery.id,
