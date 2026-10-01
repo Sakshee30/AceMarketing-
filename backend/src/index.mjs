@@ -77,6 +77,9 @@ import {handleEvaluateEntitlement} from '../modules/entitlements/src/application
 import {handleDefineCustomObject} from '../modules/custom-objects/src/application/commands/define-object/define-object.handler.mjs'
 import {handleQuerySearch} from '../modules/search/src/application/queries/query-search/query-search.handler.mjs'
 import {handleAuthorizeUpload} from '../modules/documents/src/application/commands/authorize-upload/authorize-upload.handler.mjs'
+import {handleConnectProvider} from '../modules/integrations/src/application/commands/connect-provider/connect-provider.handler.mjs'
+import {handleReconcileIntegration} from '../modules/integrations/src/application/commands/reconcile-sync/reconcile-sync.handler.mjs'
+import {handleReplayWebhookDelivery} from '../modules/webhooks/src/application/commands/replay-delivery/replay-delivery.handler.mjs'
 
 const runtimeRole=runtimeRolePolicy()
 
@@ -1728,7 +1731,7 @@ const server = http.createServer(async (req,res)=>{
     const webhookReplayMatch=url.pathname.match(/^\/api\/webhook-deliveries\/([^/]+)\/replay$/)
     if(req.method==='POST'&&webhookReplayMatch){
       try{
-        const delivery=await replayWebhookDelivery({workspaceId,deliveryId:decodeURIComponent(webhookReplayMatch[1]),actorId:req.user?.userId||null})
+        const delivery=await handleReplayWebhookDelivery({workspaceId,deliveryId:decodeURIComponent(webhookReplayMatch[1]),actorId:req.user?.userId||null})
         if(!delivery)return send(req,res,404,{error:'webhook delivery not found'})
         await appendAuditRecord({
           workspaceId,actorId:req.user?.userId,action:'webhook.delivery_replayed',
@@ -1745,7 +1748,7 @@ const server = http.createServer(async (req,res)=>{
       const body=await readBody(req)
       if(!body.baseUrl&&!body.id) return send(req,res,400,{error:'baseUrl or id required'})
       try{
-        const result=await runCustomIntegrationTest(workspaceId,body)
+        const result=await handleReconcileIntegration({workspaceId,input:body})
         return send(req,res,result.ok?200:422,{...result,testedAt:new Date().toISOString()})
       }catch(error){
         return send(req,res,422,{ok:false,error:error instanceof Error?error.message:'connection test failed',testedAt:new Date().toISOString()})
@@ -1756,7 +1759,7 @@ const server = http.createServer(async (req,res)=>{
       if(!integrationCapacity.allowed) return send(req,res,429,{error:'custom integration limit reached',usage:integrationCapacity})
       const body=await readBody(req)
       if(!body.name || !body.baseUrl || !body.identity) return send(req,res,400,{error:'name, baseUrl and identity required'})
-      const item=await persistCustomIntegration(workspaceId,body)
+      const item=await handleConnectProvider({workspaceId,input:body})
       await mutateState(s=>{s.audit.unshift({id:randomUUID(),action:'custom_integration.created',entityId:item.id,at:new Date().toISOString()});s.audit=s.audit.slice(0,1000)})
       return send(req,res,201,item)
     }
