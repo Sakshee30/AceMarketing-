@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "ace.provider-api-versions.v1",
+  "reviewedAt": "2026-10-02",
+  "providers": [
+    {"id":"google-ads","versionEnv":"GOOGLE_ADS_API_VERSION","defaultVersion":"v25","reviewUrl":"https://developers.google.com/google-ads/api/docs/versions"},
+    {"id":"meta","versionEnv":"META_GRAPH_VERSION","defaultVersion":"v26.0","reviewUrl":"https://developers.facebook.com/docs/graph-api/changelog/"},
+    {"id":"linkedin","versionEnv":"LINKEDIN_MARKETING_VERSION","defaultVersion":"202609","reviewUrl":"https://learn.microsoft.com/linkedin/marketing/versioning"},
+    {"id":"salesforce","versionEnv":"SALESFORCE_API_VERSION","defaultVersion":"v65.0","reviewUrl":"https://developer.salesforce.com/docs/platform/lwc/guide/get-started-api-version.html"},
+    {"id":"zoho","versionEnv":"ZOHO_CRM_API_VERSION","defaultVersion":"v8","reviewUrl":"https://www.zoho.com/crm/developer/docs/api/v8/"},
+    {"id":"ga4","versionEnv":null,"defaultVersion":"v1beta","reviewUrl":"https://developers.google.com/analytics/devguides/reporting/data/v1"},
+    {"id":"tiktok","versionEnv":null,"defaultVersion":"v1.3","reviewUrl":"https://business-api.tiktok.com/portal/docs"},
+    {"id":"pinterest","versionEnv":null,"defaultVersion":"v5","reviewUrl":"https://developers.pinterest.com/docs/api/v5/"}
+  ]
+}
