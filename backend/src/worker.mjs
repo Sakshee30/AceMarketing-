@@ -22,7 +22,7 @@ import {recordWebhookDeliveryAttempt} from './platform/webhook-delivery-store.mj
 import {workerClassPolicy} from './platform/worker-class.mjs'
 import {registerOutboxHandler,runOutboxRelayBatch} from './platform/outbox-relay.mjs'
 import {appendRealtimeEvent} from './platform/realtime-event-store.mjs'
-import {listAuditRecords} from './platform/audit-store.mjs'\nimport {runConnectorSync} from './connector-ingestion.mjs'
+import {listAuditRecords} from './platform/audit-store.mjs'\nimport {runConnectorSync,runDueConnectorSyncSchedules} from './connector-ingestion.mjs'
 
 if(!queueAvailable()) throw new Error('DATABASE_URL is required for the worker runtime')
 
@@ -50,9 +50,9 @@ const pollMs=Number(process.env.WORKER_POLL_MS||1000)
 const audienceScheduleBatch=Number(process.env.AUDIENCE_SCHEDULER_BATCH_SIZE||5)
 const audienceSchedulePollMs=Number(process.env.AUDIENCE_SCHEDULER_POLL_MS||15000)
 const reportScheduleBatch=Number(process.env.REPORT_SCHEDULER_BATCH_SIZE||5)
-const reportSchedulePollMs=Number(process.env.REPORT_SCHEDULER_POLL_MS||30000)
+const reportSchedulePollMs=Number(process.env.REPORT_SCHEDULER_POLL_MS||30000)\nconst connectorSchedulePollMs=Number(process.env.CONNECTOR_SCHEDULER_POLL_MS||60000)
 let lastAudienceSchedulePoll=0
-let lastReportSchedulePoll=0
+let lastReportSchedulePoll=0\nlet lastConnectorSchedulePoll=0
 let stopping=false
 const drainController=createDrainController()
 
@@ -208,6 +208,12 @@ const runBatch=async()=>{
   if(runEmbeddedSchedulers&&Date.now()-lastReportSchedulePoll>=reportSchedulePollMs){
     lastReportSchedulePoll=Date.now()
     await runDueReportSchedules(reportScheduleBatch)
+  }
+  if(runEmbeddedSchedulers&&['all','general'].includes(workerPolicy.workerClass)&&Date.now()-lastConnectorSchedulePoll>=connectorSchedulePollMs){
+    lastConnectorSchedulePoll=Date.now()
+    await runDueConnectorSyncSchedules({limit:10}).catch(error=>{
+      console.error('[worker] connector schedule poll failed',error instanceof Error?error.message:error)
+    })
   }
   if(stopping)return
   const jobs=await leaseJobs({workerId,limit:batchSize,includeKinds:workerPolicy.includeKinds,excludeKinds:workerPolicy.excludeKinds})
