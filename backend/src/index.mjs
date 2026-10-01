@@ -1,7 +1,7 @@
 import http from 'node:http'
 import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto'
 import { URL } from 'node:url'
-import { createToken, verifyToken, hasPermission, createRateLimiter, securityHeaders, resolveCorsOrigin } from './security.mjs'
+import { createToken, verifyToken, hashPassword, hasPermission, createRateLimiter, securityHeaders, resolveCorsOrigin } from './security.mjs'
 import { closeStore, getState, mutateState, storageHealth, withWorkspace } from './store.mjs'
 import { connectorVaultReady, decryptSecret, encryptSecret } from './vault.mjs'
 import { getJob, queueAvailable, queueStats, requestJobCancellation } from './queue.mjs'
