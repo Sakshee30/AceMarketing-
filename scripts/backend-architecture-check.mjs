@@ -78,6 +78,7 @@ const required=[
   'backend/tests/canonical-control-plane-handlers.test.mjs',
   'backend/tests/canonical-audit-replay-handlers.test.mjs',
   'backend/src/platform/feature-traceability.mjs',
+  'backend/src/platform/persistence-catalog.mjs',
   'backend/tests/feature-traceability.test.mjs',
   'docs/evidence/BACKEND_ARCHITECTURE_ACCEPTANCE.md',
   'backend/src/platform/acceptance-register.mjs',
