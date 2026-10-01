@@ -29,8 +29,8 @@ const legacy=(moduleId,id,permission,contract,handlerPath,testPath,extra={})=>
   defineOperation({moduleId,id,permission,contract,handlerPath,testPath,...extra})
 
 export const platformOperationRegistry=Object.freeze([
-  legacy('identity','start-login','identity.session.manage','session','backend/src/security.mjs','backend/tests/platform-foundation.test.mjs',{audit:'security'}),
-  legacy('identity','recover-account','identity.session.manage','account-recovery','backend/src/security.mjs','backend/tests/platform-foundation.test.mjs',{audit:'security'}),
+  defineOperation({moduleId:'identity',id:'start-login',permission:'identity.session.manage',contract:'session',handlerPath:'backend/modules/identity/src/application/commands/start-login/start-login.handler.mjs',testPath:'backend/tests/canonical-security-document-handlers.test.mjs',status:'canonical',audit:'security'}),
+  defineOperation({moduleId:'identity',id:'recover-account',permission:'identity.session.manage',contract:'account-recovery',handlerPath:'backend/modules/identity/src/application/commands/recover-account/recover-account.handler.mjs',testPath:'backend/tests/canonical-security-document-handlers.test.mjs',status:'canonical',audit:'security'}),
 
   legacy('organizations','update-organization','organization.manage','organization','backend/src/store.mjs','backend/tests/platform-foundation.test.mjs'),
   defineOperation({moduleId:'workspaces',id:'update-workspace',permission:'workspace.write',contract:'workspace',handlerPath:'backend/modules/workspaces/src/application/commands/update-workspace/update-workspace.handler.mjs',testPath:'backend/tests/canonical-lifecycle-handlers.test.mjs',status:'canonical',audit:'required'}),
@@ -79,9 +79,9 @@ export const platformOperationRegistry=Object.freeze([
   defineOperation({moduleId:'billing',id:'reconcile-payment',permission:'billing.manage',contract:'subscription',handlerPath:'backend/modules/billing/src/application/commands/reconcile-payment/reconcile-payment.handler.mjs',testPath:'backend/tests/canonical-billing-usage-handlers.test.mjs',status:'canonical',audit:'financial'}),
 
   defineOperation({moduleId:'documents',id:'authorize-upload',permission:'files.upload',contract:'file-object',handlerPath:'backend/modules/documents/src/application/commands/authorize-upload/authorize-upload.handler.mjs',testPath:'backend/tests/canonical-data-foundation-handlers.test.mjs',status:'canonical',audit:'security'}),
-  legacy('documents','approve-file','files.manage','file-object','backend/src/platform/object-lifecycle.mjs','backend/tests/object-lifecycle.test.mjs',{durability:'durable-job',audit:'security'}),
+  defineOperation({moduleId:'documents',id:'approve-file',permission:'files.manage',contract:'file-object',handlerPath:'backend/modules/documents/src/application/commands/approve-file/approve-file.handler.mjs',testPath:'backend/tests/canonical-security-document-handlers.test.mjs',status:'canonical',durability:'durable-job',audit:'security'}),
   defineOperation({moduleId:'search',id:'query-search',permission:'search.read',contract:'search-query',handlerPath:'backend/modules/search/src/application/queries/query-search/query-search.handler.mjs',testPath:'backend/tests/canonical-data-foundation-handlers.test.mjs',status:'canonical'}),
-  legacy('search','rebuild-index','search.manage','search-projection','backend/src/platform/search-port.mjs','backend/tests/search-port.test.mjs',{durability:'durable-job'}),
+  defineOperation({moduleId:'search',id:'rebuild-index',permission:'search.manage',contract:'search-projection',handlerPath:'backend/modules/search/src/application/commands/rebuild-index/rebuild-index.handler.mjs',testPath:'backend/tests/canonical-security-document-handlers.test.mjs',status:'canonical',durability:'durable-job'}),
 
   legacy('audit','search-audit','audit.read','audit-event','backend/src/platform/audit-store.mjs','backend/tests/platform-audit-catalog.test.mjs',{audit:'locked'}),
   legacy('audit','export-audit','audit.export','audit-event','backend/src/platform/audit-store.mjs','backend/tests/platform-audit-catalog.test.mjs',{durability:'durable-job',audit:'locked'}),
