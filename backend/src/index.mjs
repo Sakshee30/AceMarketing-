@@ -15,7 +15,7 @@ import { billingConfigured, billingEventHistory, billingReconciliationHistory, c
 import { closeConsentStore, consentAllows, consentStats, getConsent, listConsentAudit, saveConsent } from './consent.mjs'
 import { closePrivacyOps, deleteSubject, exportSubject, listPrivacyRequests, purgeRetention, retentionPolicy } from './privacy-ops.mjs'
 import { closeAudienceScheduler, listAudienceRefreshRuns, listAudienceSchedules, saveAudienceSchedule } from './audience-scheduler.mjs'
-import { closeCohortAnalytics, cohortAnalytics } from './cohort-analytics.mjs'
+import { closeCohortAnalytics, cohortAnalytics } from './cohort-analytics.mjs'\nimport {connectorReadCatalog,listConnectorSyncRuns,connectorDataSummary} from './connector-ingestion.mjs'
 import { closeReportScheduler, listReportDeliveries, listReportSchedules, queueReportNow, reportMailConfigured, saveReportSchedule } from './report-scheduler.mjs'
 import { closeEventRules, createEventRule, evaluateEventRules, eventRuleStats, listEventRuleRuns, listEventRules, markEventRuleActivation, setEventRuleEnabled } from './event-rules.mjs'
 import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, publicChallenges, publicCaseStudies, publicResources, publicResourceCenter } from './public-content.mjs'
@@ -1515,6 +1515,44 @@ const server = http.createServer(async (req,res)=>{
           tokenHealth:health
         }
       }),requests:(state.integrationRequests||[]).slice(0,100)})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/integrations/sync-runs') {
+      const connector=String(url.searchParams.get('connector')||'').trim()||null
+      const limit=Math.max(1,Math.min(Number(url.searchParams.get('limit')||50),200))
+      const items=await listConnectorSyncRuns({workspaceId,connector,limit})
+      return send(req,res,200,{items,readConnectors:connectorReadCatalog()})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/integrations/data-summary') {
+      return send(req,res,200,await connectorDataSummary(workspaceId))
+    }
+    if (req.method === 'POST' && url.pathname === '/api/integrations/sync') {
+      const body=await readBody(req)
+      const connector=String(body.connector||'').trim()
+      const mode=String(body.mode||'incremental').trim().toLowerCase()
+      if(!connectorReadCatalog().includes(connector))return send(req,res,400,{error:'connector does not support read synchronization',connector,supported:connectorReadCatalog()})
+      if(!['backfill','incremental','manual'].includes(mode))return send(req,res,400,{error:'mode must be backfill, incremental, or manual'})
+      const parseDate=value=>{
+        if(value==null||value==='')return null
+        const date=new Date(value)
+        if(Number.isNaN(date.getTime()))throw new Error('invalid sync date')
+        return date.toISOString()
+      }
+      let start=null,end=null
+      try{start=parseDate(body.start);end=parseDate(body.end)}catch(error){return send(req,res,400,{error:error.message})}
+      if(start&&end&&Date.parse(start)>Date.parse(end))return send(req,res,400,{error:'sync start must be before end'})
+      const operationKey=String(req.headers['idempotency-key']||req.requestId||randomUUID())
+      const job=await handleSubmitJob({
+        workspaceId,
+        kind:'connector_sync',
+        payload:{connector,mode,start,end,options:body.options&&typeof body.options==='object'?body.options:{}},
+        idempotencyKey:'connector-sync:'+connector+':'+operationKey,
+        maxAttempts:Number(process.env.CONNECTOR_SYNC_MAX_ATTEMPTS||3),
+        deadlineAt:new Date(Date.now()+Number(process.env.CONNECTOR_SYNC_JOB_DEADLINE_MS||30*60*1000)).toISOString(),
+        inputSnapshot:{schemaVersion:'connector-sync.v1',connector,mode,start,end,capturedAt:new Date().toISOString()},
+        resultSchemaVersion:'connector-sync-result.v1'
+      })
+      if(!job)return send(req,res,503,{error:'durable connector sync requires DATABASE_URL'})
+      return send(req,res,202,{jobId:job.id,status:job.status,connector,mode})
     }
     if (req.method === 'GET' && url.pathname === '/api/integration-flows') {
       const state=await getState()
