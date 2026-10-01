@@ -12,6 +12,11 @@ export const integrationsApi={
     return {integrations,custom,whatsapp,webhookSubscriptions,webhookDeliveries}
   },
   integrations:(signal?:AbortSignal)=>sharedApi.integrations({signal}),
+  syncRuns:(connector?:string,signal?:AbortSignal)=>sharedApi.connectorSyncRuns(connector,{signal}),
+  dataSummary:(signal?:AbortSignal)=>sharedApi.connectorDataSummary({signal}),
+  syncSchedules:(signal?:AbortSignal)=>sharedApi.connectorSyncSchedules({signal}),
+  saveSyncSchedule:(payload:Record<string,unknown>)=>sharedApi.saveConnectorSyncSchedule(payload),
+  triggerSync:(payload:Record<string,unknown>,operationId:string)=>sharedApi.triggerConnectorSync(payload,{operationId}),
   customIntegrations:(signal?:AbortSignal)=>sharedApi.customIntegrations({signal}),
   whatsappMessages:(signal?:AbortSignal)=>sharedApi.whatsappMessages({signal}),
   connectIntegration:(name:string,operationId:string,signal?:AbortSignal)=>sharedApi.connectIntegration(name,{operationId,signal}),
