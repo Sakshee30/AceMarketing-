@@ -18,7 +18,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectHome=true
 ProtectSystem=strict
-ReadWritePaths=/opt/acemarketing /tmp
+ReadWritePaths=/var/lib/acemarketing /tmp
 LimitNOFILE=65536
 
 [Install]
