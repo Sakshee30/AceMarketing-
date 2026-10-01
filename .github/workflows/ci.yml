@@ -42,8 +42,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Install dependencies
-        run: npm install
+      - name: Install dependencies from lockfile
+        run: npm ci
       - name: Prepare database schema for integration tests
         run: npm run migrate
       - name: Audit production dependencies
@@ -57,6 +57,8 @@ jobs:
         run: npm run frontend:architecture
       - name: Enforce backend architecture boundaries
         run: npm run backend:architecture
+      - name: Verify Docker-free systemd topology
+        run: systemd-analyze verify deploy/systemd/*.service deploy/systemd/*.target
       - name: Validate product architecture profile
         run: npm run architecture:project-profile
       - name: Enforce migration and trust-boundary review impact
