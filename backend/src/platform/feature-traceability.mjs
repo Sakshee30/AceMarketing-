@@ -3,7 +3,6 @@ import {platformModuleRegistry,validateModuleRegistry} from './module-registry.m
 import {platformOperationRegistry,validateOperationRegistry} from './operation-registry.mjs'
 import {tablesForMigrations,validatePersistenceCatalog} from './persistence-catalog.mjs'
 
-const genericRunbook='docs/PRODUCTION_RUNBOOK.md'
 const telemetry=Object.freeze(['request_count','error_count','duration_ms'])
 const genericConfiguration=Object.freeze(['config/project-profile.json'])
 const catalogDashboard='/control-api/catalog'
@@ -45,7 +44,8 @@ export const platformFeatureTraceability=Object.freeze(platformModuleRegistry.ma
       profiles:Object.freeze([...item.profiles])
     }))),
     telemetry,
-    runbook:genericRunbook,
+    featureReadme:'docs/features/'+module.id+'.md',
+    runbook:'operations/runbooks/features/'+module.id+'.md',
     dashboard:catalogDashboard,
     supportedProfiles:Object.freeze([...module.supportedProfiles]),
     offBehaviour:Object.freeze({...feature.offBehaviour}),
@@ -71,6 +71,7 @@ export const featureTraceabilitySnapshot=()=>({
     handlers:[...item.handlers],
     tests:[...item.tests],
     telemetry:[...item.telemetry],
+    featureReadme:item.featureReadme,
     supportedProfiles:[...item.supportedProfiles],
     operations:item.operations.map(operation=>({...operation,profiles:[...operation.profiles]})),
     offBehaviour:{...item.offBehaviour}
@@ -96,7 +97,7 @@ export const validateFeatureTraceability=()=>{
     if(!item.handlers.length||!item.tests.length)throw new Error('traceability evidence missing: '+item.id)
     if(!item.telemetry.length)throw new Error('traceability telemetry missing: '+item.id)
     if(!item.configuration.length)throw new Error('traceability configuration missing: '+item.id)
-    if(!item.runbook||!item.dashboard)throw new Error('traceability operational link missing: '+item.id)
+    if(!item.featureReadme||!item.runbook||!item.dashboard)throw new Error('traceability operational link missing: '+item.id)
     if(!item.supportedProfiles.length)throw new Error('traceability supported profiles missing: '+item.id)
     if(!item.offBehaviour?.newWork)throw new Error('traceability off behaviour missing: '+item.id)
   }
