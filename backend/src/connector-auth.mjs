@@ -20,6 +20,11 @@ const providers={
     clientId:()=>process.env.GOOGLE_OAUTH_CLIENT_ID||'',
     clientSecret:()=>process.env.GOOGLE_OAUTH_CLIENT_SECRET||''
   },
+  'LinkedIn Ads':{
+    tokenUrl:'https://www.linkedin.com/oauth/v2/accessToken',
+    clientId:()=>process.env.LINKEDIN_OAUTH_CLIENT_ID||'',
+    clientSecret:()=>process.env.LINKEDIN_OAUTH_CLIENT_SECRET||''
+  },
   'HubSpot':{
     tokenUrl:process.env.HUBSPOT_OAUTH_TOKEN_URL||'https://api.hubapi.com/oauth/2026-03/token',
     clientId:()=>process.env.HUBSPOT_OAUTH_CLIENT_ID||'',
