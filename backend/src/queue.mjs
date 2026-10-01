@@ -330,6 +330,28 @@ export const markUnknownOutcome=async({
   return rows[0]||null
 }
 
+export const replayDeadLetterJob=async({workspaceId,id})=>{
+  if(!pool)return null
+  const {rows}=await pool.query(
+    `UPDATE ace_jobs
+     SET status='retry',
+         attempts=0,
+         available_at=now(),
+         leased_until=NULL,
+         lease_owner=NULL,
+         heartbeat_at=NULL,
+         cancel_requested_at=NULL,
+         completed_at=NULL,
+         unknown_outcome_at=NULL,
+         last_error=NULL,
+         updated_at=now()
+     WHERE id=$1 AND workspace_id=$2 AND status='dead_letter'
+     RETURNING *`,
+    [id,workspaceId]
+  )
+  return rows[0]||null
+}
+
 export const requestJobCancellation=async({workspaceId,id})=>{
   if(!pool) return null
   const {rows}=await pool.query(
