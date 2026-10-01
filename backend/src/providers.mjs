@@ -345,9 +345,10 @@ const microsoftEventName=event=>String(event||'conversion')
   .slice(0,128)||'conversion'
 
 const deliverMicrosoft=async(workspaceId,signal)=>{
-  const credential=await credentialFor(workspaceId,'Microsoft Ads / Bing Ads').catch(()=>({}))
-  const tagId=String(signal.microsoftUetTagId||signal.data?.microsoftUetTagId||credential.tag_id||process.env.MICROSOFT_UET_TAG_ID||'').trim()
-  const token=String(signal.microsoftCapiToken||signal.data?.microsoftCapiToken||credential.access_token||process.env.MICROSOFT_CAPI_TOKEN||'').trim()
+  const capiCredential=await credentialFor(workspaceId,'Microsoft Ads CAPI').catch(async()=>credentialFor(workspaceId,'Microsoft Ads / Bing Ads').catch(()=>({})))
+  const legacyCapiToken=capiCredential.tag_id&&!capiCredential.refresh_token?capiCredential.access_token:''
+  const tagId=String(signal.microsoftUetTagId||signal.data?.microsoftUetTagId||capiCredential.tag_id||process.env.MICROSOFT_UET_TAG_ID||'').trim()
+  const token=String(signal.microsoftCapiToken||signal.data?.microsoftCapiToken||capiCredential.capi_token||legacyCapiToken||process.env.MICROSOFT_CAPI_TOKEN||'').trim()
   if(!tagId||!token) throw new Error('MICROSOFT_UET_TAG_ID and MICROSOFT_CAPI_TOKEN are required')
   const occurred=new Date(signal.occurredAt||Date.now())
   const eventTime=Math.floor((Number.isNaN(occurred.getTime())?Date.now():occurred.getTime())/1000)
