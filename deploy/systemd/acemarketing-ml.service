@@ -1,0 +1,24 @@
+[Unit]
+Description=AceMarketing local ML service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=acemarketing
+Group=acemarketing
+WorkingDirectory=/opt/acemarketing/current
+EnvironmentFile=/etc/acemarketing/acemarketing.env
+ExecStart=/opt/acemarketing/venv/bin/python -m uvicorn acemarketing_ml.app:app --app-dir ml-service/src --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=5
+TimeoutStopSec=60
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/opt/acemarketing /tmp
+LimitNOFILE=65536
+
+[Install]
+WantedBy=acemarketing-full.target
