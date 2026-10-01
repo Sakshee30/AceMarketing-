@@ -73,10 +73,10 @@ export const platformOperationRegistry=Object.freeze([
   legacy('notifications','send-notification','notifications.manage','notification-delivery','backend/src/auth-mailer.mjs','backend/tests/platform-foundation.test.mjs',{durability:'durable-job'}),
   legacy('reporting','run-report','reports.manage','report-schedule','backend/src/report-scheduler.mjs','backend/tests/platform-foundation.test.mjs',{durability:'durable-job'}),
 
-  legacy('usage','record-usage','usage.manage','usage-event','backend/src/platform/usage-ledger.mjs','backend/tests/usage-ledger.test.mjs'),
-  legacy('usage','reserve-quota','usage.manage','usage-reservation','backend/src/platform/usage-ledger.mjs','backend/tests/usage-ledger.test.mjs'),
-  legacy('billing','change-subscription','billing.manage','subscription','backend/src/platform/billing-lifecycle.mjs','backend/tests/billing-lifecycle.test.mjs',{audit:'financial'}),
-  legacy('billing','reconcile-payment','billing.manage','subscription','backend/src/platform/billing-lifecycle.mjs','backend/tests/billing-lifecycle.test.mjs',{audit:'financial'}),
+  defineOperation({moduleId:'usage',id:'record-usage',permission:'usage.manage',contract:'usage-event',handlerPath:'backend/modules/usage/src/application/commands/record-usage/record-usage.handler.mjs',testPath:'backend/tests/canonical-billing-usage-handlers.test.mjs',status:'canonical'}),
+  defineOperation({moduleId:'usage',id:'reserve-quota',permission:'usage.manage',contract:'usage-reservation',handlerPath:'backend/modules/usage/src/application/commands/reserve-quota/reserve-quota.handler.mjs',testPath:'backend/tests/canonical-billing-usage-handlers.test.mjs',status:'canonical'}),
+  defineOperation({moduleId:'billing',id:'change-subscription',permission:'billing.manage',contract:'subscription',handlerPath:'backend/modules/billing/src/application/commands/change-subscription/change-subscription.handler.mjs',testPath:'backend/tests/canonical-billing-usage-handlers.test.mjs',status:'canonical',audit:'financial'}),
+  defineOperation({moduleId:'billing',id:'reconcile-payment',permission:'billing.manage',contract:'subscription',handlerPath:'backend/modules/billing/src/application/commands/reconcile-payment/reconcile-payment.handler.mjs',testPath:'backend/tests/canonical-billing-usage-handlers.test.mjs',status:'canonical',audit:'financial'}),
 
   defineOperation({moduleId:'documents',id:'authorize-upload',permission:'files.upload',contract:'file-object',handlerPath:'backend/modules/documents/src/application/commands/authorize-upload/authorize-upload.handler.mjs',testPath:'backend/tests/canonical-data-foundation-handlers.test.mjs',status:'canonical',audit:'security'}),
   legacy('documents','approve-file','files.manage','file-object','backend/src/platform/object-lifecycle.mjs','backend/tests/object-lifecycle.test.mjs',{durability:'durable-job',audit:'security'}),
