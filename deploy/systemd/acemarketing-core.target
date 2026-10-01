@@ -1,0 +1,4 @@
+[Unit]
+Description=AceMarketing core production target
+Requires=acemarketing-migrate.service acemarketing-preflight.service acemarketing-api.service acemarketing-worker.service acemarketing-web.service
+After=network-online.target acemarketing-migrate.service acemarketing-preflight.service
