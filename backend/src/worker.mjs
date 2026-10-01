@@ -22,7 +22,7 @@ import {recordWebhookDeliveryAttempt} from './platform/webhook-delivery-store.mj
 import {workerClassPolicy} from './platform/worker-class.mjs'
 import {registerOutboxHandler,runOutboxRelayBatch} from './platform/outbox-relay.mjs'
 import {appendRealtimeEvent} from './platform/realtime-event-store.mjs'
-import {listAuditRecords} from './platform/audit-store.mjs'
+import {listAuditRecords} from './platform/audit-store.mjs'\nimport {runConnectorSync} from './connector-ingestion.mjs'
 
 if(!queueAvailable()) throw new Error('DATABASE_URL is required for the worker runtime')
 
@@ -86,7 +86,7 @@ const assertAiExecutionStillAllowed=async job=>{
   throw new Error('AI task execution blocked before provider/model call: '+gate.reasons.join('; '))
 }
 
-const handle=async job=>{
+const handle=async job=>{\n  if(job.kind==='connector_sync'){\n    const payload=job.payload||{}\n    return runConnectorSync({workspaceId:job.workspace_id,connector:String(payload.connector||''),mode:payload.mode||'incremental',start:payload.start||null,end:payload.end||null,options:payload.options||{}})\n  }
   if(job.kind==='audit_export'){
     const items=await listAuditRecords({
       workspaceId:job.workspace_id,
