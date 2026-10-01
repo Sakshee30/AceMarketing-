@@ -19,6 +19,7 @@ import {acceptanceRegisterSnapshot} from './platform/acceptance-register.mjs'
 import {evidenceRegistrySnapshot} from './platform/evidence-registry.mjs'
 import {featureTraceabilitySnapshot} from './platform/feature-traceability.mjs'
 import {architectureExecutionReport} from './platform/execution-report.mjs'
+import {goldenSliceSnapshot} from './platform/golden-slice-registry.mjs'
 import {handleActivateConfig} from '../modules/capabilities/src/application/commands/activate-config/activate-config.handler.mjs'
 import {handleMigrateProvider} from '../modules/capabilities/src/application/commands/migrate-provider/migrate-provider.handler.mjs'
 import {handleMoveTenant} from '../modules/cells/src/application/commands/move-tenant/move-tenant.handler.mjs'
@@ -234,6 +235,7 @@ const observedPage=async page=>{
   if(page==='evidence')return evidenceRegistrySnapshot()
   if(page==='catalog')return featureTraceabilitySnapshot()
   if(page==='execution-report')return architectureExecutionReport()
+  if(page==='golden-slice')return goldenSliceSnapshot()
   if(page==='audit')return {schemaVersion:'platform-audit-summary.v1',generatedAt:new Date().toISOString(),status:'available-through-durable-audit-store',note:'Control API intentionally exposes summary metadata only in this phase.'}
   if(page==='emergency')return {schemaVersion:'platform-emergency.v1',generatedAt:new Date().toISOString(),mode:'governed',items:await listEmergencyControls(),latestRuntimeSnapshot:await latestRuntimeSnapshot(process.env.NODE_ENV||'development')}
   throw Object.assign(new Error('unknown control page'),{status:404})
