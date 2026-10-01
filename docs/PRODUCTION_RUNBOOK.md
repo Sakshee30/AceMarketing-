@@ -103,7 +103,7 @@ The launcher:
 
 Standard/full use `npm run start:standard` and `npm run start:full`.
 
-For host production, install `deploy/systemd/acemarketing.service.example` as a systemd service and put TLS/reverse proxy in front of it. An nginx example is at `deploy/nginx.host.conf.example`.
+For host production, use the independently supervised services and targets in `deploy/systemd/`. See `deploy/systemd/README.md`. Put TLS/reverse proxy in front of the host services; an nginx example is at `deploy/nginx.host.conf.example`.
 
 ## 5. Health verification
 
@@ -166,6 +166,8 @@ node scripts/stack.mjs up --mode=core --no-build
 ```
 
 ## 9. Application downgrade / rollback
+
+Detailed procedures for Docker and Docker-free rollback are in `docs/ROLLBACK_RUNBOOK.md`.
 
 Rollback to a previous release manifest:
 
