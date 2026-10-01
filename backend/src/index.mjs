@@ -117,6 +117,7 @@ const CONNECTOR_PROVIDERS={
     tokenUrl:'https://graph.facebook.com/v23.0/oauth/access_token',
     scopes:['ads_management','ads_read','business_management']
   },
+  'Microsoft Ads / Bing Ads':{provider:'microsoft_ads',authType:'oauth2',clientId:process.env.MICROSOFT_ADS_OAUTH_CLIENT_ID||'',clientSecret:process.env.MICROSOFT_ADS_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',tokenUrl:'https://login.microsoftonline.com/common/oauth2/v2.0/token',scopes:['openid','offline_access','https://ads.microsoft.com/msads.manage'],tokenScopes:['https://ads.microsoft.com/msads.manage','offline_access']},
   'LinkedIn Ads':{provider:'linkedin',authType:'oauth2',clientId:process.env.LINKEDIN_OAUTH_CLIENT_ID||'',clientSecret:process.env.LINKEDIN_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://www.linkedin.com/oauth/v2/authorization',tokenUrl:'https://www.linkedin.com/oauth/v2/accessToken',scopes:['rw_conversions','r_ads','r_ads_reporting']},
   'HubSpot':{provider:'hubspot',authType:'oauth2',clientId:process.env.HUBSPOT_OAUTH_CLIENT_ID||'',clientSecret:process.env.HUBSPOT_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://app.hubspot.com/oauth/authorize',tokenUrl:'https://api.hubapi.com/oauth/2026-03/token',scopes:['crm.objects.contacts.read','crm.objects.contacts.write','crm.objects.companies.read','crm.objects.deals.read']},
   'Salesforce':{provider:'salesforce',authType:'oauth2',clientId:process.env.SALESFORCE_OAUTH_CLIENT_ID||'',clientSecret:process.env.SALESFORCE_OAUTH_CLIENT_SECRET||'',authorizeUrl:'https://login.salesforce.com/services/oauth2/authorize',tokenUrl:'https://login.salesforce.com/services/oauth2/token',scopes:['api','refresh_token']},
@@ -275,7 +276,7 @@ const integrations = [
   'Exotel','Knowlarity','Tata Tele','MyOperator','Twilio',
   'Shopify','WooCommerce','Magento','WordPress','Typeform','React App','Custom Backend',
   'BigQuery','Snowflake','MongoDB','Oracle DB','Google Cloud Storage','Amazon S3',
-  'Google Ads','Meta Ads','ChatGPT Ads','LinkedIn Ads','Microsoft Ads / Bing Ads','X','Pinterest','TikTok Ads','Yahoo Ads','Taboola','Spotify Ads','Snapchat Ads','Criteo','DV360','Google Merchant Center','Meta Lead Ads','Meta CAPI','Meta Catalog','GA4','Google Calendar',
+  'Google Ads','Meta Ads','ChatGPT Ads','LinkedIn Ads','Microsoft Ads / Bing Ads','Microsoft Ads CAPI','X','Pinterest','TikTok Ads','Yahoo Ads','Taboola','Spotify Ads','Snapchat Ads','Criteo','DV360','Google Merchant Center','Meta Lead Ads','Meta CAPI','Meta Catalog','GA4','Google Calendar',
   'Apollo','Lusha','Calixa'
 ]
 const agents = ['Meta Advanced CAPI','Google ECL / OCI','ChatGPT Ads CAPI','Call Tracking Events','Custom Integration','Lead Grading','CRM Enrichment','Voice Lead Qualification','Voice Scheduler','Meeting Reminder','Feedback Agent','Lead Reactivation','Attribution Agent','Deep Linking Agent','Fraud Detection Agent','Customer Journey Agent','Audiences Agent','Event Agent','Ask Ace']
@@ -1917,6 +1918,7 @@ const server = http.createServer(async (req,res)=>{
         grant_type:'authorization_code',
         code_verifier:pending.verifier
       })
+      if(Array.isArray(provider.tokenScopes)&&provider.tokenScopes.length)tokenBody.set('scope',provider.tokenScopes.join(' '))
       const tokenResponse=await fetch(provider.tokenUrl,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:tokenBody})
       const tokenPayload=await tokenResponse.json().catch(()=>({}))
       if(!tokenResponse.ok) return send(req,res,502,{error:'oauth token exchange failed',provider:provider.provider,status:tokenResponse.status})
@@ -1963,6 +1965,7 @@ const server = http.createServer(async (req,res)=>{
         grant_type:'authorization_code',
         code_verifier:pending.verifier
       })
+      if(Array.isArray(provider.tokenScopes)&&provider.tokenScopes.length)tokenBody.set('scope',provider.tokenScopes.join(' '))
       const tokenResponse=await fetch(provider.tokenUrl,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:tokenBody})
       const tokenPayload=await tokenResponse.json().catch(()=>({}))
       if(!tokenResponse.ok) return send(req,res,502,{error:'oauth token exchange failed',provider:provider.provider,status:tokenResponse.status})
