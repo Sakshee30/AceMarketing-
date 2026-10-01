@@ -15,7 +15,7 @@ import { billingConfigured, billingEventHistory, billingReconciliationHistory, c
 import { closeConsentStore, consentAllows, consentStats, getConsent, listConsentAudit, saveConsent } from './consent.mjs'
 import { closePrivacyOps, deleteSubject, exportSubject, listPrivacyRequests, purgeRetention, retentionPolicy } from './privacy-ops.mjs'
 import { closeAudienceScheduler, listAudienceRefreshRuns, listAudienceSchedules, saveAudienceSchedule } from './audience-scheduler.mjs'
-import { closeCohortAnalytics, cohortAnalytics } from './cohort-analytics.mjs'\nimport {connectorReadCatalog,listConnectorSyncRuns,connectorDataSummary,listConnectorSyncSchedules,saveConnectorSyncSchedule} from './connector-ingestion.mjs'
+import { closeCohortAnalytics, cohortAnalytics } from './cohort-analytics.mjs'\nimport {connectorReadCatalog,listConnectorSyncRuns,connectorDataSummary,listConnectorSyncSchedules,saveConnectorSyncSchedule} from './connector-ingestion.mjs'\nimport {appendTrackedEvent,listTrackedEvents,trackedEventStats} from './tracked-events.mjs'
 import { closeReportScheduler, listReportDeliveries, listReportSchedules, queueReportNow, reportMailConfigured, saveReportSchedule } from './report-scheduler.mjs'
 import { closeEventRules, createEventRule, evaluateEventRules, eventRuleStats, listEventRuleRuns, listEventRules, markEventRuleActivation, setEventRuleEnabled } from './event-rules.mjs'
 import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, publicChallenges, publicCaseStudies, publicResources, publicResourceCenter } from './public-content.mjs'
@@ -851,7 +851,10 @@ const server = http.createServer(async (req,res)=>{
   }
   return withWorkspace(workspaceId,async()=>{
   let trackedEvents=trackedEventsByWorkspace.get(workspaceId)
-  if(!trackedEvents){trackedEvents=[];trackedEventsByWorkspace.set(workspaceId,trackedEvents)}
+  if(!trackedEvents){
+    trackedEvents=await listTrackedEvents(workspaceId,{limit:5000}).catch(()=>[])
+    trackedEventsByWorkspace.set(workspaceId,trackedEvents)
+  }
   try {
     if(authenticatedUser){
       const authState=await getState()
@@ -2600,7 +2603,7 @@ const server = http.createServer(async (req,res)=>{
         available:true,
         score,
         totals:{
-          trackedEvents:trackedEvents.length,
+          trackedEvents:Number(eventStats?.total||trackedEvents.length),
           assistedEvents:assisted,
           matchedEvents:matched,
           unmatchedEvents:unmatched,
@@ -2995,7 +2998,7 @@ const server = http.createServer(async (req,res)=>{
       return send(req,res,200,{available:true,records,knownIdentities:Number(leadStats?.total||0),schemaHealth,quarantined,matchedEvents:Number(attr?.matchedEvents||0),sources,recent,providerData,generatedAt:new Date().toISOString()})
     }
     if (req.method === 'POST' && url.pathname === '/api/data-hub/rebuild') {
-      const [state,leadStats,attr]=await Promise.all([getState(),leadOpsStats(workspaceId),attributionStats(workspaceId)])
+      const [state,leadStats,attr,eventStats]=await Promise.all([getState(),leadOpsStats(workspaceId),attributionStats(workspaceId),trackedEventStats(workspaceId).catch(()=>({total:trackedEvents.length}))])
       const snapshot={
         id:'dh_'+randomUUID(),
         scope:'canonical_view',
@@ -3022,12 +3025,11 @@ const server = http.createServer(async (req,res)=>{
     }
     if (req.method === 'GET' && url.pathname === '/api/live-sync') {
       const state=await getState()
-      const now=Date.now()
-      const recentTracked=trackedEvents.slice(-250)
-      const lastMinute=recentTracked.filter(x=>{
-        const t=Date.parse(x.receivedAt||x.occurredAt||x.timestamp||'')
-        return Number.isFinite(t)&&now-t<=60_000
-      })
+      const [recentTracked,eventStats]=await Promise.all([
+        listTrackedEvents(workspaceId,{limit:250}).catch(()=>trackedEvents.slice(-250)),
+        trackedEventStats(workspaceId).catch(()=>({lastMinute:0}))
+      ])
+      const lastMinuteCount=Number(eventStats?.lastMinute||0)
       const deliveries=(state.signalDeliveries||[]).slice(0,1000)
       const delivered=deliveries.filter(x=>x.status==='delivered')
       const successful=deliveries.filter(x=>['delivered','succeeded'].includes(String(x.status||'').toLowerCase())).length
@@ -3068,7 +3070,7 @@ const server = http.createServer(async (req,res)=>{
         status:recentTracked.length||deliveries.length?'active':'idle',
         medianLatencyMs,
         deliveryRate:terminal?Number((successful/terminal*100).toFixed(2)):null,
-        eventsPerMinute:lastMinute.length,
+        eventsPerMinute:lastMinuteCount,
         recent,
         destinations:destinationThroughput,
         generatedAt:new Date().toISOString()
@@ -3517,7 +3519,7 @@ const server = http.createServer(async (req,res)=>{
         s.recentEvents=s.recentEvents||[]
         s.recentEvents.unshift(persistedEvent)
         s.recentEvents=s.recentEvents.slice(0,5000)
-      })
+      })\n      await appendTrackedEvent(workspaceId,persistedEvent)
       let leadProfile=null
       if(body.customerId||body.email||body.phone||body.emailSha256||body.email_sha256||body.phoneSha256||body.phone_sha256||body.deviceId||body.device_id){
         leadProfile=await upsertLeadProfile(workspaceId,{
