@@ -120,6 +120,7 @@ jobs:
           ML_FORECAST_DIGEST=$(jq -r '."containerimage.digest"' ml-forecast-metadata.json)
           ML_CAUSAL_DIGEST=$(jq -r '."containerimage.digest"' ml-causal-metadata.json)
           ML_MMM_DIGEST=$(jq -r '."containerimage.digest"' ml-mmm-metadata.json)
+          MIGRATION_HEAD=$(find backend/migrations -maxdepth 1 -name '*.sql' -printf '%f\n' | sort | tail -n 1)
           cat > release-manifest.json <<EOF
           {
             "schemaVersion": "ace.release.v1",
@@ -141,7 +142,8 @@ jobs:
             },
             "configurationVersion": "external-versioned-runtime-config",
             "supportedDeploymentModes": ["core","standard","full"],
-            "databaseMigrationSource": "backend/migrations"
+            "databaseMigrationSource": "backend/migrations",
+            "databaseMigrationHead": "${MIGRATION_HEAD}"
           }
           EOF
           cat release-manifest.json
