@@ -67,6 +67,12 @@ import {evaluateAccessPermission} from '../modules/authorization/src/application
 import {handlePublishForm} from '../modules/forms/src/application/commands/publish-form/publish-form.handler.mjs'
 import {handleSubmitForm} from '../modules/forms/src/application/commands/submit-form/submit-form.handler.mjs'
 import {handleSimulateRule} from '../modules/rules/src/application/queries/simulate-rule/simulate-rule.handler.mjs'
+import {handleUpdateWorkspace} from '../modules/workspaces/src/application/commands/update-workspace/update-workspace.handler.mjs'
+import {handleRemoveMember} from '../modules/memberships/src/application/commands/remove-member/remove-member.handler.mjs'
+import {handlePublishRule} from '../modules/rules/src/application/commands/publish-rule/publish-rule.handler.mjs'
+import {handlePublishWorkflow} from '../modules/workflows/src/application/commands/publish-workflow/publish-workflow.handler.mjs'
+import {handleRetryWorkflowExecution} from '../modules/workflows/src/application/commands/retry-step/retry-step.handler.mjs'
+import {handleDecideApproval} from '../modules/approvals/src/application/commands/decide-approval/decide-approval.handler.mjs'
 
 const runtimeRole=runtimeRolePolicy()
 
@@ -1411,17 +1417,16 @@ const server = http.createServer(async (req,res)=>{
     }
     if (req.method === 'POST' && url.pathname === '/api/members/deactivate') {
       const body=await readBody(req)
-      const memberId=String(body.memberId||'')
-      if(!memberId) return send(req,res,400,{error:'memberId required'})
-      if(memberId===req.user.userId) return send(req,res,409,{error:'cannot deactivate your own active session'})
-      let updated=null
-      await mutateState(s=>{
-        const member=(s.members||[]).find(x=>x.id===memberId)
-        if(member){member.status='inactive';member.updatedAt=new Date().toISOString();updated={...member};delete updated.passwordHash}
-        s.sessions=(s.sessions||[]).map(x=>x.userId===memberId?{...x,status:'revoked',revokedAt:new Date().toISOString()}:x)
-        s.audit.unshift({id:randomUUID(),action:'member.deactivated',entityId:memberId,at:new Date().toISOString()})
-      })
-      return updated?send(req,res,200,updated):send(req,res,404,{error:'member not found'})
+      try{
+        const updated=await handleRemoveMember({
+          workspaceId,
+          memberId:body.memberId,
+          actorId:req.user?.userId||null
+        })
+        return updated?send(req,res,200,updated):send(req,res,404,{error:'member not found'})
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'member deactivation failed',code:error?.code||'member_deactivation_failed'})
+      }
     }
     if (req.method === 'POST' && url.pathname === '/api/invitations/activate') {
       const body=await readBody(req)
@@ -6116,20 +6121,16 @@ const server = http.createServer(async (req,res)=>{
     }
     if (req.method === 'POST' && url.pathname === '/api/settings') {
       const body=await readBody(req)
-      const allowed=['organization','timezone','currency','reportingWeek','defaultAttribution','environment','primaryDomain','crossDomainTracking','gclidPersistenceDays','fbclidPersistenceDays','notifyDeliveryFailures','notifyTokenExpiry','notifyAudienceStale','notifyDailySummary','notificationEmail','notificationSlack','approvalSignalReturn','approvalCrmEnrichment','approvalLeadQualification','approvalAudienceSuppression','approvalCustomIntegration']
-      const patch={}
-      for(const key of allowed) if(body[key]!==undefined) patch[key]=body[key]
-      if(!Object.keys(patch).length) return send(req,res,400,{error:'no supported settings provided'})
-      const now=new Date().toISOString()
-      let saved={}
-      await mutateState(s=>{
-        s.workspaceSettings={...(s.workspaceSettings||{}),...patch,updatedAt:now}
-        saved={...s.workspaceSettings}
-        s.audit=s.audit||[]
-        s.audit.unshift({id:randomUUID(),action:'workspace.settings_updated',entityId:workspaceId,fields:Object.keys(patch),at:now})
-        s.audit=s.audit.slice(0,1000)
-      })
-      return send(req,res,200,saved)
+      try{
+        const saved=await handleUpdateWorkspace({
+          workspaceId,
+          patch:body,
+          actorId:req.user?.userId||null
+        })
+        return send(req,res,200,saved)
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'workspace settings update failed',code:error?.code||'workspace_settings_update_failed'})
+      }
     }
     if (req.method === 'GET' && url.pathname === '/api/workspaces') {
       const state=await withWorkspace('ws_default',()=>getState())
@@ -6602,7 +6603,7 @@ const server = http.createServer(async (req,res)=>{
     }
     const policyPublishMatch=url.pathname.match(/^\/api\/policy-rules\/([^/]+)\/publish$/)
     if(req.method==='POST'&&policyPublishMatch){
-      const rule=await publishPolicyRule({workspaceId,id:decodeURIComponent(policyPublishMatch[1])})
+      const rule=await handlePublishRule({workspaceId,id:decodeURIComponent(policyPublishMatch[1])})
       if(!rule)return send(req,res,404,{error:'policy rule not found'})
       await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'policy_rule.published',entityType:'policy_rule',entityId:rule.id,requestId:req.requestId,traceId:req.context?.traceId,metadata:{version:Number(rule.published_version||0)}}).catch(()=>{})
       return send(req,res,200,rule)
@@ -6740,7 +6741,7 @@ const server = http.createServer(async (req,res)=>{
     const workflowExecutionRetryMatch=url.pathname.match(/^\/api\/workflows\/executions\/([^/]+)\/retry$/)
     if(req.method==='POST'&&workflowExecutionRetryMatch){
       try{
-        const execution=await retryWorkflowExecution({workspaceId,executionId:decodeURIComponent(workflowExecutionRetryMatch[1]),actorId:req.user?.userId||null})
+        const execution=await handleRetryWorkflowExecution({workspaceId,executionId:decodeURIComponent(workflowExecutionRetryMatch[1]),actorId:req.user?.userId||null})
         if(!execution)return send(req,res,404,{error:'workflow execution not found'})
         await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'workflow.execution_retried',entityType:'workflow_execution',entityId:execution.id,requestId:req.requestId,traceId:req.context?.traceId,metadata:{attempts:Number(execution.attempts||0)}}).catch(()=>{})
         return send(req,res,200,execution)
@@ -6778,7 +6779,7 @@ const server = http.createServer(async (req,res)=>{
     }
     const workflowPublishMatch=url.pathname.match(/^\/api\/workflows\/([^/]+)\/publish$/)
     if(req.method==='POST'&&workflowPublishMatch){
-      const workflow=await publishWorkflow({workspaceId,id:decodeURIComponent(workflowPublishMatch[1])})
+      const workflow=await handlePublishWorkflow({workspaceId,id:decodeURIComponent(workflowPublishMatch[1])})
       if(!workflow)return send(req,res,404,{error:'workflow not found'})
       await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'workflow.published',entityType:'workflow',entityId:workflow.id,requestId:req.requestId,traceId:req.context?.traceId,metadata:{version:Number(workflow.published_version||0)}}).catch(()=>{})
       return send(req,res,200,workflow)
@@ -6815,7 +6816,7 @@ const server = http.createServer(async (req,res)=>{
     if(req.method==='POST'&&approvalDecisionMatch){
       const body=await readBody(req)
       try{
-        const approval=await decideWorkflowApproval({
+        const approval=await handleDecideApproval({
           workspaceId,
           approvalId:decodeURIComponent(approvalDecisionMatch[1]),
           actorId:req.user?.userId||null,
