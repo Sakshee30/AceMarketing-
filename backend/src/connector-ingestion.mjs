@@ -337,6 +337,61 @@ const syncZoho=async(ctx)=>{
   return {fetched,rawInserted,normalized,streams:modules}
 }
 
+const linkedInDatePart=date=>({year:date.getUTCFullYear(),month:date.getUTCMonth()+1,day:date.getUTCDate()})
+const linkedInDateRange=(start,end)=>{
+  const a=linkedInDatePart(start),b=linkedInDatePart(end)
+  return `(start:(year:${a.year},month:${a.month},day:${a.day}),end:(year:${b.year},month:${b.month},day:${b.day}))`
+}
+
+const syncLinkedIn=async(ctx)=>{
+  const connector='LinkedIn Ads',stream='campaign_daily'
+  const token=await credential(ctx.workspaceId,connector)
+  const account=String(ctx.options.accountId||process.env.LINKEDIN_AD_ACCOUNT_ID||'').replace(/^urn:li:sponsoredAccount:/,'')
+  if(!account||!token.access_token)throw new Error('LinkedIn Ads requires ad account ID and OAuth access token')
+  const r=await rangeFor({...ctx,connector,stream,defaultBackfillDays:90})
+  const version=process.env.LINKEDIN_MARKETING_VERSION||'202609'
+  const params=new URLSearchParams({
+    q:'analytics',
+    dateRange:linkedInDateRange(r.start,r.end),
+    timeGranularity:'DAILY',
+    pivot:'CAMPAIGN',
+    accounts:`List(urn:li:sponsoredAccount:${account})`,
+    fields:'dateRange,pivotValues,impressions,clicks,costInLocalCurrency,externalWebsiteConversions,conversionValueInLocalCurrency'
+  })
+  const {json}=await requestJson('https://api.linkedin.com/rest/adAnalytics?'+params.toString(),{
+    headers:{
+      Authorization:'Bearer '+token.access_token,
+      'Linkedin-Version':version,
+      'X-Restli-Protocol-Version':'2.0.0'
+    },
+    allowedOrigins:['https://api.linkedin.com']
+  })
+  const rows=json.elements||[]
+  const persisted=await persistAdRows({
+    workspaceId:ctx.workspaceId,connector,stream,accountId:account,rows,runId:ctx.runId,
+    map:row=>{
+      const urn=String(row.pivotValues?.[0]||'')
+      const campaignId=urn.split(':').at(-1)||urn
+      const start=row.dateRange?.start||{}
+      const day=[start.year,String(start.month||'').padStart(2,'0'),String(start.day||'').padStart(2,'0')].join('-')
+      return {
+        sourceId:[campaignId,day].join(':'),
+        campaignId,
+        campaignName:null,
+        day,
+        spend:n(row.costInLocalCurrency),
+        impressions:n(row.impressions),
+        clicks:n(row.clicks),
+        conversions:n(row.externalWebsiteConversions),
+        conversionValue:n(row.conversionValueInLocalCurrency),
+        extra:{pivotValues:row.pivotValues||[],linkedInVersion:version}
+      }
+    }
+  })
+  await saveCheckpoint({workspaceId:ctx.workspaceId,connector,stream,watermark:r.end.toISOString(),cursor:{version}})
+  return {...persisted,fetched:rows.length,streams:[stream]}
+}
+
 const syncTikTok=async(ctx)=>{
   const connector='TikTok Ads',stream='campaign_daily'
   const token=await credential(ctx.workspaceId,connector)
@@ -403,6 +458,7 @@ const adapters={
   'Google Ads':syncGoogleAds,
   'Meta Ads':syncMetaAds,
   'GA4':syncGa4,
+  'LinkedIn Ads':syncLinkedIn,
   'HubSpot':syncHubSpot,
   'Salesforce':syncSalesforce,
   'Zoho CRM':syncZoho,
