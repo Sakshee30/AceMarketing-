@@ -20,6 +20,12 @@ const providers={
     clientId:()=>process.env.GOOGLE_OAUTH_CLIENT_ID||'',
     clientSecret:()=>process.env.GOOGLE_OAUTH_CLIENT_SECRET||''
   },
+  'Microsoft Ads / Bing Ads':{
+    tokenUrl:'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+    clientId:()=>process.env.MICROSOFT_ADS_OAUTH_CLIENT_ID||'',
+    clientSecret:()=>process.env.MICROSOFT_ADS_OAUTH_CLIENT_SECRET||'',
+    scope:'https://ads.microsoft.com/msads.manage offline_access'
+  },
   'LinkedIn Ads':{
     tokenUrl:'https://www.linkedin.com/oauth/v2/accessToken',
     clientId:()=>process.env.LINKEDIN_OAUTH_CLIENT_ID||'',
@@ -73,6 +79,7 @@ const refreshRecord=async(workspaceId,record,force=false)=>{
     client_id:clientId,
     client_secret:clientSecret
   })
+  if(provider.scope)body.set('scope',provider.scope)
   const response=await fetch(provider.tokenUrl,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body})
   const fresh=await parseTokenResponse(response)
   if(!fresh.access_token)throw new Error(record.connector+' refresh response did not contain access_token')
