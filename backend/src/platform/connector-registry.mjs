@@ -141,14 +141,14 @@ const manifests=Object.freeze([
     id:'microsoft-ads',
     displayName:'Microsoft Ads / Bing Ads',
     category:'advertising',
-    auth:{type:'token',scopes:[]},
+    auth:{type:'oauth2',scopes:['https://ads.microsoft.com/msads.manage','offline_access']},
     operations:['campaign.read','insights.read','backfill.read','incremental.read','conversion.write','account.verify'],
     webhookEvents:[],
     schemas:{input:'marketing-signal.v1',output:'campaign-daily.v1'},
     rateLimit:{strategy:'provider-aware',retryAfter:true},
     idempotency:'campaign-date',
-    healthCheck:'reporting-bridge-and-account-verification',
-    compatibility:{api:'microsoft-reporting',version:'v13'}
+    healthCheck:'oauth-developer-token-and-account-verification',
+    compatibility:{api:'microsoft-reporting-rest',version:'v13'}
   },
   {
     id:'whatsapp-cloud',
@@ -204,7 +204,7 @@ export const connectorCatalogSnapshot=()=>{
       ...manifest,
       lifecycleStates:[...lifecycleStates],
       failureKinds:[...failureKinds],
-      credentialStorage:'server-secret-reference-only',
+      credentialStorage:manifest.auth.type==='oauth2'?'encrypted-oauth-token':'server-secret-reference-only',
       connectionScope:'tenant-workspace',
       callbackOwnership:'server-bound-oauth-state'
     }
