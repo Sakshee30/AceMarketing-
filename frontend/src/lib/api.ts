@@ -210,7 +210,12 @@ export const api = {
   submitPublicConnectorRequest: (payload: Record<string, unknown>) => request<{ id: string; status: string; connector: string }>('/public/connector-requests', { method:'POST', body:JSON.stringify(payload) }),
   overview: () => request('/workspace/overview'),
   integrations: (options?:{signal?:AbortSignal}) => request('/integrations',{signal:options?.signal}),
-  requestIntegration: (payload: Record<string, unknown>) => request('/integration-requests',{method:'POST',body:JSON.stringify(payload)}),
+  requestIntegration: (payload: Record<string, unknown>) => request('/integration-requests',{method:'POST',body:JSON.stringify(payload)}),\n  connectorSyncRuns: (connector?:string,options?:{signal?:AbortSignal}) => request('/integrations/sync-runs'+(connector?'?connector='+encodeURIComponent(connector):''),{signal:options?.signal}),
+  connectorDataSummary: (options?:{signal?:AbortSignal}) => request('/integrations/data-summary',{signal:options?.signal}),
+  connectorSyncSchedules: (options?:{signal?:AbortSignal}) => request('/integrations/sync-schedules',{signal:options?.signal}),
+  saveConnectorSyncSchedule: (payload:Record<string,unknown>) => request('/integrations/sync-schedules',{method:'POST',body:JSON.stringify(payload)}),
+  triggerConnectorSync: (payload:Record<string,unknown>,options?:{operationId?:string}) => request('/integrations/sync',{method:'POST',headers:options?.operationId?{'Idempotency-Key':options.operationId}:undefined,body:JSON.stringify(payload)}),
+
   integrationFlows: () => request('/integration-flows'),
   createIntegrationFlow: (payload: Record<string, unknown>) => request('/integration-flows',{method:'POST',body:JSON.stringify(payload)}),
   testIntegrationFlow: (id:string) => request('/integration-flows/test',{method:'POST',body:JSON.stringify({id})}),
