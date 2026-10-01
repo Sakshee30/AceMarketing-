@@ -1,6 +1,6 @@
 import {createHash,randomUUID} from 'node:crypto'
 import {pool} from './database.mjs'
-import {enqueueJob} from './queue.mjs'
+import {handleSubmitJob} from '../modules/jobs/src/application/commands/submit-job/submit-job.handler.mjs'
 import {createActivationRun,getAudienceBundle,materializeAudience,updateAudienceSyncState} from './lead-ops.mjs'
 
 const cadenceMap={
@@ -120,7 +120,7 @@ const refreshOne=async schedule=>{
       const key=provider==='Meta Ads'?'meta':'google'
       await updateAudienceSyncState(workspaceId,audienceId,key,{status:'queued',error:null})
       const run=await createActivationRun(workspaceId,{kind:'audience_sync',entityId:audienceId,provider,requestSummary:{audience:bundle.audience.name,members:after.length,mode:bundle.audience.mode,automatic:true,added,removed,reason:changed?'membership_changed':'stale_refresh'}})
-      await enqueueJob({
+      await handleSubmitJob({
         workspaceId,
         kind:'audience_sync',
         idempotencyKey:'audience:auto:'+audienceId+':'+key+':'+membershipHash+':'+String(schedule.last_run_at||Date.now()),
