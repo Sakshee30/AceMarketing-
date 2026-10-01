@@ -23,7 +23,7 @@ const requestJson=async(url,{method='GET',headers={},body=null,allowedOrigins=[]
       if(next.origin!==parsed.origin)throw new Error('cross-origin provider redirect blocked')
       return requestJson(next,{method,headers,body,allowedOrigins})
     }
-    const raw=await response.text()
+    if(response.status===304)return {json:{},headers:response.headers,status:304}\n    const raw=await response.text()
     let json={}
     try{json=raw?JSON.parse(raw):{}}catch{json={raw:raw.slice(0,5000)}}
     if(!response.ok){
