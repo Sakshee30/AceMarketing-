@@ -59,6 +59,53 @@ jobs:
         run: |
           docker buildx build             --platform linux/amd64             --file deploy/Dockerfile.platform-admin             --tag ghcr.io/${{ steps.repo.outputs.name }}/platform-admin:${{ github.sha }}             --sbom=true             --provenance=mode=max             --metadata-file platform-admin-metadata.json             --push .
 
+      - name: Build and push base ML image with SBOM and provenance
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            --file deploy/Dockerfile.ml \
+            --tag ghcr.io/${{ steps.repo.outputs.name }}/ml:${{ github.sha }} \
+            --sbom=true \
+            --provenance=mode=max \
+            --metadata-file ml-metadata.json \
+            --push .
+
+      - name: Build and push forecasting ML image
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            --file deploy/Dockerfile.ml-specialist \
+            --build-arg ML_EXTRA=forecasting \
+            --tag ghcr.io/${{ steps.repo.outputs.name }}/ml-forecast:${{ github.sha }} \
+            --sbom=true \
+            --provenance=mode=max \
+            --metadata-file ml-forecast-metadata.json \
+            --push .
+
+      - name: Build and push causal ML image
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            --file deploy/Dockerfile.ml-specialist \
+            --build-arg ML_EXTRA=causal \
+            --tag ghcr.io/${{ steps.repo.outputs.name }}/ml-causal:${{ github.sha }} \
+            --sbom=true \
+            --provenance=mode=max \
+            --metadata-file ml-causal-metadata.json \
+            --push .
+
+      - name: Build and push MMM image
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            --file deploy/Dockerfile.ml-specialist \
+            --build-arg ML_EXTRA=mmm \
+            --tag ghcr.io/${{ steps.repo.outputs.name }}/ml-mmm:${{ github.sha }} \
+            --sbom=true \
+            --provenance=mode=max \
+            --metadata-file ml-mmm-metadata.json \
+            --push .
+
       - name: Create immutable release manifest
         shell: bash
         run: |
@@ -69,6 +116,10 @@ jobs:
           CUSTOMER_APP_DIGEST=$(jq -r '."containerimage.digest"' customer-app-metadata.json)
           PUBLIC_SITE_DIGEST=$(jq -r '."containerimage.digest"' public-site-metadata.json)
           PLATFORM_ADMIN_DIGEST=$(jq -r '."containerimage.digest"' platform-admin-metadata.json)
+          ML_DIGEST=$(jq -r '."containerimage.digest"' ml-metadata.json)
+          ML_FORECAST_DIGEST=$(jq -r '."containerimage.digest"' ml-forecast-metadata.json)
+          ML_CAUSAL_DIGEST=$(jq -r '."containerimage.digest"' ml-causal-metadata.json)
+          ML_MMM_DIGEST=$(jq -r '."containerimage.digest"' ml-mmm-metadata.json)
           cat > release-manifest.json <<EOF
           {
             "schemaVersion": "ace.release.v1",
@@ -82,9 +133,14 @@ jobs:
               "web": "ghcr.io/${{ steps.repo.outputs.name }}/web@${WEB_DIGEST}",
               "customerApp": "ghcr.io/${{ steps.repo.outputs.name }}/customer-app@${CUSTOMER_APP_DIGEST}",
               "publicSite": "ghcr.io/${{ steps.repo.outputs.name }}/public-site@${PUBLIC_SITE_DIGEST}",
-              "platformAdmin": "ghcr.io/${{ steps.repo.outputs.name }}/platform-admin@${PLATFORM_ADMIN_DIGEST}"
+              "platformAdmin": "ghcr.io/${{ steps.repo.outputs.name }}/platform-admin@${PLATFORM_ADMIN_DIGEST}",
+              "ml": "ghcr.io/${{ steps.repo.outputs.name }}/ml@${ML_DIGEST}",
+              "mlForecast": "ghcr.io/${{ steps.repo.outputs.name }}/ml-forecast@${ML_FORECAST_DIGEST}",
+              "mlCausal": "ghcr.io/${{ steps.repo.outputs.name }}/ml-causal@${ML_CAUSAL_DIGEST}",
+              "mlMmm": "ghcr.io/${{ steps.repo.outputs.name }}/ml-mmm@${ML_MMM_DIGEST}"
             },
             "configurationVersion": "external-versioned-runtime-config",
+            "supportedDeploymentModes": ["core","standard","full"],
             "databaseMigrationSource": "backend/migrations"
           }
           EOF
