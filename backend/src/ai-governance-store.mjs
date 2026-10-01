@@ -16,7 +16,7 @@ const readTaskUsage=async(workspaceId,task)=>{
       [workspaceId,task]
     ),
     pool.query(
-      `SELECT COALESCE(sum(CASE WHEN status='committed' THEN COALESCE(actual_units,reserved_units,0) ELSE reserved_units END),0)::float8 AS units
+      `SELECT COALESCE(sum(CASE WHEN status='committed' THEN COALESCE(actual_units,reserved_units,0) ELSE reserved_units END),0) AS units
        FROM ace_ai_usage_reservations
        WHERE workspace_id=$1 AND task=$2
          AND created_at>=date_trunc('month',now())
@@ -211,7 +211,7 @@ export const evaluateAiTaskAdmission=async({workspaceId,task,requestedModel,rese
     )
     activeJobs=Number(active.rows[0]?.count||0)
     const usage=await pool.query(
-      `SELECT COALESCE(sum(CASE WHEN status='committed' THEN COALESCE(actual_units,reserved_units,0) ELSE reserved_units END),0)::float8 AS units
+      `SELECT COALESCE(sum(CASE WHEN status='committed' THEN COALESCE(actual_units,reserved_units,0) ELSE reserved_units END),0) AS units
        FROM ace_ai_usage_reservations
        WHERE workspace_id=$1 AND task=$2
          AND created_at>=date_trunc('month',now())

@@ -137,13 +137,22 @@ export const reviewAnomalyItem=async({workspaceId,resultId,entityId,status,feedb
 export const listSegmentSnapshots=async({workspaceId,limit=50})=>{
   if(!pool)return []
   const safeLimit=Math.max(1,Math.min(Number(limit||50),200))
-  const {rows}=await pool.query(
-    `SELECT s.*,
-       (SELECT count(*)::int FROM ace_ai_segment_memberships m WHERE m.workspace_id=s.workspace_id AND m.snapshot_id=s.id) AS member_count
-     FROM ace_ai_segment_snapshots s WHERE s.workspace_id=$1 ORDER BY s.created_at DESC LIMIT $2`,
-    [workspaceId,safeLimit]
-  )
-  return rows
+  const [snapshots,membershipCounts]=await Promise.all([
+    pool.query(
+      `SELECT * FROM ace_ai_segment_snapshots
+       WHERE workspace_id=$1 ORDER BY created_at DESC LIMIT $2`,
+      [workspaceId,safeLimit]
+    ),
+    pool.query(
+      `SELECT snapshot_id,count(*)::int AS member_count
+       FROM ace_ai_segment_memberships
+       WHERE workspace_id=$1
+       GROUP BY snapshot_id`,
+      [workspaceId]
+    )
+  ])
+  const countsBySnapshot=new Map(membershipCounts.rows.map(row=>[row.snapshot_id,Number(row.member_count||0)]))
+  return snapshots.rows.map(row=>({...row,member_count:countsBySnapshot.get(row.id)||0}))
 }
 
 export const getSegmentMemberships=async({workspaceId,snapshotId,limit=1000})=>{

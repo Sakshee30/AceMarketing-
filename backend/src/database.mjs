@@ -10,6 +10,13 @@ export const embeddedDatabase=!databaseUrl&&process.env.NODE_ENV!=='production'
 
 const createEmbeddedPool=async()=>{
   const db=newDb({autoCreateForeignKeyIndices:true})
+  // PostgreSQL accepts float8 as an alias for double precision. Register the
+  // alias explicitly because pg-mem does not provide it in every release.
+  db.public.registerEquivalentType({
+    name:'float8',
+    equivalentTo:DataType.float,
+    isValid:value=>Number.isFinite(Number(value))
+  })
   db.public.registerFunction({
     name:'date_trunc',
     args:[DataType.text,DataType.timestamptz],
