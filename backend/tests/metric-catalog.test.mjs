@@ -59,7 +59,7 @@ test('derived marketing metrics use one shared formula with null zero denominato
   assert.equal(metrics.cpc,0.2)
   assert.equal(metrics.cpm,10)
   assert.equal(metrics.cpa,4)
-  assert.equal(metrics.conversion_rate,0.05)
+  assert.equal(metrics.click_to_conversion_rate,0.05)
   assert.equal(metrics.roas,4)
   assert.equal(deriveMarketingMetrics({spend:0,clicks:0,impressions:0,conversions:0,revenue:0}).roas,null)
 })
