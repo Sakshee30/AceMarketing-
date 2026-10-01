@@ -202,6 +202,7 @@ const refreshConnectorCredential=async(workspaceId,connector)=>{
     client_id:provider.clientId,
     client_secret:provider.clientSecret
   })
+  if(Array.isArray(provider.tokenScopes)&&provider.tokenScopes.length)form.set('scope',provider.tokenScopes.join(' '))
   const response=await fetch(provider.tokenUrl,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:form})
   const body=await response.json().catch(()=>({}))
   if(!response.ok||!body.access_token) throw new Error('OAuth token refresh failed: '+response.status)
