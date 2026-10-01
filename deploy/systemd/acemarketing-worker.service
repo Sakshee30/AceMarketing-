@@ -1,0 +1,26 @@
+[Unit]
+Description=AceMarketing durable worker
+After=network-online.target acemarketing-preflight.service
+Requires=acemarketing-preflight.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=acemarketing
+Group=acemarketing
+WorkingDirectory=/opt/acemarketing/current
+EnvironmentFile=/etc/acemarketing/acemarketing.env
+ExecStart=/usr/bin/node backend/src/worker.mjs
+Restart=always
+RestartSec=3
+TimeoutStopSec=60
+KillSignal=SIGTERM
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/opt/acemarketing /tmp
+LimitNOFILE=65536
+
+[Install]
+WantedBy=acemarketing-core.target
