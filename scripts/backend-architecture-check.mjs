@@ -64,7 +64,7 @@ const required=[
   'backend/apps/workers/webhook-delivery/src/bootstrap.mjs',
   'backend/apps/workers/documents/src/bootstrap.mjs',
   'backend/apps/scheduler/src/bootstrap.mjs',
-  'backend/src/platform/module-registry.mjs',
+  'backend/src/platform/module-registry.mjs',\n  'backend/src/platform/operation-registry.mjs',\n  'backend/tests/operation-registry.test.mjs',\n  'docs/architecture/BACKEND_ADOPTION_GAP_MAP.md',
   'backend/tests/module-registry.test.mjs',
   'backend/migrations/054_cell_placement.sql',
   'backend/modules/identity/module.manifest.mjs',
@@ -255,6 +255,14 @@ if(fs.existsSync(searchPortPath)){
   if(!source.includes('tenant-and-resource-policy-before-result'))failures.push('Search must enforce tenant/resource authorization before returning results.')
 }
 
+
+const operationRegistryPath=path.join(root,'backend','src','platform','operation-registry.mjs')
+if(fs.existsSync(operationRegistryPath)){
+  const source=fs.readFileSync(operationRegistryPath,'utf8')
+  for(const requiredToken of ['platformOperationRegistry','legacy-mapped','canonical','handlerPath','testPath','validateOperationRegistry']){
+    if(!source.includes(requiredToken))failures.push('Operation registry must preserve '+requiredToken+' semantics.')
+  }
+}
 
 const capabilityManifestPath=path.join(root,'backend','src','platform','capability-manifest.mjs')
 if(fs.existsSync(capabilityManifestPath)){
