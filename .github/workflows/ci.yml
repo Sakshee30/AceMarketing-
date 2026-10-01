@@ -58,6 +58,8 @@ jobs:
         run: npm run architecture:project-profile
       - name: Enforce migration and trust-boundary review impact
         run: npm run architecture:change-impact
+      - name: Validate foundation reuse and deprecation governance
+        run: npm run reuse:governance
       - name: Run backend foundation tests
         run: npm run test:backend-foundation
       - name: Validate frontend and backend
