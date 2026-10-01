@@ -1,6 +1,8 @@
 import http from 'node:http'
+import https from 'node:https'
 import {readFile,stat} from 'node:fs/promises'
 import {extname,join,normalize,resolve} from 'node:path'
+import WebSocket,{WebSocketServer} from 'ws'
 
 const args=Object.fromEntries(process.argv.slice(2).map(arg=>{
   const [key,...rest]=arg.replace(/^--/,'').split('=')
@@ -9,6 +11,8 @@ const args=Object.fromEntries(process.argv.slice(2).map(arg=>{
 const root=resolve(args.dir||'dist/frontend')
 const port=Number(args.port||process.env.PORT||4173)
 const host=args.host||process.env.HOST||'0.0.0.0'
+const apiTarget=String(args['api-target']||process.env.ACE_STATIC_API_TARGET||'').replace(/\/$/,'')
+const forwardedProto=String(process.env.ACE_FORWARDED_PROTO||'http')
 
 const contentType=path=>({
   '.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8',
@@ -31,12 +35,38 @@ const headers={
   'Permissions-Policy':'camera=(), microphone=(), geolocation=()'
 }
 
+const proxyHttp=(req,res)=>{
+  if(!apiTarget)return false
+  const target=new URL(req.url||'/',apiTarget)
+  const transport=target.protocol==='https:'?https:http
+  const upstream=transport.request(target,{
+    method:req.method,
+    headers:{
+      ...req.headers,
+      host:target.host,
+      'x-forwarded-for':String(req.headers['x-forwarded-for']||req.socket.remoteAddress||''),
+      'x-forwarded-proto':String(req.headers['x-forwarded-proto']||forwardedProto)
+    }
+  },upstreamRes=>{
+    res.writeHead(upstreamRes.statusCode||502,upstreamRes.headers)
+    upstreamRes.pipe(res)
+  })
+  upstream.on('error',error=>{
+    if(res.headersSent){res.destroy(error);return}
+    res.writeHead(502,{...headers,'Content-Type':'application/json'})
+    res.end(JSON.stringify({error:'API proxy unavailable'}))
+  })
+  req.pipe(upstream)
+  return true
+}
+
 const server=http.createServer(async(req,res)=>{
   if(req.url==='/healthz'){
     res.writeHead(200,{...headers,'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'})
     res.end('ok')
     return
   }
+  if(String(req.url||'').startsWith('/api/')&&proxyHttp(req,res))return
   let file=safePath(req.url)
   if(!file){res.writeHead(400,headers);res.end('bad request');return}
   try{
@@ -65,7 +95,37 @@ const server=http.createServer(async(req,res)=>{
   }
 })
 
-server.listen(port,host,()=>console.log(`[static] serving ${root} on http://${host}:${port}`))
+const wss=new WebSocketServer({noServer:true})
+server.on('upgrade',(req,socket,head)=>{
+  if(!apiTarget||!String(req.url||'').startsWith('/api/')){
+    socket.destroy()
+    return
+  }
+  const target=new URL(req.url||'/',apiTarget)
+  target.protocol=target.protocol==='https:'?'wss:':'ws:'
+  const protocols=String(req.headers['sec-websocket-protocol']||'').split(',').map(x=>x.trim()).filter(Boolean)
+  wss.handleUpgrade(req,socket,head,client=>{
+    const upstream=new WebSocket(target,protocols.length?protocols:undefined,{
+      headers:{
+        ...Object.fromEntries(Object.entries(req.headers).filter(([name])=>!['host','sec-websocket-key','sec-websocket-version','sec-websocket-extensions','sec-websocket-protocol','connection','upgrade'].includes(name.toLowerCase()))),
+        'x-forwarded-for':String(req.headers['x-forwarded-for']||req.socket.remoteAddress||''),
+        'x-forwarded-proto':String(req.headers['x-forwarded-proto']||forwardedProto)
+      }
+    })
+    const closeBoth=(code=1011,reason='proxy closed')=>{
+      try{if(client.readyState===WebSocket.OPEN||client.readyState===WebSocket.CONNECTING)client.close(code,reason)}catch{}
+      try{if(upstream.readyState===WebSocket.OPEN||upstream.readyState===WebSocket.CONNECTING)upstream.close(code,reason)}catch{}
+    }
+    client.on('message',data=>{if(upstream.readyState===WebSocket.OPEN)upstream.send(data)})
+    upstream.on('message',data=>{if(client.readyState===WebSocket.OPEN)client.send(data)})
+    client.on('close',()=>closeBoth(1000,'client closed'))
+    upstream.on('close',(code,reason)=>{try{client.close(code,String(reason||'upstream closed'))}catch{}})
+    client.on('error',()=>closeBoth())
+    upstream.on('error',()=>closeBoth())
+  })
+})
+
+server.listen(port,host,()=>console.log(`[static] serving ${root} on http://${host}:${port}${apiTarget?' with API proxy '+apiTarget:''}`))
 const stop=()=>server.close(()=>process.exit(0))
 process.on('SIGINT',stop)
 process.on('SIGTERM',stop)
