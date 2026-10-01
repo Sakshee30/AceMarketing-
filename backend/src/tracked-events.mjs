@@ -50,7 +50,22 @@ export const listTrackedEvents=async(workspaceId,{limit=500,minutes=null}={})=>{
      FROM ace_events WHERE ${where} ORDER BY received_at DESC LIMIT $${params.length}`,
     params
   ))
-  return rows
+  return rows.map(row=>({
+    ...(row.payload&&typeof row.payload==='object'?row.payload:{}),
+    id:row.id,
+    event:row.event_type,
+    eventType:row.event_type,
+    consentCategory:row.event_category,
+    occurredAt:row.occurred_at,
+    receivedAt:row.received_at,
+    source:row.source,
+    customerId:row.customer_id,
+    visitorId:row.visitor_id,
+    deviceId:row.device_id,
+    emailSha256:row.email_sha256,
+    phoneSha256:row.phone_sha256,
+    campaign:row.campaign
+  }))
 }
 
 export const trackedEventStats=async(workspaceId)=>{
