@@ -11,7 +11,66 @@ permissions:
   packages: write
 
 jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: acemarketing
+          POSTGRES_USER: ace
+          POSTGRES_PASSWORD: ace_release_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ace -d acemarketing"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://ace:ace_release_ci@127.0.0.1:5432/acemarketing
+      DB_SSL: disable
+      NODE_ENV: test
+      AUTH_REQUIRED: "false"
+      DEFAULT_WORKSPACE_ID: ws_release
+      RATE_LIMIT_PER_MINUTE: "20000"
+      CONNECTOR_ENCRYPTION_KEY: "release-ci-only-connector-encryption-key"
+      PUBLIC_SITE_ORIGIN: https://acemarketing.example.test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install Node dependencies from lockfile
+        run: npm ci
+      - name: Apply migrations
+        run: npm run migrate
+      - name: Verify provider API version registry
+        run: npm run provider:versions
+      - name: Verify backend architecture, contracts, tenant isolation and foundation
+        run: npm run backend:verify
+      - name: Verify AI backend
+        run: npm run verify:ai-backend
+      - name: Verify all frontend release surfaces
+        env:
+          FRONTEND_BUDGET_MODE: strict
+        run: npm run frontends:verify
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Verify base ML service
+        run: |
+          python -m pip install -e "ml-service[test]"
+          ruff check ml-service/src ml-service/tests
+          mypy --config-file ml-service/pyproject.toml ml-service/src/acemarketing_ml
+          pytest -q ml-service/tests
+      - name: Verify Docker-free systemd topology
+        run: systemd-analyze verify deploy/systemd/*.service deploy/systemd/*.target
+
   images:
+    needs: qualify
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
