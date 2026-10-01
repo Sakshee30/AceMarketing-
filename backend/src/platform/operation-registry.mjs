@@ -35,14 +35,14 @@ export const platformOperationRegistry=Object.freeze([
   legacy('organizations','update-organization','organization.manage','organization','backend/src/store.mjs','backend/tests/platform-foundation.test.mjs'),
   legacy('workspaces','update-workspace','workspace.manage','workspace','backend/src/platform/workspace-access.mjs','backend/tests/workspace-access.test.mjs'),
   legacy('memberships','remove-member','memberships.manage','membership','backend/src/security.mjs','backend/tests/workspace-access.test.mjs',{audit:'security'}),
-  legacy('authorization','evaluate-access','access.evaluate','permission-evaluation','backend/src/platform/access-policy.mjs','backend/tests/access-policy.test.mjs',{audit:'security'}),
+  defineOperation({moduleId:'authorization',id:'evaluate-access',permission:'access.evaluate',contract:'permission-evaluation',handlerPath:'backend/modules/authorization/src/application/queries/evaluate-access/evaluate-access.handler.mjs',testPath:'backend/tests/canonical-operation-handlers.test.mjs',status:'canonical',audit:'security'}),
   legacy('authorization','publish-policy','access.manage','access-policy','backend/src/platform/policy-engine.mjs','backend/tests/policy-workflow.test.mjs',{audit:'security'}),
 
   legacy('entitlements','evaluate-entitlement','entitlement.read','entitlement','backend/src/entitlements.mjs','backend/tests/usage-ledger.test.mjs'),
-  legacy('forms','publish-form','forms.manage','form-definition','backend/src/platform/forms-store.mjs','backend/tests/forms-store.test.mjs'),
-  legacy('forms','submit-form','forms.submit','form-submission','backend/src/platform/forms-store.mjs','backend/tests/forms-store.test.mjs'),
+  defineOperation({moduleId:'forms',id:'publish-form',permission:'forms.manage',contract:'form-definition',handlerPath:'backend/modules/forms/src/application/commands/publish-form/publish-form.handler.mjs',testPath:'backend/tests/canonical-operation-handlers.test.mjs',status:'canonical'}),
+  defineOperation({moduleId:'forms',id:'submit-form',permission:'forms.submit',contract:'form-submission',handlerPath:'backend/modules/forms/src/application/commands/submit-form/submit-form.handler.mjs',testPath:'backend/tests/canonical-operation-handlers.test.mjs',status:'canonical'}),
   legacy('custom-objects','define-object','objects.schema.manage','custom-object-definition','backend/src/platform/custom-object-store.mjs','backend/tests/custom-object-store.test.mjs'),
-  legacy('rules','simulate-rule','rules.evaluate','rule-evaluation','backend/src/platform/policy-engine.mjs','backend/tests/policy-workflow.test.mjs'),
+  defineOperation({moduleId:'rules',id:'simulate-rule',permission:'rules.evaluate',contract:'rule-evaluation',handlerPath:'backend/modules/rules/src/application/queries/simulate-rule/simulate-rule.handler.mjs',testPath:'backend/tests/canonical-operation-handlers.test.mjs',status:'canonical'}),
   legacy('rules','publish-rule','rules.manage','rule-definition','backend/src/platform/policy-engine.mjs','backend/tests/policy-workflow.test.mjs'),
 
   defineOperation({
