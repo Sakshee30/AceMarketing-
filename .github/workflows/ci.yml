@@ -48,6 +48,9 @@ jobs:
         run: npm run migrate
       - name: Audit production dependencies
         run: npm run security:audit
+      - name: Validate provider API version review freshness
+        run: npm run provider:versions
+
       - name: Validate database and admission capacity budgets
         run: npm run capacity:budget
       - name: Enforce frontend architecture boundaries
