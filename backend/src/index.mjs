@@ -4,7 +4,7 @@ import { URL } from 'node:url'
 import { createToken, verifyToken, verifyPassword, hashPassword, hasPermission, createRateLimiter, securityHeaders, resolveCorsOrigin } from './security.mjs'
 import { closeStore, getState, mutateState, storageHealth, withWorkspace } from './store.mjs'
 import { connectorVaultReady, decryptSecret, encryptSecret } from './vault.mjs'
-import { enqueueJob, getJob, queueAvailable, queueStats, requestJobCancellation } from './queue.mjs'
+import { getJob, queueAvailable, queueStats, requestJobCancellation } from './queue.mjs'
 import { attributionStats, captureClickSession, closeAttributionStore, recordAssistedEvent, reconcileAttribution } from './attribution-store.mjs'
 import { audienceOpsStats, closeLeadOps, createActivationRun, createAudience as createLeadAudience, getAudienceBundle, getLeadProfile, leadOpsStats, listActivationRuns, listAudiences as listLeadAudiences, listLeadProfiles, materializeAudience, overrideLeadGrade as persistLeadGrade, previewAudience as previewLeadAudience, scoreLead, upsertLeadProfile, updateAudienceSyncState } from './lead-ops.mjs'
 import { closeAgentOrchestrator, completeFollowUp as persistCompleteFollowUp, createAgentRun, createFollowUp, createMeeting, getMeeting, listAgentRuns, listFeedback as listPersistedFeedback, listFollowUps as listPersistedFollowUps, listMeetings as listPersistedMeetings, listRoutingDecisions, recordFeedback, rescheduleMeeting, routeLead, updateAgentRun } from './agent-orchestrator.mjs'
@@ -22,7 +22,7 @@ import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, p
 import { parseWhatsAppWebhook, resolveWhatsAppWorkspace, sendWhatsAppMessage, verifyWhatsAppWebhookChallenge, verifyWhatsAppWebhookSignature } from './whatsapp-cloud.mjs'
 import { normalizeCallEvent, resolveCallWorkspace, verifyCallWebhook } from './call-events.mjs'
 import { createCalendarEvent, updateCalendarEvent } from './calendar-provider.mjs'
-import { authMailConfigured, sendPasswordReset } from './auth-mailer.mjs'
+import { authMailConfigured } from './auth-mailer.mjs'
 import { modelCatalogItems, modelRegistryItem, registrySummary } from './ai-registry.mjs'
 import { verifyProviderAccess } from './ai-providers.mjs'
 import { closeAiRuntime, listAiResults, submitHostedAiJob } from './ai-runtime.mjs'
@@ -83,6 +83,9 @@ import {handleReplayWebhookDelivery} from '../modules/webhooks/src/application/c
 import {handleReserveQuota} from '../modules/usage/src/application/commands/reserve-quota/reserve-quota.handler.mjs'
 import {handleChangeSubscription} from '../modules/billing/src/application/commands/change-subscription/change-subscription.handler.mjs'
 import {handleReconcilePayment} from '../modules/billing/src/application/commands/reconcile-payment/reconcile-payment.handler.mjs'
+import {handleSubmitJob} from '../modules/jobs/src/application/commands/submit-job/submit-job.handler.mjs'
+import {handleSendNotification} from '../modules/notifications/src/application/commands/send-notification/send-notification.handler.mjs'
+import {handleRunReport} from '../modules/reporting/src/application/commands/run-report/run-report.handler.mjs'
 
 const runtimeRole=runtimeRolePolicy()
 
@@ -1308,7 +1311,7 @@ const server = http.createServer(async (req,res)=>{
           s.audit.unshift({id:randomUUID(),action:'auth.password_reset_requested',entityId:member.id,at:now})
           s.audit=s.audit.slice(0,1000)
         })
-        if(authMailConfigured()) await sendPasswordReset({email:member.email,token})
+        if(authMailConfigured()) await handleSendNotification({kind:'password_reset',recipient:member.email,token})
         else if(!IS_PROD) return send(req,res,202,{accepted:true,developmentResetToken:token,expiresAt})
       }
       return send(req,res,202,{accepted:true})
@@ -2598,7 +2601,7 @@ const server = http.createServer(async (req,res)=>{
             if(target){target.status='queued';target.nextAttemptAt=now;target.updatedAt=now;target.lastError=null}
           })
           const replayPayload=item.replayPayload||buildSignalReplayPayload(item,item)
-          const job=await enqueueJob({workspaceId,kind:'signal_delivery',idempotencyKey:'reconcile-retry:'+item.id+':'+Date.now(),payload:{...replayPayload,deliveryId:item.id,event:item.event,destination:item.destination,idempotencyKey:item.idempotencyKey}})
+          const job=await handleSubmitJob({workspaceId,kind:'signal_delivery',idempotencyKey:'reconcile-retry:'+item.id+':'+Date.now(),payload:{...replayPayload,deliveryId:item.id,event:item.event,destination:item.destination,idempotencyKey:item.idempotencyKey}})
           jobs.push(job?.id||null)
         }
         result={status:'queued',detail:'Failed deliveries re-queued',replayed:failed.length,jobs:jobs.filter(Boolean)}
@@ -3521,7 +3524,7 @@ const server = http.createServer(async (req,res)=>{
               const item={id:deliveryId,event:match.outputEvent,destination,customerId:body.customerId?String(body.customerId):null,externalEventId:match.assistedEvent?.id||match.runId,status:'queued',attempts:0,idempotencyKey,createdAt:now,updatedAt:now,nextAttemptAt:now}
               item.replayPayload=buildSignalReplayPayload({...body,event:match.outputEvent,destination,value:match.assistedEvent?.value??body.value??null,currency:match.assistedEvent?.currency||body.currency||null},{...item,idempotencyKey})
               await mutateState(s=>{s.signalDeliveries=s.signalDeliveries||[];s.signalDeliveries.unshift(item);s.signalDeliveries=s.signalDeliveries.slice(0,10000);s.audit.unshift({id:randomUUID(),action:'event-rule.signal.queued',entityId:deliveryId,ruleId:match.ruleId,destination,event:match.outputEvent,at:now});s.audit=s.audit.slice(0,1000)})
-              const job=await enqueueJob({workspaceId,kind:'signal_delivery',idempotencyKey:'rule-signal:'+idempotencyKey,payload:item.replayPayload})
+              const job=await handleSubmitJob({workspaceId,kind:'signal_delivery',idempotencyKey:'rule-signal:'+idempotencyKey,payload:item.replayPayload})
               derivedDeliveries.push({ruleId:match.ruleId,outputEvent:match.outputEvent,destination,deliveryId,jobId:job?.id||null})
               queued++
             }
@@ -3561,7 +3564,7 @@ const server = http.createServer(async (req,res)=>{
                   run.status='failed';run.detail=validationError
                 }else{
                   await mutateState(s=>{s.signalDeliveries=s.signalDeliveries||[];s.signalDeliveries.unshift(item);s.signalDeliveries=s.signalDeliveries.slice(0,10000)})
-                  const job=await enqueueJob({workspaceId,kind:'signal_delivery',idempotencyKey:'activation:'+idempotencyKey,payload:item.replayPayload})
+                  const job=await handleSubmitJob({workspaceId,kind:'signal_delivery',idempotencyKey:'activation:'+idempotencyKey,payload:item.replayPayload})
                   run.status='succeeded';run.detail='Signal queued for '+rule.destination;run.operationId=deliveryId;run.jobId=job?.id||null
                 }
               }
@@ -3943,7 +3946,7 @@ const server = http.createServer(async (req,res)=>{
     if (req.method === 'POST' && url.pathname === '/api/report-schedules/run-now') {
       const body=await readBody(req)
       if(!body.id)return send(req,res,400,{error:'id required'})
-      try{return send(req,res,202,await queueReportNow(workspaceId,String(body.id)))}
+      try{return send(req,res,202,await handleRunReport({workspaceId,scheduleId:String(body.id)}))}
       catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'report queue failed'})}
     }
     if (req.method === 'GET' && url.pathname === '/api/reports') {
@@ -4008,7 +4011,7 @@ const server = http.createServer(async (req,res)=>{
       const lead=await getLeadProfile(workspaceId,String(body.lead))
       if(!lead) return send(req,res,404,{error:'lead not found'})
       const run=await createActivationRun(workspaceId,{kind:'crm_writeback',entityId:lead.id,provider:String(body.provider),requestSummary:{lead:lead.external_lead_id,grade:lead.grade,score:lead.score}})
-      const job=await enqueueJob({workspaceId,kind:'crm_writeback',idempotencyKey:'crm:'+run.id,payload:{leadRef:lead.id,provider:String(body.provider),fields:body.fields||{},activationRunId:run.id}})
+      const job=await handleSubmitJob({workspaceId,kind:'crm_writeback',idempotencyKey:'crm:'+run.id,payload:{leadRef:lead.id,provider:String(body.provider),fields:body.fields||{},activationRunId:run.id}})
       return send(req,res,202,{runId:run.id,jobId:job?.id||null,status:'queued',provider:body.provider})
     }
     if (req.method === 'POST' && url.pathname === '/api/lead-grading/score') {
@@ -4298,7 +4301,7 @@ const server = http.createServer(async (req,res)=>{
         const key=provider==='Meta Ads'?'meta':'google'
         await updateAudienceSyncState(workspaceId,bundle.audience.id,key,{status:'queued',error:null})
         const run=await createActivationRun(workspaceId,{kind:'audience_sync',entityId:bundle.audience.id,provider,requestSummary:{audience:bundle.audience.name,members:bundle.members.length,mode:bundle.audience.mode}})
-        const job=await enqueueJob({workspaceId,kind:'audience_sync',idempotencyKey:'audience:'+bundle.audience.id+':'+key+':'+Date.now(),payload:{audienceId:bundle.audience.id,provider,activationRunId:run.id}})
+        const job=await handleSubmitJob({workspaceId,kind:'audience_sync',idempotencyKey:'audience:'+bundle.audience.id+':'+key+':'+Date.now(),payload:{audienceId:bundle.audience.id,provider,activationRunId:run.id}})
         queued.push({provider,runId:run.id,jobId:job?.id||null})
       }
       return send(req,res,202,{id:bundle.audience.id,status:'syncing',queued})
@@ -4382,7 +4385,7 @@ const server = http.createServer(async (req,res)=>{
         s.audit.unshift({id:randomUUID(),action:'chatgpt_ads.signal_queued',entityId:item.id,event:item.event,oppref:Boolean(body.oppref),at:now})
         s.audit=s.audit.slice(0,1000)
       })
-      const job=await enqueueJob({workspaceId,kind:'signal_delivery',idempotencyKey:'chatgpt-ads:'+idempotencyKey,payload:item.replayPayload})
+      const job=await handleSubmitJob({workspaceId,kind:'signal_delivery',idempotencyKey:'chatgpt-ads:'+idempotencyKey,payload:item.replayPayload})
       return send(req,res,202,{duplicate:false,item,job:job?{id:job.id,status:job.status}:null})
     }
     if (req.method === 'GET' && url.pathname === '/api/signal-deliveries') {
@@ -4443,7 +4446,7 @@ const server = http.createServer(async (req,res)=>{
         s.audit.unshift({id:randomUUID(),action:'signal.queued',entityId:item.id,destination:item.destination,event:item.event,at:now})
         s.audit=s.audit.slice(0,1000)
       })
-      const job=await enqueueJob({
+      const job=await handleSubmitJob({
         workspaceId,
         kind:'signal_delivery',
         idempotencyKey:'signal:'+idempotencyKey,
@@ -4471,7 +4474,7 @@ const server = http.createServer(async (req,res)=>{
       })
       if(updated){
         const replayPayload=updated.replayPayload||buildSignalReplayPayload(updated,updated)
-        await enqueueJob({
+        await handleSubmitJob({
           workspaceId,
           kind:'signal_delivery',
           idempotencyKey:'retry:'+updated.id+':'+Date.now(),
@@ -4501,7 +4504,7 @@ const server = http.createServer(async (req,res)=>{
       const jobs=[]
       for(const item of replayItems){
         const replayPayload=item.replayPayload||buildSignalReplayPayload(item,item)
-        const job=await enqueueJob({
+        const job=await handleSubmitJob({
           workspaceId,
           kind:'signal_delivery',
           idempotencyKey:'dlq-replay:'+item.id+':'+Date.now(),
@@ -4929,7 +4932,7 @@ const server = http.createServer(async (req,res)=>{
         const operation=task==='future_customer_value'?'regression_train':'classification_train'
         const requestKey=String(req.headers['idempotency-key']||req.requestId||randomUUID())
         const deadlineAt=new Date(Date.now()+Number(process.env.ML_JOB_DEADLINE_MS||15*60*1000)).toISOString()
-        const job=await enqueueJob({
+        const job=await handleSubmitJob({
           workspaceId,
           kind:'ml_task',
           payload:{operation,task,request},
@@ -5296,7 +5299,7 @@ const server = http.createServer(async (req,res)=>{
       const query=String(body.query||'').trim()
       if(!query)return send(req,res,400,{error:'query required'})
       if(query.length>1000)return send(req,res,400,{error:'query exceeds 1000 characters'})
-      const job=await enqueueJob({
+      const job=await handleSubmitJob({
         workspaceId,
         kind:'knowledge_search',
         payload:{query,role:authenticatedUser?.role||'viewer',limit:Math.max(1,Math.min(Number(body.limit||10),20))},
@@ -5354,7 +5357,7 @@ const server = http.createServer(async (req,res)=>{
       if(!admission.allowed)return send(req,res,429,{error:'ML task is blocked by tenant policy',prerequisites:admission.reasons,policy:admission.policy,usage:admission.usage})
       const requestKey=String(req.headers['idempotency-key']||req.requestId||randomUUID())
       const deadlineAt=new Date(Date.now()+Number(process.env.ML_JOB_DEADLINE_MS||15*60*1000)).toISOString()
-      const job=await enqueueJob({
+      const job=await handleSubmitJob({
         workspaceId,
         kind:'ml_task',
         payload:{operation:spec.operation,task,request:body},
@@ -5895,7 +5898,7 @@ const server = http.createServer(async (req,res)=>{
         timezone:String(body.timezone||'Asia/Kolkata')
       }
       const run=await createAgentRun(workspaceId,{agentType:'voice_scheduler',entityId:leadRef,triggerKey:String(body.trigger||'manual_voice_scheduler'),input})
-      const job=await enqueueJob({workspaceId,kind:'agent_action',idempotencyKey:'agent:'+run.id,payload:{agentRunId:run.id,actionType:'voice_scheduler',payload:{...input,runId:run.id}}})
+      const job=await handleSubmitJob({workspaceId,kind:'agent_action',idempotencyKey:'agent:'+run.id,payload:{agentRunId:run.id,actionType:'voice_scheduler',payload:{...input,runId:run.id}}})
       return send(req,res,202,{id:run.id,status:'queued',jobId:job?.id||null,leadRef})
     }
     if (req.method === 'GET' && url.pathname === '/api/qualification-calls') {
@@ -5906,14 +5909,14 @@ const server = http.createServer(async (req,res)=>{
       const body=await readBody(req)
       if(!body.id) return send(req,res,400,{error:'id required'})
       const run=await createAgentRun(workspaceId,{agentType:'voice_qualification',entityId:String(body.id),triggerKey:'manual_retry',input:{lead:body.lead||'Lead',source:body.source||'workspace',intent:body.intent||0}})
-      const job=await enqueueJob({workspaceId,kind:'agent_action',idempotencyKey:'agent:'+run.id,payload:{agentRunId:run.id,actionType:'voice_qualification',payload:{lead:body.lead||'Lead',source:body.source||'workspace',intent:body.intent||0,runId:run.id}}})
+      const job=await handleSubmitJob({workspaceId,kind:'agent_action',idempotencyKey:'agent:'+run.id,payload:{agentRunId:run.id,actionType:'voice_qualification',payload:{lead:body.lead||'Lead',source:body.source||'workspace',intent:body.intent||0,runId:run.id}}})
       return send(req,res,202,{id:run.id,status:'queued',jobId:job?.id||null})
     }
     if (req.method === 'POST' && url.pathname === '/api/qualification-calls') {
       const body=await readBody(req)
       if(!body.lead) return send(req,res,400,{error:'lead required'})
       const run=await createAgentRun(workspaceId,{agentType:'voice_qualification',entityId:String(body.leadRef||body.lead),triggerKey:String(body.trigger||'lead_created'),input:body})
-      const job=await enqueueJob({workspaceId,kind:'agent_action',idempotencyKey:'agent:'+run.id,payload:{agentRunId:run.id,actionType:'voice_qualification',payload:{...body,runId:run.id}}})
+      const job=await handleSubmitJob({workspaceId,kind:'agent_action',idempotencyKey:'agent:'+run.id,payload:{agentRunId:run.id,actionType:'voice_qualification',payload:{...body,runId:run.id}}})
       return send(req,res,202,{id:run.id,status:'queued',jobId:job?.id||null})
     }
     if (req.method === 'GET' && url.pathname === '/api/meetings') return send(req,res,200,{items:await listPersistedMeetings(workspaceId)})
@@ -5977,7 +5980,7 @@ const server = http.createServer(async (req,res)=>{
         calendarHtmlLink:meeting.calendar_html_link||null
       }
       const run=await createAgentRun(workspaceId,{agentType:'meeting_reminder',entityId:String(body.id),triggerKey:'manual_reminder',input:reminderPayload})
-      const job=await enqueueJob({workspaceId,kind:'agent_action',idempotencyKey:'agent:'+run.id,payload:{agentRunId:run.id,actionType:'meeting_reminder',payload:{...reminderPayload,runId:run.id}}})
+      const job=await handleSubmitJob({workspaceId,kind:'agent_action',idempotencyKey:'agent:'+run.id,payload:{agentRunId:run.id,actionType:'meeting_reminder',payload:{...reminderPayload,runId:run.id}}})
       return send(req,res,202,{id:body.id,runId:run.id,status:'queued',jobId:job?.id||null})
     }
     if (req.method === 'GET' && url.pathname === '/api/feedback') {
@@ -6005,7 +6008,7 @@ const server = http.createServer(async (req,res)=>{
       const body=await readBody(req)
       if(!body.lead) return send(req,res,400,{error:'lead required'})
       const run=await createAgentRun(workspaceId,{agentType:'feedback',entityId:String(body.leadRef||body.lead),triggerKey:'manual_feedback',input:body})
-      const job=await enqueueJob({workspaceId,kind:'agent_action',idempotencyKey:'agent:'+run.id,payload:{agentRunId:run.id,actionType:'feedback',payload:{...body,runId:run.id}}})
+      const job=await handleSubmitJob({workspaceId,kind:'agent_action',idempotencyKey:'agent:'+run.id,payload:{agentRunId:run.id,actionType:'feedback',payload:{...body,runId:run.id}}})
       return send(req,res,202,{runId:run.id,status:'queued',jobId:job?.id||null})
     }
     if (req.method === 'POST' && url.pathname === '/api/feedback/route') {
