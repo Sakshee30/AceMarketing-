@@ -60,6 +60,19 @@ const manifests=Object.freeze([
     compatibility:{api:'tiktok-events'}
   },
   {
+    id:'linkedin-ads',
+    displayName:'LinkedIn Ads',
+    category:'advertising',
+    auth:{type:'oauth2',scopes:['r_ads','r_ads_reporting','rw_conversions']},
+    operations:['campaign.read','insights.read','backfill.read','incremental.read','conversion.write','account.verify'],
+    webhookEvents:[],
+    schemas:{input:'marketing-signal.v1',output:'campaign-daily.v1'},
+    rateLimit:{strategy:'provider-aware',retryAfter:true},
+    idempotency:'campaign-date',
+    healthCheck:'credential-and-ad-account-verification',
+    compatibility:{api:'linkedin-marketing',versionEnv:'LINKEDIN_MARKETING_VERSION'}
+  },
+  {
     id:'ga4',
     displayName:'GA4',
     category:'analytics',
