@@ -43,7 +43,7 @@ const credential=async(workspaceId,connector)=>{
 
 const checkpoint=async(workspaceId,connector,stream)=>{
   if(!pool)return null
-  const {rows}=await pool.query(
+  const {rows}=await tenantQuery(workspaceId,
     'SELECT cursor,watermark,updated_at FROM ace_connector_checkpoints WHERE workspace_id=$1 AND connector=$2 AND stream=$3',
     [workspaceId,connector,stream]
   )
@@ -51,7 +51,7 @@ const checkpoint=async(workspaceId,connector,stream)=>{
 }
 
 const saveCheckpoint=async({workspaceId,connector,stream,cursor={},watermark=null})=>{
-  await pool.query(
+  await tenantQuery(workspaceId,
     `INSERT INTO ace_connector_checkpoints(workspace_id,connector,stream,cursor,watermark,updated_at)
      VALUES ($1,$2,$3,$4::jsonb,$5,now())
      ON CONFLICT(workspace_id,connector,stream) DO UPDATE SET
@@ -63,7 +63,7 @@ const saveCheckpoint=async({workspaceId,connector,stream,cursor={},watermark=nul
 const persistRaw=async({workspaceId,connector,stream,sourceId,observedAt,payload,runId})=>{
   const hash=sha(payload)
   const id='raw_'+sha([workspaceId,connector,stream,sourceId,hash]).slice(0,40)
-  const result=await pool.query(
+  const result=await tenantQuery(workspaceId,
     `INSERT INTO ace_connector_raw_records
       (id,workspace_id,connector,stream,source_id,observed_at,payload_hash,payload,sync_run_id)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9)
@@ -74,7 +74,7 @@ const persistRaw=async({workspaceId,connector,stream,sourceId,observedAt,payload
 }
 
 const upsertCampaign=async({workspaceId,connector,accountId='',campaignId,campaignName=null,day,currency=null,spend=0,impressions=0,clicks=0,conversions=0,conversionValue=0,sessions=0,users=0,extra={},sourceUpdatedAt=null})=>{
-  await pool.query(
+  await tenantQuery(workspaceId,
     `INSERT INTO ace_campaign_daily
       (workspace_id,connector,account_id,campaign_id,campaign_name,day,currency,spend,impressions,clicks,conversions,conversion_value,sessions,users,extra,source_updated_at,updated_at)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15::jsonb,$16,now())
@@ -88,7 +88,7 @@ const upsertCampaign=async({workspaceId,connector,accountId='',campaignId,campai
 }
 
 const upsertCrm=async({workspaceId,connector,objectType,sourceId,sourceUpdatedAt=null,normalized={},payload,runId})=>{
-  await pool.query(
+  await tenantQuery(workspaceId,
     `INSERT INTO ace_crm_records
       (workspace_id,connector,object_type,source_id,source_updated_at,normalized,payload,sync_run_id,updated_at)
      VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb,$8,now())
@@ -101,7 +101,7 @@ const upsertCrm=async({workspaceId,connector,objectType,sourceId,sourceUpdatedAt
 
 const createRun=async({workspaceId,connector,mode,start,end})=>{
   const id='csync_'+randomUUID()
-  await pool.query(
+  await tenantQuery(workspaceId,
     `INSERT INTO ace_connector_sync_runs(id,workspace_id,connector,mode,status,requested_start,requested_end)
      VALUES ($1,$2,$3,$4,'running',$5,$6)`,
     [id,workspaceId,connector,mode,start||null,end||null]
@@ -109,8 +109,8 @@ const createRun=async({workspaceId,connector,mode,start,end})=>{
   return id
 }
 
-const finishRun=async(id,status,stats,error=null)=>{
-  await pool.query(
+const finishRun=async(workspaceId,id,status,stats,error=null)=>{
+  await tenantQuery(workspaceId,
     `UPDATE ace_connector_sync_runs SET status=$2,stats=$3::jsonb,error=$4,updated_at=now(),completed_at=now() WHERE id=$1`,
     [id,status,JSON.stringify(stats||{}),error?String(error).slice(0,4000):null]
   )
@@ -437,7 +437,7 @@ export const listConnectorSyncRuns=async({workspaceId,connector=null,limit=50})=
   let where='workspace_id=$1'
   if(connector){params.push(connector);where+=' AND connector=$2'}
   params.push(safeLimit)
-  const {rows}=await pool.query(
+  const {rows}=await tenantQuery(workspaceId,
     `SELECT id,connector,mode,status,requested_start,requested_end,cursor,stats,error,created_at,updated_at,completed_at
      FROM ace_connector_sync_runs WHERE ${where} ORDER BY created_at DESC LIMIT $${params.length}`,params
   )
@@ -446,7 +446,7 @@ export const listConnectorSyncRuns=async({workspaceId,connector=null,limit=50})=
 
 export const listConnectorSyncSchedules=async({workspaceId})=>{
   if(!pool)return []
-  const {rows}=await pool.query(
+  const {rows}=await tenantQuery(workspaceId,
     'SELECT id,connector,enabled,interval_minutes,next_run_at,last_enqueued_at,last_job_id,options,created_at,updated_at FROM ace_connector_sync_schedules WHERE workspace_id=$1 ORDER BY connector',
     [workspaceId]
   )
@@ -458,7 +458,7 @@ export const saveConnectorSyncSchedule=async({workspaceId,connector,enabled=true
   if(!connectorReadCatalog().includes(connector))throw new Error('connector does not support read synchronization')
   const interval=Math.max(5,Math.min(Number(intervalMinutes||60),10080))
   const id='css_'+sha([workspaceId,connector]).slice(0,32)
-  const {rows}=await pool.query(
+  const {rows}=await tenantQuery(workspaceId,
     `INSERT INTO ace_connector_sync_schedules(id,workspace_id,connector,enabled,interval_minutes,next_run_at,options,created_at,updated_at)
      VALUES ($1,$2,$3,$4,$5,now(),$6::jsonb,now(),now())
      ON CONFLICT(workspace_id,connector) DO UPDATE SET
@@ -474,7 +474,7 @@ export const saveConnectorSyncSchedule=async({workspaceId,connector,enabled=true
 export const runDueConnectorSyncSchedules=async({limit=10}={})=>{
   if(!pool)return {checked:0,enqueued:0}
   const safeLimit=Math.max(1,Math.min(Number(limit||10),100))
-  const {rows}=await pool.query(
+  const {rows}=await systemQuery(
     `SELECT id,workspace_id,connector,interval_minutes,next_run_at,options
      FROM ace_connector_sync_schedules
      WHERE enabled=true AND next_run_at<=now()
