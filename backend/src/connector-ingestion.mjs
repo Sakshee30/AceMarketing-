@@ -1,8 +1,10 @@
 import {createHash,randomUUID} from 'node:crypto'
+import {inflateRawSync} from 'node:zlib'
 import {pool} from './database.mjs'
 import {connectorCredential} from './connector-auth.mjs'\nimport {enqueueJob} from './queue.mjs'\nimport {withTenantDbTransaction,withSystemDbTransaction} from './platform/tenant-db.mjs'
 import {deploymentMode} from './platform/deployment-mode.mjs'
 import {deriveMarketingMetrics} from './metric-catalog.mjs'
+import {validateOutboundDestination} from './platform/egress-policy.mjs'
 
 const timeoutMs=()=>Math.max(1000,Math.min(Number(process.env.CONNECTOR_SYNC_HTTP_TIMEOUT_MS||30000),120000))
 const maxPages=()=>Math.max(1,Math.min(Number(process.env.CONNECTOR_SYNC_MAX_PAGES||100),1000))
@@ -36,6 +38,123 @@ const requestJson=async(url,{method='GET',headers={},body=null,allowedOrigins=[]
     }
     return {json,headers:response.headers,status:response.status}
   }finally{clearTimeout(timer)}
+}
+
+const maxDownloadBytes=()=>Math.max(1024*1024,Math.min(Number(process.env.CONNECTOR_SYNC_MAX_DOWNLOAD_BYTES||50*1024*1024),250*1024*1024))
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms))
+
+const requestBuffer=async(rawUrl,{headers={}}={})=>{
+  let current=await validateOutboundDestination(rawUrl,{allowedPorts:[443],purpose:'connector report download'})
+  for(let hop=0;hop<4;hop++){
+    const controller=new AbortController()
+    const timer=setTimeout(()=>controller.abort('connector_download_timeout'),Math.max(timeoutMs(),120000))
+    try{
+      const response=await fetch(current.url,{headers,redirect:'manual',signal:controller.signal})
+      if(response.status>=300&&response.status<400&&response.headers.get('location')){
+        const next=new URL(response.headers.get('location'),current.url)
+        current=await validateOutboundDestination(next.toString(),{allowedPorts:[443],purpose:'connector report redirect'})
+        continue
+      }
+      if(!response.ok)throw new Error('connector report download failed: '+response.status)
+      const declared=Number(response.headers.get('content-length')||0)
+      if(declared&&declared>maxDownloadBytes())throw new Error('connector report download exceeds configured size limit')
+      if(!response.body)throw new Error('connector report download body is unavailable')
+      const reader=response.body.getReader()
+      const chunks=[]
+      let total=0
+      while(true){
+        const part=await reader.read()
+        if(part.done)break
+        total+=part.value.byteLength
+        if(total>maxDownloadBytes()){await reader.cancel().catch(()=>{});throw new Error('connector report download exceeds configured size limit')}
+        chunks.push(Buffer.from(part.value))
+      }
+      return Buffer.concat(chunks,total)
+    }finally{clearTimeout(timer)}
+  }
+  throw new Error('connector report download exceeded redirect limit')
+}
+
+const unzipFirstFile=buffer=>{
+  if(!Buffer.isBuffer(buffer)||buffer.length<22)throw new Error('invalid ZIP report')
+  let eocd=-1
+  const lower=Math.max(0,buffer.length-65557)
+  for(let i=buffer.length-22;i>=lower;i--){
+    if(buffer.readUInt32LE(i)===0x06054b50){eocd=i;break}
+  }
+  if(eocd<0)throw new Error('ZIP end-of-central-directory not found')
+  const entries=buffer.readUInt16LE(eocd+10)
+  let offset=buffer.readUInt32LE(eocd+16)
+  for(let index=0;index<entries;index++){
+    if(offset+46>buffer.length||buffer.readUInt32LE(offset)!==0x02014b50)throw new Error('invalid ZIP central directory')
+    const flags=buffer.readUInt16LE(offset+8)
+    const method=buffer.readUInt16LE(offset+10)
+    const compressedSize=buffer.readUInt32LE(offset+20)
+    const uncompressedSize=buffer.readUInt32LE(offset+24)
+    const nameLength=buffer.readUInt16LE(offset+28)
+    const extraLength=buffer.readUInt16LE(offset+30)
+    const commentLength=buffer.readUInt16LE(offset+32)
+    const localOffset=buffer.readUInt32LE(offset+42)
+    const name=buffer.subarray(offset+46,offset+46+nameLength).toString('utf8')
+    offset+=46+nameLength+extraLength+commentLength
+    if(name.endsWith('/'))continue
+    if(flags&1)throw new Error('encrypted ZIP reports are unsupported')
+    if(uncompressedSize>maxDownloadBytes())throw new Error('uncompressed connector report exceeds configured size limit')
+    if(localOffset+30>buffer.length||buffer.readUInt32LE(localOffset)!==0x04034b50)throw new Error('invalid ZIP local header')
+    const localNameLength=buffer.readUInt16LE(localOffset+26)
+    const localExtraLength=buffer.readUInt16LE(localOffset+28)
+    const start=localOffset+30+localNameLength+localExtraLength
+    const end=start+compressedSize
+    if(end>buffer.length)throw new Error('truncated ZIP report')
+    const data=buffer.subarray(start,end)
+    if(method===0)return Buffer.from(data)
+    if(method===8){
+      const output=inflateRawSync(data,{maxOutputLength:maxDownloadBytes()})
+      if(output.length>maxDownloadBytes())throw new Error('uncompressed connector report exceeds configured size limit')
+      return output
+    }
+    throw new Error('unsupported ZIP compression method: '+method)
+  }
+  throw new Error('ZIP report contains no file')
+}
+
+const parseCsv=raw=>{
+  const text=String(raw||'').replace(/^\uFEFF/,'')
+  const records=[]
+  let row=[],field='',quoted=false
+  const pushField=()=>{row.push(field);field=''}
+  const pushRow=()=>{pushField();if(row.some(value=>value!==''))records.push(row);row=[]}
+  for(let i=0;i<text.length;i++){
+    const ch=text[i]
+    if(quoted){
+      if(ch==='"'&&text[i+1]==='"'){field+='"';i++;continue}
+      if(ch==='"'){quoted=false;continue}
+      field+=ch;continue
+    }
+    if(ch==='"'){quoted=true;continue}
+    if(ch===','){pushField();continue}
+    if(ch==='\n'){pushRow();continue}
+    if(ch==='\r'){if(text[i+1]==='\n')continue;pushRow();continue}
+    field+=ch
+  }
+  if(field||row.length)pushRow()
+  if(records.length<1)return []
+  const headers=records[0].map(value=>String(value).trim())
+  return records.slice(1).map(values=>Object.fromEntries(headers.map((key,index)=>[key,values[index]??''])))
+}
+
+const reportNumber=value=>{
+  const clean=String(value??'').trim().replace(/,/g,'').replace(/%$/,'')
+  const parsed=Number(clean)
+  return Number.isFinite(parsed)?parsed:0
+}
+
+const reportDay=value=>{
+  const raw=String(value||'').trim()
+  if(/^\d{4}-\d{2}-\d{2}$/.test(raw))return raw
+  const parsed=new Date(raw)
+  if(Number.isNaN(parsed.getTime()))return ''
+  return parsed.toISOString().slice(0,10)
 }
 
 const credential=async(workspaceId,connector)=>{
