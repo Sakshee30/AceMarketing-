@@ -49,7 +49,7 @@ services:
       ML_MMM_SERVICE_URL: ${ML_MMM_SERVICE_URL:-}
     command: ["node","backend/scripts/preflight.mjs"]
     depends_on:
-      preflight:
+      migrate:
         condition: service_completed_successfully
     networks: [ace_internal]
     restart: "no"
