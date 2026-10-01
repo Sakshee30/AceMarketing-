@@ -2,6 +2,7 @@ import {createHash,randomUUID} from 'node:crypto'
 import {pool} from './database.mjs'
 import {connectorCredential} from './connector-auth.mjs'\nimport {enqueueJob} from './queue.mjs'\nimport {withTenantDbTransaction,withSystemDbTransaction} from './platform/tenant-db.mjs'
 import {deploymentMode} from './platform/deployment-mode.mjs'
+import {deriveMarketingMetrics} from './metric-catalog.mjs'
 
 const timeoutMs=()=>Math.max(1000,Math.min(Number(process.env.CONNECTOR_SYNC_HTTP_TIMEOUT_MS||30000),120000))
 const maxPages=()=>Math.max(1,Math.min(Number(process.env.CONNECTOR_SYNC_MAX_PAGES||100),1000))
@@ -585,24 +586,27 @@ export const listConnectorCampaignFacts=async({workspaceId,limit=100,days=90})=>
      LIMIT $3`,
     [workspaceId,cutoff,safeLimit]
   )
-  return rows.map(row=>({
-    id:row.connector+':'+row.account_id+':'+row.campaign_id,
-    connector:row.connector,
-    accountId:row.account_id,
-    campaignId:row.campaign_id,
-    name:row.campaign_name||row.campaign_id,
-    spend:n(row.spend),
-    impressions:n(row.impressions),
-    clicks:n(row.clicks),
-    leads:null,
-    customers:n(row.conversions),
-    conversions:n(row.conversions),
-    revenue:n(row.conversion_value),
-    sessions:n(row.sessions),
-    users:n(row.users),
-    firstDay:row.first_day,
-    lastDay:row.last_day
-  }))
+  return rows.map(row=>{
+    const base={
+      id:row.connector+':'+row.account_id+':'+row.campaign_id,
+      connector:row.connector,
+      accountId:row.account_id,
+      campaignId:row.campaign_id,
+      name:row.campaign_name||row.campaign_id,
+      spend:n(row.spend),
+      impressions:n(row.impressions),
+      clicks:n(row.clicks),
+      leads:null,
+      customers:n(row.conversions),
+      conversions:n(row.conversions),
+      revenue:n(row.conversion_value),
+      sessions:n(row.sessions),
+      users:n(row.users),
+      firstDay:row.first_day,
+      lastDay:row.last_day
+    }
+    return {...base,metrics:deriveMarketingMetrics(base)}
+  })
 }
 
 export const connectorDataSummary=async(workspaceId)=>{
