@@ -54,6 +54,8 @@ jobs:
         run: npm run frontend:architecture
       - name: Enforce backend architecture boundaries
         run: npm run backend:architecture
+      - name: Validate product architecture profile
+        run: npm run architecture:project-profile
       - name: Run backend foundation tests
         run: npm run test:backend-foundation
       - name: Validate frontend and backend
