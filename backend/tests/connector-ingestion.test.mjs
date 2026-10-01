@@ -4,7 +4,7 @@ import {connectorReadCatalog,connectorDataSummary,listConnectorSyncRuns} from '.
 
 test('connector read catalog includes all provider rows exposed for sync testing',()=>{
   const items=connectorReadCatalog()
-  for(const name of ['Google Ads','Meta Ads','GA4','HubSpot','Salesforce','Zoho CRM','TikTok Ads','Pinterest','Microsoft Ads / Bing Ads','X']){
+  for(const name of ['Google Ads','Meta Ads','GA4','LinkedIn Ads','HubSpot','Salesforce','Zoho CRM','TikTok Ads','Pinterest','Microsoft Ads / Bing Ads','X']){
     assert.ok(items.includes(name),name+' should be readable')
   }
 })
