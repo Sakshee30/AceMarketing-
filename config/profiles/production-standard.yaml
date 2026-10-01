@@ -1,26 +1,38 @@
-schemaVersion: 1
+schemaVersion: 2
 profile: production-standard
+implementationStatus: executable-baseline
+deploymentMode: core
 platform:
   database:
     provider: postgres
     required: true
+    authoritative: true
   cache:
-    enabled: true
-    provider: redis
+    enabled: false
+    provider: none
+    optionalAccelerator: redis
     fallback: bounded-bypass
   queue:
-    provider: sqs
+    provider: postgres
     requiredForAcceptedJobs: true
+    durability: durable
+    delivery: at-least-once
     onUnavailable: reject-new-admission
   objectStorage:
-    provider: s3
-    required: true
+    enabledByDefault: false
+    provider: s3-compatible
+    requiredWhenFeature: files
     onUnavailable: reject-upload-safely
   search:
     enabled: true
     provider: postgres-limited
   ai:
     enabled: false
+    optionalProfiles:
+      - ai
+      - ai-forecasting
+      - ai-causal
+      - ai-mmm
   audit:
     requiredForSensitiveCommits: true
     durableStore: postgres
@@ -28,4 +40,8 @@ security:
   authentication: required
   authorization: required
   tenantIsolation: required
-  secretProvider: secrets-manager
+  secretProvider: externally-injected
+notes:
+  - Redis is not authoritative and is not required for the executable production baseline.
+  - PostgreSQL is the durable job authority in the current runtime.
+  - S3 is required only when file/object workflows are enabled.
