@@ -17,7 +17,7 @@ import {executeAiActivationJob,reconcileStaleActivationDispatches} from './ai-ac
 import {applyDeploymentHealthGuard,recordDeploymentObservation} from './ai-deployment-controls.mjs'
 import {evaluateAiTaskWorkerExecution} from './ai-governance-store.mjs'
 import {createDrainController} from './platform/drain-controller.mjs'
-import {dispatchWebhookDelivery} from './platform/webhook-delivery-worker.mjs'
+import {handleDeliverWebhook} from '../backend/modules/webhooks/src/application/commands/deliver-webhook/deliver-webhook.handler.mjs'
 import {recordWebhookDeliveryAttempt} from './platform/webhook-delivery-store.mjs'
 import {workerClassPolicy} from './platform/worker-class.mjs'
 import {registerOutboxHandler,runOutboxRelayBatch} from './platform/outbox-relay.mjs'
@@ -87,7 +87,7 @@ const assertAiExecutionStillAllowed=async job=>{
 
 const handle=async job=>{
   if(job.kind==='webhook_delivery'){
-    return dispatchWebhookDelivery({workspaceId:job.workspace_id,deliveryId:job.payload?.deliveryId})
+    return handleDeliverWebhook({workspaceId:job.workspace_id,deliveryId:job.payload?.deliveryId})
   }
   if(job.kind==='ai_activation_execution'){
     return executeAiActivationJob(job)
