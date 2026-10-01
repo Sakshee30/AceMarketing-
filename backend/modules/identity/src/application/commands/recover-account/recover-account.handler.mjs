@@ -50,9 +50,10 @@ export const handleRecoverAccount=async({
     }
     const digest=tokenDigest(rawToken)
     const state=await readState()
-    const reset=(state.passwordResets||[]).find(x=>x.tokenHash===digest&&!x.used&&Date.parse(x.expiresAt)>Date.now())
+    const completionTime=now()
+    const reset=(state.passwordResets||[]).find(x=>x.tokenHash===digest&&!x.used&&Date.parse(x.expiresAt)>completionTime.getTime())
     if(!reset)throw Object.assign(new Error('invalid or expired reset token'),{status:400,code:'password_reset_invalid'})
-    const completedAt=now().toISOString()
+    const completedAt=completionTime.toISOString()
     await mutate(s=>{
       const member=(s.members||[]).find(x=>x.id===reset.userId)
       if(member){member.passwordHash=hash(rawPassword);member.updatedAt=completedAt}
