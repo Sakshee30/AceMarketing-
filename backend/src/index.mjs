@@ -1,7 +1,7 @@
 import http from 'node:http'
 import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto'
 import { URL } from 'node:url'
-import { createToken, verifyToken, verifyPassword, hashPassword, hasPermission, createRateLimiter, securityHeaders, resolveCorsOrigin } from './security.mjs'
+import { createToken, verifyToken, hasPermission, createRateLimiter, securityHeaders, resolveCorsOrigin } from './security.mjs'
 import { closeStore, getState, mutateState, storageHealth, withWorkspace } from './store.mjs'
 import { connectorVaultReady, decryptSecret, encryptSecret } from './vault.mjs'
 import { getJob, queueAvailable, queueStats, requestJobCancellation } from './queue.mjs'
@@ -22,7 +22,6 @@ import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, p
 import { parseWhatsAppWebhook, resolveWhatsAppWorkspace, sendWhatsAppMessage, verifyWhatsAppWebhookChallenge, verifyWhatsAppWebhookSignature } from './whatsapp-cloud.mjs'
 import { normalizeCallEvent, resolveCallWorkspace, verifyCallWebhook } from './call-events.mjs'
 import { createCalendarEvent, updateCalendarEvent } from './calendar-provider.mjs'
-import { authMailConfigured } from './auth-mailer.mjs'
 import { modelCatalogItems, modelRegistryItem, registrySummary } from './ai-registry.mjs'
 import { verifyProviderAccess } from './ai-providers.mjs'
 import { closeAiRuntime, listAiResults, submitHostedAiJob } from './ai-runtime.mjs'
@@ -54,8 +53,8 @@ import {createCustomObject,createCustomObjectRecord,createCustomObjectVersion,ge
 import {archivePolicyRule,createPolicyRule,createPolicyRuleVersion,evaluatePublishedPolicyRule,getPolicyRule,listPolicyRules,publishPolicyRule,simulatePolicyExpression} from './platform/policy-engine.mjs'
 import {archiveWorkflow,cancelWorkflowExecution,createWorkflow,createWorkflowApproval,createWorkflowVersion,decideWorkflowApproval,getWorkflow,listWorkflowApprovals,listWorkflowExecutionSteps,listWorkflowExecutions,listWorkflows,publishWorkflow,retryWorkflowExecution,simulateWorkflowDefinition,startWorkflowExecution} from './platform/workflow-store.mjs'
 import {workflowActionCatalog} from './platform/workflow-action-catalog.mjs'
-import {createDownloadGrant,createUploadIntent,listObjects,markObjectQuarantined,recordObjectScan,softDeleteObject} from './platform/object-lifecycle.mjs'
-import {indexExtractedObject,markObjectProcessingFailure} from './platform/document-processing.mjs'
+import {createDownloadGrant,createUploadIntent,listObjects,markObjectQuarantined,softDeleteObject} from './platform/object-lifecycle.mjs'
+import {markObjectProcessingFailure} from './platform/document-processing.mjs'
 import {querySearch,searchCapabilityProfile} from './platform/search-port.mjs'
 import {runtimeGuardForRequest} from './platform/runtime-config-runtime.mjs'
 import {beginProcessDrain,livenessState,markStartupComplete,readinessState,startupState} from './platform/process-health.mjs'
@@ -86,6 +85,10 @@ import {handleReconcilePayment} from '../modules/billing/src/application/command
 import {handleSubmitJob} from '../modules/jobs/src/application/commands/submit-job/submit-job.handler.mjs'
 import {handleSendNotification} from '../modules/notifications/src/application/commands/send-notification/send-notification.handler.mjs'
 import {handleRunReport} from '../modules/reporting/src/application/commands/run-report/run-report.handler.mjs'
+import {handleStartLogin} from '../modules/identity/src/application/commands/start-login/start-login.handler.mjs'
+import {handleRecoverAccount} from '../modules/identity/src/application/commands/recover-account/recover-account.handler.mjs'
+import {handleApproveFile} from '../modules/documents/src/application/commands/approve-file/approve-file.handler.mjs'
+import {handleRebuildSearchIndex} from '../modules/search/src/application/commands/rebuild-index/rebuild-index.handler.mjs'
 
 const runtimeRole=runtimeRolePolicy()
 
@@ -1161,27 +1164,21 @@ const server = http.createServer(async (req,res)=>{
     }
     if (req.method === 'POST' && url.pathname === '/api/auth/login') {
       const body=await readBody(req)
-      const email=String(body.email||'').trim().toLowerCase()
-      const password=String(body.password||'')
-      if(!email.includes('@')||password.length<6) return send(req,res,400,{error:'valid email and password length >= 6 required'})
-      const state=await getState()
-      let member=(state.members||[]).find(x=>String(x.email).toLowerCase()===email&&x.status==='active')
-      let passwordOk=false
-      if(member?.passwordHash) passwordOk=verifyPassword(password,member.passwordHash)
-      else if(email===String(ADMIN_EMAIL).toLowerCase() && ADMIN_PASSWORD_HASH && ADMIN_PASSWORD_HASH!=='salt:scrypt-hex') passwordOk=verifyPassword(password,ADMIN_PASSWORD_HASH)
-      else if(!IS_PROD && member) passwordOk=true
-      if(!member||!passwordOk) return send(req,res,401,{error:'invalid credentials'})
-      const ttl=Number(process.env.TOKEN_TTL_SECONDS||3600)
-      const jti=randomUUID()
-      const expiresAt=new Date(Date.now()+ttl*1000).toISOString()
-      const token=createToken({email:member.email,userId:member.id,workspaceId,role:member.role,jti},JWT_SECRET,ttl)
-      await mutateState(s=>{
-        s.sessions=s.sessions||[]
-        s.sessions.unshift({jti,userId:member.id,email:member.email,role:member.role,status:'active',createdAt:new Date().toISOString(),expiresAt})
-        s.sessions=s.sessions.filter(x=>!x.expiresAt||Date.parse(x.expiresAt)>Date.now()).slice(0,5000)
-        s.audit.unshift({id:randomUUID(),action:'auth.login',entityId:member.id,at:new Date().toISOString()})
-      })
-      return send(req,res,200,{token,user:{id:member.id,email:member.email,name:member.name,role:member.role},workspaceId,expiresIn:ttl})
+      try{
+        const result=await handleStartLogin({
+          workspaceId,
+          email:body.email,
+          password:body.password,
+          jwtSecret:JWT_SECRET,
+          adminEmail:ADMIN_EMAIL,
+          adminPasswordHash:ADMIN_PASSWORD_HASH,
+          isProd:IS_PROD,
+          ttlSeconds:Number(process.env.TOKEN_TTL_SECONDS||3600)
+        })
+        return send(req,res,200,result)
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'login failed',code:error?.code||'login_failed'})
+      }
     }
     if (req.method === 'GET' && url.pathname === '/api/auth/google/start') {
       if(!process.env.GOOGLE_OAUTH_CLIENT_ID||!process.env.GOOGLE_OAUTH_CLIENT_SECRET||!AUTH_GOOGLE_REDIRECT_URI) return send(req,res,503,{error:'Google login is not configured'})
@@ -1294,49 +1291,21 @@ const server = http.createServer(async (req,res)=>{
     }
     if (req.method === 'POST' && url.pathname === '/api/auth/password/forgot') {
       const body=await readBody(req)
-      const email=String(body.email||'').trim().toLowerCase()
-      if(!email.includes('@')) return send(req,res,202,{accepted:true})
-      const state=await getState()
-      const member=(state.members||[]).find(x=>String(x.email).toLowerCase()===email&&x.status==='active')
-      if(member){
-        const token=randomBytes(32).toString('base64url')
-        const tokenHash=createHash('sha256').update(token).digest('hex')
-        const now=new Date().toISOString()
-        const expiresAt=new Date(Date.now()+30*60*1000).toISOString()
-        await mutateState(s=>{
-          s.passwordResets=s.passwordResets||[]
-          s.passwordResets.unshift({tokenHash,userId:member.id,email:member.email,expiresAt,createdAt:now,used:false})
-          s.passwordResets=s.passwordResets.filter(x=>!x.used&&Date.parse(x.expiresAt)>Date.now()).slice(0,200)
-          s.audit=s.audit||[]
-          s.audit.unshift({id:randomUUID(),action:'auth.password_reset_requested',entityId:member.id,at:now})
-          s.audit=s.audit.slice(0,1000)
-        })
-        if(authMailConfigured()) await handleSendNotification({kind:'password_reset',recipient:member.email,token})
-        else if(!IS_PROD) return send(req,res,202,{accepted:true,developmentResetToken:token,expiresAt})
+      try{
+        const result=await handleRecoverAccount({mode:'request',email:body.email,isProd:IS_PROD})
+        return send(req,res,202,result)
+      }catch(error){
+        return send(req,res,Number(error?.status||500),{error:error instanceof Error?error.message:'password reset request failed',code:error?.code||'password_reset_request_failed'})
       }
-      return send(req,res,202,{accepted:true})
     }
     if (req.method === 'POST' && url.pathname === '/api/auth/password/reset') {
       const body=await readBody(req)
-      const token=String(body.token||'')
-      const password=String(body.password||'')
-      if(!token||password.length<8) return send(req,res,400,{error:'valid token and password length >= 8 required'})
-      const tokenHash=createHash('sha256').update(token).digest('hex')
-      const state=await getState()
-      const reset=(state.passwordResets||[]).find(x=>x.tokenHash===tokenHash&&!x.used&&Date.parse(x.expiresAt)>Date.now())
-      if(!reset) return send(req,res,400,{error:'invalid or expired reset token'})
-      const now=new Date().toISOString()
-      await mutateState(s=>{
-        const member=(s.members||[]).find(x=>x.id===reset.userId)
-        if(member){member.passwordHash=hashPassword(password);member.updatedAt=now}
-        const found=(s.passwordResets||[]).find(x=>x.tokenHash===tokenHash)
-        if(found){found.used=true;found.usedAt=now}
-        s.sessions=(s.sessions||[]).map(x=>x.userId===reset.userId?{...x,status:'revoked',revokedAt:now}:x)
-        s.audit=s.audit||[]
-        s.audit.unshift({id:randomUUID(),action:'auth.password_reset_completed',entityId:reset.userId,at:now})
-        s.audit=s.audit.slice(0,1000)
-      })
-      return send(req,res,200,{ok:true})
+      try{
+        const result=await handleRecoverAccount({mode:'complete',token:body.token,password:body.password,isProd:IS_PROD})
+        return send(req,res,200,result)
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'password reset failed',code:error?.code||'password_reset_failed'})
+      }
     }
     if (req.method === 'POST' && url.pathname === '/api/auth/logout') {
       const jti=req.user?.jti
@@ -6304,7 +6273,7 @@ const server = http.createServer(async (req,res)=>{
       }
       const body=await readBody(req)
       try{
-        const item=await recordObjectScan({
+        const item=await handleApproveFile({
           workspaceId,
           objectId:decodeURIComponent(objectScanMatch[1]),
           result:body.result,
@@ -6338,7 +6307,7 @@ const server = http.createServer(async (req,res)=>{
       const body=await readBody(req)
       const objectId=decodeURIComponent(objectIndexMatch[1])
       try{
-        const item=await indexExtractedObject({
+        const item=await handleRebuildSearchIndex({
           workspaceId,
           objectId,
           text:body.text,
