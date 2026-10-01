@@ -124,7 +124,7 @@ Do not route production traffic until readiness and smoke verification succeed.
 
 ## 6. Backup
 
-Create a PostgreSQL custom-format backup:
+Create a PostgreSQL custom-format backup. The backup command now verifies the dump with `pg_restore --list`, computes SHA-256, and writes `<dump>.meta.json` with migration/release metadata:
 
 ```bash
 DATABASE_URL=... npm run backup
@@ -141,7 +141,7 @@ Before major migrations/releases, create a verified backup and record:
 
 ## 7. Restore
 
-Restore is guarded:
+Restore is guarded and verifies the backup metadata/checksum before touching the destination database:
 
 ```bash
 RESTORE_CONFIRM=YES DATABASE_URL=... npm run restore -- backups/acemarketing-....dump
