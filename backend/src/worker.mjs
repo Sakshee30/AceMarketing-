@@ -22,6 +22,7 @@ import {recordWebhookDeliveryAttempt} from './platform/webhook-delivery-store.mj
 import {workerClassPolicy} from './platform/worker-class.mjs'
 import {registerOutboxHandler,runOutboxRelayBatch} from './platform/outbox-relay.mjs'
 import {appendRealtimeEvent} from './platform/realtime-event-store.mjs'
+import {listAuditRecords} from './platform/audit-store.mjs'
 
 if(!queueAvailable()) throw new Error('DATABASE_URL is required for the worker runtime')
 
@@ -86,6 +87,14 @@ const assertAiExecutionStillAllowed=async job=>{
 }
 
 const handle=async job=>{
+  if(job.kind==='audit_export'){
+    const items=await listAuditRecords({
+      workspaceId:job.workspace_id,
+      limit:Number(job.payload?.limit||500),
+      before:job.payload?.before||null
+    })
+    return {schemaVersion:'audit-export.v1',workspaceId:job.workspace_id,items,exportedAt:new Date().toISOString()}
+  }
   if(job.kind==='webhook_delivery'){
     return handleDeliverWebhook({workspaceId:job.workspace_id,deliveryId:job.payload?.deliveryId})
   }
