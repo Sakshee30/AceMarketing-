@@ -63,6 +63,10 @@ import {runtimeRoleAllows,runtimeRolePolicy} from './platform/runtime-role.mjs'
 import {assertWorkspaceCell} from './platform/cell-placement.mjs'
 import {createBoard,getBoardOperation,getBoardSnapshot,listBoards} from './platform/board-store.mjs'
 import {moveCardController} from '../modules/boards/src/interfaces/http/move-card.controller.mjs'
+import {evaluateAccessPermission} from '../modules/authorization/src/application/queries/evaluate-access/evaluate-access.handler.mjs'
+import {handlePublishForm} from '../modules/forms/src/application/commands/publish-form/publish-form.handler.mjs'
+import {handleSubmitForm} from '../modules/forms/src/application/commands/submit-form/submit-form.handler.mjs'
+import {handleSimulateRule} from '../modules/rules/src/application/queries/simulate-rule/simulate-rule.handler.mjs'
 
 const runtimeRole=runtimeRolePolicy()
 
@@ -476,7 +480,7 @@ const events = [
   {name:'Enrolment',source:'CRM / Billing',destinations:['Google Ads','Meta Ads','LinkedIn Ads'],latency:'real-time',status:'active'},
 ]
 
-const permissionForRequest=(method,path)=>centralizedPermissionForRequest(method,path)
+const permissionForRequest=(method,path)=>evaluateAccessPermission(method,path)
 
 const readRawBody = req => new Promise((resolve,reject)=>{
   const chunks=[]
@@ -6446,7 +6450,7 @@ const server = http.createServer(async (req,res)=>{
     }
     const publishMatch=url.pathname.match(/^\/api\/forms\/([^/]+)\/publish$/)
     if(req.method==='POST'&&publishMatch){
-      const form=await publishForm({workspaceId,id:decodeURIComponent(publishMatch[1]),actorId:req.user?.userId||null})
+      const form=await handlePublishForm({workspaceId,id:decodeURIComponent(publishMatch[1]),actorId:req.user?.userId||null})
       if(!form)return send(req,res,404,{error:'form not found'})
       await appendAuditRecord({
         workspaceId,
@@ -6464,7 +6468,7 @@ const server = http.createServer(async (req,res)=>{
     if(req.method==='POST'&&submissionsMatch){
       const body=await readBody(req)
       try{
-        const submission=await submitForm({
+        const submission=await handleSubmitForm({
           workspaceId,
           id:decodeURIComponent(submissionsMatch[1]),
           data:body.data,
@@ -6558,7 +6562,7 @@ const server = http.createServer(async (req,res)=>{
     if(req.method==='POST'&&url.pathname==='/api/policy-rules/simulate'){
       const body=await readBody(req)
       try{
-        return send(req,res,200,simulatePolicyExpression({expression:body.expression,input:body.input||{}}))
+        return send(req,res,200,handleSimulateRule({expression:body.expression,input:body.input||{}}))
       }catch(error){
         return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'policy simulation failed',code:error?.code||'policy_simulation_failed'})
       }
