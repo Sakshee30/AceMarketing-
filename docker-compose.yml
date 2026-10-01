@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: ${POSTGRES_IMAGE:-postgres:16-alpine}
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-acemarketing}
@@ -16,6 +16,7 @@ services:
     networks: [ace_internal]
 
   migrate:
+    image: ${ACE_API_IMAGE:-ace-marketing-api:local}
     build:
       context: .
       dockerfile: deploy/Dockerfile.api
@@ -30,6 +31,7 @@ services:
     restart: "no"
 
   api:
+    image: ${ACE_API_IMAGE:-ace-marketing-api:local}
     build:
       context: .
       dockerfile: deploy/Dockerfile.api
@@ -41,6 +43,11 @@ services:
       PORT: 3001
       NODE_ENV: production
       ALLOW_FILE_STORE_IN_PRODUCTION: "false"
+      ACE_DEPLOYMENT_MODE: ${ACE_DEPLOYMENT_MODE:-core}
+      ML_SERVICE_URL: ${ML_SERVICE_URL:-}
+      ML_FORECAST_SERVICE_URL: ${ML_FORECAST_SERVICE_URL:-}
+      ML_CAUSAL_SERVICE_URL: ${ML_CAUSAL_SERVICE_URL:-}
+      ML_MMM_SERVICE_URL: ${ML_MMM_SERVICE_URL:-}
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -50,6 +57,7 @@ services:
 
   control-api:
     profiles: ["control"]
+    image: ${ACE_CONTROL_API_IMAGE:-ace-marketing-control-api:local}
     build:
       context: .
       dockerfile: deploy/Dockerfile.control-api
@@ -65,6 +73,7 @@ services:
       CONTROL_SESSION_SECRET: ${CONTROL_SESSION_SECRET:-}
       ACE_RELEASE_SHA: ${ACE_RELEASE_SHA:-}
       ACE_CONFIG_VERSION: ${ACE_CONFIG_VERSION:-}
+      ACE_DEPLOYMENT_MODE: ${ACE_DEPLOYMENT_MODE:-core}
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -72,6 +81,7 @@ services:
     expose: ["3002"]
 
   worker:
+    image: ${ACE_WORKER_IMAGE:-ace-marketing-worker:local}
     build:
       context: .
       dockerfile: deploy/Dockerfile.api
@@ -82,6 +92,11 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-ace}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-acemarketing}
       NODE_ENV: production
       ALLOW_FILE_STORE_IN_PRODUCTION: "false"
+      ACE_DEPLOYMENT_MODE: ${ACE_DEPLOYMENT_MODE:-core}
+      ML_SERVICE_URL: ${ML_SERVICE_URL:-}
+      ML_FORECAST_SERVICE_URL: ${ML_FORECAST_SERVICE_URL:-}
+      ML_CAUSAL_SERVICE_URL: ${ML_CAUSAL_SERVICE_URL:-}
+      ML_MMM_SERVICE_URL: ${ML_MMM_SERVICE_URL:-}
     command: ["node","backend/src/worker.mjs"]
     depends_on:
       migrate:
@@ -90,6 +105,7 @@ services:
 
   ml-service:
     profiles: ["ai"]
+    image: ${ACE_ML_IMAGE:-ace-marketing-ml:local}
     build:
       context: .
       dockerfile: deploy/Dockerfile.ml
@@ -106,6 +122,7 @@ services:
 
   ml-forecasting:
     profiles: ["ai-forecasting"]
+    image: ${ACE_ML_FORECAST_IMAGE:-ace-marketing-ml-forecast:local}
     build:
       context: .
       dockerfile: deploy/Dockerfile.ml-specialist
@@ -132,6 +149,7 @@ services:
 
   ml-causal:
     profiles: ["ai-causal"]
+    image: ${ACE_ML_CAUSAL_IMAGE:-ace-marketing-ml-causal:local}
     build:
       context: .
       dockerfile: deploy/Dockerfile.ml-specialist
@@ -153,6 +171,7 @@ services:
 
   ml-mmm:
     profiles: ["ai-mmm"]
+    image: ${ACE_ML_MMM_IMAGE:-ace-marketing-ml-mmm:local}
     build:
       context: .
       dockerfile: deploy/Dockerfile.ml-specialist
@@ -175,6 +194,7 @@ services:
 
   platform-admin:
     profiles: ["control"]
+    image: ${ACE_PLATFORM_ADMIN_IMAGE:-ace-marketing-platform-admin:local}
     build:
       context: .
       dockerfile: deploy/Dockerfile.platform-admin
@@ -187,6 +207,7 @@ services:
     networks: [ace_internal]
 
   web:
+    image: ${ACE_WEB_IMAGE:-ace-marketing-web:local}
     build:
       context: .
       dockerfile: deploy/Dockerfile.frontend
