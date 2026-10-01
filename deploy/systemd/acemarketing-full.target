@@ -1,0 +1,4 @@
+[Unit]
+Description=AceMarketing full production target
+Requires=acemarketing-standard.target acemarketing-ml.service
+After=acemarketing-standard.target
