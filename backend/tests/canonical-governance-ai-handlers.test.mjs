@@ -44,7 +44,7 @@ test('AI activation execution requires explicit proposal identity',async()=>{
     queue:async args=>{captured=args;return {accepted:true,jobId:'job_2'}}
   })
   assert.equal(result.accepted,true)
-  assert.equal(captured.proposalId,'ap_1')
+  assert.equal(captured.id,'ap_1')
   await assert.rejects(
     ()=>handleActivateModelResult({workspaceId:'ws_1',proposalId:'',queue:async()=>({})}),
     error=>error?.code==='ai_activation_id_required'
