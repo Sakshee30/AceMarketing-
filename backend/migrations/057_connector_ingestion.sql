@@ -1,3 +1,20 @@
+CREATE TABLE IF NOT EXISTS ace_connector_sync_schedules (
+  id text PRIMARY KEY,
+  workspace_id text NOT NULL,
+  connector text NOT NULL,
+  enabled boolean NOT NULL DEFAULT true,
+  interval_minutes integer NOT NULL DEFAULT 60 CHECK(interval_minutes BETWEEN 5 AND 10080),
+  next_run_at timestamptz NOT NULL DEFAULT now(),
+  last_enqueued_at timestamptz,
+  last_job_id text,
+  options jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(workspace_id,connector)
+);
+CREATE INDEX IF NOT EXISTS ace_connector_sync_schedules_due_idx
+  ON ace_connector_sync_schedules(enabled,next_run_at);
+
 CREATE TABLE IF NOT EXISTS ace_connector_sync_runs (
   id text PRIMARY KEY,
   workspace_id text NOT NULL,
@@ -79,6 +96,13 @@ CREATE TABLE IF NOT EXISTS ace_crm_records (
 );
 CREATE INDEX IF NOT EXISTS ace_crm_records_updated_idx
   ON ace_crm_records(workspace_id,connector,object_type,source_updated_at DESC);
+
+ALTER TABLE ace_connector_sync_schedules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ace_connector_sync_schedules FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS ace_connector_sync_schedules_workspace_policy ON ace_connector_sync_schedules;
+CREATE POLICY ace_connector_sync_schedules_workspace_policy ON ace_connector_sync_schedules
+USING (workspace_id = NULLIF(current_setting('app.workspace_id', true),'') OR current_setting('app.system_worker', true) = 'true')
+WITH CHECK (workspace_id = NULLIF(current_setting('app.workspace_id', true),'') OR current_setting('app.system_worker', true) = 'true');
 
 ALTER TABLE ace_connector_sync_runs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ace_connector_sync_runs FORCE ROW LEVEL SECURITY;
