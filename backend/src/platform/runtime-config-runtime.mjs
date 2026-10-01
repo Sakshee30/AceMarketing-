@@ -1,8 +1,17 @@
 import {latestRuntimeSnapshot,evaluateRuntimeControl,verifyRuntimeSnapshot} from './runtime-configuration.mjs'
+import {deploymentMode} from './deployment-mode.mjs'
 
 const cache=new Map()
 const CACHE_MS=Math.max(500,Math.min(30_000,Number(process.env.RUNTIME_CONFIG_CACHE_MS||5_000)))
 const environment=()=>String(process.env.ACE_RUNTIME_ENVIRONMENT||process.env.NODE_ENV||'development')
+
+const deploymentModeDecision=featureId=>{
+  const mode=deploymentMode()
+  if(featureId==='ai'&&!mode.features.ai)return {allowed:false,state:'disabled',code:'deployment_mode_disabled',reason:'AI is disabled in deployment mode '+mode.name}
+  if(featureId==='billing'&&!mode.features.billing)return {allowed:false,state:'disabled',code:'deployment_mode_disabled',reason:'Billing is disabled in deployment mode '+mode.name}
+  if(['files','documents'].includes(featureId)&&!mode.features.files)return {allowed:false,state:'disabled',code:'deployment_mode_disabled',reason:'Files are disabled in deployment mode '+mode.name}
+  return null
+}
 
 const loadSnapshot=async()=>{
   const env=environment()
@@ -16,6 +25,8 @@ const loadSnapshot=async()=>{
 export const invalidateRuntimeConfigurationCache=()=>cache.clear()
 
 export const runtimeControlDecision=async({featureId,scopeType='workspace',scopeId=null,operation='execute'})=>{
+  const modeDecision=deploymentModeDecision(featureId)
+  if(modeDecision)return {...modeDecision,configurationVersion:null,source:'deployment-mode'}
   const snapshot=await loadSnapshot()
   if(!snapshot){
     return {
