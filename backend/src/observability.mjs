@@ -1,6 +1,6 @@
 import {createHash,randomUUID} from 'node:crypto'
 import {pool,embeddedDatabase} from './database.mjs'
-import {recordUsageLedgerEvent} from './platform/usage-ledger.mjs'
+import {handleRecordUsage} from '../modules/usage/src/application/commands/record-usage/record-usage.handler.mjs'
 const evalIntervalMs=Number(process.env.MONITORING_EVAL_INTERVAL_MS||60000)
 const retentionDays=Number(process.env.API_METRIC_RETENTION_DAYS||30)
 
@@ -178,7 +178,7 @@ export const recordApiTelemetry=async(workspaceId,{requestId,method,path,statusC
     [workspaceId]
   )
   if(statusCode<400&&usage){
-    await recordUsageLedgerEvent({
+    await handleRecordUsage({
       workspaceId,
       eventId:'api:'+String(requestId)+':'+usage,
       metric:usage,
