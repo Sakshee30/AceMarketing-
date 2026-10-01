@@ -3,6 +3,7 @@ import {modelRegistrySnapshot} from '../ai-registry.mjs'
 import {connectorCatalogSnapshot} from './connector-registry.mjs'
 import {capabilityManifestSnapshot} from './capability-manifest.mjs'
 import {moduleRegistrySnapshot} from './module-registry.mjs'
+import {deploymentModeSnapshot} from './deployment-mode.mjs'
 
 const state=(desired,actual,reason=null)=>({desired,actual,reason})
 
@@ -81,6 +82,11 @@ const featureActual=item=>{
   const envKey='ACE_FEATURE_'+item.id.toUpperCase().replace(/[^A-Z0-9]+/g,'_')
   const configured=process.env[envKey]
   if(configured==='false')return 'disabled'
+  if(configured==='true')return 'enabled'
+  const mode=deploymentModeSnapshot()
+  if(item.id==='ai'&&!mode.features.ai)return 'disabled'
+  if(item.id==='billing'&&!mode.features.billing)return 'disabled'
+  if(['files','documents'].includes(item.id)&&!mode.features.files)return 'disabled'
   return 'enabled'
 }
 
@@ -106,6 +112,7 @@ export const capabilitySnapshot=()=>{
     schemaVersion:'platform-capabilities.v1',
     generatedAt:new Date().toISOString(),
     configurationVersion:process.env.ACE_CONFIG_VERSION||'unversioned',
+    deploymentMode:deploymentModeSnapshot(),
     releaseVersion:process.env.ACE_RELEASE_SHA||process.env.GITHUB_SHA||'unknown',
     features,
     providers:providerItems,
