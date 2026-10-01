@@ -14,7 +14,11 @@ export const METRIC_CATALOG=Object.freeze([
   metric('conversion_rate','Conversion rate','ratio',{source:'derived',countingUnit:'ratio',identityRule:'none',denominator:'leads'}),
   metric('cost_per_lead','Cost per lead','money_per_count',{source:'derived',countingUnit:'ratio',identityRule:'none',denominator:'leads'}),
   metric('cost_per_qualified_lead','Cost per qualified lead','money_per_count',{source:'derived',countingUnit:'ratio',identityRule:'none',denominator:'qualified_leads'}),
-  metric('roas','ROAS','ratio',{source:'derived',countingUnit:'ratio',identityRule:'none',denominator:'spend'})
+  metric('roas','ROAS','ratio',{source:'derived',countingUnit:'ratio',identityRule:'none',denominator:'spend'}),
+  metric('ctr','CTR','ratio',{source:'derived',countingUnit:'ratio',identityRule:'none',denominator:'impressions'}),
+  metric('cpc','CPC','money_per_count',{source:'derived',countingUnit:'ratio',identityRule:'none',denominator:'clicks'}),
+  metric('cpm','CPM','money_per_thousand',{source:'derived',countingUnit:'ratio',identityRule:'none',denominator:'impressions'}),
+  metric('cpa','CPA','money_per_count',{source:'derived',countingUnit:'ratio',identityRule:'none',denominator:'customers'})
 ])
 
 export const metricCatalog=()=>({
@@ -73,6 +77,24 @@ const amountFor=(events,type)=>{
     if(Number.isFinite(amount))total+=amount
   })
   return total
+}
+
+export const deriveMarketingMetrics=({
+  spend=0,impressions=0,clicks=0,leads=null,qualifiedLeads=null,conversions=0,revenue=0
+}={})=>{
+  const value=x=>Number.isFinite(Number(x))?Number(x):0
+  const ratio=(numerator,denominator)=>value(denominator)===0?null:value(numerator)/value(denominator)
+  const s=value(spend),i=value(impressions),c=value(clicks),conv=value(conversions),rev=value(revenue)
+  return {
+    ctr:ratio(c,i),
+    cpc:ratio(s,c),
+    cpm:i===0?null:(s/i)*1000,
+    cost_per_lead:leads==null?null:ratio(s,leads),
+    cost_per_qualified_lead:qualifiedLeads==null?null:ratio(s,qualifiedLeads),
+    cpa:ratio(s,conv),
+    conversion_rate:ratio(conv,c),
+    roas:ratio(rev,s)
+  }
 }
 
 export const calculateMetricSet=({
