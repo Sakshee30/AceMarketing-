@@ -18,7 +18,8 @@ export const METRIC_CATALOG=Object.freeze([
   metric('ctr','CTR','ratio',{source:'derived',countingUnit:'ratio',identityRule:'none',denominator:'impressions'}),
   metric('cpc','CPC','money_per_count',{source:'derived',countingUnit:'ratio',identityRule:'none',denominator:'clicks'}),
   metric('cpm','CPM','money_per_thousand',{source:'derived',countingUnit:'ratio',identityRule:'none',denominator:'impressions'}),
-  metric('cpa','CPA','money_per_count',{source:'derived',countingUnit:'ratio',identityRule:'none',denominator:'customers'})
+  metric('cpa','CPA','money_per_count',{source:'derived',countingUnit:'ratio',identityRule:'none',denominator:'customers'}),
+  metric('click_to_conversion_rate','Click-to-conversion rate','ratio',{source:'derived',countingUnit:'ratio',identityRule:'none',denominator:'clicks'})
 ])
 
 export const metricCatalog=()=>({
@@ -92,7 +93,7 @@ export const deriveMarketingMetrics=({
     cost_per_lead:leads==null?null:ratio(s,leads),
     cost_per_qualified_lead:qualifiedLeads==null?null:ratio(s,qualifiedLeads),
     cpa:ratio(s,conv),
-    conversion_rate:ratio(conv,c),
+    click_to_conversion_rate:ratio(conv,c),
     roas:ratio(rev,s)
   }
 }
