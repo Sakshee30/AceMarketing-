@@ -70,6 +70,10 @@ const controls=Object.freeze([
 ])
 
 const localEvidence=Object.freeze({
+  'G-45':['backend/scripts/migrate.mjs','scripts/rollback.mjs','.github/workflows/release.yml','docs/PRODUCTION_RUNBOOK.md'],
+  'G-34':['backend/tests/capacity-budget.test.mjs','backend/adapters/redis/cache.redis.ts','config/profiles/production-standard.yaml'],
+  'G-33':['backend/src/queue.mjs','backend/src/platform/deployment-mode.mjs','config/profiles/production-standard.yaml'],
+  'G-09':['frontend/src/customer-app/workspace-lifecycle.ts','packages/client-core/src/query-scope.ts','tests/security/cross-tenant-platform-isolation.test.mjs'],
   'G-03':['frontend/customer-app','frontend/platform-admin','website/public-site'],
   'G-04':['.github/CODEOWNERS','scripts/frontend-architecture-check.mjs','scripts/backend-architecture-check.mjs'],
   'G-05':['frontend/customer-app/src/features/catalog.ts','frontend/src/features'],
