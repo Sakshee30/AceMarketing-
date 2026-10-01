@@ -1,39 +1,46 @@
-schemaVersion: 1
+schemaVersion: 2
 profile: production-high-scale
+implementationStatus: qualification-target
 capacity:
   registeredUsersTarget: 700000
   dynamicRpsQualificationTarget: 50000
   simultaneousActiveSessionsScenario: 70000
   claimStatus: qualification-required
-platform:
+currentRuntime:
   database:
     provider: postgres
-    required: true
-  cache:
-    enabled: true
-    provider: redis
-    fallback: bounded-bypass
-    fallbackBudgetProfile: cache-unavailable
+    authoritative: true
   queue:
-    provider: sqs
-    requiredForAcceptedJobs: true
-    onUnavailable: reject-new-admission
-  objectStorage:
-    provider: s3
-    required: true
-    onUnavailable: reject-upload-safely
+    provider: postgres
+    durability: durable
+    delivery: at-least-once
+  cache:
+    provider: none
+    redisAdapterContractAvailable: true
   search:
-    enabled: true
-    provider: opensearch
+    provider: postgres-limited
+  tenantCells:
+    available: true
+scaleOutTargets:
+  cache:
+    candidate: redis
+    status: adapter-contract-only
+    qualificationRequired: true
+  queueAcceleration:
+    candidate: external-durable-queue
+    status: not-selected
+    note: PostgreSQL remains durable intent authority until an external dispatch adapter is implemented and qualified.
+  analytics:
+    candidate:
+      - clickhouse
+      - bigquery
+      - snowflake
+    status: not-selected
+    qualificationRequired: true
+  search:
+    candidate: opensearch
+    status: deferred
     fallback: postgres-limited
-    fallbackBudgetProfile: search-degraded
-  ai:
-    enabled: false
-    onUnavailable: feature-disabled
-  audit:
-    requiredForSensitiveCommits: true
-    durableStore: postgres
-routing:
   tenantCells:
     enabled: true
     requireRoutingEpoch: true
@@ -42,4 +49,13 @@ security:
   authentication: required
   authorization: required
   tenantIsolation: required
-  secretProvider: secrets-manager
+  secretProvider: externally-injected
+qualificationRequired:
+  - representative load and tenant skew
+  - provider quotas
+  - cache-loss fallback budget
+  - database saturation and failover
+  - zone failure
+  - recovery RPO/RTO
+  - external queue semantics if introduced
+  - analytics warehouse reconciliation if introduced
