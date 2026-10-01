@@ -1,0 +1,4 @@
+[Unit]
+Description=AceMarketing standard production target
+Requires=acemarketing-core.target acemarketing-control-api.service acemarketing-platform-admin.service
+After=acemarketing-core.target
