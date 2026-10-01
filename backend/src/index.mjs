@@ -73,6 +73,10 @@ import {handlePublishRule} from '../modules/rules/src/application/commands/publi
 import {handlePublishWorkflow} from '../modules/workflows/src/application/commands/publish-workflow/publish-workflow.handler.mjs'
 import {handleRetryWorkflowExecution} from '../modules/workflows/src/application/commands/retry-step/retry-step.handler.mjs'
 import {handleDecideApproval} from '../modules/approvals/src/application/commands/decide-approval/decide-approval.handler.mjs'
+import {handleEvaluateEntitlement} from '../modules/entitlements/src/application/queries/evaluate-entitlement/evaluate-entitlement.handler.mjs'
+import {handleDefineCustomObject} from '../modules/custom-objects/src/application/commands/define-object/define-object.handler.mjs'
+import {handleQuerySearch} from '../modules/search/src/application/queries/query-search/query-search.handler.mjs'
+import {handleAuthorizeUpload} from '../modules/documents/src/application/commands/authorize-upload/authorize-upload.handler.mjs'
 
 const runtimeRole=runtimeRolePolicy()
 
@@ -4652,9 +4656,9 @@ const server = http.createServer(async (req,res)=>{
       catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'retention purge failed'})}
     }
     if (req.method === 'GET' && url.pathname === '/api/monitoring') return send(req,res,200,await monitoringSnapshot(workspaceId))
-    if (req.method === 'GET' && url.pathname === '/api/billing/usage') return send(req,res,200,await subscriptionSummary(workspaceId))
+    if (req.method === 'GET' && url.pathname === '/api/billing/usage') return send(req,res,200,await handleEvaluateEntitlement({workspaceId}))
     if (req.method === 'GET' && url.pathname === '/api/billing/subscription') {
-      const summary=await subscriptionSummary(workspaceId)
+      const summary=await handleEvaluateEntitlement({workspaceId})
       return send(req,res,200,{...summary,providerConfigured:billingConfigured(),events:await billingEventHistory(workspaceId,20),reconciliation:await billingReconciliationHistory(workspaceId,20)})
     }
     if (req.method === 'POST' && url.pathname === '/api/billing/checkout') {
@@ -6227,7 +6231,7 @@ const server = http.createServer(async (req,res)=>{
     if (req.method === 'POST' && url.pathname === '/api/files/upload-intents') {
       const body=await readBody(req)
       try{
-        const intent=await createUploadIntent({
+        const intent=await handleAuthorizeUpload({
           workspaceId,
           name:body.name,
           mime:body.mime,
@@ -6359,7 +6363,7 @@ const server = http.createServer(async (req,res)=>{
       const limit=Number(url.searchParams.get('limit')||20)
       const sourceType=url.searchParams.get('sourceType')||null
       try{
-        const result=await querySearch({
+        const result=await handleQuerySearch({
           workspaceId,
           query,
           role:req.user?.role||'viewer',
@@ -6495,7 +6499,7 @@ const server = http.createServer(async (req,res)=>{
     if(req.method==='POST'&&url.pathname==='/api/custom-objects'){
       const body=await readBody(req)
       try{
-        const object=await createCustomObject({
+        const object=await handleDefineCustomObject({
           workspaceId,
           objectKey:body.objectKey,
           name:body.name,
