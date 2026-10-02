@@ -29,3 +29,18 @@ test('Password visibility control changes input type without losing content',asy
  await page.getByRole('button',{name:'Show',exact:true}).click();await expect(input).toHaveAttribute('type','text')
  await page.getByRole('button',{name:'Hide',exact:true}).click();await expect(input).toHaveAttribute('type','password')
 })
+
+test('Workspace chrome reflects authenticated identity and persisted locale',async({page})=>{
+ await page.getByLabel('Email',{exact:true}).fill(actor.email)
+ await page.locator('.login-card input[type=password]').fill(actor.password)
+ await page.locator('.login-submit').click()
+ await expect(page.locator('.product-body')).toBeVisible()
+ const me=await page.evaluate(async()=>{const token=sessionStorage.getItem('ace_session_token');const h={Authorization:'Bearer '+token,'X-Workspace-ID':localStorage.getItem('ace_workspace_id')||''};const [m,s]=await Promise.all([fetch('/api/auth/me',{headers:h}),fetch('/api/settings',{headers:h})]);return {me:await m.json(),settings:await s.json()}})
+ const profile=page.locator('.profile-mini')
+ await expect(profile).toContainText(me.me.user.email)
+ await expect(profile).toContainText(String(me.me.user.role).replace(/_/g,' '))
+ await page.getByRole('button',{name:'Region and language'}).click()
+ await expect(page.locator('.region-popover')).toContainText('Timezone · '+String(me.settings.timezone||'Not configured'))
+ await expect(page.locator('.region-popover')).toContainText('Currency · '+String(me.settings.currency||'Not configured'))
+ await expect(page.locator('.profile-mini')).not.toContainText('Sakshee')
+})
