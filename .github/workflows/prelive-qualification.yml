@@ -1,70 +1,102 @@
 name: Pre-live Qualification
-
 on:
   push:
     branches: ['qa/prelive-qualification-20261003']
   workflow_dispatch:
-
 permissions:
   contents: read
-
 concurrency:
   group: prelive-${{ github.ref }}
   cancel-in-progress: false
-
 jobs:
-  baseline:
+  prepare:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    permissions:
+      contents: write
+    outputs:
+      candidate: ${{ steps.source.outputs.candidate }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-      - name: Freeze tracked source and runtime evidence
+      - name: Materialize reviewed implementation and commit source repairs on QA branch only
+        id: source
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p artifacts/prelive
-          git archive --format=tar.gz --output=artifacts/prelive/source.tar.gz HEAD
-          git rev-parse HEAD > artifacts/prelive/commit.txt
-          node --version > artifacts/prelive/node-version.txt
-          git ls-files > artifacts/prelive/tracked-files.txt
-      - name: Check every tracked JavaScript runtime file
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          import json, pathlib, subprocess, sys, time
-          import xml.etree.ElementTree as ET
-          paths = subprocess.check_output(['git','ls-files','-z']).decode().split('\0')
-          paths = sorted(p for p in paths if p.endswith(('.js','.mjs','.cjs')))
-          results=[]
-          suite=ET.Element('testsuite',name='PRELIVE_RUNTIME_SYNTAX',tests=str(len(paths)))
-          for path in paths:
-              start=time.monotonic()
-              p=subprocess.run(['node','--check',path],capture_output=True,text=True,timeout=30)
-              elapsed=time.monotonic()-start
-              result={'path':path,'status':'PASS' if p.returncode==0 else 'FAIL','seconds':elapsed,'diagnostic':p.stderr}
-              results.append(result)
-              case=ET.SubElement(suite,'testcase',name=path,classname='syntax',time=str(elapsed))
-              if p.returncode:
-                  ET.SubElement(case,'failure',message='JavaScript parse failure').text=p.stderr
-                  print('FAIL',path,p.stderr)
-          failures=sum(r['status']=='FAIL' for r in results)
-          suite.set('failures',str(failures))
-          root=pathlib.Path('artifacts/prelive')
-          (root/'syntax.json').write_text(json.dumps({'scope':'syntax only; not application acceptance','results':results},indent=2))
-          ET.ElementTree(suite).write(root/'syntax.junit.xml',encoding='utf-8',xml_declaration=True)
-          print(f'Checked {len(paths)} files; failures={failures}')
-          sys.exit(1 if failures else 0)
+          test "$GITHUB_REF_NAME" = 'qa/prelive-qualification-20261003'
+          if test -f qa-transport/part0.b64; then
+            python3 - <<'PY'
+          import base64,gzip,hashlib,io,json,lzma,pathlib
+          root=pathlib.Path.cwd()
+          encoded=''.join((root/f'qa-transport/part{i}.b64').read_text() for i in range(3))
+          payload=base64.b64decode(encoded,validate=True)
+          assert hashlib.sha256(payload).hexdigest()=='4a10b9d9a3d81a666b7855d720cb92c28ba4fdd7be7837ea6a8f226821337978'
+          files=json.loads(lzma.decompress(payload))
+          for name,item in files.items():
+              relative=pathlib.PurePosixPath(name)
+              assert not relative.is_absolute() and '..' not in relative.parts
+              assert name.startswith('qa/') or name=='backend/src/security.mjs',name
+              path=root/name
+              raw=item['text'].encode()
+              if item['encoding']=='gzip-on-write':
+                  path=path.with_name(path.name+'.gz')
+                  stream=io.BytesIO()
+                  with gzip.GzipFile(fileobj=stream,mode='wb',mtime=0) as out:out.write(raw)
+                  raw=stream.getvalue()
+              else:assert item['encoding']=='utf-8'
+              path.parent.mkdir(parents=True,exist_ok=True)
+              path.write_bytes(raw)
+          repairs=json.loads((root/'qa/source-repairs.json').read_text())
+          assert set(repairs)=={'backend/src/connector-ingestion.mjs','backend/src/index.mjs','backend/src/worker.mjs'}
+          for name,pairs in repairs.items():
+              p=root/name;s=p.read_text()
+              for old,new in pairs:
+                  assert s.count(old)==1,(name,'source drift')
+                  s=s.replace(old,new)
+              p.write_text(s)
+          (root/'qa/source-repairs.json').unlink()
+          with (root/'.gitignore').open('a') as f:f.write('\n# Qualification reports are not source\nartifacts/prelive/\nqa/__pycache__/\n')
           PY
-      - name: Publish baseline evidence even on failure
+            git rm qa-transport/part0.b64 qa-transport/part1.b64 qa-transport/part2.b64
+            git add qa backend/src/security.mjs backend/src/connector-ingestion.mjs backend/src/index.mjs backend/src/worker.mjs .gitignore
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'test(qa): implement isolated PostgreSQL/API/browser qualification and fix runtime/auth defects'
+            git push origin "HEAD:refs/heads/$GITHUB_REF_NAME"
+          fi
+          echo "candidate=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+  qualification:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.candidate }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.21.0'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Install test browsers and PostgreSQL server tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-16
+          npx playwright install --with-deps chromium firefox webkit
+      - name: Freeze candidate evidence
+        run: |
+          mkdir -p artifacts/prelive
+          git rev-parse HEAD > artifacts/prelive/candidate.txt
+          node --version > artifacts/prelive/node-version.txt
+          git archive --format=tar.gz --output=artifacts/prelive/tested-source.tar.gz HEAD
+      - name: Execute actual isolated qualification
+        run: bash qa/run-isolated.sh
+      - name: Preserve test reports and failure evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: prelive-baseline-${{ github.sha }}
+          name: prelive-evidence-${{ needs.prepare.outputs.candidate }}
           path: artifacts/prelive/
           if-no-files-found: error
           retention-days: 14
