@@ -5,7 +5,7 @@ import {gunzipSync} from 'node:zlib'
 import pg from 'pg'
 if(process.env.QA_ISOLATED!=='1')throw new Error('Isolated harness required')
 const actors=JSON.parse(readFileSync(process.env.QA_ACTORS_FILE,'utf8'))
-const a=actors.find(x=>x.id.endsWith('000001')),b=actors.find(x=>x.id.endsWith('000009')),approver=actors.find(x=>x.id.endsWith('000002'))
+const a=actors.find(x=>x.id.endsWith('000001')),b=actors.find(x=>x.id.endsWith('000009')),approver=actors.find(x=>x.id.endsWith('000003'))
 const base=process.env.QA_API_URL,admin=new pg.Client({connectionString:process.env.QA_ADMIN_DATABASE_URL})
 const tokens=new Map();let tokenA,tokenB,approverToken,createdWorkspace
 const diagnostics=[]
@@ -71,4 +71,12 @@ test('SEC: malformed tracking arrays and timestamps are client errors without pe
   const r=await req('/api/track',{method:'POST',body});assert.equal(r.status,400,JSON.stringify(r.data))
  }
  const {rows}=await admin.query('SELECT id FROM ace_events WHERE id=$1',['qa_reject_boolean_date']);assert.equal(rows.length,0)
+})
+
+test('MET reconciliation totals equal persisted tracked events in each tenant',async()=>{
+ for(const [actor,token] of [[a,tokenA],[b,tokenB]]){
+  const expected=Number((await admin.query('SELECT count(*)::int n FROM ace_events WHERE workspace_id=$1',[actor.workspaceId])).rows[0].n)
+  const r=await req('/api/reconciliation',{token,workspace:actor.workspaceId})
+  assert.equal(r.status,200,JSON.stringify(r.data));assert.equal(r.data.totals.trackedEvents,expected)
+ }
 })

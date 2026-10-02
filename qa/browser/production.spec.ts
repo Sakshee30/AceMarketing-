@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test'
+import {test,expect} from '../browser-guard'
 import {readFileSync} from 'node:fs'
 const actor=JSON.parse(readFileSync(process.env.QA_ACTORS_FILE!,'utf8')).find((a:any)=>a.id.endsWith('000001'))
 test.beforeEach(async({page,context})=>{

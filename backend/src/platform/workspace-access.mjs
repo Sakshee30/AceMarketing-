@@ -41,3 +41,18 @@ export const seedWorkspaceCreator=(state,actor)=>{
   state.members.push(member)
   return member
 }
+
+/** Only return registry metadata after checking current active membership. */
+export const listActorWorkspaces=async({registry,currentState,currentWorkspaceId,actor,loadWorkspace})=>{
+  const entries=new Map()
+  for(const item of [...(registry?.workspaces||[]),...(currentState?.workspaces||[])]){
+    if(item&&/^[A-Za-z0-9_-]{1,64}$/.test(String(item.id||'')))entries.set(String(item.id),item)
+  }
+  const allowed=[]
+  for(const [id,item] of entries){
+    const state=id===currentWorkspaceId?currentState:await loadWorkspace(id)
+    const membership=activeWorkspaceMembership(state,actor)
+    if(membership)allowed.push({...item,role:membership.role})
+  }
+  return allowed
+}

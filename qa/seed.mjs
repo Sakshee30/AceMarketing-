@@ -38,6 +38,10 @@ for(const ws of core.workspaces){
   })
  })
 }
+await withWorkspace('ws_default',()=>mutateState(state=>{
+ state.members=[]
+ state.workspaces=core.workspaces.map(ws=>({id:ws.workspace_id,name:ws.name,status:ws.fixture_state,tenantId:ws.tenant_id}))
+}))
 writeFileSync(process.env.QA_ACTORS_FILE,JSON.stringify(actors),{mode:0o600})
 writeFileSync(process.env.QA_REPORTS+'/fixture-mapping.json',JSON.stringify({seededWorkspaces:core.workspaces.length,seededMemberships:actors.length,seededUsers:new Set(actors.map(a=>a.id)).size,addedMemberships,unmapped,qualification:'setup only; no onboarding or suspended-tenant claim'},null,2))
 await closeStore()

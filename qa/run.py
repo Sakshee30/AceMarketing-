@@ -69,6 +69,7 @@ def write_summary():
       if r['status']=='FAIL':ET.SubElement(c,'failure',message=r['detail'])
       if r['status']=='BLOCKED':ET.SubElement(c,'skipped',message=r['detail'])
     ET.ElementTree(suite).write(REPORTS/'stages.junit.xml',encoding='utf-8',xml_declaration=True)
+    subprocess.run(['python3','qa/write_case_status.py',str(REPORTS),sha],cwd=ROOT,check=True)
     with (REPORTS/'checksums.sha256').open('w') as f:
       for path in sorted(REPORTS.rglob('*')):
         if path.is_file() and path.name!='checksums.sha256':
@@ -101,6 +102,7 @@ def main():
         raise RuntimeError('Unexpected outbound route')
     except OSError:pass
     record('network-isolation','PASS','Loopback-only namespace; external connection denied')
+    command('systemd',['bash','qa/verify-systemd.sh'])
     scripts=sorted(p for p in ROOT.rglob('*') if p.suffix in ('.mjs','.cjs','.js') and not any(x in p.relative_to(ROOT).parts for x in ('node_modules','.git','dist','artifacts')))
     syntax=[]
     for p in scripts:
@@ -115,7 +117,8 @@ def main():
       for n,line in enumerate(p.read_text().splitlines(),1):
         if "url.pathname === '/api/" in line or "url.pathname==='/api/" in line:literal.append({'file':str(p.relative_to(ROOT)),'line':n,'source':line.strip()})
     (REPORTS/'route-discovery.json').write_text(json.dumps({'note':'Literal route candidates only; regex/dynamic routes and semantics require reconciliation.','candidates':literal},indent=2))
-    command('independent-oracles',['node','--test','--test-reporter=spec','--test-reporter-destination=stdout','--test-reporter=junit','--test-reporter-destination='+str(REPORTS/'oracles.junit.xml'),'qa/tests/golden.test.mjs','qa/tests/token.test.mjs','qa/tests/tracking-input.test.mjs','qa/tests/stream-client.test.mjs'])
+    command('independent-oracles',['node','--test','--test-reporter=spec','--test-reporter-destination=stdout','--test-reporter=junit','--test-reporter-destination='+str(REPORTS/'oracles.junit.xml'),'qa/tests/golden.test.mjs','qa/tests/token.test.mjs','qa/tests/tracking-input.test.mjs','qa/tests/stream-client.test.mjs','qa/workspace-visibility.test.mjs'])
+    command('release-gate-self-tests',['python3','qa/test_release_gate.py'])
     pgdirs=sorted(Path('/usr/lib/postgresql').glob('*/bin'),reverse=True)
     if not pgdirs:raise RuntimeError('PostgreSQL server binaries unavailable')
     pgdir=pgdirs[0]; env={**BASE_ENV,'PATH':str(pgdir)+':'+BASE_ENV['PATH']}
@@ -167,6 +170,12 @@ def main():
       else:record('production-browser','BLOCKED','Static production server did not become ready')
     else:record('production-browser','BLOCKED','No production frontend artifact')
     record('worker-runtime','PASS' if worker.poll() is None else 'FAIL','Worker liveness only; business completion checked in API suite')
+    # Quiesce source writers before table-content reconciliation.
+    for name,process,log in PROCESSES:
+      if name in ('api','worker','web') and process.poll() is None:
+        process.terminate()
+        try:process.wait(timeout=15)
+        except subprocess.TimeoutExpired:process.kill();process.wait()
     # An actual in-cluster dump/restore smoke, not a fresh-host disaster-recovery claim.
     dump=PRIVATE/'qa.dump'
     ok=command('backup-smoke',[str(pgdir/'pg_dump'),app_admin,'-Fc','-f',str(dump)],env)
@@ -174,9 +183,16 @@ def main():
       sql('CREATE DATABASE qa_restore')
       restored=admin.replace('/postgres','/qa_restore')
       if command('restore-smoke',[str(pgdir/'pg_restore'),'-d',restored,'--exit-on-error',str(dump)],env):
-        a=subprocess.check_output([str(pgdir/'psql'),app_admin,'-Atc','SELECT count(*) FROM ace_workspace_state'],env=env,text=True)
-        b=subprocess.check_output([str(pgdir/'psql'),restored,'-Atc','SELECT count(*) FROM ace_workspace_state'],env=env,text=True)
-        record('restore-state-count','PASS' if a==b else 'FAIL',f'workspace snapshots source={a.strip()} restored={b.strip()}')
+        compare_env={**app_env,'QA_SOURCE_DATABASE_URL':app_admin,'QA_RESTORED_DATABASE_URL':restored,
+          'QA_CANDIDATE':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()}
+        if command('restore-content-reconciliation',['node','qa/restore-check.mjs'],compare_env):
+          restored_env={**app_env,'DATABASE_URL':app_env['DATABASE_URL'].replace('/qa_http','/qa_restore'),
+            'PORT':'3002','QA_API_URL':'http://127.0.0.1:3002'}
+          restored_api=spawn('restored-api',['node','backend/src/index.mjs'],{k:v for k,v in restored_env.items() if k!='QA_ADMIN_DATABASE_URL'})
+          if ready('http://127.0.0.1:3002/api/health',restored_api):
+            command('restored-authenticated-api',['node','qa/restore-api.mjs'],restored_env)
+          else:record('restored-authenticated-api','FAIL','Restored API did not become ready')
+
 
 if __name__=='__main__':
     os.chdir(ROOT)

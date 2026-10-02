@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test'
+import {test,expect} from '../browser-guard'
 import {readFileSync} from 'node:fs'
 import {workspaceFeatureManifest} from '../../frontend/src/features/workspace/manifest'
 const actor=JSON.parse(readFileSync(process.env.QA_ACTORS_FILE!,'utf8')).find((a:any)=>a.id.endsWith('000001'))
@@ -14,8 +14,8 @@ for(const feature of workspaceFeatureManifest){
   if(await consent.isVisible())await consent.getByRole('button',{name:'Essential only',exact:true}).click()
   await expect(page.locator('.product-body')).toBeVisible()
   await expect(page.getByRole('navigation',{name:'Workspace navigation'})).toBeVisible()
-  await page.waitForLoadState('networkidle')
-  await expect(page.locator('.workspace-section-error')).toHaveCount(0)
+  await expect(page.locator('.product-body .ace-state-loading')).toHaveCount(0)
+  await expect(page.locator('.workspace-section-error,.product-body .ace-state-error')).toHaveCount(0)
   await expect(page.locator('.product-body h1,.product-body h2').first()).toBeVisible()
   expect(errors).toEqual([])
   expect(await page.evaluate(()=>localStorage.getItem('ace_active_tab'))).toBe(feature.label)
@@ -25,6 +25,6 @@ for(const route of ['/', '/agents','/integrations','/pricing','/case-studies','/
  test('Production public render smoke: '+route,async({page})=>{
   const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message))
   await page.goto('/#'+route);await expect(page.getByRole('heading').first()).toBeVisible()
-  await page.waitForLoadState('networkidle');expect(errors).toEqual([])
+  await expect(page.locator('.product-body .ace-state-loading')).toHaveCount(0);expect(errors).toEqual([])
  })
 }

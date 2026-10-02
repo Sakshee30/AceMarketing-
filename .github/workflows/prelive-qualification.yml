@@ -11,26 +11,15 @@ concurrency:
 jobs:
   prepare:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     outputs:
       candidate: ${{ steps.source.outputs.candidate }}
     steps:
       - uses: actions/checkout@v4
-      - name: Apply reviewed final repairs only on QA branch
+        with:
+          persist-credentials: false
+      - name: Freeze candidate
         id: source
-        shell: bash
-        run: |
-          set -euo pipefail
-          test "$GITHUB_REF_NAME" = 'qa/prelive-qualification-20261003'
-          if test -f qa/finish-implementation.py; then
-            python3 qa/finish-implementation.py
-            git rm qa/finish-implementation.py qa/final-repairs.json qa/list-workspaces.mjs.txt qa/extra-business-tests.mjs.txt
-            git add qa backend/src/index.mjs backend/src/store.mjs backend/src/platform/workspace-access.mjs .github/workflows
-            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'fix: enforce workspace visibility, remove production demo state and repair reconciliation'
-            git push origin "HEAD:refs/heads/$GITHUB_REF_NAME"
-          fi
-          echo "candidate=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+        run: echo "candidate=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
   qualification:
     needs: prepare
     runs-on: ubuntu-latest

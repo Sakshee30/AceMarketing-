@@ -46,7 +46,7 @@ import {globalAdmission} from './platform/admission-control.mjs'
 import {assertActorWorkspace,requestedWorkspaceId,tenantExecutionScope} from './platform/tenant-context.mjs'
 import {appendAuditRecord,listAuditRecords} from './platform/audit-store.mjs'
 import {permissionForRequest as centralizedPermissionForRequest} from './platform/access-policy.mjs'
-import {assertWorkspaceMembership,seedWorkspaceCreator} from './platform/workspace-access.mjs'
+import {assertWorkspaceMembership,seedWorkspaceCreator,listActorWorkspaces} from './platform/workspace-access.mjs'
 import {validateOutboundDestination} from './platform/egress-policy.mjs'
 import {markInboxProcessed,recordInboxEvent} from './platform/reliability-store.mjs'
 import {createWebhookSubscription,createWebhookTestDelivery,listWebhookDeliveries,listWebhookDeliveryAttempts,listWebhookSubscriptions,replayWebhookDelivery,setWebhookSubscriptionStatus} from './platform/webhook-delivery-store.mjs'
@@ -2602,7 +2602,7 @@ const server = http.createServer(async (req,res)=>{
       return updated?send(req,res,200,updated):send(req,res,404,{error:'deep link not found'})
     }
     if (req.method === 'GET' && url.pathname === '/api/reconciliation') {
-      const [state,attr]=await Promise.all([getState(),attributionStats(workspaceId)])
+      const [state,attr,eventStats]=await Promise.all([getState(),attributionStats(workspaceId),trackedEventStats(workspaceId)])
       const deliveries=state.signalDeliveries||[]
       const quarantined=state.quarantinedEvents||[]
       const adjustments=state.adjustments||[]
@@ -2633,7 +2633,7 @@ const server = http.createServer(async (req,res)=>{
         available:true,
         score,
         totals:{
-          trackedEvents:Number(eventStats?.total||trackedEvents.length),
+          trackedEvents:Number(eventStats?.total??0),
           assistedEvents:assisted,
           matchedEvents:matched,
           unmatchedEvents:unmatched,
@@ -6231,8 +6231,10 @@ const server = http.createServer(async (req,res)=>{
       }
     }
     if (req.method === 'GET' && url.pathname === '/api/workspaces') {
-      const state=await withWorkspace('ws_default',()=>getState())
-      return send(req,res,200,{items:state.workspaces||[]})
+      const registry=await withWorkspace('ws_default',()=>getState())
+      const currentState=await getState()
+      const items=await listActorWorkspaces({registry,currentState,currentWorkspaceId:workspaceId,actor:req.user,loadWorkspace:id=>withWorkspace(id,()=>getState())})
+      return send(req,res,200,{items})
     }
     if (req.method === 'POST' && url.pathname === '/api/workspaces') {
       const body=await readBody(req)
