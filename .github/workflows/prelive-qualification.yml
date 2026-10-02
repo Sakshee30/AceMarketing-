@@ -1,0 +1,70 @@
+name: Pre-live Qualification
+
+on:
+  push:
+    branches: ['qa/prelive-qualification-20261003']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prelive-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Freeze tracked source and runtime evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/prelive
+          git archive --format=tar.gz --output=artifacts/prelive/source.tar.gz HEAD
+          git rev-parse HEAD > artifacts/prelive/commit.txt
+          node --version > artifacts/prelive/node-version.txt
+          git ls-files > artifacts/prelive/tracked-files.txt
+      - name: Check every tracked JavaScript runtime file
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, subprocess, sys, time
+          import xml.etree.ElementTree as ET
+          paths = subprocess.check_output(['git','ls-files','-z']).decode().split('\0')
+          paths = sorted(p for p in paths if p.endswith(('.js','.mjs','.cjs')))
+          results=[]
+          suite=ET.Element('testsuite',name='PRELIVE_RUNTIME_SYNTAX',tests=str(len(paths)))
+          for path in paths:
+              start=time.monotonic()
+              p=subprocess.run(['node','--check',path],capture_output=True,text=True,timeout=30)
+              elapsed=time.monotonic()-start
+              result={'path':path,'status':'PASS' if p.returncode==0 else 'FAIL','seconds':elapsed,'diagnostic':p.stderr}
+              results.append(result)
+              case=ET.SubElement(suite,'testcase',name=path,classname='syntax',time=str(elapsed))
+              if p.returncode:
+                  ET.SubElement(case,'failure',message='JavaScript parse failure').text=p.stderr
+                  print('FAIL',path,p.stderr)
+          failures=sum(r['status']=='FAIL' for r in results)
+          suite.set('failures',str(failures))
+          root=pathlib.Path('artifacts/prelive')
+          (root/'syntax.json').write_text(json.dumps({'scope':'syntax only; not application acceptance','results':results},indent=2))
+          ET.ElementTree(suite).write(root/'syntax.junit.xml',encoding='utf-8',xml_declaration=True)
+          print(f'Checked {len(paths)} files; failures={failures}')
+          sys.exit(1 if failures else 0)
+          PY
+      - name: Publish baseline evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prelive-baseline-${{ github.sha }}
+          path: artifacts/prelive/
+          if-no-files-found: error
+          retention-days: 14
