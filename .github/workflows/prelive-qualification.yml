@@ -17,40 +17,16 @@ jobs:
       candidate: ${{ steps.source.outputs.candidate }}
     steps:
       - uses: actions/checkout@v4
-      - name: Apply reviewed exact-match repairs on QA branch only
+      - name: Materialize reviewed QA extensions on testing branch only
         id: source
-        shell: bash
         run: |
           set -euo pipefail
           test "$GITHUB_REF_NAME" = 'qa/prelive-qualification-20261003'
-          if test -f qa/repair-batch.json; then
-            python3 - <<'PY'
-          import hashlib,json,pathlib
-          repairs=json.loads(pathlib.Path('qa/repair-batch.json').read_text())
-          allowed={'frontend/src/lib/api.ts','backend/src/platform/evidence-registry.mjs','backend/tests/runtime-config-runtime.test.mjs','config/profiles/production-high-scale.yaml','backend/src/index.mjs'}
-          assert set(repairs)==allowed
-          for name,item in repairs.items():
-              path=pathlib.Path(name)
-              assert hashlib.sha256(path.read_bytes()).hexdigest()==item['base_sha256'],('source drift',name)
-              text=path.read_text()
-              for pair in item['replacements']:
-                  assert text.count(pair['before'])==1,(name,'replacement mismatch')
-                  text=text.replace(pair['before'],pair['after'])
-              if name=='frontend/src/lib/api.ts':
-                  start=text.index('export const streamAiJob=')
-                  end=text.index('\nexport const api =',start)
-                  text=text[:start]+pathlib.Path('qa/stream-repair.ts.txt').read_text()+text[end:]
-              path.write_text(text)
-          path=pathlib.Path('qa/run.py');text=path.read_text()
-          text=text.replace("'qa/tests/golden.test.mjs','qa/tests/token.test.mjs'","'qa/tests/golden.test.mjs','qa/tests/token.test.mjs','qa/tests/tracking-input.test.mjs','qa/tests/stream-client.test.mjs'")
-          text=text.replace("'--test-reporter=junit',","'--test-reporter=spec','--test-reporter-destination=stdout','--test-reporter=junit',")
-          path.write_text(text)
-          path=pathlib.Path('qa/playwright.config.ts');path.write_text(path.read_text().replace("trace:'retain-on-failure'","trace:'off'"))
-          path=pathlib.Path('qa/fixtures/provenance.json');data=json.loads(path.read_text());data.pop('files',None);path.write_text(json.dumps(data,indent=2)+'\n')
-          PY
-            git rm qa/repair-batch.json qa/stream-repair.ts.txt
-            git add qa backend/src/index.mjs frontend/src/lib/api.ts backend/src/platform/evidence-registry.mjs backend/tests/runtime-config-runtime.test.mjs config/profiles/production-high-scale.yaml
-            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'fix: repair AI stream compilation, tracking validation and control contracts'
+          if test -f qa/extend-runner.py; then
+            python3 qa/extend-runner.py
+            git rm qa/extend-runner.py
+            git add qa
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'test(qa): expand real API, sample import and browser coverage'
             git push origin "HEAD:refs/heads/$GITHUB_REF_NAME"
           fi
           echo "candidate=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
@@ -58,8 +34,6 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     timeout-minutes: 55
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -84,11 +58,89 @@ jobs:
           git archive --format=tar.gz --output=artifacts/prelive/tested-source.tar.gz HEAD
       - name: Execute actual isolated qualification
         run: bash qa/run-isolated.sh
-      - name: Preserve test reports and failure evidence
+      - name: Preserve reports even on failure
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: prelive-evidence-${{ needs.prepare.outputs.candidate }}
           path: artifacts/prelive/
+          if-no-files-found: error
+          retention-days: 14
+  dependency-audit:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.candidate }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.21.0'
+      - name: Audit locked runtime and development dependencies
+        run: |
+          python3 - <<'PY'
+          import json,pathlib,subprocess,sys
+          p=pathlib.Path('artifacts/audit');p.mkdir(parents=True)
+          (p/'candidate.txt').write_text(subprocess.check_output(['git','rev-parse','HEAD'],text=True))
+          results=[]
+          for scope,args in [('all',[]),('runtime',['--omit=dev'])]:
+              r=subprocess.run(['npm','audit','--json','--audit-level=high',*args],text=True,capture_output=True)
+              (p/(scope+'.json')).write_text(r.stdout)
+              (p/(scope+'.stderr')).write_text(r.stderr)
+              results.append({'scope':scope,'exitCode':r.returncode})
+          (p/'summary.json').write_text(json.dumps(results,indent=2))
+          sys.exit(1 if any(r['exitCode'] for r in results) else 0)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prelive-audit-${{ needs.prepare.outputs.candidate }}
+          path: artifacts/audit
+          if-no-files-found: error
+          retention-days: 14
+  ml-checks:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.candidate }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: ml-service/pyproject.toml
+      - name: Install ML dependencies and record resolved versions
+        run: |
+          mkdir -p artifacts/ml
+          git rev-parse HEAD > artifacts/ml/candidate.txt
+          python -m pip install -e 'ml-service[test]'
+          python -m pip freeze > artifacts/ml/resolved-dependencies.txt
+      - name: Run ML static checks independently
+        run: |
+          python - <<'PY'
+          import json,pathlib,subprocess,sys
+          p=pathlib.Path('artifacts/ml');results=[]
+          for name,args in [('lint',['ruff','check','ml-service/src','ml-service/tests']),('format',['ruff','format','--check','ml-service/src','ml-service/tests']),('types',['mypy','--config-file','ml-service/pyproject.toml','ml-service/src/acemarketing_ml']),('compile',['python','-m','compileall','-q','ml-service/src'])]:
+              r=subprocess.run(args,text=True,capture_output=True);(p/(name+'.log')).write_text(r.stdout+r.stderr);results.append({'name':name,'exitCode':r.returncode})
+          (p/'static-summary.json').write_text(json.dumps(results,indent=2));sys.exit(1 if any(r['exitCode'] for r in results) else 0)
+          PY
+      - name: Run actual ML tests without network access
+        if: always()
+        run: |
+          sudo env -i PATH="$PATH" HOME="$HOME" QA_UID="$(id -u)" QA_GID="$(id -g)" unshare --net bash -c '
+            set -euo pipefail
+            ip link set lo up
+            exec setpriv --reuid="$QA_UID" --regid="$QA_GID" --init-groups env -i PATH="$PATH" HOME="$HOME" CI=true pytest -q -rs ml-service/tests --junitxml=artifacts/ml/tests.junit.xml
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prelive-ml-${{ needs.prepare.outputs.candidate }}
+          path: artifacts/ml
           if-no-files-found: error
           retention-days: 14
