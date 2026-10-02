@@ -1,0 +1,7 @@
+test('MET reconciliation totals equal persisted tracked events in each tenant',async()=>{
+ for(const [actor,token] of [[a,tokenA],[b,tokenB]]){
+  const expected=Number((await admin.query('SELECT count(*)::int n FROM ace_events WHERE workspace_id=$1',[actor.workspaceId])).rows[0].n)
+  const r=await req('/api/reconciliation',{token,workspace:actor.workspaceId})
+  assert.equal(r.status,200,JSON.stringify(r.data));assert.equal(r.data.totals.trackedEvents,expected)
+ }
+})

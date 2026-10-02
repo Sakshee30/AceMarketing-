@@ -17,23 +17,24 @@ jobs:
       candidate: ${{ steps.source.outputs.candidate }}
     steps:
       - uses: actions/checkout@v4
-      - name: Materialize reviewed QA extensions on testing branch only
+      - name: Apply reviewed final repairs only on QA branch
         id: source
+        shell: bash
         run: |
           set -euo pipefail
           test "$GITHUB_REF_NAME" = 'qa/prelive-qualification-20261003'
-          if test -f qa/extend-runner.py; then
-            python3 qa/extend-runner.py
-            git rm qa/extend-runner.py
-            git add qa
-            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'test(qa): expand real API, sample import and browser coverage'
+          if test -f qa/finish-implementation.py; then
+            python3 qa/finish-implementation.py
+            git rm qa/finish-implementation.py qa/final-repairs.json qa/list-workspaces.mjs.txt qa/extra-business-tests.mjs.txt
+            git add qa backend/src/index.mjs backend/src/store.mjs backend/src/platform/workspace-access.mjs .github/workflows
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'fix: enforce workspace visibility, remove production demo state and repair reconciliation'
             git push origin "HEAD:refs/heads/$GITHUB_REF_NAME"
           fi
           echo "candidate=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
   qualification:
     needs: prepare
     runs-on: ubuntu-latest
-    timeout-minutes: 55
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
         with:
@@ -45,11 +46,12 @@ jobs:
           cache: npm
       - name: Install locked dependencies
         run: npm ci
-      - name: Install test browsers and PostgreSQL server tools
+      - name: Install browsers, PostgreSQL and CI service executable
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y postgresql-16
           npx playwright install --with-deps chromium firefox webkit
+          if ! test -e /usr/bin/node; then sudo ln -s "$(command -v node)" /usr/bin/node; fi
       - name: Freeze candidate evidence
         run: |
           mkdir -p artifacts/prelive
@@ -83,15 +85,11 @@ jobs:
           python3 - <<'PY'
           import json,pathlib,subprocess,sys
           p=pathlib.Path('artifacts/audit');p.mkdir(parents=True)
-          (p/'candidate.txt').write_text(subprocess.check_output(['git','rev-parse','HEAD'],text=True))
-          results=[]
+          (p/'candidate.txt').write_text(subprocess.check_output(['git','rev-parse','HEAD'],text=True));results=[]
           for scope,args in [('all',[]),('runtime',['--omit=dev'])]:
               r=subprocess.run(['npm','audit','--json','--audit-level=high',*args],text=True,capture_output=True)
-              (p/(scope+'.json')).write_text(r.stdout)
-              (p/(scope+'.stderr')).write_text(r.stderr)
-              results.append({'scope':scope,'exitCode':r.returncode})
-          (p/'summary.json').write_text(json.dumps(results,indent=2))
-          sys.exit(1 if any(r['exitCode'] for r in results) else 0)
+              (p/(scope+'.json')).write_text(r.stdout);(p/(scope+'.stderr')).write_text(r.stderr);results.append({'scope':scope,'exitCode':r.returncode})
+          (p/'summary.json').write_text(json.dumps(results,indent=2));sys.exit(1 if any(r['exitCode'] for r in results) else 0)
           PY
       - uses: actions/upload-artifact@v4
         if: always()
@@ -129,7 +127,7 @@ jobs:
               r=subprocess.run(args,text=True,capture_output=True);(p/(name+'.log')).write_text(r.stdout+r.stderr);results.append({'name':name,'exitCode':r.returncode})
           (p/'static-summary.json').write_text(json.dumps(results,indent=2));sys.exit(1 if any(r['exitCode'] for r in results) else 0)
           PY
-      - name: Run actual ML tests without network access
+      - name: Run ML tests without network access
         if: always()
         run: |
           sudo env -i PATH="$PATH" HOME="$HOME" QA_UID="$(id -u)" QA_GID="$(id -g)" unshare --net bash -c '
