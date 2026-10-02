@@ -1,4 +1,6 @@
 import test from 'node:test'
+// These tests isolate runtime overrides; deployment-mode guards are tested separately.
+test.before(()=>{process.env.ACE_DEPLOYMENT_MODE='full'})
 import assert from 'node:assert/strict'
 import {pool} from '../src/database.mjs'
 import {publishRuntimeSnapshot,createEmergencyControl,revokeEmergencyControl} from '../src/platform/runtime-configuration.mjs'

@@ -5,12 +5,6 @@
   "fixture_seed": 20261002,
   "retained_golden_contract": "camelCase; major INR",
   "bulk_contract": "snake_case; integer minor INR",
-  "files": {
-    "core.json.gz": "0583afa2eea5bf302703a397f0772c4569b3d6420b5e8627bca352c6dc00c832",
-    "leads.json.gz": "122df5c0cf5dafd65f59d5cabb634a213cce897e03a0f8561804624a20f7a490",
-    "golden.json.gz": "7741e883afa9f7264b880ba07ffce2c3e3390d62e0efcee01d23a668bf725013",
-    "plan.json.gz": "c056ae564dda1a815472a2dd16fa736fc09fab0670265e922916c66ab12c5f55"
-  },
   "planExtraction": "Every source test ID/scenario/priority/phase/fixture preserved; original steps and expected results stay in supplied plan",
   "files_sha256": {
     "qa/fixtures/core.json.gz": "0583afa2eea5bf302703a397f0772c4569b3d6420b5e8627bca352c6dc00c832",

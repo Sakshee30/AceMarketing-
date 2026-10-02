@@ -18,6 +18,7 @@ import { closeAudienceScheduler, listAudienceRefreshRuns, listAudienceSchedules,
 import { closeCohortAnalytics, cohortAnalytics } from './cohort-analytics.mjs'
 import {connectorReadCatalog,listConnectorSyncRuns,connectorDataSummary,listConnectorSyncSchedules,saveConnectorSyncSchedule} from './connector-ingestion.mjs'
 import {appendTrackedEvent,listTrackedEvents,trackedEventStats} from './tracked-events.mjs'
+import {trackingInputError} from './tracking-input.mjs'
 import { closeReportScheduler, listReportDeliveries, listReportSchedules, queueReportNow, reportMailConfigured, saveReportSchedule } from './report-scheduler.mjs'
 import { closeEventRules, createEventRule, evaluateEventRules, eventRuleStats, listEventRuleRuns, listEventRules, markEventRuleActivation, setEventRuleEnabled } from './event-rules.mjs'
 import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, publicChallenges, publicCaseStudies, publicResources, publicResourceCenter } from './public-content.mjs'
@@ -3514,6 +3515,8 @@ const server = http.createServer(async (req,res)=>{
     }
     if (req.method === 'POST' && url.pathname === '/api/track') {
       const body=await readBody(req)
+      const inputError=trackingInputError(body)
+      if(inputError)return send(req,res,400,{accepted:false,error:inputError})
       const authorization=String(req.headers.authorization||'')
       const suppliedKey=authorization.replace(/^Bearer\s+/i,'')
       if(suppliedKey.startsWith('ace_')){
@@ -3532,7 +3535,7 @@ const server = http.createServer(async (req,res)=>{
       if(!trackingSubjectId) return send(req,res,400,{accepted:false,error:'customerId, visitorId, or deviceId required'})
       const consent=await consentAllows(workspaceId,{subjectType:body.customerId?'customer':'visitor',subjectId:trackingSubjectId,category})
       if(!consent.allowed) return send(req,res,403,{accepted:false,error:'consent required',reason:consent.reason,category})
-      const event={id:randomUUID(),receivedAt:new Date().toISOString(),consentCategory:category,...body}
+      const event={...body,id:body.id||randomUUID(),receivedAt:new Date().toISOString(),consentCategory:category}
       trackedEvents.push(event)
       if(trackedEvents.length>5000) trackedEvents.splice(0,trackedEvents.length-5000)
       const persistedEvent={...event}
