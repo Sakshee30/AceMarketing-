@@ -1,7 +1,9 @@
 import {createHash,randomUUID} from 'node:crypto'
 import {inflateRawSync} from 'node:zlib'
 import {pool} from './database.mjs'
-import {connectorCredential} from './connector-auth.mjs'\nimport {enqueueJob} from './queue.mjs'\nimport {withTenantDbTransaction,withSystemDbTransaction} from './platform/tenant-db.mjs'
+import {connectorCredential} from './connector-auth.mjs'
+import {enqueueJob} from './queue.mjs'
+import {withTenantDbTransaction,withSystemDbTransaction} from './platform/tenant-db.mjs'
 import {deploymentMode} from './platform/deployment-mode.mjs'
 import {deriveMarketingMetrics} from './metric-catalog.mjs'
 import {validateOutboundDestination} from './platform/egress-policy.mjs'
@@ -12,7 +14,9 @@ const sha=value=>createHash('sha256').update(typeof value==='string'?value:JSON.
 const isoDay=value=>new Date(value).toISOString().slice(0,10)
 const n=value=>Number.isFinite(Number(value))?Number(value):0
 const s=value=>value==null?'':String(value)
-const nowIso=()=>new Date().toISOString()\nconst tenantQuery=(workspaceId,text,params=[])=>withTenantDbTransaction(workspaceId,db=>db.query(text,params))\nconst systemQuery=(text,params=[])=>withSystemDbTransaction(db=>db.query(text,params))
+const nowIso=()=>new Date().toISOString()
+const tenantQuery=(workspaceId,text,params=[])=>withTenantDbTransaction(workspaceId,db=>db.query(text,params))
+const systemQuery=(text,params=[])=>withSystemDbTransaction(db=>db.query(text,params))
 
 const requestJson=async(url,{method='GET',headers={},body=null,allowedOrigins=[]}={})=>{
   const parsed=new URL(url)
@@ -27,7 +31,8 @@ const requestJson=async(url,{method='GET',headers={},body=null,allowedOrigins=[]
       if(next.origin!==parsed.origin)throw new Error('cross-origin provider redirect blocked')
       return requestJson(next,{method,headers,body,allowedOrigins})
     }
-    if(response.status===304)return {json:{},headers:response.headers,status:304}\n    const raw=await response.text()
+    if(response.status===304)return {json:{},headers:response.headers,status:304}
+    const raw=await response.text()
     let json={}
     try{json=raw?JSON.parse(raw):{}}catch{json={raw:raw.slice(0,5000)}}
     if(!response.ok){

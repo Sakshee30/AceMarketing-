@@ -15,7 +15,9 @@ import { billingConfigured, billingEventHistory, billingReconciliationHistory, c
 import { closeConsentStore, consentAllows, consentStats, getConsent, listConsentAudit, saveConsent } from './consent.mjs'
 import { closePrivacyOps, deleteSubject, exportSubject, listPrivacyRequests, purgeRetention, retentionPolicy } from './privacy-ops.mjs'
 import { closeAudienceScheduler, listAudienceRefreshRuns, listAudienceSchedules, saveAudienceSchedule } from './audience-scheduler.mjs'
-import { closeCohortAnalytics, cohortAnalytics } from './cohort-analytics.mjs'\nimport {connectorReadCatalog,listConnectorSyncRuns,connectorDataSummary,listConnectorSyncSchedules,saveConnectorSyncSchedule} from './connector-ingestion.mjs'\nimport {appendTrackedEvent,listTrackedEvents,trackedEventStats} from './tracked-events.mjs'
+import { closeCohortAnalytics, cohortAnalytics } from './cohort-analytics.mjs'
+import {connectorReadCatalog,listConnectorSyncRuns,connectorDataSummary,listConnectorSyncSchedules,saveConnectorSyncSchedule} from './connector-ingestion.mjs'
+import {appendTrackedEvent,listTrackedEvents,trackedEventStats} from './tracked-events.mjs'
 import { closeReportScheduler, listReportDeliveries, listReportSchedules, queueReportNow, reportMailConfigured, saveReportSchedule } from './report-scheduler.mjs'
 import { closeEventRules, createEventRule, evaluateEventRules, eventRuleStats, listEventRuleRuns, listEventRules, markEventRuleActivation, setEventRuleEnabled } from './event-rules.mjs'
 import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, publicChallenges, publicCaseStudies, publicResources, publicResourceCenter } from './public-content.mjs'
@@ -3546,7 +3548,8 @@ const server = http.createServer(async (req,res)=>{
         s.recentEvents=s.recentEvents||[]
         s.recentEvents.unshift(persistedEvent)
         s.recentEvents=s.recentEvents.slice(0,5000)
-      })\n      await appendTrackedEvent(workspaceId,persistedEvent)
+      })
+      await appendTrackedEvent(workspaceId,persistedEvent)
       let leadProfile=null
       if(body.customerId||body.email||body.phone||body.emailSha256||body.email_sha256||body.phoneSha256||body.phone_sha256||body.deviceId||body.device_id){
         leadProfile=await upsertLeadProfile(workspaceId,{
