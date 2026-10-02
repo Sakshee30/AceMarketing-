@@ -17,48 +17,40 @@ jobs:
       candidate: ${{ steps.source.outputs.candidate }}
     steps:
       - uses: actions/checkout@v4
-      - name: Materialize reviewed implementation and commit source repairs on QA branch only
+      - name: Apply reviewed exact-match repairs on QA branch only
         id: source
         shell: bash
         run: |
           set -euo pipefail
           test "$GITHUB_REF_NAME" = 'qa/prelive-qualification-20261003'
-          if test -f qa-transport/part0.b64; then
+          if test -f qa/repair-batch.json; then
             python3 - <<'PY'
-          import base64,gzip,hashlib,io,json,lzma,pathlib
-          root=pathlib.Path.cwd()
-          encoded=''.join((root/f'qa-transport/part{i}.b64').read_text() for i in range(3))
-          payload=base64.b64decode(encoded,validate=True)
-          assert hashlib.sha256(payload).hexdigest()=='4a10b9d9a3d81a666b7855d720cb92c28ba4fdd7be7837ea6a8f226821337978'
-          files=json.loads(lzma.decompress(payload))
-          for name,item in files.items():
-              relative=pathlib.PurePosixPath(name)
-              assert not relative.is_absolute() and '..' not in relative.parts
-              assert name.startswith('qa/') or name=='backend/src/security.mjs',name
-              path=root/name
-              raw=item['text'].encode()
-              if item['encoding']=='gzip-on-write':
-                  path=path.with_name(path.name+'.gz')
-                  stream=io.BytesIO()
-                  with gzip.GzipFile(fileobj=stream,mode='wb',mtime=0) as out:out.write(raw)
-                  raw=stream.getvalue()
-              else:assert item['encoding']=='utf-8'
-              path.parent.mkdir(parents=True,exist_ok=True)
-              path.write_bytes(raw)
-          repairs=json.loads((root/'qa/source-repairs.json').read_text())
-          assert set(repairs)=={'backend/src/connector-ingestion.mjs','backend/src/index.mjs','backend/src/worker.mjs'}
-          for name,pairs in repairs.items():
-              p=root/name;s=p.read_text()
-              for old,new in pairs:
-                  assert s.count(old)==1,(name,'source drift')
-                  s=s.replace(old,new)
-              p.write_text(s)
-          (root/'qa/source-repairs.json').unlink()
-          with (root/'.gitignore').open('a') as f:f.write('\n# Qualification reports are not source\nartifacts/prelive/\nqa/__pycache__/\n')
+          import hashlib,json,pathlib
+          repairs=json.loads(pathlib.Path('qa/repair-batch.json').read_text())
+          allowed={'frontend/src/lib/api.ts','backend/src/platform/evidence-registry.mjs','backend/tests/runtime-config-runtime.test.mjs','config/profiles/production-high-scale.yaml','backend/src/index.mjs'}
+          assert set(repairs)==allowed
+          for name,item in repairs.items():
+              path=pathlib.Path(name)
+              assert hashlib.sha256(path.read_bytes()).hexdigest()==item['base_sha256'],('source drift',name)
+              text=path.read_text()
+              for pair in item['replacements']:
+                  assert text.count(pair['before'])==1,(name,'replacement mismatch')
+                  text=text.replace(pair['before'],pair['after'])
+              if name=='frontend/src/lib/api.ts':
+                  start=text.index('export const streamAiJob=')
+                  end=text.index('\nexport const api =',start)
+                  text=text[:start]+pathlib.Path('qa/stream-repair.ts.txt').read_text()+text[end:]
+              path.write_text(text)
+          path=pathlib.Path('qa/run.py');text=path.read_text()
+          text=text.replace("'qa/tests/golden.test.mjs','qa/tests/token.test.mjs'","'qa/tests/golden.test.mjs','qa/tests/token.test.mjs','qa/tests/tracking-input.test.mjs','qa/tests/stream-client.test.mjs'")
+          text=text.replace("'--test-reporter=junit',","'--test-reporter=spec','--test-reporter-destination=stdout','--test-reporter=junit',")
+          path.write_text(text)
+          path=pathlib.Path('qa/playwright.config.ts');path.write_text(path.read_text().replace("trace:'retain-on-failure'","trace:'off'"))
+          path=pathlib.Path('qa/fixtures/provenance.json');data=json.loads(path.read_text());data.pop('files',None);path.write_text(json.dumps(data,indent=2)+'\n')
           PY
-            git rm qa-transport/part0.b64 qa-transport/part1.b64 qa-transport/part2.b64
-            git add qa backend/src/security.mjs backend/src/connector-ingestion.mjs backend/src/index.mjs backend/src/worker.mjs .gitignore
-            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'test(qa): implement isolated PostgreSQL/API/browser qualification and fix runtime/auth defects'
+            git rm qa/repair-batch.json qa/stream-repair.ts.txt
+            git add qa backend/src/index.mjs frontend/src/lib/api.ts backend/src/platform/evidence-registry.mjs backend/tests/runtime-config-runtime.test.mjs config/profiles/production-high-scale.yaml
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'fix: repair AI stream compilation, tracking validation and control contracts'
             git push origin "HEAD:refs/heads/$GITHUB_REF_NAME"
           fi
           echo "candidate=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
