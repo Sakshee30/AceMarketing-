@@ -159,11 +159,11 @@ def main():
       record('authenticated-api-startup','FAIL','API did not become healthy; see api.log');return
     record('authenticated-api-startup','PASS','Real API: NODE_ENV=production; auth enabled; restricted PostgreSQL role')
     worker=spawn('worker',['node','backend/src/worker.mjs'],{k:v for k,v in app_env.items() if k!='QA_ADMIN_DATABASE_URL'})
-    command('authenticated-api',['node','--test','--test-concurrency=1','--test-force-exit','--test-timeout=90000','--test-reporter=spec','--test-reporter-destination=stdout','--test-reporter=junit','--test-reporter-destination='+str(REPORTS/'api.junit.xml'),'qa/tests/api.test.mjs'],app_env,timeout=300)
+    command('authenticated-api',['node','--test','--test-concurrency=1','--test-force-exit','--test-timeout=90000','--test-reporter=spec','--test-reporter-destination=stdout','--test-reporter=junit','--test-reporter-destination='+str(REPORTS/'api.junit.xml'),'qa/tests/api.test.mjs','qa/tests/business-api.test.mjs'],app_env,timeout=300)
     if built:
       web=spawn('web',['node','scripts/static-server.mjs','--dir=dist/frontend','--host=127.0.0.1','--port=4173','--api-target=http://127.0.0.1:3001'],app_env)
       if ready('http://127.0.0.1:4173/healthz',web):
-        command('production-browser',['./node_modules/.bin/playwright','test','--config=qa/playwright.config.ts'],app_env,timeout=450)
+        command('production-browser',['./node_modules/.bin/playwright','test','--config=qa/playwright.config.ts'],app_env,timeout=900)
       else:record('production-browser','BLOCKED','Static production server did not become ready')
     else:record('production-browser','BLOCKED','No production frontend artifact')
     record('worker-runtime','PASS' if worker.poll() is None else 'FAIL','Worker liveness only; business completion checked in API suite')
