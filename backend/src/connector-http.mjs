@@ -21,9 +21,10 @@ export const requestConnectorJson=async(rawUrl,{
   const redirects=integer(maxRedirects,4,0,10,'connector redirect limit')
   if(!Array.isArray(allowedOrigins)||!allowedOrigins.length)throw new Error('connector origin allowlist required')
   const permitted=new Set(allowedOrigins)
+  let url=new URL(rawUrl)
   const controller=new AbortController()
   const timer=setTimeout(()=>controller.abort(new Error('connector_sync_timeout')),deadline)
-  const seen=new Set();let url=new URL(rawUrl),reader=null
+  const seen=new Set();let reader=null
   try{
     for(let hop=0;;hop++){
       if(url.protocol!=='https:'||url.username||url.password)throw new Error('connector sync requires credential-free HTTPS URL')
