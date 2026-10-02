@@ -55,6 +55,7 @@ jobs:
         with:
           name: prelive-evidence-${{ needs.prepare.outputs.candidate }}
           path: artifacts/prelive/
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 14
   dependency-audit:
