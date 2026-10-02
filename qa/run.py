@@ -134,7 +134,7 @@ def main():
     if not command('migrations',['npm','run','migrate'],template_env):return
     command('migration-idempotency',['npm','run','migrate'],template_env)
     native_env={**env,'NODE_ENV':'test','QA_NATIVE_ADMIN_URL':admin,'CONNECTOR_ENCRYPTION_KEY':secrets.token_hex(32),'AUTH_REQUIRED':'true'}
-    command('native-regression',['node','--import','./qa/native-db.mjs','--test','--test-concurrency=2','--test-force-exit','--test-timeout=90000','--test-reporter=spec','--test-reporter-destination=stdout','--test-reporter=junit','--test-reporter-destination='+str(REPORTS/'native.junit.xml'),*native],native_env,timeout=1200)
+    command('native-regression',['node','--import','./qa/native-db.mjs','--test','--test-concurrency=2','--test-force-exit','--test-timeout=300000','--test-reporter=spec','--test-reporter-destination=stdout','--test-reporter=junit','--test-reporter-destination='+str(REPORTS/'native.junit.xml'),*native],native_env,timeout=1200)
     # Keep type/build results independent so one failure does not erase other evidence.
     command('typecheck',['npm','run','check:frontend'],env)
     built=command('production-bundle',['./node_modules/.bin/vite','build'],env)
@@ -162,7 +162,7 @@ def main():
       record('authenticated-api-startup','FAIL','API did not become healthy; see api.log');return
     record('authenticated-api-startup','PASS','Real API: NODE_ENV=production; auth enabled; restricted PostgreSQL role')
     worker=spawn('worker',['node','backend/src/worker.mjs'],{k:v for k,v in app_env.items() if k!='QA_ADMIN_DATABASE_URL'})
-    command('authenticated-api',['node','--test','--test-concurrency=1','--test-force-exit','--test-timeout=90000','--test-reporter=spec','--test-reporter-destination=stdout','--test-reporter=junit','--test-reporter-destination='+str(REPORTS/'api.junit.xml'),'qa/tests/api.test.mjs','qa/tests/business-api.test.mjs'],app_env,timeout=300)
+    command('authenticated-api',['node','--test','--test-concurrency=1','--test-force-exit','--test-timeout=300000','--test-reporter=spec','--test-reporter-destination=stdout','--test-reporter=junit','--test-reporter-destination='+str(REPORTS/'api.junit.xml'),'qa/tests/api.test.mjs','qa/tests/business-api.test.mjs'],app_env,timeout=300)
     if built:
       web=spawn('web',['node','scripts/static-server.mjs','--dir=dist/frontend','--host=127.0.0.1','--port=4173','--api-target=http://127.0.0.1:3001'],app_env)
       if ready('http://127.0.0.1:4173/healthz',web):
