@@ -78,13 +78,19 @@ export const upsertLeadProfile=async(workspaceId,input={})=>{
       call_summary=COALESCE(EXCLUDED.call_summary,ace_lead_profiles.call_summary),
       whatsapp_summary=COALESCE(EXCLUDED.whatsapp_summary,ace_lead_profiles.whatsapp_summary),
       updated_at=now()
+     WHERE COALESCE(EXCLUDED.journey->>'lastActivity','') >= COALESCE(ace_lead_profiles.journey->>'lastActivity','')
      RETURNING *`,
     [id,workspaceId,externalLeadId,safeText(input.name),emailHash,phoneHash,safeText(input.deviceId||input.device_id,512),safeText(input.devicePlatform||input.device_platform,32),safeText(input.appId||input.app_id,256),safeText(input.source),safeText(input.campaign),
      safeText(input.crmStage||input.stage),safeText(input.intent),scoring.score,scoring.grade,scoring.version,JSON.stringify(scoring.drivers),
-     json(input.attributes),json({journeyDepth:Number(input.journeyDepth||input.pagesViewed||0),pricingPageViews:Number(input.pricingPageViews||0),lastActivity:input.lastActivity||null,conversionPropensity:Number(input.conversionPropensity||0),ltvTier:input.ltvTier||null,whatsappEngaged:Boolean(input.whatsappEngaged),callOutcome:input.callOutcome||null,meetingStatus:input.meetingStatus||null}),
+     json(input.attributes),json({journeyDepth:Number(input.journeyDepth||input.pagesViewed||0),pricingPageViews:Number(input.pricingPageViews||0),lastActivity:input.lastActivity?new Date(input.lastActivity).toISOString():null,conversionPropensity:Number(input.conversionPropensity||0),ltvTier:input.ltvTier||null,whatsappEngaged:Boolean(input.whatsappEngaged),callOutcome:input.callOutcome||null,meetingStatus:input.meetingStatus||null}),
      safeText(input.callSummary,4000),safeText(input.whatsappSummary,4000)]
   )
-  return rows[0]
+  if(rows[0])return rows[0]
+  const current=await pool.query(
+    'SELECT * FROM ace_lead_profiles WHERE workspace_id=$1 AND external_lead_id=$2 LIMIT 1',
+    [workspaceId,externalLeadId]
+  )
+  return current.rows[0]||null
 }
 
 export const listLeadProfiles=async(workspaceId,limit=100)=>{
