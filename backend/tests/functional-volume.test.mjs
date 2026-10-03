@@ -5,7 +5,7 @@ import {createInterface} from 'node:readline'
 import {join} from 'node:path'
 import {execFileSync} from 'node:child_process'
 import {createHash} from 'node:crypto'
-import {upsertLeadProfile,leadIdentityStats,leadOpsStats} from '../src/lead-ops.mjs'
+import {upsertLeadProfile,listLeadProfiles,leadIdentityStats,leadOpsStats} from '../src/lead-ops.mjs'
 import {appendTrackedEvent,trackedEventStats,listTrackedEvents} from '../src/tracked-events.mjs'
 import {calculateMetricSet} from '../src/metric-catalog.mjs'
 import {upsertCampaignDailyFact,connectorDataSummary} from '../src/connector-ingestion.mjs'
@@ -31,6 +31,7 @@ test('D2 volume: actual lead repository imports 10000 supplied leads and replay 
  for(const l of leads){const r=records.get(l.lead_id);assert.ok(r);assert.equal(r.workspace_id,l.workspace_id);assert.equal(r.name,l.display_name);assert.equal(r.crm_stage,l.stage);assert.equal(r.campaign,l.campaign_id);assert.equal(r.email_sha256,createHash('sha256').update(l.email.toLowerCase()).digest('hex'))}
  for(const workspace of new Set(leads.map(l=>l.workspace_id))){
   assert.equal((await leadOpsStats(workspace)).total,2500)
+  assert.equal((await listLeadProfiles(workspace,5000)).length,2500,'full functional workspace lead read must not truncate at 500')
   const identity=await leadIdentityStats(workspace)
   assert.equal(identity.total,2500,'identity summary must use the full workspace population, not the 500-row list cap')
   assert.ok(identity.stitchedProfiles>=0&&identity.stitchedProfiles<=identity.total)
@@ -105,10 +106,15 @@ test('D2 volume: persisted event types and monetary minor units match independen
  assert.equal(result.metrics.impressions,10000);assert.equal(result.metrics.clicks,10000);assert.equal(result.metrics.roas,null,'no provider spend was injected into first-party events')
  report.firstPartyMetrics=result.metrics;report.checks.push('event classes, net revenue and independent first-party metric oracle reconcile')
 })
-test('D2 volume: application readers enforce explicit workspace filters and documented caps',{skip:!isolated},async()=>{
+test('D2 volume: application readers enforce explicit workspace filters and bounded full functional reads',{skip:!isolated},async()=>{
  assert.equal(report.eventsImported,100000,'complete event ingest prerequisite')
- for(const workspace of new Set(leads.map(l=>l.workspace_id))){assert.equal((await trackedEventStats(workspace)).total,25000);const rows=await listTrackedEvents(workspace,{limit:99999});assert.equal(rows.length,5000);for(const r of rows){assert.equal(r.email,undefined);assert.equal(r.phone,undefined)}}
+ for(const workspace of new Set(leads.map(l=>l.workspace_id))){
+  assert.equal((await trackedEventStats(workspace)).total,25000)
+  const rows=await listTrackedEvents(workspace,{limit:99999})
+  assert.equal(rows.length,25000,'functional workspace journey source must expose all 25000 persisted events')
+  for(const r of rows){assert.equal(r.email,undefined);assert.equal(r.phone,undefined)}
+ }
  assert.equal((await trackedEventStats('qa_ace_v1_workspace_000005')).total,0)
  assert.deepEqual(await listTrackedEvents('qa_ace_v1_workspace_000005'),[])
- report.checks.push('four 25000-event workspace counts, 5000-read cap, empty workspace and no raw contact fields');report.dataLayerChecksComplete=true
+ report.checks.push('four 25000-event workspace counts, bounded full functional reads, empty workspace and no raw contact fields');report.dataLayerChecksComplete=true
 })
