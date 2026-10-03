@@ -32,7 +32,8 @@ export function AccessibleDialog({
   useEffect(()=>{
     restoreRef.current=document.activeElement instanceof HTMLElement?document.activeElement:null
     const root=rootRef.current
-    const first=root?.querySelector<HTMLElement>(focusableSelector)
+    const first=root?.querySelector<HTMLElement>('[data-dialog-initial-focus],input:not([disabled]),select:not([disabled]),textarea:not([disabled])')
+      ||root?.querySelector<HTMLElement>(focusableSelector)
     requestAnimationFrame(()=>first?.focus())
     return()=>{requestAnimationFrame(()=>restoreRef.current?.focus?.())}
   },[])

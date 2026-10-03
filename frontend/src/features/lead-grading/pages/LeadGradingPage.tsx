@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react'
-import {Activity,ArrowRight,Check,CheckCircle2,ChevronRight,RadioTower,ShieldCheck,Target} from 'lucide-react'
+import {Activity,ArrowRight,Check,CheckCircle2,ChevronRight,DatabaseZap,RadioTower,ShieldCheck,Target} from 'lucide-react'
 import {leadGradingApi} from '../data/lead-grading.api'
 import {ErrorState,LoadingState,StaleState} from '../../../components/system/FrontendStates'
 
@@ -7,6 +7,10 @@ function PageHead({crumb,title,sub,action,onAction}:{crumb:string,title:string,s
 function Stat({label,value,sub,Icon}:{label:string,value:string,sub:string,Icon:any}){return <article className="stat"><div><span>{label}</span><Icon/></div><strong>{value}</strong><small>{sub}</small></article>}
 type Notice={kind:'ok'|'error'|'unknown'|'',text:string}
 const unknownMutation=(error:any)=>['timeout','network'].includes(String(error?.details?.cause||''))
+const catalogueFixture={
+ leadId:'qa_ace_v1_lead_000001',name:'Synthetic Lead 0000001',email:'qa_ace_v1.lead0000001@example.test',
+ stage:'contacted',marketingConsent:'granted',campaignId:'qa_ace_v1_campaign_000001',campaign:'QA Campaign 0001',source:'META'
+}
 
 export default function LeadGradingPage(){
  const [selected,setSelected]=useState('')
@@ -16,6 +20,8 @@ export default function LeadGradingPage(){
  const [busy,setBusy]=useState('')
  const [loading,setLoading]=useState(true)
  const [notice,setNotice]=useState<Notice>({kind:'',text:''})
+ const [fixture,setFixture]=useState(catalogueFixture)
+ const [fixtureResult,setFixtureResult]=useState<any>(null)
 
  const load=async()=>{
   setLoading(true)
@@ -79,6 +85,27 @@ export default function LeadGradingPage(){
   }finally{setBusy('')}
  }
 
+ const ingestFixture=async(event:any)=>{
+  event.preventDefault()
+  if(busy)return
+  setBusy('fixture');setNotice({kind:'',text:''});setFixtureResult(null)
+  const payload={
+   externalLeadId:fixture.leadId,name:fixture.name,email:fixture.email,source:fixture.source,campaign:fixture.campaign,
+   crmStage:fixture.stage,lastActivity:new Date().toISOString(),
+   attributes:{synthetic:true,fixtureVersion:'ace.dummy.v1',marketingConsent:fixture.marketingConsent,campaignId:fixture.campaignId,
+    provenance:{workbook:'AceMarketing_Dummy_Data_Catalogue.xlsx',leadSheet:'Lead Preview',leadRow:7,campaignSheet:'Campaigns',campaignRow:7}}
+  }
+  try{
+   const result:any=await leadGradingApi.ingest(payload)
+   setFixtureResult({request:payload,response:result})
+   setNotice({kind:'ok',text:'Synthetic catalogue lead persisted and scored by the backend.'})
+   await load()
+   setSelected(fixture.name)
+  }catch(e:any){
+   setNotice(unknownMutation(e)?{kind:'unknown',text:'The fixture-ingestion outcome is unknown. Refresh grading before submitting it again.'}:{kind:'error',text:e?.message||'Catalogue fixture could not be ingested.'})
+  }finally{setBusy('')}
+ }
+
  const openActivation=()=>{if(activated?.nextTab)window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:activated.nextTab}))}
  const total=Number(stats?.total||0)
  const dist=[['A · High intent',Number(stats?.aGrade||0)],['B · Strong fit',Math.max(0,Number(stats?.abQuality||0)-Number(stats?.aGrade||0))],['C · Nurture',Number(stats?.cGrade||0)],['D · Low quality',Number(stats?.dGrade||0)]]
@@ -90,6 +117,26 @@ export default function LeadGradingPage(){
   {notice.text&&notice.kind==='error'&&<ErrorState title="Lead grading action failed" description={notice.text} action={{label:'Refresh grading',onClick:load}}/>}
   {notice.text&&notice.kind==='unknown'&&<StaleState title="Lead grading needs reconciliation" description={notice.text} action={{label:'Refresh authoritative state',onClick:load}}/>}
   {notice.text&&notice.kind==='ok'&&<div className="delivery-notice ok" role="status"><CheckCircle2/><span>{notice.text}</span></div>}
+
+  <section className="app-panel fixture-proof">
+   <div className="panel-head"><div><h3>Catalogue fixture → persisted grade</h3><p>One auditable input/output path using the supplied workbook. Values remain editable before submission.</p></div><span className="healthy">Synthetic only</span></div>
+   <form onSubmit={ingestFixture}>
+    <div className="fixture-fields">
+     <label>Lead ID <small>Lead Preview!A7</small><input aria-label="Catalogue lead ID" required value={fixture.leadId} onChange={e=>setFixture(x=>({...x,leadId:e.target.value}))}/></label>
+     <label>Display name <small>Lead Preview!E7</small><input aria-label="Catalogue display name" required value={fixture.name} onChange={e=>setFixture(x=>({...x,name:e.target.value}))}/></label>
+     <label>Email <small>Lead Preview!F7</small><input aria-label="Catalogue email" required type="email" value={fixture.email} onChange={e=>setFixture(x=>({...x,email:e.target.value}))}/></label>
+     <label>CRM stage <small>Lead Preview!G7</small><select aria-label="Catalogue CRM stage" value={fixture.stage} onChange={e=>setFixture(x=>({...x,stage:e.target.value}))}>{['new','contacted','qualified','customer','lost'].map(x=><option key={x}>{x}</option>)}</select></label>
+     <label>Marketing consent <small>Lead Preview!H7</small><select aria-label="Catalogue marketing consent" value={fixture.marketingConsent} onChange={e=>setFixture(x=>({...x,marketingConsent:e.target.value}))}>{['granted','denied','revoked'].map(x=><option key={x}>{x}</option>)}</select></label>
+     <label>Campaign ID <small>Lead Preview!D7</small><input aria-label="Catalogue campaign ID" required value={fixture.campaignId} onChange={e=>setFixture(x=>({...x,campaignId:e.target.value}))}/></label>
+     <label>Campaign name <small>Campaigns!D7</small><input aria-label="Catalogue campaign name" required value={fixture.campaign} onChange={e=>setFixture(x=>({...x,campaign:e.target.value}))}/></label>
+     <label>Provider/source <small>Campaigns!E7</small><input aria-label="Catalogue provider source" required value={fixture.source} onChange={e=>setFixture(x=>({...x,source:e.target.value}))}/></label>
+    </div>
+    <div className="fixture-flow"><span><DatabaseZap/>Workbook cells</span><ArrowRight/><span>POST /api/enrich/upsert</span><ArrowRight/><span>scoreLead v2.0</span><ArrowRight/><span>Persisted lead grade</span></div>
+    <button className="app-primary" disabled={!!busy} type="submit">{busy==='fixture'?'Persisting & scoring…':'Use fixture and calculate grade'}</button>
+   </form>
+   {fixtureResult&&<div className="fixture-result" role="status"><CheckCircle2/><div><b>Backend output: Grade {fixtureResult.response?.grade} · {fixtureResult.response?.score}/100</b><small>Lead {fixtureResult.response?.leadId} · record {fixtureResult.response?.id}</small><small>Request provenance was stored in attributes; the list below was refreshed from GET /api/lead-grading.</small></div></div>}
+   <div className="source-conflict-note"><ShieldCheck/><div><b>Mapping boundary</b><p>The workbook explicitly says its schema is neutral. This adapter maps only the labelled cells above to the existing application contract; it does not bulk-import or infer unresolved roles, IDs, or provider contracts.</p></div></div>
+  </section>
 
   <div className="stats-grid">
    <Stat label="A-grade leads" value={stats?.available?String(stats.aGrade||0):'—'} sub="Highest-intent pool" Icon={Target}/>

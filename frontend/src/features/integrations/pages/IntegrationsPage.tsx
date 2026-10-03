@@ -1,7 +1,7 @@
 import {useState} from 'react'
 import {useMutation,useQuery,useQueryClient} from '@tanstack/react-query'
 import {
-  Activity,ArrowRight,Cable,Check,CheckCircle2,MessageCircle,Plus,Search,ShieldCheck,Sparkles,X
+  Activity,ArrowRight,BarChart3,Cable,Check,CheckCircle2,DatabaseZap,Eye,MessageCircle,MousePointerClick,Plus,RefreshCw,Search,ShieldCheck,Sparkles,UsersRound,X
 } from 'lucide-react'
 import {integrationsApi as api} from '../data/integrations.api'
 import {integrationKeys} from '../data/integrations.keys'
@@ -31,6 +31,98 @@ function PageHead({
     </div>
     {action&&<button className="app-primary" onClick={onAction}><Sparkles/>{action}</button>}
   </div>
+}
+
+const sampleCampaigns=[
+  {connector:'GA4',rows:12,sessions:28640,users:19420,conversions:638,impressions:0,clicks:0},
+  {connector:'Meta Ads',rows:8,sessions:0,users:0,conversions:612,impressions:1284000,clicks:18240},
+  {connector:'Google Ads',rows:6,sessions:0,users:0,conversions:438,impressions:865000,clicks:12450}
+]
+const sampleCrm=[
+  {connector:'HubSpot',object_type:'contacts',rows:3840},
+  {connector:'HubSpot',object_type:'deals',rows:460},
+  {connector:'HubSpot',object_type:'companies',rows:182}
+]
+const metricValue=(value:any)=>Number.isFinite(Number(value))?Number(value):0
+const countLabel=(value:number)=>Math.round(value).toLocaleString('en-IN')
+const connectorLabel=(connector:string)=>connector.toLowerCase()==='ga4'?'Google Analytics 4 (GA4)':connector
+
+function ConnectorAnalytics(){
+ const dataQuery=useQuery({
+  queryKey:integrationKeys.dataSummary(),
+  queryFn:({signal})=>api.dataSummary(signal),
+  staleTime:30_000,
+  refetchOnWindowFocus:true
+ })
+ const summary:any=dataQuery.data
+ const campaignRows:any[]=Array.isArray(summary?.campaigns)?summary.campaigns:[]
+ const crmRows:any[]=Array.isArray(summary?.crm)?summary.crm:[]
+ const rawRows:any[]=Array.isArray(summary?.raw)?summary.raw:[]
+ const live=Boolean(summary?.available&&(campaignRows.length||crmRows.length||rawRows.length))
+ const campaigns=live?campaignRows:sampleCampaigns
+ const crm=live?crmRows:sampleCrm
+ const campaignSources=Object.values(campaigns.reduce((sources:any,row:any)=>{
+  const connector=String(row.connector||'Unknown source')
+  const source=sources[connector]||{connector,rows:0,sessions:0,users:0,impressions:0,clicks:0,conversions:0}
+  source.rows+=metricValue(row.rows)
+  source.sessions+=metricValue(row.sessions)
+  source.users+=metricValue(row.users)
+  source.impressions+=metricValue(row.impressions)
+  source.clicks+=metricValue(row.clicks)
+  source.conversions+=metricValue(row.conversions)
+  sources[connector]=source
+  return sources
+ },{})) as any[]
+ const crmSources=Object.values(crm.reduce((sources:any,row:any)=>{
+  const connector=String(row.connector||'Unknown CRM')
+  const source=sources[connector]||{connector,records:0,objects:0}
+  source.records+=metricValue(row.rows)
+  source.objects+=1
+  sources[connector]=source
+  return sources
+ },{})) as any[]
+ const totalSessions=campaignSources.reduce((sum:any,row:any)=>sum+row.sessions,0)
+ const totalImpressions=campaignSources.filter(row=>row.connector.toLowerCase()!=='ga4').reduce((sum:any,row:any)=>sum+row.impressions,0)
+ const totalClicks=campaignSources.filter(row=>row.connector.toLowerCase()!=='ga4').reduce((sum:any,row:any)=>sum+row.clicks,0)
+ const totalConversions=campaignSources.reduce((sum:any,row:any)=>sum+row.conversions,0)
+ const totalCrmRecords=crmSources.reduce((sum:any,row:any)=>sum+row.records,0)
+ const maxActivity=Math.max(1,...campaignSources.map(row=>row.sessions||row.clicks))
+
+ return <section className="app-panel connector-analytics" aria-labelledby="connector-analytics-title">
+  <div className="panel-head connector-analytics-head">
+   <div><span className="connector-analytics-eyebrow">DATA IN → DECISIONS OUT</span><h3 id="connector-analytics-title">Connected marketing analytics</h3><p>See how web, ad and CRM data combine into one measurable customer journey.</p></div>
+   <div className="connector-analytics-actions"><span className={live?'connector-data-badge live':'connector-data-badge sample'}>{live?'LIVE CONNECTOR DATA':'SAMPLE PREVIEW'}</span><button type="button" onClick={()=>void dataQuery.refetch()} disabled={dataQuery.isFetching}><RefreshCw/>{dataQuery.isFetching?'Refreshing…':'Refresh data'}</button></div>
+  </div>
+  {dataQuery.isError&&<div className="delivery-notice error" role="alert"><Activity/><span>{(dataQuery.error as any)?.message||'Live connector analytics could not be loaded. The sample preview is shown instead.'}</span><button type="button" onClick={()=>void dataQuery.refetch()}>Retry</button></div>}
+  {dataQuery.isPending&&!summary?<div className="connector-analytics-loading"><Activity/>Loading connector analytics…</div>:<>
+   {!live&&<div className="connector-sample-note" role="note"><Sparkles/><span>Illustrative sample numbers for your walkthrough—not connected account results. Connect a provider and run a sync to replace these with workspace data.</span></div>}
+   {live&&!campaignRows.length&&!crmRows.length&&<div className="connector-sample-note" role="note"><DatabaseZap/><span>Raw connector events are arriving. Normalized campaign and CRM analytics will appear after the next successful sync.</span></div>}
+   <div className="connector-analytics-stats">
+    <article><span><BarChart3/>GA4 sessions</span><strong>{live&&!campaignSources.length?'—':countLabel(totalSessions)}</strong><small>Website sessions from Google Analytics</small></article>
+    <article><span><Eye/>Paid impressions</span><strong>{live&&!campaignSources.length?'—':countLabel(totalImpressions)}</strong><small>Reported by connected ad platforms</small></article>
+    <article><span><MousePointerClick/>Ad click-through rate</span><strong>{totalImpressions?((totalClicks/totalImpressions)*100).toFixed(2)+'%':'—'}</strong><small>{countLabel(totalClicks)} clicks ÷ {countLabel(totalImpressions)} impressions</small></article>
+    <article><span><UsersRound/>CRM records</span><strong>{live&&!crmSources.length?'—':countLabel(totalCrmRecords)}</strong><small>Contacts, companies and deals synced</small></article>
+   </div>
+   <div className="connector-analytics-detail">
+    <div className="connector-analytics-card">
+     <div className="connector-card-heading"><div><h4>Channel performance</h4><p>Engagement and outcomes reported by each platform</p></div><span>{campaignSources.length} sources</span></div>
+     {campaignSources.length?campaignSources.map((source:any)=><div className="connector-performance-row" key={source.connector}>
+      <div className="connector-performance-meta"><b>{connectorLabel(source.connector)}</b><span>{countLabel(source.rows)} campaign-day records</span></div>
+      <div className="connector-performance-track" aria-label={source.sessions?countLabel(source.sessions)+' sessions':countLabel(source.clicks)+' clicks'}><i style={{width:Math.max(2,((source.sessions||source.clicks)/maxActivity)*100)+'%'}}/></div>
+      <div className="connector-performance-values"><b>{countLabel(source.sessions||source.clicks)} {source.sessions?'sessions':'clicks'}</b><span>{countLabel(source.conversions)} reported conversions{source.impressions?' · '+countLabel(source.impressions)+' impressions':''}</span></div>
+     </div>):<div className="connector-analytics-empty">No normalized campaign analytics yet.</div>}
+     <small className="connector-analytics-footnote">Conversion totals are provider-reported and are not deduplicated across platforms.</small>
+    </div>
+    <div className="connector-analytics-card">
+     <div className="connector-card-heading"><div><h4>CRM data feed</h4><p>Business records available for journey and revenue analysis</p></div><DatabaseZap/></div>
+     {crmSources.length?crmSources.map((source:any)=><div className="connector-crm-row" key={source.connector}><span className="connector-crm-icon"><UsersRound/></span><div><b>{source.connector}</b><small>{source.objects} object types synced</small></div><strong>{countLabel(source.records)}</strong></div>):<div className="connector-analytics-empty">No CRM records synced yet.</div>}
+     <div className="connector-analytics-flow"><b>How the data connects</b><div><span>GA4 + Meta Ads</span><ArrowRight/><span>Canonical events</span><ArrowRight/><span>CRM journey &amp; outcomes</span></div></div>
+    </div>
+   </div>
+   <div className="connector-analytics-process" aria-label="Data processing steps"><span><i>1</i><b>Connect sources</b><small>Authorize GA4, Meta and CRM</small></span><ArrowRight/><span><i>2</i><b>Sync &amp; normalize</b><small>Map fields to a shared schema</small></span><ArrowRight/><span><i>3</i><b>Measure journeys</b><small>Relate campaigns to CRM outcomes</small></span><ArrowRight/><span><i>4</i><b>Activate insights</b><small>Use analytics in reports and audiences</small></span></div>
+   {live&&summary?.generatedAt&&<div className="connector-analytics-updated">Live data · summary generated {new Date(summary.generatedAt).toLocaleString()}</div>}
+  </>}
+ </section>
 }
 
 export default function IntegrationsPage(){
@@ -229,6 +321,7 @@ export default function IntegrationsPage(){
  <div className="integration-summary"><div><strong>{builtInCount}+</strong><span>catalogued connector paths</span></div><div><strong>{connected.length+customConnectors.length}</strong><span>connected in this workspace</span></div><div><strong>{integrationRequests.filter((x:any)=>x.status==='requested').length}</strong><span>requested connectors</span></div><div><strong>Native + Custom</strong><span>explicit capability status</span></div></div>
  {requestNotice.text&&<div className={'delivery-notice '+(requestNotice.kind==='error'?'error':'ok')} role={requestNotice.kind==='error'?'alert':'status'}>{requestNotice.kind==='error'?<ShieldCheck/>:<CheckCircle2/>}<span>{requestNotice.text}</span></div>}
  {connectionNotice&&<div className={'delivery-notice '+(connectionNotice.type==='error'?'error':connectionNotice.type==='unknown'?'status':'ok')} role={connectionNotice.type==='error'?'alert':'status'}>{connectionNotice.type==='error'?<ShieldCheck/>:<CheckCircle2/>}<span>{connectionNotice.text}{connectionNotice.requestId&&<> Request ID: {connectionNotice.requestId}</>}</span>{connectionNotice.type==='unknown'&&<button type="button" onClick={()=>void loadIntegrations()}>Refresh authoritative state</button>}</div>}
+ <ConnectorAnalytics/>
  <div className="app-panel custom-integration-hero"><div><Cable/><div><span>Custom integration</span><h3>Connect proprietary systems without changing your stack</h3><p>Define authentication, endpoint, identity fields and business mappings, then validate the connection before enabling sync.</p></div></div><div className="panel-actions"><button onClick={()=>setRequestOpen(true)}>Request connector</button><button className="app-primary" onClick={()=>{setBuilder(true);setBuilderStep(1);setTestResult(null)}}><Plus/>Build custom integration</button></div></div>
  <div className="app-panel"><div className="panel-head"><div><h3>Integration catalog</h3><p>Native OAuth connectors are labelled separately from configurable adapters.</p></div><div className="integration-catalog-search"><Search/><input aria-label="Search integration catalog" value={integrationSearch} onChange={e=>setIntegrationSearch(e.target.value)} placeholder="Search CRM, warehouse, ads, messaging..."/></div></div>{integrationLoading&&<div className="empty-state"><Activity/><b>Refreshing integration state</b><small>Loading connector capability, workspace credentials, custom adapters and WhatsApp activity.</small></div>}</div>
  <div className="app-panel whatsapp-ops"><div className="panel-head"><div><h3>WhatsApp Cloud API operations</h3><p>Send a provider-backed message and inspect real inbound/outbound webhook activity.</p></div><span className={connected.includes('WhatsApp')?'healthy':'warning'}>{connected.includes('WhatsApp')?'Connected':'Connect WhatsApp first'}</span></div>

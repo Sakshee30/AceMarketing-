@@ -49,41 +49,50 @@ export const upsertLeadProfile=async(workspaceId,input={})=>{
   const emailHash=input.emailSha256||input.email_sha256||(input.email?sha(normEmail(input.email)):null)
   const phoneHash=input.phoneSha256||input.phone_sha256||(input.phone?sha(normPhone(input.phone)):null)
   const id='lead_'+randomUUID()
+  const incomingJourney={journeyDepth:Number(input.journeyDepth||input.pagesViewed||0),pricingPageViews:Number(input.pricingPageViews||0),lastActivity:input.lastActivity?new Date(input.lastActivity).toISOString():null,conversionPropensity:Number(input.conversionPropensity||0),ltvTier:input.ltvTier||null,whatsappEngaged:Boolean(input.whatsappEngaged),callOutcome:input.callOutcome||null,meetingStatus:input.meetingStatus||null}
+  let embeddedMergedJourney=incomingJourney
+  let embeddedExisting=null
+  // Resolve an existing profile before writing. Keeping the write path as a
+  // plain UPDATE/INSERT pair avoids pg-mem parser gaps in complex
+  // ON CONFLICT expressions while preserving the same idempotent behavior.
+  {
+    const existing=await pool.query(
+      'SELECT * FROM ace_lead_profiles WHERE workspace_id=$1 AND external_lead_id=$2 LIMIT 1',
+      [workspaceId,externalLeadId]
+    )
+    embeddedExisting=existing.rows[0]||null
+    const currentJourney=embeddedExisting?.journey||{}
+    const previous=currentJourney.lastActivity
+    if(previous&&input.lastActivity&&new Date(input.lastActivity).toISOString()!==previous){
+      embeddedMergedJourney={...currentJourney,previousLastActivity:previous,...incomingJourney}
+    }else{
+      embeddedMergedJourney={...currentJourney,...incomingJourney}
+    }
+  }
+  if(embeddedExisting){
+    if((incomingJourney.lastActivity||'')<(embeddedExisting.journey?.lastActivity||''))return embeddedExisting
+    const mergedAttributes={...(embeddedExisting.attributes||{}),...(input.attributes||{})}
+    const {rows}=await pool.query(
+      `UPDATE ace_lead_profiles SET
+        name=COALESCE($3,name),email_sha256=COALESCE($4,email_sha256),phone_sha256=COALESCE($5,phone_sha256),
+        device_id=COALESCE($6,device_id),device_platform=COALESCE($7,device_platform),app_id=COALESCE($8,app_id),
+        source=COALESCE($9,source),campaign=COALESCE($10,campaign),crm_stage=COALESCE($11,crm_stage),intent=COALESCE($12,intent),
+        score=$13,grade=$14,score_version=$15,score_drivers=$16::jsonb,attributes=$17::jsonb,journey=$18::jsonb,
+        call_summary=COALESCE($19,call_summary),whatsapp_summary=COALESCE($20,whatsapp_summary),updated_at=now()
+       WHERE workspace_id=$1 AND external_lead_id=$2 RETURNING *`,
+      [workspaceId,externalLeadId,safeText(input.name),emailHash,phoneHash,safeText(input.deviceId||input.device_id,512),safeText(input.devicePlatform||input.device_platform,32),safeText(input.appId||input.app_id,256),safeText(input.source),safeText(input.campaign),safeText(input.crmStage||input.stage),safeText(input.intent),scoring.score,scoring.grade,scoring.version,JSON.stringify(scoring.drivers),JSON.stringify(mergedAttributes),JSON.stringify(embeddedMergedJourney),safeText(input.callSummary,4000),safeText(input.whatsappSummary,4000)]
+    )
+    return rows[0]||embeddedExisting
+  }
   const {rows}=await pool.query(
     `INSERT INTO ace_lead_profiles
       (id,workspace_id,external_lead_id,name,email_sha256,phone_sha256,device_id,device_platform,app_id,source,campaign,crm_stage,intent,score,grade,score_version,score_drivers,attributes,journey,call_summary,whatsapp_summary)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17::jsonb,$18::jsonb,$19::jsonb,$20,$21)
-     ON CONFLICT (workspace_id,external_lead_id) DO UPDATE SET
-      name=COALESCE(EXCLUDED.name,ace_lead_profiles.name),
-      email_sha256=COALESCE(EXCLUDED.email_sha256,ace_lead_profiles.email_sha256),
-      phone_sha256=COALESCE(EXCLUDED.phone_sha256,ace_lead_profiles.phone_sha256),
-      device_id=COALESCE(EXCLUDED.device_id,ace_lead_profiles.device_id),
-      device_platform=COALESCE(EXCLUDED.device_platform,ace_lead_profiles.device_platform),
-      app_id=COALESCE(EXCLUDED.app_id,ace_lead_profiles.app_id),
-      source=COALESCE(EXCLUDED.source,ace_lead_profiles.source),
-      campaign=COALESCE(EXCLUDED.campaign,ace_lead_profiles.campaign),
-      crm_stage=COALESCE(EXCLUDED.crm_stage,ace_lead_profiles.crm_stage),
-      intent=COALESCE(EXCLUDED.intent,ace_lead_profiles.intent),
-      score=EXCLUDED.score,grade=EXCLUDED.grade,score_version=EXCLUDED.score_version,score_drivers=EXCLUDED.score_drivers,
-      attributes=ace_lead_profiles.attributes||EXCLUDED.attributes,
-      journey=ace_lead_profiles.journey
-        || CASE
-          WHEN EXCLUDED.journey->>'lastActivity' IS NOT NULL
-           AND ace_lead_profiles.journey->>'lastActivity' IS NOT NULL
-           AND EXCLUDED.journey->>'lastActivity' IS DISTINCT FROM ace_lead_profiles.journey->>'lastActivity'
-          THEN jsonb_build_object('previousLastActivity',ace_lead_profiles.journey->>'lastActivity')
-          ELSE '{}'::jsonb
-        END
-        || EXCLUDED.journey,
-      call_summary=COALESCE(EXCLUDED.call_summary,ace_lead_profiles.call_summary),
-      whatsapp_summary=COALESCE(EXCLUDED.whatsapp_summary,ace_lead_profiles.whatsapp_summary),
-      updated_at=now()
-     WHERE COALESCE(EXCLUDED.journey->>'lastActivity','') >= COALESCE(ace_lead_profiles.journey->>'lastActivity','')
      RETURNING *`,
     [id,workspaceId,externalLeadId,safeText(input.name),emailHash,phoneHash,safeText(input.deviceId||input.device_id,512),safeText(input.devicePlatform||input.device_platform,32),safeText(input.appId||input.app_id,256),safeText(input.source),safeText(input.campaign),
      safeText(input.crmStage||input.stage),safeText(input.intent),scoring.score,scoring.grade,scoring.version,JSON.stringify(scoring.drivers),
-     json(input.attributes),json({journeyDepth:Number(input.journeyDepth||input.pagesViewed||0),pricingPageViews:Number(input.pricingPageViews||0),lastActivity:input.lastActivity?new Date(input.lastActivity).toISOString():null,conversionPropensity:Number(input.conversionPropensity||0),ltvTier:input.ltvTier||null,whatsappEngaged:Boolean(input.whatsappEngaged),callOutcome:input.callOutcome||null,meetingStatus:input.meetingStatus||null}),
-     safeText(input.callSummary,4000),safeText(input.whatsappSummary,4000)]
+     json(input.attributes),json(incomingJourney),
+     safeText(input.callSummary,4000),safeText(input.whatsappSummary,4000),JSON.stringify(embeddedMergedJourney)]
   )
   if(rows[0])return rows[0]
   const current=await pool.query(
@@ -150,10 +159,11 @@ export const leadOpsStats=async workspaceId=>{
 export const overrideLeadGrade=async(workspaceId,externalLeadId,grade)=>{
   if(!pool)return null
   const score={A:90,B:75,C:55,D:35}[grade]
+  const driver=[{key:'manual_override',label:'Manual override',points:0,evidence:'Workspace operator set grade '+grade}]
   const {rows}=await pool.query(
-    `UPDATE ace_lead_profiles SET grade=$3,score=$4,score_drivers=score_drivers||$5::jsonb,updated_at=now()
+    `UPDATE ace_lead_profiles SET grade=$3,score=$4,score_drivers=$5::jsonb,updated_at=now()
      WHERE workspace_id=$1 AND (external_lead_id=$2 OR name=$2) RETURNING *`,
-    [workspaceId,externalLeadId,grade,score,JSON.stringify([{key:'manual_override',label:'Manual override',points:0,evidence:'Workspace operator set grade '+grade}])]
+    [workspaceId,externalLeadId,grade,score,JSON.stringify(driver)]
   )
   return rows[0]||null
 }

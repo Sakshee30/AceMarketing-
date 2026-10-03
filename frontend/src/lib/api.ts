@@ -4,7 +4,6 @@ import {clearSessionToken,getSessionToken,setSessionToken} from '../../../packag
 export type DemoRequest = Record<string, FormDataEntryValue>
 
 const getToken = () => getSessionToken()
-const getWorkspace = () => typeof window !== 'undefined' ? (window.localStorage.getItem('ace_workspace_id') || 'ws_default') : 'ws_default'
 const tokenWorkspace = (token:string|null) => {
   try{
     if(!token)return null
@@ -15,6 +14,14 @@ const tokenWorkspace = (token:string|null) => {
     const normalized=encoded.replace(/-/g,'+').replace(/_/g,'/')
     return String(JSON.parse(atob(normalized)).workspaceId||'')||null
   }catch{return null}
+}
+// The signed session is authoritative. Browser storage can outlive a login or
+// workspace switch, so never send a stale workspace header when the token has
+// an explicit workspace claim.
+const getWorkspace = () => {
+  const fromToken=tokenWorkspace(getToken())
+  if(fromToken)return fromToken
+  return typeof window !== 'undefined' ? (window.localStorage.getItem('ace_workspace_id') || 'ws_default') : 'ws_default'
 }
 
 export class AceApiError extends Error {
@@ -382,6 +389,7 @@ export const api = {
   savePlannerScenario: (payload: Record<string, unknown>) => request('/planner/scenarios', { method: 'POST', body: JSON.stringify(payload) }),
   sendReportTest: (report: string) => request('/reports/send-test', { method: 'POST', body: JSON.stringify({ report }) }),
   enrich: () => request('/enrich'),
+  upsertEnrichmentLead: (payload: Record<string, unknown>) => request('/enrich/upsert', { method: 'POST', body: JSON.stringify(payload) }),
   writebackEnrichment: (lead: string, provider: string, fields?: Record<string, unknown>) => request('/enrich/writeback', { method: 'POST', body: JSON.stringify({lead,provider,fields:fields||{}}) }),
   leadGrading: () => request('/lead-grading'),
   overrideLeadGrade: (lead: string, grade: string) => request('/lead-grading/override', { method: 'POST', body: JSON.stringify({lead,grade}) }),

@@ -80,7 +80,7 @@ const metrics=async(page:any)=>page.evaluate(()=>((window as any).__ACE_FRONTEND
 test('public-site lab metrics stay within declared good thresholds where measurable',async({page},testInfo)=>{
   test.skip(!testInfo.project.name.startsWith('public-'),'public deployment only')
   await page.goto('/')
-  await page.waitForLoadState('networkidle')
+  await page.waitForLoadState('domcontentloaded')
   await page.getByRole('heading').first().click().catch(()=>{})
   await page.waitForTimeout(300)
   const values:any[]=await metrics(page)
