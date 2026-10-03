@@ -5,7 +5,7 @@ import {createInterface} from 'node:readline'
 import {join} from 'node:path'
 import {execFileSync} from 'node:child_process'
 import {createHash} from 'node:crypto'
-import {upsertLeadProfile,leadOpsStats} from '../src/lead-ops.mjs'
+import {upsertLeadProfile,leadIdentityStats,leadOpsStats} from '../src/lead-ops.mjs'
 import {appendTrackedEvent,trackedEventStats,listTrackedEvents} from '../src/tracked-events.mjs'
 import {calculateMetricSet} from '../src/metric-catalog.mjs'
 import {upsertCampaignDailyFact,connectorDataSummary} from '../src/connector-ingestion.mjs'
@@ -29,8 +29,13 @@ test('D2 volume: actual lead repository imports 10000 supplied leads and replay 
  const {rows}=await pool.query('SELECT external_lead_id,workspace_id,name,email_sha256,crm_stage,campaign FROM ace_lead_profiles')
  assert.equal(rows.length,10000);const records=new Map(rows.map(r=>[r.external_lead_id,r]))
  for(const l of leads){const r=records.get(l.lead_id);assert.ok(r);assert.equal(r.workspace_id,l.workspace_id);assert.equal(r.name,l.display_name);assert.equal(r.crm_stage,l.stage);assert.equal(r.campaign,l.campaign_id);assert.equal(r.email_sha256,createHash('sha256').update(l.email.toLowerCase()).digest('hex'))}
- for(const workspace of new Set(leads.map(l=>l.workspace_id)))assert.equal((await leadOpsStats(workspace)).total,2500)
- report.leadReplay=1000;report.leadSeconds=(performance.now()-started)/1000;report.checks.push('all lead IDs, tenants, campaigns, stages, names and email hashes reconcile')
+ for(const workspace of new Set(leads.map(l=>l.workspace_id))){
+  assert.equal((await leadOpsStats(workspace)).total,2500)
+  const identity=await leadIdentityStats(workspace)
+  assert.equal(identity.total,2500,'identity summary must use the full workspace population, not the 500-row list cap')
+  assert.ok(identity.stitchedProfiles>=0&&identity.stitchedProfiles<=identity.total)
+ }
+ report.leadReplay=1000;report.leadSeconds=(performance.now()-started)/1000;report.checks.push('all lead IDs, tenants, campaigns, stages, names and email hashes reconcile; identity totals cover all 2500 profiles per populated workspace')
 })
 
 
