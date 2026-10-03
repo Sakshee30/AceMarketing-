@@ -40,7 +40,7 @@ test('workspace tab route is direct-linkable and dirty settings require explicit
     await dialog.accept()
   })
   await page.getByRole('button',{name:'Open monitoring center'}).click()
-  await expect(page.getByRole('heading',{name:/Monitoring/i})).toBeVisible()
+  await expect(page.getByRole('heading',{name:'Platform monitoring'})).toBeVisible()
   await expect(page).toHaveURL(/tab=Monitoring/)
 })
 
