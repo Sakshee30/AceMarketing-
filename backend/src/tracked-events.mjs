@@ -15,7 +15,7 @@ export const appendTrackedEvent=async(workspaceId,event)=>{
     `INSERT INTO ace_events
       (id,workspace_id,event_type,event_category,occurred_at,received_at,source,customer_id,visitor_id,device_id,email_sha256,phone_sha256,campaign,payload)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::jsonb)
-     ON CONFLICT(id) DO UPDATE SET received_at=ace_events.received_at
+     ON CONFLICT(workspace_id,id) DO UPDATE SET received_at=ace_events.received_at
      RETURNING *`,
     [
       String(event.id),workspaceId,

@@ -27,3 +27,37 @@ test('tracked events persist durably and are tenant scoped',async()=>{
   assert.equal(stats.available,true)
   assert.equal(stats.total,1)
 })
+
+
+test('tracked event idempotency is workspace-scoped',async()=>{
+  const sharedId='evt_shared_across_workspaces'
+  await appendTrackedEvent('ws_event_scope_a',{
+    id:sharedId,
+    event:'page.viewed',
+    receivedAt:'2026-10-03T00:00:00.000Z',
+    visitorId:'visitor_a'
+  })
+  await appendTrackedEvent('ws_event_scope_b',{
+    id:sharedId,
+    event:'page.viewed',
+    receivedAt:'2026-10-03T00:00:01.000Z',
+    visitorId:'visitor_b'
+  })
+  const a=await listTrackedEvents('ws_event_scope_a',{limit:10})
+  const b=await listTrackedEvents('ws_event_scope_b',{limit:10})
+  assert.equal(a.length,1)
+  assert.equal(b.length,1)
+  assert.equal(a[0].id,sharedId)
+  assert.equal(b[0].id,sharedId)
+  assert.equal(a[0].visitorId,'visitor_a')
+  assert.equal(b[0].visitorId,'visitor_b')
+  await appendTrackedEvent('ws_event_scope_a',{
+    id:sharedId,
+    event:'page.viewed',
+    receivedAt:'2026-10-03T00:00:02.000Z',
+    visitorId:'visitor_a_replay'
+  })
+  const replayed=await listTrackedEvents('ws_event_scope_a',{limit:10})
+  assert.equal(replayed.length,1,'same workspace replay must remain idempotent')
+  assert.equal(replayed[0].visitorId,'visitor_a','replay must not overwrite canonical event content')
+})

@@ -1,0 +1,134 @@
+name: Pre-live Qualification
+on:
+  push:
+    branches: ['qa/prelive-qualification-20261003']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: prelive-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      candidate: ${{ steps.source.outputs.candidate }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Freeze candidate
+        id: source
+        run: echo "candidate=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+  qualification:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.candidate }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.21.0'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Install browsers, PostgreSQL and CI service executable
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-16
+          npx playwright install --with-deps chromium firefox webkit
+          if ! test -e /usr/bin/node; then sudo ln -s "$(command -v node)" /usr/bin/node; fi
+      - name: Freeze candidate evidence
+        run: |
+          mkdir -p artifacts/prelive
+          git rev-parse HEAD > artifacts/prelive/candidate.txt
+          node --version > artifacts/prelive/node-version.txt
+          git archive --format=tar.gz --output=artifacts/prelive/tested-source.tar.gz HEAD
+      - name: Execute actual isolated qualification
+        run: bash qa/run-isolated.sh
+      - name: Preserve reports even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prelive-evidence-${{ needs.prepare.outputs.candidate }}
+          path: artifacts/prelive/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+  dependency-audit:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.candidate }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.21.0'
+      - name: Audit locked runtime and development dependencies
+        run: |
+          python3 - <<'PY'
+          import json,pathlib,subprocess,sys
+          p=pathlib.Path('artifacts/audit');p.mkdir(parents=True)
+          (p/'candidate.txt').write_text(subprocess.check_output(['git','rev-parse','HEAD'],text=True));results=[]
+          for scope,args in [('all',[]),('runtime',['--omit=dev'])]:
+              r=subprocess.run(['npm','audit','--json','--audit-level=high',*args],text=True,capture_output=True)
+              (p/(scope+'.json')).write_text(r.stdout);(p/(scope+'.stderr')).write_text(r.stderr);results.append({'scope':scope,'exitCode':r.returncode})
+          (p/'summary.json').write_text(json.dumps(results,indent=2));sys.exit(1 if any(r['exitCode'] for r in results) else 0)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prelive-audit-${{ needs.prepare.outputs.candidate }}
+          path: artifacts/audit
+          if-no-files-found: error
+          retention-days: 14
+  ml-checks:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.candidate }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: ml-service/pyproject.toml
+      - name: Install ML dependencies and record resolved versions
+        run: |
+          mkdir -p artifacts/ml
+          git rev-parse HEAD > artifacts/ml/candidate.txt
+          python -m pip install -e 'ml-service[test]'
+          python -m pip freeze > artifacts/ml/resolved-dependencies.txt
+      - name: Run ML static checks independently
+        run: |
+          python - <<'PY'
+          import json,pathlib,subprocess,sys
+          p=pathlib.Path('artifacts/ml');results=[]
+          for name,args in [('lint',['ruff','check','ml-service/src','ml-service/tests']),('format',['ruff','format','--check','ml-service/src','ml-service/tests']),('types',['mypy','--config-file','ml-service/pyproject.toml','ml-service/src/acemarketing_ml']),('compile',['python','-m','compileall','-q','ml-service/src'])]:
+              r=subprocess.run(args,text=True,capture_output=True);(p/(name+'.log')).write_text(r.stdout+r.stderr);results.append({'name':name,'exitCode':r.returncode})
+          (p/'static-summary.json').write_text(json.dumps(results,indent=2));sys.exit(1 if any(r['exitCode'] for r in results) else 0)
+          PY
+      - name: Run ML tests without network access
+        if: always()
+        run: |
+          sudo env -i PATH="$PATH" HOME="$HOME" QA_UID="$(id -u)" QA_GID="$(id -g)" unshare --net bash -c '
+            set -euo pipefail
+            ip link set lo up
+            exec setpriv --reuid="$QA_UID" --regid="$QA_GID" --init-groups env -i PATH="$PATH" HOME="$HOME" CI=true pytest -q -rs ml-service/tests --junitxml=artifacts/ml/tests.junit.xml
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prelive-ml-${{ needs.prepare.outputs.candidate }}
+          path: artifacts/ml
+          if-no-files-found: error
+          retention-days: 14

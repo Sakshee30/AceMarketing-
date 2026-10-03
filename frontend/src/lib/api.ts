@@ -8,7 +8,9 @@ const getWorkspace = () => typeof window !== 'undefined' ? (window.localStorage.
 const tokenWorkspace = (token:string|null) => {
   try{
     if(!token)return null
-    const encoded=token.split('.')[1]
+    const segments=token.split('.')
+    if(segments.length!==2)return null
+    const encoded=segments[0]
     if(!encoded)return null
     const normalized=encoded.replace(/-/g,'+').replace(/_/g,'/')
     return String(JSON.parse(atob(normalized)).workspaceId||'')||null
@@ -110,56 +112,55 @@ export const streamAiJob=async(id:string,onEvent:(event:{event:string;data:any})
   const runtime=getPublicRuntimeConfig()
   const token=getToken()
   const controller=new AbortController()
-  const abort=()=>{try{controller.abort((signal as any)?.reason||'caller_cancelled')}catch{}}
+  const abort=()=>{try{controller.abort(signal?.reason||'caller_cancelled')}catch{}}
   if(signal){
     if(signal.aborted)abort()
     else signal.addEventListener('abort',abort,{once:true})
   }
+  activeRequests.add(controller)
   try{
     const response=await fetch(runtime.apiBasePath+'/ai/jobs/'+encodeURIComponent(id)+'/events',{
-      method:'GET',
-      signal:controller.signal,
-      headers:{
-        Accept:'text/event-stream',
-        'X-Workspace-ID':getWorkspace(),
-        ...(token?{Authorization:'Bearer '+token}:{})
-      }
+      method:'GET',signal:controller.signal,
+      headers:{Accept:'text/event-stream','X-Workspace-ID':getWorkspace(),...(token?{Authorization:'Bearer '+token}:{})}
     })
     if(!response.ok)throw new AceApiError('AI job stream failed: '+response.status,response.status,response.headers.get('x-request-id')||'',{})
     if(!response.body)throw new AceApiError('AI job stream body is unavailable',0,'',{cause:'missing_stream'})
     const reader=response.body.getReader()
     const decoder=new TextDecoder()
     let buffer=''
-    while(true){
-      const chunk=await reader.read()
-      if(chunk.done)break
-      buffer+=decoder.decode(chunk.value,{stream:true})
-      buffer=buffer.replace(/\r
-/g,'
-')
-      let boundary=buffer.indexOf('
-
-')
-      while(boundary>=0){
-        const block=buffer.slice(0,boundary)
-        buffer=buffer.slice(boundary+2)
-        let event='message'
-        let data=''
-        for(const line of block.split('
-')){
-          if(line.startsWith('event:'))event=line.slice(6).trim()
-          else if(line.startsWith('data:'))data+=line.slice(5).trim()
+    try{
+      while(true){
+        const chunk=await reader.read()
+        buffer+=chunk.done?decoder.decode():decoder.decode(chunk.value,{stream:true})
+        // Keep an incomplete trailing CR until the next chunk arrives.
+        buffer=buffer.replace(/\r\n/g,'\n')
+        let boundary=buffer.indexOf('\n\n')
+        while(boundary>=0){
+          const block=buffer.slice(0,boundary)
+          buffer=buffer.slice(boundary+2)
+          let event='message'
+          const dataLines:string[]=[]
+          for(const line of block.split('\n')){
+            if(line.startsWith('event:'))event=line.slice(6).trim()||'message'
+            else if(line.startsWith('data:'))dataLines.push(line.slice(5).replace(/^ /,''))
+          }
+          if(dataLines.length){
+            const dataText=dataLines.join('\n')
+            let data:any=dataText
+            try{data=JSON.parse(dataText)}catch{}
+            // A consumer exception propagates, rather than invoking it again.
+            onEvent({event,data})
+          }
+          boundary=buffer.indexOf('\n\n')
         }
-        if(data){
-          try{onEvent({event,data:JSON.parse(data)})}
-          catch{onEvent({event,data})}
-        }
-        boundary=buffer.indexOf('
-
-')
+        if(chunk.done)break
       }
+    }finally{
+      try{await reader.cancel()}catch{}
+      reader.releaseLock()
     }
   }finally{
+    activeRequests.delete(controller)
     if(signal)signal.removeEventListener('abort',abort)
   }
 }

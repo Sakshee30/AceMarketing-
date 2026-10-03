@@ -88,6 +88,12 @@ const initial={
 
 const cloneInitial=workspaceId=>{
   const state=structuredClone(initial)
+  if(isProd){
+    // New production scopes start empty. Do not rewrite already persisted records.
+    for(const key of ['signalDeliveries','connectorHealth','qualificationCalls','meetings','followUps','feedback','approvals'])state[key]=[]
+    if(workspaceId!==defaultWorkspaceId)state.members=[]
+    state.launchpad={...state.launchpad,monthlyPipelineTarget:0,maxCac:0,monthlySpendCeiling:0,grossMarginPercent:0,initialized:false}
+  }
   state.workspaces=state.workspaces.map((x,i)=>i===0?{...x,id:workspaceId}:x)
   return state
 }

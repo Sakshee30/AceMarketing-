@@ -14,6 +14,12 @@ currentRuntime:
     provider: postgres
     durability: durable
     delivery: at-least-once
+    requiredForAcceptedJobs: true
+    onUnavailable: reject-new-admission
+  objectStorage:
+    provider: s3-compatible
+    requiredWhenFeature: files
+    onUnavailable: reject-upload-safely
   cache:
     provider: none
     redisAdapterContractAvailable: true

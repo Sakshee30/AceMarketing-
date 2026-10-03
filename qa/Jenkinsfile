@@ -1,0 +1,24 @@
+pipeline {
+  agent { label 'ace-qa-linux-isolated' }
+  options { timestamps(); disableConcurrentBuilds(); timeout(time: 60, unit: 'MINUTES') }
+  parameters { choice(name: 'QUALIFICATION_MODE', choices: ['supporting-regression', 'release-candidate'], description: 'Release candidate requires complete source-case evidence; currently blocked by remaining scope.') }
+  stages {
+    stage('Checkout candidate') { steps { checkout scm } }
+    stage('Install locked dependencies') {
+      steps { sh 'test "$(node --version)" = v24.21.0'; sh 'npm ci'; sh 'npx playwright install chromium firefox webkit' }
+    }
+    stage('CI systemd verification') { steps { sh 'CI=true bash qa/verify-systemd.sh' } }
+    stage('Isolated application tests') { steps { sh 'bash qa/run-isolated.sh' } }
+    stage('Dependency audit') { steps { sh 'npm audit --audit-level=high'; sh 'npm audit --omit=dev --audit-level=high' } }
+    stage('Full source-case evidence gate') {
+      when { expression { params.QUALIFICATION_MODE == 'release-candidate' } }
+      steps { sh 'python3 qa/release_gate.py --cases artifacts/prelive/source-case-status.json --root artifacts/prelive --candidate "$(git rev-parse HEAD)" --out artifacts/prelive/jenkins-release-gate.json' }
+    }
+  }
+  post {
+    always {
+      junit testResults: 'artifacts/prelive/*.junit.xml', allowEmptyResults: false
+      archiveArtifacts artifacts: 'artifacts/prelive/**', allowEmptyArchive: false, fingerprint: true
+    }
+  }
+}

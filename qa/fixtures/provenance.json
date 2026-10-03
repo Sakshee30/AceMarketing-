@@ -1,0 +1,15 @@
+{
+  "source": "AceMarketing_Dummy_Data_Testing_Package.zip",
+  "source_sha256": "9117176651ac07f1bbcdcfb007059559161beff89eb6ab13caac53750c9dbaf4",
+  "baseline": "a82f24a8e762b6a60e0c13bcb15347daa78f1b49",
+  "fixture_seed": 20261002,
+  "retained_golden_contract": "camelCase; major INR",
+  "bulk_contract": "snake_case; integer minor INR",
+  "planExtraction": "Every source test ID/scenario/priority/phase/fixture preserved; original steps and expected results stay in supplied plan",
+  "files_sha256": {
+    "qa/fixtures/core.json.gz": "0583afa2eea5bf302703a397f0772c4569b3d6420b5e8627bca352c6dc00c832",
+    "qa/fixtures/leads.json.gz": "122df5c0cf5dafd65f59d5cabb634a213cce897e03a0f8561804624a20f7a490",
+    "qa/fixtures/golden.json.gz": "7741e883afa9f7264b880ba07ffce2c3e3390d62e0efcee01d23a668bf725013",
+    "qa/fixtures/plan.json.gz": "ba4249e0bf5b2d5edde435bb89c6d218a3ef5653c6642c9afdacd743d408ab52"
+  }
+}

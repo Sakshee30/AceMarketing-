@@ -2,6 +2,10 @@ import {acceptanceControlRegistry} from './acceptance-register.mjs'
 import {featureCatalogItem} from './feature-catalog.mjs'
 
 const featureForRequirement=Object.freeze({
+  'G-09':'workspaces',
+  'G-33':'jobs',
+  'G-34':'capabilities',
+  'G-45':'capabilities',
   'G-03':'authorization',
   'G-04':'capabilities',
   'G-05':'workspaces',

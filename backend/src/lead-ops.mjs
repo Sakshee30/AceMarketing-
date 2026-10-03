@@ -93,6 +93,40 @@ export const listLeadProfiles=async(workspaceId,limit=100)=>{
   return rows
 }
 
+export const leadIdentityStats=async workspaceId=>{
+  if(!pool)return {available:false,total:0,stitchedProfiles:0,identifiers:{}}
+  const {rows}=await pool.query(
+    `SELECT
+       COUNT(*)::int total,
+       COUNT(*) FILTER (
+         WHERE
+           (CASE WHEN COALESCE(external_lead_id,'')<>'' THEN 1 ELSE 0 END)+
+           (CASE WHEN COALESCE(email_sha256,'')<>'' THEN 1 ELSE 0 END)+
+           (CASE WHEN COALESCE(phone_sha256,'')<>'' THEN 1 ELSE 0 END)+
+           (CASE WHEN COALESCE(device_id,'')<>'' THEN 1 ELSE 0 END) >= 2
+       )::int stitched,
+       BOOL_OR(COALESCE(external_lead_id,'')<>'') customer_id,
+       BOOL_OR(COALESCE(email_sha256,'')<>'') email_sha256,
+       BOOL_OR(COALESCE(phone_sha256,'')<>'') phone_sha256,
+       BOOL_OR(COALESCE(device_id,'')<>'') device_id
+     FROM ace_lead_profiles
+     WHERE workspace_id=$1 AND status='active'`,
+    [workspaceId]
+  )
+  const row=rows[0]||{}
+  return {
+    available:true,
+    total:Number(row.total||0),
+    stitchedProfiles:Number(row.stitched||0),
+    identifiers:{
+      customer_id:Boolean(row.customer_id),
+      email_sha256:Boolean(row.email_sha256),
+      phone_sha256:Boolean(row.phone_sha256),
+      device_id:Boolean(row.device_id)
+    }
+  }
+}
+
 export const leadOpsStats=async workspaceId=>{
   if(!pool)return {available:false}
   const {rows}=await pool.query(

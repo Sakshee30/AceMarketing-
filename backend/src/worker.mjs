@@ -22,7 +22,8 @@ import {recordWebhookDeliveryAttempt} from './platform/webhook-delivery-store.mj
 import {workerClassPolicy} from './platform/worker-class.mjs'
 import {registerOutboxHandler,runOutboxRelayBatch} from './platform/outbox-relay.mjs'
 import {appendRealtimeEvent} from './platform/realtime-event-store.mjs'
-import {listAuditRecords} from './platform/audit-store.mjs'\nimport {runConnectorSync,runDueConnectorSyncSchedules} from './connector-ingestion.mjs'
+import {listAuditRecords} from './platform/audit-store.mjs'
+import {runConnectorSync,runDueConnectorSyncSchedules} from './connector-ingestion.mjs'
 
 if(!queueAvailable()) throw new Error('DATABASE_URL is required for the worker runtime')
 
@@ -50,9 +51,11 @@ const pollMs=Number(process.env.WORKER_POLL_MS||1000)
 const audienceScheduleBatch=Number(process.env.AUDIENCE_SCHEDULER_BATCH_SIZE||5)
 const audienceSchedulePollMs=Number(process.env.AUDIENCE_SCHEDULER_POLL_MS||15000)
 const reportScheduleBatch=Number(process.env.REPORT_SCHEDULER_BATCH_SIZE||5)
-const reportSchedulePollMs=Number(process.env.REPORT_SCHEDULER_POLL_MS||30000)\nconst connectorSchedulePollMs=Number(process.env.CONNECTOR_SCHEDULER_POLL_MS||60000)
+const reportSchedulePollMs=Number(process.env.REPORT_SCHEDULER_POLL_MS||30000)
+const connectorSchedulePollMs=Number(process.env.CONNECTOR_SCHEDULER_POLL_MS||60000)
 let lastAudienceSchedulePoll=0
-let lastReportSchedulePoll=0\nlet lastConnectorSchedulePoll=0
+let lastReportSchedulePoll=0
+let lastConnectorSchedulePoll=0
 let stopping=false
 const drainController=createDrainController()
 
@@ -86,7 +89,11 @@ const assertAiExecutionStillAllowed=async job=>{
   throw new Error('AI task execution blocked before provider/model call: '+gate.reasons.join('; '))
 }
 
-const handle=async job=>{\n  if(job.kind==='connector_sync'){\n    const payload=job.payload||{}\n    return runConnectorSync({workspaceId:job.workspace_id,connector:String(payload.connector||''),mode:payload.mode||'incremental',start:payload.start||null,end:payload.end||null,options:payload.options||{}})\n  }
+const handle=async job=>{
+  if(job.kind==='connector_sync'){
+    const payload=job.payload||{}
+    return runConnectorSync({workspaceId:job.workspace_id,connector:String(payload.connector||''),mode:payload.mode||'incremental',start:payload.start||null,end:payload.end||null,options:payload.options||{}})
+  }
   if(job.kind==='audit_export'){
     const items=await listAuditRecords({
       workspaceId:job.workspace_id,

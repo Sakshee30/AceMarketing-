@@ -6,7 +6,7 @@ import { closeStore, getState, mutateState, storageHealth, withWorkspace } from 
 import { connectorVaultReady, decryptSecret, encryptSecret } from './vault.mjs'
 import { getJob, queueAvailable, queueStats, requestJobCancellation } from './queue.mjs'
 import { attributionStats, captureClickSession, closeAttributionStore, recordAssistedEvent, reconcileAttribution } from './attribution-store.mjs'
-import { audienceOpsStats, closeLeadOps, createActivationRun, createAudience as createLeadAudience, getAudienceBundle, getLeadProfile, leadOpsStats, listActivationRuns, listAudiences as listLeadAudiences, listLeadProfiles, materializeAudience, overrideLeadGrade as persistLeadGrade, previewAudience as previewLeadAudience, scoreLead, upsertLeadProfile, updateAudienceSyncState } from './lead-ops.mjs'
+import { audienceOpsStats, closeLeadOps, createActivationRun, createAudience as createLeadAudience, getAudienceBundle, getLeadProfile, leadIdentityStats, leadOpsStats, listActivationRuns, listAudiences as listLeadAudiences, listLeadProfiles, materializeAudience, overrideLeadGrade as persistLeadGrade, previewAudience as previewLeadAudience, scoreLead, upsertLeadProfile, updateAudienceSyncState } from './lead-ops.mjs'
 import { closeAgentOrchestrator, completeFollowUp as persistCompleteFollowUp, createAgentRun, createFollowUp, createMeeting, getMeeting, listAgentRuns, listFeedback as listPersistedFeedback, listFollowUps as listPersistedFollowUps, listMeetings as listPersistedMeetings, listRoutingDecisions, recordFeedback, rescheduleMeeting, routeLead, updateAgentRun } from './agent-orchestrator.mjs'
 import { closeCustomIntegrations, createCustomIntegration as persistCustomIntegration, listCustomIntegrations, testCustomIntegration as runCustomIntegrationTest } from './custom-integrations.mjs'
 import { closeObservability, listAlerts as listLiveAlerts, listMonitoringRules as listLiveMonitoringRules, monitoringSnapshot, recordApiTelemetry, resolveAlert as resolveLiveAlert, saveMonitoringRule } from './observability.mjs'
@@ -15,7 +15,10 @@ import { billingConfigured, billingEventHistory, billingReconciliationHistory, c
 import { closeConsentStore, consentAllows, consentStats, getConsent, listConsentAudit, saveConsent } from './consent.mjs'
 import { closePrivacyOps, deleteSubject, exportSubject, listPrivacyRequests, purgeRetention, retentionPolicy } from './privacy-ops.mjs'
 import { closeAudienceScheduler, listAudienceRefreshRuns, listAudienceSchedules, saveAudienceSchedule } from './audience-scheduler.mjs'
-import { closeCohortAnalytics, cohortAnalytics } from './cohort-analytics.mjs'\nimport {connectorReadCatalog,listConnectorSyncRuns,connectorDataSummary,listConnectorSyncSchedules,saveConnectorSyncSchedule} from './connector-ingestion.mjs'\nimport {appendTrackedEvent,listTrackedEvents,trackedEventStats} from './tracked-events.mjs'
+import { closeCohortAnalytics, cohortAnalytics } from './cohort-analytics.mjs'
+import {connectorReadCatalog,listConnectorSyncRuns,connectorDataSummary,listConnectorSyncSchedules,saveConnectorSyncSchedule} from './connector-ingestion.mjs'
+import {appendTrackedEvent,listTrackedEvents,trackedEventStats} from './tracked-events.mjs'
+import {trackingInputError} from './tracking-input.mjs'
 import { closeReportScheduler, listReportDeliveries, listReportSchedules, queueReportNow, reportMailConfigured, saveReportSchedule } from './report-scheduler.mjs'
 import { closeEventRules, createEventRule, evaluateEventRules, eventRuleStats, listEventRuleRuns, listEventRules, markEventRuleActivation, setEventRuleEnabled } from './event-rules.mjs'
 import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, publicChallenges, publicCaseStudies, publicResources, publicResourceCenter } from './public-content.mjs'
@@ -43,7 +46,7 @@ import {globalAdmission} from './platform/admission-control.mjs'
 import {assertActorWorkspace,requestedWorkspaceId,tenantExecutionScope} from './platform/tenant-context.mjs'
 import {appendAuditRecord,listAuditRecords} from './platform/audit-store.mjs'
 import {permissionForRequest as centralizedPermissionForRequest} from './platform/access-policy.mjs'
-import {assertWorkspaceMembership,seedWorkspaceCreator} from './platform/workspace-access.mjs'
+import {assertWorkspaceMembership,seedWorkspaceCreator,listActorWorkspaces} from './platform/workspace-access.mjs'
 import {validateOutboundDestination} from './platform/egress-policy.mjs'
 import {markInboxProcessed,recordInboxEvent} from './platform/reliability-store.mjs'
 import {createWebhookSubscription,createWebhookTestDelivery,listWebhookDeliveries,listWebhookDeliveryAttempts,listWebhookSubscriptions,replayWebhookDelivery,setWebhookSubscriptionStatus} from './platform/webhook-delivery-store.mjs'
@@ -848,8 +851,16 @@ const server = http.createServer(async (req,res)=>{
       try{assertActorWorkspace(authenticatedUser,workspaceId)}catch(error){
         return send(req,res,403,{error:'token workspace mismatch',code:error?.code||'workspace_scope_mismatch'})
       }
-    }else if(AUTH_REQUIRED||url.pathname==='/api/auth/me'){
+    }else if(AUTH_REQUIRED){
       return send(req,res,401,{error:'unauthorized'})
+    }else{
+      const devState=await withWorkspace(workspaceId,()=>getState())
+      const devMember=(devState.members||[]).find(x=>x.status==='active'&&x.role==='owner')||(devState.members||[]).find(x=>x.status==='active')
+      if(devMember){
+        authenticatedUser={userId:devMember.id,email:devMember.email,role:devMember.role,workspaceId,jti:null,developmentBypass:true}
+      }else if(url.pathname==='/api/auth/me'){
+        return send(req,res,401,{error:'unauthorized'})
+      }
     }
   }
   return withWorkspace(workspaceId,async()=>{
@@ -861,10 +872,10 @@ const server = http.createServer(async (req,res)=>{
   try {
     if(authenticatedUser){
       const authState=await getState()
-      const session=(authState.sessions||[]).find(x=>x.jti===authenticatedUser.jti&&x.status==='active')
       const member=(authState.members||[]).find(x=>x.id===authenticatedUser.userId&&x.status==='active')
+      const session=authenticatedUser.developmentBypass?{status:'active'}:(authState.sessions||[]).find(x=>x.jti===authenticatedUser.jti&&x.status==='active')
       if(!session||!member) return send(req,res,401,{error:'session revoked or member inactive'})
-      if(session.expiresAt&&Date.parse(session.expiresAt)<=Date.now()) return send(req,res,401,{error:'session expired'})
+      if(!authenticatedUser.developmentBypass&&session.expiresAt&&Date.parse(session.expiresAt)<=Date.now()) return send(req,res,401,{error:'session expired'})
       authenticatedUser={...authenticatedUser,role:member.role,email:member.email,userId:member.id}
       req.user=authenticatedUser
       req.tenantScope=tenantExecutionScope({actor:authenticatedUser,workspaceId})
@@ -1382,6 +1393,7 @@ const server = http.createServer(async (req,res)=>{
       const role=String(body.role||'analyst')
       if(!email.includes('@')) return send(req,res,400,{error:'valid email required'})
       if(!['owner','admin','analyst','operator'].includes(role)) return send(req,res,400,{error:'invalid role'})
+      if(role==='owner'&&req.user.role!=='owner') return send(req,res,403,{error:'only an owner can grant owner role',code:'owner_role_grant_denied'})
       const state=await getState()
       if((state.members||[]).some(x=>String(x.email).toLowerCase()===email&&x.status==='active')) return send(req,res,409,{error:'member already exists'})
       const rawToken=randomBytes(24).toString('base64url')
@@ -1399,6 +1411,11 @@ const server = http.createServer(async (req,res)=>{
       const memberId=String(body.memberId||'')
       const role=String(body.role||'')
       if(!memberId||!['owner','admin','analyst','operator'].includes(role)) return send(req,res,400,{error:'memberId and valid role required'})
+      const state=await getState()
+      const targetMember=(state.members||[]).find(x=>x.id===memberId)
+      if(!targetMember) return send(req,res,404,{error:'member not found'})
+      if(role==='owner'&&req.user.role!=='owner') return send(req,res,403,{error:'only an owner can grant owner role',code:'owner_role_grant_denied'})
+      if(targetMember.role==='owner'&&req.user.role!=='owner') return send(req,res,403,{error:'only an owner can change an owner role',code:'owner_role_change_denied'})
       if(memberId===req.user.userId&&req.user.role==='owner'&&role!=='owner') return send(req,res,409,{error:'owner cannot remove their own owner role'})
       let updated=null
       await mutateState(s=>{
@@ -1411,6 +1428,9 @@ const server = http.createServer(async (req,res)=>{
     }
     if (req.method === 'POST' && url.pathname === '/api/members/deactivate') {
       const body=await readBody(req)
+      const state=await getState()
+      const targetMember=(state.members||[]).find(x=>x.id===String(body.memberId||''))
+      if(targetMember?.role==='owner'&&req.user.role!=='owner') return send(req,res,403,{error:'only an owner can deactivate an owner',code:'owner_deactivation_denied'})
       try{
         const updated=await handleRemoveMember({
           workspaceId,
@@ -2599,7 +2619,7 @@ const server = http.createServer(async (req,res)=>{
       return updated?send(req,res,200,updated):send(req,res,404,{error:'deep link not found'})
     }
     if (req.method === 'GET' && url.pathname === '/api/reconciliation') {
-      const [state,attr]=await Promise.all([getState(),attributionStats(workspaceId)])
+      const [state,attr,eventStats]=await Promise.all([getState(),attributionStats(workspaceId),trackedEventStats(workspaceId)])
       const deliveries=state.signalDeliveries||[]
       const quarantined=state.quarantinedEvents||[]
       const adjustments=state.adjustments||[]
@@ -2630,7 +2650,7 @@ const server = http.createServer(async (req,res)=>{
         available:true,
         score,
         totals:{
-          trackedEvents:Number(eventStats?.total||trackedEvents.length),
+          trackedEvents:Number(eventStats?.total??0),
           assistedEvents:assisted,
           matchedEvents:matched,
           unmatchedEvents:unmatched,
@@ -3512,6 +3532,8 @@ const server = http.createServer(async (req,res)=>{
     }
     if (req.method === 'POST' && url.pathname === '/api/track') {
       const body=await readBody(req)
+      const inputError=trackingInputError(body)
+      if(inputError)return send(req,res,400,{accepted:false,error:inputError})
       const authorization=String(req.headers.authorization||'')
       const suppliedKey=authorization.replace(/^Bearer\s+/i,'')
       if(suppliedKey.startsWith('ace_')){
@@ -3530,7 +3552,7 @@ const server = http.createServer(async (req,res)=>{
       if(!trackingSubjectId) return send(req,res,400,{accepted:false,error:'customerId, visitorId, or deviceId required'})
       const consent=await consentAllows(workspaceId,{subjectType:body.customerId?'customer':'visitor',subjectId:trackingSubjectId,category})
       if(!consent.allowed) return send(req,res,403,{accepted:false,error:'consent required',reason:consent.reason,category})
-      const event={id:randomUUID(),receivedAt:new Date().toISOString(),consentCategory:category,...body}
+      const event={...body,id:body.id||randomUUID(),receivedAt:new Date().toISOString(),consentCategory:category}
       trackedEvents.push(event)
       if(trackedEvents.length>5000) trackedEvents.splice(0,trackedEvents.length-5000)
       const persistedEvent={...event}
@@ -3546,7 +3568,8 @@ const server = http.createServer(async (req,res)=>{
         s.recentEvents=s.recentEvents||[]
         s.recentEvents.unshift(persistedEvent)
         s.recentEvents=s.recentEvents.slice(0,5000)
-      })\n      await appendTrackedEvent(workspaceId,persistedEvent)
+      })
+      await appendTrackedEvent(workspaceId,persistedEvent)
       let leadProfile=null
       if(body.customerId||body.email||body.phone||body.emailSha256||body.email_sha256||body.phoneSha256||body.phone_sha256||body.deviceId||body.device_id){
         leadProfile=await upsertLeadProfile(workspaceId,{
@@ -4899,19 +4922,22 @@ const server = http.createServer(async (req,res)=>{
       return send(req,res,200,{saved:true,updatedAt})
     }
     if (req.method === 'GET' && url.pathname === '/api/identity') {
-      const [profiles,attr]=await Promise.all([listLeadProfiles(workspaceId,500),attributionStats(workspaceId).catch(()=>({available:false}))])
+      const [recentProfiles,identityStats,attr]=await Promise.all([
+        listLeadProfiles(workspaceId,50),
+        leadIdentityStats(workspaceId),
+        attributionStats(workspaceId).catch(()=>({available:false}))
+      ])
       const idCount=lead=>[lead.external_lead_id,lead.email_sha256,lead.phone_sha256,lead.device_id].filter(Boolean).length
-      const stitched=profiles.filter(lead=>idCount(lead)>=2)
       const identifiers=[
-        profiles.some(x=>x.external_lead_id)?'customer_id':null,
-        profiles.some(x=>x.email_sha256)?'email_sha256':null,
-        profiles.some(x=>x.phone_sha256)?'phone_sha256':null,
-        profiles.some(x=>x.device_id)?'device_id':null,
+        identityStats?.identifiers?.customer_id?'customer_id':null,
+        identityStats?.identifiers?.email_sha256?'email_sha256':null,
+        identityStats?.identifiers?.phone_sha256?'phone_sha256':null,
+        identityStats?.identifiers?.device_id?'device_id':null,
         Number(attr?.clickIdCoverage?.gclid||0)>0?'gclid':null,
         Number(attr?.clickIdCoverage?.fbclid||0)>0?'fbclid':null,
         Number(attr?.clickIdCoverage?.braid||0)>0?'gbraid/wbraid':null
       ].filter(Boolean)
-      const recent=profiles.slice(0,50).map(lead=>({
+      const recent=recentProfiles.map(lead=>({
         id:lead.external_lead_id||lead.id,
         name:lead.name||lead.external_lead_id||'Anonymous profile',
         identifierCount:idCount(lead),
@@ -4924,12 +4950,13 @@ const server = http.createServer(async (req,res)=>{
           device:Boolean(lead.device_id)
         }
       }))
-      const total=profiles.length
-      const deterministicRate=total?Number((stitched.length/total*100).toFixed(1)):null
+      const total=Number(identityStats?.total||0)
+      const stitchedProfiles=Number(identityStats?.stitchedProfiles||0)
+      const deterministicRate=total?Number((stitchedProfiles/total*100).toFixed(1)):null
       return send(req,res,200,{
         available:true,
         profiles:total,
-        stitchedProfiles:stitched.length,
+        stitchedProfiles,
         deterministicMatchRate:deterministicRate,
         clickCoverage:attr?.clickIdCoverage||{},
         identifiers,
@@ -6225,8 +6252,10 @@ const server = http.createServer(async (req,res)=>{
       }
     }
     if (req.method === 'GET' && url.pathname === '/api/workspaces') {
-      const state=await withWorkspace('ws_default',()=>getState())
-      return send(req,res,200,{items:state.workspaces||[]})
+      const registry=await withWorkspace('ws_default',()=>getState())
+      const currentState=await getState()
+      const items=await listActorWorkspaces({registry,currentState,currentWorkspaceId:workspaceId,actor:req.user,loadWorkspace:id=>withWorkspace(id,()=>getState())})
+      return send(req,res,200,{items})
     }
     if (req.method === 'POST' && url.pathname === '/api/workspaces') {
       const body=await readBody(req)

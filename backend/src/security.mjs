@@ -13,14 +13,16 @@ export const createToken = ({email,userId=null,workspaceId='ws_default',role='ow
 
 export const verifyToken = (token, secret) => {
   if(!token || !secret) return null
-  const [encoded,sig]=String(token).split('.')
+  const parts=String(token).split('.')
+  if(parts.length!==2)return null
+  const [encoded,sig]=parts
   if(!encoded||!sig) return null
   const expected=createHmac('sha256',secret).update(encoded).digest('base64url')
   const a=Buffer.from(sig), b=Buffer.from(expected)
   if(a.length!==b.length || !timingSafeEqual(a,b)) return null
   try{
     const payload=JSON.parse(fromB64url(encoded))
-    if(!payload.exp || payload.exp < Math.floor(Date.now()/1000)) return null
+    if(!payload || typeof payload!=='object' || !Number.isFinite(payload.exp) || payload.exp <= Math.floor(Date.now()/1000)) return null
     return payload
   }catch{return null}
 }

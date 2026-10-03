@@ -1,7 +1,10 @@
+import {requestConnectorJson as requestJson} from './connector-http.mjs'
 import {createHash,randomUUID} from 'node:crypto'
 import {inflateRawSync} from 'node:zlib'
 import {pool} from './database.mjs'
-import {connectorCredential} from './connector-auth.mjs'\nimport {enqueueJob} from './queue.mjs'\nimport {withTenantDbTransaction,withSystemDbTransaction} from './platform/tenant-db.mjs'
+import {connectorCredential} from './connector-auth.mjs'
+import {enqueueJob} from './queue.mjs'
+import {withTenantDbTransaction,withSystemDbTransaction} from './platform/tenant-db.mjs'
 import {deploymentMode} from './platform/deployment-mode.mjs'
 import {deriveMarketingMetrics} from './metric-catalog.mjs'
 import {validateOutboundDestination} from './platform/egress-policy.mjs'
@@ -12,33 +15,10 @@ const sha=value=>createHash('sha256').update(typeof value==='string'?value:JSON.
 const isoDay=value=>new Date(value).toISOString().slice(0,10)
 const n=value=>Number.isFinite(Number(value))?Number(value):0
 const s=value=>value==null?'':String(value)
-const nowIso=()=>new Date().toISOString()\nconst tenantQuery=(workspaceId,text,params=[])=>withTenantDbTransaction(workspaceId,db=>db.query(text,params))\nconst systemQuery=(text,params=[])=>withSystemDbTransaction(db=>db.query(text,params))
+const nowIso=()=>new Date().toISOString()
+const tenantQuery=(workspaceId,text,params=[])=>withTenantDbTransaction(workspaceId,db=>db.query(text,params))
+const systemQuery=(text,params=[])=>withSystemDbTransaction(db=>db.query(text,params))
 
-const requestJson=async(url,{method='GET',headers={},body=null,allowedOrigins=[]}={})=>{
-  const parsed=new URL(url)
-  if(parsed.protocol!=='https:')throw new Error('connector sync requires HTTPS')
-  if(allowedOrigins.length&&!allowedOrigins.includes(parsed.origin))throw new Error('connector redirect origin is not allowlisted: '+parsed.origin)
-  const controller=new AbortController()
-  const timer=setTimeout(()=>controller.abort('connector_sync_timeout'),timeoutMs())
-  try{
-    const response=await fetch(parsed,{method,headers:{Accept:'application/json',...headers},body,redirect:'manual',signal:controller.signal})
-    if(response.status>=300&&response.status<400&&response.headers.get('location')){
-      const next=new URL(response.headers.get('location'),parsed)
-      if(next.origin!==parsed.origin)throw new Error('cross-origin provider redirect blocked')
-      return requestJson(next,{method,headers,body,allowedOrigins})
-    }
-    if(response.status===304)return {json:{},headers:response.headers,status:304}\n    const raw=await response.text()
-    let json={}
-    try{json=raw?JSON.parse(raw):{}}catch{json={raw:raw.slice(0,5000)}}
-    if(!response.ok){
-      const error=new Error('connector provider request failed: '+response.status)
-      error.status=response.status
-      error.providerBody=json
-      throw error
-    }
-    return {json,headers:response.headers,status:response.status}
-  }finally{clearTimeout(timer)}
-}
 
 const maxDownloadBytes=()=>Math.max(1024*1024,Math.min(Number(process.env.CONNECTOR_SYNC_MAX_DOWNLOAD_BYTES||50*1024*1024),250*1024*1024))
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms))
@@ -208,6 +188,8 @@ const upsertCampaign=async({workspaceId,connector,accountId='',campaignId,campai
   )
 }
 
+export const upsertCampaignDailyFact=async(input)=>upsertCampaign(input)
+
 const upsertCrm=async({workspaceId,connector,objectType,sourceId,sourceUpdatedAt=null,normalized={},payload,runId})=>{
   await tenantQuery(workspaceId,
     `INSERT INTO ace_crm_records
@@ -279,7 +261,8 @@ const syncGoogleAds=async(ctx)=>{
   const {json}=await requestJson(`https://googleads.googleapis.com/${version}/customers/${customerId}/googleAds:searchStream`,{
     method:'POST',headers,body:JSON.stringify({query}),allowedOrigins:['https://googleads.googleapis.com']
   })
-  const rows=(Array.isArray(json)?json:[]).flatMap(batch=>batch.results||[])
+  if(!Array.isArray(json)||json.some(batch=>!batch||typeof batch!=='object'||(batch.results!==undefined&&!Array.isArray(batch.results))))throw new Error('Google Ads response schema invalid')
+  const rows=json.flatMap(batch=>batch.results||[])
   const persisted=await persistAdRows({workspaceId:ctx.workspaceId,connector,stream,accountId:customerId,rows,runId:ctx.runId,map:row=>({
     sourceId:[row.campaign?.id,row.segments?.date].join(':'),
     campaignId:s(row.campaign?.id),campaignName:row.campaign?.name||null,day:row.segments?.date,
@@ -299,12 +282,16 @@ const syncMetaAds=async(ctx)=>{
   const version=process.env.META_GRAPH_VERSION||'v26.0'
   const fields='campaign_id,campaign_name,spend,impressions,clicks,actions,action_values,date_start,date_stop'
   let url=`https://graph.facebook.com/${version}/act_${account}/insights?level=campaign&time_increment=1&limit=500&fields=${encodeURIComponent(fields)}&time_range=${encodeURIComponent(JSON.stringify({since:isoDay(r.start),until:isoDay(r.end)}))}`
-  const rows=[]
+  const rows=[],seenPages=new Set()
   for(let page=0;url&&page<maxPages();page++){
+    if(seenPages.has(url))throw new Error('Meta Ads repeated pagination cursor')
+    seenPages.add(url)
     const result=await requestJson(url,{headers:{Authorization:'Bearer '+token.access_token},allowedOrigins:['https://graph.facebook.com']})
-    rows.push(...(result.json.data||[]))
+    if(!Array.isArray(result.json.data))throw new Error('Meta Ads response schema invalid: data array required')
+    rows.push(...result.json.data)
     url=result.json.paging?.next||null
   }
+  if(url)throw new Error('Meta Ads page limit reached before complete synchronization')
   const sumAction=(items,names)=>n((items||[]).filter(x=>names.includes(x.action_type)).reduce((a,x)=>a+n(x.value),0))
   const persisted=await persistAdRows({workspaceId:ctx.workspaceId,connector,stream,accountId:account,rows,runId:ctx.runId,map:row=>({
     sourceId:[row.campaign_id,row.date_start].join(':'),campaignId:s(row.campaign_id),campaignName:row.campaign_name||null,
@@ -330,6 +317,7 @@ const syncGa4=async(ctx)=>{
     const {json}=await requestJson(`https://analyticsdata.googleapis.com/v1beta/properties/${propertyId}:runReport`,{
       method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token.access_token},body:JSON.stringify(body),allowedOrigins:['https://analyticsdata.googleapis.com']
     })
+    if((json.rows!==undefined&&!Array.isArray(json.rows))||(!json.rows&&Number(json.rowCount)>0))throw new Error('GA4 response schema invalid')
     const batch=json.rows||[]
     rows.push(...batch)
     offset+=batch.length

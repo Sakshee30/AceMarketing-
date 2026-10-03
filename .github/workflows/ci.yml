@@ -41,7 +41,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '24.21.0'
       - name: Install dependencies from lockfile
         run: npm ci
       - name: Prepare database schema for integration tests
@@ -58,7 +58,7 @@ jobs:
       - name: Enforce backend architecture boundaries
         run: npm run backend:architecture
       - name: Verify Docker-free systemd topology
-        run: systemd-analyze verify deploy/systemd/*.service deploy/systemd/*.target
+        run: bash qa/verify-systemd.sh
       - name: Validate Docker Compose topology
         shell: bash
         run: |
