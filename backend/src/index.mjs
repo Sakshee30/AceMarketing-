@@ -1385,6 +1385,7 @@ const server = http.createServer(async (req,res)=>{
       const role=String(body.role||'analyst')
       if(!email.includes('@')) return send(req,res,400,{error:'valid email required'})
       if(!['owner','admin','analyst','operator'].includes(role)) return send(req,res,400,{error:'invalid role'})
+      if(role==='owner'&&req.user.role!=='owner') return send(req,res,403,{error:'only an owner can grant owner role',code:'owner_role_grant_denied'})
       const state=await getState()
       if((state.members||[]).some(x=>String(x.email).toLowerCase()===email&&x.status==='active')) return send(req,res,409,{error:'member already exists'})
       const rawToken=randomBytes(24).toString('base64url')
@@ -1402,6 +1403,11 @@ const server = http.createServer(async (req,res)=>{
       const memberId=String(body.memberId||'')
       const role=String(body.role||'')
       if(!memberId||!['owner','admin','analyst','operator'].includes(role)) return send(req,res,400,{error:'memberId and valid role required'})
+      const state=await getState()
+      const targetMember=(state.members||[]).find(x=>x.id===memberId)
+      if(!targetMember) return send(req,res,404,{error:'member not found'})
+      if(role==='owner'&&req.user.role!=='owner') return send(req,res,403,{error:'only an owner can grant owner role',code:'owner_role_grant_denied'})
+      if(targetMember.role==='owner'&&req.user.role!=='owner') return send(req,res,403,{error:'only an owner can change an owner role',code:'owner_role_change_denied'})
       if(memberId===req.user.userId&&req.user.role==='owner'&&role!=='owner') return send(req,res,409,{error:'owner cannot remove their own owner role'})
       let updated=null
       await mutateState(s=>{
