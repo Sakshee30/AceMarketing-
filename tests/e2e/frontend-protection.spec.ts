@@ -138,7 +138,7 @@ test('loads extracted executive briefs feature from its direct workspace route',
   await dismissConsent(page)
   await expect(page).toHaveURL(/#\/workspace\?tab=Executive%20Briefs/)
   await expect(page.getByRole('heading',{name:'Executive data snippets'})).toBeVisible()
-  await expect(page.getByText(/Schedule executive brief/i)).toBeVisible()
+  await expect(page.getByRole('heading',{name:'Schedule executive brief'})).toBeVisible()
 })
 
 
