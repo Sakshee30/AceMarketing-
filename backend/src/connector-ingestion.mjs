@@ -188,6 +188,8 @@ const upsertCampaign=async({workspaceId,connector,accountId='',campaignId,campai
   )
 }
 
+export const upsertCampaignDailyFact=async(input)=>upsertCampaign(input)
+
 const upsertCrm=async({workspaceId,connector,objectType,sourceId,sourceUpdatedAt=null,normalized={},payload,runId})=>{
   await tenantQuery(workspaceId,
     `INSERT INTO ace_crm_records
