@@ -79,6 +79,7 @@ const createEmbeddedPool=async()=>{
     if(file==='056_realtime_events.sql')sql=sql.replace(/ALTER TABLE ace_realtime_events ENABLE ROW LEVEL SECURITY;[\s\S]*$/m,'')
     if(file==='057_connector_ingestion.sql')sql=sql.replace(/ALTER TABLE ace_connector_sync_schedules ENABLE ROW LEVEL SECURITY;[\s\S]*$/m,'')
     if(file==='058_durable_events.sql')sql=sql.replace(/ALTER TABLE ace_events ENABLE ROW LEVEL SECURITY;[\s\S]*$/m,'')
+    if(file==='060_attribution_rls.sql')continue
     if(file==='052_object_processing_search.sql'){
       // Keep the production PostgreSQL migration authoritative. The embedded
       // pg-mem test database lacks multi-column ALTER, RLS and tsvector/GIN
