@@ -249,8 +249,8 @@ test('loads extracted adjustments feature from its direct workspace route',async
   await page.goto('/#/workspace?tab=Adjustments')
   await dismissConsent(page)
   await expect(page).toHaveURL(/#\/workspace\?tab=Adjustments/)
-  await expect(page.getByRole('heading',{name:'Conversion adjustments'})).toBeVisible()
-  await expect(page.getByText(/Conversion adjustments/i)).toBeVisible()
+  await expect(page.getByRole('heading',{name:'Conversion adjustments',level:1})).toBeVisible()
+  await expect(page.getByRole('heading',{name:'Conversion adjustments',level:3})).toBeVisible()
 })
 
 test('loads extracted diagnostics feature from its direct workspace route',async({page})=>{
