@@ -89,7 +89,7 @@ export const upsertLeadProfile=async(workspaceId,input={})=>{
 
 export const listLeadProfiles=async(workspaceId,limit=100)=>{
   if(!pool)return []
-  const {rows}=await pool.query(`SELECT * FROM ace_lead_profiles WHERE workspace_id=$1 AND status='active' ORDER BY updated_at DESC LIMIT $2`,[workspaceId,Math.max(1,Math.min(500,Number(limit)||100))])
+  const {rows}=await pool.query(`SELECT * FROM ace_lead_profiles WHERE workspace_id=$1 AND status='active' ORDER BY updated_at DESC LIMIT $2`,[workspaceId,Math.max(1,Math.min(5000,Number(limit)||100))])
   return rows
 }
 
