@@ -120,7 +120,7 @@ test('loads extracted alerts feature from its direct workspace route',async({pag
   await dismissConsent(page)
   await expect(page).toHaveURL(/#\/workspace\?tab=Alerts/)
   await expect(page.getByRole('heading',{name:'Alert Center'})).toBeVisible()
-  await expect(page.getByText(/Operational incidents/i)).toBeVisible()
+  await expect(page.getByRole('heading',{name:'Operational incidents'})).toBeVisible()
 })
 
 
