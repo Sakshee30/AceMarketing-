@@ -208,7 +208,7 @@ test('loads extracted developers feature from its direct workspace route',async(
   await dismissConsent(page)
   await expect(page).toHaveURL(/#\/workspace\?tab=Developers/)
   await expect(page.getByRole('heading',{name:'Developer & webhook console'})).toBeVisible()
-  await expect(page.getByText(/API keys/i)).toBeVisible()
+  await expect(page.getByRole('heading',{name:'API keys'})).toBeVisible()
 })
 
 test('loads extracted delivery feature from its direct workspace route',async({page})=>{
