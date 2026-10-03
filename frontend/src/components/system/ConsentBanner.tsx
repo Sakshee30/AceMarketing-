@@ -5,10 +5,9 @@ import {getLocalConsent,saveLocalConsent} from '../../lib/tracker'
 
 export function ConsentBanner(){
  const [visible,setVisible]=useState(()=>!getLocalConsent())
- const choose=async(analytics:boolean,marketing:boolean,personalization:boolean)=>{
-  await saveLocalConsent({analytics,marketing,personalization})
+ const choose=(analytics:boolean,marketing:boolean,personalization:boolean)=>{
   setVisible(false)
-  requestAnimationFrame(()=>document.querySelector<HTMLElement>('.ace-skip-link')?.focus())
+  void saveLocalConsent({analytics,marketing,personalization})
  }
  if(typeof document==='undefined')return null
  const node=!visible
