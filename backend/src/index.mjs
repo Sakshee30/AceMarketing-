@@ -6,7 +6,7 @@ import { closeStore, getState, mutateState, storageHealth, withWorkspace } from 
 import { connectorVaultReady, decryptSecret, encryptSecret } from './vault.mjs'
 import { getJob, queueAvailable, queueStats, requestJobCancellation } from './queue.mjs'
 import { attributionStats, captureClickSession, closeAttributionStore, recordAssistedEvent, reconcileAttribution } from './attribution-store.mjs'
-import { audienceOpsStats, closeLeadOps, createActivationRun, createAudience as createLeadAudience, getAudienceBundle, getLeadProfile, leadOpsStats, listActivationRuns, listAudiences as listLeadAudiences, listLeadProfiles, materializeAudience, overrideLeadGrade as persistLeadGrade, previewAudience as previewLeadAudience, scoreLead, upsertLeadProfile, updateAudienceSyncState } from './lead-ops.mjs'
+import { audienceOpsStats, closeLeadOps, createActivationRun, createAudience as createLeadAudience, getAudienceBundle, getLeadProfile, leadIdentityStats, leadOpsStats, listActivationRuns, listAudiences as listLeadAudiences, listLeadProfiles, materializeAudience, overrideLeadGrade as persistLeadGrade, previewAudience as previewLeadAudience, scoreLead, upsertLeadProfile, updateAudienceSyncState } from './lead-ops.mjs'
 import { closeAgentOrchestrator, completeFollowUp as persistCompleteFollowUp, createAgentRun, createFollowUp, createMeeting, getMeeting, listAgentRuns, listFeedback as listPersistedFeedback, listFollowUps as listPersistedFollowUps, listMeetings as listPersistedMeetings, listRoutingDecisions, recordFeedback, rescheduleMeeting, routeLead, updateAgentRun } from './agent-orchestrator.mjs'
 import { closeCustomIntegrations, createCustomIntegration as persistCustomIntegration, listCustomIntegrations, testCustomIntegration as runCustomIntegrationTest } from './custom-integrations.mjs'
 import { closeObservability, listAlerts as listLiveAlerts, listMonitoringRules as listLiveMonitoringRules, monitoringSnapshot, recordApiTelemetry, resolveAlert as resolveLiveAlert, saveMonitoringRule } from './observability.mjs'
@@ -4922,19 +4922,22 @@ const server = http.createServer(async (req,res)=>{
       return send(req,res,200,{saved:true,updatedAt})
     }
     if (req.method === 'GET' && url.pathname === '/api/identity') {
-      const [profiles,attr]=await Promise.all([listLeadProfiles(workspaceId,500),attributionStats(workspaceId).catch(()=>({available:false}))])
+      const [recentProfiles,identityStats,attr]=await Promise.all([
+        listLeadProfiles(workspaceId,50),
+        leadIdentityStats(workspaceId),
+        attributionStats(workspaceId).catch(()=>({available:false}))
+      ])
       const idCount=lead=>[lead.external_lead_id,lead.email_sha256,lead.phone_sha256,lead.device_id].filter(Boolean).length
-      const stitched=profiles.filter(lead=>idCount(lead)>=2)
       const identifiers=[
-        profiles.some(x=>x.external_lead_id)?'customer_id':null,
-        profiles.some(x=>x.email_sha256)?'email_sha256':null,
-        profiles.some(x=>x.phone_sha256)?'phone_sha256':null,
-        profiles.some(x=>x.device_id)?'device_id':null,
+        identityStats?.identifiers?.customer_id?'customer_id':null,
+        identityStats?.identifiers?.email_sha256?'email_sha256':null,
+        identityStats?.identifiers?.phone_sha256?'phone_sha256':null,
+        identityStats?.identifiers?.device_id?'device_id':null,
         Number(attr?.clickIdCoverage?.gclid||0)>0?'gclid':null,
         Number(attr?.clickIdCoverage?.fbclid||0)>0?'fbclid':null,
         Number(attr?.clickIdCoverage?.braid||0)>0?'gbraid/wbraid':null
       ].filter(Boolean)
-      const recent=profiles.slice(0,50).map(lead=>({
+      const recent=recentProfiles.map(lead=>({
         id:lead.external_lead_id||lead.id,
         name:lead.name||lead.external_lead_id||'Anonymous profile',
         identifierCount:idCount(lead),
@@ -4947,12 +4950,13 @@ const server = http.createServer(async (req,res)=>{
           device:Boolean(lead.device_id)
         }
       }))
-      const total=profiles.length
-      const deterministicRate=total?Number((stitched.length/total*100).toFixed(1)):null
+      const total=Number(identityStats?.total||0)
+      const stitchedProfiles=Number(identityStats?.stitchedProfiles||0)
+      const deterministicRate=total?Number((stitchedProfiles/total*100).toFixed(1)):null
       return send(req,res,200,{
         available:true,
         profiles:total,
-        stitchedProfiles:stitched.length,
+        stitchedProfiles,
         deterministicMatchRate:deterministicRate,
         clickCoverage:attr?.clickIdCoverage||{},
         identifiers,
