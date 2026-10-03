@@ -1420,6 +1420,9 @@ const server = http.createServer(async (req,res)=>{
     }
     if (req.method === 'POST' && url.pathname === '/api/members/deactivate') {
       const body=await readBody(req)
+      const state=await getState()
+      const targetMember=(state.members||[]).find(x=>x.id===String(body.memberId||''))
+      if(targetMember?.role==='owner'&&req.user.role!=='owner') return send(req,res,403,{error:'only an owner can deactivate an owner',code:'owner_deactivation_denied'})
       try{
         const updated=await handleRemoveMember({
           workspaceId,
