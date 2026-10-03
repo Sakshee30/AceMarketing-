@@ -44,3 +44,20 @@ test('Workspace chrome reflects authenticated identity and persisted locale',asy
  await expect(page.locator('.region-popover')).toContainText('Currency · '+String(me.settings.currency||'Not configured'))
  await expect(page.locator('.profile-mini')).not.toContainText('Sakshee')
 })
+
+
+test('Workspace selector renders only persisted backend workspaces',async({page})=>{
+ await page.getByLabel('Email',{exact:true}).fill(actor.email)
+ await page.locator('.login-card input[type=password]').fill(actor.password)
+ await page.locator('.login-submit').click()
+ await expect(page.locator('.product-body')).toBeVisible()
+ const backend=await page.evaluate(async()=>{const token=sessionStorage.getItem('ace_session_token');const workspaceId=localStorage.getItem('ace_workspace_id')||'';const r=await fetch('/api/workspaces',{headers:{Authorization:'Bearer '+token,'X-Workspace-ID':workspaceId}});return {status:r.status,body:await r.json()}})
+ expect(backend.status).toBe(200)
+ const expected=(backend.body.items||[]).map((item:any)=>String(item.name))
+ await page.locator('.workspace').click()
+ const rendered=await page.locator('.workspace-menu > button:not(.new-workspace) b').allTextContents()
+ expect(rendered.sort()).toEqual([...expected].sort())
+ expect(rendered).not.toContain('Ace EdTech')
+ expect(rendered).not.toContain('Ace Healthcare')
+ expect(rendered).not.toContain('Demo Sandbox')
+})
