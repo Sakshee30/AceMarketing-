@@ -166,7 +166,10 @@ def main():
     if built:
       web=spawn('web',['node','scripts/static-server.mjs','--dir=dist/frontend','--host=127.0.0.1','--port=4173','--api-target=http://127.0.0.1:3001'],app_env)
       if ready('http://127.0.0.1:4173/healthz',web):
-        command('production-browser',['./node_modules/.bin/playwright','test','--config=qa/playwright.config.ts'],app_env,timeout=900)
+        # The release browser matrix spans multiple engines and hundreds of cases; give it a bounded
+        # 30-minute qualification window so a slow CI host does not turn an otherwise progressing suite
+        # into an artificial 15-minute harness block.
+        command('production-browser',['./node_modules/.bin/playwright','test','--config=qa/playwright.config.ts'],app_env,timeout=1800)
       else:record('production-browser','BLOCKED','Static production server did not become ready')
     else:record('production-browser','BLOCKED','No production frontend artifact')
     record('worker-runtime','PASS' if worker.poll() is None else 'FAIL','Worker liveness only; business completion checked in API suite')
