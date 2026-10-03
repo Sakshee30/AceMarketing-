@@ -134,11 +134,7 @@ function CustomerWorkspaceShell({back,queryClient}:{back:()=>void;queryClient:Qu
  const [workspace,setWorkspace]=useState('')
  const [workspaceGeneration,setWorkspaceGeneration]=useState(0)
  const [workspaceTransition,setWorkspaceTransition]=useState<any>(null)
- const [workspaces,setWorkspaces]=useState<any[]>([
-  {name:'Ace EdTech',environment:'Production',initials:'AM'},
-  {name:'Ace Healthcare',environment:'Production',initials:'AH'},
-  {name:'Demo Sandbox',environment:'Sandbox',initials:'DS'}
- ])
+ const [workspaces,setWorkspaces]=useState<any[]>([])
  const [createOpen,setCreateOpen]=useState(false)
  const [workspaceDraft,setWorkspaceDraft]=useState({name:'',environment:'Production'})
  const [workspaceBusy,setWorkspaceBusy]=useState(false)
@@ -177,8 +173,11 @@ function CustomerWorkspaceShell({back,queryClient}:{back:()=>void;queryClient:Qu
    staleTime:60_000
   }).then((r:any)=>{
    if(!active)return
-   if(r.items?.length){setWorkspaces(r.items);if(!r.items.some((x:any)=>x.name===workspace))setWorkspace(r.items[0].name)}
-  }).catch(()=>null)
+   const items=Array.isArray(r.items)?r.items:[]
+   setWorkspaces(items)
+   const selected=items.find((item:any)=>String(item.id||'')===String(workspaceScopeId))||items[0]
+   setWorkspace(selected?.name||'')
+  }).catch(()=>{if(active){setWorkspaces([]);setWorkspace('')}})
   return()=>{active=false}
  },[queryClient])
  useEffect(()=>{
