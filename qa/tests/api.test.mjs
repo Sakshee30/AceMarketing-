@@ -1,6 +1,7 @@
 import test,{before,after} from 'node:test'
 import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
+import {randomBytes} from 'node:crypto'
 import pg from 'pg'
 import {enqueueJob,getJob} from '../../backend/src/queue.mjs'
 import {pool} from '../../backend/src/database.mjs'
@@ -46,6 +47,25 @@ test('MEMBERS support: admin cannot grant or modify owner role',async()=>{
  r=await request('/api/members/deactivate',{method:'POST',token:adminToken,body:{memberId:owner.id}})
  assert.equal(r.status,403);assert.equal(r.data.code,'owner_deactivation_denied')
 })
+
+test('MEMBERS support: invitation activation role change and deactivation revoke sessions',async()=>{
+ const email='qa-member-lifecycle@example.test'
+ const credential=randomBytes(18).toString('base64url')+'!Qa9'
+ let r=await request('/api/members/invite',{method:'POST',token:tokenA,body:{email,role:'analyst'}})
+ assert.equal(r.status,201,JSON.stringify(r.data));assert.equal(typeof r.data.inviteToken,'string')
+ r=await request('/api/invitations/activate',{method:'POST',body:{inviteToken:r.data.inviteToken,name:'QA Member Lifecycle',password:credential}})
+ assert.equal(r.status,201,JSON.stringify(r.data));const memberId=r.data.user.id
+ const memberToken=await login({email,password:credential,workspaceId:a.workspaceId})
+ assert.equal((await request('/api/auth/me',{token:memberToken})).status,200)
+ r=await request('/api/members/role',{method:'POST',token:tokenA,body:{memberId,role:'operator'}})
+ assert.equal(r.status,200);assert.equal(r.data.role,'operator')
+ assert.equal((await request('/api/auth/me',{token:memberToken})).status,401,'role change must revoke the old session')
+ const operatorToken=await login({email,password:credential,workspaceId:a.workspaceId})
+ r=await request('/api/members/deactivate',{method:'POST',token:tokenA,body:{memberId}})
+ assert.equal(r.status,200);assert.equal(r.data.status,'inactive')
+ assert.equal((await request('/api/auth/me',{token:operatorToken})).status,401,'deactivation must revoke the active session')
+})
+
 
 test('SEC support: credential fields are absent from member response',async()=>{const r=await request('/api/members',{token:tokenA});assert.equal(r.status,200);assert.ok(!JSON.stringify(r.data).includes('passwordHash'));assert.ok(!JSON.stringify(r.data).includes(a.password))})
 test('SEC support: unapproved web origin rejected',async()=>{assert.equal((await request('/api/auth/me',{token:tokenA,headers:{Origin:'https://foreign.example.test'}})).status,403)})
