@@ -26,6 +26,25 @@ test('AUTH-006 support: missing credentials denied',async()=>{assert.equal((awai
 test('AUTH token-integrity support: tampered token rejected',async()=>{assert.equal((await request('/api/auth/me',{token:tokenA+'.extra'})).status,401)})
 test('TEN-002 support: foreign workspace header denied',async()=>{assert.equal((await request('/api/auth/me',{token:tokenA,workspace:b.workspaceId})).status,403)})
 test('TEN-005 support: analyst cannot create a form',async()=>{assert.equal((await request('/api/forms',{method:'POST',token:analystToken,body:{name:'Forbidden',slug:'forbidden',schema:{fields:[{key:'email',type:'email'}]}}})).status,403)})
+
+test('MEMBERS support: analyst cannot manage memberships',async()=>{
+ assert.equal((await request('/api/members/invite',{method:'POST',token:analystToken,body:{email:'blocked-member@example.test',role:'analyst'}})).status,403)
+})
+
+test('MEMBERS support: admin cannot grant or modify owner role',async()=>{
+ const state=await request('/api/members',{token:tokenA});assert.equal(state.status,200)
+ const adminActor=actors.find(x=>x.workspaceId===a.workspaceId&&x.role==='admin')
+ assert.ok(adminActor,'fixture admin required')
+ const adminToken=await login(adminActor)
+ const owner=state.data.items.find(x=>x.role==='owner');assert.ok(owner,'workspace owner required')
+ let r=await request('/api/members/invite',{method:'POST',token:adminToken,body:{email:'forbidden-owner@example.test',role:'owner'}})
+ assert.equal(r.status,403);assert.equal(r.data.code,'owner_role_grant_denied')
+ r=await request('/api/members/role',{method:'POST',token:adminToken,body:{memberId:adminActor.id,role:'owner'}})
+ assert.equal(r.status,403);assert.equal(r.data.code,'owner_role_grant_denied')
+ r=await request('/api/members/role',{method:'POST',token:adminToken,body:{memberId:owner.id,role:'analyst'}})
+ assert.equal(r.status,403);assert.equal(r.data.code,'owner_role_change_denied')
+})
+
 test('SEC support: credential fields are absent from member response',async()=>{const r=await request('/api/members',{token:tokenA});assert.equal(r.status,200);assert.ok(!JSON.stringify(r.data).includes('passwordHash'));assert.ok(!JSON.stringify(r.data).includes(a.password))})
 test('SEC support: unapproved web origin rejected',async()=>{assert.equal((await request('/api/auth/me',{token:tokenA,headers:{Origin:'https://foreign.example.test'}})).status,403)})
 test('TEN support: invalid scope identifier rejected',async()=>{assert.equal((await request('/api/auth/me',{token:tokenA,workspace:'../foreign'})).status,400)})
