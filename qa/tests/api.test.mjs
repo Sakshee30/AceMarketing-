@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs'
 import {randomBytes} from 'node:crypto'
 import pg from 'pg'
 import {enqueueJob,getJob} from '../../backend/src/queue.mjs'
+import {upsertCampaignDailyFact} from '../../backend/src/connector-ingestion.mjs'
 import {pool} from '../../backend/src/database.mjs'
 import {withTenantDbTransaction} from '../../backend/src/platform/tenant-db.mjs'
 if(process.env.QA_ISOLATED!=='1')throw new Error('Isolated harness required')
@@ -102,6 +103,34 @@ test('TRACK-005 support: malformed timestamp rejected without durable partial ef
  const r=await request('/api/track',{method:'POST',body});assert.equal(r.status,400,'invalid timestamp is a client validation error')
  const {rows}=await admin.query('SELECT state FROM ace_workspace_state WHERE workspace_id=$1',[a.workspaceId]);assert.ok(!(rows[0]?.state?.recentEvents||[]).some(x=>x.id===body.id),'reject must not enter recent events')
 })
+
+
+test('MET provider daily support: normalized fact is visible through authenticated integration summary',async()=>{
+ await upsertCampaignDailyFact({
+  workspaceId:a.workspaceId,
+  connector:'Meta Ads',
+  accountId:'SIM_ACCOUNT_QA',
+  campaignId:'SIM_CAMPAIGN_QA',
+  campaignName:'QA Provider Daily',
+  day:'2026-09-30',
+  currency:'INR',
+  spend:123.45,
+  impressions:1000,
+  clicks:100,
+  conversions:7,
+  conversionValue:700,
+  extra:{source:'qa_api_acceptance'}
+ })
+ const r=await request('/api/integrations/data-summary',{token:tokenA})
+ assert.equal(r.status,200,JSON.stringify(r.data))
+ const row=(r.data.campaigns||[]).find(x=>x.connector==='Meta Ads')
+ assert.ok(row,'provider summary row required')
+ assert.ok(Number(row.rows)>=1)
+ const foreign=await request('/api/integrations/data-summary',{token:tokenB,workspace:b.workspaceId})
+ assert.equal(foreign.status,200)
+ assert.ok(!(foreign.data.campaigns||[]).some(x=>x.connector==='Meta Ads'&&Number(x.spend)===123.45),'foreign tenant must not observe provider fact')
+})
+
 test('JOBS support: independent worker finishes one logical audit export after duplicate enqueue',async()=>{
  const input={workspaceId:a.workspaceId,kind:'audit_export',payload:{limit:20},idempotencyKey:'qa_audit_export_once'}
  const one=await enqueueJob(input),two=await enqueueJob(input);assert.equal(one.id,two.id)
