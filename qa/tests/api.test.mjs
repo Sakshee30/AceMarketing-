@@ -43,6 +43,8 @@ test('MEMBERS support: admin cannot grant or modify owner role',async()=>{
  assert.equal(r.status,403);assert.equal(r.data.code,'owner_role_grant_denied')
  r=await request('/api/members/role',{method:'POST',token:adminToken,body:{memberId:owner.id,role:'analyst'}})
  assert.equal(r.status,403);assert.equal(r.data.code,'owner_role_change_denied')
+ r=await request('/api/members/deactivate',{method:'POST',token:adminToken,body:{memberId:owner.id}})
+ assert.equal(r.status,403);assert.equal(r.data.code,'owner_deactivation_denied')
 })
 
 test('SEC support: credential fields are absent from member response',async()=>{const r=await request('/api/members',{token:tokenA});assert.equal(r.status,200);assert.ok(!JSON.stringify(r.data).includes('passwordHash'));assert.ok(!JSON.stringify(r.data).includes(a.password))})
