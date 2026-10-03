@@ -17,7 +17,13 @@ def main():
         if actual!=digest:raise ValueError('Supplied fixture checksum mismatch: '+rel)
     with (out/'D2_marketing/leads.csv').open(newline='',encoding='utf-8') as f:
         leads=list(csv.DictReader(f))
+    with (out/'D2_marketing/campaigns.csv').open(newline='',encoding='utf-8') as f:
+        campaigns=list(csv.DictReader(f))
+    with (out/'D2_marketing/campaign_daily_stats.csv').open(newline='',encoding='utf-8') as f:
+        campaign_daily=list(csv.DictReader(f))
     (out/'leads.json').write_text(json.dumps(leads),encoding='utf-8')
+    (out/'campaigns.json').write_text(json.dumps(campaigns),encoding='utf-8')
+    (out/'campaign_daily.json').write_text(json.dumps(campaign_daily),encoding='utf-8')
     (out/'source-validation.json').write_text(json.dumps({'source':'supplied AceMarketing_Dummy_Data_v1 D2_marketing','files':expected,'validated':True},indent=2)+'\n')
     print('Five original D2 files reproduced byte-for-byte; no application import performed by generator.')
 if __name__=='__main__':main()
