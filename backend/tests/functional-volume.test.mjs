@@ -8,6 +8,7 @@ import {createHash} from 'node:crypto'
 import {upsertLeadProfile,leadOpsStats} from '../src/lead-ops.mjs'
 import {appendTrackedEvent,trackedEventStats,listTrackedEvents} from '../src/tracked-events.mjs'
 import {calculateMetricSet} from '../src/metric-catalog.mjs'
+import {upsertCampaignDailyFact,connectorDataSummary} from '../src/connector-ingestion.mjs'
 import {pool} from '../src/database.mjs'
 const isolated=process.env.QA_ISOLATED==='1'&&Boolean(process.env.QA_NATIVE_ADMIN_URL)
 const report={scope:'Actual application data-layer integration on isolated real PostgreSQL; NOT full API/browser/load qualification',leadsImported:0,eventsImported:0,checks:[],providerCampaignRowsImported:0}
@@ -31,6 +32,49 @@ test('D2 volume: actual lead repository imports 10000 supplied leads and replay 
  for(const workspace of new Set(leads.map(l=>l.workspace_id)))assert.equal((await leadOpsStats(workspace)).total,2500)
  report.leadReplay=1000;report.leadSeconds=(performance.now()-started)/1000;report.checks.push('all lead IDs, tenants, campaigns, stages, names and email hashes reconcile')
 })
+
+
+test('D2 volume: actual campaign daily repository imports all 9000 provider rows and replay stays idempotent',{skip:!isolated,timeout:300000},async()=>{
+ assert.ok(root,'fixture prerequisite')
+ const campaigns=JSON.parse(readFileSync(join(root,'campaigns.json')))
+ const campaignMap=new Map(campaigns.map(x=>[x.campaign_id,x]))
+ const rows=JSON.parse(readFileSync(join(root,'campaign_daily.json')))
+ assert.equal(rows.length,9000)
+ const connectorNames={META:'Meta Ads',GOOG:'Google Ads',XADS:'X',TIK:'TikTok Ads',LINK:'LinkedIn Ads',PIN:'Pinterest',MS:'Microsoft Ads / Bing Ads'}
+ const persist=async row=>{
+  const campaign=campaignMap.get(row.campaign_id);assert.ok(campaign,'campaign metadata required')
+  await upsertCampaignDailyFact({
+   workspaceId:row.workspace_id,
+   connector:connectorNames[row.provider_code]||row.provider_code,
+   accountId:campaign.provider_account_id||'',
+   campaignId:row.campaign_id,
+   campaignName:campaign.name,
+   day:row.date,
+   currency:row.currency,
+   spend:Number(row.spend_minor)/100,
+   impressions:Number(row.impressions),
+   clicks:Number(row.clicks),
+   conversions:0,
+   conversionValue:0,
+   extra:{fixtureStatId:row.stat_id,sourceKind:row.source_kind}
+  })
+ }
+ await parallel(rows,persist)
+ await parallel(rows.slice(0,100),persist)
+ const total=Number((await pool.query('SELECT count(*) n FROM ace_campaign_daily')).rows[0].n)
+ assert.equal(total,9000)
+ const sums=(await pool.query('SELECT SUM(spend)::numeric spend,SUM(impressions)::bigint impressions,SUM(clicks)::bigint clicks FROM ace_campaign_daily')).rows[0]
+ assert.equal(Math.round(Number(sums.spend)*100),oracle.provider_daily.spend_minor)
+ assert.equal(Number(sums.impressions),oracle.provider_daily.impressions)
+ assert.equal(Number(sums.clicks),oracle.provider_daily.clicks)
+ const summary=await connectorDataSummary(rows[0].workspace_id)
+ assert.equal(summary.available,true)
+ assert.ok(summary.campaigns.length>0)
+ report.providerCampaignRowsImported=9000
+ report.providerCampaignReplay=100
+ report.checks.push('9000 provider daily rows persisted through normalized connector data layer; replay idempotent and aggregate oracle reconciled')
+})
+
 test('D2 volume: actual event repository persists 100000 original events and deduplicates replay',{skip:!isolated,timeout:300000},async()=>{
  assert.ok(root,'fixture prerequisite');const started=performance.now();let batch=[];const replay=[]
  for await(const line of createInterface({input:createReadStream(join(root,'D2_marketing/events.ndjson')),crlfDelay:Infinity})){
