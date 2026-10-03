@@ -851,8 +851,16 @@ const server = http.createServer(async (req,res)=>{
       try{assertActorWorkspace(authenticatedUser,workspaceId)}catch(error){
         return send(req,res,403,{error:'token workspace mismatch',code:error?.code||'workspace_scope_mismatch'})
       }
-    }else if(AUTH_REQUIRED||url.pathname==='/api/auth/me'){
+    }else if(AUTH_REQUIRED){
       return send(req,res,401,{error:'unauthorized'})
+    }else{
+      const devState=await withWorkspace(workspaceId,()=>getState())
+      const devMember=(devState.members||[]).find(x=>x.status==='active'&&x.role==='owner')||(devState.members||[]).find(x=>x.status==='active')
+      if(devMember){
+        authenticatedUser={userId:devMember.id,email:devMember.email,role:devMember.role,workspaceId,jti:null,developmentBypass:true}
+      }else if(url.pathname==='/api/auth/me'){
+        return send(req,res,401,{error:'unauthorized'})
+      }
     }
   }
   return withWorkspace(workspaceId,async()=>{
@@ -864,10 +872,10 @@ const server = http.createServer(async (req,res)=>{
   try {
     if(authenticatedUser){
       const authState=await getState()
-      const session=(authState.sessions||[]).find(x=>x.jti===authenticatedUser.jti&&x.status==='active')
       const member=(authState.members||[]).find(x=>x.id===authenticatedUser.userId&&x.status==='active')
+      const session=authenticatedUser.developmentBypass?{status:'active'}:(authState.sessions||[]).find(x=>x.jti===authenticatedUser.jti&&x.status==='active')
       if(!session||!member) return send(req,res,401,{error:'session revoked or member inactive'})
-      if(session.expiresAt&&Date.parse(session.expiresAt)<=Date.now()) return send(req,res,401,{error:'session expired'})
+      if(!authenticatedUser.developmentBypass&&session.expiresAt&&Date.parse(session.expiresAt)<=Date.now()) return send(req,res,401,{error:'session expired'})
       authenticatedUser={...authenticatedUser,role:member.role,email:member.email,userId:member.id}
       req.user=authenticatedUser
       req.tenantScope=tenantExecutionScope({actor:authenticatedUser,workspaceId})
