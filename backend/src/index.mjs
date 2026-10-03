@@ -3692,12 +3692,13 @@ const server = http.createServer(async (req,res)=>{
       return send(req,res,200,stats)
     }
     if (req.method === 'GET' && url.pathname === '/api/journeys') {
-      const [profiles,meetings,followUps,feedbackResult,routingDecisions,state]=await Promise.all([
-        listLeadProfiles(workspaceId,500),
+      const [profiles,journeyEvents,meetings,followUps,feedbackResult,routingDecisions,state]=await Promise.all([
+        listLeadProfiles(workspaceId,5000),
+        listTrackedEvents(workspaceId,{limit:50000}).catch(()=>trackedEvents),
         listPersistedMeetings(workspaceId),
         listPersistedFollowUps(workspaceId),
         listPersistedFeedback(workspaceId),
-        listRoutingDecisions(workspaceId,500),
+        listRoutingDecisions(workspaceId,5000),
         getState()
       ])
       const feedback=feedbackResult?.items||[]
@@ -3715,7 +3716,7 @@ const server = http.createServer(async (req,res)=>{
         if(!value)return false
         return [lead.id,lead.external_lead_id,lead.name].filter(Boolean).some(x=>String(x).toLowerCase()===value)
       }
-      const trackedForLead=lead=>trackedEvents.filter(event=>{
+      const trackedForLead=lead=>journeyEvents.filter(event=>{
         const refs=[event.customerId,event.leadId,event.externalLeadId,event.visitorId,event.deviceId,event.device_id]
         return refs.some(ref=>sameLead(lead,ref))||(lead.device_id&&refs.some(ref=>String(ref||'')===String(lead.device_id)))
       })
@@ -3770,13 +3771,14 @@ const server = http.createServer(async (req,res)=>{
       return send(req,res,200,{available:true,items,generatedAt:new Date().toISOString()})
     }
     if (req.method === 'GET' && url.pathname === '/api/customer-360') {
-      const [profiles,meetings,followUps,feedbackResult,routingDecisions,agentRuns,audiences]=await Promise.all([
-        listLeadProfiles(workspaceId,500),
+      const [profiles,customerEvents,meetings,followUps,feedbackResult,routingDecisions,agentRuns,audiences]=await Promise.all([
+        listLeadProfiles(workspaceId,5000),
+        listTrackedEvents(workspaceId,{limit:50000}).catch(()=>trackedEvents),
         listPersistedMeetings(workspaceId),
         listPersistedFollowUps(workspaceId),
         listPersistedFeedback(workspaceId),
-        listRoutingDecisions(workspaceId,500),
-        listAgentRuns(workspaceId,500),
+        listRoutingDecisions(workspaceId,5000),
+        listAgentRuns(workspaceId,5000),
         listLeadAudiences(workspaceId)
       ])
       const feedback=feedbackResult?.items||[]
@@ -3785,7 +3787,7 @@ const server = http.createServer(async (req,res)=>{
         if(!value)return false
         return [lead.id,lead.external_lead_id,lead.name].filter(Boolean).some(x=>String(x).trim().toLowerCase()===value)
       }
-      const trackedForLead=lead=>trackedEvents.filter(event=>{
+      const trackedForLead=lead=>customerEvents.filter(event=>{
         const refs=[event.customerId,event.leadId,event.externalLeadId,event.visitorId,event.deviceId,event.device_id]
         return refs.some(ref=>sameLead(lead,ref))||(lead.device_id&&refs.some(ref=>String(ref||'')===String(lead.device_id)))
       })
