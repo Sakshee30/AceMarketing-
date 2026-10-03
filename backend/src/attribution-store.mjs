@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto'
 import {pool} from './database.mjs'
+import {withTenantDbTransaction} from './platform/tenant-db.mjs'
 const retentionDays=Number(process.env.CLICK_ID_RETENTION_DAYS||90)
 const callWindowMinutes=Number(process.env.CALL_MATCH_WINDOW_MINUTES||30)
 
@@ -12,6 +13,7 @@ const text=value=>value==null||value===''?null:String(value).slice(0,2048)
 const safeJson=value=>JSON.stringify(value&&typeof value==='object'?value:{})
 
 export const attributionStoreAvailable=()=>Boolean(pool)
+const tenantQuery=(workspaceId,sql,params)=>withTenantDbTransaction(workspaceId,db=>db.query(sql,params))
 
 const identifiers=body=>({
   visitorId:text(body.visitorId||body.visitor_id),
@@ -35,7 +37,7 @@ export const captureClickSession=async(workspaceId,body={})=>{
   const now=new Date(body.occurredAt||body.timestamp||Date.now())
   const expiresAt=new Date(now.getTime()+retentionDays*24*60*60*1000)
   const id='clk_'+randomUUID()
-  const {rows}=await pool.query(
+  const {rows}=await tenantQuery(workspaceId,
     `INSERT INTO ace_click_sessions
       (id,workspace_id,visitor_id,customer_id,email_sha256,phone_sha256,gclid,gbraid,wbraid,fbclid,msclkid,ttclid,twclid,
        utm_source,utm_medium,utm_campaign,utm_term,utm_content,landing_url,referrer,first_seen_at,last_seen_at,expires_at,metadata)
@@ -60,7 +62,7 @@ const candidateFor=async(workspaceId,event)=>{
     new Date(occurredDate.getTime()-callWindowMinutes*60000).toISOString(),
     new Date(occurredDate.getTime()+5*60000).toISOString()
   ]
-  const {rows}=await pool.query(
+  const {rows}=await tenantQuery(workspaceId,
     `SELECT *,
       CASE
         WHEN $3::text IS NOT NULL AND customer_id=$3 THEN 100
@@ -133,7 +135,7 @@ export const recordAssistedEvent=async(workspaceId,body={})=>{
   const candidate=await candidateFor(workspaceId,{...body,occurredAt:occurredAt.toISOString()})
   const match=methodFor(candidate,body)
   const id='ast_'+randomUUID()
-  const {rows}=await pool.query(
+  const {rows}=await tenantQuery(workspaceId,
     `INSERT INTO ace_assisted_events
       (id,workspace_id,idempotency_key,event_type,source,occurred_at,customer_id,visitor_id,email_sha256,phone_sha256,
        gclid,gbraid,wbraid,fbclid,msclkid,ttclid,twclid,value,currency,payload,matched_session_id,match_method,match_confidence,status)
@@ -151,7 +153,7 @@ export const recordAssistedEvent=async(workspaceId,body={})=>{
 
 export const reconcileAttribution=async(workspaceId,limit=250)=>{
   if(!pool) return {available:false,processed:0,matched:0,unmatched:0}
-  const {rows}=await pool.query(
+  const {rows}=await tenantQuery(workspaceId,
     `SELECT * FROM ace_assisted_events
      WHERE workspace_id=$1 AND status='unmatched'
      ORDER BY occurred_at ASC LIMIT $2`,
@@ -162,7 +164,7 @@ export const reconcileAttribution=async(workspaceId,limit=250)=>{
     const candidate=await candidateFor(workspaceId,event)
     const match=methodFor(candidate,event)
     if(candidate){
-      await pool.query(
+      await tenantQuery(workspaceId,
         `UPDATE ace_assisted_events
          SET matched_session_id=$2,match_method=$3,match_confidence=$4,status='matched',updated_at=now()
          WHERE id=$1`,
@@ -179,7 +181,7 @@ export const attributionStats=async(workspaceId,{periodDays=null}={})=>{
   const days=[7,30,90].includes(Number(periodDays))?Number(periodDays):null
   const cutoff=days==null?null:new Date(Date.now()-days*86400000).toISOString()
   const [sessions,events,methods,recent,channels,campaigns,eventTypes,touchSummary]=await Promise.all([
-    pool.query(`SELECT COUNT(*)::int total,
+    tenantQuery(workspaceId,`SELECT COUNT(*)::int total,
       COUNT(*) FILTER (WHERE gclid IS NOT NULL)::int gclid,
       COUNT(*) FILTER (WHERE fbclid IS NOT NULL)::int fbclid,
       COUNT(*) FILTER (WHERE gbraid IS NOT NULL OR wbraid IS NOT NULL)::int braid,
@@ -188,7 +190,7 @@ export const attributionStats=async(workspaceId,{periodDays=null}={})=>{
       FROM ace_click_sessions
       WHERE workspace_id=$1 AND expires_at>=now()
         AND ($2::timestamptz IS NULL OR first_seen_at>=$2::timestamptz)`,[workspaceId,cutoff]),
-    pool.query(`SELECT COUNT(*)::int total,
+    tenantQuery(workspaceId,`SELECT COUNT(*)::int total,
       COUNT(*) FILTER (WHERE status='matched')::int matched,
       COUNT(*) FILTER (WHERE status='unmatched')::int unmatched,
       COALESCE(SUM(value) FILTER (WHERE status='matched'),0)::numeric matched_value,
@@ -196,19 +198,19 @@ export const attributionStats=async(workspaceId,{periodDays=null}={})=>{
       FROM ace_assisted_events
       WHERE workspace_id=$1
         AND ($2::timestamptz IS NULL OR occurred_at>=$2::timestamptz)`,[workspaceId,cutoff]),
-    pool.query(`SELECT COALESCE(match_method,'unmatched') method,COUNT(*)::int count
+    tenantQuery(workspaceId,`SELECT COALESCE(match_method,'unmatched') method,COUNT(*)::int count
       FROM ace_assisted_events
       WHERE workspace_id=$1
         AND ($2::timestamptz IS NULL OR occurred_at>=$2::timestamptz)
       GROUP BY COALESCE(match_method,'unmatched') ORDER BY count DESC`,[workspaceId,cutoff]),
-    pool.query(`SELECT e.id,e.event_type,e.source,e.occurred_at,e.status,e.match_method,e.match_confidence,e.value,e.currency,
+    tenantQuery(workspaceId,`SELECT e.id,e.event_type,e.source,e.occurred_at,e.status,e.match_method,e.match_confidence,e.value,e.currency,
         s.utm_source,s.utm_medium,s.utm_campaign,s.utm_term,s.utm_content,s.landing_url,s.referrer,s.first_seen_at,s.last_seen_at
       FROM ace_assisted_events e
       LEFT JOIN ace_click_sessions s ON s.id=e.matched_session_id AND s.workspace_id=e.workspace_id
       WHERE e.workspace_id=$1
         AND ($2::timestamptz IS NULL OR e.occurred_at>=$2::timestamptz)
       ORDER BY e.occurred_at DESC LIMIT 30`,[workspaceId,cutoff]),
-    pool.query(`SELECT COALESCE(NULLIF(s.utm_source,''),NULLIF(e.source,''),'Direct / Unknown') channel,
+    tenantQuery(workspaceId,`SELECT COALESCE(NULLIF(s.utm_source,''),NULLIF(e.source,''),'Direct / Unknown') channel,
         COUNT(*)::int events,
         COUNT(*) FILTER (WHERE e.status='matched')::int matched,
         COALESCE(SUM(e.value) FILTER (WHERE e.status='matched'),0)::numeric value,
@@ -220,7 +222,7 @@ export const attributionStats=async(workspaceId,{periodDays=null}={})=>{
       GROUP BY COALESCE(NULLIF(s.utm_source,''),NULLIF(e.source,''),'Direct / Unknown')
       ORDER BY value DESC,matched DESC,events DESC
       LIMIT 25`,[workspaceId,cutoff]),
-    pool.query(`SELECT COALESCE(NULLIF(s.utm_campaign,''),'Unattributed campaign') campaign,
+    tenantQuery(workspaceId,`SELECT COALESCE(NULLIF(s.utm_campaign,''),'Unattributed campaign') campaign,
         COALESCE(NULLIF(s.utm_source,''),NULLIF(e.source,''),'Direct / Unknown') channel,
         COUNT(*)::int events,
         COUNT(*) FILTER (WHERE e.status='matched')::int matched,
@@ -233,7 +235,7 @@ export const attributionStats=async(workspaceId,{periodDays=null}={})=>{
       GROUP BY COALESCE(NULLIF(s.utm_campaign,''),'Unattributed campaign'),COALESCE(NULLIF(s.utm_source,''),NULLIF(e.source,''),'Direct / Unknown')
       ORDER BY value DESC,matched DESC,events DESC
       LIMIT 30`,[workspaceId,cutoff]),
-    pool.query(`SELECT event_type,
+    tenantQuery(workspaceId,`SELECT event_type,
         COUNT(*)::int events,
         COUNT(*) FILTER (WHERE status='matched')::int matched,
         COALESCE(SUM(value) FILTER (WHERE status='matched'),0)::numeric value
@@ -243,7 +245,7 @@ export const attributionStats=async(workspaceId,{periodDays=null}={})=>{
       GROUP BY event_type
       ORDER BY value DESC,matched DESC,events DESC
       LIMIT 20`,[workspaceId,cutoff]),
-    pool.query(`SELECT
+    tenantQuery(workspaceId,`SELECT
         COUNT(*) FILTER (WHERE s.id IS NOT NULL)::int matched_sessions,
         COUNT(DISTINCT s.utm_source) FILTER (WHERE s.utm_source IS NOT NULL AND s.utm_source<>'')::int source_count,
         COUNT(DISTINCT s.utm_campaign) FILTER (WHERE s.utm_campaign IS NOT NULL AND s.utm_campaign<>'')::int campaign_count,
