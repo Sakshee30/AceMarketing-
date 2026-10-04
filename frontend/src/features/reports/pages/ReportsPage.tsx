@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {
   Activity,BarChart3,CheckCircle2,ChevronRight,CircleDollarSign,Plus,ShieldCheck,Sparkles,Target,UsersRound
 } from 'lucide-react'
@@ -85,6 +86,7 @@ export default function ReportsPage(){
   }
 
   useEffect(()=>{void loadReports()},[])
+  useDevelopmentLiveRefresh(()=>loadReports())
 
   const rows=cohorts.cohorts||[]
   const latest=rows[rows.length-1]||{}

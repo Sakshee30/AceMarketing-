@@ -6,8 +6,11 @@ backend/data/
 .env
 .env.*
 !.env.example
+!.env.live.example
+.venv-live/
 
 
 # Qualification reports are not source
 artifacts/prelive/
 qa/__pycache__/
+ml-service/**/__pycache__/

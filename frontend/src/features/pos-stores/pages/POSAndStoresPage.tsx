@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Building2,CheckCircle2,ChevronRight,CircleDollarSign,RadioTower,ShieldCheck,Sparkles,Target,X} from 'lucide-react'
 import {posStoresApi} from '../data/pos-stores.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -34,6 +35,7 @@ export default function POSAndStoresPage(){
  }
 
  useEffect(()=>{void load()},[])
+ useDevelopmentLiveRefresh(()=>load())
 
  const current=(data.locations||[]).find((x:any)=>x.id===selected)||data.locations?.[0]
 

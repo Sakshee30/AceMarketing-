@@ -1,4 +1,5 @@
 import {useEffect,useRef,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ChevronRight,DatabaseZap,RadioTower,Search,ShieldCheck,Target,UsersRound} from 'lucide-react'
 import {customer360Api} from '../data/customer-360.api'
 import {LoadingState} from '../../../components/system/FrontendStates'
@@ -28,6 +29,7 @@ export default function Customer360Page(){
   }
  }
  useEffect(()=>{void load();return()=>{requestSequence.current++}},[])
+ useDevelopmentLiveRefresh(()=>load())
  const choose=(id:string)=>{setSelected(id);void load(id)}
  const filteredItems=(data.items||[]).filter((x:any)=>{
   const q=query.trim().toLowerCase()

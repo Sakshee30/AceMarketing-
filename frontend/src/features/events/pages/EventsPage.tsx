@@ -1,4 +1,5 @@
 import {useEffect,useMemo,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,CheckCircle2,ChevronRight,Plus,RadioTower,ShieldCheck,Sparkles,X,Zap} from 'lucide-react'
 import {eventsApi} from '../data/events.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -35,6 +36,7 @@ export default function EventsPage(){
   }finally{setLoading(false)}
  }
  useEffect(()=>{void load()},[])
+ useDevelopmentLiveRefresh(()=>load())
 
  const current=(data.items||[]).find((x:any)=>x.id===active)||data.items?.[0]
  const categories=['All',...Array.from(new Set((data.templates||[]).map((x:any)=>x.category||'Other')))] as string[]

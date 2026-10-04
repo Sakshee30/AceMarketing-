@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,Check,CheckCircle2,ChevronRight,RadioTower,ShieldCheck,Target} from 'lucide-react'
 import {leadGradingApi} from '../data/lead-grading.api'
 import {ErrorState,LoadingState,StaleState} from '../../../components/system/FrontendStates'
@@ -33,7 +34,7 @@ export default function LeadGradingPage(){
    }))
    setLeads(mapped)
    setStats(r.stats||null)
-   if(mapped.length)setSelected((v:string)=>v&&mapped.some((x:any)=>x.name===v)?v:mapped[0].name)
+   if(mapped.length)setSelected((v:string)=>v&&mapped.some((x:any)=>x.leadId===v)?v:mapped[0].leadId)
    else setSelected('')
    setNotice(n=>n.kind==='error'?{kind:'',text:''}:n)
   }catch(e:any){
@@ -42,8 +43,9 @@ export default function LeadGradingPage(){
  }
 
  useEffect(()=>{void load()},[])
+ useDevelopmentLiveRefresh(()=>load(),!busy,true)
 
- const current=leads.find(x=>x.name===selected)||leads[0]
+ const current=leads.find(x=>x.leadId===selected)||leads[0]
  const visibleLeads=leads.slice(0,150)
 
  const override=async(grade:string)=>{
@@ -101,7 +103,7 @@ export default function LeadGradingPage(){
   <div className="grading-layout">
    <div className="app-panel grading-list" aria-busy={loading?'true':undefined}>
     <div className="panel-head"><div><h3>Recent graded leads</h3><p>Score, grade and current stage{leads.length>150?' · first 150 rendered':''}</p></div><button disabled={loading} onClick={load}>{loading?'Refreshing…':'Refresh'}</button></div>
-    {visibleLeads.length?visibleLeads.map(x=><button key={x.name} className={selected===x.name?'selected':''} onClick={()=>{setSelected(x.name);setActivated(null);setNotice({kind:'',text:''})}}><span className={'grade grade-'+String(x.grade).toLowerCase()}>{x.grade}</span><div><b>{x.name}</b><small>{x.source} · {x.stage}</small></div><strong>{x.score}/100</strong><ChevronRight/></button>):!loading&&<div className="empty-delivery-state"><Target/><div><b>No graded leads yet</b><small>Lead profiles appear after CRM or first-party identity ingestion.</small></div></div>}
+    {visibleLeads.length?visibleLeads.map(x=><button key={x.leadId} className={selected===x.leadId?'selected':''} onClick={()=>{setSelected(x.leadId);setActivated(null);setNotice({kind:'',text:''})}}><span className={'grade grade-'+String(x.grade).toLowerCase()}>{x.grade}</span><div><b>{x.name}</b><small>{x.source} · {x.stage}</small></div><strong>{x.score}/100</strong><ChevronRight/></button>):!loading&&<div className="empty-delivery-state"><Target/><div><b>No graded leads yet</b><small>Lead profiles appear after CRM or first-party identity ingestion.</small></div></div>}
    </div>
 
    <div className="app-panel grading-detail">

@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {CheckCircle2,ChevronRight,CircleDollarSign,RadioTower,ShieldCheck,Sparkles,X} from 'lucide-react'
 import {matchbackApi} from '../data/matchback.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -38,6 +39,7 @@ export default function MatchbackPage(){
   }finally{setLoading(false)}
  }
  useEffect(()=>{void load()},[])
+ useDevelopmentLiveRefresh(()=>load())
 
  const live=data.live||{}
  const current=(data.rules||[]).find((x:any)=>x.id===selected)||data.rules?.[0]

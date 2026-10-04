@@ -196,20 +196,20 @@ export const recordMlExecution=async({workspaceId,job,result})=>{
     await client.query(
       `UPDATE ace_ai_model_registry
        SET training_status=CASE
-             WHEN $4 IS NOT NULL THEN 'trained'
+             WHEN $3::text IS NOT NULL THEN 'trained'
              WHEN training_status='not_applicable' THEN training_status
              ELSE training_status
            END,
            evaluation_status=CASE
-             WHEN $5::boolean THEN 'evidence_recorded'
+             WHEN $4::boolean THEN 'evidence_recorded'
              ELSE evaluation_status
            END,
-           artifact_revision=COALESCE($4,artifact_revision),
-           artifact_hash=COALESCE($6,artifact_hash),
-           evaluation_reference=COALESCE($7,evaluation_reference),
+           artifact_revision=COALESCE($3::text,artifact_revision),
+           artifact_hash=COALESCE($5::text,artifact_hash),
+           evaluation_reference=COALESCE($6::text,evaluation_reference),
            updated_at=now()
        WHERE workspace_id=$1 AND task=$2`,
-      [workspaceId,task,resultId,artifact?.artifactId||null,evaluated,artifact?.sha256||null,evalId]
+      [workspaceId,task,artifact?.artifactId||null,evaluated,artifact?.sha256||null,evalId]
     )
     await client.query('COMMIT')
     return {resultId,evaluationId:evalId}

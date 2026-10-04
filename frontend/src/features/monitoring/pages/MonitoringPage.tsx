@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,BarChart3,Check,CheckCircle2,Gauge,ShieldCheck,Sparkles,Zap} from 'lucide-react'
 import {monitoringApi} from '../data/monitoring.api'
 
@@ -70,6 +71,7 @@ export default function MonitoringPage(){
   }
 
   useEffect(()=>{void load()},[])
+ useDevelopmentLiveRefresh(()=>load())
 
   const alerts=live?.recentAlerts||[]
   const usage=live?.usage||{}

@@ -5,8 +5,8 @@ import {fileURLToPath} from 'node:url'
 const root=new URL('../',import.meta.url)
 const node=process.execPath
 const services=[
-  {name:'API',port:3001,command:fileURLToPath(new URL('../backend/src/index.mjs',import.meta.url))},
-  {name:'frontend',port:5173,command:fileURLToPath(new URL('../node_modules/vite/bin/vite.js',import.meta.url)),args:['--host','127.0.0.1']}
+  {name:'API',port:3001,nodeArgs:['--watch','--watch-path=backend/src','--watch-path=backend/modules','--watch-path=backend/migrations'],command:fileURLToPath(new URL('../backend/src/index.mjs',import.meta.url))},
+  {name:'frontend',port:5173,command:fileURLToPath(new URL('../node_modules/vite/bin/vite.js',import.meta.url)),args:['--host','127.0.0.1','--strictPort']}
 ]
 const children=[]
 let closing=false
@@ -32,7 +32,10 @@ const stop=code=>{
   if(closing)return
   closing=true
   for(const child of children){
-    if(!child.killed)child.kill('SIGTERM')
+    if(!child.killed){
+      if(process.platform==='win32'&&child.pid)spawn('taskkill',['/PID',String(child.pid),'/T','/F'],{stdio:'ignore'})
+      else child.kill('SIGTERM')
+    }
   }
   setTimeout(()=>process.exit(code),150).unref()
 }
@@ -42,12 +45,16 @@ for(const service of services){
     console.log(`[dev] Reusing ${service.name} on port ${service.port}`)
     continue
   }
-  const child=spawn(node,[service.command,...(service.args||[])],{
+  const child=spawn(node,[...(service.nodeArgs||[]),service.command,...(service.args||[])],{
     cwd:root,
     stdio:'inherit',
     env:process.env
   })
   children.push(child)
+  child.once('error',error=>{
+    console.error(`[dev] ${service.name} failed to start: ${error.message}`)
+    stop(1)
+  })
   child.once('exit',code=>{
     if(!closing){
       console.error(`[dev] ${service.name} stopped unexpectedly (${code??'unknown'}).`)
@@ -64,6 +71,7 @@ for(const service of services){
 
 if(!closing){
   console.log('[dev] AceMarketing ready at http://localhost:5173')
+  console.log('[dev] Frontend edits hot reload; backend source and migration edits restart the API.')
   console.log('[dev] Press Ctrl+C to stop locally started services.')
 }
 

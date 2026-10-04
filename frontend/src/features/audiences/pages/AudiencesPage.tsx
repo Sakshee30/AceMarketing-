@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,CheckCircle2,ChevronRight,Plus,ShieldCheck,Sparkles,Target,UsersRound,X,Zap} from 'lucide-react'
 import {audiencesApi as api} from '../data/audiences.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -28,6 +29,7 @@ export default function AudiencesPage(){
  }
  const reloadAudiences=async()=>{const r:any=await api.audiences();normalize(r)}
  useEffect(()=>{reloadAudiences().catch((e:any)=>setNotice(e?.message||'Audiences could not be loaded.'))},[])
+ useDevelopmentLiveRefresh(()=>reloadAudiences().catch((e:any)=>setNotice(e?.message||'Audiences could not be loaded.')))
  const previewAudience=async(e:any)=>{
   e.preventDefault();setNotice('')
   const f=new FormData(e.currentTarget)

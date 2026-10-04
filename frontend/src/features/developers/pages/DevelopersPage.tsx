@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,AlertTriangle,Cable,Check,CheckCircle2,ChevronRight,Code2,Plus,RadioTower,RefreshCw,X} from 'lucide-react'
 import {developersApi as api} from '../data/developers.api'
 import {useDirtyWork} from '../../../lib/dirty-work'
@@ -26,6 +27,7 @@ export default function DevelopersPage(){
   }catch(e:any){setNotice(e?.message||'Developer data could not be loaded.')}
  }
  useEffect(()=>{load()},[])
+ useDevelopmentLiveRefresh(()=>load())
  const rotate=async()=>{
   setBusy('secret');setNotice('')
   try{const r:any=await api.rotateWebhookSecret();setSecret(r.secret);setNotice('New signing secret generated. Copy it now; only its fingerprint is persisted.')}

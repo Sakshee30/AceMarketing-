@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,Check,CheckCircle2,ChevronRight,DatabaseZap,ShieldCheck,Sparkles,UsersRound} from 'lucide-react'
 import {dataHubApi} from '../data/data-hub.api'
 import {ErrorState,LoadingState,StaleState} from '../../../components/system/FrontendStates'
@@ -32,6 +33,7 @@ export default function DataHubPage(){
  }
 
  useEffect(()=>{void load()},[])
+ useDevelopmentLiveRefresh(()=>load())
 
  const sources=hub?.sources||[]
  const current=sources.find((item:any)=>item.name===selected)||sources[0]

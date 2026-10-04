@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,Check,CheckCircle2,ChevronRight,MessageCircle,Network,RefreshCw,ShieldCheck,Target,X} from 'lucide-react'
 import {followUpsApi} from '../data/follow-ups.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -47,6 +48,7 @@ export default function FollowUpsPage(){
   }catch(error:any){setReactivationError(error?.message||'Lead reactivation candidates could not be loaded. Existing candidate evidence was preserved.')}
  }
  useEffect(()=>{Promise.all([loadQueue(),loadReactivation(30,7)]).finally(()=>setLoading(false))},[])
+ useDevelopmentLiveRefresh(()=>Promise.all([loadQueue(),loadReactivation(dormantDays,recentDays)]))
  useEffect(()=>{if(!loading)void loadReactivation(dormantDays,recentDays)},[dormantDays,recentDays])
 
  const current=items.find(item=>item.id===selected)||null

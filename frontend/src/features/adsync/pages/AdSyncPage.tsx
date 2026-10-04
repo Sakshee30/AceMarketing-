@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {
   Activity,ArrowRight,Bot,Cable,CheckCircle2,ChevronRight,Gauge,MousePointer2,Network,
   PhoneCall,RadioTower,ShieldCheck,Sparkles,Target,Video,X,Zap
@@ -98,6 +99,7 @@ export default function AdSyncPage(){
   }
 
   useEffect(()=>{void load()},[])
+ useDevelopmentLiveRefresh(()=>load())
 
   const current=(data.items||[]).find((item:any)=>item.id===selected)||data.items?.[0]
 

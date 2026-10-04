@@ -1,4 +1,5 @@
 import {useEffect,useMemo,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {
   Activity,AlertTriangle,ArrowRight,Bot,Check,CheckCircle2,MousePointer2,RadioTower,ShieldCheck
 } from 'lucide-react'
@@ -95,6 +96,7 @@ export default function ChatGPTAdsPage(){
   }
 
   useEffect(()=>{void load()},[])
+ useDevelopmentLiveRefresh(()=>load())
 
   const payload=()=>{
     const raw:any={

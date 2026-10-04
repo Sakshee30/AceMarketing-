@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,Bot,Check,CheckCircle2,ChevronRight,Layers3,Plus,ShieldCheck,X,Zap} from 'lucide-react'
 import {agentsApi} from '../data/agents.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -51,6 +52,7 @@ export default function AgentsPage(){
   }
 
   useEffect(()=>{void load()},[])
+ useDevelopmentLiveRefresh(()=>load())
 
   const items:any[]=data.items||[]
   const runs:any[]=data.runs||[]

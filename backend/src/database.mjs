@@ -67,7 +67,7 @@ const createEmbeddedPool=async()=>{
     }
     // pg-mem does not implement PostgreSQL row-level security. Production applies
     // the RLS migration; embedded tests exercise the application tenant context.
-    if(file==='036_platform_rls.sql')continue
+    if(file==='036_platform_rls.sql'||file==='060_attribution_rls.sql')continue
     if(file==='037_forms_custom_objects.sql')sql=sql.replace(/ALTER TABLE ace_forms ENABLE ROW LEVEL SECURITY;[\s\S]*$/m,'')
     if(file==='038_rules_workflows.sql')sql=sql.replace(/ALTER TABLE ace_policy_rules ENABLE ROW LEVEL SECURITY;[\s\S]*$/m,'')
     if(file==='039_usage_ledger.sql')sql=sql.replace(/ALTER TABLE ace_usage_ledger ENABLE ROW LEVEL SECURITY;[\s\S]*$/m,'')

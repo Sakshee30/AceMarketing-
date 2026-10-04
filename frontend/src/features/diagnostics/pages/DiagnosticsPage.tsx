@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,Check,CheckCircle2,ChevronRight,MousePointer2,Settings2,ShieldCheck,Zap,X} from 'lucide-react'
 import {diagnosticsApi as api} from '../data/diagnostics.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -16,6 +17,7 @@ export default function DiagnosticsPage(){
  const [uncertain,setUncertain]=useState(false)
  const load=()=>api.diagnostics().then((r:any)=>{setData(r);if(!selected&&r.issues?.[0])setSelected(r.issues[0].key)}).catch(()=>null)
  useEffect(()=>{load()},[])
+ useDevelopmentLiveRefresh(()=>load())
  const issueMap:any={duplicate_conversions:['Duplicate conversions','Duplicate delivery/audit evidence detected.'],missing_click_ids:['Missing click IDs','A share of active click sessions lacks usable advertising identifiers.'],delivery_failures:['Delivery failures','Dead-letter signal deliveries need investigation or replay.'],connector_health:['Connector health','A connected provider is reporting degraded health.'],schema_mismatch:['Schema mismatch','Quarantined events require field or schema correction.']}
  const issues=(data?.issues||[]).map((x:any)=>({...x,title:issueMap[x.key]?.[0]||String(x.key).replaceAll('_',' '),description:issueMap[x.key]?.[1]||'Operational issue detected.'}))
  const current=issues.find((x:any)=>x.key===selected)||issues[0]

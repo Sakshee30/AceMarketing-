@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,Check,CheckCircle2,ChevronRight,CircleDollarSign,ShieldCheck,X} from 'lucide-react'
 import {adjustmentsApi as api} from '../data/adjustments.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -17,6 +18,7 @@ export default function AdjustmentsPage(){
  useDirtyWork({key:'adjustment-draft',label:'Conversion adjustment draft',dirty:builder,scope:'feature'})
  const load=()=>api.adjustments().then((r:any)=>{const mapped=(r.items||[]).map((x:any)=>({...x,event:String(x.event||'').replaceAll('_',' ').replace(/\b\w/g,(m:string)=>m.toUpperCase()),source:String(x.source||'').replaceAll('_',' / '),destination:String(x.destination||'').replaceAll('_',' '),from:x.fromValue??'—',to:x.toValue??'—',status:String(x.status||'pending').replace(/^./,(m:string)=>m.toUpperCase())}));setItems(mapped);setSelected(x=>x&&mapped.some((y:any)=>y.id===x)?x:(mapped[0]?.id||''))}).catch((e:any)=>{setItems([]);setNotice(e?.message||'Adjustments could not be loaded.')})
  useEffect(()=>{load()},[])
+ useDevelopmentLiveRefresh(()=>load())
  const current=items.find(x=>x.id===selected)||items[0]
  const apply=async(id:string)=>{setBusy('apply');setNotice('');setUncertain(false);try{await api.applyAdjustment(id);setNotice('Adjustment applied and audit state updated.');await load();setPreview(null)}catch(e:any){const cause=String(e?.details?.cause||'');if(cause==='timeout'||cause==='network'){setUncertain(true);setNotice('The backend did not confirm whether this adjustment was applied. Refresh adjustment state before applying it again.')}else setNotice(e?.message||'Adjustment could not be applied.')}finally{setBusy('')}}
  const showPreview=async(id:string)=>{setBusy('preview');setNotice('');try{const r:any=await api.previewAdjustment(id);setPreview(r)}catch(e:any){setNotice(e?.message||'Preview could not be generated.')}finally{setBusy('')}}

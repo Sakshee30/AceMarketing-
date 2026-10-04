@@ -1,4 +1,5 @@
 import {useEffect,useMemo,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,CheckCircle2,ChevronRight,DatabaseZap,RadioTower,Search,ShieldCheck,Target} from 'lucide-react'
 import {enrichApi} from '../data/enrich.api'
 import {ErrorState,LoadingState,StaleState} from '../../../components/system/FrontendStates'
@@ -30,6 +31,7 @@ export default function EnrichPage(){
  }
 
  useEffect(()=>{void load()},[])
+ useDevelopmentLiveRefresh(()=>load(),!writeback,true)
 
  const profiles=(live.items||[]).slice(0,300)
  const normalizedSearch=search.trim().toLowerCase()

@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Check,CheckCircle2,ChevronRight,CircleDollarSign,ShieldCheck,UsersRound,X} from 'lucide-react'
 import {fraudApi as api} from '../data/fraud.api'
 import {StaleState} from '../../../components/system/FrontendStates'
@@ -13,6 +14,7 @@ export default function FraudPage(){
  const [actionState,setActionState]=useState(()=>initialMutationLifecycle<any>())
  const load=()=>api.load().then((r:any)=>{setData(r);if(r.items?.length)setSelected((x:string)=>x&&r.items.some((i:any)=>i.key===x)?x:r.items[0].key)}).catch((e:any)=>setNotice({kind:'error',text:e?.message||'Fraud and noise signals could not be loaded.'}))
  useEffect(()=>{void load()},[])
+ useDevelopmentLiveRefresh(()=>load())
  const current=(data.items||[]).find((x:any)=>x.key===selected)||data.items?.[0]
  const runAction=async(kind:'block'|'review',name:string)=>{
   let lifecycle=mutationLifecycle.validating(actionState);setActionState(lifecycle)

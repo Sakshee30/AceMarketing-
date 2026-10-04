@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,CheckCircle2,Network,Plus,ShieldCheck,Sparkles,X} from 'lucide-react'
 import {dataFlowsApi as api} from '../data/data-flows.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -29,6 +30,7 @@ export default function DataFlowsPage(){
   finally{setLoading(false)}
  }
  useEffect(()=>{load()},[])
+ useDevelopmentLiveRefresh(()=>load())
  const connectorNames=integrations.map((x:any)=>x.name)
  const create=async(e:any)=>{
   e.preventDefault();setBusy('create');setNotice({kind:'',text:''})

@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,ChevronRight,MousePointer2,Network,ShieldCheck,X} from 'lucide-react'
 import {fingerprintingApi} from '../data/fingerprinting.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -39,6 +40,7 @@ export default function FingerprintingPage(){
  }
 
  useEffect(()=>{void load()},[])
+ useDevelopmentLiveRefresh(()=>load())
  const current=(data.scenarios||[]).find((item:any)=>item.name===selected)||data.scenarios?.[0]
 
  const run=async()=>{

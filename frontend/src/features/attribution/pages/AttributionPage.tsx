@@ -1,4 +1,5 @@
 import {useEffect,useRef,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,BarChart3,ChevronDown,ChevronRight,CircleDollarSign,PieChart,ShieldCheck,Target} from 'lucide-react'
 import {attributionApi} from '../data/attribution.api'
 import {ErrorState,LoadingState} from '../../../components/system/FrontendStates'
@@ -35,6 +36,7 @@ export default function AttributionPage(){
  }
 
  useEffect(()=>{void load();return()=>{requestSequence.current++}},[periodDays])
+ useDevelopmentLiveRefresh(()=>load())
 
  const cycle=()=>setPeriod(periods[(periods.indexOf(period)+1)%periods.length])
  const channels=(live?.channels||[]).slice(0,100)

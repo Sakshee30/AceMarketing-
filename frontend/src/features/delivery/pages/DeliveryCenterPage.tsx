@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,Cable,CheckCircle2,RadioTower,ShieldCheck,Sparkles} from 'lucide-react'
 import {deliveryApi as api} from '../data/delivery.api'
 import {StaleState} from '../../../components/system/FrontendStates'
@@ -20,6 +21,7 @@ export default function DeliveryCenterPage(){
   }
  }
  useEffect(()=>{load()},[])
+ useDevelopmentLiveRefresh(()=>load())
  const retry=async(id:string)=>{
   setBusy(id);setNotice({kind:'',text:''})
   try{await api.retrySignalDelivery(id);setNotice({kind:'ok',text:'Delivery re-queued with its persisted identifiers and conversion payload.'});await load()}

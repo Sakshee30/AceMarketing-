@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,CheckCircle2,ChevronRight,Globe2,MousePointer2,RadioTower,ShieldCheck,Sparkles,X} from 'lucide-react'
 import {sitesApi} from '../data/sites.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -45,6 +46,7 @@ export default function SitesPage(){
  }
 
  useEffect(()=>{void load()},[])
+ useDevelopmentLiveRefresh(()=>load())
 
  const current=sites.find(item=>item.domain===selected)||sites[0]
  const result=current?tests[current.domain]:null

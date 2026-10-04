@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ChevronRight,MousePointer2,Smartphone,Target,UsersRound} from 'lucide-react'
 import {behaviorApi} from '../data/behavior.api'
 import {ErrorState,LoadingState} from '../../../components/system/FrontendStates'
@@ -27,6 +28,7 @@ export default function BehaviorPage(){
  }
 
  useEffect(()=>{void load()},[])
+ useDevelopmentLiveRefresh(()=>load())
 
  const stats=data.stats||{}
  const rawList=view==='events'?data.events||[]:view==='sources'?data.sources||[]:view==='campaigns'?data.campaigns||[]:data.devices||[]

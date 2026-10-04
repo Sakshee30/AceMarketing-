@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {
   Activity,AlertTriangle,ArrowRight,CheckCircle2,MessageCircle,ShieldCheck,Sparkles,X
 } from 'lucide-react'
@@ -75,6 +76,7 @@ export default function LeakMonitorPage(){
   }
 
   useEffect(()=>{void load()},[])
+ useDevelopmentLiveRefresh(()=>load())
 
   const recover=async(item:any,channel='call')=>{
     setBusy(item.leadRef)

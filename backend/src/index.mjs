@@ -3585,11 +3585,11 @@ const server = http.createServer(async (req,res)=>{
           appId:body.appId||body.app_id,
           source:body.source||body.utm_source||'first_party',
           campaign:body.campaign||body.utm_campaign||null,
-          crmStage:body.crmStage||body.stage||null,
-          journeyDepth:body.journeyDepth||body.pagesViewed||0,
-          pricingPageViews:body.pricingPageViews||0,
-          conversionPropensity:body.conversionPropensity||0,
-          ltvTier:body.ltvTier||null,
+          crmStage:body.crmStage??body.stage,
+          journeyDepth:body.journeyDepth??body.pagesViewed,
+          pricingPageViews:body.pricingPageViews,
+          conversionPropensity:body.conversionPropensity,
+          ltvTier:body.ltvTier,
           lastActivity:body.occurredAt||event.receivedAt,
           attributes:{channel:body.channel||null,event:body.event||body.name||null,platform:body.platform||null,consentSubjectType:body.customerId?'customer':'visitor',consentSubjectId:trackingSubjectId}
         }).catch(()=>null)

@@ -1,4 +1,5 @@
 import {useEffect,useRef,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {CalendarDays,ChevronDown,ChevronRight,MessageCircle,MessageSquareText,MousePointer2,Network,PhoneCall,Search,Target} from 'lucide-react'
 import {journeysApi} from '../data/journeys.api'
 import {ErrorState,LoadingState} from '../../../components/system/FrontendStates'
@@ -34,6 +35,7 @@ export default function JourneysPage(){
  }
 
  useEffect(()=>{void load();return()=>{requestSequence.current++}},[])
+ useDevelopmentLiveRefresh(()=>load())
 
  const sources=['All sources',...Array.from(new Set(data.map(x=>x.source).filter(Boolean)))]
  const stages=['All stages',...Array.from(new Set(data.map(x=>x.stage).filter(Boolean)))]

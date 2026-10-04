@@ -1,4 +1,5 @@
 import {useEffect,useMemo,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,BarChart3,BookOpen,BrainCircuit,CheckCircle2,Database,FileSearch,RefreshCw,ShieldCheck,Sparkles,Target,Trash2} from 'lucide-react'
 import {EmptyState,ErrorState,LoadingState} from '../../../components/system/FrontendStates'
 import {intelligenceApi} from '../data/intelligence.api'
@@ -97,6 +98,11 @@ export default function IntelligencePage(){
   finally{setLoading(false)}
  }
  useEffect(()=>{void load()},[])
+ const hasPolicyEdits=policies.some((item:any)=>{
+  const draft=policyDrafts[item.task]
+  return draft&&(draft.enabled!==(item.enabled!==false)||draft.maxConcurrentJobs!==Number(item.maxConcurrentJobs||4)||draft.monthlyUnitBudget!==(item.monthlyUnitBudget==null?'':String(item.monthlyUnitBudget)))
+ })
+ useDevelopmentLiveRefresh(()=>load(),!hasPolicyEdits&&!busy)
  useEffect(()=>{
   const id=activeJob?.jobId
   if(!id)return

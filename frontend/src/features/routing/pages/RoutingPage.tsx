@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,Check,CheckCircle2,ChevronRight,Network,Plus,ShieldCheck,UsersRound,X} from 'lucide-react'
 import {routingApi} from '../data/routing.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -46,6 +47,7 @@ export default function RoutingPage(){
   }
 
   useEffect(()=>{void load()},[])
+ useDevelopmentLiveRefresh(()=>load())
 
   const rules:any[]=data.rules||[]
   const recent:any[]=data.recent||[]

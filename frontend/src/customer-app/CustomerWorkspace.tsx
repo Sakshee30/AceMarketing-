@@ -103,6 +103,8 @@ export default function CustomerWorkspace({back}:{back:()=>void}){
     retryDelay:customerRetryDelay,
     refetchOnWindowFocus:true,
     refetchOnReconnect:true,
+    refetchInterval:import.meta.env.DEV?5_000:false,
+    refetchIntervalInBackground:false,
     gcTime:5*60*1000
    }
   }
@@ -133,6 +135,8 @@ function CustomerWorkspaceShell({back,queryClient}:{back:()=>void;queryClient:Qu
  const [mobileNavOpen,setMobileNavOpen]=useState(false)
  const [workspace,setWorkspace]=useState('')
  const [workspaceGeneration,setWorkspaceGeneration]=useState(0)
+ const [sessionUser,setSessionUser]=useState<any>(null)
+ const [workspaceSettings,setWorkspaceSettings]=useState<any>(null)
  const [workspaceTransition,setWorkspaceTransition]=useState<any>(null)
  const [workspaces,setWorkspaces]=useState<any[]>([])
  const [createOpen,setCreateOpen]=useState(false)
@@ -165,6 +169,15 @@ function CustomerWorkspaceShell({back,queryClient}:{back:()=>void;queryClient:Qu
  const leaveWorkspace=()=>{
   if(confirmDiscardDirtyWork('the public website'))back()
  }
+ useEffect(()=>{
+  let active=true
+  setSessionUser(null)
+  setWorkspaceSettings(null)
+  void Promise.all([api.me(),api.settings()]).then(([session,settings]:any[])=>{
+   if(active){setSessionUser(session.user||null);setWorkspaceSettings(settings)}
+  }).catch(()=>null)
+  return()=>{active=false}
+ },[workspaceGeneration])
  useEffect(()=>{
   let active=true
   queryClient.fetchQuery({

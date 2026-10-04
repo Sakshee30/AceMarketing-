@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,CheckCircle2,ChevronRight,ShieldCheck,Sparkles,Target,X} from 'lucide-react'
 import {personalizationApi as api} from '../data/personalization.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -23,6 +24,7 @@ export default function PersonalizationPage(){
   }catch(e:any){setNotice(e?.message||'Personalization rules could not be loaded.')}
  }
  useEffect(()=>{load()},[])
+ useDevelopmentLiveRefresh(()=>load())
  const current=(data.items||[]).find((x:any)=>x.id===selected)||data.items?.[0]
  const perf=(data.performance||[]).find((x:any)=>x.ruleId===current?.id)||{}
  const create=async(e:any)=>{

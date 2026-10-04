@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,CheckCircle2,DatabaseZap,RadioTower,ShieldCheck,Target} from 'lucide-react'
 import {reconciliationApi as api} from '../data/reconciliation.api'
 import {StaleState} from '../../../components/system/FrontendStates'
@@ -12,6 +13,7 @@ export default function ReconciliationPage(){
  const [actionState,setActionState]=useState(()=>initialMutationLifecycle<any>())
  const load=async()=>{try{setData(await api.load())}catch(e:any){setNotice({kind:'error',text:e?.message||'Reconciliation data could not be loaded.'})}}
  useEffect(()=>{void load()},[])
+ useDevelopmentLiveRefresh(()=>load())
  const run=async(issue:string)=>{
   let lifecycle=mutationLifecycle.validating(actionState);setActionState(lifecycle)
   lifecycle=mutationLifecycle.submitting(lifecycle);setActionState(lifecycle)

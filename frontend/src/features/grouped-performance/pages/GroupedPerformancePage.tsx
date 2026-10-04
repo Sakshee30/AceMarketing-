@@ -1,4 +1,5 @@
 import {useEffect,useMemo,useRef,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,CheckCircle2,CircleDollarSign,ShieldCheck,Table2,Target} from 'lucide-react'
 import {groupedPerformanceApi} from '../data/grouped-performance.api'
 import {ErrorState,LoadingState,StaleState} from '../../../components/system/FrontendStates'
@@ -41,6 +42,7 @@ export default function GroupedPerformancePage(){
  }
 
  useEffect(()=>{void load(dimension);return()=>{requestSequence.current++}},[dimension])
+ useDevelopmentLiveRefresh(()=>load(dimension))
 
  const money=(n:any)=>'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:0})
 

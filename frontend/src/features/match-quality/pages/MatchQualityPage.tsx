@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,AlertTriangle,ArrowRight,CheckCircle2,Gauge,ShieldCheck} from 'lucide-react'
 import {matchQualityApi as api} from '../data/match-quality.api'
 import {QualityPageHead as PageHead,QualityStat as Stat} from '../ui/QualityPrimitives'
@@ -8,6 +9,7 @@ export default function MatchQualityPage(){
  const [notice,setNotice]=useState('')
  const load=async()=>{try{setData(await api.load());setNotice('')}catch(e:any){setNotice(e?.message||'Match quality could not be loaded.')}}
  useEffect(()=>{void load()},[])
+ useDevelopmentLiveRefresh(()=>load())
  const signalLabel=(key:string)=>({
   customerId:'Customer ID',emailSha256:'Email hash',phoneSha256:'Phone hash',deviceId:'Device ID',visitorId:'Visitor ID',
   gclid:'GCLID',gbraid:'GBRAID',wbraid:'WBRAID',fbclid:'FBCLID',msclkid:'MSCLKID',oppref:'oppref',obref:'obref',

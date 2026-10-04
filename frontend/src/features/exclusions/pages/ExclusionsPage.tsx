@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {ArrowRight,CheckCircle2,ShieldCheck,Smartphone,UsersRound,X} from 'lucide-react'
 import {exclusionsApi as api} from '../data/exclusions.api'
 import {StaleState} from '../../../components/system/FrontendStates'
@@ -10,6 +11,7 @@ export default function ExclusionsPage(){
  const [notice,setNotice]=useState('')
  const load=async()=>{try{setData(await api.exclusions())}catch(e:any){setNotice(e?.message||'Exclusion audiences could not be loaded.')}}
  useEffect(()=>{load()},[])
+ useDevelopmentLiveRefresh(()=>load())
  const createPreset=async(preset:any,destination:string)=>{
   setBusy('create:'+preset.key+':'+destination);setNotice('')
   try{

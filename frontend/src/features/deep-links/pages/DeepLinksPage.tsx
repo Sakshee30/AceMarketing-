@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,Check,CheckCircle2,ChevronRight,Globe2,MousePointer2,Network,Sparkles,X} from 'lucide-react'
 import {deepLinksApi} from '../data/deep-links.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -35,6 +36,7 @@ export default function DeepLinksPage(){
   }finally{setLoading(false)}
  }
  useEffect(()=>{void load()},[])
+ useDevelopmentLiveRefresh(()=>load())
 
  const current=links.find(item=>item.slug===selected)||links[0]
 

@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {ArrowRight,BarChart3,CheckCircle2,ShieldCheck,Sparkles} from 'lucide-react'
 import {plannerApi} from '../data/planner.api'
 import {StaleState} from '../../../components/system/FrontendStates'
@@ -30,6 +31,7 @@ export default function PlannerPage(){
   }
 
   useEffect(()=>{void load()},[])
+ useDevelopmentLiveRefresh(()=>load())
 
   const channels=data.channels||[]
   const totalShare=channels.reduce((total:number,item:any)=>total+Number(item.share||0),0)||1

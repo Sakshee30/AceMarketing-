@@ -1,4 +1,5 @@
 import {useEffect,useMemo,useRef,useState,type FormEvent} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,CheckCircle2,ChevronRight,ShieldCheck,Sparkles,Target,X} from 'lucide-react'
 import {
   modelsApi,
@@ -151,6 +152,7 @@ export default function ModelsPage(){
   useEffect(()=>{
     if(currentTask)void loadGovernance(currentTask)
   },[currentTask])
+  useDevelopmentLiveRefresh(()=>Promise.all([load(),loadGovernance(currentTask||undefined)]),!policyOpen)
 
   const run=async()=>{
     if(!current)return

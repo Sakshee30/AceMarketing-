@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {
   Activity,BarChart3,Check,MessageSquareText,Plus,RadioTower,ShieldCheck,Sparkles
 } from 'lucide-react'
@@ -89,6 +90,7 @@ export default function ExecutiveBriefsPage(){
   }
 
   useEffect(()=>{void load()},[])
+ useDevelopmentLiveRefresh(()=>load())
 
   const briefs=(delivery.items||[]).filter((item:any)=>item.report_type==='executive_brief')
   const deliveries=(delivery.deliveries||[]).filter((item:any)=>briefs.some((brief:any)=>brief.id===item.schedule_id))

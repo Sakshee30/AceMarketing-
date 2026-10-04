@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,Bell,Check,CheckCircle2,MessageCircle,ShieldCheck,Sparkles} from 'lucide-react'
 import {alertsApi} from '../data/alerts.api'
 import {StaleState} from '../../../components/system/FrontendStates'
@@ -77,6 +78,7 @@ export default function AlertsPage(){
   }
 
   useEffect(()=>{void load()},[])
+ useDevelopmentLiveRefresh(()=>load())
 
   const current=items.find(item=>item.id===selected)||items[0]
 

@@ -1,5 +1,6 @@
 import {createHash,randomUUID} from 'node:crypto'
 import {pool,embeddedDatabase} from './database.mjs'
+import {mergeLeadEvidence} from './lead-evidence.mjs'
 
 const sha=v=>createHash('sha256').update(String(v)).digest('hex')
 const normEmail=v=>String(v||'').trim().toLowerCase()
@@ -45,11 +46,18 @@ export const upsertLeadProfile=async(workspaceId,input={})=>{
   if(!pool)return null
   const externalLeadId=safeText(input.externalLeadId||input.leadId||input.customerId||input.email||input.phone)
   if(!externalLeadId)throw new Error('externalLeadId, leadId, customerId, email or phone required')
+  const client=await pool.connect()
+  try{
+  await client.query('BEGIN')
+  // Serialize patches for this identity, including simultaneous first inserts.
+  if(!embeddedDatabase)await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',[JSON.stringify([workspaceId,externalLeadId])])
+  const existing=await client.query('SELECT * FROM ace_lead_profiles WHERE workspace_id=$1 AND external_lead_id=$2',[workspaceId,externalLeadId])
+  input=mergeLeadEvidence(existing.rows[0],input)
   const scoring=scoreLead(input)
   const emailHash=input.emailSha256||input.email_sha256||(input.email?sha(normEmail(input.email)):null)
   const phoneHash=input.phoneSha256||input.phone_sha256||(input.phone?sha(normPhone(input.phone)):null)
   const id='lead_'+randomUUID()
-  const {rows}=await pool.query(
+  const {rows}=await client.query(
     `INSERT INTO ace_lead_profiles
       (id,workspace_id,external_lead_id,name,email_sha256,phone_sha256,device_id,device_platform,app_id,source,campaign,crm_stage,intent,score,grade,score_version,score_drivers,attributes,journey,call_summary,whatsapp_summary)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17::jsonb,$18::jsonb,$19::jsonb,$20,$21)
@@ -84,7 +92,10 @@ export const upsertLeadProfile=async(workspaceId,input={})=>{
      json(input.attributes),json({journeyDepth:Number(input.journeyDepth||input.pagesViewed||0),pricingPageViews:Number(input.pricingPageViews||0),lastActivity:input.lastActivity||null,conversionPropensity:Number(input.conversionPropensity||0),ltvTier:input.ltvTier||null,whatsappEngaged:Boolean(input.whatsappEngaged),callOutcome:input.callOutcome||null,meetingStatus:input.meetingStatus||null}),
      safeText(input.callSummary,4000),safeText(input.whatsappSummary,4000)]
   )
+  await client.query('COMMIT')
   return rows[0]
+  }catch(error){await client.query('ROLLBACK');throw error}
+  finally{client.release()}
 }
 
 export const listLeadProfiles=async(workspaceId,limit=100)=>{

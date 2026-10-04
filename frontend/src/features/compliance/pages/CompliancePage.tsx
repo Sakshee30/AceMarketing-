@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {AlertTriangle,Check,CheckCircle2,DatabaseZap,RadioTower,ShieldCheck,Sparkles,UsersRound,X} from 'lucide-react'
 import {complianceApi as api} from '../data/compliance.api'
 import {StaleState} from '../../../components/system/FrontendStates'
@@ -23,6 +24,7 @@ export default function CompliancePage(){
  const [uncertain,setUncertain]=useState(false)
  const load=async()=>{try{setData(await api.center());setUncertain(false)}catch(e:any){setNotice(e?.message||'Compliance center could not be loaded.')}}
  useEffect(()=>{load()},[])
+ useDevelopmentLiveRefresh(()=>load())
  const exportSubject=async()=>{
   if(!selector.trim()){setNotice('Enter a subject selector first.');return}
   setBusy('export');setNotice('');setExportResult(null)

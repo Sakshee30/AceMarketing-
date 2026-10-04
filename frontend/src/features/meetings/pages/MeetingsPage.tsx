@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,CalendarDays,CheckCircle2,ChevronRight,MessageCircle,PhoneOutgoing,ShieldCheck,X} from 'lucide-react'
 import {meetingsApi} from '../data/meetings.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -37,6 +38,7 @@ export default function MeetingsPage(){
   finally{setLoading(false)}
  }
  useEffect(()=>{void load()},[])
+ useDevelopmentLiveRefresh(()=>load())
  const current=meetings.find(item=>item.id===selected)||meetings[0]
 
  const create=async(event:any)=>{

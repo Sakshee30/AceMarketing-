@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,CheckCircle2,ChevronRight,RadioTower,ShieldCheck,X,Zap} from 'lucide-react'
 import {realTimeActivationApi as api} from '../data/real-time-activation.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -22,6 +23,7 @@ export default function RealTimeActivationPage(){
   }catch(e:any){setNotice(e?.message||'Real-time activation rules could not be loaded.')}
  }
  useEffect(()=>{load()},[])
+ useDevelopmentLiveRefresh(()=>load())
  const current=(data.items||[]).find((x:any)=>x.id===selected)||data.items?.[0]
  const create=async(e:any)=>{
   e.preventDefault();setBusy('create');setNotice('')

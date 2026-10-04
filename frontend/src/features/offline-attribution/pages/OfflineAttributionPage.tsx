@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {ArrowRight,CheckCircle2,ChevronRight,CircleDollarSign,MessageCircle,PhoneCall,RadioTower,ShieldCheck,Target,X} from 'lucide-react'
 import {offlineAttributionApi} from '../data/offline-attribution.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -20,6 +21,7 @@ export default function OfflineAttributionPage(){
  useDirtyWork({key:'offline-attribution-rule-draft',label:'Offline attribution rule',dirty:builder,scope:'feature'})
  const load=async()=>{setLoading(true);try{const [r,c]:any=await Promise.all([offlineAttributionApi.load(),offlineAttributionApi.ctwa().catch(()=>({available:false,stats:{},items:[]}))]);setData(r);setCtwa(c);const rules=r.rules||[];setSelected((x:string)=>x&&rules.some((i:any)=>i.id===x)?x:(rules[0]?.id||''));setNotice(n=>n.kind==='error'?{kind:'',text:''}:n)}catch(e:any){setNotice({kind:'error',text:e?.message||'Offline attribution could not be loaded. Existing attribution evidence was preserved.'})}finally{setLoading(false)}}
  useEffect(()=>{load()},[])
+ useDevelopmentLiveRefresh(()=>load())
  const current=(data.rules||[]).find((x:any)=>x.id===selected)||data.rules?.[0]
  const callEvents=Number(data.callAttribution?.events||0)
  const waMessages=Number(data.whatsapp?.messages||0)

@@ -65,6 +65,10 @@ Start the API and frontend together:
 npm run dev
 ```
 
+No Docker is needed. Keep this command running: saved frontend changes hot reload in the browser, and saved backend source or migration changes automatically restart the API. Backend restarts reset the embedded development database; use PostgreSQL when testing durable data or background integrations.
+
+For continuous synthetic customer journeys through real APIs, a persistent native test database, a background worker, local ML jobs, and a live request/coverage dashboard, see [the detailed local testing workflow](LOCAL_LIVE_TESTING.md). On a new machine, install the native prerequisites, copy `.env.live.example` to `.env.live.local`, configure your dedicated local database, then run `npm run live:setup -- --native` and `npm run dev:live`. The application is at `http://localhost:5173` and the feed dashboard is at `http://localhost:5174`. The original `npm run live:setup` without `--native` is specific to the existing Windows/WSL development PC.
+
 For individual service debugging, use separate terminals:
 
 ```bash

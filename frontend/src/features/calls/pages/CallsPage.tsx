@@ -1,4 +1,5 @@
 import {useEffect,useRef,useState} from 'react'
+import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,CalendarDays,CheckCircle2,ChevronRight,PhoneCall,PhoneIncoming,ShieldCheck,Target,X} from 'lucide-react'
 import {callsApi} from '../data/calls.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -77,6 +78,7 @@ export default function CallsPage(){
   finally{setLoading(false)}
  }
  useEffect(()=>{void load()},[])
+ useDevelopmentLiveRefresh(()=>load())
  useEffect(()=>{liveStatusRef.current=liveStatus},[liveStatus])
  useEffect(()=>()=>{void stopLiveVoice(false)},[])
 
