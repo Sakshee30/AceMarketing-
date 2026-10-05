@@ -59,6 +59,12 @@ export default function EnrichPage(){
  }
 
  const total=Number(stats.total||0),ab=Number(stats.abQuality||0)
+ const visibleGradeCounts={
+  a:profiles.filter((x:any)=>String(x.grade||'').toUpperCase()==='A').length,
+  b:profiles.filter((x:any)=>String(x.grade||'').toUpperCase()==='B').length,
+  c:profiles.filter((x:any)=>String(x.grade||'').toUpperCase()==='C').length,
+  d:profiles.filter((x:any)=>String(x.grade||'').toUpperCase()==='D').length
+ }
 
  return <>
   <PageHead crumb="Conversion / Enrich" title="CRM enrichment" sub="Give sales acquisition, intent, journey, call and messaging context before the first conversation." action={loading?'Refreshing…':'Refresh'} onAction={()=>{if(!loading)void load()}}/>
@@ -77,7 +83,7 @@ export default function EnrichPage(){
 
   <div className="enrich-layout">
    <div className="app-panel enrich-leads" aria-busy={loading?'true':undefined}>
-    <div className="panel-head"><div><h3>Enriched leads</h3><p>Choose the exact lead context sales should receive{profiles.length>150?' · first 150 matches rendered':''}</p></div><span className="healthy">{profiles.length} profiles</span></div>
+    <div className="panel-head"><div><h3>Enriched leads</h3><p>Choose the exact lead context sales should receive{profiles.length>150?' · first 150 matches rendered':''}</p></div><span className="healthy">{total} profiles</span></div>
     <div className="enrich-search"><Search/><input aria-label="Search enriched leads" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search lead, source, campaign, stage..."/></div>
     {visible.length?visible.map((x:any)=><button key={x.id} className={profile?.id===x.id?'selected':''} onClick={()=>setSelected(x.id)}><span className={'grade grade-'+String(x.grade||'D').toLowerCase()}>{x.grade||'D'}</span><div><b>{x.name||x.leadId}</b><small>{x.source||'Unknown source'} · {x.stage||'lead'}{x.campaign?' · '+x.campaign:''}</small></div><strong>{Number(x.score||0)}</strong><ChevronRight/></button>):!loading&&<div className="empty-delivery-state"><Search/><div><b>No enriched lead matches</b><small>Clear the search or ingest another CRM/first-party profile.</small></div></div>}
    </div>
@@ -94,7 +100,7 @@ export default function EnrichPage(){
 
   <div className="two-col">
    <div className="app-panel"><div className="panel-head"><div><h3>CRM writeback evidence</h3><p>Durable runs for the selected lead</p></div></div>{runs.length?runs.map((x:any)=><div className="enrich-writeback-row" key={x.id}><RadioTower/><div><b>{x.provider||'CRM'}</b><small>{x.created_at||x.createdAt?new Date(x.created_at||x.createdAt).toLocaleString():'—'}{x.last_error||x.lastError?' · '+(x.last_error||x.lastError):''}</small></div><span className={String(x.status||'queued').toLowerCase()}>{String(x.status||'queued').replaceAll('_',' ')}</span></div>):<div className="empty-delivery-state"><RadioTower/><div><b>No writebacks for this lead yet</b><small>Choose a CRM above to queue the first governed enrichment writeback.</small></div></div>}</div>
-   <div className="app-panel"><div className="panel-head"><div><h3>Grade distribution</h3><p>Current persisted lead pool</p></div></div>{stats.available&&total?[['A · High intent',Number(stats.aGrade||0)],['B · Strong fit',Math.max(0,Number(stats.abQuality||0)-Number(stats.aGrade||0))],['C · Nurture',Number(stats.cGrade||0)],['D · Low quality',Number(stats.dGrade||0)]].map((x:any)=><div className="health-line" key={x[0]}><span>{x[0]}</span><div className="progress"><i style={{width:(x[1]/total*100)+'%'}}/></div><b>{x[1]}</b></div>):<div className="empty-delivery-state"><Target/><div><b>No grading population yet</b></div></div>}</div>
+   <div className="app-panel"><div className="panel-head"><div><h3>Grade distribution</h3><p>Current persisted lead pool</p></div></div>{stats.available&&total?[['A · High intent',visibleGradeCounts.a],['B · Strong fit',visibleGradeCounts.b],['C · Nurture',visibleGradeCounts.c],['D · Low quality',visibleGradeCounts.d]].map((x:any)=><div className="health-line" key={x[0]}><span>{x[0]}</span><div className="progress"><i style={{width:(x[1]/Math.max(1,profiles.length)*100)+'%'}}/></div><b>{x[1]}</b></div>):<div className="empty-delivery-state"><Target/><div><b>No grading population yet</b></div></div>}</div>
   </div>
 
   <div className="source-conflict-note"><ShieldCheck/><div><b>Enrichment integrity</b><p>Only persisted first-party and CRM evidence is shown. CRM writeback success is displayed only after backend acknowledgement.</p></div></div>

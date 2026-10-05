@@ -140,16 +140,17 @@ export const leadIdentityStats=async workspaceId=>{
 
 export const leadOpsStats=async workspaceId=>{
   if(!pool)return {available:false}
-  const {rows}=await pool.query(
-    `SELECT COUNT(*)::int total,
-      COUNT(*) FILTER(WHERE grade='A')::int a,
-      COUNT(*) FILTER(WHERE grade IN ('A','B'))::int ab,
-      COUNT(*) FILTER(WHERE grade='C')::int c,
-      COUNT(*) FILTER(WHERE grade='D')::int d,
-      AVG(score)::numeric avg_score
-     FROM ace_lead_profiles WHERE workspace_id=$1 AND status='active'`,[workspaceId])
-  const r=rows[0]
-  return {available:true,total:r.total,aGrade:r.a,abQuality:r.ab,cGrade:r.c,dGrade:r.d,averageScore:Number(r.avg_score||0)}
+  // Keep this aggregation pg-mem compatible: FILTER/AVG expressions are
+  // parsed inconsistently by the local test database. Aggregate plain rows
+  // in application code so dashboard distributions remain truthful.
+  const {rows}=await pool.query(`SELECT grade,score FROM ace_lead_profiles WHERE workspace_id=$1 AND status='active'`,[workspaceId])
+  const total=rows.length
+  const a=rows.filter(r=>String(r.grade||'').toUpperCase()==='A').length
+  const b=rows.filter(r=>String(r.grade||'').toUpperCase()==='B').length
+  const c=rows.filter(r=>String(r.grade||'').toUpperCase()==='C').length
+  const d=rows.filter(r=>String(r.grade||'').toUpperCase()==='D').length
+  const average=total?rows.reduce((sum,r)=>sum+Number(r.score||0),0)/total:0
+  return {available:true,total,aGrade:a,abQuality:a+b,cGrade:c,dGrade:d,averageScore:Number(average.toFixed(2))}
 }
 
 export const overrideLeadGrade=async(workspaceId,externalLeadId,grade)=>{
