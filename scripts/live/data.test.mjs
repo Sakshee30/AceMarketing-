@@ -2,6 +2,20 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {randomSource,customer,leadInput,eventInput,supervisedRows,matrixRows,forecastInput} from './data.mjs'
 import {trackingInputError} from '../../backend/src/tracking-input.mjs'
+import {scoreLead} from '../../backend/src/lead-ops.mjs'
+
+test('completed demo journeys retain all four grades with coherent channel evidence',()=>{
+  for(const [intent,grade] of [[.1,'D'],[.35,'C'],[.6,'B'],[.85,'A']]){
+    const person={...customer(randomSource(42),1,'grade_mix'),intent,phase:4}
+    const input=leadInput(person,intent>=.75?'converted':'contacted')
+    assert.equal(scoreLead(input).grade,grade)
+    assert.equal(input.meetingStatus,intent>=.75?'scheduled':null)
+    assert.equal(input.callOutcome,intent>=.75?'qualified':intent>=.5?'connected':'no_answer')
+    const tracked=eventInput(person,intent>=.75?'purchase':'lead')
+    assert.equal(tracked.journeyDepth,input.journeyDepth)
+    assert.equal(tracked.crmStage,input.crmStage)
+  }
+})
 
 test('seeded acquisition mixes channels but preserves identities and purchase values across stages',()=>{
   const random=randomSource(42)

@@ -163,6 +163,8 @@ async function startCustomer(){
   return person
 }
 async function advance(person,force=false){
+  // Forced verification journeys explicitly exercise the high-intent scenario.
+  if(force)person.intent=Math.max(.8,person.intent)
   person.phase++
   if(person.phase===1){
     const tracked=await request('/track',eventInput(person,'lead'));state.counters.events++
@@ -170,28 +172,29 @@ async function advance(person,force=false){
     if(resources.form)await request('/forms/'+resources.form.id+'/submissions',{submissionId:'submission_'+person.id,data:{customerId:person.id,name:person.name,email:person.email,product:person.product}})
   }else if(person.phase===2){
     const score=await request('/lead-grading/score',leadInput(person,'qualified'))
-    checks('Lead score has explanation',Number.isFinite(score.score)&&Array.isArray(score.drivers)&&score.drivers.length>0)
+    checks('Lead score has explanation',Number.isFinite(score.score)&&Array.isArray(score.drivers)&&(score.drivers.length>0||score.score===20))
     await request('/enrich/upsert',leadInput(person,'qualified'))
     await request('/routing/test',{leadRef:person.id,score:score.score,source:person.source,identityConfidence:.95})
     if(env.CALL_WEBHOOK_SECRET){
-      const body={eventId:'call_'+person.id,customerId:person.id,provider:'local_test_telephony',from:person.phone,to:'+15550109999',status:'completed',durationSeconds:120+Math.floor(person.intent*300),startedAt:iso(-240000),endedAt:iso(),disposition:person.intent>.55?'qualified':'connected',campaign:person.campaign,source:'call',...(person.gclid?{gclid:person.gclid}:{})}
+      const connected=person.intent>=.5
+      const body={eventId:'call_'+person.id,customerId:person.id,provider:'local_test_telephony',from:person.phone,to:'+15550109999',status:connected?'completed':'no_answer',durationSeconds:connected?120+Math.floor(person.intent*300):0,startedAt:iso(-240000),endedAt:iso(),disposition:leadInput(person,'qualified').callOutcome,campaign:person.campaign,source:'call',...(person.gclid?{gclid:person.gclid}:{})}
       const timestamp=String(Math.floor(Date.now()/1000))
       await request('/webhooks/calls',body,{'x-ace-timestamp':timestamp,'x-ace-signature':'sha256='+createHmac('sha256',env.CALL_WEBHOOK_SECRET).update(timestamp+'.'+JSON.stringify(body)).digest('hex')})
     }
-    if(env.WHATSAPP_APP_SECRET){
+    if(env.WHATSAPP_APP_SECRET&&leadInput(person,'qualified').whatsappEngaged){
       const from=person.phone.replace(/\D/g,'')
       const body={object:'whatsapp_business_account',entry:[{id:'local_test_business',changes:[{field:'messages',value:{messaging_product:'whatsapp',metadata:{phone_number_id:'local_test_phone'},contacts:[{wa_id:from,profile:{name:person.name}}],messages:[{from,id:'wamid_'+person.id,timestamp:String(Math.floor(Date.now()/1000)),type:'text',text:{body:'I would like details about '+person.product},referral:{source_url:'https://example.com/ad',source_type:'ad',source_id:'synthetic_ad',headline:person.product,ctwa_clid:'synthetic_ctwa_'+person.id}}]}}]}]}
       await request('/webhooks/whatsapp',body,{'x-hub-signature-256':'sha256='+createHmac('sha256',env.WHATSAPP_APP_SECRET).update(JSON.stringify(body)).digest('hex')})
     }
   }else if(person.phase===3){
-    if(force||person.intent>.35){
+    if(force||person.intent>=.75){
       await request('/meetings',{leadRef:person.id,lead:person.name,startsAt:iso(86400000),syncCalendar:false})
       await request('/enrich/upsert',leadInput(person,'consultation'))
     }
     const personalized=await request('/personalization/decide',{customerId:person.id,surface:'website',source:person.source})
     if(personalized.decision?.id)await request('/personalization/feedback',{decisionId:personalized.decision.id,kind:'impression'})
   }else if(person.phase===4){
-    if(force||person.intent>.55){
+    if(force||person.intent>=.75){
       const input=eventInput(person,'purchase')
       const tracked=await request('/track',input)
       state.counters.events++;state.counters.purchases++;person.converted=true

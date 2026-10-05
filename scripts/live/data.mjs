@@ -23,23 +23,26 @@ export function customer(random,index,runId){
 }
 
 export function leadInput(person,stage='lead'){
-  const high=person.intent>.55
+  const high=person.intent>=.75,strong=person.intent>=.5,nurture=person.intent>=.25
+  const depth=high?2+person.phase*2:strong?Math.min(6,2+person.phase*2):nurture?Math.min(4,2+person.phase):2
   return {externalLeadId:person.id,customerId:person.id,name:person.name,email:person.email,phone:person.phone,
-    deviceId:person.deviceId,devicePlatform:'web',source:person.source,campaign:person.campaign,crmStage:stage,
-    journeyDepth:2+person.phase*2,pricingPageViews:high?2:1,conversionPropensity:Math.round(person.intent*100),
-    whatsappEngaged:person.phase>=2,callOutcome:person.phase>=2?(high?'qualified':'connected'):'unreached',
-    meetingStatus:person.phase>=3?'scheduled':null,lastActivity:iso(),
+    deviceId:person.deviceId,devicePlatform:'web',source:person.source,campaign:person.campaign,
+    crmStage:stage==='lead'?'lead':high?stage:strong?'qualified':nurture?'contacted':'lead',
+    journeyDepth:depth,pricingPageViews:high?2:nurture?1:0,conversionPropensity:Math.floor(person.intent*100),
+    whatsappEngaged:person.phase>=2&&(high||(!strong&&nurture)),callOutcome:person.phase>=2?(high?'qualified':strong?'connected':'no_answer'):'unreached',
+    meetingStatus:person.phase>=3&&high?'scheduled':null,lastActivity:iso(),
     attributes:{synthetic:true,generator:'ace-live.v1',category:person.category,product:person.product,city:['Mumbai','Delhi','Bengaluru'][Math.floor(person.intent*3)]}}
 }
 
 export function eventInput(person,event){
+  const evidence=leadInput(person,event==='purchase'?'converted':person.phase>=2?'qualified':'lead')
   return {id:`evt_${randomUUID()}`,event,eventCategory:'analytics',occurredAt:iso(),customerId:person.id,
     visitorId:person.visitorId,deviceId:person.deviceId,emailSha256:hash(person.email),
     phoneSha256:createHash('sha256').update(person.phone.replace(/\D/g,'')).digest('hex'),
     source:person.source,utm_source:person.source,utm_medium:['google','meta'].includes(person.source)?'cpc':'referral',
     campaign:person.campaign,utm_campaign:person.campaign,url:'http://localhost:5173/'+(event==='page_view'?'pricing':'checkout'),
-    domain:'localhost',crmStage:event==='purchase'?'converted':'lead',journeyDepth:2+person.phase*2,
-    pricingPageViews:person.intent>.55?2:1,conversionPropensity:Math.round(person.intent*100),
+    domain:'localhost',crmStage:evidence.crmStage,journeyDepth:evidence.journeyDepth,
+    pricingPageViews:evidence.pricingPageViews,conversionPropensity:evidence.conversionPropensity,
     category:person.category,product:person.product,synthetic:true,generator:'ace-live.v1',
     value:event==='purchase'?person.value:0,currency:'INR',
     ...(person.gclid?{gclid:person.gclid}:{}),...(person.fbclid?{fbclid:person.fbclid}:{})}

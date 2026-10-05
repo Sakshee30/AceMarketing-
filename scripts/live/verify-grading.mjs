@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import {loadEnvFile} from '../load-env.mjs'
+import {customer,leadInput,randomSource} from './data.mjs'
 
 const env=await loadEnvFile('.env.live.local')
 const base='http://127.0.0.1:3001/api'
@@ -43,4 +44,11 @@ assert.equal(lead.grade,'A')
 assert.equal(lead.journey.pricingPageViews,2)
 const {total,aGrade,abQuality,cGrade,dGrade}=enriched.stats
 assert.equal(aGrade+(abQuality-aGrade)+cGrade+dGrade,total,'Distribution accounts for every active profile')
-console.log(JSON.stringify({passed:true,leadId:externalLeadId,transitions:'D → C → B → A; risk A → C → A',score:lead.score,concurrentPatchesPreserved:true,distributionTotal:total},null,2))
+const generatedGrades={}
+for(const [intent,grade] of [[.1,'D'],[.35,'C'],[.6,'B'],[.85,'A']]){
+  const person={...customer(randomSource(42),Math.round(intent*100),externalLeadId+'_mix'),intent,phase:4}
+  const result=await request('/enrich/upsert',leadInput(person,intent>=.75?'converted':'contacted'))
+  assert.equal(result.grade,grade,'The actual backend must grade each generated scenario correctly')
+  generatedGrades[grade]={leadId:result.leadId,score:result.score}
+}
+console.log(JSON.stringify({passed:true,leadId:externalLeadId,transitions:'D → C → B → A; risk A → C → A',score:lead.score,concurrentPatchesPreserved:true,distributionTotal:total,generatedGrades},null,2))

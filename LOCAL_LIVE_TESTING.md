@@ -64,7 +64,7 @@ On another machine, use the native first-run steps above. Both API and ML must u
 
 ## 3. Follow one customer's complete workflow
 
-The feed creates a customer roughly every three seconds, subject to processing time. Customers advance over several cycles. High-intent customers convert; lower-intent customers abandon and receive follow-ups.
+The feed creates a customer roughly every three seconds, subject to processing time. Customers advance over several cycles. Intent ranges generate low-quality (D), nurture (C), strong-fit (B), and high-intent (A) journeys. D leads have shallow browsing and unanswered calls; C leads browse and engage through messaging without a qualified call; B leads have qualified sales context but no meeting or two-way messaging evidence; A leads progress through calls, messaging, meetings, and conversion. Only the high-intent group converts automatically. Others remain at their appropriate grade and receive follow-ups. Grades are computed by the real backend from these inputs, never assigned directly by the generator. Forced verification journeys use high intent to exercise purchases. Existing historical demo records keep their stored grades.
 
 | Step | Actual input/API | Where to inspect the result |
 |---|---|---|
