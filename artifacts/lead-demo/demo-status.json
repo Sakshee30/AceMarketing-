@@ -1,0 +1,14 @@
+{
+  "browserPassed": true,
+  "accessPassed": true,
+  "browserProjects": [
+    "chromium",
+    "firefox",
+    "webkit"
+  ],
+  "sourceLeads": 10000,
+  "workspaces": 4,
+  "credentialFile": "/tmp/acemarketing-qa-mgfibqd5/demo-login.json",
+  "url": "http://localhost:4173/demo-leads.html",
+  "qualification": "Local feature demo only; live integrations and production qualification remain outstanding"
+}

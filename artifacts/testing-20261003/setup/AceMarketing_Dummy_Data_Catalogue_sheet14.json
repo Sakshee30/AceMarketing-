@@ -1,0 +1,184 @@
+[
+  [
+    "NEGATIVE AND CONTROL INPUTS",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Never bulk seed. Formula-like literals are escaped in this workbook; raw negative CSV must be handled as text.",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Case ID",
+    "Kind",
+    "Input value",
+    "Expected behavior",
+    "Baseline import"
+  ],
+  [
+    "NEG-001",
+    "missing_email",
+    "",
+    "reject when email is required",
+    "0"
+  ],
+  [
+    "NEG-002",
+    "invalid_email",
+    "not-an-email",
+    "validation error",
+    "0"
+  ],
+  [
+    "NEG-003",
+    "foreign_workspace",
+    "qa_ace_v1_workspace_000003",
+    "deny cross-tenant binding",
+    "0"
+  ],
+  [
+    "NEG-004",
+    "unknown_tenant",
+    "qa_nonexistent_tenant",
+    "reject invalid parent",
+    "0"
+  ],
+  [
+    "NEG-005",
+    "duplicate_source_id",
+    "SIM_LEAD_0000001",
+    "one logical effect; approved dedupe policy",
+    "0"
+  ],
+  [
+    "NEG-006",
+    "invalid_date",
+    "46083.416666666664",
+    "reject impossible date",
+    "0"
+  ],
+  [
+    "NEG-007",
+    "missing_timezone",
+    "2026-09-01T10:00:00",
+    "require explicit interpretation; no silent shift",
+    "0"
+  ],
+  [
+    "NEG-008",
+    "negative_spend_minor",
+    "'-100",
+    "reject or explicit correction type; no silent absolute value",
+    "0"
+  ],
+  [
+    "NEG-009",
+    "invalid_currency",
+    "QQQ",
+    "reject unsupported currency",
+    "0"
+  ],
+  [
+    "NEG-010",
+    "oversized_name",
+    "QA_LONG_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx [full input in JSON]",
+    "bounded field validation; actual limit must be mapped",
+    "0"
+  ],
+  [
+    "NEG-011",
+    "unicode_text",
+    "QA caf\u00e9 \u2014 \u092a\u0930\u0940\u0915\u094d\u0937\u0923 \u2014 \u6771\u4eac",
+    "round trip without corruption",
+    "0"
+  ],
+  [
+    "NEG-012",
+    "html_literal",
+    "<b>QA_HTML_CANARY</b>",
+    "display as safe literal or allowed sanitized content",
+    "0"
+  ],
+  [
+    "NEG-013",
+    "sql_literal",
+    "QA' OR '1'='1",
+    "parameterized treatment, no query widening",
+    "0"
+  ],
+  [
+    "NEG-014",
+    "formula_literal",
+    "=1+1",
+    "export/import as text; never execute as formula",
+    "0"
+  ],
+  [
+    "NEG-015",
+    "formula_plus",
+    "'+1+1",
+    "export/import as literal text",
+    "0"
+  ],
+  [
+    "NEG-016",
+    "formula_at",
+    "'@SUM(1,1)",
+    "export/import as literal text",
+    "0"
+  ],
+  [
+    "NEG-017",
+    "path_traversal",
+    "../qa_canary.txt",
+    "reject outside upload namespace",
+    "0"
+  ],
+  [
+    "NEG-018",
+    "mass_assignment",
+    "{'is_admin': True, 'tenant_id': 'qa_ace_v1_tenant_000002'}",
+    "ignore/reject unauthorized fields",
+    "0"
+  ],
+  [
+    "NEG-019",
+    "unexpected_boolean",
+    "TRUEE",
+    "reject invalid boolean",
+    "0"
+  ],
+  [
+    "NEG-020",
+    "currency_without_amount",
+    "{'currency': 'INR', 'amount_minor': None}",
+    "reject incomplete money value",
+    "0"
+  ]
+]

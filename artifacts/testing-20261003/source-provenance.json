@@ -1,0 +1,32 @@
+{
+  "originalWorkspaceBaseline": "ef56647d6aaad1b723c77728139fcf81cf624f7b",
+  "branch": "qa/prelive-qualification-20261003",
+  "testedLocalSnapshot": "aafb5f9d0e191e7a976e61547d8b995a11baa709",
+  "allChangedWorkspaceFilesMatchTestedSnapshot": true,
+  "changedFilesSha256": {
+    ".gitignore": "9b89814d1af08df671adb1d71cea48480850e7b8a908e0eb6c05102e3ce10fee",
+    "backend/src/connector-ingestion.mjs": "0622c898722a7952853ed54d887ba75f8709a7ccda251af2ef1716d02da0570e",
+    "backend/tests/connector-pagination.test.mjs": "ca6dc18a8a9e93db31b9744f557a69af7af67add68db2f0c8ffc06fe0c1b64dc",
+    "backend/tests/functional-volume.test.mjs": "d08f8edb095048669621b724686f2ba65bcf9cf24c8f9c8ce68d12684dba967e",
+    "frontend/src/customer-app/CustomerWorkspace.tsx": "fad99384eeab59f3069732cd1ddb8efcb6ddb8ed525df4eb02b6cbf0162301db",
+    "ml-service/pyproject.toml": "8beb8277f43b50ecebd702d2c78a17df80ce443fca005181a9a3909e208a2fe8",
+    "qa/IMPLEMENTATION.md": "077b6bc956e3762d62e7be394ae60ec91c61b061b7085972842b3072991e413f",
+    "qa/materialize-functional.py": "970c7b3e772e7d11254fc3caa26a3b119c58d42042a9f4036a687d56256189f2",
+    "qa/restore-api.mjs": "65def6956df0472f6e8e7f8e6a370d8a11e21e68153c70c10eb4e6e12880d1d8",
+    "qa/run.py": "d04d85b57f8584e10e99c5600cb5fe8ba66f72a4552e8f0850c151b6666e9c0e",
+    "qa/write_case_status.py": "3741c5602fa6ddbcd423a00afa371a823d410051cf08bae1befb2bbc1e4f0b76",
+    "qa/browser/identity.spec.ts": "2c83c81754d5dfe43ec6f452f4dc8b2e6a3a229f1ef3fe8b287193e4a452eacd",
+    "qa/tests/full-ingress.test.mjs": "dc47f272113678ddbdc5422f5c6fdbfdafebed87305cbfb0d16386518798ca92",
+    "qa/summarize-local.py": "6fde1697807a97c1500b19c2571c4c0e2e9684c6d31dd32e9815991a0683bb3a"
+  },
+  "suppliedDocumentsSha256": {
+    "AceMarketing_Actual_Test_Results.xlsx": "509df724313e3d3e2cb2af1ea5a38e9004c5cbdc0e802202c971f4652e46d0bc",
+    "AceMarketing_Dummy_Data_Catalogue.xlsx": "53babef2f938f75fddce2ead8a8da6e8ed54eac4c9cb9ea677de617137f428d6",
+    "AceMarketing_Dummy_Data_Handbook.docx": "29376eebd56814cd6eed7be4ee6db2a179a7cf7c39672cdaa6a804cb233e64b6",
+    "AceMarketing_Implementation_Execution_Report.docx": "605a3ccfb4b74f6ac8b220db6bd639625b4b3bffa7e86ada2e4b697877f103fd",
+    "AceMarketing_Implementation_Execution_Report.md": "2801904942151066bae6d954b07403e612a5c2950444f45d7157ce28913ca299",
+    "AceMarketing_Master_Test_Plan.docx": "473a8dc6083b672f776e6ed5f814f2cc4eecdcbb966b9844293f2105ff1d2327",
+    "AceMarketing_Test_Execution_Workbook.xlsx": "2f2aff78a14d78c25320029296232ab45df9e44477d126e3d59e28c2125b162a"
+  },
+  "note": "Snapshot commit was created in the isolated local checkout. Original workspace changes remain uncommitted; supplied documents remain unchanged."
+}

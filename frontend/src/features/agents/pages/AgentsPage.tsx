@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,Bot,Check,CheckCircle2,ChevronRight,Layers3,Plus,ShieldCheck,X,Zap} from 'lucide-react'
 import {agentsApi} from '../data/agents.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -34,7 +34,7 @@ export default function AgentsPage(){
   useDirtyWork({key:'custom-agent-test-draft',label:'Custom agent test draft',dirty:testOpen,scope:'feature'})
 
   const load=async()=>{
-    setLoading(true)
+    beginLoading(setLoading)
     setLoadError('')
     try{
       const response:any=await agentsApi.load()

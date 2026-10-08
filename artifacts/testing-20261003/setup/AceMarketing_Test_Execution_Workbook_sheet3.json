@@ -1,0 +1,3612 @@
+[
+  [
+    "EXECUTION DETAIL",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Execution specification. Fill actual results, candidate/run identifiers and durable evidence links after execution. No result has been pre-filled as passing.",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Test ID",
+    "Preconditions",
+    "Execution steps",
+    "Expected result",
+    "Required evidence",
+    "Actual result / evidence URL",
+    "Run ID / candidate SHA",
+    "N/A rationale / approval"
+  ],
+  [
+    "BASE-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Checkout frozen SHA in an empty workspace; install exact lockfile dependencies.",
+    "Install is reproducible; dirty source or floating revision fails the gate.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BASE-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Discover runtime .mjs files and parse-check them, including connector-ingestion.mjs.",
+    "No syntax errors; imported literal backslash-n characters are rejected before any expensive suite.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BASE-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Provision documented supported Node binary on disposable Linux host; verify all service and target units.",
+    "ExecStart binaries exist and are executable; units validate without suppressing diagnostics.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BASE-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Start each enabled API/control/worker entrypoint with isolated configuration.",
+    "Processes start, readiness passes and imported modules resolve; failed process makes build fail.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BASE-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Compare pinned Node/Python versions across Jenkins, Actions, containers and host units.",
+    "One approved supported runtime baseline; documented compatibility differences only.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BASE-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Supply a non-allowlisted host, missing environment marker and a production-like credential identifier.",
+    "Harness refuses execution before seeding, scans, load, restore or outbound requests.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BASE-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Remove one required JUnit or evidence file from a deliberately failed harness run.",
+    "Gate fails; no-files-found cannot silently produce a green release.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BASE-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Force a test failure and then terminate the Jenkins job.",
+    "Original failure remains visible; logs persist; only run-owned resources are cleaned.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BASE-009",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Add a temporary discoverable test not in an explicit npm list; compare discovered and selected suites.",
+    "Inventory discrepancy blocks or requires an explicit tracked exclusion; new tests cannot be silently omitted.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BASE-010",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Build combined and standalone customer/public/admin outputs from the same SHA.",
+    "Each starts from its production artifact; asset budgets and integrity checks pass.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AUTH-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Create test user through supported setup; login through real API and browser.",
+    "Valid session grants only its authorized workspace and role; no fixture bypass.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AUTH-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Submit unknown user and wrong password; compare responses and audit metadata.",
+    "No session or enumeration leak; bounded uniform failure and safe audit record.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AUTH-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Logout then reuse old token in API, browser and realtime reconnect.",
+    "Revoked session rejected everywhere, including an already-open tab.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AUTH-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Advance test clock past session expiry; attempt protected read and write.",
+    "Denied or correctly refreshed according to contract; no unauthorized mutation.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AUTH-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Request reset, use token once, reuse it and attempt cross-user use.",
+    "Single use, expiry and ownership enforced; reset updates sessions as specified.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AUTH-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Run isolated production-mode process with AUTH_REQUIRED=true and unsafe fallback settings.",
+    "Protected routes require real authentication; insecure startup configuration is rejected.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AUTH-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Inspect HTTPS session cookies and exercise CSRF/cross-origin requests where cookies are used.",
+    "Security attributes and origin/CSRF policy match the approved threat model.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AUTH-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Send bounded repeated failures at configured limits, then attempt legitimate login.",
+    "Rate limits work without account-wide denial of service or unbounded retries.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AUTH-009",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Simulate state mismatch, expired state and callback for a different user or workspace.",
+    "Callback is rejected and cannot bind credentials to the wrong identity.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AUTH-010",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Login on two browsers; change password or remove membership during active requests.",
+    "Documented session policy holds; revocation freshness is measured and bounded.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "TEN-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "As tenant A, read/update/delete/export a known tenant B object identifier.",
+    "Every route denies access; no object existence, count or field leakage.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "TEN-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Alter X-Workspace-ID, body workspace and nested object parent on an authorized request.",
+    "Server derives and validates tenant context; caller cannot select an unauthorized tenant.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "TEN-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Use non-owner non-superuser non-BYPASSRLS application role; query with absent/wrong tenant context.",
+    "Database independently denies tenant leakage; role attributes are recorded as evidence.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "TEN-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Alternate A and B requests concurrently through the same connection pool and worker processes.",
+    "Transaction-local tenant context never survives into another request.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "TEN-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Run actual supported roles against every discovered protected operation and field.",
+    "Allowed actions succeed and forbidden actions fail at backend, not merely hidden buttons.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "TEN-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Invite, accept, expire, revoke and attempt replay or wrong-email acceptance.",
+    "Membership transitions are authorized and idempotent; revoked invite cannot create access.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "TEN-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Remove a member while a download, export and realtime connection are active.",
+    "Future access stops within the approved bound; queued work rechecks authorization as required.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "TEN-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Create, suspend and archive test workspace with pending jobs and schedules.",
+    "Defined retention and suspension behavior; no new writes or scheduled side effects after suspension.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "TEN-009",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Use a customer administrator session against platform-control APIs and assets.",
+    "Customer privileges do not grant platform administration; separate authorization enforced.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "TEN-010",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Query identical search text and cache keys in tenants with distinctive secret canary values.",
+    "No foreign snippets, suggestions, counts, cached responses or document chunks.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "WEB-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Open every discovered public route and follow primary/secondary navigation links.",
+    "No broken link, dead CTA, blank route or unexpected authenticated content.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "WEB-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Submit a valid synthetic demo request; repeat after refresh and inspect backend record.",
+    "Request is persisted once per defined submission identity with a truthful confirmation.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "WEB-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Submit blank, malformed, long and Unicode inputs and a double click.",
+    "Accessible validation; no malformed database rows or duplicate side effects.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "WEB-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Navigate from public site to login and customer app; preserve approved return URL.",
+    "Correct origin and return route; unsafe redirects rejected.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "WEB-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Inspect titles, canonical URLs, robots and sitemap on each deployment surface.",
+    "Public metadata is correct; private staging/customer/admin routes are not exposed for indexing.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "WEB-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Decline analytics on first visit; navigate and submit a demo form.",
+    "Non-essential tracking remains blocked while essential user workflow still works.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "WEB-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Fail demo request once and restore network; use retry.",
+    "Useful error and retained safe inputs; no false success or duplicate request.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "WEB-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Compare advertised integrations, features and verification labels to release scope ledger.",
+    "Unsupported or unqualified capability is not advertised as working or provider-verified.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UI-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Visit each protected route directly; refresh, navigate back/forward and reopen tab.",
+    "Route and selected workspace persist correctly; auth and error boundaries hold.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UI-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Exercise search, sorting, pagination and combined filters with known fixture IDs.",
+    "Correct record set and counts across pages; no hidden stale filters.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UI-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Create an item, reload, edit, cancel an edit, delete and reload.",
+    "UI matches committed database state; canceled edits never persist.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UI-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Exercise delayed response, empty dataset, 403, 404, 429 and 500 states.",
+    "Distinct accessible states; no misleading zero totals or endless spinners.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UI-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Edit same version in two tabs and save in competing order.",
+    "Conflict policy is explicit; no silent overwrite where version checking is required.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UI-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Double-click save and replay the same idempotency key.",
+    "Single intended business effect; UI gives accurate completion.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UI-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Switch workspaces during a slow request, then let the old response finish.",
+    "Late response cannot populate the newly selected workspace.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UI-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Exercise modals, menus, keyboard shortcuts, toast dismissal and destructive confirmations.",
+    "Consistent focus, escape behavior, keyboard access and protection against accidental destructive actions.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "TRACK-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Emit a browser event through actual SDK to API, raw storage, canonical storage and aggregate.",
+    "Traceable event ID at each layer; accepted durable event is not merely an in-memory success.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "TRACK-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Send same source event before/after response loss and from parallel requests.",
+    "One logical event and one downstream effect; duplicate receipts are identifiable.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "TRACK-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Use synthetic GCLID/FBCLID and other supported click IDs through page transitions.",
+    "Supported identifiers are persisted and attributed without corruption or unauthorized sharing.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "TRACK-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Deny consent, emit events, grant then revoke, and retry delayed events.",
+    "Only permitted processing occurs under explicit policy; queued activation rechecks consent.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "TRACK-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Send malformed JSON, absent required fields, oversized payload and future/invalid timestamp.",
+    "Safe documented errors or quarantine; no silent coercion into valid analytics.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "TRACK-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Interrupt browser connection, restore it and replay buffered events out of order.",
+    "Bounded retries and consistent ordering policy without loss or duplicate counting.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "TRACK-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Stop API or worker immediately after accepted ingestion; restart and reconcile IDs.",
+    "Acknowledged durable input is recoverable and eventually processed once logically.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "TRACK-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Inspect provenance from API acceptance through canonical transformations and report.",
+    "Workspace, source IDs, timestamps, schema/version and processing warnings are traceable.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "TRACK-009",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Measure navigation with SDK enabled, denied-consent and unavailable ingestion endpoint.",
+    "Tracking does not block critical UI, create retry storms or expose secrets.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "TRACK-010",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Send another workspace ID with an invalid or mismatched ingestion credential.",
+    "Rejected or quarantined by contract; no foreign workspace writes.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "IDENT-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Create anonymous click, form lead, CRM qualification and purchase for one fixture identity.",
+    "One coherent journey with correct ordered source evidence.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "IDENT-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Use shared device, shared email alias and similar phone strings for different people.",
+    "No unauthorized merge across tenants or beyond approved identity rules.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "IDENT-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Replay equivalent supported email/phone formats and Unicode values.",
+    "Normalization is deterministic; original provenance remains available.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "IDENT-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Insert a touch after conversion processing with an earlier occurred-at time.",
+    "Approved lookback/recomputation policy is applied and historical output versioned.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "IDENT-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Connect only authorized matching identities across two synthetic devices.",
+    "Approved cross-device join occurs; unsupported inference remains separate.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "IDENT-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Create conversion with no usable click ID or prior touch.",
+    "Shows unattributed or unknown explicitly; no invented channel assignment.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "IDENT-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Delete one fixture person and rebuild journey and search views.",
+    "Personal data and derived links are removed or retained only by documented policy.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "IDENT-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Mix UTC, reporting timezone boundaries, repeated timestamps and delayed callbacks.",
+    "Stable documented ordering and visible invalid-clock warnings.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "MET-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Load golden event fixture; compare independent expected values with API, dashboard and export.",
+    "Spend, leads, customers, revenue, refunds and net ROAS agree under the metric version.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "MET-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Apply full/partial refund and a duplicate refund event.",
+    "Net revenue and the intended ROAS definition update once; gross versus net distinction is explicit.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "MET-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Calculate rates with zero spend/leads/impressions/clicks as applicable.",
+    "Null and warning where contract specifies; no Infinity, NaN or fabricated zero success.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "MET-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Aggregate INR and USD without a conversion policy, then with a versioned test policy.",
+    "No silent currency summation; policy/version and conversion lineage are visible.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "MET-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Place events exactly at start, immediately before end and exactly at end.",
+    "Start included, end excluded; timezone label/query window alignment is correct.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "MET-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Run every discovered attribution model on an independently hand-calculated journey.",
+    "Allocated credit equals eligible conversion value within approved rounding rules.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "MET-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Vary conversion time and touch timing across lookback cutoff for each supported model.",
+    "Eligible touch set and channel credit match the documented model, not a generic formula.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "MET-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Compare provider account/date totals to normalized records and dashboard after backfill.",
+    "Differences are explained by currency, timezone, dedupe, freshness or explicit rejection ledger.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "MET-009",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Disconnect source and expire freshness bound; ask dashboard/AI for latest performance.",
+    "Staleness/absence displayed; no demo data silently shown as current business results.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "MET-010",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Mix real recorded conversion fixture and an AI estimate.",
+    "Estimated outcomes remain separately labeled and cannot inflate recorded revenue or attribution.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "MET-011",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Compare calculateMetricSet and deriveMarketingMetrics using a refund fixture and documented inputs.",
+    "Any intentional difference is named and versioned; inconsistent unlabeled dashboard/API meaning is a defect.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "MET-012",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Compare filtered aggregate to independently summing all eligible pages.",
+    "No page-limited totals, double-counted joins or unauthorized rows.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LEAD-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Create lead, enrich, qualify, disqualify and convert with actual role checks.",
+    "Each valid state transition persists with history; forbidden transitions fail.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LEAD-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Import duplicate identifiers with conflicting values and rerun the same file.",
+    "Approved match/conflict policy and idempotency; no silent data destruction.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LEAD-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Use absent required fields, long names, international text and invalid contact formats.",
+    "Useful validation or explicit quarantine; original import row traceable.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LEAD-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Score fixed fixture twice with same model/rule version.",
+    "Reproducible deterministic path or recorded stochastic tolerance; score reasons and version present.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LEAD-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Read/export enrichment and contact fields as viewer and unauthorized roles.",
+    "Field-level permissions and masking match policy.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LEAD-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Two workers assign same unassigned lead simultaneously.",
+    "Single valid owner under documented assignment/version rule.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LEAD-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Return empty, malformed, delayed and rate-limited enrichment responses.",
+    "Lead remains usable; retry/status is truthful; no fabricated enrichment.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LEAD-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Mark lead opted out, then attempt audience export, messaging and activation.",
+    "Suppressed contact cannot generate a prohibited external action.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ADS-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Map approved business event to simulated provider conversion action and deliver.",
+    "Payload fields, value, currency, time, source ID and receipt match expected contract.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ADS-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Replay same conversion through queue retry and manual retry concurrently.",
+    "One logical provider effect; stable idempotency identity and auditable retry history.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ADS-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Simulate provider acceptance followed by response loss.",
+    "Unknown outcome is reconciled before any potentially duplicate side effect.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ADS-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Simulate batch with accepted, invalid and transiently failed rows.",
+    "Only eligible failures retry; accepted rows do not resend; per-row outcome shown.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ADS-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Attempt to select a live account or omit required test designation in isolated lane.",
+    "Safety guard blocks real advertising or conversion writes.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ADS-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Approve a proposal, then disable execution before worker dispatch.",
+    "Dispatch-time permission/consent/budget/kill-switch checks stop the action.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ADS-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Expire token during queued conversion delivery and refresh it.",
+    "Bounded reauthorization/retry without plaintext credentials or dropped job.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ADS-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Compare delivered, rejected, pending and unknown conversions with simulator ledger.",
+    "UI totals and receipts match business outcomes rather than job submission status.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AUD-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Create compound segment rules and evaluate known included/excluded fixture users.",
+    "Exact expected membership and counts; rule/version retained.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AUD-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Place contact in eligible audience and global opt-out simultaneously.",
+    "Suppression wins in previews, exports and dispatch-time checks.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AUD-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Advance clock across schedule and process late source changes.",
+    "One scheduled run per policy; documented refresh window and freshness.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AUD-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Export audience with role restrictions and guessed export/download IDs.",
+    "Only authorized recipients and fields; no cross-tenant disclosure.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AUD-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Add and remove audience members between two sync runs.",
+    "Correct add/remove delta; retries do not resurrect removed members.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AUD-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Sync paginated audience with duplicate rows and a failed middle page.",
+    "Complete deduplicated audience with resumable checkpoint and bounded memory.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AUD-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Submit unsupported operator, recursion and extremely broad unsafe expression.",
+    "Bounded validation; no arbitrary code execution or uncontrolled query.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AUD-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Revoke connector while audience sync is queued.",
+    "Subsequent writes stop and state is visibly revoked/degraded.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FORM-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Draft, preview, publish and revise a form; submit against old and new versions.",
+    "Submission binds to immutable valid schema version; published history preserved.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FORM-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Submit unknown, required, typed and nested fields with invalid values.",
+    "Backend validates schema; malicious or extra fields cannot overwrite protected state.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FORM-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Exercise every supported conditional visibility and validation rule.",
+    "Hidden/required semantics are consistent between browser and backend.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FORM-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Create allowed field types, required fields and uniqueness rule; insert records.",
+    "Correct typed persistence, validation and bounded schema.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FORM-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Change type/remove a field with existing records; read historical versions.",
+    "Safe explicit migration or rejection; no unreadable historical data.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FORM-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Submit an exposed form while changing tenant/form ID and targeting internal fields.",
+    "Public capability is scoped; no administrative or cross-tenant access.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FORM-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Double submit same request and retry after dropped response.",
+    "Contract-defined single logical submission and workflow trigger.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FORM-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Delete/archive form or custom object referenced by workflow/board.",
+    "Dependency checks prevent orphaned behavior; approved archive semantics documented.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FLOW-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Trigger form -> rule -> approval -> simulated action -> completion.",
+    "Every step has durable status, inputs, outputs and shared trace ID.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FLOW-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Stop worker after committed step and before next dispatch; restart.",
+    "Resumes at correct step without duplicate irreversible action.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FLOW-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Attempt self-approval and approval by wrong role or workspace.",
+    "Policy denies forbidden decisions and retains audit evidence.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FLOW-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Exercise true, false, null, invalid and boundary inputs for each rule operator.",
+    "Correct branch; unsupported condition fails explicitly rather than silently succeeding.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FLOW-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Create supported loop or recursive trigger with limit exceeded.",
+    "Maximum steps, runtime and cost enforced; no runaway automation.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FLOW-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Fail one step transiently, permanently and with unknown outcome.",
+    "Correct bounded retry, DLQ or reconciliation; audit distinguishes outcomes.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FLOW-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Cancel before and during a pending approved action.",
+    "Cancellation semantics explicit; no undisclosed post-cancel side effect.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FLOW-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Edit workflow while a run is waiting for approval.",
+    "Existing run uses its frozen version or explicit migration policy.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FLOW-009",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Start concurrent workflows at remaining quota boundary.",
+    "Atomic reservations prevent over-admission; canceled/failed work reconciles usage.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FLOW-010",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Insert a catalogued but unavailable action under a disabled mode.",
+    "Validation and execution fail truthfully; no fake green completion.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BOARD-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Create board/columns/items; reload and verify placements.",
+    "Persistent authorized state and correctly ordered items.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BOARD-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Move card by keyboard/non-drag control and pointer drag.",
+    "Equivalent valid versioned move and clear focus feedback.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BOARD-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Two clients move same version of a card to different columns.",
+    "Conflict/idempotency policy prevents contradictory placements.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BOARD-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Open two authorized clients; move card and observe updates.",
+    "Other client receives authorized event once logically within approved latency.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BOARD-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Subscribe with foreign workspace/board identifiers and revoked session.",
+    "Subscription denied; no foreign events or presence information.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BOARD-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Disconnect one client, apply changes and reconnect with old event cursor.",
+    "Missed events replay or snapshot refresh reconciles state without duplicates.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BOARD-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Pause a slow client and generate many board changes.",
+    "Bounded buffers and documented resync; server remains responsive.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BOARD-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Delete/archive item while another client attempts a stale move.",
+    "Safe conflict/not-found behavior without orphan event or corrupt board.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FILE-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Upload file, quarantine, approve/process/index and download as permitted user.",
+    "Only approved state is searchable/downloadable; object and metadata lifecycle agrees.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FILE-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Guess object keys, signed URLs and document IDs across tenants.",
+    "Denied; no bucket/object enumeration or cache leak.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FILE-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Submit harmless signature fixtures, mismatched MIME, traversal filename and archive bomb fixture.",
+    "Policy rejects/quarantines safely with bounded expansion and storage.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FILE-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Upload max-size boundary, oversize file and interrupted multipart request.",
+    "Limits enforced and orphan parts cleaned without corrupt approved objects.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FILE-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Stop processor mid-job, restart and compare content/version.",
+    "Durable bounded retry; no duplicate indexing or permanently stuck processing.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FILE-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Revoke access or expire link, then retry search, preview and download.",
+    "Access and link semantics follow approved policy; sensitive previews are not leaked.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FILE-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Delete approved document; query search, AI retrieval, cache and storage.",
+    "Deletion/tombstone propagates consistently within defined deadline.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FILE-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Index controlled documents with exact known terms and duplicate names.",
+    "Expected authorized matches, stable ordering and correct pagination.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FILE-009",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Fail upload/read/delete service calls at each lifecycle transition.",
+    "No false approval or dangling success; retry/reconciliation evidence present.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FILE-010",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Index a document containing instructions to disclose secrets or call an external URL.",
+    "Content remains untrusted data; no privilege escalation or unintended outbound action.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AI-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Ask known question over golden canonical data via actual AI orchestration.",
+    "Numbers trace to source/query/version; simulator-only and real-model results labeled separately.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AI-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Ask for an unsupported metric or absent period.",
+    "No invented numbers or unsupported source claims; clear limitation/freshness response.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AI-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Ask tenant A assistant to reveal tenant B canary document or metric.",
+    "Retrieval/tools refuse and no foreign data appears in prompts, logs or answer.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AI-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Place malicious instructions in retrieved document, CRM note and provider payload.",
+    "System policy and tool permissions hold; untrusted input cannot authorize actions.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AI-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Return timeout, 429, malformed JSON and incomplete streaming result.",
+    "Bounded retry and schema validation; no fake successful result or unbounded token spend.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AI-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Generate recommendation, attempt execute before approval, approve and use simulator.",
+    "Proposal and effect are distinct; only authorized approved safe action dispatches.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AI-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Provide insufficient labels, duplicate IDs, leakage features and missing columns.",
+    "Training/evaluation blocks with precise readiness reasons.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AI-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Construct tenant/time-separated datasets and attempt future-information leakage.",
+    "Split membership and leakage checks are recorded; holdout remains untouched.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AI-009",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Evaluate scoring/forecast model versus approved simple baseline on fixed holdout.",
+    "Agreed task-specific metric and uncertainty interval meet acceptance, not exact natural-language matching.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AI-010",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Compare score reliability and error for defined supported business segments.",
+    "Measured calibration/error tolerances and weak segments reported; no untested general accuracy claim.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AI-011",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Load valid, missing, corrupted and incompatible checkpoint/model manifest.",
+    "Only integrity-checked compatible artifact runs; failures remain visible.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AI-012",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Promote approved model; revoke or roll back while jobs are queued.",
+    "Version routing and audit are correct; stale/forbidden model cannot continue unauthorized execution.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AI-013",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Exceed token/cost/time limit and cancel a streaming request.",
+    "Budget enforced across retries; usage reconciled; canceled stream releases resources.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AI-014",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Exercise forecasting, causal and MMM with enabled and disabled capability flags.",
+    "Disabled is explicit; enabled path has evaluated evidence, not a generic model response.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AI-015",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Repeat stochastic evaluation with recorded prompt/model/seeds and acceptance distribution.",
+    "Variance reported and threshold agreed; a lucky single response is not qualification.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "AI-016",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Use only synthetic data to run forecast/attribution/causal workflows.",
+    "Mechanical correctness can pass; real-world predictive or causal validity stays unqualified without representative evidence.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BILL-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Simulate successful checkout and verified subscription webhook.",
+    "Correct tenant/plan state only after trusted evidence; no real charge.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BILL-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Send valid, invalid, stale and tampered billing webhook fixtures.",
+    "Only valid events processed; secrets never logged.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BILL-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Duplicate and reorder checkout/payment/subscription events.",
+    "One logical state transition and usage effect; stale event cannot overwrite newer state.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BILL-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Issue simultaneous operations against one remaining quota unit.",
+    "At most allowed admissions; atomic ledger/reservations remain consistent.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BILL-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Change plan with usage above new allowance and queued work.",
+    "Documented entitlements and effective date; data retained and overage policy enforced.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BILL-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Simulate failure, grace period, recovery and cancellation.",
+    "Access transitions match approved commercial policy without accidental data deletion.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BILL-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Compare accepted/completed/canceled/retried operations to billable ledger.",
+    "No double charging or missing release of reservations; disputed items traceable.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BILL-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Attempt plan, invoice and payment changes as unauthorized role or foreign tenant.",
+    "Denied at API, UI and export layer.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BILL-009",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Use minor-unit and fractional usage boundaries with supported currency rules.",
+    "Deterministic monetary calculations; no binary-float discrepancy in chargeable results.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "BILL-010",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Run core mode and call billing endpoints or stale bookmarked billing UI.",
+    "Clear unavailable state; no attempted live payment or phantom subscription.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "COMMS-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Trigger invite/reset/scheduled report into local mail capture.",
+    "Correct template, recipient fixture, authorized content and single logical send.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "COMMS-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Submit a non-test email/number/calendar destination in isolated environment.",
+    "Egress/destination guard denies delivery before external side effect.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "COMMS-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Replay synthetic received/delivered/read/failure events out of order.",
+    "Correct contact/journey mapping and monotonic status policy; no duplicate message.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "COMMS-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Queue message, revoke consent and then release worker.",
+    "Dispatch rechecks consent and suppresses forbidden send.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "COMMS-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Simulate ringing/answered/completed/missed/corrected call callbacks.",
+    "One call record with correct timestamps, duration and attribution; corrections audited.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "COMMS-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Open call/document media from unauthorized session or workspace.",
+    "No disclosure through download, preview, transcript or AI retrieval.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "COMMS-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Simulate simultaneous booking, cancellation and timezone boundary.",
+    "No double booking where contract promises exclusivity; correct timezone rendering.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "COMMS-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Advance clock across due time and restart scheduler during delivery.",
+    "One logical scheduled report; accurate tenant/filter/time-window snapshot.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "COMMS-009",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Fail mail/messaging/calendar simulator then recover it.",
+    "Bounded retry and DLQ visibility; no false delivery indicator.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "COMMS-010",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Disable WhatsApp/calls/googleAuth/transports and invoke stale UI/API actions.",
+    "Truthful unavailable state at all layers; no background dispatch.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "JOBS-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Crash between business write and dispatch; replay relay after restart.",
+    "Committed event eventually dispatches; rolled-back business state has no event.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "JOBS-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Two workers claim same eligible job and one loses lease mid-execution.",
+    "Lease/fencing prevents concurrent logical effects; stale worker cannot commit final result.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "JOBS-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Inject 429/503 and inspect attempt intervals and Retry-After handling.",
+    "Bounded exponential/backoff behavior with jitter and correct terminal state.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "JOBS-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Inject deterministic failing job among healthy jobs.",
+    "Bounded retries/DLQ; healthy jobs progress without head-of-line deadlock.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "JOBS-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Replay DLQ job whose external outcome is known successful.",
+    "No duplicate effect; reconciliation record explains outcome.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "JOBS-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Start two schedulers and cross due-time boundary.",
+    "One logical schedule dispatch; missed tick recovery follows contract.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "JOBS-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Fill bounded queue and approach admission limits.",
+    "Explicit backpressure; no silent data loss or unlimited memory growth.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "JOBS-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Send termination while jobs are active; exceed drain timeout for one job.",
+    "Safe acknowledgment, lease release/recovery and accurate in-flight status.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "JOBS-009",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Load tenant A heavily while B sends low-rate critical work.",
+    "Per-tenant limits prevent starvation; B remains within approved latency.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "JOBS-010",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Fail audit or usage write at accepted/completed transition.",
+    "No inconsistent billing or misleading success; documented atomicity/reconciliation holds.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "CTRL-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Use actual platform roles to view/propose/approve/apply a configuration.",
+    "Only allowed role can perform each step; sensitive fields redacted.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "CTRL-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Apply same control change twice and conflicting stale-version update.",
+    "One logical change; stale conflict cannot silently overwrite active config.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "CTRL-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Disable provider/AI dispatch with queued and in-flight operations.",
+    "New dispatch stops, in-flight policy visible, audit and recovery procedure recorded.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "CTRL-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Update feature setting and inspect API/worker/frontend effective values.",
+    "Versioned config converges within bound; no split-brain capability display.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "CTRL-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Switch test provider mapping with pending jobs, then roll back.",
+    "Credentials/checkpoints/receipts remain coherent; no dropped or duplicate dispatch.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "CTRL-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Submit unknown fields, unsafe endpoints, missing dependencies and excessive limits.",
+    "Configuration rejected before activation with useful validation.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "CTRL-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Create failed drill evidence and attempt to mark it verified without results.",
+    "Gate requires matching immutable artifacts; metadata alone is not accepted.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "CTRL-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Where high-scale profile is in release scope, move tenant while old cell has pending writes.",
+    "Routing epoch/fencing blocks stale writers; otherwise feature is explicitly excluded and disabled.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "SEC-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Scan source/history/build outputs/reports for test canary secret and review dependency access.",
+    "No secrets in public assets, logs or artifacts; findings block release per policy.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "SEC-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Use safe SQL/HTML/script/template payload fixtures in every input boundary.",
+    "Parameterized persistence and safe rendering; no executed script or query privilege escalation.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "SEC-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Use controlled loopback/private-IP/metadata/DNS-rebinding/redirect fixtures against custom endpoints.",
+    "Outbound checks reject unsafe destinations across redirects and resolution changes.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "SEC-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Inject protected role/tenant/approval/plan/state fields into writable JSON bodies.",
+    "Server ignores/rejects forbidden properties and enforces business authorization.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "SEC-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Run scoped ZAP with real test login and assert protected pages were reached.",
+    "Scan coverage proves authenticated paths, not merely login page; triaged exploitable findings resolved.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "SEC-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Scan runtime plus build/dev dependencies, lockfiles, OS packages and container images.",
+    "SBOM and vulnerability triage tied to artifact digest; no unapproved critical/high risk.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "SEC-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Exercise CORS, host/forwarded headers, redirects, CSP and cache controls.",
+    "Only trusted origins/proxies accepted; private responses not cached publicly.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "SEC-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Submit bounded pathological regex, nesting, decompression and oversized requests.",
+    "Limits/timeouts fail safely; no service-wide uncontrolled CPU or memory use.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "SEC-009",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Tamper signed callbacks and replay nonce/timestamp/idempotency identity.",
+    "Authenticity, freshness and replay policy enforced before business changes.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "SEC-010",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Run untrusted-PR harness job without release/provider credentials or shared privileged agent.",
+    "No access to secrets, deployment rights, host Docker socket or trusted release workspace.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PRIV-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Record grant/change/revoke and inspect downstream processing decisions.",
+    "Purpose/version/time and enforcement evidence traceable; no retroactive fabricated consent.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PRIV-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Erase synthetic person across CRM, events, documents, search, AI and queued work.",
+    "Deletion or justified retention follows approved data map; prohibited reactivation prevented.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PRIV-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Request test-person export and attempt unauthorized alternate identifier.",
+    "Complete authorized machine-readable data; no foreign-person leakage.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PRIV-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Advance time beyond retention threshold with legal/administrative hold fixture.",
+    "Eligible data purged; approved hold respected; bounded authorized job.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PRIV-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Perform privileged changes, failed access and replay actions; attempt audit mutation.",
+    "Required audit fields present; unauthorized alteration/deletion denied.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PRIV-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Inject canary token/email into workflows and inspect logs, traces, screenshots and crash dumps.",
+    "Secrets/regulated fields redacted according to policy; useful correlation retained.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PRIV-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Restore pre-erasure backup into isolated host and replay deletion/suppression journal.",
+    "Previously erased contacts do not reappear in active processing unnoticed.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PRIV-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Attempt to read Jenkins test reports as unprivileged project user after expiry.",
+    "Sensitive evidence access/retention policy enforced; cleanup demonstrable.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "A11Y-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Run critical journeys on Chromium, Firefox and WebKit with production builds.",
+    "Equivalent business behavior; project selection proves more than one matrix smoke file.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "A11Y-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Run critical flows on actual supported Android Chrome and iOS Safari devices.",
+    "Touch, viewport, keyboard and session behavior verified; emulation not mislabeled physical-device coverage.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "A11Y-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Complete login, forms, dashboard filters, approvals and board move without pointer.",
+    "No trap; visible focus; all critical operations reachable.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "A11Y-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Read labels, errors, tables, live results and dialog transitions using supported assistive tech.",
+    "Meaningful names/roles/order and announcements for critical states.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "A11Y-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Run axe on loaded, empty, error and expanded modal/menu states.",
+    "No unresolved critical/serious applicable violations; manual requirements tracked separately.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "A11Y-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Use narrow viewport, large text and 200%-400% zoom on key pages.",
+    "Critical content/actions available without clipping or unusable two-dimensional layout.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "A11Y-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Compare approved baseline screenshots with frozen time/data/fonts and dynamic regions controlled.",
+    "Unexpected visual changes reviewed; approval cannot mask a functional/accessibility defect.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "A11Y-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Run repeated navigation/switching/streaming/reconnect with hidden-tab intervals.",
+    "No growing listeners, leaked subscriptions, stuck state or unbounded client memory.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PERF-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Use supported roles/tenants on read, write, ingestion, search and async completion mix.",
+    "Measured useful business outcomes and latency meet approved per-class budgets.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PERF-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Run chosen arrival target from separate generator; inspect dropped_iterations and generator utilization.",
+    "Actual offered rate sustained without dropped iterations or generator bottleneck hiding server overload.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PERF-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Run 1, 10, 50, 100 and approved higher concurrent-user stages with realistic think time.",
+    "Capacity envelope and saturation point measured; concurrency not confused with RPS.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PERF-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Track accepted event through durable completion under steady load.",
+    "Queue age and end-to-end completion budget pass; 202 acknowledgment alone is not success.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PERF-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Increase controlled load beyond capacity, then return to baseline.",
+    "Bounded 429/503/backpressure, no corruption; recovery time and rejected work accounted for.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PERF-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Apply burst to ingestion and workflow APIs while a second tenant reads dashboard.",
+    "No tenant starvation; queue and resource recovery within approved target.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PERF-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Run approved multi-hour workload with scheduling, report generation and token rollover.",
+    "No sustained leak, connection exhaustion, backlog growth or latent data divergence.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PERF-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Capture slow-query plans, cardinality, pool utilization and representative pagination.",
+    "No unbounded full scans/N+1 queries on critical paths; evidence matches data volume.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PERF-009",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Restart service and compare first request/cache miss/model warmup to steady state.",
+    "Documented cold-start budget and honest user status; no false readiness.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PERF-010",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Reconcile fixture counts, balances, dedupe keys and provider simulator ledger after load.",
+    "No acknowledged event loss, cross-tenant data, duplicate charge or double activation.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "DEP-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Deploy core on fresh isolated host with real PostgreSQL, API, worker and web.",
+    "Documented commands yield healthy authenticated product; optional features visibly disabled.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "DEP-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Deploy standard with declared enabled integrations and simulator destinations.",
+    "Enabled functionality works; absent specialist services fail gracefully, not with blank UI.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "DEP-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Deploy full with required object store, AI test services and admin surface.",
+    "All advertised enabled components start and pass critical paths.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "DEP-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Install core without Docker on fresh disposable Linux VM using documented systemd flow.",
+    "Actual service startup, restart, logs, permissions and reboot verified, not just unit syntax.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "DEP-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Install each claimed Docker-free higher mode with its real prerequisites.",
+    "No hidden Docker dependency; mode support is measured and any exclusion explicit.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "DEP-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Run full -> standard -> core with pending workflows/files/model references, then re-enable.",
+    "Data retained; jobs drained/paused safely; capabilities and schedules match effective mode.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "DEP-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Upgrade from representative prior schema/data and rerun migration.",
+    "Checksums/order/locks/compatibility hold; second application safe; no destructive surprise.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "DEP-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Deploy bad candidate, roll back immutable app artifact using compatible schema strategy.",
+    "Verified prior behavior returns; destructive DB downgrade is not assumed.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "DEP-009",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Exercise .env, process environment, runtime config and invalid feature dependencies.",
+    "Deterministic documented precedence and safe validation.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "DEP-010",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Compare tested and promoted SHA, image digest, frontend assets and migration manifest.",
+    "Exactly tested artifacts promoted; no rebuild/drift between qualification and release.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "DR-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Restore database/object metadata and required objects to an empty isolated host.",
+    "Authenticated critical journeys work and independent counts/checksums reconcile.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "DR-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Corrupt/truncate backup and mismatch manifest/object snapshot.",
+    "Restore fails safely before accepting corrupt data; evidence and alert retained.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "DR-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Restore with missing/wrong credential-encryption key then approved recovered key.",
+    "Explicit safe failure followed by usable credentials only with authorized key; no plaintext fallback.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "DR-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Record last durable input, failure time, recovery point and service restored time.",
+    "Observed data loss/recovery duration within approved target; no unmeasured DR claim.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "DR-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Interrupt DB connections mid-write/transaction then restore service.",
+    "No false committed success; retries safe; readiness and alerts correctly reflect outage.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "DR-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Remove optional service in supported mode and restore it.",
+    "Core remains correctly bounded or fails clearly; no silent change to unsupported behavior.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "DR-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Fill test-owned data/log volume to threshold under bounded workload.",
+    "Admission/alerts prevent corruption; recovery releases pressure and preserves accepted work.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "DR-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Ask operator not involved in implementation to install, diagnose, restore and roll back from docs.",
+    "Tasks succeed without undocumented developer intervention; gaps recorded as release defects.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UAT-001",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "New test organization connects simulator, imports history, qualifies lead and views correct report.",
+    "User completes business goal without DB edits, bypass flags or undocumented steps.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UAT-002",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Admin invites/restricts user, changes allowed setting and audits activity.",
+    "Permissions and observable business outcomes match approved scope.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UAT-003",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Analyst filters attribution, asks grounded AI question and exports source-reconciled report.",
+    "Output understandable and numerically correct with source/freshness labels.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UAT-004",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Diagnose failed sync, rotate test credential and replay eligible failure using documented UI/runbook.",
+    "Recovery safe and auditable without cross-tenant/secret access.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UAT-005",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Reconcile routes/actions/operations/jobs/connectors/migrations and claims against test IDs/evidence.",
+    "No release-scope item lacks disposition, owner, execution result or justified non-applicability.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UAT-006",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "For each blocker, rerun failed test and affected regression against final candidate SHA.",
+    "Closure requires fixed-SHA evidence and review; earlier green evidence cannot cover later code.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UAT-007",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Review all mock-only, not-run, blocked, flaky and excluded rows.",
+    "No deferred provider or model-efficacy work relabeled PASS; blocked critical path prevents sign-off.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UAT-008",
+    "Isolated run namespace; approved synthetic fixture; actual supported roles/capabilities; feature enabled unless testing disable behavior.",
+    "Assemble final manifest, test totals, exceptions, restore/load/security evidence and approvals.",
+    "QA/product/engineering/operations sign correct readiness tier; production enablement remains separate.",
+    "Run/SHA + sanitized request or UI trace + durable state/reconciliation + audit/provider ledger as applicable.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-META-01",
+    "Versioned simulator only; conversion/audience delivery and declared reporting. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Connect synthetic authorized account; try wrong-workspace/account credential and missing scope.",
+    "Only intended account binds; exact supported scopes and error classification verified.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-META-02",
+    "Versioned simulator only; conversion/audience delivery and declared reporting. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Exercise each actually supported declared operation using versioned provider simulator fixtures.",
+    "URL/method/headers/body and normalized output match approved contract; unsupported operations remain explicit.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-META-03",
+    "Versioned simulator only; conversion/audience delivery and declared reporting. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "For reads, exercise multi-page/empty/duplicate cursor; for event-only transports, replay sequenced callbacks.",
+    "Completeness, dedupe and progress correct; capabilities determine applicable test branch.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-META-04",
+    "Versioned simulator only; conversion/audience delivery and declared reporting. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Interrupt supported sync or delivery after commit; retry with same logical identity.",
+    "No lost acknowledged records or duplicate external effect; checkpoint advances only safely.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-META-05",
+    "Versioned simulator only; conversion/audience delivery and declared reporting. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Simulate 429 with Retry-After, 500, connection loss and timeout for supported operation.",
+    "Bounded retry, correct degraded status, no retry storm; permanent failure not retried forever.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-META-06",
+    "Versioned simulator only; conversion/audience delivery and declared reporting. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Expire/revoke credentials during queued work; inspect UI/logs/traces and credential rotation.",
+    "No secret disclosure; work stops or safely reauthorizes; revoked access cannot continue.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-META-07",
+    "Versioned simulator only; conversion/audience delivery and declared reporting. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Return missing/extra/wrong-type fields and partial row/event rejection.",
+    "Contract validation/quarantine and truthful partial status; no silent zero-filled success.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-META-08",
+    "Versioned simulator only; conversion/audience delivery and declared reporting. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Compare simulated source/delivery ledger to raw/canonical/CRM records and customer-visible results.",
+    "One auditable source-to-result chain; credentials-connected is not counted as data-sync qualified.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-GOOG-01",
+    "Versioned simulator only; declared conversion/audience delivery; reconcile reporting capability with runtime. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Connect synthetic authorized account; try wrong-workspace/account credential and missing scope.",
+    "Only intended account binds; exact supported scopes and error classification verified.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-GOOG-02",
+    "Versioned simulator only; declared conversion/audience delivery; reconcile reporting capability with runtime. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Exercise each actually supported declared operation using versioned provider simulator fixtures.",
+    "URL/method/headers/body and normalized output match approved contract; unsupported operations remain explicit.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-GOOG-03",
+    "Versioned simulator only; declared conversion/audience delivery; reconcile reporting capability with runtime. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "For reads, exercise multi-page/empty/duplicate cursor; for event-only transports, replay sequenced callbacks.",
+    "Completeness, dedupe and progress correct; capabilities determine applicable test branch.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-GOOG-04",
+    "Versioned simulator only; declared conversion/audience delivery; reconcile reporting capability with runtime. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Interrupt supported sync or delivery after commit; retry with same logical identity.",
+    "No lost acknowledged records or duplicate external effect; checkpoint advances only safely.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-GOOG-05",
+    "Versioned simulator only; declared conversion/audience delivery; reconcile reporting capability with runtime. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Simulate 429 with Retry-After, 500, connection loss and timeout for supported operation.",
+    "Bounded retry, correct degraded status, no retry storm; permanent failure not retried forever.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-GOOG-06",
+    "Versioned simulator only; declared conversion/audience delivery; reconcile reporting capability with runtime. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Expire/revoke credentials during queued work; inspect UI/logs/traces and credential rotation.",
+    "No secret disclosure; work stops or safely reauthorizes; revoked access cannot continue.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-GOOG-07",
+    "Versioned simulator only; declared conversion/audience delivery; reconcile reporting capability with runtime. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Return missing/extra/wrong-type fields and partial row/event rejection.",
+    "Contract validation/quarantine and truthful partial status; no silent zero-filled success.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-GOOG-08",
+    "Versioned simulator only; declared conversion/audience delivery; reconcile reporting capability with runtime. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Compare simulated source/delivery ledger to raw/canonical/CRM records and customer-visible results.",
+    "One auditable source-to-result chain; credentials-connected is not counted as data-sync qualified.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-XADS-01",
+    "Versioned simulator only; declared reporting/conversion; verify native-versus-bridge implementation. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Connect synthetic authorized account; try wrong-workspace/account credential and missing scope.",
+    "Only intended account binds; exact supported scopes and error classification verified.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-XADS-02",
+    "Versioned simulator only; declared reporting/conversion; verify native-versus-bridge implementation. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Exercise each actually supported declared operation using versioned provider simulator fixtures.",
+    "URL/method/headers/body and normalized output match approved contract; unsupported operations remain explicit.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-XADS-03",
+    "Versioned simulator only; declared reporting/conversion; verify native-versus-bridge implementation. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "For reads, exercise multi-page/empty/duplicate cursor; for event-only transports, replay sequenced callbacks.",
+    "Completeness, dedupe and progress correct; capabilities determine applicable test branch.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-XADS-04",
+    "Versioned simulator only; declared reporting/conversion; verify native-versus-bridge implementation. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Interrupt supported sync or delivery after commit; retry with same logical identity.",
+    "No lost acknowledged records or duplicate external effect; checkpoint advances only safely.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-XADS-05",
+    "Versioned simulator only; declared reporting/conversion; verify native-versus-bridge implementation. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Simulate 429 with Retry-After, 500, connection loss and timeout for supported operation.",
+    "Bounded retry, correct degraded status, no retry storm; permanent failure not retried forever.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-XADS-06",
+    "Versioned simulator only; declared reporting/conversion; verify native-versus-bridge implementation. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Expire/revoke credentials during queued work; inspect UI/logs/traces and credential rotation.",
+    "No secret disclosure; work stops or safely reauthorizes; revoked access cannot continue.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-XADS-07",
+    "Versioned simulator only; declared reporting/conversion; verify native-versus-bridge implementation. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Return missing/extra/wrong-type fields and partial row/event rejection.",
+    "Contract validation/quarantine and truthful partial status; no silent zero-filled success.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-XADS-08",
+    "Versioned simulator only; declared reporting/conversion; verify native-versus-bridge implementation. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Compare simulated source/delivery ledger to raw/canonical/CRM records and customer-visible results.",
+    "One auditable source-to-result chain; credentials-connected is not counted as data-sync qualified.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-TIK-01",
+    "Versioned simulator only; declared conversion delivery; reconcile reporting capability with runtime. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Connect synthetic authorized account; try wrong-workspace/account credential and missing scope.",
+    "Only intended account binds; exact supported scopes and error classification verified.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-TIK-02",
+    "Versioned simulator only; declared conversion delivery; reconcile reporting capability with runtime. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Exercise each actually supported declared operation using versioned provider simulator fixtures.",
+    "URL/method/headers/body and normalized output match approved contract; unsupported operations remain explicit.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-TIK-03",
+    "Versioned simulator only; declared conversion delivery; reconcile reporting capability with runtime. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "For reads, exercise multi-page/empty/duplicate cursor; for event-only transports, replay sequenced callbacks.",
+    "Completeness, dedupe and progress correct; capabilities determine applicable test branch.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-TIK-04",
+    "Versioned simulator only; declared conversion delivery; reconcile reporting capability with runtime. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Interrupt supported sync or delivery after commit; retry with same logical identity.",
+    "No lost acknowledged records or duplicate external effect; checkpoint advances only safely.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-TIK-05",
+    "Versioned simulator only; declared conversion delivery; reconcile reporting capability with runtime. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Simulate 429 with Retry-After, 500, connection loss and timeout for supported operation.",
+    "Bounded retry, correct degraded status, no retry storm; permanent failure not retried forever.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-TIK-06",
+    "Versioned simulator only; declared conversion delivery; reconcile reporting capability with runtime. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Expire/revoke credentials during queued work; inspect UI/logs/traces and credential rotation.",
+    "No secret disclosure; work stops or safely reauthorizes; revoked access cannot continue.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-TIK-07",
+    "Versioned simulator only; declared conversion delivery; reconcile reporting capability with runtime. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Return missing/extra/wrong-type fields and partial row/event rejection.",
+    "Contract validation/quarantine and truthful partial status; no silent zero-filled success.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-TIK-08",
+    "Versioned simulator only; declared conversion delivery; reconcile reporting capability with runtime. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Compare simulated source/delivery ledger to raw/canonical/CRM records and customer-visible results.",
+    "One auditable source-to-result chain; credentials-connected is not counted as data-sync qualified.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-LINK-01",
+    "Versioned simulator only; declared reporting and conversion delivery. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Connect synthetic authorized account; try wrong-workspace/account credential and missing scope.",
+    "Only intended account binds; exact supported scopes and error classification verified.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-LINK-02",
+    "Versioned simulator only; declared reporting and conversion delivery. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Exercise each actually supported declared operation using versioned provider simulator fixtures.",
+    "URL/method/headers/body and normalized output match approved contract; unsupported operations remain explicit.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-LINK-03",
+    "Versioned simulator only; declared reporting and conversion delivery. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "For reads, exercise multi-page/empty/duplicate cursor; for event-only transports, replay sequenced callbacks.",
+    "Completeness, dedupe and progress correct; capabilities determine applicable test branch.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-LINK-04",
+    "Versioned simulator only; declared reporting and conversion delivery. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Interrupt supported sync or delivery after commit; retry with same logical identity.",
+    "No lost acknowledged records or duplicate external effect; checkpoint advances only safely.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-LINK-05",
+    "Versioned simulator only; declared reporting and conversion delivery. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Simulate 429 with Retry-After, 500, connection loss and timeout for supported operation.",
+    "Bounded retry, correct degraded status, no retry storm; permanent failure not retried forever.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-LINK-06",
+    "Versioned simulator only; declared reporting and conversion delivery. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Expire/revoke credentials during queued work; inspect UI/logs/traces and credential rotation.",
+    "No secret disclosure; work stops or safely reauthorizes; revoked access cannot continue.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-LINK-07",
+    "Versioned simulator only; declared reporting and conversion delivery. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Return missing/extra/wrong-type fields and partial row/event rejection.",
+    "Contract validation/quarantine and truthful partial status; no silent zero-filled success.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-LINK-08",
+    "Versioned simulator only; declared reporting and conversion delivery. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Compare simulated source/delivery ledger to raw/canonical/CRM records and customer-visible results.",
+    "One auditable source-to-result chain; credentials-connected is not counted as data-sync qualified.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-GA4-01",
+    "Versioned simulator only; read-only reporting, property/date/dimension normalization. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Connect synthetic authorized account; try wrong-workspace/account credential and missing scope.",
+    "Only intended account binds; exact supported scopes and error classification verified.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-GA4-02",
+    "Versioned simulator only; read-only reporting, property/date/dimension normalization. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Exercise each actually supported declared operation using versioned provider simulator fixtures.",
+    "URL/method/headers/body and normalized output match approved contract; unsupported operations remain explicit.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-GA4-03",
+    "Versioned simulator only; read-only reporting, property/date/dimension normalization. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "For reads, exercise multi-page/empty/duplicate cursor; for event-only transports, replay sequenced callbacks.",
+    "Completeness, dedupe and progress correct; capabilities determine applicable test branch.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-GA4-04",
+    "Versioned simulator only; read-only reporting, property/date/dimension normalization. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Interrupt supported sync or delivery after commit; retry with same logical identity.",
+    "No lost acknowledged records or duplicate external effect; checkpoint advances only safely.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-GA4-05",
+    "Versioned simulator only; read-only reporting, property/date/dimension normalization. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Simulate 429 with Retry-After, 500, connection loss and timeout for supported operation.",
+    "Bounded retry, correct degraded status, no retry storm; permanent failure not retried forever.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-GA4-06",
+    "Versioned simulator only; read-only reporting, property/date/dimension normalization. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Expire/revoke credentials during queued work; inspect UI/logs/traces and credential rotation.",
+    "No secret disclosure; work stops or safely reauthorizes; revoked access cannot continue.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-GA4-07",
+    "Versioned simulator only; read-only reporting, property/date/dimension normalization. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Return missing/extra/wrong-type fields and partial row/event rejection.",
+    "Contract validation/quarantine and truthful partial status; no silent zero-filled success.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-GA4-08",
+    "Versioned simulator only; read-only reporting, property/date/dimension normalization. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Compare simulated source/delivery ledger to raw/canonical/CRM records and customer-visible results.",
+    "One auditable source-to-result chain; credentials-connected is not counted as data-sync qualified.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-HUB-01",
+    "Versioned simulator only; CRM entities, lifecycle mapping and declared lead writes. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Connect synthetic authorized account; try wrong-workspace/account credential and missing scope.",
+    "Only intended account binds; exact supported scopes and error classification verified.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-HUB-02",
+    "Versioned simulator only; CRM entities, lifecycle mapping and declared lead writes. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Exercise each actually supported declared operation using versioned provider simulator fixtures.",
+    "URL/method/headers/body and normalized output match approved contract; unsupported operations remain explicit.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-HUB-03",
+    "Versioned simulator only; CRM entities, lifecycle mapping and declared lead writes. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "For reads, exercise multi-page/empty/duplicate cursor; for event-only transports, replay sequenced callbacks.",
+    "Completeness, dedupe and progress correct; capabilities determine applicable test branch.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-HUB-04",
+    "Versioned simulator only; CRM entities, lifecycle mapping and declared lead writes. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Interrupt supported sync or delivery after commit; retry with same logical identity.",
+    "No lost acknowledged records or duplicate external effect; checkpoint advances only safely.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-HUB-05",
+    "Versioned simulator only; CRM entities, lifecycle mapping and declared lead writes. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Simulate 429 with Retry-After, 500, connection loss and timeout for supported operation.",
+    "Bounded retry, correct degraded status, no retry storm; permanent failure not retried forever.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-HUB-06",
+    "Versioned simulator only; CRM entities, lifecycle mapping and declared lead writes. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Expire/revoke credentials during queued work; inspect UI/logs/traces and credential rotation.",
+    "No secret disclosure; work stops or safely reauthorizes; revoked access cannot continue.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-HUB-07",
+    "Versioned simulator only; CRM entities, lifecycle mapping and declared lead writes. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Return missing/extra/wrong-type fields and partial row/event rejection.",
+    "Contract validation/quarantine and truthful partial status; no silent zero-filled success.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-HUB-08",
+    "Versioned simulator only; CRM entities, lifecycle mapping and declared lead writes. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Compare simulated source/delivery ledger to raw/canonical/CRM records and customer-visible results.",
+    "One auditable source-to-result chain; credentials-connected is not counted as data-sync qualified.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-SF-01",
+    "Versioned simulator only; CRM entities, change tracking and declared lead writes. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Connect synthetic authorized account; try wrong-workspace/account credential and missing scope.",
+    "Only intended account binds; exact supported scopes and error classification verified.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-SF-02",
+    "Versioned simulator only; CRM entities, change tracking and declared lead writes. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Exercise each actually supported declared operation using versioned provider simulator fixtures.",
+    "URL/method/headers/body and normalized output match approved contract; unsupported operations remain explicit.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-SF-03",
+    "Versioned simulator only; CRM entities, change tracking and declared lead writes. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "For reads, exercise multi-page/empty/duplicate cursor; for event-only transports, replay sequenced callbacks.",
+    "Completeness, dedupe and progress correct; capabilities determine applicable test branch.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-SF-04",
+    "Versioned simulator only; CRM entities, change tracking and declared lead writes. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Interrupt supported sync or delivery after commit; retry with same logical identity.",
+    "No lost acknowledged records or duplicate external effect; checkpoint advances only safely.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-SF-05",
+    "Versioned simulator only; CRM entities, change tracking and declared lead writes. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Simulate 429 with Retry-After, 500, connection loss and timeout for supported operation.",
+    "Bounded retry, correct degraded status, no retry storm; permanent failure not retried forever.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-SF-06",
+    "Versioned simulator only; CRM entities, change tracking and declared lead writes. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Expire/revoke credentials during queued work; inspect UI/logs/traces and credential rotation.",
+    "No secret disclosure; work stops or safely reauthorizes; revoked access cannot continue.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-SF-07",
+    "Versioned simulator only; CRM entities, change tracking and declared lead writes. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Return missing/extra/wrong-type fields and partial row/event rejection.",
+    "Contract validation/quarantine and truthful partial status; no silent zero-filled success.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-SF-08",
+    "Versioned simulator only; CRM entities, change tracking and declared lead writes. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Compare simulated source/delivery ledger to raw/canonical/CRM records and customer-visible results.",
+    "One auditable source-to-result chain; credentials-connected is not counted as data-sync qualified.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-ZOHO-01",
+    "Versioned simulator only; module mapping, regional/account handling and declared writes. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Connect synthetic authorized account; try wrong-workspace/account credential and missing scope.",
+    "Only intended account binds; exact supported scopes and error classification verified.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-ZOHO-02",
+    "Versioned simulator only; module mapping, regional/account handling and declared writes. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Exercise each actually supported declared operation using versioned provider simulator fixtures.",
+    "URL/method/headers/body and normalized output match approved contract; unsupported operations remain explicit.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-ZOHO-03",
+    "Versioned simulator only; module mapping, regional/account handling and declared writes. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "For reads, exercise multi-page/empty/duplicate cursor; for event-only transports, replay sequenced callbacks.",
+    "Completeness, dedupe and progress correct; capabilities determine applicable test branch.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-ZOHO-04",
+    "Versioned simulator only; module mapping, regional/account handling and declared writes. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Interrupt supported sync or delivery after commit; retry with same logical identity.",
+    "No lost acknowledged records or duplicate external effect; checkpoint advances only safely.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-ZOHO-05",
+    "Versioned simulator only; module mapping, regional/account handling and declared writes. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Simulate 429 with Retry-After, 500, connection loss and timeout for supported operation.",
+    "Bounded retry, correct degraded status, no retry storm; permanent failure not retried forever.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-ZOHO-06",
+    "Versioned simulator only; module mapping, regional/account handling and declared writes. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Expire/revoke credentials during queued work; inspect UI/logs/traces and credential rotation.",
+    "No secret disclosure; work stops or safely reauthorizes; revoked access cannot continue.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-ZOHO-07",
+    "Versioned simulator only; module mapping, regional/account handling and declared writes. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Return missing/extra/wrong-type fields and partial row/event rejection.",
+    "Contract validation/quarantine and truthful partial status; no silent zero-filled success.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-ZOHO-08",
+    "Versioned simulator only; module mapping, regional/account handling and declared writes. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Compare simulated source/delivery ledger to raw/canonical/CRM records and customer-visible results.",
+    "One auditable source-to-result chain; credentials-connected is not counted as data-sync qualified.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-PIN-01",
+    "Versioned simulator only; declared reporting and conversion delivery. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Connect synthetic authorized account; try wrong-workspace/account credential and missing scope.",
+    "Only intended account binds; exact supported scopes and error classification verified.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-PIN-02",
+    "Versioned simulator only; declared reporting and conversion delivery. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Exercise each actually supported declared operation using versioned provider simulator fixtures.",
+    "URL/method/headers/body and normalized output match approved contract; unsupported operations remain explicit.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-PIN-03",
+    "Versioned simulator only; declared reporting and conversion delivery. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "For reads, exercise multi-page/empty/duplicate cursor; for event-only transports, replay sequenced callbacks.",
+    "Completeness, dedupe and progress correct; capabilities determine applicable test branch.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-PIN-04",
+    "Versioned simulator only; declared reporting and conversion delivery. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Interrupt supported sync or delivery after commit; retry with same logical identity.",
+    "No lost acknowledged records or duplicate external effect; checkpoint advances only safely.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-PIN-05",
+    "Versioned simulator only; declared reporting and conversion delivery. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Simulate 429 with Retry-After, 500, connection loss and timeout for supported operation.",
+    "Bounded retry, correct degraded status, no retry storm; permanent failure not retried forever.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-PIN-06",
+    "Versioned simulator only; declared reporting and conversion delivery. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Expire/revoke credentials during queued work; inspect UI/logs/traces and credential rotation.",
+    "No secret disclosure; work stops or safely reauthorizes; revoked access cannot continue.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-PIN-07",
+    "Versioned simulator only; declared reporting and conversion delivery. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Return missing/extra/wrong-type fields and partial row/event rejection.",
+    "Contract validation/quarantine and truthful partial status; no silent zero-filled success.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-PIN-08",
+    "Versioned simulator only; declared reporting and conversion delivery. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Compare simulated source/delivery ledger to raw/canonical/CRM records and customer-visible results.",
+    "One auditable source-to-result chain; credentials-connected is not counted as data-sync qualified.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-MS-01",
+    "Versioned simulator only; declared reporting/conversion; verify native-versus-bridge implementation. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Connect synthetic authorized account; try wrong-workspace/account credential and missing scope.",
+    "Only intended account binds; exact supported scopes and error classification verified.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-MS-02",
+    "Versioned simulator only; declared reporting/conversion; verify native-versus-bridge implementation. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Exercise each actually supported declared operation using versioned provider simulator fixtures.",
+    "URL/method/headers/body and normalized output match approved contract; unsupported operations remain explicit.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-MS-03",
+    "Versioned simulator only; declared reporting/conversion; verify native-versus-bridge implementation. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "For reads, exercise multi-page/empty/duplicate cursor; for event-only transports, replay sequenced callbacks.",
+    "Completeness, dedupe and progress correct; capabilities determine applicable test branch.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-MS-04",
+    "Versioned simulator only; declared reporting/conversion; verify native-versus-bridge implementation. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Interrupt supported sync or delivery after commit; retry with same logical identity.",
+    "No lost acknowledged records or duplicate external effect; checkpoint advances only safely.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-MS-05",
+    "Versioned simulator only; declared reporting/conversion; verify native-versus-bridge implementation. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Simulate 429 with Retry-After, 500, connection loss and timeout for supported operation.",
+    "Bounded retry, correct degraded status, no retry storm; permanent failure not retried forever.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-MS-06",
+    "Versioned simulator only; declared reporting/conversion; verify native-versus-bridge implementation. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Expire/revoke credentials during queued work; inspect UI/logs/traces and credential rotation.",
+    "No secret disclosure; work stops or safely reauthorizes; revoked access cannot continue.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-MS-07",
+    "Versioned simulator only; declared reporting/conversion; verify native-versus-bridge implementation. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Return missing/extra/wrong-type fields and partial row/event rejection.",
+    "Contract validation/quarantine and truthful partial status; no silent zero-filled success.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-MS-08",
+    "Versioned simulator only; declared reporting/conversion; verify native-versus-bridge implementation. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Compare simulated source/delivery ledger to raw/canonical/CRM records and customer-visible results.",
+    "One auditable source-to-result chain; credentials-connected is not counted as data-sync qualified.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-WA-01",
+    "Versioned simulator only; message/template/status and webhook operations. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Connect synthetic authorized account; try wrong-workspace/account credential and missing scope.",
+    "Only intended account binds; exact supported scopes and error classification verified.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-WA-02",
+    "Versioned simulator only; message/template/status and webhook operations. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Exercise each actually supported declared operation using versioned provider simulator fixtures.",
+    "URL/method/headers/body and normalized output match approved contract; unsupported operations remain explicit.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-WA-03",
+    "Versioned simulator only; message/template/status and webhook operations. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "For reads, exercise multi-page/empty/duplicate cursor; for event-only transports, replay sequenced callbacks.",
+    "Completeness, dedupe and progress correct; capabilities determine applicable test branch.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-WA-04",
+    "Versioned simulator only; message/template/status and webhook operations. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Interrupt supported sync or delivery after commit; retry with same logical identity.",
+    "No lost acknowledged records or duplicate external effect; checkpoint advances only safely.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-WA-05",
+    "Versioned simulator only; message/template/status and webhook operations. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Simulate 429 with Retry-After, 500, connection loss and timeout for supported operation.",
+    "Bounded retry, correct degraded status, no retry storm; permanent failure not retried forever.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-WA-06",
+    "Versioned simulator only; message/template/status and webhook operations. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Expire/revoke credentials during queued work; inspect UI/logs/traces and credential rotation.",
+    "No secret disclosure; work stops or safely reauthorizes; revoked access cannot continue.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-WA-07",
+    "Versioned simulator only; message/template/status and webhook operations. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Return missing/extra/wrong-type fields and partial row/event rejection.",
+    "Contract validation/quarantine and truthful partial status; no silent zero-filled success.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-WA-08",
+    "Versioned simulator only; message/template/status and webhook operations. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Compare simulated source/delivery ledger to raw/canonical/CRM records and customer-visible results.",
+    "One auditable source-to-result chain; credentials-connected is not counted as data-sync qualified.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-HTTP-01",
+    "Versioned simulator only; approved endpoint verification, mapping and read synchronization. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Connect synthetic authorized account; try wrong-workspace/account credential and missing scope.",
+    "Only intended account binds; exact supported scopes and error classification verified.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-HTTP-02",
+    "Versioned simulator only; approved endpoint verification, mapping and read synchronization. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Exercise each actually supported declared operation using versioned provider simulator fixtures.",
+    "URL/method/headers/body and normalized output match approved contract; unsupported operations remain explicit.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-HTTP-03",
+    "Versioned simulator only; approved endpoint verification, mapping and read synchronization. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "For reads, exercise multi-page/empty/duplicate cursor; for event-only transports, replay sequenced callbacks.",
+    "Completeness, dedupe and progress correct; capabilities determine applicable test branch.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-HTTP-04",
+    "Versioned simulator only; approved endpoint verification, mapping and read synchronization. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Interrupt supported sync or delivery after commit; retry with same logical identity.",
+    "No lost acknowledged records or duplicate external effect; checkpoint advances only safely.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-HTTP-05",
+    "Versioned simulator only; approved endpoint verification, mapping and read synchronization. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Simulate 429 with Retry-After, 500, connection loss and timeout for supported operation.",
+    "Bounded retry, correct degraded status, no retry storm; permanent failure not retried forever.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-HTTP-06",
+    "Versioned simulator only; approved endpoint verification, mapping and read synchronization. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Expire/revoke credentials during queued work; inspect UI/logs/traces and credential rotation.",
+    "No secret disclosure; work stops or safely reauthorizes; revoked access cannot continue.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-HTTP-07",
+    "Versioned simulator only; approved endpoint verification, mapping and read synchronization. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Return missing/extra/wrong-type fields and partial row/event rejection.",
+    "Contract validation/quarantine and truthful partial status; no silent zero-filled success.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PROV-HTTP-08",
+    "Versioned simulator only; approved endpoint verification, mapping and read synchronization. Mark unsupported operation-specific subcases N/A with reason; do not invent provider features.",
+    "Compare simulated source/delivery ledger to raw/canonical/CRM records and customer-visible results.",
+    "One auditable source-to-result chain; credentials-connected is not counted as data-sync qualified.",
+    "Sanitized wire contract + simulator account/ledger + cursor/source IDs + database/UI reconciliation.",
+    "",
+    "",
+    ""
+  ]
+]

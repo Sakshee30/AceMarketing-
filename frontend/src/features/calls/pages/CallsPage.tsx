@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,CalendarDays,CheckCircle2,ChevronRight,PhoneCall,PhoneIncoming,ShieldCheck,Target,X} from 'lucide-react'
 import {callsApi} from '../data/calls.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -65,7 +65,7 @@ export default function CallsPage(){
  useDirtyWork({key:'qualification-call-draft',label:'Voice qualification draft',dirty:builder,scope:'feature'})
 
  const load=async()=>{
-  setLoading(true)
+  beginLoading(setLoading)
   try{
    const [runs,events]:any=await Promise.all([callsApi.qualification(),callsApi.events()])
    const mapped=(runs.items||[]).map((item:any)=>({id:item.id,kind:'agent',lead:item.lead,source:item.source,agent:item.agent,status:String(item.status).replace('_',' '),duration:item.duration,intent:item.intent||0,next:item.next,attempts:item.attempts,lastError:item.lastError,createdAt:item.createdAt}))

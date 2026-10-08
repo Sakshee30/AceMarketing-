@@ -19,8 +19,8 @@ export default function LiveSyncPage(){
 
  useDirtyWork({key:'live-sync-alert-draft',label:'Monitoring alert draft',dirty:alertOpen,scope:'feature'})
 
- const load=async()=>{
-  setLoading(true)
+ const load=async(background=false)=>{
+  if(!background)setLoading(true)
   try{
    const result:any=await liveSyncApi.load()
    setLive(result)
@@ -32,8 +32,8 @@ export default function LiveSyncPage(){
 
  useEffect(()=>{
   let disposed=false
-  const refresh=()=>{if(!disposed&&document.visibilityState==='visible')void load()}
-  refresh()
+  const refresh=(background=true)=>{if(!disposed&&document.visibilityState==='visible')void load(background)}
+  refresh(false)
   const interval=window.setInterval(refresh,15000)
   const onVisibility=()=>{if(document.visibilityState==='visible')refresh()}
   document.addEventListener('visibilitychange',onVisibility)
@@ -89,8 +89,8 @@ export default function LiveSyncPage(){
   </div>
 
   <div className="app-panel" aria-busy={loading?'true':undefined}>
-   <div className="panel-head"><div><h3>Recent activity</h3><p>{document.visibilityState==='visible'?'Visibility-aware refresh every 15 seconds':'Live refresh paused while this tab is hidden'}</p></div><button disabled={loading} onClick={load}>{loading?'Refreshing…':'Refresh'}</button></div>
-   {rows.length?<table><thead><tr><th>Time</th><th>Source</th><th>Event</th><th>Destination</th><th>Status</th><th>Match key</th></tr></thead><tbody>{rows.map((row:any)=><tr key={row.id}><td>{row.time?new Date(row.time).toLocaleTimeString():'—'}</td><td>{row.source}</td><td>{row.event}</td><td>{row.destination}</td><td><span className="status">{String(row.status).replaceAll('_',' ')}</span></td><td>{row.matchKey}</td></tr>)}</tbody></table>:!loading&&<div className="empty-delivery-state"><Activity/><div><b>No live activity yet</b><small>Tracked events and provider deliveries will appear here as they happen.</small></div></div>}
+   <div className="panel-head"><div><h3>Recent activity</h3><p>{document.visibilityState==='visible'?'Visibility-aware refresh every 15 seconds':'Live refresh paused while this tab is hidden'}</p></div><button disabled={loading} onClick={()=>void load()}>{loading?'Refreshing…':'Refresh'}</button></div>
+   {rows.length?<div className="workspace-table-scroll" role="region" aria-label="Recent sync activity" tabIndex={0}><table><thead><tr><th>Time</th><th>Source</th><th>Event</th><th>Destination</th><th>Status</th><th>Match key</th></tr></thead><tbody>{rows.map((row:any)=><tr key={row.id}><td>{row.time?new Date(row.time).toLocaleTimeString():'—'}</td><td>{row.source}</td><td>{row.event}</td><td>{row.destination}</td><td><span className="status">{String(row.status).replaceAll('_',' ')}</span></td><td>{row.matchKey}</td></tr>)}</tbody></table></div>:!loading&&<div className="empty-delivery-state"><Activity/><div><b>No live activity yet</b><small>Tracked events and provider deliveries will appear here as they happen.</small></div></div>}
   </div>
 
   <div className="two-col">

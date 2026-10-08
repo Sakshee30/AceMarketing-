@@ -1,0 +1,9 @@
+...................                                                      [100%]
+=============================== warnings summary ===============================
+tests/test_contracts_and_baselines.py::test_segmentation_reports_stability_diagnostics
+tests/test_contracts_and_baselines.py::test_segmentation_reports_stability_diagnostics
+  /home/aceqa/ml-venv/lib/python3.13/site-packages/sklearn/cluster/_hdbscan/hdbscan.py:722: FutureWarning: The default value of `copy` will change from False to True in 1.10. Explicitly set a value for `copy` to silence this warning.
+    warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+19 passed, 2 warnings in 2.41s

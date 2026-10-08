@@ -1,0 +1,102 @@
+{
+  "seededWorkspaces": 8,
+  "seededMemberships": 18,
+  "seededUsers": 16,
+  "addedMemberships": [
+    {
+      "fixtureUserId": "qa_ace_v1_user_000001",
+      "workspaceId": "qa_ace_v1_workspace_000002",
+      "role": "owner",
+      "reason": "Additional same-tenant QA setup grant for sample import"
+    },
+    {
+      "fixtureUserId": "qa_ace_v1_user_000009",
+      "workspaceId": "qa_ace_v1_workspace_000004",
+      "role": "owner",
+      "reason": "Additional same-tenant QA setup grant for sample import"
+    }
+  ],
+  "unmapped": [
+    {
+      "fixtureUserId": "qa_ace_v1_user_000006",
+      "persona": "approver",
+      "reason": "No exact supported role mapping approved"
+    },
+    {
+      "fixtureUserId": "qa_ace_v1_user_000007",
+      "persona": "support_operator",
+      "reason": "No exact supported role mapping approved"
+    },
+    {
+      "fixtureUserId": "qa_ace_v1_user_000005",
+      "persona": "viewer",
+      "reason": "No exact supported role mapping approved"
+    },
+    {
+      "fixtureUserId": "qa_ace_v1_user_000008",
+      "persona": "billing_operator",
+      "reason": "No exact supported role mapping approved"
+    },
+    {
+      "fixtureUserId": "qa_ace_v1_user_000014",
+      "persona": "approver",
+      "reason": "No exact supported role mapping approved"
+    },
+    {
+      "fixtureUserId": "qa_ace_v1_user_000015",
+      "persona": "support_operator",
+      "reason": "No exact supported role mapping approved"
+    },
+    {
+      "fixtureUserId": "qa_ace_v1_user_000013",
+      "persona": "viewer",
+      "reason": "No exact supported role mapping approved"
+    },
+    {
+      "fixtureUserId": "qa_ace_v1_user_000016",
+      "persona": "billing_operator",
+      "reason": "No exact supported role mapping approved"
+    },
+    {
+      "fixtureUserId": "qa_ace_v1_user_000022",
+      "persona": "approver",
+      "reason": "No exact supported role mapping approved"
+    },
+    {
+      "fixtureUserId": "qa_ace_v1_user_000023",
+      "persona": "support_operator",
+      "reason": "No exact supported role mapping approved"
+    },
+    {
+      "fixtureUserId": "qa_ace_v1_user_000021",
+      "persona": "viewer",
+      "reason": "No exact supported role mapping approved"
+    },
+    {
+      "fixtureUserId": "qa_ace_v1_user_000024",
+      "persona": "billing_operator",
+      "reason": "No exact supported role mapping approved"
+    },
+    {
+      "fixtureUserId": "qa_ace_v1_user_000030",
+      "persona": "approver",
+      "reason": "No exact supported role mapping approved"
+    },
+    {
+      "fixtureUserId": "qa_ace_v1_user_000031",
+      "persona": "support_operator",
+      "reason": "No exact supported role mapping approved"
+    },
+    {
+      "fixtureUserId": "qa_ace_v1_user_000029",
+      "persona": "viewer",
+      "reason": "No exact supported role mapping approved"
+    },
+    {
+      "fixtureUserId": "qa_ace_v1_user_000032",
+      "persona": "billing_operator",
+      "reason": "No exact supported role mapping approved"
+    }
+  ],
+  "qualification": "setup only; no onboarding or suspended-tenant claim"
+}

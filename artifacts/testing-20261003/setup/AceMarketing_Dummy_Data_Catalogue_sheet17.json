@@ -1,0 +1,146 @@
+[
+  [
+    "12 BUSINESS JOURNEY CARDS",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Fresh isolated namespace per journey. Cards are inputs and expected observations; all actual evidence fields are empty.",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Journey",
+    "Title",
+    "Fixtures",
+    "Actions",
+    "Expected",
+    "Status"
+  ],
+  [
+    "J01",
+    "First-time organization to trusted report",
+    "D8_uat/organization.json | D8_uat/leads_20.csv | D8_uat/campaign_history.json",
+    "Create organization/users; ingest campaign history via real supported services; reconcile API, database, dashboard and export.",
+    "Spend 1000 INR; 20 leads; 5 qualified; 2 customers; net revenue 2700 INR; net ROAS 2.7.",
+    "Not run"
+  ],
+  [
+    "J02",
+    "Paid click to conversion signal return",
+    "D3_golden/attribution.json | D4_integration/providers/META/response_lost_after_accept.json",
+    "Capture synthetic click; qualify lead; approve conversion; simulate response loss and retry with stable idempotency key.",
+    "One logical external effect; truthful unknown/accepted/final statuses; attribution sums to conversion value.",
+    "Not run"
+  ],
+  [
+    "J03",
+    "Consent withdrawal during queued work",
+    "D2_marketing/mutation_overlays.json | D4_integration/communications.json",
+    "Queue permitted action; revoke consent and authorization; resume dispatch.",
+    "Zero prohibited external effects; audit explains suppression.",
+    "Not run"
+  ],
+  [
+    "J04",
+    "Historical sync to incremental recovery",
+    "D4_integration/providers/HUB/source_records.json | D4_integration/providers/HUB/duplicate_page.json",
+    "Backfill pages; fail middle page; restart; replay duplicate then incremental update.",
+    "Exactly six unique source records for the supplied six-record page fixture; cursor advances atomically.",
+    "Not run"
+  ],
+  [
+    "J05",
+    "Form/rule/workflow/approval",
+    "D4_integration/workflows.json",
+    "Publish form; submit score 75; approve by separate allowed actor; crash and resume; introduce version 2.",
+    "One simulated effect; no self/foreign approval; running execution version follows approved policy.",
+    "Not run"
+  ],
+  [
+    "J06",
+    "Safe AI analysis and activation",
+    "D6_ai/evaluation_cases.json | D6_ai/corpus/qa_marketing_facts.txt",
+    "Ask grounded questions; attempt unauthorized action; apply approval and simulator-only restrictions.",
+    "Grounded numbers, correct sources, no unauthorized action or foreign-tenant data.",
+    "Not run"
+  ],
+  [
+    "J07",
+    "Subscription and quota correctness",
+    "D4_integration/billing.json",
+    "Process duplicate/out-of-order callbacks; race twelve one-unit reservations against quota ten.",
+    "Ten accepted and two rejected; at most ten reserved; one payment effect.",
+    "Not run"
+  ],
+  [
+    "J08",
+    "Collaboration under conflict",
+    "D4_integration/boards.json",
+    "Submit two version-1 moves concurrently; reconnect a stale observer; revoke membership.",
+    "One move wins, one conflicts, final version 2, no post-revocation realtime disclosure.",
+    "Not run"
+  ],
+  [
+    "J09",
+    "Document to authorized search and deletion",
+    "D5_security_files/uploads/valid/tenant_a_private.txt | D5_security_files/privacy_lifecycle.json",
+    "Upload, quarantine/process/index, search, revoke access and delete; inspect every projection.",
+    "Authorized result before revocation only; no accessible deleted/foreign content afterward.",
+    "Not run"
+  ],
+  [
+    "J10",
+    "Multi-channel lead journey",
+    "D4_integration/communications.json",
+    "Simulate WhatsApp, call, calendar and CRM status updates for one synthetic identity.",
+    "One final delivered message; 180-second call; 15:30 IST booking; no real recipients.",
+    "Not run"
+  ],
+  [
+    "J11",
+    "Security boundary journey",
+    "D1_core/authorization_cases.json | D5_security_files/uploads/valid/tenant_b_private.txt",
+    "Attempt foreign-tenant read/write/export/search/realtime/AI/admin actions through real app.",
+    "No foreign canary or mutation; do not treat a hidden UI button as authorization.",
+    "Not run"
+  ],
+  [
+    "J12",
+    "Operational recovery journey",
+    "D4_integration/deployment_recovery.json",
+    "Record acknowledgments; interrupt infrastructure; restore or restart; reconcile; qualify rollback and mode downgrade.",
+    "Acknowledged-state reconciliation, measured recovery evidence and retained business data; no invented success.",
+    "Not run"
+  ]
+]

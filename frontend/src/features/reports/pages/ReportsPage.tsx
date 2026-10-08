@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {
   Activity,BarChart3,CheckCircle2,ChevronRight,CircleDollarSign,Plus,ShieldCheck,Sparkles,Target,UsersRound
 } from 'lucide-react'
@@ -49,6 +49,7 @@ function ReportsStat({
 }
 
 export default function ReportsPage(){
+  const [lookbackMonths,setLookbackMonths]=useState(13)
   const [selected,setSelected]=useState('live')
   const [cohorts,setCohorts]=useState<any>({cohorts:[],sources:[],totals:null,eventDefinitions:null})
   const [delivery,setDelivery]=useState<any>({items:[],deliveries:[],configured:false})
@@ -58,10 +59,10 @@ export default function ReportsPage(){
   const [runState,setRunState]=useState(()=>initialMutationLifecycle<any>())
 
   const loadReports=async()=>{
-    setReportLoading(true)
+    beginLoading(setReportLoading)
     try{
       const [cohortData,deliveryData]:any=await Promise.all([
-        reportsApi.cohorts(6),
+        reportsApi.cohorts(lookbackMonths),
         reportsApi.schedules()
       ])
       setCohorts(cohortData)
@@ -85,7 +86,7 @@ export default function ReportsPage(){
     }
   }
 
-  useEffect(()=>{void loadReports()},[])
+  useEffect(()=>{void loadReports()},[lookbackMonths])
   useDevelopmentLiveRefresh(()=>loadReports())
 
   const rows=cohorts.cohorts||[]
@@ -269,9 +270,9 @@ export default function ReportsPage(){
     <div className="app-panel">
       <div className="panel-head">
         <div><h3>Cohort performance</h3><p>First-acquisition month → qualified, consultation, conversion and attributed revenue</p></div>
-        <span className="healthy">Live data</span>
+        <label>Report period <select aria-label="Report period" value={lookbackMonths} onChange={event=>setLookbackMonths(Number(event.target.value))}><option value={3}>3 months</option><option value={6}>6 months</option><option value={12}>12 calendar months</option><option value={13}>Past year + current month</option><option value={24}>24 months</option></select></label>
       </div>
-      <table>
+      <div className="workspace-table-scroll" role="region" aria-label="Cohort performance" tabIndex={0}><table>
         <thead><tr><th>Cohort</th><th>Acquired</th><th>Qualified</th><th>Consultation</th><th>Conversion</th><th>Revenue</th><th>Revenue / acquired</th></tr></thead>
         <tbody>
           {rows.length
@@ -287,7 +288,7 @@ export default function ReportsPage(){
             :<tr><td colSpan={7}>No matched cohort data yet. Tracking sessions and assisted conversion events will populate this view.</td></tr>
           }
         </tbody>
-      </table>
+      </table></div>
     </div>
 
     <div className="two-col">

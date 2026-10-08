@@ -1,0 +1,173 @@
+[
+  [
+    "DATA RECONCILIATION",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Candidate 6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00 | Evidence from isolated run 37064060695",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Measure",
+    "Unit",
+    "Expected",
+    "Observed",
+    "Comparison",
+    "Interpretation",
+    "Evidence"
+  ],
+  [
+    "D2 leads",
+    "records",
+    "10000",
+    "10000",
+    "MATCH",
+    "Actual app repository + PostgreSQL",
+    "functional-volume.json"
+  ],
+  [
+    "D2 events",
+    "records",
+    "100000",
+    "100000",
+    "MATCH",
+    "Actual app repository + PostgreSQL",
+    "functional-volume.json"
+  ],
+  [
+    "Lead replays",
+    "attempts",
+    "1000",
+    "1000",
+    "MATCH",
+    "Unique counts unchanged",
+    "functional-volume.json"
+  ],
+  [
+    "Event replays",
+    "attempts",
+    "1000",
+    "1000",
+    "MATCH",
+    "Unique counts unchanged",
+    "functional-volume.json"
+  ],
+  [
+    "Qualified leads",
+    "records",
+    "2000",
+    "2000",
+    "MATCH",
+    "Independent first-party oracle",
+    "functional-volume.json"
+  ],
+  [
+    "Customers",
+    "records",
+    "1000",
+    "1000",
+    "MATCH",
+    "Independent first-party oracle",
+    "functional-volume.json"
+  ],
+  [
+    "Gross revenue",
+    "INR major",
+    "1300300",
+    "1300300",
+    "MATCH",
+    "Explicit conversion from minor-unit input",
+    "functional-volume.json"
+  ],
+  [
+    "Refunds",
+    "INR major",
+    "20000",
+    "20000",
+    "MATCH",
+    "Explicit conversion from minor-unit input",
+    "functional-volume.json"
+  ],
+  [
+    "Net revenue",
+    "INR major",
+    "1280300",
+    "1280300",
+    "MATCH",
+    "Expected gross minus refunds",
+    "functional-volume.json"
+  ],
+  [
+    "Conversion rate",
+    "fraction",
+    "0.1",
+    "0.1",
+    "MATCH",
+    "Customers / leads; 0.1 means 10%",
+    "functional-volume.json"
+  ],
+  [
+    "Fixture files hashed",
+    "files",
+    "5",
+    "5",
+    "MATCH",
+    "Original D2 checksums, not new expected source",
+    "functional-volume.json"
+  ],
+  [
+    "Seeded app users",
+    "users",
+    "16",
+    "16",
+    "MATCH",
+    "16 remaining fixture personas unmapped",
+    "fixture-mapping.json"
+  ],
+  [
+    "Source scenarios retained",
+    "scenarios",
+    "356",
+    "356",
+    "MATCH",
+    "Retained does not mean accepted",
+    "source-case-status.json"
+  ]
+]

@@ -1,0 +1,11 @@
+{
+  "nodeKnownVulnerabilities": 0,
+  "pythonKnownVulnerabilitiesAfter": 0,
+  "pythonRawFindingsBefore": 2,
+  "pythonUniqueFindingsBefore": 1,
+  "fixedIssue": "CVE-2025-71176 in test dependency pytest 8.4.2",
+  "resolvedPytestVersion": "9.1.1",
+  "sourceRequirement": "pytest>=9.0.3,<10",
+  "primarySource": "https://pytest.org/en/stable/changelog.html#pytest-9-0-3-2026-04-07",
+  "boundary": "Known vulnerability database checks on resolved dependencies; not complete application security/privacy approval. Local application distribution is not a public third-party package."
+}

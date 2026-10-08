@@ -1,0 +1,15 @@
+test_duplicate_case_fails (__main__.GateTests.test_duplicate_case_fails) ... ok
+test_missing_case_fails (__main__.GateTests.test_missing_case_fails) ... ok
+test_modified_evidence_fails (__main__.GateTests.test_modified_evidence_fails) ... ok
+test_no_evidence_fails (__main__.GateTests.test_no_evidence_fails) ... ok
+test_partial_smoke_never_passes (__main__.GateTests.test_partial_smoke_never_passes) ... ok
+test_path_escape_fails (__main__.GateTests.test_path_escape_fails) ... ok
+test_real_complete_case_passes_case_gate_only (__main__.GateTests.test_real_complete_case_passes_case_gate_only) ... ok
+test_retry_only_flaky_fails (__main__.GateTests.test_retry_only_flaky_fails) ... ok
+test_stale_candidate_fails (__main__.GateTests.test_stale_candidate_fails) ... ok
+test_unapproved_exclusion_fails (__main__.GateTests.test_unapproved_exclusion_fails) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.006s
+
+OK

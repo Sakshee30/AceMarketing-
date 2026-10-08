@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ChevronRight,MousePointer2,Smartphone,Target,UsersRound} from 'lucide-react'
 import {behaviorApi} from '../data/behavior.api'
 import {ErrorState,LoadingState} from '../../../components/system/FrontendStates'
@@ -15,7 +15,7 @@ export default function BehaviorPage(){
  const [error,setError]=useState('')
 
  const load=async()=>{
-  setLoading(true)
+  beginLoading(setLoading)
   setError('')
   try{
    const r:any=await behaviorApi.load()

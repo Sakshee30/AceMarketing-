@@ -1,0 +1,357 @@
+{
+  "passed": false,
+  "checks": {
+    "sameGeneratorRun": true,
+    "customersKeepIncreasing": true,
+    "eventsKeepIncreasing": true,
+    "actualRequestsKeepIncreasing": true,
+    "completeFeatureSweepRepeated": false,
+    "newCustomerOutputVerified": false
+  },
+  "counterDeltas": {
+    "cycles": 1,
+    "customers": 12,
+    "events": 42,
+    "purchases": 3,
+    "requests": 442,
+    "errors": 1,
+    "jobsSucceeded": 11
+  },
+  "completedCustomerDelta": 10,
+  "fullSweepDelta": 0,
+  "featureActivityDeltas": {
+    "Overview": {
+      "successfulWrites": 0,
+      "successfulReads": 27
+    },
+    "Launchpad": {
+      "successfulWrites": 0,
+      "successfulReads": 9
+    },
+    "Boards": {
+      "successfulWrites": 3,
+      "successfulReads": 9
+    },
+    "AdSync": {
+      "successfulWrites": 0,
+      "successfulReads": 18
+    },
+    "ChatGPT Ads": {
+      "successfulWrites": 7,
+      "successfulReads": 9
+    },
+    "Funnel": {
+      "successfulWrites": 0,
+      "successfulReads": 9
+    },
+    "Leak Monitor": {
+      "successfulWrites": 7,
+      "successfulReads": 9
+    },
+    "Events": {
+      "successfulWrites": 189,
+      "successfulReads": 18
+    },
+    "Adjustments": {
+      "successfulWrites": 7,
+      "successfulReads": 9
+    },
+    "Diagnostics": {
+      "successfulWrites": 14,
+      "successfulReads": 9
+    },
+    "Match Quality": {
+      "successfulWrites": 0,
+      "successfulReads": 9
+    },
+    "Reconciliation": {
+      "successfulWrites": 7,
+      "successfulReads": 9
+    },
+    "Fraud": {
+      "successfulWrites": 7,
+      "successfulReads": 9
+    },
+    "Deep Links": {
+      "successfulWrites": 468,
+      "successfulReads": 9
+    },
+    "Sites": {
+      "successfulWrites": 9,
+      "successfulReads": 18
+    },
+    "Fingerprinting": {
+      "successfulWrites": 7,
+      "successfulReads": 18
+    },
+    "Live Sync": {
+      "successfulWrites": 0,
+      "successfulReads": 18
+    },
+    "Data Hub": {
+      "successfulWrites": 7,
+      "successfulReads": 9
+    },
+    "Customer 360": {
+      "successfulWrites": 0,
+      "successfulReads": 9
+    },
+    "Offline Attribution": {
+      "successfulWrites": 196,
+      "successfulReads": 18
+    },
+    "Matchback": {
+      "successfulWrites": 10,
+      "successfulReads": 18
+    },
+    "POS & Stores": {
+      "successfulWrites": 6,
+      "successfulReads": 9
+    },
+    "Journeys": {
+      "successfulWrites": 0,
+      "successfulReads": 9
+    },
+    "Identity": {
+      "successfulWrites": 0,
+      "successfulReads": 9
+    },
+    "Models": {
+      "successfulWrites": 9,
+      "successfulReads": 18
+    },
+    "AI Intelligence": {
+      "successfulWrites": 37,
+      "successfulReads": 198
+    },
+    "Attribution": {
+      "successfulWrites": 186,
+      "successfulReads": 18
+    },
+    "Planner": {
+      "successfulWrites": 6,
+      "successfulReads": 9
+    },
+    "Reports": {
+      "successfulWrites": 303,
+      "successfulReads": 27
+    },
+    "Grouped Performance": {
+      "successfulWrites": 6,
+      "successfulReads": 18
+    },
+    "Executive Briefs": {
+      "successfulWrites": 0,
+      "successfulReads": 18
+    },
+    "Enrich": {
+      "successfulWrites": 373,
+      "successfulReads": 9
+    },
+    "Lead Grading": {
+      "successfulWrites": 7,
+      "successfulReads": 9
+    },
+    "Behavior": {
+      "successfulWrites": 0,
+      "successfulReads": 9
+    },
+    "Feed": {
+      "successfulWrites": 13,
+      "successfulReads": 9
+    },
+    "Agents": {
+      "successfulWrites": 10,
+      "successfulReads": 18
+    },
+    "Routing": {
+      "successfulWrites": 374,
+      "successfulReads": 9
+    },
+    "Follow-ups": {
+      "successfulWrites": 377,
+      "successfulReads": 18
+    },
+    "Calls": {
+      "successfulWrites": 378,
+      "successfulReads": 18
+    },
+    "Meetings": {
+      "successfulWrites": 107,
+      "successfulReads": 18
+    },
+    "Feedback": {
+      "successfulWrites": 100,
+      "successfulReads": 9
+    },
+    "Approvals": {
+      "successfulWrites": 1,
+      "successfulReads": 9
+    },
+    "Ask Ace": {
+      "successfulWrites": 14,
+      "successfulReads": 0
+    },
+    "Integrations": {
+      "successfulWrites": 0,
+      "successfulReads": 72
+    },
+    "Data Flows": {
+      "successfulWrites": 10,
+      "successfulReads": 9
+    },
+    "Real-Time Activation": {
+      "successfulWrites": 752,
+      "successfulReads": 18
+    },
+    "Personalization": {
+      "successfulWrites": 373,
+      "successfulReads": 9
+    },
+    "Exclusions": {
+      "successfulWrites": 3,
+      "successfulReads": 9
+    },
+    "Audiences": {
+      "successfulWrites": 9,
+      "successfulReads": 18
+    },
+    "Delivery": {
+      "successfulWrites": 0,
+      "successfulReads": 27
+    },
+    "Monitoring": {
+      "successfulWrites": 3,
+      "successfulReads": 18
+    },
+    "Alerts": {
+      "successfulWrites": 0,
+      "successfulReads": 9
+    },
+    "Compliance": {
+      "successfulWrites": 410,
+      "successfulReads": 36
+    },
+    "Developers": {
+      "successfulWrites": 14,
+      "successfulReads": 36
+    },
+    "Settings": {
+      "successfulWrites": 0,
+      "successfulReads": 49
+    },
+    "Public website": {
+      "successfulWrites": 7,
+      "successfulReads": 96
+    },
+    "Forms & custom objects": {
+      "successfulWrites": 470,
+      "successfulReads": 32
+    },
+    "Policies & workflows": {
+      "successfulWrites": 27,
+      "successfulReads": 40
+    },
+    "Authentication & security": {
+      "successfulWrites": 0,
+      "successfulReads": 16
+    },
+    "Local ML pipelines": {
+      "successfulWrites": 0,
+      "successfulReads": 0
+    }
+  },
+  "latestPipelineProof": {},
+  "failures": [],
+  "blocked": [
+    {
+      "feature": "Boards",
+      "check": "Board card ingestion",
+      "detail": "Boards can be created and read; the backend has no public card-creation API."
+    },
+    {
+      "feature": "AdSync",
+      "check": "External ad-platform delivery",
+      "detail": "Google/Meta test credentials and destination IDs required; local event rules and tracking are exercised."
+    },
+    {
+      "feature": "ChatGPT Ads",
+      "check": "Send to ChatGPT Ads",
+      "detail": "Provider credentials required; local payload validation is exercised."
+    },
+    {
+      "feature": "AI Intelligence",
+      "check": "Hosted AI routes other than the analyst (reviewer, extraction, embeddings, reranking, transcription, live voice, creative image)",
+      "detail": "Anthropic, Google and Voyage API keys are required; the analyst and local ML routes are exercised."
+    },
+    {
+      "feature": "Reports",
+      "check": "Scheduled report e-mail",
+      "detail": "SMTP test credentials required; report reads and schedules are exercised."
+    },
+    {
+      "feature": "Executive Briefs",
+      "check": "Brief e-mail delivery",
+      "detail": "SMTP test credentials required."
+    },
+    {
+      "feature": "Enrich",
+      "check": "CRM writeback delivery",
+      "detail": "Connected CRM required; the writeback request is queued and reported, not delivered."
+    },
+    {
+      "feature": "Calls",
+      "check": "Outbound and live voice calls",
+      "detail": "Telephony/voice provider credentials required; signed inbound call webhooks are exercised."
+    },
+    {
+      "feature": "Meetings",
+      "check": "Calendar synchronisation",
+      "detail": "Calendar provider credentials required; local meeting records are exercised."
+    },
+    {
+      "feature": "Integrations",
+      "check": "OAuth connector connections",
+      "detail": "Real provider OAuth apps and test accounts required."
+    },
+    {
+      "feature": "Exclusions",
+      "check": "Exclusion sync to ad platforms",
+      "detail": "Connected Google/Meta account required; local exclusion audiences are created."
+    },
+    {
+      "feature": "Audiences",
+      "check": "Audience sync to ad platforms",
+      "detail": "Connected Google/Meta account required; local materialization is exercised."
+    },
+    {
+      "feature": "Delivery",
+      "check": "Signal dispatch to destinations",
+      "detail": "Connected ad/CRM destination required; delivery queue reads are exercised."
+    },
+    {
+      "feature": "Settings",
+      "check": "Billing checkout and portal",
+      "detail": "Stripe test credentials and signed webhooks required; usage and subscription reads are exercised."
+    },
+    {
+      "feature": "Forms & custom objects",
+      "check": "File upload and document extraction",
+      "detail": "Object-store credentials and scanner required."
+    },
+    {
+      "feature": "Policies & workflows",
+      "check": "Workflow step processing",
+      "detail": "Publish/start/cancel are exercised; the worker does not advance durable workflow steps."
+    },
+    {
+      "feature": "Local ML pipelines",
+      "check": "marketing_mix",
+      "detail": "Optional dependency meridian is not installed in this service profile."
+    }
+  ],
+  "startedAt": "2026-10-07T21:01:43.357Z",
+  "finishedAt": "2026-10-07T21:11:58.949Z",
+  "checkedAt": "2026-10-07T21:11:59.674752+00:00",
+  "runId": "year_48caa5f9a0ad"
+}

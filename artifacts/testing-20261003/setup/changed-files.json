@@ -1,0 +1,16 @@
+[
+    ".gitignore",
+    "backend/src/connector-ingestion.mjs",
+    "backend/tests/connector-pagination.test.mjs",
+    "backend/tests/functional-volume.test.mjs",
+    "frontend/src/customer-app/CustomerWorkspace.tsx",
+    "ml-service/pyproject.toml",
+    "qa/IMPLEMENTATION.md",
+    "qa/materialize-functional.py",
+    "qa/restore-api.mjs",
+    "qa/run.py",
+    "qa/write_case_status.py",
+    "qa/browser/identity.spec.ts",
+    "qa/tests/full-ingress.test.mjs",
+    "qa/summarize-local.py"
+]

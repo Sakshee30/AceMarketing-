@@ -1,0 +1,68 @@
+{
+  "feature": "Lead Grading",
+  "utc": "2026-10-03T16:01:56.963007+00:00",
+  "browserChecks": {
+    "passed": 18,
+    "failed": 0,
+    "skipped": 0,
+    "engines": [
+      "Chromium",
+      "Firefox",
+      "WebKit"
+    ]
+  },
+  "sourceLeads": 10000,
+  "authenticatedReplays": 1000,
+  "workspaceCounts": {
+    "qa_ace_v1_workspace_000001": 2500,
+    "qa_ace_v1_workspace_000002": 2500,
+    "qa_ace_v1_workspace_000003": 2500,
+    "qa_ace_v1_workspace_000004": 2500
+  },
+  "pagesPerWorkspace": 25,
+  "sourceValidation": {
+    "source": "supplied AceMarketing_Dummy_Data_v1 D2_marketing",
+    "files": {
+      "D2_marketing/leads.csv": "7f2ec6eef33d8730be042a4dc0936f1b5a169fb9e1461269bd35fe98ef52922a",
+      "D2_marketing/events.ndjson": "4065b68dbeca295d65f6b0e1f552a489d7c4b4aab6d93e26358daeaac44c34c8",
+      "D2_marketing/campaigns.csv": "7f5488d0e9dcd813b67d37859441e0ad50ab95f2f025b5bb35ede7f2a639dcce",
+      "D2_marketing/campaign_daily_stats.csv": "583d3b65b68b1cf57c79b34df392a7e4774b96ae824eab5138abfdb2c8eb7682",
+      "D2_marketing/expected_reconciliation.json": "6afd287fb58a22f5c3a1e839bfd28261209af306c76907cd5d12c8da32f72979"
+    },
+    "validated": true
+  },
+  "sourceFilesSha256": {
+    "backend/src/index.mjs": "38b50544ebc32e51b32f71068577fd6b29af93d7a6833d4b442e366ccaaab84c",
+    "backend/src/lead-ops.mjs": "1413e5486e6c203e29422b7ee820d171d79c60fa02f85aad5150ad3fc8d7748e",
+    "frontend/src/lib/api.ts": "76ce584a2a544a08a416e971192dc6a9d59f22e3f074ecd9631108689540fccd",
+    "frontend/src/auth/LoginPage.tsx": "6bd71be1aed7aeb1fb7979b008f0fa7d7f8f8bfdab7e7e0923da405516512b32",
+    "frontend/src/features/lead-grading/data/lead-grading.api.ts": "d3f4d735539e7b4bc6b5202fa13cda6f2cf5de05560efa4b084272a70fb935b9",
+    "frontend/src/features/lead-grading/pages/LeadGradingPage.tsx": "a9e6c150522222e7d84e5d206b6d341ac6eb7aa525dab92cac34806a2cd29f97",
+    "frontend/src/ace-platform.css": "debbbb5a77b6231fe5b1a8590a848f275696909cca4132af38cb0a94cee9de69",
+    "qa/demo-browser/lead-visibility.spec.ts": "ac97c5cb5e1be0890060003325367abe2e2f5352b95123e847bf410e25d2635f",
+    "qa/demo-browser/lead-demo-login.spec.ts": "c8c3949d292772d6d9857a4f49f9b7c9f8c6698bf72efcbb36e998392c0d0aeb",
+    "qa/playwright.demo.config.ts": "5f8f4b76af6e6a571c04f89141e2a2a8b37cec3f3bbe877bd302ddf2de9f3504",
+    "qa/demo-leads.py": "ac786c33e0d71a47f627e52e7900c908903868f2bed009aa49ed2bfee5049e91",
+    "qa/lead_demo_launcher.py": "ab127d76d9e6a74c33cdf805931792e42c21a5626683b9c73f77320fb380c006"
+  },
+  "demoUrl": "http://localhost:4173/demo-leads.html",
+  "verified": [
+    "all 10000 source IDs and displayed names across all pages in each engine",
+    "search and selected lead ID, campaign and stage",
+    "persisted grade override and activation on a lead beyond the old read limit",
+    "refresh and empty search",
+    "launcher for all four workspaces",
+    "normal login within an explicitly selected workspace",
+    "real authenticated HTTP import and independent persisted field reconciliation",
+    "frontend typecheck and production build"
+  ],
+  "productionQualified": false,
+  "limitations": [
+    "one feature only; full acceptance plan remains incomplete",
+    "initial scoring inputs are CRM-stage-based; no rich behavioral data or AI efficacy proof",
+    "created routing operation does not prove provider delivery",
+    "concurrent updates, sustained load, full permission matrix and recovery not qualified",
+    "normal login requires a selected workspace; fresh workspace discovery remains outside this check",
+    "local Linux PostgreSQL 18.6 demo, not the planned PostgreSQL 16 deployment matrix"
+  ]
+}

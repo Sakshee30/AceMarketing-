@@ -1,0 +1,116 @@
+[
+  [
+    "GOLDEN ORACLE  |  INDEPENDENT ARITHMETIC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Original plan values are major INR units. Input values are synthetic. Formulas below derive expected results; application observations remain blank.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Input / output",
+    "Value",
+    "Unit / interpretation",
+    "Source"
+  ],
+  [
+    "Spend",
+    "1000",
+    "INR major",
+    "Source plan golden fixture"
+  ],
+  [
+    "Impressions",
+    "1000",
+    "Count",
+    "Source plan golden fixture"
+  ],
+  [
+    "Clicks",
+    "100",
+    "Count",
+    "Source plan golden fixture"
+  ],
+  [
+    "Leads",
+    "20",
+    "Distinct leads",
+    "Source plan golden fixture"
+  ],
+  [
+    "Qualified leads",
+    "5",
+    "Distinct qualified leads",
+    "Source plan golden fixture"
+  ],
+  [
+    "Customers",
+    "2",
+    "Distinct customers",
+    "Source plan golden fixture"
+  ],
+  [
+    "Gross revenue",
+    "3000",
+    "INR major",
+    "Source plan golden fixture"
+  ],
+  [
+    "Refunds",
+    "300",
+    "INR major",
+    "Source plan golden fixture"
+  ],
+  [
+    "Net revenue",
+    "2700",
+    "INR major",
+    "Gross revenue less refunds"
+  ],
+  [
+    "Customer/lead conversion",
+    "0.1",
+    "Fraction; displayed as percent",
+    "Customers divided by leads"
+  ],
+  [
+    "Cost per lead",
+    "50",
+    "INR major",
+    "Spend divided by leads"
+  ],
+  [
+    "Cost per qualified lead",
+    "200",
+    "INR major",
+    "Spend divided by qualified leads"
+  ],
+  [
+    "Net-revenue ROAS",
+    "2.7",
+    "Dimensionless ratio",
+    "Net revenue divided by spend"
+  ]
+]

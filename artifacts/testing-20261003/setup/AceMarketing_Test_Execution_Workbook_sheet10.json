@@ -1,0 +1,176 @@
+[
+  [
+    "SOURCES",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Repository references are pinned to the reviewed commit. Source presence is not execution evidence. External references are official documentation consulted on 2 October 2026.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Source ID",
+    "Source title",
+    "URL",
+    "Read scope / limitation"
+  ],
+  [
+    "S01",
+    "Frozen repository baseline",
+    "https://github.com/Sakshee30/AceMarketing-/commit/a82f24a8e762b6a60e0c13bcb15347daa78f1b49",
+    "main head inspected 2 October 2026; commit dated 1 October 2026 UTC."
+  ],
+  [
+    "S02",
+    "CI run 2940",
+    "https://github.com/Sakshee30/AceMarketing-/actions/runs/36919845892",
+    "Completed failure. Build job stopped at systemd verification; subsequent test/build steps skipped."
+  ],
+  [
+    "S03",
+    "CI workflow",
+    "https://github.com/Sakshee30/AceMarketing-/blob/a82f24a8e762b6a60e0c13bcb15347daa78f1b49/.github/workflows/ci.yml",
+    "Read lines 1-180; Node 20, PostgreSQL 16, AUTH_REQUIRED=false, build and smoke stages."
+  ],
+  [
+    "S04",
+    "Package scripts",
+    "https://github.com/Sakshee30/AceMarketing-/blob/a82f24a8e762b6a60e0c13bcb15347daa78f1b49/package.json",
+    "Scripts inspected; explicit Node test suites, browser suites, deployment, AI, backup and restore entrypoints."
+  ],
+  [
+    "S05",
+    "Product README",
+    "https://github.com/Sakshee30/AceMarketing-/blob/a82f24a8e762b6a60e0c13bcb15347daa78f1b49/README.md",
+    "Read lines 1-190. Product description and legacy demo section; not a source of verified completion."
+  ],
+  [
+    "S06",
+    "Platform module registry",
+    "https://github.com/Sakshee30/AceMarketing-/blob/a82f24a8e762b6a60e0c13bcb15347daa78f1b49/backend/src/platform/module-registry.mjs",
+    "Read lines 1-330; declared modules, capabilities, contracts and owners; declarations are not execution proof."
+  ],
+  [
+    "S07",
+    "Connector registry",
+    "https://github.com/Sakshee30/AceMarketing-/blob/a82f24a8e762b6a60e0c13bcb15347daa78f1b49/backend/src/platform/connector-registry.mjs",
+    "Read lines 1-200; 13 connector manifests. Operations must be reconciled with actual runtime handlers."
+  ],
+  [
+    "S08",
+    "Connector ingestion",
+    "https://github.com/Sakshee30/AceMarketing-/blob/a82f24a8e762b6a60e0c13bcb15347daa78f1b49/backend/src/connector-ingestion.mjs",
+    "Read lines 1-210; raw/canonical persistence. Literal backslash-n separators in imports; independently decoded fetched base64 excerpt and syntax-checked first four physical lines."
+  ],
+  [
+    "S09",
+    "Deployment modes",
+    "https://github.com/Sakshee30/AceMarketing-/blob/a82f24a8e762b6a60e0c13bcb15347daa78f1b49/backend/src/platform/deployment-mode.mjs",
+    "Complete mode definitions: core, standard, full; environment overrides."
+  ],
+  [
+    "S10",
+    "Default Playwright configuration",
+    "https://github.com/Sakshee30/AceMarketing-/blob/a82f24a8e762b6a60e0c13bcb15347daa78f1b49/playwright.config.ts",
+    "Chromium desktop/mobile projects; CI retries and HTML report; dev frontend webServer."
+  ],
+  [
+    "S11",
+    "Browser matrix configuration",
+    "https://github.com/Sakshee30/AceMarketing-/blob/a82f24a8e762b6a60e0c13bcb15347daa78f1b49/playwright.matrix.config.ts",
+    "Chromium/Firefox/WebKit/mobile projects, restricted to frontend-matrix.spec.ts."
+  ],
+  [
+    "S12",
+    "ML workflow",
+    "https://github.com/Sakshee30/AceMarketing-/blob/a82f24a8e762b6a60e0c13bcb15347daa78f1b49/.github/workflows/ml-ci.yml",
+    "Python 3.12, Ruff, mypy, compileall, pytest and ML container build; path-filtered triggers."
+  ],
+  [
+    "S13",
+    "Capacity qualification workflow",
+    "https://github.com/Sakshee30/AceMarketing-/blob/a82f24a8e762b6a60e0c13bcb15347daa78f1b49/.github/workflows/qualification.yml",
+    "Manual isolated environment; default target 4,000 offered requests/second; a configuration, not measured capacity."
+  ],
+  [
+    "S14",
+    "Load workload",
+    "https://github.com/Sakshee30/AceMarketing-/blob/a82f24a8e762b6a60e0c13bcb15347daa78f1b49/tests/load/qualification.js",
+    "70/20/5/5 request mix; 2xx acceptance checks; no login setup or async completion verification in the inspected script."
+  ],
+  [
+    "S15",
+    "Marketing metric catalogue",
+    "https://github.com/Sakshee30/AceMarketing-/blob/a82f24a8e762b6a60e0c13bcb15347daa78f1b49/backend/src/metric-catalog.mjs",
+    "Read lines 1-205; [start,end), null zero denominators, explicit currency policy, net-revenue ROAS in calculateMetricSet."
+  ],
+  [
+    "S16",
+    "Jenkins pipeline documentation",
+    "https://www.jenkins.io/doc/book/pipeline/jenkinsfile/",
+    "Pipeline-as-code and test/credential handling reference."
+  ],
+  [
+    "S17",
+    "Playwright best practices",
+    "https://playwright.dev/docs/best-practices",
+    "Isolated tests; controlled third-party dependencies."
+  ],
+  [
+    "S18",
+    "OWASP ASVS",
+    "https://owasp.org/projects/asvs",
+    "Security requirements reference; use ASVS 5.0.0 Level 2 as the proposed mapping baseline."
+  ],
+  [
+    "S19",
+    "PostgreSQL row-level security",
+    "https://www.postgresql.org/docs/17/ddl-rowsecurity.html",
+    "Superusers/BYPASSRLS and normally table owners bypass row security; role-sensitive testing is essential."
+  ],
+  [
+    "S20",
+    "k6 thresholds",
+    "https://grafana.com/docs/k6/latest/using-k6/thresholds/",
+    "Pass/fail thresholds; use business metrics and dropped-iteration criteria, not status checks alone."
+  ],
+  [
+    "S21",
+    "Accessibility testing",
+    "https://playwright.dev/docs/accessibility-testing",
+    "Automated scans need manual accessibility and inclusive user testing."
+  ],
+  [
+    "S22",
+    "Node supported release schedule",
+    "https://github.com/nodejs/Release",
+    "At review, Node 24 is Active LTS, Node 22 Maintenance LTS; pin an approved supported patch."
+  ],
+  [
+    "S23",
+    "Node end-of-life reference",
+    "https://nodejs.org/en/about/eol",
+    "Node 20 is listed as EOL at the review date."
+  ],
+  [
+    "S24",
+    "ZAP automation framework",
+    "https://www.zaproxy.org/docs/automate/automation-framework/",
+    "Authenticated scoped scanning and job tests."
+  ]
+]

@@ -1,0 +1,151 @@
+EXECUTION REPORT  /  3 OCTOBER 2026
+Testing implemented.
+Evidence recorded.
+AceMarketing pre-live qualification
+Decision: continue qualification
+695 supporting automated checks passed on the exact candidate, with 0 failures/errors and 0 skips in the collected suites. This does not complete the 356-scenario plan or certify a perfect application.
+Control
+Recorded state
+QA branch
+qa/prelive-qualification-20261003
+Tested candidate
+6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00
+Actual executor
+GitHub Actions; isolated Linux / PostgreSQL / browser engines
+Main / production
+Main unchanged; no live provider activity or deployment
+Full release gate
+BLOCKED — source acceptance, remaining tests and sign-off incomplete
+What changed in this pass
+Implemented bounded provider transport and pagination safeguards; added 25 transport, 11 connector orchestration and five full-volume integration checks. Reproduced the supplied functional data bytes and exercised the real lead/event data layer. Retested the earlier QA foundation and repaired evidence-archive handling.
+Read this report with the execution workbook and raw reports. Supporting test cases, stage checks and broad acceptance scenarios are separate measurements.
+https://github.com/Sakshee30/AceMarketing-/actions/runs/37064060695
+https://github.com/Sakshee30/AceMarketing-/pull/13
+1. Actual executed results
+Suite
+Tests
+Pass
+Fail / skip
+Native Node regression
+325
+325
+0 / 0
+Independent oracles
+38
+38
+0 / 0
+Authenticated API
+108
+108
+0 / 0
+Production browser
+195
+195
+0 / 0
+Release-gate self-tests
+10
+10
+0 / 0
+ML service
+19
+19
+0 / 0
+Total: 695 test cases. The runner also recorded 23 separate stages; stage summaries are not added to the testcase total.
+Native and oracle checks
+Native tests include units, controlled mocks and real data-layer tests. Independent oracles validate known values and boundaries. None automatically grants broad source-scenario acceptance.
+API and browser meaning
+API cases include read-route smoke checks and selected real business writes/readbacks. Browser cases repeat route/render and authentication checks across Chromium, Firefox and WebKit; they are not 195 unique full business journeys.
+Build, database and worker
+Recursive syntax checks, frontend typecheck, four production bundles, migrations and repeat migrations, real authenticated API startup and worker checks were run. Business completion is observed in API evidence rather than inferred from HTTP 202.
+ML and dependency checks
+The separate candidate-specific audit and ML reports are attached. ML tests cover synthetic/service mechanics, not trained-model marketing accuracy. Vulnerability scans are limited to their scanner/database scope.
+Evidence: prelive/*.junit.xml, prelive/execution-summary.json, ml/tests.junit.xml, ml/static-summary.json, audit/all.json and audit/runtime.json.
+2. Supplied data exercised
+Check
+Actual result
+Boundary
+Original fixture files
+Five original SHA-256 values match
+Same fixed seed/history and source bytes
+Lead records
+10,000 imported; 1,000 replayed
+Actual repository functions + PostgreSQL
+Tracking events
+100,000 imported; 1,000 replayed
+Unique counts unchanged after replay
+Workspace totals
+2,500 leads / 25,000 events each
+Four populated workspaces; empty scope tested
+HTTP business subset
+100 supplied leads + replay
+Separate actual API lane
+Provider daily and D7
+Not app-qualified in this run
+No full campaign/daily or million-event claim
+Independent numerical reconciliation
+First-party measure
+Expected / actual (major INR)
+Gross revenue
+1,300,300
+Refunds
+20,000
+Net revenue
+1,280,300
+Leads / qualified / customers
+10,000 / 2,000 / 1,000
+Customer-to-lead conversion
+10%
+ROAS in this volume profile
+Null — provider spend was not imported
+Bulk monetary fixtures use integer minor INR units. The adapter converts explicitly for metric calculation. Provider daily aggregates and first-party events remain separate source series. The small golden oracle separately checks INR 2,700 net revenue and ROAS 2.7.
+Data-layer integration is not full-volume HTTP/browser load qualification, restricted-role proof or a production capacity claim. See functional-volume.json for actual assertions and recorded timings.
+3. Changes and verified safeguards
+Provider transport
+Enforces an explicit HTTPS origin allowlist; rejects URL credentials and cross-origin redirects; bounds redirects, bytes and whole-request/body time. Malformed JSON no longer becomes a successful empty report. HTTP errors retain status and retry metadata without raw provider bodies.
+Pagination and recovery
+Meta repeated cursors and page-cap truncation fail instead of advancing a checkpoint. A page-two failure is tested against real PostgreSQL, then retried to completion. Valid empty data is distinguished from malformed envelopes. Google Ads and GA4 envelope checks were added.
+Regression coverage
+25 transport checks, 11 actual connector-orchestrator/database cases with only external fetch simulated, and five full-functional data-layer cases are implemented and included in discovery. They are not all 13 providers’ complete wire-contract qualification.
+Existing QA repairs retained
+The branch also contains earlier parser, token, AI-stream, event-validation, tenant-workspace visibility, new-production-workspace demo-state, reconciliation and CI executable-path fixes. These were retained and regression-tested; pre-existing persisted records were not globally rewritten.
+Workflow and artifact integrity
+Preparation is read-only and does not rewrite source. An earlier one-time source-patch attempt failed before testing because of workflow permissions; it was corrected without extending application-test privileges. The final upload retains browser metadata covered by the checksum manifest.
+After download, all 45 pre-live checksum entries were present and matched. The application, audit and ML artifacts record the same exact candidate.
+4. What still blocks completion
+OPEN-01 | Known UI defect
+CustomerWorkspace.tsx still hard-codes sidebar user name/owner label, example workspace labels and locale values. Page rendering is not proof these values are correct.
+OPEN-02 | Scope and acceptance
+356 source scenarios remain unsigned / scope_complete=false. Supporting checks do not constitute their complete acceptance criteria.
+OPEN-03 | Persona mappings
+16 users seeded from 32; viewer, approver, support_operator and billing_operator have no approved exact role mapping.
+OPEN-04 | Full data and scale paths
+10000 leads/100000 events passed data-layer integration. Full campaign/provider-daily import and all-record UI/API ingress remain incomplete; D7 million-event qualification not run.
+OPEN-05 | Provider qualification
+Selected Meta/Google/GA4 orchestration cases and bounded generic transport pass with external fetch simulated. All 13 native wire contracts, OAuth/callbacks and account behavior are not qualified.
+OPEN-06 | Security, privacy and files
+Selected auth/isolation checks and npm audit are not full security approval. Full 23-document lifecycle, search/erasure, privacy and dynamic scans not executed.
+OPEN-07 | Real AI and human testing
+Synthetic ML/service tests and browser engines do not establish live-model quality, screen-reader usability, physical device coverage or human UAT.
+OPEN-08 | Deployment and disaster recovery
+Systemd configuration and same-cluster PostgreSQL restore smoke passed. All Docker/native modes, fresh-host/object/key restoration and measured RPO/RTO remain unqualified.
+The known hard-coded sidebar identity/workspace/locale issue must be corrected and semantically tested before UAT. A green rendering check does not verify that a displayed role or identity is truthful.
+All 356 source IDs remain in the ledger with incomplete acceptance; evidence is linked as supporting only. The release gate remains blocked rather than silently approving unexecuted scope.
+5. Reproduction and handoff
+Use a trusted disposable non-root Linux agent with the approved Node v24.21.0 runtime, Python 3, PostgreSQL 16 server tools, Playwright system libraries and scoped permission for the network-namespace launcher. Never provide a shared production target or live provider credentials.
+npm ci
+npx playwright install --with-deps chromium firefox webkit
+bash qa/run-isolated.sh
+The launcher clears inherited application credentials, creates a private loopback-only namespace and disposable database cluster, runs checks, captures sanitized reports and removes run-owned temporary resources.
+Jenkins boundary
+qa/Jenkinsfile is implemented and calls the same isolated runner. No Jenkins server run occurred in this execution. Configure its trusted agent prerequisites and run the release-candidate mode only when complete source-case evidence is available; it intentionally blocks today.
+Recovery boundary
+The restore check matched 109 public tables and recorded sequences within a separate database on the same disposable cluster, then authenticated to the restored API. Empty tables are included. Fresh-host, object/key restore, all deployment modes and RPO/RTO remain unqualified.
+Evidence package
+The workbook lists every collected testcase, the stage results, original source-scope status and remaining obligations. The package includes immutable tested-source archive, raw JUnit/logs/readbacks, fixture source hashes, dependency/ML evidence and the complete Markdown report.
+Sources and review location
+https://github.com/Sakshee30/AceMarketing-/actions/runs/37064060695
+https://github.com/Sakshee30/AceMarketing-/pull/13
+Candidate: 6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00
+Supplied basis: Master Test Plan, Execution Workbook, Dummy Data Handbook/package.
+Primary evidence: candidate-specific JUnit and JSON files in evidence/.
+Decision: supporting regression passed; full acceptance, provider qualification and production enablement remain blocked.

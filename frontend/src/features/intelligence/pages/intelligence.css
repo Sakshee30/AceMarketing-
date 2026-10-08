@@ -5,3 +5,4 @@
 .intel-policy-row input[type="checkbox"]{width:auto}
 @media(max-width:760px){.intel-policy-row{grid-template-columns:1fr 1fr}.intel-policy-row button{grid-column:1/-1}}
 @media(max-width:480px){.intel-policy-row{grid-template-columns:1fr}}
+.intel-answer{margin-top:16px;border:1px solid rgba(58,31,82,.16);border-radius:12px;background:#fff;padding:14px 16px}.intel-answer-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline;margin-bottom:8px}.intel-answer-head small{color:#6b6478;overflow-wrap:anywhere}.intel-answer-body{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55;font-size:14px;max-height:520px;overflow:auto}.intel-answer.pending{background:#f6f3fb}.intel-answer.error{border-color:#c0392b;color:#8c2318}.intel-answer p{margin:4px 0 0}

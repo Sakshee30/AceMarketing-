@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,CheckCircle2,ChevronRight,MessageSquareText,Network,PhoneOutgoing,Plus,ShieldCheck,Target,X} from 'lucide-react'
 import {feedbackApi} from '../data/feedback.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -33,7 +33,7 @@ export default function FeedbackPage(){
   useDirtyWork({key:'feedback-request-draft',label:'Feedback request draft',dirty:requestOpen,scope:'feature'})
 
   const load=async()=>{
-    setLoading(true)
+    beginLoading(setLoading)
     setLoadError('')
     try{
       const response:any=await feedbackApi.load()

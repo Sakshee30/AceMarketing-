@@ -1,0 +1,462 @@
+{
+ "generatedAt": "2026-10-07T07:45:06.379Z",
+ "app": "http://127.0.0.1:5173",
+ "features": {
+  "Public website": {
+   "ok": true,
+   "detail": "Rendered \"Make paid media learn\nfrom real outcomes, not\nsurface-level \" · 6 API calls OK · 7978 characters",
+   "heading": "Make paid media learn\nfrom real outcomes, not\nsurface-level clicks.",
+   "apiCalls": 6,
+   "textLength": 7978,
+   "screenshot": "screens/public-website.png"
+  },
+  "Authentication & security": {
+   "ok": true,
+   "detail": "Rendered \"Acquisition command center\" · 14 API calls OK · 1926 characters",
+   "heading": "Acquisition command center",
+   "apiCalls": 14,
+   "textLength": 1926,
+   "screenshot": "screens/authentication-security.png"
+  },
+  "Overview": {
+   "ok": true,
+   "detail": "Rendered \"Acquisition command center\" · 0 API calls OK · 1926 characters",
+   "heading": "Acquisition command center",
+   "apiCalls": 0,
+   "textLength": 1926,
+   "screenshot": "screens/overview.png"
+  },
+  "Launchpad": {
+   "ok": true,
+   "detail": "Rendered \"Launchpad\" · 1 API calls OK · 644 characters",
+   "heading": "Launchpad",
+   "apiCalls": 1,
+   "textLength": 644,
+   "screenshot": "screens/launchpad.png"
+  },
+  "Boards": {
+   "ok": true,
+   "detail": "Rendered \"Boards\" · 2 API calls OK · 359 characters",
+   "heading": "Boards",
+   "apiCalls": 2,
+   "textLength": 359,
+   "screenshot": "screens/boards.png"
+  },
+  "AdSync": {
+   "ok": true,
+   "detail": "Rendered \"Server-side signal activation\" · 4 API calls OK · 1795 characters",
+   "heading": "Server-side signal activation",
+   "apiCalls": 4,
+   "textLength": 1795,
+   "screenshot": "screens/adsync.png"
+  },
+  "ChatGPT Ads": {
+   "ok": true,
+   "detail": "Rendered \"ChatGPT Ads conversion measurement\" · 2 API calls OK · 2474 characters",
+   "heading": "ChatGPT Ads conversion measurement",
+   "apiCalls": 2,
+   "textLength": 2474,
+   "screenshot": "screens/chatgpt-ads.png"
+  },
+  "Funnel": {
+   "ok": true,
+   "detail": "Rendered \"Channel, account & campaign funnel\" · 2 API calls OK · 7575 characters",
+   "heading": "Channel, account & campaign funnel",
+   "apiCalls": 2,
+   "textLength": 7575,
+   "screenshot": "screens/funnel.png"
+  },
+  "Leak Monitor": {
+   "ok": true,
+   "detail": "Rendered \"Funnel leak monitor\" · 2 API calls OK · 45534 characters",
+   "heading": "Funnel leak monitor",
+   "apiCalls": 2,
+   "textLength": 45534,
+   "screenshot": "screens/leak-monitor.png"
+  },
+  "Events": {
+   "ok": true,
+   "detail": "Rendered \"Conversion event manager\" · 2 API calls OK · 4001 characters",
+   "heading": "Conversion event manager",
+   "apiCalls": 2,
+   "textLength": 4001,
+   "screenshot": "screens/events.png"
+  },
+  "Adjustments": {
+   "ok": true,
+   "detail": "Rendered \"Conversion adjustments\" · 2 API calls OK · 17666 characters",
+   "heading": "Conversion adjustments",
+   "apiCalls": 2,
+   "textLength": 17666,
+   "screenshot": "screens/adjustments.png"
+  },
+  "Diagnostics": {
+   "ok": true,
+   "detail": "Rendered \"Tracking & data quality diagnostics\" · 2 API calls OK · 805 characters",
+   "heading": "Tracking & data quality diagnostics",
+   "apiCalls": 2,
+   "textLength": 805,
+   "screenshot": "screens/diagnostics.png"
+  },
+  "Match Quality": {
+   "ok": true,
+   "detail": "Rendered \"Event match quality\" · 2 API calls OK · 2206 characters",
+   "heading": "Event match quality",
+   "apiCalls": 2,
+   "textLength": 2206,
+   "screenshot": "screens/match-quality.png"
+  },
+  "Reconciliation": {
+   "ok": true,
+   "detail": "Rendered \"Conversion reconciliation center\" · 2 API calls OK · 6056 characters",
+   "heading": "Conversion reconciliation center",
+   "apiCalls": 2,
+   "textLength": 6056,
+   "screenshot": "screens/reconciliation.png"
+  },
+  "Fraud": {
+   "ok": true,
+   "detail": "Rendered \"Fraud & noise detection\" · 2 API calls OK · 722 characters",
+   "heading": "Fraud & noise detection",
+   "apiCalls": 2,
+   "textLength": 722,
+   "screenshot": "screens/fraud.png"
+  },
+  "Deep Links": {
+   "ok": true,
+   "detail": "Rendered \"Deep linking\" · 2 API calls OK · 754 characters",
+   "heading": "Deep linking",
+   "apiCalls": 2,
+   "textLength": 754,
+   "screenshot": "screens/deep-links.png"
+  },
+  "Sites": {
+   "ok": true,
+   "detail": "Rendered \"Site & pixel operations\" · 2 API calls OK · 712 characters",
+   "heading": "Site & pixel operations",
+   "apiCalls": 2,
+   "textLength": 712,
+   "screenshot": "screens/sites.png"
+  },
+  "Fingerprinting": {
+   "ok": true,
+   "detail": "Rendered \"Cross-domain journey continuity\" · 2 API calls OK · 792 characters",
+   "heading": "Cross-domain journey continuity",
+   "apiCalls": 2,
+   "textLength": 792,
+   "screenshot": "screens/fingerprinting.png"
+  },
+  "Live Sync": {
+   "ok": true,
+   "detail": "Rendered \"24×7 event transfer\" · 2 API calls OK · 3863 characters",
+   "heading": "24×7 event transfer",
+   "apiCalls": 2,
+   "textLength": 3863,
+   "screenshot": "screens/live-sync.png"
+  },
+  "Data Hub": {
+   "ok": true,
+   "detail": "Rendered \"Unified customer data hub\" · 3 API calls OK · 4639 characters",
+   "heading": "Unified customer data hub",
+   "apiCalls": 3,
+   "textLength": 4639,
+   "screenshot": "screens/data-hub.png"
+  },
+  "Customer 360": {
+   "ok": true,
+   "detail": "Rendered \"Customer 360\" · 4 API calls OK · 19678 characters",
+   "heading": "Customer 360",
+   "apiCalls": 4,
+   "textLength": 19678,
+   "screenshot": "screens/customer-360.png"
+  },
+  "Offline Attribution": {
+   "ok": true,
+   "detail": "Rendered \"Calls, WhatsApp & offline revenue\" · 4 API calls OK · 3139 characters",
+   "heading": "Calls, WhatsApp & offline revenue",
+   "apiCalls": 4,
+   "textLength": 3139,
+   "screenshot": "screens/offline-attribution.png"
+  },
+  "Matchback": {
+   "ok": true,
+   "detail": "Rendered \"Closure matchback & revenue reconciliation\" · 2 API calls OK · 1567 characters",
+   "heading": "Closure matchback & revenue reconciliation",
+   "apiCalls": 2,
+   "textLength": 1567,
+   "screenshot": "screens/matchback.png"
+  },
+  "POS & Stores": {
+   "ok": true,
+   "detail": "Rendered \"POS, walk-in & store-sale attribution\" · 2 API calls OK · 6658 characters",
+   "heading": "POS, walk-in & store-sale attribution",
+   "apiCalls": 2,
+   "textLength": 6658,
+   "screenshot": "screens/pos-stores.png"
+  },
+  "Journeys": {
+   "ok": true,
+   "detail": "Rendered \"Customer journey explorer\" · 4 API calls OK · 37390 characters",
+   "heading": "Customer journey explorer",
+   "apiCalls": 4,
+   "textLength": 37390,
+   "screenshot": "screens/journeys.png"
+  },
+  "Identity": {
+   "ok": true,
+   "detail": "Rendered \"Identity resolution\" · 3 API calls OK · 4483 characters",
+   "heading": "Identity resolution",
+   "apiCalls": 3,
+   "textLength": 4483,
+   "screenshot": "screens/identity.png"
+  },
+  "Models": {
+   "ok": true,
+   "detail": "Rendered \"Custom models\" · 3 API calls OK · 3197 characters",
+   "heading": "Custom models",
+   "apiCalls": 3,
+   "textLength": 3197,
+   "screenshot": "screens/models.png"
+  },
+  "AI Intelligence": {
+   "ok": true,
+   "detail": "Rendered \"AI intelligence workspace\" · 56 API calls OK · 5275 characters",
+   "heading": "AI intelligence workspace",
+   "apiCalls": 56,
+   "textLength": 5275,
+   "screenshot": "screens/ai-intelligence.png"
+  },
+  "Attribution": {
+   "ok": true,
+   "detail": "Rendered \"Full-path attribution\" · 2 API calls OK · 1996 characters",
+   "heading": "Full-path attribution",
+   "apiCalls": 2,
+   "textLength": 1996,
+   "screenshot": "screens/attribution.png"
+  },
+  "Planner": {
+   "ok": true,
+   "detail": "Rendered \"Strategic media planner\" · 2 API calls OK · 2357 characters",
+   "heading": "Strategic media planner",
+   "apiCalls": 2,
+   "textLength": 2357,
+   "screenshot": "screens/planner.png"
+  },
+  "Reports": {
+   "ok": true,
+   "detail": "Rendered \"Cohort & automated reports\" · 4 API calls OK · 2199 characters",
+   "heading": "Cohort & automated reports",
+   "apiCalls": 4,
+   "textLength": 2199,
+   "screenshot": "screens/reports.png"
+  },
+  "Grouped Performance": {
+   "ok": true,
+   "detail": "Rendered \"Grouped performance\" · 2 API calls OK · 1742 characters",
+   "heading": "Grouped performance",
+   "apiCalls": 2,
+   "textLength": 1742,
+   "screenshot": "screens/grouped-performance.png"
+  },
+  "Executive Briefs": {
+   "ok": true,
+   "detail": "Rendered \"Executive data snippets\" · 4 API calls OK · 1775 characters",
+   "heading": "Executive data snippets",
+   "apiCalls": 4,
+   "textLength": 1775,
+   "screenshot": "screens/executive-briefs.png"
+  },
+  "Enrich": {
+   "ok": true,
+   "detail": "Rendered \"CRM enrichment\" · 2 API calls OK · 7366 characters",
+   "heading": "CRM enrichment",
+   "apiCalls": 2,
+   "textLength": 7366,
+   "screenshot": "screens/enrich.png"
+  },
+  "Lead Grading": {
+   "ok": true,
+   "detail": "Rendered \"Lead grading\" · 2 API calls OK · 5097 characters",
+   "heading": "Lead grading",
+   "apiCalls": 2,
+   "textLength": 5097,
+   "screenshot": "screens/lead-grading.png"
+  },
+  "Behavior": {
+   "ok": true,
+   "detail": "Rendered \"Website & app behavior\" · 2 API calls OK · 3703 characters",
+   "heading": "Website & app behavior",
+   "apiCalls": 2,
+   "textLength": 3703,
+   "screenshot": "screens/behavior.png"
+  },
+  "Feed": {
+   "ok": true,
+   "detail": "Rendered \"Feed & payload enhancement\" · 2 API calls OK · 2713 characters",
+   "heading": "Feed & payload enhancement",
+   "apiCalls": 2,
+   "textLength": 2713,
+   "screenshot": "screens/feed.png"
+  },
+  "Agents": {
+   "ok": true,
+   "detail": "Rendered \"Agent operations\" · 2 API calls OK · 2483 characters",
+   "heading": "Agent operations",
+   "apiCalls": 2,
+   "textLength": 2483,
+   "screenshot": "screens/agents.png"
+  },
+  "Routing": {
+   "ok": true,
+   "detail": "Rendered \"Lead routing\" · 2 API calls OK · 1450 characters",
+   "heading": "Lead routing",
+   "apiCalls": 2,
+   "textLength": 1450,
+   "screenshot": "screens/routing.png"
+  },
+  "Follow-ups": {
+   "ok": true,
+   "detail": "Rendered \"Follow-up operations\" · 4 API calls OK · 18296 characters",
+   "heading": "Follow-up operations",
+   "apiCalls": 4,
+   "textLength": 18296,
+   "screenshot": "screens/follow-ups.png"
+  },
+  "Calls": {
+   "ok": true,
+   "detail": "Rendered \"Voice qualification & call tracking\" · 4 API calls OK · 10949 characters",
+   "heading": "Voice qualification & call tracking",
+   "apiCalls": 4,
+   "textLength": 10949,
+   "screenshot": "screens/calls.png"
+  },
+  "Meetings": {
+   "ok": true,
+   "detail": "Rendered \"Scheduler & meeting reminders\" · 4 API calls OK · 16829 characters",
+   "heading": "Scheduler & meeting reminders",
+   "apiCalls": 4,
+   "textLength": 16829,
+   "screenshot": "screens/meetings.png"
+  },
+  "Feedback": {
+   "ok": true,
+   "detail": "Rendered \"Feedback agent\" · 3 API calls OK · 14639 characters",
+   "heading": "Feedback agent",
+   "apiCalls": 3,
+   "textLength": 14639,
+   "screenshot": "screens/feedback.png"
+  },
+  "Approvals": {
+   "ok": true,
+   "detail": "Rendered \"Human approval center\" · 1 API calls OK · 1059 characters",
+   "heading": "Human approval center",
+   "apiCalls": 1,
+   "textLength": 1059,
+   "screenshot": "screens/approvals.png"
+  },
+  "Ask Ace": {
+   "ok": true,
+   "detail": "Rendered \"Journey & attribution assistant\" · 0 API calls OK · 1460 characters",
+   "heading": "Journey & attribution assistant",
+   "apiCalls": 0,
+   "textLength": 1460,
+   "screenshot": "screens/ask-ace.png"
+  },
+  "Integrations": {
+   "ok": true,
+   "detail": "Rendered \"Platform-agnostic connectivity\" · 5 API calls OK · 5274 characters",
+   "heading": "Platform-agnostic connectivity",
+   "apiCalls": 5,
+   "textLength": 5274,
+   "screenshot": "screens/integrations.png"
+  },
+  "Data Flows": {
+   "ok": true,
+   "detail": "Rendered \"Data flows\" · 4 API calls OK · 997 characters",
+   "heading": "Data flows",
+   "apiCalls": 4,
+   "textLength": 997,
+   "screenshot": "screens/data-flows.png"
+  },
+  "Real-Time Activation": {
+   "ok": true,
+   "detail": "Rendered \"Real-time activation\" · 2 API calls OK · 2311 characters",
+   "heading": "Real-time activation",
+   "apiCalls": 2,
+   "textLength": 2311,
+   "screenshot": "screens/real-time-activation.png"
+  },
+  "Personalization": {
+   "ok": true,
+   "detail": "Rendered \"Personalization studio\" · 2 API calls OK · 1293 characters",
+   "heading": "Personalization studio",
+   "apiCalls": 2,
+   "textLength": 1293,
+   "screenshot": "screens/personalization.png"
+  },
+  "Exclusions": {
+   "ok": true,
+   "detail": "Rendered \"Audience suppression & exclusions\" · 3 API calls OK · 1678 characters",
+   "heading": "Audience suppression & exclusions",
+   "apiCalls": 3,
+   "textLength": 1678,
+   "screenshot": "screens/exclusions.png"
+  },
+  "Audiences": {
+   "ok": true,
+   "detail": "Rendered \"Audience management\" · 2 API calls OK · 1984 characters",
+   "heading": "Audience management",
+   "apiCalls": 2,
+   "textLength": 1984,
+   "screenshot": "screens/audiences.png"
+  },
+  "Delivery": {
+   "ok": true,
+   "detail": "Rendered \"Signal delivery center\" · 4 API calls OK · 1346 characters",
+   "heading": "Signal delivery center",
+   "apiCalls": 4,
+   "textLength": 1346,
+   "screenshot": "screens/delivery.png"
+  },
+  "Monitoring": {
+   "ok": true,
+   "detail": "Rendered \"Platform monitoring\" · 4 API calls OK · 1866 characters",
+   "heading": "Platform monitoring",
+   "apiCalls": 4,
+   "textLength": 1866,
+   "screenshot": "screens/monitoring.png"
+  },
+  "Alerts": {
+   "ok": true,
+   "detail": "Rendered \"Alert Center\" · 2 API calls OK · 2480 characters",
+   "heading": "Alert Center",
+   "apiCalls": 2,
+   "textLength": 2480,
+   "screenshot": "screens/alerts.png"
+  },
+  "Compliance": {
+   "ok": true,
+   "detail": "Rendered \"Privacy, consent & compliance center\" · 2 API calls OK · 3593 characters",
+   "heading": "Privacy, consent & compliance center",
+   "apiCalls": 2,
+   "textLength": 3593,
+   "screenshot": "screens/compliance.png"
+  },
+  "Developers": {
+   "ok": true,
+   "detail": "Rendered \"Developer & webhook console\" · 4 API calls OK · 1946 characters",
+   "heading": "Developer & webhook console",
+   "apiCalls": 4,
+   "textLength": 1946,
+   "screenshot": "screens/developers.png"
+  },
+  "Settings": {
+   "ok": true,
+   "detail": "Rendered \"Workspace settings\" · 2 API calls OK · 448 characters",
+   "heading": "Workspace settings",
+   "apiCalls": 2,
+   "textLength": 448,
+   "screenshot": "screens/settings.png"
+  }
+ }
+}

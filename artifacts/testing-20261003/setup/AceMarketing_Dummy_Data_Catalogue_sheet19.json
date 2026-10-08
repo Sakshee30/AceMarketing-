@@ -1,0 +1,1142 @@
+[
+  [
+    "108 CORE AND BULK FIELD DEFINITIONS",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "CSV representation is distinct from logical type. The neutral event JSON schema is not an application/provider contract.",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Dataset",
+    "Field",
+    "Logical type",
+    "Nullable",
+    "Unit",
+    "Meaning",
+    "Example",
+    "App mapping"
+  ],
+  [
+    "tenants",
+    "fixture_version",
+    "string",
+    "0",
+    "",
+    "Dataset contract version, not the application schema version.",
+    "ace.dummy.v1",
+    "Required"
+  ],
+  [
+    "tenants",
+    "run_id",
+    "string",
+    "0",
+    "",
+    "Fixture ownership namespace; map to a unique namespace for each actual execution.",
+    "qa_ace_v1",
+    "Required"
+  ],
+  [
+    "tenants",
+    "synthetic",
+    "boolean",
+    "0",
+    "",
+    "True: authored QA record, not a real customer.",
+    "True",
+    "Required"
+  ],
+  [
+    "tenants",
+    "tenant_id",
+    "string",
+    "0",
+    "",
+    "Tenant fixture identifier; parent security boundary.",
+    "qa_ace_v1_tenant_000001",
+    "Required"
+  ],
+  [
+    "tenants",
+    "name",
+    "string",
+    "0",
+    "",
+    "Synthetic fixture value; map to actual product contract.",
+    "Cedar Training QA",
+    "Required"
+  ],
+  [
+    "tenants",
+    "status",
+    "string",
+    "0",
+    "",
+    "Synthetic fixture value; map to actual product contract.",
+    "active",
+    "Required"
+  ],
+  [
+    "tenants",
+    "canary",
+    "string",
+    "0",
+    "",
+    "Synthetic tenant-private marker for isolation checks.",
+    "QA_TENANT_001_PRIVATE_CANARY",
+    "Required"
+  ],
+  [
+    "tenants",
+    "currency",
+    "string",
+    "0",
+    "",
+    "Currency code; generated bulk monetary records use INR.",
+    "INR",
+    "Required"
+  ],
+  [
+    "tenants",
+    "timezone",
+    "string",
+    "0",
+    "",
+    "Reporting timezone identifier. Bulk records use UTC.",
+    "UTC",
+    "Required"
+  ],
+  [
+    "workspaces",
+    "fixture_version",
+    "string",
+    "0",
+    "",
+    "Dataset contract version, not the application schema version.",
+    "ace.dummy.v1",
+    "Required"
+  ],
+  [
+    "workspaces",
+    "run_id",
+    "string",
+    "0",
+    "",
+    "Fixture ownership namespace; map to a unique namespace for each actual execution.",
+    "qa_ace_v1",
+    "Required"
+  ],
+  [
+    "workspaces",
+    "synthetic",
+    "boolean",
+    "0",
+    "",
+    "True: authored QA record, not a real customer.",
+    "True",
+    "Required"
+  ],
+  [
+    "workspaces",
+    "workspace_id",
+    "string",
+    "0",
+    "",
+    "Workspace fixture identifier; must belong to the same tenant.",
+    "qa_ace_v1_workspace_000001",
+    "Required"
+  ],
+  [
+    "workspaces",
+    "tenant_id",
+    "string",
+    "0",
+    "",
+    "Tenant fixture identifier; parent security boundary.",
+    "qa_ace_v1_tenant_000001",
+    "Required"
+  ],
+  [
+    "workspaces",
+    "name",
+    "string",
+    "0",
+    "",
+    "Synthetic fixture value; map to actual product contract.",
+    "QA Workspace 001",
+    "Required"
+  ],
+  [
+    "workspaces",
+    "fixture_state",
+    "string",
+    "0",
+    "",
+    "Test state such as empty or suspended; not an application status enum.",
+    "active",
+    "Required"
+  ],
+  [
+    "workspaces",
+    "timezone",
+    "string",
+    "0",
+    "",
+    "Reporting timezone identifier. Bulk records use UTC.",
+    "UTC",
+    "Required"
+  ],
+  [
+    "workspaces",
+    "currency",
+    "string",
+    "0",
+    "",
+    "Currency code; generated bulk monetary records use INR.",
+    "INR",
+    "Required"
+  ],
+  [
+    "users",
+    "fixture_version",
+    "string",
+    "0",
+    "",
+    "Dataset contract version, not the application schema version.",
+    "ace.dummy.v1",
+    "Required"
+  ],
+  [
+    "users",
+    "run_id",
+    "string",
+    "0",
+    "",
+    "Fixture ownership namespace; map to a unique namespace for each actual execution.",
+    "qa_ace_v1",
+    "Required"
+  ],
+  [
+    "users",
+    "synthetic",
+    "boolean",
+    "0",
+    "",
+    "True: authored QA record, not a real customer.",
+    "True",
+    "Required"
+  ],
+  [
+    "users",
+    "user_id",
+    "string",
+    "0",
+    "",
+    "User fixture identifier; provision credentials through actual authentication.",
+    "qa_ace_v1_user_000001",
+    "Required"
+  ],
+  [
+    "users",
+    "tenant_id",
+    "string",
+    "0",
+    "",
+    "Tenant fixture identifier; parent security boundary.",
+    "qa_ace_v1_tenant_000001",
+    "Required"
+  ],
+  [
+    "users",
+    "email",
+    "string",
+    "0",
+    "",
+    "Non-deliverable example.test identity; outgoing mail must still be captured.",
+    "qa_ace_v1.user000001@example.test",
+    "Required"
+  ],
+  [
+    "users",
+    "display_name",
+    "string",
+    "0",
+    "",
+    "Synthetic fixture value; map to actual product contract.",
+    "QA User 000001",
+    "Required"
+  ],
+  [
+    "users",
+    "logical_persona",
+    "string",
+    "0",
+    "",
+    "Test responsibility label; not asserted to be an existing app role.",
+    "owner",
+    "Required"
+  ],
+  [
+    "users",
+    "account_state",
+    "string",
+    "0",
+    "",
+    "Synthetic fixture value; map to actual product contract.",
+    "active",
+    "Required"
+  ],
+  [
+    "users",
+    "credential_ref",
+    "string",
+    "0",
+    "",
+    "Reference for runtime injected test credential; no password value supplied.",
+    "QA_USER_000001_PASSWORD",
+    "Required"
+  ],
+  [
+    "users",
+    "app_role_mapping",
+    "string",
+    "0",
+    "",
+    "UNRESOLVED until the actual application permission enum is reviewed.",
+    "UNRESOLVED",
+    "Required"
+  ],
+  [
+    "users",
+    "home_workspace_id",
+    "string",
+    "0",
+    "",
+    "Synthetic fixture value; map to actual product contract.",
+    "qa_ace_v1_workspace_000001",
+    "Required"
+  ],
+  [
+    "memberships",
+    "fixture_version",
+    "string",
+    "0",
+    "",
+    "Dataset contract version, not the application schema version.",
+    "ace.dummy.v1",
+    "Required"
+  ],
+  [
+    "memberships",
+    "run_id",
+    "string",
+    "0",
+    "",
+    "Fixture ownership namespace; map to a unique namespace for each actual execution.",
+    "qa_ace_v1",
+    "Required"
+  ],
+  [
+    "memberships",
+    "synthetic",
+    "boolean",
+    "0",
+    "",
+    "True: authored QA record, not a real customer.",
+    "True",
+    "Required"
+  ],
+  [
+    "memberships",
+    "membership_id",
+    "string",
+    "0",
+    "",
+    "Membership fixture primary identifier.",
+    "qa_ace_v1_membership_000001",
+    "Required"
+  ],
+  [
+    "memberships",
+    "tenant_id",
+    "string",
+    "0",
+    "",
+    "Tenant fixture identifier; parent security boundary.",
+    "qa_ace_v1_tenant_000001",
+    "Required"
+  ],
+  [
+    "memberships",
+    "workspace_id",
+    "string",
+    "0",
+    "",
+    "Workspace fixture identifier; must belong to the same tenant.",
+    "qa_ace_v1_workspace_000001",
+    "Required"
+  ],
+  [
+    "memberships",
+    "user_id",
+    "string",
+    "0",
+    "",
+    "User fixture identifier; provision credentials through actual authentication.",
+    "qa_ace_v1_user_000001",
+    "Required"
+  ],
+  [
+    "memberships",
+    "logical_persona",
+    "string",
+    "0",
+    "",
+    "Test responsibility label; not asserted to be an existing app role.",
+    "owner",
+    "Required"
+  ],
+  [
+    "memberships",
+    "membership_state",
+    "string",
+    "0",
+    "",
+    "Synthetic fixture value; map to actual product contract.",
+    "active",
+    "Required"
+  ],
+  [
+    "memberships",
+    "app_role_mapping",
+    "string",
+    "0",
+    "",
+    "UNRESOLVED until the actual application permission enum is reviewed.",
+    "UNRESOLVED",
+    "Required"
+  ],
+  [
+    "campaigns",
+    "fixture_version",
+    "string",
+    "0",
+    "",
+    "Dataset contract version, not the application schema version.",
+    "ace.dummy.v1",
+    "Required"
+  ],
+  [
+    "campaigns",
+    "run_id",
+    "string",
+    "0",
+    "",
+    "Fixture ownership namespace; map to a unique namespace for each actual execution.",
+    "qa_ace_v1",
+    "Required"
+  ],
+  [
+    "campaigns",
+    "synthetic",
+    "boolean",
+    "0",
+    "",
+    "True: authored QA record, not a real customer.",
+    "True",
+    "Required"
+  ],
+  [
+    "campaigns",
+    "campaign_id",
+    "string",
+    "0",
+    "",
+    "Campaign fixture identifier; links leads, events and provider daily aggregates.",
+    "qa_ace_v1_campaign_000001",
+    "Required"
+  ],
+  [
+    "campaigns",
+    "tenant_id",
+    "string",
+    "0",
+    "",
+    "Tenant fixture identifier; parent security boundary.",
+    "qa_ace_v1_tenant_000001",
+    "Required"
+  ],
+  [
+    "campaigns",
+    "workspace_id",
+    "string",
+    "0",
+    "",
+    "Workspace fixture identifier; must belong to the same tenant.",
+    "qa_ace_v1_workspace_000001",
+    "Required"
+  ],
+  [
+    "campaigns",
+    "name",
+    "string",
+    "0",
+    "",
+    "Synthetic fixture value; map to actual product contract.",
+    "QA Campaign 0001",
+    "Required"
+  ],
+  [
+    "campaigns",
+    "provider_code",
+    "string",
+    "0",
+    "",
+    "Synthetic fixture value; map to actual product contract.",
+    "META",
+    "Required"
+  ],
+  [
+    "campaigns",
+    "provider_account_id",
+    "string",
+    "0",
+    "",
+    "Synthetic fixture value; map to actual product contract.",
+    "SIM_ACCOUNT_001",
+    "Required"
+  ],
+  [
+    "campaigns",
+    "provider_campaign_id",
+    "string",
+    "0",
+    "",
+    "Synthetic fixture value; map to actual product contract.",
+    "SIM_CAMPAIGN_000001",
+    "Required"
+  ],
+  [
+    "campaigns",
+    "current_state",
+    "string",
+    "0",
+    "",
+    "Synthetic fixture value; map to actual product contract.",
+    "active",
+    "Required"
+  ],
+  [
+    "campaigns",
+    "start_at",
+    "string",
+    "0",
+    "UTC ISO-8601",
+    "Campaign test window inclusive start.",
+    "46206",
+    "Required"
+  ],
+  [
+    "campaigns",
+    "end_at",
+    "string",
+    "0",
+    "UTC ISO-8601",
+    "Campaign test window exclusive end.",
+    "46296",
+    "Required"
+  ],
+  [
+    "campaigns",
+    "currency",
+    "string",
+    "0",
+    "",
+    "Currency code; generated bulk monetary records use INR.",
+    "INR",
+    "Required"
+  ],
+  [
+    "campaigns",
+    "budget_minor",
+    "integer",
+    "0",
+    "minor INR units",
+    "Synthetic campaign budget in minor units; no spend authorization.",
+    "10000000",
+    "Required"
+  ],
+  [
+    "campaigns",
+    "outbound_enabled",
+    "boolean",
+    "0",
+    "",
+    "False for all supplied campaign rows; additional network safety is required.",
+    "False",
+    "Required"
+  ],
+  [
+    "leads",
+    "fixture_version",
+    "string",
+    "0",
+    "",
+    "Dataset contract version, not the application schema version.",
+    "ace.dummy.v1",
+    "Required"
+  ],
+  [
+    "leads",
+    "run_id",
+    "string",
+    "0",
+    "",
+    "Fixture ownership namespace; map to a unique namespace for each actual execution.",
+    "qa_ace_v1",
+    "Required"
+  ],
+  [
+    "leads",
+    "synthetic",
+    "boolean",
+    "0",
+    "",
+    "True: authored QA record, not a real customer.",
+    "True",
+    "Required"
+  ],
+  [
+    "leads",
+    "lead_id",
+    "string",
+    "0",
+    "",
+    "Synthetic lead fixture identifier.",
+    "qa_ace_v1_lead_000001",
+    "Required"
+  ],
+  [
+    "leads",
+    "tenant_id",
+    "string",
+    "0",
+    "",
+    "Tenant fixture identifier; parent security boundary.",
+    "qa_ace_v1_tenant_000001",
+    "Required"
+  ],
+  [
+    "leads",
+    "workspace_id",
+    "string",
+    "0",
+    "",
+    "Workspace fixture identifier; must belong to the same tenant.",
+    "qa_ace_v1_workspace_000001",
+    "Required"
+  ],
+  [
+    "leads",
+    "campaign_id",
+    "string",
+    "0",
+    "",
+    "Campaign fixture identifier; links leads, events and provider daily aggregates.",
+    "qa_ace_v1_campaign_000001",
+    "Required"
+  ],
+  [
+    "leads",
+    "source_record_id",
+    "string",
+    "0",
+    "",
+    "External-simulator record identity used for deterministic replay/deduplication.",
+    "SIM_LEAD_0000001",
+    "Required"
+  ],
+  [
+    "leads",
+    "display_name",
+    "string",
+    "0",
+    "",
+    "Synthetic fixture value; map to actual product contract.",
+    "Synthetic Lead 0000001",
+    "Required"
+  ],
+  [
+    "leads",
+    "email",
+    "string",
+    "0",
+    "",
+    "Non-deliverable example.test identity; outgoing mail must still be captured.",
+    "qa_ace_v1.lead0000001@example.test",
+    "Required"
+  ],
+  [
+    "leads",
+    "recipient_id",
+    "string",
+    "0",
+    "",
+    "SIM_ recipient key, not an E.164 phone number. Requires transport mapping.",
+    "SIM_RECIPIENT_0000001",
+    "Required"
+  ],
+  [
+    "leads",
+    "phone_e164",
+    "string",
+    "1",
+    "",
+    "Intentionally empty; no plausible reachable number is supplied.",
+    "",
+    "Required"
+  ],
+  [
+    "leads",
+    "stage",
+    "string",
+    "0",
+    "",
+    "Synthetic fixture value; map to actual product contract.",
+    "contacted",
+    "Required"
+  ],
+  [
+    "leads",
+    "marketing_consent",
+    "string",
+    "0",
+    "",
+    "Synthetic marketing status: granted, denied or revoked; recheck at action time.",
+    "granted",
+    "Required"
+  ],
+  [
+    "leads",
+    "analytics_consent",
+    "string",
+    "0",
+    "",
+    "Synthetic analytics status; bulk event baseline is granted.",
+    "granted",
+    "Required"
+  ],
+  [
+    "leads",
+    "created_at",
+    "string",
+    "0",
+    "UTC ISO-8601",
+    "UTC ISO-8601 entity creation timestamp.",
+    "46213.294444444444",
+    "Required"
+  ],
+  [
+    "leads",
+    "updated_at",
+    "string",
+    "0",
+    "UTC ISO-8601",
+    "UTC ISO-8601 latest entity timestamp.",
+    "46213.29861111111",
+    "Required"
+  ],
+  [
+    "leads",
+    "expected_score_band",
+    "string",
+    "0",
+    "",
+    "Synthetic QA label, not an actual model output or validated scoring accuracy.",
+    "low",
+    "Required"
+  ],
+  [
+    "leads",
+    "currency",
+    "string",
+    "0",
+    "",
+    "Currency code; generated bulk monetary records use INR.",
+    "INR",
+    "Required"
+  ],
+  [
+    "campaign_daily_stats",
+    "fixture_version",
+    "string",
+    "0",
+    "",
+    "Dataset contract version, not the application schema version.",
+    "ace.dummy.v1",
+    "Required"
+  ],
+  [
+    "campaign_daily_stats",
+    "run_id",
+    "string",
+    "0",
+    "",
+    "Fixture ownership namespace; map to a unique namespace for each actual execution.",
+    "qa_ace_v1",
+    "Required"
+  ],
+  [
+    "campaign_daily_stats",
+    "synthetic",
+    "boolean",
+    "0",
+    "",
+    "True: authored QA record, not a real customer.",
+    "True",
+    "Required"
+  ],
+  [
+    "campaign_daily_stats",
+    "stat_id",
+    "string",
+    "0",
+    "",
+    "Synthetic fixture value; map to actual product contract.",
+    "qa_ace_v1_stat_000001",
+    "Required"
+  ],
+  [
+    "campaign_daily_stats",
+    "tenant_id",
+    "string",
+    "0",
+    "",
+    "Tenant fixture identifier; parent security boundary.",
+    "qa_ace_v1_tenant_000001",
+    "Required"
+  ],
+  [
+    "campaign_daily_stats",
+    "workspace_id",
+    "string",
+    "0",
+    "",
+    "Workspace fixture identifier; must belong to the same tenant.",
+    "qa_ace_v1_workspace_000001",
+    "Required"
+  ],
+  [
+    "campaign_daily_stats",
+    "campaign_id",
+    "string",
+    "0",
+    "",
+    "Campaign fixture identifier; links leads, events and provider daily aggregates.",
+    "qa_ace_v1_campaign_000001",
+    "Required"
+  ],
+  [
+    "campaign_daily_stats",
+    "provider_code",
+    "string",
+    "0",
+    "",
+    "Synthetic fixture value; map to actual product contract.",
+    "META",
+    "Required"
+  ],
+  [
+    "campaign_daily_stats",
+    "date",
+    "string",
+    "0",
+    "",
+    "UTC daily aggregate date; one row per campaign per day.",
+    "2026-07-03",
+    "Required"
+  ],
+  [
+    "campaign_daily_stats",
+    "currency",
+    "string",
+    "0",
+    "",
+    "Currency code; generated bulk monetary records use INR.",
+    "INR",
+    "Required"
+  ],
+  [
+    "campaign_daily_stats",
+    "spend_minor",
+    "integer",
+    "0",
+    "minor INR units",
+    "Provider aggregate spend in minor currency units; independent of first-party events.",
+    "1300",
+    "Required"
+  ],
+  [
+    "campaign_daily_stats",
+    "impressions",
+    "integer",
+    "0",
+    "",
+    "Provider-reported daily aggregate, not first-party ad.impression event count.",
+    "101",
+    "Required"
+  ],
+  [
+    "campaign_daily_stats",
+    "clicks",
+    "integer",
+    "0",
+    "",
+    "Provider-reported daily aggregate, not first-party ad.click event count.",
+    "11",
+    "Required"
+  ],
+  [
+    "campaign_daily_stats",
+    "source_kind",
+    "string",
+    "0",
+    "",
+    "Separate provider_daily_aggregate from first_party_tracking; do not add both as the same source.",
+    "provider_daily_aggregate",
+    "Required"
+  ],
+  [
+    "events",
+    "fixture_version",
+    "string",
+    "0",
+    "",
+    "Dataset contract version, not the application schema version.",
+    "ace.dummy.v1",
+    "Required"
+  ],
+  [
+    "events",
+    "run_id",
+    "string",
+    "0",
+    "",
+    "Fixture ownership namespace; map to a unique namespace for each actual execution.",
+    "qa_ace_v1",
+    "Required"
+  ],
+  [
+    "events",
+    "synthetic",
+    "boolean",
+    "0",
+    "",
+    "True: authored QA record, not a real customer.",
+    "1",
+    "Required"
+  ],
+  [
+    "events",
+    "event_id",
+    "string",
+    "0",
+    "",
+    "Deterministic event identifier; stable on replay.",
+    "qa_ace_v1_event_000001",
+    "Required"
+  ],
+  [
+    "events",
+    "tenant_id",
+    "string",
+    "0",
+    "",
+    "Tenant fixture identifier; parent security boundary.",
+    "qa_ace_v1_tenant_000001",
+    "Required"
+  ],
+  [
+    "events",
+    "workspace_id",
+    "string",
+    "0",
+    "",
+    "Workspace fixture identifier; must belong to the same tenant.",
+    "qa_ace_v1_workspace_000001",
+    "Required"
+  ],
+  [
+    "events",
+    "campaign_id",
+    "string",
+    "0",
+    "",
+    "Campaign fixture identifier; links leads, events and provider daily aggregates.",
+    "qa_ace_v1_campaign_000001",
+    "Required"
+  ],
+  [
+    "events",
+    "lead_id",
+    "string",
+    "0",
+    "",
+    "Synthetic lead fixture identifier.",
+    "qa_ace_v1_lead_000001",
+    "Required"
+  ],
+  [
+    "events",
+    "event_type",
+    "string",
+    "0",
+    "",
+    "Fixture event name; map to actual event/operation contract.",
+    "ad.impression",
+    "Required"
+  ],
+  [
+    "events",
+    "occurred_at",
+    "string",
+    "0",
+    "UTC ISO-8601",
+    "UTC event time; used for reporting-window inclusion.",
+    "46213.29236111111",
+    "Required"
+  ],
+  [
+    "events",
+    "received_at",
+    "string",
+    "0",
+    "UTC ISO-8601",
+    "UTC ingestion time; distinct from event time.",
+    "46213.29241898148",
+    "Required"
+  ],
+  [
+    "events",
+    "currency",
+    "string",
+    "0",
+    "",
+    "Currency code; generated bulk monetary records use INR.",
+    "INR",
+    "Required"
+  ],
+  [
+    "events",
+    "amount_minor",
+    "integer",
+    "0",
+    "minor INR units",
+    "Nonnegative integer minor INR units; event type indicates payment/refund. 100 minor INR units = INR 1.",
+    "0",
+    "Required"
+  ],
+  [
+    "events",
+    "idempotency_key",
+    "string",
+    "0",
+    "",
+    "Stable event identity for duplicate replay; scope with tenant/source where required.",
+    "qa_ace_v1_event_000001",
+    "Required"
+  ],
+  [
+    "events",
+    "source_kind",
+    "string",
+    "0",
+    "",
+    "Separate provider_daily_aggregate from first_party_tracking; do not add both as the same source.",
+    "first_party_tracking",
+    "Required"
+  ],
+  [
+    "events",
+    "analytics_consent",
+    "string",
+    "0",
+    "",
+    "Synthetic analytics status; bulk event baseline is granted.",
+    "granted",
+    "Required"
+  ],
+  [
+    "events",
+    "anonymous_id",
+    "string",
+    "0",
+    "",
+    "Synthetic anonymous identity; shared-device overlays must not cause unsafe merges.",
+    "qa_ace_v1_anon_000001",
+    "Required"
+  ],
+  [
+    "events",
+    "click_id",
+    "string",
+    "0",
+    "",
+    "SIM_ click identifier, not a real advertising click token.",
+    "SIM_CLICK_0000001",
+    "Required"
+  ],
+  [
+    "events",
+    "parent_event_id",
+    "string",
+    "1",
+    "",
+    "Refund references its payment event; otherwise empty.",
+    "",
+    "Required"
+  ]
+]

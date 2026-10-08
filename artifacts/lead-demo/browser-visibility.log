@@ -1,0 +1,23 @@
+
+Running 18 tests using 1 worker
+
+  ✓   1 [chromium] › qa/demo-browser/lead-demo-login.spec.ts:7:1 › Local demo launcher opens all four supplied workspaces (1.7s)
+  ✓   2 [chromium] › qa/demo-browser/lead-demo-login.spec.ts:19:1 › Explore the Leads demo through the actual login form (2.1s)
+  ✓   3 [chromium] › qa/demo-browser/lead-visibility.spec.ts:9:2 › Every supplied lead is visible: qa_ace_v1_workspace_000001 (12.4s)
+  ✓   4 [chromium] › qa/demo-browser/lead-visibility.spec.ts:9:2 › Every supplied lead is visible: qa_ace_v1_workspace_000002 (4.4s)
+  ✓   5 [chromium] › qa/demo-browser/lead-visibility.spec.ts:9:2 › Every supplied lead is visible: qa_ace_v1_workspace_000003 (4.2s)
+  ✓   6 [chromium] › qa/demo-browser/lead-visibility.spec.ts:9:2 › Every supplied lead is visible: qa_ace_v1_workspace_000004 (4.2s)
+  ✓   7 [firefox] › qa/demo-browser/lead-demo-login.spec.ts:7:1 › Local demo launcher opens all four supplied workspaces (2.8s)
+  ✓   8 [firefox] › qa/demo-browser/lead-demo-login.spec.ts:19:1 › Explore the Leads demo through the actual login form (4.7s)
+  ✓   9 [firefox] › qa/demo-browser/lead-visibility.spec.ts:9:2 › Every supplied lead is visible: qa_ace_v1_workspace_000001 (6.6s)
+  ✓  10 [firefox] › qa/demo-browser/lead-visibility.spec.ts:9:2 › Every supplied lead is visible: qa_ace_v1_workspace_000002 (18.1s)
+  ✓  11 [firefox] › qa/demo-browser/lead-visibility.spec.ts:9:2 › Every supplied lead is visible: qa_ace_v1_workspace_000003 (7.1s)
+  ✓  12 [firefox] › qa/demo-browser/lead-visibility.spec.ts:9:2 › Every supplied lead is visible: qa_ace_v1_workspace_000004 (6.8s)
+  ✓  13 [webkit] › qa/demo-browser/lead-demo-login.spec.ts:7:1 › Local demo launcher opens all four supplied workspaces (2.3s)
+  ✓  14 [webkit] › qa/demo-browser/lead-demo-login.spec.ts:19:1 › Explore the Leads demo through the actual login form (2.7s)
+  ✓  15 [webkit] › qa/demo-browser/lead-visibility.spec.ts:9:2 › Every supplied lead is visible: qa_ace_v1_workspace_000001 (8.2s)
+  ✓  16 [webkit] › qa/demo-browser/lead-visibility.spec.ts:9:2 › Every supplied lead is visible: qa_ace_v1_workspace_000002 (5.9s)
+  ✓  17 [webkit] › qa/demo-browser/lead-visibility.spec.ts:9:2 › Every supplied lead is visible: qa_ace_v1_workspace_000003 (6.4s)
+  ✓  18 [webkit] › qa/demo-browser/lead-visibility.spec.ts:9:2 › Every supplied lead is visible: qa_ace_v1_workspace_000004 (6.0s)
+
+  18 passed (1.8m)

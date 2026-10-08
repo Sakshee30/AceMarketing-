@@ -1,0 +1,172 @@
+[
+  [
+    "RELEASE GATES",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "No gate has passed. Tier A permits only offline qualification with live capability disabled. Any missing mandatory evidence blocks the applicable readiness decision.",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Gate",
+    "Requirement",
+    "Acceptance criterion",
+    "Policy",
+    "Owner",
+    "Status",
+    "Evidence / candidate",
+    "Exception / sign-off"
+  ],
+  [
+    "G01",
+    "Frozen baseline",
+    "Exact SHA + lockfiles + runtime/config/schema/image/model/fixture hashes recorded.",
+    "Mandatory; mismatch fails",
+    "Engineering",
+    "Not evaluated",
+    "",
+    ""
+  ],
+  [
+    "G02",
+    "Safe execution",
+    "Isolated targets and test account allowlists; outbound denial self-test passes; no real customers/spend.",
+    "Mandatory; any unsafe target fails",
+    "Security + DevOps",
+    "Not evaluated",
+    "",
+    ""
+  ],
+  [
+    "G03",
+    "Boot and syntax",
+    "All runtime syntax/import/startup checks pass; F01/F02 verified fixed.",
+    "Mandatory; no skipped checks",
+    "Backend + DevOps",
+    "Not evaluated",
+    "",
+    ""
+  ],
+  [
+    "G04",
+    "Scope and test execution",
+    "100% of in-scope operations have test/disposition; all mandatory selected tests executed with evidence.",
+    "No missing reports, unapproved exclusions, .only or skipped P0/P1",
+    "QA lead",
+    "Not evaluated",
+    "",
+    ""
+  ],
+  [
+    "G05",
+    "Critical behavior",
+    "All P0/P1 required functional, auth, tenant, data, workflow, billing and activation checks pass.",
+    "Zero open critical/high-impact business defects",
+    "Product + QA",
+    "Not evaluated",
+    "",
+    ""
+  ],
+  [
+    "G06",
+    "Security and privacy",
+    "No unresolved exploitable critical/high findings; no tenant leak, secret exposure or consent violation.",
+    "Required review signed; scanner failure is not clean result",
+    "Security",
+    "Not evaluated",
+    "",
+    ""
+  ],
+  [
+    "G07",
+    "Data correctness",
+    "Golden metrics/attribution, ingestion/dedupe, billing and provider-ledger reconciliation match oracles.",
+    "Zero unexplained discrepancies; documented numeric tolerance only",
+    "Data lead",
+    "Not evaluated",
+    "",
+    ""
+  ],
+  [
+    "G08",
+    "Performance and resilience",
+    "Approved per-class SLOs pass at agreed load/hardware; offered rate delivered; async/data-integrity pass.",
+    "Capacity target approved before test; no unsupported capacity claim",
+    "Performance + operations",
+    "Not evaluated",
+    "",
+    ""
+  ],
+  [
+    "G09",
+    "Deployment and recovery",
+    "Every supported mode/install matrix and actual restore/rollback drill passes.",
+    "RPO/RTO measured against approved values",
+    "DevOps",
+    "Not evaluated",
+    "",
+    ""
+  ],
+  [
+    "G10",
+    "AI scope",
+    "Enabled AI tasks pass grounded safety, version, budget and task-specific evaluation requirements.",
+    "Synthetic mechanics do not qualify real-world model efficacy",
+    "AI + product",
+    "Not evaluated",
+    "",
+    ""
+  ],
+  [
+    "G11",
+    "Provider qualification tier",
+    "Every connector tagged simulated, sandbox-qualified, live-qualified, unsupported or blocked.",
+    "Offline readiness can pass with live disabled; enabled live connector cannot rely on mocks",
+    "Integrations",
+    "Not evaluated",
+    "",
+    ""
+  ],
+  [
+    "G12",
+    "Final UAT and sign-off",
+    "Candidate retested after changes; docs verified; known minor issues accepted with owner/expiry.",
+    "No automatic production deployment; final QA/product/engineering/operations approval",
+    "Release owner",
+    "Not evaluated",
+    "",
+    ""
+  ]
+]

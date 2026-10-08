@@ -1,0 +1,4416 @@
+{
+ "generatedAt": "2026-10-07T21:11:54.379Z",
+ "runId": "1a11824d83b_00acff",
+ "mode": "verify",
+ "workspaceId": "ws_default",
+ "startedAt": "2026-10-07T20:53:50.267Z",
+ "counters": {
+  "cycles": 1,
+  "customers": 4,
+  "events": 17,
+  "purchases": 1,
+  "requests": 1080,
+  "errors": 0,
+  "jobsSucceeded": 24
+ },
+ "gradeMix": {
+  "D": 1,
+  "C": 1,
+  "B": 1,
+  "A": 1
+ },
+ "featureTotals": {
+  "pass": 60,
+  "fail": 0,
+  "blocked": 0,
+  "pending": 0,
+  "not run": 0
+ },
+ "findings": [],
+ "openItems": [],
+ "jobs": [
+  {
+   "id": "job_1a67e6c9-23e6-4074-b062-1da94f7acd43",
+   "task": "analyst",
+   "status": "succeeded",
+   "path": "/ai/analysis",
+   "submittedAt": "2026-10-07T21:02:09.019Z",
+   "training": false,
+   "feature": "AI Intelligence",
+   "label": "Grounded analyst answers from workspace evidence",
+   "attempts": 1,
+   "error": null
+  },
+  {
+   "id": "job_16b33e53-2ec9-4740-a90e-36786b8537c7",
+   "task": "incrementality",
+   "status": "succeeded",
+   "path": "/ai/ml/incrementality",
+   "submittedAt": "2026-10-07T21:01:49.738Z",
+   "training": false,
+   "attempts": 1,
+   "error": null
+  },
+  {
+   "id": "job_c4a5daae-877f-40e2-b5ff-7bdef86a7083",
+   "task": "forecast_primary",
+   "status": "succeeded",
+   "path": "/ai/ml/forecast/chronos-2",
+   "submittedAt": "2026-10-07T21:01:49.046Z",
+   "training": false,
+   "attempts": 1,
+   "error": null
+  },
+  {
+   "id": "job_25647127-d220-44a3-94fb-fdc186b69cbb",
+   "task": "forecast_challenger",
+   "status": "succeeded",
+   "path": "/ai/ml/forecast/catboost-challenger",
+   "submittedAt": "2026-10-07T21:01:49.012Z",
+   "training": false,
+   "attempts": 1,
+   "error": null
+  },
+  {
+   "id": "job_241a6dc4-f851-474d-9c62-6ce85a9dcfff",
+   "task": "offer_ranking",
+   "status": "succeeded",
+   "path": "/ai/ml/rank/score",
+   "submittedAt": "2026-10-07T21:01:48.905Z",
+   "training": false,
+   "attempts": 1,
+   "error": null
+  },
+  {
+   "id": "job_c48ded98-a74d-40ae-902b-cb3b193e0445",
+   "task": "behavioral_segments",
+   "status": "succeeded",
+   "path": "/ai/ml/segments",
+   "submittedAt": "2026-10-07T21:01:48.862Z",
+   "training": false,
+   "attempts": 1,
+   "error": null
+  },
+  {
+   "id": "job_fd922512-e9a5-4b0a-b074-81c0b7a7dbaa",
+   "task": "anomaly_detection",
+   "status": "succeeded",
+   "path": "/ai/ml/anomalies",
+   "submittedAt": "2026-10-07T21:01:48.783Z",
+   "training": false,
+   "attempts": 1,
+   "error": null
+  },
+  {
+   "id": "job_f69b7d35-b6c8-4f89-b4c7-7c02ca7870be",
+   "task": "forecast_baseline",
+   "status": "succeeded",
+   "path": "/ai/ml/forecast/seasonal-naive",
+   "submittedAt": "2026-10-07T21:01:48.650Z",
+   "training": false,
+   "attempts": 1,
+   "error": null
+  },
+  {
+   "id": "job_f387f6c6-c2c2-4677-b351-d230607cdd28",
+   "task": "future_customer_value",
+   "status": "succeeded",
+   "path": "/ai/ml/score",
+   "submittedAt": "2026-10-07T21:01:48.409Z",
+   "training": false,
+   "attempts": 1,
+   "error": null
+  },
+  {
+   "id": "job_24f01a46-eea6-4166-ad98-71a88f10559b",
+   "task": "customer_churn",
+   "status": "succeeded",
+   "path": "/ai/ml/score",
+   "submittedAt": "2026-10-07T21:01:48.253Z",
+   "training": false,
+   "attempts": 1,
+   "error": null
+  },
+  {
+   "id": "job_f1c6e371-4eb0-471c-9efd-a09b823aa432",
+   "task": "paid_conversion",
+   "status": "succeeded",
+   "path": "/ai/ml/score",
+   "submittedAt": "2026-10-07T21:01:48.184Z",
+   "training": false,
+   "attempts": 1,
+   "error": null
+  },
+  {
+   "id": "job_43c921a6-a935-4422-a3b2-c6eddbe5bc31",
+   "task": "lead_qualification",
+   "status": "succeeded",
+   "path": "/ai/ml/score",
+   "submittedAt": "2026-10-07T21:01:48.063Z",
+   "training": false,
+   "attempts": 1,
+   "error": null
+  },
+  {
+   "id": "job_f2e8ac01-4fb0-4988-b5f9-5faff0646efb",
+   "task": "analyst",
+   "status": "succeeded",
+   "path": "/ai/analysis",
+   "submittedAt": "2026-10-07T20:58:02.198Z",
+   "training": false,
+   "feature": "AI Intelligence",
+   "label": "Grounded analyst answers from workspace evidence",
+   "attempts": 2,
+   "error": "worker lease expired before finalization"
+  },
+  {
+   "id": "job_fb1515f6-8c94-4cba-910a-946c6744d1ac",
+   "task": "incrementality",
+   "status": "succeeded",
+   "path": "/ai/ml/incrementality",
+   "submittedAt": "2026-10-07T20:58:01.386Z",
+   "training": false,
+   "attempts": 1,
+   "error": null
+  },
+  {
+   "id": "job_c6b57fcd-4a46-4183-9cb8-1ee1207fb8e2",
+   "task": "forecast_primary",
+   "status": "succeeded",
+   "path": "/ai/ml/forecast/chronos-2",
+   "submittedAt": "2026-10-07T20:58:01.358Z",
+   "training": false,
+   "attempts": 1,
+   "error": null
+  },
+  {
+   "id": "job_a7723c36-708c-46f1-a164-3cdd6c08dbdf",
+   "task": "forecast_challenger",
+   "status": "succeeded",
+   "path": "/ai/ml/forecast/catboost-challenger",
+   "submittedAt": "2026-10-07T20:58:01.338Z",
+   "training": false,
+   "attempts": 1,
+   "error": null
+  },
+  {
+   "id": "job_f6d186b4-feb9-4f4f-90a4-bf8a6f2941d0",
+   "task": "offer_ranking",
+   "status": "succeeded",
+   "path": "/ai/ml/rank",
+   "submittedAt": "2026-10-07T20:58:01.310Z",
+   "training": true,
+   "attempts": 1,
+   "error": null
+  },
+  {
+   "id": "job_203685aa-2ef3-44fc-976e-6ac6da82a6b7",
+   "task": "behavioral_segments",
+   "status": "succeeded",
+   "path": "/ai/ml/segments",
+   "submittedAt": "2026-10-07T20:58:01.277Z",
+   "training": false,
+   "attempts": 1,
+   "error": null
+  },
+  {
+   "id": "job_9514f82e-8186-41c1-bef1-d67d10721ddb",
+   "task": "anomaly_detection",
+   "status": "succeeded",
+   "path": "/ai/ml/anomalies",
+   "submittedAt": "2026-10-07T20:58:01.244Z",
+   "training": false,
+   "attempts": 1,
+   "error": null
+  },
+  {
+   "id": "job_fbf97067-0714-43bf-92a3-1d0c8d3e5b3b",
+   "task": "forecast_baseline",
+   "status": "succeeded",
+   "path": "/ai/ml/forecast/seasonal-naive",
+   "submittedAt": "2026-10-07T20:58:01.218Z",
+   "training": false,
+   "attempts": 1,
+   "error": null
+  },
+  {
+   "id": "job_e0919fd9-21ba-40a1-8606-f0bba02c3b3a",
+   "task": "future_customer_value",
+   "status": "succeeded",
+   "path": "/ai/datasets/aids_78cfd872-dd5b-42a5-a563-506fc87afd4e/train",
+   "submittedAt": "2026-10-07T20:58:01.176Z",
+   "training": true,
+   "attempts": 1,
+   "error": null
+  },
+  {
+   "id": "job_b7d68839-077a-48fd-98d0-9a9114825047",
+   "task": "customer_churn",
+   "status": "succeeded",
+   "path": "/ai/datasets/aids_dfe0a9a7-7689-49c6-bf14-77a40b618ec7/train",
+   "submittedAt": "2026-10-07T20:58:00.462Z",
+   "training": true,
+   "attempts": 1,
+   "error": null
+  },
+  {
+   "id": "job_ce155a69-babf-4fa3-bada-fff6be656588",
+   "task": "paid_conversion",
+   "status": "succeeded",
+   "path": "/ai/datasets/aids_5d0c48f3-861d-45f7-a80b-8a587d2c6bb2/train",
+   "submittedAt": "2026-10-07T20:57:59.227Z",
+   "training": true,
+   "attempts": 1,
+   "error": null
+  },
+  {
+   "id": "job_6cb8465b-ba4d-447e-94bf-63d27eabfbc4",
+   "task": "lead_qualification",
+   "status": "succeeded",
+   "path": "/ai/datasets/aids_bdcda6f1-105f-48f1-adf9-2e27c7d02f0a/train",
+   "submittedAt": "2026-10-07T20:57:58.522Z",
+   "training": true,
+   "attempts": 1,
+   "error": null
+  }
+ ],
+ "features": [
+  {
+   "section": "Workspace",
+   "feature": "Overview",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Acquisition command center\" · 20 API calls OK · 1922 characters",
+    "heading": "Acquisition command center",
+    "apiCalls": 20,
+    "textLength": 1922,
+    "screenshot": "screens/overview.png"
+   },
+   "passed": 3,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "GET /dashboard-summary",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 6 fields; recent: 12 rows",
+     "at": "2026-10-07T20:58:02.443Z"
+    },
+    {
+     "name": "GET /live-sync",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 8 fields; recent: 50 rows",
+     "at": "2026-10-07T20:58:02.513Z"
+    },
+    {
+     "name": "GET /workspace/overview",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 7 fields",
+     "at": "2026-10-07T20:58:02.668Z"
+    }
+   ]
+  },
+  {
+   "section": "Workspace",
+   "feature": "Launchpad",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Launchpad\" · 1 API calls OK · 645 characters",
+    "heading": "Launchpad",
+    "apiCalls": 1,
+    "textLength": 645,
+    "screenshot": "screens/launchpad.png"
+   },
+   "passed": 1,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "GET /launchpad",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 10 fields; steps: 6 rows",
+     "at": "2026-10-07T20:58:02.772Z"
+    }
+   ]
+  },
+  {
+   "section": "Workspace",
+   "feature": "Boards",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Boards\" · 2 API calls OK · 359 characters",
+    "heading": "Boards",
+    "apiCalls": 2,
+    "textLength": 359,
+    "screenshot": "screens/boards.png"
+   },
+   "passed": 2,
+   "failed": 0,
+   "blocked": [
+    {
+     "name": "Board card ingestion",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Boards can be created and read; the backend has no public card-creation API.",
+     "at": "2026-10-07T20:53:58.605Z"
+    }
+   ],
+   "checks": [
+    {
+     "name": "Create board",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:51.389Z"
+    },
+    {
+     "name": "Board card ingestion",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Boards can be created and read; the backend has no public card-creation API.",
+     "at": "2026-10-07T20:53:58.605Z"
+    },
+    {
+     "name": "GET /boards",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 1 rows",
+     "at": "2026-10-07T20:58:02.787Z"
+    }
+   ]
+  },
+  {
+   "section": "Tracking & Data",
+   "feature": "AdSync",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Server-side signal activation\" · 4 API calls OK · 2015 characters",
+    "heading": "Server-side signal activation",
+    "apiCalls": 4,
+    "textLength": 2015,
+    "screenshot": "screens/adsync.png"
+   },
+   "passed": 2,
+   "failed": 0,
+   "blocked": [
+    {
+     "name": "External ad-platform delivery",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Google/Meta test credentials and destination IDs required; local event rules and tracking are exercised.",
+     "at": "2026-10-07T20:53:58.605Z"
+    }
+   ],
+   "checks": [
+    {
+     "name": "External ad-platform delivery",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Google/Meta test credentials and destination IDs required; local event rules and tracking are exercised.",
+     "at": "2026-10-07T20:53:58.605Z"
+    },
+    {
+     "name": "GET /events",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 4 fields; runs: 50 rows",
+     "at": "2026-10-07T20:58:02.808Z"
+    },
+    {
+     "name": "GET /signal-deliveries",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; items: 3 rows",
+     "at": "2026-10-07T20:58:02.814Z"
+    }
+   ]
+  },
+  {
+   "section": "Tracking & Data",
+   "feature": "ChatGPT Ads",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"ChatGPT Ads conversion measurement\" · 2 API calls OK · 2474 characters",
+    "heading": "ChatGPT Ads conversion measurement",
+    "apiCalls": 2,
+    "textLength": 2474,
+    "screenshot": "screens/chatgpt-ads.png"
+   },
+   "passed": 2,
+   "failed": 0,
+   "blocked": [
+    {
+     "name": "Send to ChatGPT Ads",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Provider credentials required; local payload validation is exercised.",
+     "at": "2026-10-07T20:53:58.605Z"
+    }
+   ],
+   "checks": [
+    {
+     "name": "Send to ChatGPT Ads",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Provider credentials required; local payload validation is exercised.",
+     "at": "2026-10-07T20:53:58.605Z"
+    },
+    {
+     "name": "GET /chatgpt-ads",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 8 fields; supportedEventTypes: 13 rows",
+     "at": "2026-10-07T20:58:02.855Z"
+    },
+    {
+     "name": "Validate conversion payload",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:35.589Z"
+    }
+   ]
+  },
+  {
+   "section": "Tracking & Data",
+   "feature": "Funnel",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Channel, account & campaign funnel\" · 2 API calls OK · 19850 characters",
+    "heading": "Channel, account & campaign funnel",
+    "apiCalls": 2,
+    "textLength": 19850,
+    "screenshot": "screens/funnel.png"
+   },
+   "passed": 2,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "GET /funnel",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 6 fields; campaigns: 208 rows",
+     "at": "2026-10-07T20:58:02.910Z"
+    },
+    {
+     "name": "Funnel reports non-zero stages",
+     "kind": "assert",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:51.353Z"
+    }
+   ]
+  },
+  {
+   "section": "Tracking & Data",
+   "feature": "Leak Monitor",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Funnel leak monitor\" · 2 API calls OK · 35331 characters",
+    "heading": "Funnel leak monitor",
+    "apiCalls": 2,
+    "textLength": 35331,
+    "screenshot": "screens/leak-monitor.png"
+   },
+   "passed": 2,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "GET /leak-monitor",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 5 fields; items: 143 rows",
+     "at": "2026-10-07T20:58:02.952Z"
+    },
+    {
+     "name": "Recover funnel leak",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:21.916Z"
+    }
+   ]
+  },
+  {
+   "section": "Tracking & Data",
+   "feature": "Events",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Conversion event manager\" · 2 API calls OK · 4094 characters",
+    "heading": "Conversion event manager",
+    "apiCalls": 2,
+    "textLength": 4094,
+    "screenshot": "screens/events.png"
+   },
+   "passed": 4,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "Create event transformation rule",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:51.066Z"
+    },
+    {
+     "name": "GET /events",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 4 fields; runs: 50 rows",
+     "at": "2026-10-07T20:58:02.959Z"
+    },
+    {
+     "name": "GET /event-templates",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 6 rows",
+     "at": "2026-10-07T20:58:02.963Z"
+    },
+    {
+     "name": "Purchase transforms into qualified event",
+     "kind": "write",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:04.043Z"
+    }
+   ]
+  },
+  {
+   "section": "Tracking & Data",
+   "feature": "Adjustments",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Conversion adjustments\" · 2 API calls OK · 17665 characters",
+    "heading": "Conversion adjustments",
+    "apiCalls": 2,
+    "textLength": 17665,
+    "screenshot": "screens/adjustments.png"
+   },
+   "passed": 2,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "GET /adjustments",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 500 rows",
+     "at": "2026-10-07T20:58:02.972Z"
+    },
+    {
+     "name": "Create and preview adjustment",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:10.945Z"
+    }
+   ]
+  },
+  {
+   "section": "Tracking & Data",
+   "feature": "Diagnostics",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Tracking & data quality diagnostics\" · 2 API calls OK · 802 characters",
+    "heading": "Tracking & data quality diagnostics",
+    "apiCalls": 2,
+    "textLength": 802,
+    "screenshot": "screens/diagnostics.png"
+   },
+   "passed": 3,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "GET /diagnostics",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 9 fields; issues: 4 rows",
+     "at": "2026-10-07T20:58:03.269Z"
+    },
+    {
+     "name": "Run diagnostics scan",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:38.741Z"
+    },
+    {
+     "name": "Queue diagnostics replay",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:46.538Z"
+    }
+   ]
+  },
+  {
+   "section": "Tracking & Data",
+   "feature": "Match Quality",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Event match quality\" · 2 API calls OK · 2054 characters",
+    "heading": "Event match quality",
+    "apiCalls": 2,
+    "textLength": 2054,
+    "screenshot": "screens/match-quality.png"
+   },
+   "passed": 1,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "GET /match-quality",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 12 fields; coverage: 14 rows",
+     "at": "2026-10-07T20:58:03.337Z"
+    }
+   ]
+  },
+  {
+   "section": "Tracking & Data",
+   "feature": "Reconciliation",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Conversion reconciliation center\" · 2 API calls OK · 6047 characters",
+    "heading": "Conversion reconciliation center",
+    "apiCalls": 2,
+    "textLength": 6047,
+    "screenshot": "screens/reconciliation.png"
+   },
+   "passed": 2,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "GET /reconciliation",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 7 fields; recentActions: 50 rows",
+     "at": "2026-10-07T20:58:03.489Z"
+    },
+    {
+     "name": "Run identity reconciliation",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:52.663Z"
+    }
+   ]
+  },
+  {
+   "section": "Tracking & Data",
+   "feature": "Fraud",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Fraud & noise detection\" · 2 API calls OK · 723 characters",
+    "heading": "Fraud & noise detection",
+    "apiCalls": 2,
+    "textLength": 723,
+    "screenshot": "screens/fraud.png"
+   },
+   "passed": 2,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "GET /fraud",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 4 fields; reviews: 1000 rows",
+     "at": "2026-10-07T20:58:03.538Z"
+    },
+    {
+     "name": "Queue fraud review",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:20.709Z"
+    }
+   ]
+  },
+  {
+   "section": "Tracking & Data",
+   "feature": "Deep Links",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Deep linking\" · 3 API calls OK · 754 characters",
+    "heading": "Deep linking",
+    "apiCalls": 3,
+    "textLength": 754,
+    "screenshot": "screens/deep-links.png"
+   },
+   "passed": 4,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "Create and activate deep link",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:52.212Z"
+    },
+    {
+     "name": "GET /deep-links",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 3 fields; items: 1 rows",
+     "at": "2026-10-07T20:58:03.562Z"
+    },
+    {
+     "name": "Record deep-link click",
+     "kind": "write",
+     "count": 4,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:55:50.092Z"
+    },
+    {
+     "name": "Record deep-link conversion",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:04.785Z"
+    }
+   ]
+  },
+  {
+   "section": "Tracking & Data",
+   "feature": "Sites",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Site & pixel operations\" · 2 API calls OK · 681 characters",
+    "heading": "Site & pixel operations",
+    "apiCalls": 2,
+    "textLength": 681,
+    "screenshot": "screens/sites.png"
+   },
+   "passed": 4,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "Register site",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:56.246Z"
+    },
+    {
+     "name": "GET /sites",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; items: 1 rows",
+     "at": "2026-10-07T20:58:03.584Z"
+    },
+    {
+     "name": "GET /sites/debug?domain=127.0.0.1",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; items: 100 rows",
+     "at": "2026-10-07T20:58:03.620Z"
+    },
+    {
+     "name": "Validate site installation",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:20.060Z"
+    }
+   ]
+  },
+  {
+   "section": "Tracking & Data",
+   "feature": "Fingerprinting",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Cross-domain journey continuity\" · 2 API calls OK · 794 characters",
+    "heading": "Cross-domain journey continuity",
+    "apiCalls": 2,
+    "textLength": 794,
+    "screenshot": "screens/fingerprinting.png"
+   },
+   "passed": 3,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "GET /fingerprinting",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 5 fields; scenarios: 4 rows",
+     "at": "2026-10-07T20:58:03.938Z"
+    },
+    {
+     "name": "GET /fingerprinting/matches",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; items: 17 rows",
+     "at": "2026-10-07T20:58:04.108Z"
+    },
+    {
+     "name": "Record fingerprint evidence",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:16.848Z"
+    }
+   ]
+  },
+  {
+   "section": "Tracking & Data",
+   "feature": "Live Sync",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"24×7 event transfer\" · 2 API calls OK · 3788 characters",
+    "heading": "24×7 event transfer",
+    "apiCalls": 2,
+    "textLength": 3788,
+    "screenshot": "screens/live-sync.png"
+   },
+   "passed": 6,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "Invalid event timestamp is rejected",
+     "kind": "security",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:58.691Z"
+    },
+    {
+     "name": "GET /live-sync",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 8 fields; recent: 50 rows",
+     "at": "2026-10-07T20:58:04.141Z"
+    },
+    {
+     "name": "GET /monitoring-rules",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 6 rows",
+     "at": "2026-10-07T20:58:04.147Z"
+    },
+    {
+     "name": "Tracking persists profile and click session",
+     "kind": "assert",
+     "count": 4,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Assertion held on the live API response",
+     "at": "2026-10-07T20:55:41.515Z"
+    },
+    {
+     "name": "Customer acquisition (consent, visit, lead capture)",
+     "kind": "write",
+     "count": 4,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:55:50.092Z"
+    },
+    {
+     "name": "Latest purchase appears in the live event stream",
+     "kind": "assert",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:51.214Z"
+    }
+   ]
+  },
+  {
+   "section": "Tracking & Data",
+   "feature": "Data Hub",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Unified customer data hub\" · 2 API calls OK · 4620 characters",
+    "heading": "Unified customer data hub",
+    "apiCalls": 2,
+    "textLength": 4620,
+    "screenshot": "screens/data-hub.png"
+   },
+   "passed": 2,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "GET /data-hub",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 10 fields; recent: 50 rows",
+     "at": "2026-10-07T20:58:04.456Z"
+    },
+    {
+     "name": "Rebuild data hub",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:35.417Z"
+    }
+   ]
+  },
+  {
+   "section": "Tracking & Data",
+   "feature": "Customer 360",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Customer 360\" · 2 API calls OK · 687 characters",
+    "heading": "Customer 360",
+    "apiCalls": 2,
+    "textLength": 687,
+    "screenshot": "screens/customer-360.png"
+   },
+   "passed": 2,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "GET /customer-360",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 5 fields; items: 500 rows",
+     "at": "2026-10-07T20:58:07.542Z"
+    },
+    {
+     "name": "Customer profile is retrievable by id",
+     "kind": "assert",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:48.687Z"
+    }
+   ]
+  },
+  {
+   "section": "Tracking & Data",
+   "feature": "Offline Attribution",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Calls, WhatsApp & offline revenue\" · 5 API calls OK · 3157 characters",
+    "heading": "Calls, WhatsApp & offline revenue",
+    "apiCalls": 5,
+    "textLength": 3157,
+    "screenshot": "screens/offline-attribution.png"
+   },
+   "passed": 7,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "Create offline attribution rule",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:58.438Z"
+    },
+    {
+     "name": "Unsigned WhatsApp webhook is rejected",
+     "kind": "security",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:58.704Z"
+    },
+    {
+     "name": "GET /offline-attribution",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 6 fields; templates: 4 rows",
+     "at": "2026-10-07T20:58:07.880Z"
+    },
+    {
+     "name": "GET /ctwa-attribution",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 3 fields; items: 200 rows",
+     "at": "2026-10-07T20:58:08.013Z"
+    },
+    {
+     "name": "Ingest signed WhatsApp click-to-chat webhook",
+     "kind": "write",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:55:59.559Z"
+    },
+    {
+     "name": "Test offline conversion",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:06.783Z"
+    },
+    {
+     "name": "Click-to-WhatsApp message is attributed",
+     "kind": "assert",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:51.155Z"
+    }
+   ]
+  },
+  {
+   "section": "Tracking & Data",
+   "feature": "Matchback",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Closure matchback & revenue reconciliation\" · 4 API calls OK · 1572 characters",
+    "heading": "Closure matchback & revenue reconciliation",
+    "apiCalls": 4,
+    "textLength": 1572,
+    "screenshot": "screens/matchback.png"
+   },
+   "passed": 4,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "Create matchback rule",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:58.259Z"
+    },
+    {
+     "name": "GET /matchback",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 4 fields; templates: 4 rows",
+     "at": "2026-10-07T20:58:08.239Z"
+    },
+    {
+     "name": "GET /matchback/unmatched",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; items: 13 rows",
+     "at": "2026-10-07T20:58:08.390Z"
+    },
+    {
+     "name": "Reconcile matchback rule",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:00.538Z"
+    }
+   ]
+  },
+  {
+   "section": "Tracking & Data",
+   "feature": "POS & Stores",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"POS, walk-in & store-sale attribution\" · 2 API calls OK · 6767 characters",
+    "heading": "POS, walk-in & store-sale attribution",
+    "apiCalls": 2,
+    "textLength": 6767,
+    "screenshot": "screens/pos-stores.png"
+   },
+   "passed": 3,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "GET /pos-stores",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 4 fields; recent: 50 rows",
+     "at": "2026-10-07T20:58:08.399Z"
+    },
+    {
+     "name": "Import POS transaction",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:15.059Z"
+    },
+    {
+     "name": "Imported store is listed",
+     "kind": "assert",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:51.255Z"
+    }
+   ]
+  },
+  {
+   "section": "Measurement & Intelligence",
+   "feature": "Journeys",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Customer journey explorer\" · 3 API calls OK · 40950 characters",
+    "heading": "Customer journey explorer",
+    "apiCalls": 3,
+    "textLength": 40950,
+    "screenshot": "screens/journeys.png"
+   },
+   "passed": 4,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "GET /journeys",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 3 fields; items: 500 rows",
+     "at": "2026-10-07T20:58:11.252Z"
+    },
+    {
+     "name": "Funnel stage progression",
+     "kind": "write",
+     "count": 16,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:04.785Z"
+    },
+    {
+     "name": "Journey timeline contains the customer",
+     "kind": "assert",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:50.861Z"
+    },
+    {
+     "name": "Nurture lead has a journey",
+     "kind": "assert",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:53.358Z"
+    }
+   ]
+  },
+  {
+   "section": "Measurement & Intelligence",
+   "feature": "Identity",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Identity resolution\" · 3 API calls OK · 4821 characters",
+    "heading": "Identity resolution",
+    "apiCalls": 3,
+    "textLength": 4821,
+    "screenshot": "screens/identity.png"
+   },
+   "passed": 1,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "GET /identity",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 8 fields; recent: 50 rows",
+     "at": "2026-10-07T20:58:11.671Z"
+    }
+   ]
+  },
+  {
+   "section": "Measurement & Intelligence",
+   "feature": "Models",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Custom models\" · 3 API calls OK · 3213 characters",
+    "heading": "Custom models",
+    "apiCalls": 3,
+    "textLength": 3213,
+    "screenshot": "screens/models.png"
+   },
+   "passed": 4,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "Create weighted model",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:51.265Z"
+    },
+    {
+     "name": "GET /models",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; items: 24 rows",
+     "at": "2026-10-07T20:58:11.697Z"
+    },
+    {
+     "name": "GET /models/validation",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 6 fields; runs: 20 rows",
+     "at": "2026-10-07T20:58:11.718Z"
+    },
+    {
+     "name": "Run weighted model",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:10.380Z"
+    }
+   ]
+  },
+  {
+   "section": "Measurement & Intelligence",
+   "feature": "AI Intelligence",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"AI intelligence workspace\" · 55 API calls OK · 5275 characters",
+    "heading": "AI intelligence workspace",
+    "apiCalls": 55,
+    "textLength": 5275,
+    "screenshot": "screens/ai-intelligence.png"
+   },
+   "passed": 41,
+   "failed": 0,
+   "blocked": [
+    {
+     "name": "Hosted AI routes other than the analyst (reviewer, extraction, embeddings, reranking, transcription, live voice, creative image)",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Anthropic, Google and Voyage API keys are required; the analyst and local ML routes are exercised.",
+     "at": "2026-10-07T20:53:58.605Z"
+    }
+   ],
+   "checks": [
+    {
+     "name": "Declare evaluation policy for lead_qualification",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:58.515Z"
+    },
+    {
+     "name": "Declare evaluation policy for paid_conversion",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:58.522Z"
+    },
+    {
+     "name": "Declare evaluation policy for customer_churn",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:58.526Z"
+    },
+    {
+     "name": "Declare evaluation policy for future_customer_value",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:58.533Z"
+    },
+    {
+     "name": "Declare evaluation policy for forecast_challenger",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:58.539Z"
+    },
+    {
+     "name": "Declare evaluation policy for offer_ranking",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:58.548Z"
+    },
+    {
+     "name": "Verify, evaluate, approve and deploy the hosted analyst",
+     "kind": "ml",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Provider access verified; grounding evaluation met its predeclared gate; analyst route deployed",
+     "at": "2026-10-07T20:53:58.605Z"
+    },
+    {
+     "name": "Hosted AI routes other than the analyst (reviewer, extraction, embeddings, reranking, transcription, live voice, creative image)",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Anthropic, Google and Voyage API keys are required; the analyst and local ML routes are exercised.",
+     "at": "2026-10-07T20:53:58.605Z"
+    },
+    {
+     "name": "GET /ai/registry",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 7 fields; items: 21 rows",
+     "at": "2026-10-07T20:58:11.780Z"
+    },
+    {
+     "name": "GET /ai/ml/capabilities",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 4 fields; items: 13 rows",
+     "at": "2026-10-07T20:58:12.015Z"
+    },
+    {
+     "name": "GET /ai/monitoring",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 14 fields; forecastCoverage: 100 rows",
+     "at": "2026-10-07T20:58:12.623Z"
+    },
+    {
+     "name": "GET /ai/results",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 4 fields; items: 50 rows",
+     "at": "2026-10-07T20:58:12.690Z"
+    },
+    {
+     "name": "GET /ai/evaluations",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 4 fields; items: 100 rows",
+     "at": "2026-10-07T20:58:12.717Z"
+    },
+    {
+     "name": "GET /ai/forecast-records",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 4 fields; items: 100 rows",
+     "at": "2026-10-07T20:58:12.745Z"
+    },
+    {
+     "name": "GET /ai/anomalies",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 4 fields; items: 200 rows",
+     "at": "2026-10-07T20:58:12.772Z"
+    },
+    {
+     "name": "GET /ai/segments",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 3 fields; items: 50 rows",
+     "at": "2026-10-07T20:58:12.873Z"
+    },
+    {
+     "name": "GET /ai/rankings",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 4 fields; items: 500 rows",
+     "at": "2026-10-07T20:58:12.910Z"
+    },
+    {
+     "name": "GET /ai/task-policies",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; items: 21 rows",
+     "at": "2026-10-07T20:58:13.014Z"
+    },
+    {
+     "name": "GET /ai/metrics/catalog",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 6 fields; items: 17 rows",
+     "at": "2026-10-07T20:58:13.017Z"
+    },
+    {
+     "name": "GET /ai/datasets",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 4 fields; items: 37 rows",
+     "at": "2026-10-07T20:58:13.036Z"
+    },
+    {
+     "name": "GET /ai/knowledge",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; items: 1 rows",
+     "at": "2026-10-07T20:58:13.066Z"
+    },
+    {
+     "name": "GET /ai/transcripts",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; items: 0 rows",
+     "at": "2026-10-07T20:58:13.072Z"
+    },
+    {
+     "name": "GET /ai/creative-assets",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; items: 0 rows",
+     "at": "2026-10-07T20:58:13.080Z"
+    },
+    {
+     "name": "GET /ai/activation-proposals",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; items: 0 rows",
+     "at": "2026-10-07T20:58:13.087Z"
+    },
+    {
+     "name": "GET /ai/deployment-controls",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; items: 21 rows",
+     "at": "2026-10-07T20:58:13.120Z"
+    },
+    {
+     "name": "GET /ai/causal-records",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 3 fields; items: 65 rows",
+     "at": "2026-10-07T20:58:13.129Z"
+    },
+    {
+     "name": "GET /ai/marketing-mix-records",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 3 fields; items: 0 rows",
+     "at": "2026-10-07T20:58:13.137Z"
+    },
+    {
+     "name": "GET /ai/evaluation-policy?task=lead_qualification",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields",
+     "at": "2026-10-07T20:58:13.164Z"
+    },
+    {
+     "name": "GET /ai/analyst/tools",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; items: 9 rows",
+     "at": "2026-10-07T20:58:13.167Z"
+    },
+    {
+     "name": "GET /ai-action",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; steps: 6 rows",
+     "at": "2026-10-07T20:58:13.171Z"
+    },
+    {
+     "name": "Add and search knowledge",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:42.436Z"
+    },
+    {
+     "name": "Triage detected anomalies",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:42.953Z"
+    },
+    {
+     "name": "Create point-in-time dataset",
+     "kind": "write",
+     "count": 4,
+     "failures": 0,
+     "status": "pass",
+     "detail": "future_customer_value: 1120 rows, dataset aids_78cfd872-dd5b-42a5-a563-506fc87afd4e",
+     "at": "2026-10-07T20:58:01.084Z"
+    },
+    {
+     "name": "Analyst question accepted as durable job",
+     "kind": "assert",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "{\"jobId\": \"job_1a67e6c9-23e6-4074-b062-1da94f7acd43\", \"status\": \"pending\", \"task\": \"analyst\", \"readiness\": \"evaluating\", \"requestedModel\": \"nvidia/nemotron-3-ultra-550b-a55b\", \"resultSchemaVersion\": \"",
+     "at": "2026-10-07T21:02:09.019Z"
+    },
+    {
+     "name": "Ask the grounded analyst",
+     "kind": "ml",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T21:02:09.019Z"
+    },
+    {
+     "name": "Qualify, approve and deploy lead_qualification",
+     "kind": "ml",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Evaluation met its predeclared thresholds; model is approved and deployed",
+     "at": "2026-10-07T20:58:20.904Z"
+    },
+    {
+     "name": "Qualify, approve and deploy paid_conversion",
+     "kind": "ml",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Evaluation met its predeclared thresholds; model is approved and deployed",
+     "at": "2026-10-07T20:58:20.955Z"
+    },
+    {
+     "name": "Qualify, approve and deploy customer_churn",
+     "kind": "ml",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Evaluation met its predeclared thresholds; model is approved and deployed",
+     "at": "2026-10-07T20:58:20.990Z"
+    },
+    {
+     "name": "Qualify, approve and deploy future_customer_value",
+     "kind": "ml",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Evaluation met its predeclared thresholds; model is approved and deployed",
+     "at": "2026-10-07T20:58:21.029Z"
+    },
+    {
+     "name": "Qualify, approve and deploy offer_ranking",
+     "kind": "ml",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Evaluation met its predeclared thresholds; model is approved and deployed",
+     "at": "2026-10-07T20:58:21.113Z"
+    },
+    {
+     "name": "Qualify, approve and deploy forecast_challenger",
+     "kind": "ml",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Evaluation met its predeclared thresholds; model is approved and deployed",
+     "at": "2026-10-07T21:02:15.761Z"
+    },
+    {
+     "name": "Grounded analyst answers from workspace evidence",
+     "kind": "ml",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "nvidia/nemotron-3-ultra-550b-a55b answered in 2924 characters: **Anomalies needing attention this week** 1. **`synthetic_segment_79` – persistent high-magnitude anomaly** - Detected 5× in the last 35 minutes with scor",
+     "at": "2026-10-07T21:05:32.308Z"
+    }
+   ]
+  },
+  {
+   "section": "Measurement & Intelligence",
+   "feature": "Attribution",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Full-path attribution\" · 3 API calls OK · 2070 characters",
+    "heading": "Full-path attribution",
+    "apiCalls": 3,
+    "textLength": 2070,
+    "screenshot": "screens/attribution.png"
+   },
+   "passed": 3,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "GET /attribution",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 16 fields; campaigns: 30 rows",
+     "at": "2026-10-07T20:58:13.286Z"
+    },
+    {
+     "name": "GET /attribution-identity/stats",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 16 fields; campaigns: 30 rows",
+     "at": "2026-10-07T20:58:13.538Z"
+    },
+    {
+     "name": "Conversion matches acquired customer",
+     "kind": "write",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:04.119Z"
+    }
+   ]
+  },
+  {
+   "section": "Measurement & Intelligence",
+   "feature": "Planner",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Strategic media planner\" · 2 API calls OK · 2349 characters",
+    "heading": "Strategic media planner",
+    "apiCalls": 2,
+    "textLength": 2349,
+    "screenshot": "screens/planner.png"
+   },
+   "passed": 2,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "GET /planner",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 5 fields; savedScenarios: 20 rows",
+     "at": "2026-10-07T20:58:13.784Z"
+    },
+    {
+     "name": "Save media-plan scenario",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:16.674Z"
+    }
+   ]
+  },
+  {
+   "section": "Measurement & Intelligence",
+   "feature": "Reports",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Cohort & automated reports\" · 4 API calls OK · 2466 characters",
+    "heading": "Cohort & automated reports",
+    "apiCalls": 4,
+    "textLength": 2466,
+    "screenshot": "screens/reports.png"
+   },
+   "passed": 8,
+   "failed": 0,
+   "blocked": [
+    {
+     "name": "Scheduled report e-mail",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "SMTP test credentials required; report reads and schedules are exercised.",
+     "at": "2026-10-07T20:53:58.605Z"
+    }
+   ],
+   "checks": [
+    {
+     "name": "Create report schedule",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:58.485Z"
+    },
+    {
+     "name": "Scheduled report e-mail",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "SMTP test credentials required; report reads and schedules are exercised.",
+     "at": "2026-10-07T20:53:58.605Z"
+    },
+    {
+     "name": "GET /reports",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 4 fields; schedules: 1 rows",
+     "at": "2026-10-07T20:58:13.976Z"
+    },
+    {
+     "name": "GET /cohorts?months=6",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 7 fields; sources: 8 rows",
+     "at": "2026-10-07T20:58:14.222Z"
+    },
+    {
+     "name": "GET /report-schedules",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 3 fields; items: 1 rows",
+     "at": "2026-10-07T20:58:14.228Z"
+    },
+    {
+     "name": "Record CRM qualification milestone",
+     "kind": "write",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:55:53.420Z"
+    },
+    {
+     "name": "Record CRM consultation milestone",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:55:59.697Z"
+    },
+    {
+     "name": "Cohort report contains acquired customers",
+     "kind": "write",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:29.953Z"
+    },
+    {
+     "name": "Send test report",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:35.600Z"
+    }
+   ]
+  },
+  {
+   "section": "Measurement & Intelligence",
+   "feature": "Grouped Performance",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Grouped performance\" · 2 API calls OK · 1825 characters",
+    "heading": "Grouped performance",
+    "apiCalls": 2,
+    "textLength": 1825,
+    "screenshot": "screens/grouped-performance.png"
+   },
+   "passed": 3,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "GET /grouped-performance?dimension=category&months=6",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 6 fields; conversionEvents: 7 rows",
+     "at": "2026-10-07T20:58:14.584Z"
+    },
+    {
+     "name": "GET /grouped-performance?dimension=source&months=6",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 6 fields; items: 8 rows",
+     "at": "2026-10-07T20:58:14.938Z"
+    },
+    {
+     "name": "Record channel cost",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:19.001Z"
+    }
+   ]
+  },
+  {
+   "section": "Measurement & Intelligence",
+   "feature": "Executive Briefs",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Executive data snippets\" · 4 API calls OK · 1778 characters",
+    "heading": "Executive data snippets",
+    "apiCalls": 4,
+    "textLength": 1778,
+    "screenshot": "screens/executive-briefs.png"
+   },
+   "passed": 2,
+   "failed": 0,
+   "blocked": [
+    {
+     "name": "Brief e-mail delivery",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "SMTP test credentials required.",
+     "at": "2026-10-07T20:53:58.605Z"
+    }
+   ],
+   "checks": [
+    {
+     "name": "Brief e-mail delivery",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "SMTP test credentials required.",
+     "at": "2026-10-07T20:53:58.605Z"
+    },
+    {
+     "name": "GET /cohorts?months=6",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 7 fields; sources: 8 rows",
+     "at": "2026-10-07T20:58:15.138Z"
+    },
+    {
+     "name": "GET /report-schedules",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 3 fields; items: 1 rows",
+     "at": "2026-10-07T20:58:15.143Z"
+    }
+   ]
+  },
+  {
+   "section": "Lead & Conversion",
+   "feature": "Enrich",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"CRM enrichment\" · 3 API calls OK · 7115 characters",
+    "heading": "CRM enrichment",
+    "apiCalls": 3,
+    "textLength": 7115,
+    "screenshot": "screens/enrich.png"
+   },
+   "passed": 4,
+   "failed": 0,
+   "blocked": [
+    {
+     "name": "CRM writeback delivery",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Connected CRM required; the writeback request is queued and reported, not delivered.",
+     "at": "2026-10-07T20:53:58.605Z"
+    }
+   ],
+   "checks": [
+    {
+     "name": "CRM writeback delivery",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Connected CRM required; the writeback request is queued and reported, not delivered.",
+     "at": "2026-10-07T20:53:58.605Z"
+    },
+    {
+     "name": "GET /enrich",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 3 fields; items: 100 rows",
+     "at": "2026-10-07T20:58:15.165Z"
+    },
+    {
+     "name": "Upsert lead profile",
+     "kind": "write",
+     "count": 4,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Lead persisted and scored through POST /enrich/upsert",
+     "at": "2026-10-07T20:55:45.779Z"
+    },
+    {
+     "name": "New lead is visible in enrichment",
+     "kind": "assert",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:46.021Z"
+    },
+    {
+     "name": "Acquisition source survives later calls",
+     "kind": "assert",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:46.038Z"
+    }
+   ]
+  },
+  {
+   "section": "Lead & Conversion",
+   "feature": "Lead Grading",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Lead grading\" · 2 API calls OK · 5131 characters",
+    "heading": "Lead grading",
+    "apiCalls": 2,
+    "textLength": 5131,
+    "screenshot": "screens/lead-grading.png"
+   },
+   "passed": 11,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "Invalid grade override is rejected",
+     "kind": "security",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:58.696Z"
+    },
+    {
+     "name": "GET /lead-grading",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 3 fields; items: 100 rows",
+     "at": "2026-10-07T20:58:15.183Z"
+    },
+    {
+     "name": "Score has explainable drivers",
+     "kind": "assert",
+     "count": 4,
+     "failures": 0,
+     "status": "pass",
+     "detail": "{\"score\": 96, \"grade\": \"A\", \"version\": \"v2.0\", \"drivers\": [{\"key\": \"journey_depth\", \"label\": \"Journey depth\", \"points\": 14, \"evidence\": \"6 meaningful interactions\"}, {\"key\": \"pricing\", \"label\": \"Prici",
+     "at": "2026-10-07T20:55:53.322Z"
+    },
+    {
+     "name": "Completed low-quality journey is graded D by the backend",
+     "kind": "assert",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "score 20 grade D for live_1a11824d83b_00acff_1",
+     "at": "2026-10-07T20:54:54.790Z"
+    },
+    {
+     "name": "Completed nurture journey is graded C by the backend",
+     "kind": "assert",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "score 56 grade C for live_1a11824d83b_00acff_2",
+     "at": "2026-10-07T20:55:23.320Z"
+    },
+    {
+     "name": "Completed strong-fit journey is graded B by the backend",
+     "kind": "assert",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "score 73 grade B for live_1a11824d83b_00acff_3",
+     "at": "2026-10-07T20:55:40.136Z"
+    },
+    {
+     "name": "Completed high-intent journey is graded A by the backend",
+     "kind": "assert",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "score 100 grade A for live_1a11824d83b_00acff_4",
+     "at": "2026-10-07T20:56:04.785Z"
+    },
+    {
+     "name": "Grade activation creates a downstream action",
+     "kind": "assert",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "{\"lead\": \"Rahul Thomas\", \"leadId\": \"live_1a11824d83b_00acff_4\", \"grade\": \"A\", \"status\": \"activated\", \"action\": \"routing\", \"nextTab\": \"Routing\", \"operation\": {\"id\": \"route_6c88ee67-5e99-4005-b2e3-8521f2de26c6\", \"status\": \"routed\", \"destination\": \"Priority sales queue\", \"dueAt\": null}, \"queuedAt\": \"20",
+     "at": "2026-10-07T20:57:24.109Z"
+    },
+    {
+     "name": "Activate grade downstream",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:24.109Z"
+    },
+    {
+     "name": "Grade distribution accounts for every lead",
+     "kind": "assert",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:51.298Z"
+    },
+    {
+     "name": "Converted customer is listed as grade A",
+     "kind": "assert",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "{\"id\": \"lead_c9266353-fa45-4dba-9605-964dcccd7dd3\", \"lead\": \"Rahul Thomas\", \"leadId\": \"live_1a11824d83b_00acff_4\", \"score\": 100, \"grade\": \"A\", \"source\": \"google\", \"stage\": \"converted\", \"reason\": \"Jour",
+     "at": "2026-10-07T20:57:51.298Z"
+    }
+   ]
+  },
+  {
+   "section": "Lead & Conversion",
+   "feature": "Behavior",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Website & app behavior\" · 3 API calls OK · 3688 characters",
+    "heading": "Website & app behavior",
+    "apiCalls": 3,
+    "textLength": 3688,
+    "screenshot": "screens/behavior.png"
+   },
+   "passed": 1,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "GET /behavior",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 8 fields; campaigns: 244 rows",
+     "at": "2026-10-07T20:58:15.222Z"
+    }
+   ]
+  },
+  {
+   "section": "Lead & Conversion",
+   "feature": "Feed",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Feed & payload enhancement\" · 3 API calls OK · 2763 characters",
+    "heading": "Feed & payload enhancement",
+    "apiCalls": 3,
+    "textLength": 2763,
+    "screenshot": "screens/feed.png"
+   },
+   "passed": 4,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "Register feed attribute",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:57.692Z"
+    },
+    {
+     "name": "Create feed mapping",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:57.820Z"
+    },
+    {
+     "name": "GET /feed",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 4 fields; attributes: 44 rows",
+     "at": "2026-10-07T20:58:15.240Z"
+    },
+    {
+     "name": "Preview destination feed",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:20.166Z"
+    }
+   ]
+  },
+  {
+   "section": "Lead & Conversion",
+   "feature": "Agents",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Agent operations\" · 3 API calls OK · 3531 characters",
+    "heading": "Agent operations",
+    "apiCalls": 3,
+    "textLength": 3531,
+    "screenshot": "screens/agents.png"
+   },
+   "passed": 5,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "Create custom agent",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:58.147Z"
+    },
+    {
+     "name": "GET /agents",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 4 fields; runs: 50 rows",
+     "at": "2026-10-07T20:58:15.361Z"
+    },
+    {
+     "name": "GET /agent-runs",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 200 rows",
+     "at": "2026-10-07T20:58:15.369Z"
+    },
+    {
+     "name": "Custom agent executes persisted routing",
+     "kind": "assert",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "{\"run\": {\"id\": \"agr_c8043197-fa77-4192-be21-95cb7bf465dd\", \"workspace_id\": \"ws_default\", \"agent_type\": \"custom:agent_0cc013c2-485d-440a-927c-3129565ff7a4\", \"entity_id\": \"live_1a11824d83b_00acff_4\", \"trigger_key\": \"manual_test\", \"status\": \"succeeded\", \"input\": {\"test\": true, \"action\": \"Route to sales",
+     "at": "2026-10-07T20:57:07.963Z"
+    },
+    {
+     "name": "Custom agent routing",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:07.963Z"
+    }
+   ]
+  },
+  {
+   "section": "Lead & Conversion",
+   "feature": "Routing",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Lead routing\" · 2 API calls OK · 1449 characters",
+    "heading": "Lead routing",
+    "apiCalls": 2,
+    "textLength": 1449,
+    "screenshot": "screens/routing.png"
+   },
+   "passed": 4,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "Create routing rule",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:58.498Z"
+    },
+    {
+     "name": "GET /routing",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 4 fields; recent: 50 rows",
+     "at": "2026-10-07T20:58:15.376Z"
+    },
+    {
+     "name": "Route qualified lead",
+     "kind": "write",
+     "count": 4,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:55:53.439Z"
+    },
+    {
+     "name": "Routing decision is listed",
+     "kind": "assert",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:51.166Z"
+    }
+   ]
+  },
+  {
+   "section": "Lead & Conversion",
+   "feature": "Follow-ups",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Follow-up operations\" · 1 API calls OK · 19810 characters",
+    "heading": "Follow-up operations",
+    "apiCalls": 1,
+    "textLength": 19810,
+    "screenshot": "screens/follow-ups.png"
+   },
+   "passed": 7,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "GET /follow-ups",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; items: 200 rows",
+     "at": "2026-10-07T20:58:15.400Z"
+    },
+    {
+     "name": "GET /lead-reactivation?dormantDays=30&recentDays=7",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 3 fields; items: 85 rows",
+     "at": "2026-10-07T20:58:19.290Z"
+    },
+    {
+     "name": "Create abandonment follow-up",
+     "kind": "write",
+     "count": 3,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:55:40.125Z"
+    },
+    {
+     "name": "Queue totals reflect completed work",
+     "kind": "assert",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "before {\"open\": 173, \"completedToday\": 1405, \"completedTotal\": 20255, \"overdue\": 114} after {\"open\": 167, \"completedToday\": 1412, \"completedTotal\": 20262, \"overdue\": 108}",
+     "at": "2026-10-07T20:56:20.409Z"
+    },
+    {
+     "name": "Create and complete follow-up",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:20.409Z"
+    },
+    {
+     "name": "Lead reactivation run",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:27.778Z"
+    },
+    {
+     "name": "Work the follow-up queue",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:53.565Z"
+    }
+   ]
+  },
+  {
+   "section": "Lead & Conversion",
+   "feature": "Calls",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Voice qualification & call tracking\" · 6 API calls OK · 12667 characters",
+    "heading": "Voice qualification & call tracking",
+    "apiCalls": 6,
+    "textLength": 12667,
+    "screenshot": "screens/calls.png"
+   },
+   "passed": 6,
+   "failed": 0,
+   "blocked": [
+    {
+     "name": "Outbound and live voice calls",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Telephony/voice provider credentials required; signed inbound call webhooks are exercised.",
+     "at": "2026-10-07T20:53:58.605Z"
+    }
+   ],
+   "checks": [
+    {
+     "name": "Outbound and live voice calls",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Telephony/voice provider credentials required; signed inbound call webhooks are exercised.",
+     "at": "2026-10-07T20:53:58.605Z"
+    },
+    {
+     "name": "Unsigned call webhook is rejected",
+     "kind": "security",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:58.699Z"
+    },
+    {
+     "name": "GET /call-events",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 200 rows",
+     "at": "2026-10-07T20:58:19.370Z"
+    },
+    {
+     "name": "GET /qualification-calls",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 20 rows",
+     "at": "2026-10-07T20:58:19.377Z"
+    },
+    {
+     "name": "Ingest signed call webhook",
+     "kind": "write",
+     "count": 4,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:55:54.994Z"
+    },
+    {
+     "name": "Queue qualification call",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:24.384Z"
+    },
+    {
+     "name": "Inbound call is listed",
+     "kind": "assert",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:51.068Z"
+    }
+   ]
+  },
+  {
+   "section": "Lead & Conversion",
+   "feature": "Meetings",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Scheduler & meeting reminders\" · 6 API calls OK · 17480 characters",
+    "heading": "Scheduler & meeting reminders",
+    "apiCalls": 6,
+    "textLength": 17480,
+    "screenshot": "screens/meetings.png"
+   },
+   "passed": 6,
+   "failed": 0,
+   "blocked": [
+    {
+     "name": "Calendar synchronisation",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Calendar provider credentials required; local meeting records are exercised.",
+     "at": "2026-10-07T20:53:58.605Z"
+    }
+   ],
+   "checks": [
+    {
+     "name": "Calendar synchronisation",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Calendar provider credentials required; local meeting records are exercised.",
+     "at": "2026-10-07T20:53:58.605Z"
+    },
+    {
+     "name": "GET /meetings",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 200 rows",
+     "at": "2026-10-07T20:58:19.385Z"
+    },
+    {
+     "name": "GET /voice-scheduler",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 20 rows",
+     "at": "2026-10-07T20:58:19.390Z"
+    },
+    {
+     "name": "Schedule consultation",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:55:59.578Z"
+    },
+    {
+     "name": "Schedule, reschedule and remind",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:24.353Z"
+    },
+    {
+     "name": "Request voice scheduling",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:24.365Z"
+    },
+    {
+     "name": "Scheduled consultation is listed",
+     "kind": "assert",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:50.872Z"
+    }
+   ]
+  },
+  {
+   "section": "Lead & Conversion",
+   "feature": "Feedback",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Feedback agent\" · 3 API calls OK · 15657 characters",
+    "heading": "Feedback agent",
+    "apiCalls": 3,
+    "textLength": 15657,
+    "screenshot": "screens/feedback.png"
+   },
+   "passed": 4,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "GET /feedback",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 4 fields; items: 200 rows",
+     "at": "2026-10-07T20:58:19.409Z"
+    },
+    {
+     "name": "Record customer feedback",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:04.148Z"
+    },
+    {
+     "name": "Record, request and route feedback",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:26.097Z"
+    },
+    {
+     "name": "Submitted feedback is listed",
+     "kind": "assert",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:50.882Z"
+    }
+   ]
+  },
+  {
+   "section": "Lead & Conversion",
+   "feature": "Approvals",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Human approval center\" · 2 API calls OK · 2389 characters",
+    "heading": "Human approval center",
+    "apiCalls": 2,
+    "textLength": 2389,
+    "screenshot": "screens/approvals.png"
+   },
+   "passed": 2,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "GET /approvals",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 16 rows",
+     "at": "2026-10-07T20:58:19.412Z"
+    },
+    {
+     "name": "Raise and decide agent approvals",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:56.617Z"
+    }
+   ]
+  },
+  {
+   "section": "Lead & Conversion",
+   "feature": "Ask Ace",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Journey & attribution assistant\" · 0 API calls OK · 1460 characters",
+    "heading": "Journey & attribution assistant",
+    "apiCalls": 0,
+    "textLength": 1460,
+    "screenshot": "screens/ask-ace.png"
+   },
+   "passed": 2,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "Grounded analyst tool",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:30.732Z"
+    },
+    {
+     "name": "Ask a grounded question",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:31.251Z"
+    }
+   ]
+  },
+  {
+   "section": "Activation & Integrations",
+   "feature": "Integrations",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Platform-agnostic connectivity\" · 5 API calls OK · 5280 characters",
+    "heading": "Platform-agnostic connectivity",
+    "apiCalls": 5,
+    "textLength": 5280,
+    "screenshot": "screens/integrations.png"
+   },
+   "passed": 8,
+   "failed": 0,
+   "blocked": [
+    {
+     "name": "OAuth connector connections",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Real provider OAuth apps and test accounts required.",
+     "at": "2026-10-07T20:53:58.605Z"
+    }
+   ],
+   "checks": [
+    {
+     "name": "OAuth connector connections",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Real provider OAuth apps and test accounts required.",
+     "at": "2026-10-07T20:53:58.605Z"
+    },
+    {
+     "name": "GET /integrations",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; items: 63 rows",
+     "at": "2026-10-07T20:58:19.415Z"
+    },
+    {
+     "name": "GET /custom-integrations",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 0 rows",
+     "at": "2026-10-07T20:58:19.420Z"
+    },
+    {
+     "name": "GET /integrations/sync-schedules",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; readConnectors: 11 rows",
+     "at": "2026-10-07T20:58:19.428Z"
+    },
+    {
+     "name": "GET /integrations/sync-runs",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; readConnectors: 11 rows",
+     "at": "2026-10-07T20:58:19.437Z"
+    },
+    {
+     "name": "GET /integrations/data-summary",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 6 fields; campaigns: 0 rows",
+     "at": "2026-10-07T20:58:19.442Z"
+    },
+    {
+     "name": "GET /webhook-subscriptions",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 0 rows",
+     "at": "2026-10-07T20:58:19.470Z"
+    },
+    {
+     "name": "GET /webhook-deliveries",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 0 rows",
+     "at": "2026-10-07T20:58:19.479Z"
+    },
+    {
+     "name": "GET /whatsapp/messages",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 200 rows",
+     "at": "2026-10-07T20:58:19.531Z"
+    }
+   ]
+  },
+  {
+   "section": "Activation & Integrations",
+   "feature": "Data Flows",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Data flows\" · 4 API calls OK · 997 characters",
+    "heading": "Data flows",
+    "apiCalls": 4,
+    "textLength": 997,
+    "screenshot": "screens/data-flows.png"
+   },
+   "passed": 3,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "Create integration flow",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:58.502Z"
+    },
+    {
+     "name": "GET /integration-flows",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; items: 1 rows",
+     "at": "2026-10-07T20:58:19.536Z"
+    },
+    {
+     "name": "Test integration flow",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:27.175Z"
+    }
+   ]
+  },
+  {
+   "section": "Activation & Integrations",
+   "feature": "Real-Time Activation",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Real-time activation\" · 2 API calls OK · 2301 characters",
+    "heading": "Real-time activation",
+    "apiCalls": 2,
+    "textLength": 2301,
+    "screenshot": "screens/real-time-activation.png"
+   },
+   "passed": 5,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "Create activation rule",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:51.082Z"
+    },
+    {
+     "name": "GET /activation-rules",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 3 fields; runs: 100 rows",
+     "at": "2026-10-07T20:58:19.567Z"
+    },
+    {
+     "name": "GET /activation-runs",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 0 rows",
+     "at": "2026-10-07T20:58:19.720Z"
+    },
+    {
+     "name": "Lead triggers automatic follow-up",
+     "kind": "write",
+     "count": 8,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:55:53.284Z"
+    },
+    {
+     "name": "Test activation rule",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:26.198Z"
+    }
+   ]
+  },
+  {
+   "section": "Activation & Integrations",
+   "feature": "Personalization",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Personalization studio\" · 2 API calls OK · 1293 characters",
+    "heading": "Personalization studio",
+    "apiCalls": 2,
+    "textLength": 1293,
+    "screenshot": "screens/personalization.png"
+   },
+   "passed": 3,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "Create personalization rule",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:51.147Z"
+    },
+    {
+     "name": "GET /personalization-rules",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 5 fields; recentDecisions: 100 rows",
+     "at": "2026-10-07T20:58:19.773Z"
+    },
+    {
+     "name": "Decide and record impression",
+     "kind": "write",
+     "count": 4,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:02.547Z"
+    }
+   ]
+  },
+  {
+   "section": "Activation & Integrations",
+   "feature": "Exclusions",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Audience suppression & exclusions\" · 2 API calls OK · 1682 characters",
+    "heading": "Audience suppression & exclusions",
+    "apiCalls": 2,
+    "textLength": 1682,
+    "screenshot": "screens/exclusions.png"
+   },
+   "passed": 2,
+   "failed": 0,
+   "blocked": [
+    {
+     "name": "Exclusion sync to ad platforms",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Connected Google/Meta account required; local exclusion audiences are created.",
+     "at": "2026-10-07T20:53:58.605Z"
+    }
+   ],
+   "checks": [
+    {
+     "name": "Create converted-customer exclusion",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:58.441Z"
+    },
+    {
+     "name": "Exclusion sync to ad platforms",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Connected Google/Meta account required; local exclusion audiences are created.",
+     "at": "2026-10-07T20:53:58.605Z"
+    },
+    {
+     "name": "GET /exclusions",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 3 fields; presets: 3 rows",
+     "at": "2026-10-07T20:58:19.828Z"
+    }
+   ]
+  },
+  {
+   "section": "Activation & Integrations",
+   "feature": "Audiences",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Audience management\" · 2 API calls OK · 1988 characters",
+    "heading": "Audience management",
+    "apiCalls": 2,
+    "textLength": 1988,
+    "screenshot": "screens/audiences.png"
+   },
+   "passed": 6,
+   "failed": 0,
+   "blocked": [
+    {
+     "name": "Audience sync to ad platforms",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Connected Google/Meta account required; local materialization is exercised.",
+     "at": "2026-10-07T20:53:58.605Z"
+    }
+   ],
+   "checks": [
+    {
+     "name": "Create audience",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:51.248Z"
+    },
+    {
+     "name": "Audience sync to ad platforms",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Connected Google/Meta account required; local materialization is exercised.",
+     "at": "2026-10-07T20:53:58.605Z"
+    },
+    {
+     "name": "Unsupported audience condition is rejected",
+     "kind": "security",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:58.708Z"
+    },
+    {
+     "name": "GET /audiences",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; items: 2 rows",
+     "at": "2026-10-07T20:58:19.852Z"
+    },
+    {
+     "name": "GET /audience-schedules",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; items: 1 rows",
+     "at": "2026-10-07T20:58:19.858Z"
+    },
+    {
+     "name": "Materialization returns matched members",
+     "kind": "assert",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "{\"audienceId\": \"aud_62ea017b-39e4-47b0-9e55-4925195aa59d\", \"matchedSize\": 6939, \"status\": \"ready_for_sync\"}",
+     "at": "2026-10-07T20:56:09.334Z"
+    },
+    {
+     "name": "Preview and materialize audience",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:09.354Z"
+    }
+   ]
+  },
+  {
+   "section": "Activation & Integrations",
+   "feature": "Delivery",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Signal delivery center\" · 4 API calls OK · 1346 characters",
+    "heading": "Signal delivery center",
+    "apiCalls": 4,
+    "textLength": 1346,
+    "screenshot": "screens/delivery.png"
+   },
+   "passed": 3,
+   "failed": 0,
+   "blocked": [
+    {
+     "name": "Signal dispatch to destinations",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Connected ad/CRM destination required; delivery queue reads are exercised.",
+     "at": "2026-10-07T20:53:58.605Z"
+    }
+   ],
+   "checks": [
+    {
+     "name": "Signal dispatch to destinations",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Connected ad/CRM destination required; delivery queue reads are exercised.",
+     "at": "2026-10-07T20:53:58.605Z"
+    },
+    {
+     "name": "GET /connector-health",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 3 fields; items: 3 rows",
+     "at": "2026-10-07T20:58:19.901Z"
+    },
+    {
+     "name": "GET /signal-deliveries",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; items: 3 rows",
+     "at": "2026-10-07T20:58:19.905Z"
+    },
+    {
+     "name": "GET /signal-console",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 7 fields; recent: 3 rows",
+     "at": "2026-10-07T20:58:19.922Z"
+    }
+   ]
+  },
+  {
+   "section": "Operations & Developer",
+   "feature": "Monitoring",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Platform monitoring\" · 4 API calls OK · 1771 characters",
+    "heading": "Platform monitoring",
+    "apiCalls": 4,
+    "textLength": 1771,
+    "screenshot": "screens/monitoring.png"
+   },
+   "passed": 3,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "Create monitoring rule",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:58.476Z"
+    },
+    {
+     "name": "GET /monitoring",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 12 fields; recentAlerts: 28 rows",
+     "at": "2026-10-07T20:58:20.094Z"
+    },
+    {
+     "name": "GET /monitoring-rules",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 6 rows",
+     "at": "2026-10-07T20:58:20.100Z"
+    }
+   ]
+  },
+  {
+   "section": "Operations & Developer",
+   "feature": "Alerts",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Alert Center\" · 2 API calls OK · 3447 characters",
+    "heading": "Alert Center",
+    "apiCalls": 2,
+    "textLength": 3447,
+    "screenshot": "screens/alerts.png"
+   },
+   "passed": 1,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "GET /alerts",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 28 rows",
+     "at": "2026-10-07T20:58:20.116Z"
+    }
+   ]
+  },
+  {
+   "section": "Operations & Developer",
+   "feature": "Compliance",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Privacy, consent & compliance center\" · 2 API calls OK · 3698 characters",
+    "heading": "Privacy, consent & compliance center",
+    "apiCalls": 2,
+    "textLength": 3698,
+    "screenshot": "screens/compliance.png"
+   },
+   "passed": 10,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "Tracking without consent is refused",
+     "kind": "security",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:58.653Z"
+    },
+    {
+     "name": "GET /compliance-center",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 8 fields; consentAudit: 50 rows",
+     "at": "2026-10-07T20:58:20.195Z"
+    },
+    {
+     "name": "GET /consent/stats",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; audit: 50 rows",
+     "at": "2026-10-07T20:58:20.202Z"
+    },
+    {
+     "name": "GET /privacy/requests",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; items: 100 rows",
+     "at": "2026-10-07T20:58:20.207Z"
+    },
+    {
+     "name": "GET /security-posture",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; controls: 5 rows",
+     "at": "2026-10-07T20:58:20.218Z"
+    },
+    {
+     "name": "Record customer consent",
+     "kind": "write",
+     "count": 4,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Consent stored through POST /consent",
+     "at": "2026-10-07T20:55:40.144Z"
+    },
+    {
+     "name": "Privacy export returns the customer data",
+     "kind": "write",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:27.910Z"
+    },
+    {
+     "name": "Privacy deletion removes all subject data",
+     "kind": "write",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:29.663Z"
+    },
+    {
+     "name": "Nothing remains after deletion",
+     "kind": "assert",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "{\"clickSessions\": 0, \"assistedEvents\": 0, \"leadProfiles\": 0, \"audienceMemberships\": 0, \"consentRecords\": 0}",
+     "at": "2026-10-07T20:56:29.663Z"
+    },
+    {
+     "name": "Save consent preferences",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:30.690Z"
+    }
+   ]
+  },
+  {
+   "section": "Operations & Developer",
+   "feature": "Developers",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Developer & webhook console\" · 4 API calls OK · 1948 characters",
+    "heading": "Developer & webhook console",
+    "apiCalls": 4,
+    "textLength": 1948,
+    "screenshot": "screens/developers.png"
+   },
+   "passed": 7,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "GET /api-keys",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; items: 200 rows",
+     "at": "2026-10-07T20:58:20.222Z"
+    },
+    {
+     "name": "GET /webhooks/endpoints",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 0 rows",
+     "at": "2026-10-07T20:58:20.225Z"
+    },
+    {
+     "name": "GET /webhooks/deliveries",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; items: 0 rows",
+     "at": "2026-10-07T20:58:20.229Z"
+    },
+    {
+     "name": "GET /audit-log",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; items: 250 rows",
+     "at": "2026-10-07T20:58:20.382Z"
+    },
+    {
+     "name": "API key is issued with an id",
+     "kind": "assert",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "{\"id\": \"key_cb5d6762-3b06-4524-9239-f6e67f0fd2cf\", \"name\": \"Live test key 1a11824d83b_00acff\", \"prefix\": \"ace_kOVsd5Uo\", \"createdAt\": \"2026-10-07T20:57:35.604Z\", \"notice\": \"Store this key now; only it",
+     "at": "2026-10-07T20:57:40.913Z"
+    },
+    {
+     "name": "Issue and revoke API key",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:42.398Z"
+    },
+    {
+     "name": "Export audit log",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:42.410Z"
+    }
+   ]
+  },
+  {
+   "section": "Operations & Developer",
+   "feature": "Settings",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Workspace settings\" · 3 API calls OK · 448 characters",
+    "heading": "Workspace settings",
+    "apiCalls": 3,
+    "textLength": 448,
+    "screenshot": "screens/settings.png"
+   },
+   "passed": 6,
+   "failed": 0,
+   "blocked": [
+    {
+     "name": "Billing checkout and portal",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Stripe test credentials and signed webhooks required; usage and subscription reads are exercised.",
+     "at": "2026-10-07T20:53:58.605Z"
+    }
+   ],
+   "checks": [
+    {
+     "name": "Billing checkout and portal",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Stripe test credentials and signed webhooks required; usage and subscription reads are exercised.",
+     "at": "2026-10-07T20:53:58.605Z"
+    },
+    {
+     "name": "GET /settings",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 5 fields",
+     "at": "2026-10-07T20:58:20.386Z"
+    },
+    {
+     "name": "GET /members",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 1 rows",
+     "at": "2026-10-07T20:58:20.390Z"
+    },
+    {
+     "name": "GET /billing/usage",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 16 fields",
+     "at": "2026-10-07T20:58:20.476Z"
+    },
+    {
+     "name": "GET /billing/subscription",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 19 fields; events: 0 rows",
+     "at": "2026-10-07T20:58:20.545Z"
+    },
+    {
+     "name": "GET /workspaces",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 1 rows",
+     "at": "2026-10-07T20:58:20.549Z"
+    },
+    {
+     "name": "GET /auth/me",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields",
+     "at": "2026-10-07T20:58:20.553Z"
+    }
+   ]
+  },
+  {
+   "section": "Platform (no dedicated tab)",
+   "feature": "Public website",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Make paid media learn\nfrom real outcomes, not\nsurface-level \" · 0 API calls OK · 320 characters",
+    "heading": "Make paid media learn\nfrom real outcomes, not\nsurface-level clicks.",
+    "apiCalls": 0,
+    "textLength": 320,
+    "screenshot": "screens/public-website.png"
+   },
+   "passed": 13,
+   "failed": 0,
+   "blocked": [],
+   "checks": [
+    {
+     "name": "GET /public/navigation",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 5 fields; agents: 11 rows",
+     "at": "2026-10-07T20:58:20.554Z"
+    },
+    {
+     "name": "GET /public/industries",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 7 rows",
+     "at": "2026-10-07T20:58:20.558Z"
+    },
+    {
+     "name": "GET /public/agents",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 19 rows",
+     "at": "2026-10-07T20:58:20.561Z"
+    },
+    {
+     "name": "GET /public/integrations",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; groups: 7 rows",
+     "at": "2026-10-07T20:58:20.564Z"
+    },
+    {
+     "name": "GET /public/challenges",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 6 rows",
+     "at": "2026-10-07T20:58:20.566Z"
+    },
+    {
+     "name": "GET /public/case-studies",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 7 rows",
+     "at": "2026-10-07T20:58:20.569Z"
+    },
+    {
+     "name": "GET /public/resources",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 6 rows",
+     "at": "2026-10-07T20:58:20.571Z"
+    },
+    {
+     "name": "GET /public/resource-center",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 5 fields; documentation: 4 rows",
+     "at": "2026-10-07T20:58:20.572Z"
+    },
+    {
+     "name": "GET /solutions",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 7 rows",
+     "at": "2026-10-07T20:58:20.576Z"
+    },
+    {
+     "name": "GET /resources",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 6 rows",
+     "at": "2026-10-07T20:58:20.600Z"
+    },
+    {
+     "name": "GET /case-studies",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 4 rows",
+     "at": "2026-10-07T20:58:20.603Z"
+    },
+    {
+     "name": "GET /source-notes",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; notes: 1 rows",
+     "at": "2026-10-07T20:58:20.606Z"
+    },
+    {
+     "name": "Pricing recommendation and quote",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:57:45.860Z"
+    }
+   ]
+  },
+  {
+   "section": "Platform (no dedicated tab)",
+   "feature": "Forms & custom objects",
+   "status": "pass",
+   "ui": null,
+   "passed": 8,
+   "failed": 0,
+   "blocked": [
+    {
+     "name": "File upload and document extraction",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Object-store credentials and scanner required.",
+     "at": "2026-10-07T20:53:58.605Z"
+    }
+   ],
+   "checks": [
+    {
+     "name": "Create and publish form",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:51.308Z"
+    },
+    {
+     "name": "Create and publish custom object",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:51.330Z"
+    },
+    {
+     "name": "File upload and document extraction",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Object-store credentials and scanner required.",
+     "at": "2026-10-07T20:53:58.605Z"
+    },
+    {
+     "name": "GET /forms",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 1 rows",
+     "at": "2026-10-07T20:58:20.634Z"
+    },
+    {
+     "name": "GET /custom-objects",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 1 rows",
+     "at": "2026-10-07T20:58:20.642Z"
+    },
+    {
+     "name": "GET /files",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 0 rows",
+     "at": "2026-10-07T20:58:20.648Z"
+    },
+    {
+     "name": "GET /search?q=analytics",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; items: 0 rows",
+     "at": "2026-10-07T20:58:20.671Z"
+    },
+    {
+     "name": "Submit published form",
+     "kind": "write",
+     "count": 4,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:55:53.318Z"
+    },
+    {
+     "name": "Create custom-object record",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:04.245Z"
+    }
+   ]
+  },
+  {
+   "section": "Platform (no dedicated tab)",
+   "feature": "Policies & workflows",
+   "status": "pass",
+   "ui": null,
+   "passed": 11,
+   "failed": 0,
+   "blocked": [
+    {
+     "name": "Workflow step processing",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Publish/start/cancel are exercised; the worker does not advance durable workflow steps.",
+     "at": "2026-10-07T20:53:58.605Z"
+    }
+   ],
+   "checks": [
+    {
+     "name": "Create and publish policy rule",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:51.355Z"
+    },
+    {
+     "name": "Create and publish workflow",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:51.377Z"
+    },
+    {
+     "name": "Workflow step processing",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Publish/start/cancel are exercised; the worker does not advance durable workflow steps.",
+     "at": "2026-10-07T20:53:58.605Z"
+    },
+    {
+     "name": "GET /policy-rules",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 1 rows",
+     "at": "2026-10-07T20:58:20.680Z"
+    },
+    {
+     "name": "GET /workflows",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 1 rows",
+     "at": "2026-10-07T20:58:20.685Z"
+    },
+    {
+     "name": "GET /workflows/actions",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 2 fields; items: 6 rows",
+     "at": "2026-10-07T20:58:20.688Z"
+    },
+    {
+     "name": "GET /workflows/executions",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 100 rows",
+     "at": "2026-10-07T20:58:20.707Z"
+    },
+    {
+     "name": "GET /workflows/approvals",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 1 fields; items: 0 rows",
+     "at": "2026-10-07T20:58:20.714Z"
+    },
+    {
+     "name": "Simulate policy rule",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:20.191Z"
+    },
+    {
+     "name": "Workflow start creates a running execution",
+     "kind": "assert",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "running",
+     "at": "2026-10-07T20:56:20.244Z"
+    },
+    {
+     "name": "Start and cancel workflow",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:20.262Z"
+    },
+    {
+     "name": "Simulate workflow definition",
+     "kind": "write",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:56:20.267Z"
+    }
+   ]
+  },
+  {
+   "section": "Platform (no dedicated tab)",
+   "feature": "Authentication & security",
+   "status": "pass",
+   "ui": {
+    "ok": true,
+    "detail": "Rendered \"Acquisition command center\" · 10 API calls OK · 1323 characters",
+    "heading": "Acquisition command center",
+    "apiCalls": 10,
+    "textLength": 1323,
+    "screenshot": "screens/authentication-security.png"
+   },
+   "passed": 5,
+   "failed": 0,
+   "blocked": [
+    {
+     "name": "Authentication enforcement",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Development mode: the API serves unauthenticated reads and accepts any password for a member without a stored hash. Enforcement applies when AUTH_REQUIRED=true or NODE_ENV=production; set AUTH_REQUIRED=true before exposing this stack.",
+     "at": "2026-10-07T20:53:58.605Z"
+    }
+   ],
+   "checks": [
+    {
+     "name": "Owner login issues a session token",
+     "kind": "security",
+     "count": 1,
+     "failures": 0,
+     "status": "pass",
+     "detail": "POST /auth/login returned a bearer token",
+     "at": "2026-10-07T20:53:50.911Z"
+    },
+    {
+     "name": "Authentication enforcement",
+     "kind": "external",
+     "count": 1,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Development mode: the API serves unauthenticated reads and accepts any password for a member without a stored hash. Enforcement applies when AUTH_REQUIRED=true or NODE_ENV=production; set AUTH_REQUIRED=true before exposing this stack.",
+     "at": "2026-10-07T20:53:58.605Z"
+    },
+    {
+     "name": "Unknown account cannot log in",
+     "kind": "security",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:58.612Z"
+    },
+    {
+     "name": "Malformed login is rejected",
+     "kind": "security",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T20:53:58.616Z"
+    },
+    {
+     "name": "GET /health",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 4 fields",
+     "at": "2026-10-07T20:58:20.716Z"
+    },
+    {
+     "name": "GET /ready",
+     "kind": "read",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "HTTP 200 · 4 fields",
+     "at": "2026-10-07T20:58:20.719Z"
+    }
+   ]
+  },
+  {
+   "section": "Platform (no dedicated tab)",
+   "feature": "Local ML pipelines",
+   "status": "pass",
+   "ui": null,
+   "passed": 23,
+   "failed": 0,
+   "blocked": [
+    {
+     "name": "marketing_mix",
+     "kind": "external",
+     "count": 2,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Optional dependency meridian is not installed in this service profile.",
+     "at": "2026-10-07T21:02:09.019Z"
+    }
+   ],
+   "checks": [
+    {
+     "name": "ML request accepted as durable job",
+     "kind": "assert",
+     "count": 22,
+     "failures": 0,
+     "status": "pass",
+     "detail": "{\"jobId\": \"job_16b33e53-2ec9-4740-a90e-36786b8537c7\", \"status\": \"pending\", \"task\": \"incrementality\", \"operation\": \"incrementality\", \"deadlineAt\": \"2026-10-07T21:16:49.062Z\", \"resultSchemaVersion\": \"ml",
+     "at": "2026-10-07T21:01:49.738Z"
+    },
+    {
+     "name": "lead_qualification",
+     "kind": "ml",
+     "count": 4,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Scored 4 new customers from the trained artifact",
+     "at": "2026-10-07T21:02:09.030Z"
+    },
+    {
+     "name": "Submit lead_qualification",
+     "kind": "ml",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T21:01:48.063Z"
+    },
+    {
+     "name": "paid_conversion",
+     "kind": "ml",
+     "count": 4,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Scored 4 new customers from the trained artifact",
+     "at": "2026-10-07T21:02:09.039Z"
+    },
+    {
+     "name": "Submit paid_conversion",
+     "kind": "ml",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T21:01:48.184Z"
+    },
+    {
+     "name": "customer_churn",
+     "kind": "ml",
+     "count": 4,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Scored 4 new customers from the trained artifact",
+     "at": "2026-10-07T21:02:09.053Z"
+    },
+    {
+     "name": "Submit customer_churn",
+     "kind": "ml",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T21:01:48.254Z"
+    },
+    {
+     "name": "future_customer_value",
+     "kind": "ml",
+     "count": 4,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Scored 4 new customers from the trained artifact",
+     "at": "2026-10-07T21:02:09.059Z"
+    },
+    {
+     "name": "Submit future_customer_value",
+     "kind": "ml",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T21:01:48.409Z"
+    },
+    {
+     "name": "forecast_baseline",
+     "kind": "ml",
+     "count": 4,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Worker completed job job_f69b7d35-b6c8-4f89-b4c7-7c02ca7870be; result persisted",
+     "at": "2026-10-07T21:02:09.067Z"
+    },
+    {
+     "name": "Submit forecast_baseline",
+     "kind": "ml",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T21:01:48.650Z"
+    },
+    {
+     "name": "anomaly_detection",
+     "kind": "ml",
+     "count": 4,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Worker completed job job_fd922512-e9a5-4b0a-b074-81c0b7a7dbaa; result persisted",
+     "at": "2026-10-07T21:02:10.412Z"
+    },
+    {
+     "name": "Submit anomaly_detection",
+     "kind": "ml",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T21:01:48.783Z"
+    },
+    {
+     "name": "behavioral_segments",
+     "kind": "ml",
+     "count": 4,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Worker completed job job_c48ded98-a74d-40ae-902b-cb3b193e0445; result persisted",
+     "at": "2026-10-07T21:02:11.743Z"
+    },
+    {
+     "name": "Submit behavioral_segments",
+     "kind": "ml",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T21:01:48.862Z"
+    },
+    {
+     "name": "offer_ranking",
+     "kind": "ml",
+     "count": 4,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Worker completed job job_241a6dc4-f851-474d-9c62-6ce85a9dcfff; result persisted",
+     "at": "2026-10-07T21:02:13.047Z"
+    },
+    {
+     "name": "Submit offer_ranking",
+     "kind": "ml",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T21:01:48.905Z"
+    },
+    {
+     "name": "forecast_challenger",
+     "kind": "ml",
+     "count": 4,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Worker completed job job_25647127-d220-44a3-94fb-fdc186b69cbb; result persisted",
+     "at": "2026-10-07T21:02:15.640Z"
+    },
+    {
+     "name": "Submit forecast_challenger",
+     "kind": "ml",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T21:01:49.012Z"
+    },
+    {
+     "name": "forecast_primary",
+     "kind": "ml",
+     "count": 4,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Worker completed job job_c4a5daae-877f-40e2-b5ff-7bdef86a7083; result persisted",
+     "at": "2026-10-07T21:03:45.213Z"
+    },
+    {
+     "name": "Submit forecast_primary",
+     "kind": "ml",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T21:01:49.046Z"
+    },
+    {
+     "name": "incrementality",
+     "kind": "ml",
+     "count": 4,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Worker completed job job_16b33e53-2ec9-4740-a90e-36786b8537c7; result persisted",
+     "at": "2026-10-07T21:03:58.746Z"
+    },
+    {
+     "name": "Submit incrementality",
+     "kind": "ml",
+     "count": 2,
+     "failures": 0,
+     "status": "pass",
+     "detail": "Real API request succeeded",
+     "at": "2026-10-07T21:01:49.738Z"
+    },
+    {
+     "name": "marketing_mix",
+     "kind": "external",
+     "count": 2,
+     "failures": 0,
+     "status": "blocked",
+     "detail": "Optional dependency meridian is not installed in this service profile.",
+     "at": "2026-10-07T21:02:09.019Z"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,62 @@
+[
+ {
+  "area": "Funnel, Journeys, Customer 360, Behavior, Match Quality",
+  "observation": "These pages calculate from a recent window (latest 500 lead profiles or 5,000 events), not the whole workspace. Funnel reports 500 leads while 10,000+ exist.",
+  "recommendation": "Move these totals to database aggregates, as was done for Lead Grading and now Follow-ups. This touches 18 call sites, so it was not changed in this run."
+ },
+ {
+  "area": "Local environment",
+  "observation": "http://localhost:5173 on this PC opens a different project (\"Apex CRM\"): another Vite server owns the IPv6 localhost:5173 listener.",
+  "recommendation": "Open AceMarketing at http://127.0.0.1:5173, or stop the other dev server."
+ },
+ {
+  "area": "Authentication (development mode)",
+  "observation": "With AUTH_REQUIRED unset, the API serves reads without a token and accepts any password for the owner account. This is by design for local development.",
+  "recommendation": "Set AUTH_REQUIRED=true (or run in production mode) before the stack is reachable by anyone else."
+ },
+ {
+  "area": "Identity",
+  "observation": "A customer who messages on WhatsApp gets a second lead profile keyed by phone number (source \"WhatsApp\") instead of being merged into their existing profile with the same phone hash.",
+  "recommendation": "Stitch WhatsApp senders to an existing profile by phone hash before creating a new one."
+ },
+ {
+  "area": "Unit tests (embedded database)",
+  "observation": "3 of 208 backend foundation tests fail on this PC, with or without today's changes: control idempotency (2) and secure object lifecycle (1). The in-memory test database does not honour the ON CONFLICT unique key that real PostgreSQL enforces.",
+  "recommendation": "Run these three against PostgreSQL, or pin the pg-mem version they last passed with."
+ },
+ {
+  "area": "Historical data",
+  "observation": "Records created by earlier feed versions remain: 4,711 A-grade leads, names ending in \"(test)\", and about 11,000 open follow-ups. The Python feed now completes the most overdue follow-ups each cycle.",
+  "recommendation": "Reset the local test database if a clean baseline is wanted."
+ },
+ {
+  "area": "AI Intelligence · hosted routes",
+  "observation": "7 routes stay blocked: recommendation reviewer, multimodal extraction, embeddings, reranking, call transcription, live voice and creative image (Anthropic, Google, Voyage). Knowledge sources therefore stay at \"pending_embedding\" and activation proposals cannot be reviewed. The analyst sends about 350 KB of evidence per question, which makes each answer take about a minute.",
+  "recommendation": "Add those provider keys, or route more text tasks to the NVIDIA endpoint; trim the analyst evidence snapshot to speed answers up."
+ },
+ {
+  "area": "AI Intelligence · marketing mix",
+  "observation": "google-meridian 2.1.0 requires numpy below 2.4; the working ML stack runs numpy 2.5.3. Installing it would downgrade the libraries every other pipeline depends on, so it was left out.",
+  "recommendation": "Run the marketing-mix profile as a separate ML service (ML_MMM_SERVICE_URL) with its own environment."
+ },
+ {
+  "area": "AI Intelligence · remaining local routes",
+  "observation": "Anomaly detection, segmentation, Chronos forecasting and incrementality run and persist results, but are not counted as \"active routes\": their evaluations report no metrics to qualify against, or they register no deployable artifact.",
+  "recommendation": "Decide what evidence should qualify these tasks, then add it to their results."
+ },
+ {
+  "area": "Pages with no local data source",
+  "observation": "Boards (no card-creation API), ChatGPT Ads, signal deliveries on AdSync/Delivery, connector data on Integrations. Loopback webhook destinations are deliberately blocked by the egress policy, so local delivery cannot be simulated honestly.",
+  "recommendation": "Connect real test destinations; these pages then fill from real deliveries."
+ },
+ {
+  "area": "Workspace state document",
+  "observation": "Still a single 23 MB JSON document. Reads are now cheap; each write still rewrites the whole document (p95 request time about 1 s).",
+  "recommendation": "Move the large event histories (WhatsApp, call, recent events, personalization) into their own tables."
+ },
+ {
+  "area": "External integrations",
+  "observation": "Ad-platform delivery, CRM writeback, outbound WhatsApp and calls, calendar sync, report e-mail, Stripe billing and file storage are marked Blocked per feature.",
+  "recommendation": "Connect provider test accounts, then re-run npm run live:verify:features."
+ }
+]

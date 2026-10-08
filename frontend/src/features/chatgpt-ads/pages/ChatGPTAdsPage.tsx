@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {
   Activity,AlertTriangle,ArrowRight,Bot,Check,CheckCircle2,MousePointer2,RadioTower,ShieldCheck
 } from 'lucide-react'
@@ -83,7 +83,7 @@ export default function ChatGPTAdsPage(){
   })
 
   const load=async()=>{
-    setLoading(true)
+    beginLoading(setLoading)
     try{
       const result:any=await chatgptAdsApi.status()
       setData(result)

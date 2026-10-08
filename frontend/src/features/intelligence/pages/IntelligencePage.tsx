@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,BarChart3,BookOpen,BrainCircuit,CheckCircle2,Database,FileSearch,RefreshCw,ShieldCheck,Sparkles,Target,Trash2} from 'lucide-react'
 import {EmptyState,ErrorState,LoadingState} from '../../../components/system/FrontendStates'
 import {intelligenceApi} from '../data/intelligence.api'
@@ -12,6 +12,14 @@ const json=(value:any)=>JSON.stringify(value,null,2)
 const short=(value:any)=>typeof value==='string'?value:json(value)
 const opId=(prefix:string)=>prefix+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,8)
 
+// The analyst's answer for the job submitted from this panel. Model text is rendered as text, never as HTML.
+function AnalystAnswer({job,fallbackStatus}:{job:any,fallbackStatus?:string}){
+ const status=String(job?.status||fallbackStatus||'pending')
+ const text=String(job?.result?.text||'')
+ if(text)return <div className="intel-answer" aria-live="polite"><div className="intel-answer-head"><b>Answer</b><small>{job.result.resolvedModel||job.result.requestedModel||'model'} · evidence-grounded · {job.id}</small></div><div className="intel-answer-body">{text.split(/(\*\*[^*\n]+\*\*)/).map((part,index)=>part.startsWith('**')&&part.endsWith('**')?<strong key={index}>{part.slice(2,-2)}</strong>:part)}</div></div>
+ if(['dead_letter','cancelled','unknown_outcome','failed'].includes(status))return <div className="intel-answer error" role="alert"><b>Analysis did not complete</b><p>{String(job?.last_error||status)}</p></div>
+ return <div className="intel-answer pending" aria-live="polite"><b>Analysing workspace evidence…</b><p>Job {status}. The model usually answers in one to two minutes.</p></div>
+}
 function PageHead(){return <div className="page-head"><div><span>Measurement & Intelligence / AI Intelligence</span><h1 tabIndex={-1}>AI intelligence workspace</h1><p>Run governed analysis, specialist forecasting, point-in-time datasets and source-linked knowledge without bypassing tenant policy.</p></div></div>}
 
 export default function IntelligencePage(){
@@ -53,7 +61,7 @@ export default function IntelligencePage(){
  const [activationDraft,setActivationDraft]=useState({task:'forecast_primary',proposalType:'budget_change',providerAdapter:'google_ads_budget',payload:'{"campaignBudgetResourceName":"customers/1234567890/campaignBudgets/1234567890","expectedCurrentAmountMicros":100000000,"newAmountMicros":110000000,"sharedBudgetAcknowledged":false}',evidenceRefs:'["result_or_report_id"]',expiresMinutes:30})
 
  const load=async()=>{
-  setLoading(true);setError('')
+  beginLoading(setLoading);setError('')
   try{
    const [r,p,dc,mon,t,cr,an,sg,rk,fr,ca,mm,ap,caps,m,d,k,res]:any=await Promise.all([
     intelligenceApi.registry(),
@@ -113,6 +121,7 @@ export default function IntelligencePage(){
    }
    if(event.event==='complete'){
     setActiveJob((current:any)=>current?.jobId===id?{...current,job:{...(current.job||{}),status:event.data?.status||'completed'}}:current)
+    void intelligenceApi.job(id).then((response:any)=>setActiveJob((current:any)=>current?.jobId===id?{...current,job:response.job}:current)).catch(()=>{})
     void load()
    }
   },controller.signal).catch((error:any)=>{
@@ -430,7 +439,7 @@ export default function IntelligencePage(){
 
    {activeJob?.jobId&&<div className="app-panel intel-job"><div><b>Active job</b><span>{activeJob.task||activeJob.operation||'AI task'} · {activeJob.job?.status||activeJob.status||'queued'}</span><small>{activeJob.jobId}</small></div><div><button onClick={()=>void refreshJob()} disabled={busy==='job'}><RefreshCw/>{busy==='job'?'Refreshing…':'Refresh'}</button><button onClick={()=>void cancelJob()} disabled={busy==='cancel'}>Cancel</button></div></div>}
 
-   {section==='Analyst'&&<div className="intel-grid two"><section className="app-panel"><div className="panel-head"><div><h3>Grounded analyst</h3><p>Uses only authorized workspace evidence and preserves evidence IDs.</p></div><Sparkles/></div><label className="intel-field">Question<textarea value={question} onChange={e=>setQuestion(e.target.value)} placeholder="Why did qualified lead conversion change this month?"/></label><button className="app-primary" disabled={!question.trim()||busy==='analysis'} onClick={()=>void submitAnalysis()}>{busy==='analysis'?'Submitting…':'Run governed analysis'}</button></section><section className="app-panel"><div className="panel-head"><div><h3>Metric contract</h3><p>Backend-defined metrics; no free-form arithmetic in model prose.</p></div><BarChart3/></div><pre className="intel-json">{short(metrics)}</pre></section></div>}
+   {section==='Analyst'&&<div className="intel-grid two"><section className="app-panel"><div className="panel-head"><div><h3>Grounded analyst</h3><p>Uses only authorized workspace evidence and preserves evidence IDs.</p></div><Sparkles/></div><label className="intel-field">Question<textarea value={question} onChange={e=>setQuestion(e.target.value)} placeholder="Why did qualified lead conversion change this month?"/></label><button className="app-primary" disabled={!question.trim()||busy==='analysis'} onClick={()=>void submitAnalysis()}>{busy==='analysis'?'Submitting…':'Run governed analysis'}</button>{activeJob?.task==='analyst'&&<AnalystAnswer job={activeJob.job} fallbackStatus={activeJob.status}/>}</section><section className="app-panel"><div className="panel-head"><div><h3>Metric contract</h3><p>Backend-defined metrics; no free-form arithmetic in model prose.</p></div><BarChart3/></div><pre className="intel-json">{short(metrics)}</pre></section></div>}
 
    {section==='Predictions'&&<div className="intel-grid two"><section className="app-panel"><div className="panel-head"><div><h3>Customer prediction scoring</h3><p>Score only with a registered specialist artifact. The backend rejects unsupported or unqualified routes.</p></div><Target/></div><label className="intel-field">Scoring request JSON<textarea value={predictionPayload} onChange={e=>setPredictionPayload(e.target.value)} placeholder='{"task":"lead_qualification","artifactId":"...","rows":[]}'/></label><button className="app-primary" disabled={busy==='prediction'} onClick={()=>void submitPrediction()}>{busy==='prediction'?'Submitting…':'Run governed scoring'}</button></section><section className="app-panel"><div className="panel-head"><div><h3>Prediction semantics</h3><p>Probability, horizon, artifact identity and calibration evidence remain explicit.</p></div><ShieldCheck/></div><div className="intel-callout"><ShieldCheck/><div><b>No score reinterpretation</b><p>Legacy heuristic scores remain heuristic scores. A calibrated probability is shown only when produced by the fitted/calibrated model pipeline with its calibration reference.</p></div></div></section></div>}
 

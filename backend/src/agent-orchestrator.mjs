@@ -92,6 +92,19 @@ export const listFollowUps=async workspaceId=>{
   return rows
 }
 
+// Totals cover the whole queue; listFollowUps returns only its most urgent page.
+export const followUpStats=async(workspaceId,dayStart)=>{
+  if(!pool)return null
+  const {rows}=await pool.query(
+    `SELECT COUNT(*) FILTER(WHERE status='open')::int open,
+      COUNT(*) FILTER(WHERE status='completed')::int completed_total,
+      COUNT(*) FILTER(WHERE status='completed' AND completed_at>=$2)::int completed_today,
+      COUNT(*) FILTER(WHERE status='open' AND due_at<now())::int overdue
+     FROM ace_followup_tasks WHERE workspace_id=$1`,[workspaceId,dayStart])
+  const r=rows[0]
+  return {open:r.open,completedToday:r.completed_today,completedTotal:r.completed_total,overdue:r.overdue}
+}
+
 export const completeFollowUp=async(workspaceId,id)=>{
   if(!pool)return null
   const {rows}=await pool.query(
@@ -117,8 +130,9 @@ export const createMeeting=async(workspaceId,input={})=>{
 
 export const listMeetings=async workspaceId=>{
   if(!pool)return []
-  const {rows}=await pool.query(`SELECT * FROM ace_meeting_records WHERE workspace_id=$1 ORDER BY starts_at ASC LIMIT 200`,[workspaceId])
-  return rows
+  // Latest 200 meetings, still returned in chronological order.
+  const {rows}=await pool.query(`SELECT * FROM ace_meeting_records WHERE workspace_id=$1 ORDER BY starts_at DESC LIMIT 200`,[workspaceId])
+  return rows.reverse()
 }
 
 export const getMeeting=async(workspaceId,id)=>{

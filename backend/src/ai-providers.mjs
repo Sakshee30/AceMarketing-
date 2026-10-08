@@ -27,6 +27,7 @@ const requireLiveRoute=task=>{
   if(route.provider==='anthropic'&&!process.env.ANTHROPIC_API_KEY) throw new ProviderExecutionError('Anthropic credential is not configured',{provider:'anthropic',task,status:503})
   if(route.provider==='google'&&!process.env.GOOGLE_AI_API_KEY) throw new ProviderExecutionError('Google AI credential is not configured',{provider:'google',task,status:503})
   if(route.provider==='voyage'&&!process.env.VOYAGE_API_KEY) throw new ProviderExecutionError('Voyage credential is not configured',{provider:'voyage',task,status:503})
+  if(route.provider==='nvidia'&&!process.env.NVIDIA_API_KEY) throw new ProviderExecutionError('NVIDIA credential is not configured',{provider:'nvidia',task,status:503})
   if(process.env.AI_LIVE_PROVIDER_CALLS!=='true') throw new ProviderExecutionError('live AI provider calls are disabled',{provider:route.provider,task,status:503})
   return route
 }
@@ -162,6 +163,57 @@ export const runOpenAIAnalyst=async({question,evidence,instructions})=>{
     text,
     usage:result.json?.usage||null,
     rawStatus:result.json?.status||'completed',
+    promptVersion:prompt.version
+  }
+}
+
+const nvidiaBaseUrl=()=>String(process.env.NVIDIA_BASE_URL||'https://integrate.api.nvidia.com/v1').replace(/\/$/,'')
+
+// The grounded analyst on an OpenAI-compatible chat-completions endpoint (NVIDIA NIM).
+// Only the final answer is returned; the model's reasoning trace is not persisted.
+export const runNvidiaAnalyst=async({question,evidence,instructions})=>{
+  const route=requireLiveRoute('analyst')
+  const prompt=aiPromptTemplate('analyst')
+  const body={
+    model:route.requestedModel,
+    messages:[
+      {role:'system',content:String(instructions||prompt.system)+' '+prompt.system},
+      {role:'user',content:JSON.stringify({
+        question:String(question||'').slice(0,8000),
+        evidence:evidence||{},
+        requirements:{noInventedNumbers:true,citeEvidenceIds:true,conciseRationale:true}
+      })}
+    ],
+    temperature:0.2,
+    top_p:0.95,
+    max_tokens:Number(process.env.NVIDIA_MAX_TOKENS||4096),
+    chat_template_kwargs:{enable_thinking:process.env.NVIDIA_ENABLE_THINKING!=='false'},
+    stream:false
+  }
+  let result=null
+  // The shared endpoint intermittently answers 429/503 when busy; those are safe to retry because nothing was produced.
+  for(let attempt=0;;attempt++){
+    try{
+      result=await postJson({provider:'nvidia',task:'analyst',url:nvidiaBaseUrl()+'/chat/completions',headers:{Authorization:'Bearer '+process.env.NVIDIA_API_KEY},body})
+      break
+    }catch(error){
+      if(attempt>=3||!(error instanceof ProviderExecutionError)||![429,503].includes(error.status))throw error
+      await new Promise(resolve=>setTimeout(resolve,2000*(attempt+1)))
+    }
+  }
+  const text=String(result.json?.choices?.[0]?.message?.content||'').trim()
+  if(!text){
+    throw new ProviderExecutionError('NVIDIA analyst returned no usable text output',{provider:'nvidia',task:'analyst',status:502,providerRequestId:result.providerRequestId||result.json?.id||null,unknownOutcome:false})
+  }
+  return {
+    provider:'nvidia',
+    requestedModel:route.requestedModel,
+    resolvedModel:result.json?.model||route.requestedModel,
+    providerRequestId:result.providerRequestId||result.json?.id||null,
+    requestFingerprint:result.requestFingerprint,
+    text,
+    usage:result.json?.usage||null,
+    rawStatus:result.json?.choices?.[0]?.finish_reason||'completed',
     promptVersion:prompt.version
   }
 }
@@ -401,6 +453,16 @@ export const verifyProviderAccess=async task=>{
   if(route.provider==='anthropic'){
     return verifyAnthropicModelAccess({task,requestedModel:route.requestedModel})
   }
+  if(route.provider==='nvidia'){
+    if(!process.env.NVIDIA_API_KEY)throw new ProviderExecutionError('NVIDIA credential is not configured',{provider:'nvidia',task,status:503})
+    const result=await getJson({
+      provider:'nvidia',task,
+      url:nvidiaBaseUrl()+'/models/'+route.requestedModel.split('/').map(encodeURIComponent).join('/'),
+      headers:{Authorization:'Bearer '+process.env.NVIDIA_API_KEY}
+    })
+    if(result.json?.id!==route.requestedModel)throw new ProviderExecutionError('NVIDIA endpoint does not list the exact requested model',{provider:'nvidia',task,status:404})
+    return {provider:'nvidia',task,requestedModel:route.requestedModel,resolvedModel:result.json.id,providerRequestId:result.providerRequestId||null,accessVerified:true}
+  }
   if(route.provider==='google'){
     if(!process.env.GOOGLE_AI_API_KEY)throw new ProviderExecutionError('Google AI credential is not configured',{provider:'google',task,status:503})
     const base=process.env.GOOGLE_AI_BASE_URL||'https://generativelanguage.googleapis.com/v1beta'
@@ -435,7 +497,7 @@ export const verifyProviderAccess=async task=>{
 }
 
 export const executeHostedTask=async({task,input})=>{
-  if(task==='analyst') return runOpenAIAnalyst(input||{})
+  if(task==='analyst') return modelRegistryItem(task)?.provider==='nvidia'?runNvidiaAnalyst(input||{}):runOpenAIAnalyst(input||{})
   if(task==='embedding') return embedVoyage(input||{})
   if(task==='reranking') return rerankVoyage(input||{})
   if(task==='multimodal_extraction') return extractWithGemini(input||{})

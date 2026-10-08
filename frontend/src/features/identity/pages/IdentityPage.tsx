@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,MousePointer2,Target,UsersRound} from 'lucide-react'
 import {identityApi} from '../data/identity.api'
 import {ErrorState,LoadingState} from '../../../components/system/FrontendStates'
@@ -13,7 +13,7 @@ export default function IdentityPage(){
  const [error,setError]=useState('')
 
  const load=async()=>{
-  setLoading(true)
+  beginLoading(setLoading)
   setError('')
   try{
    const r:any=await identityApi.load()

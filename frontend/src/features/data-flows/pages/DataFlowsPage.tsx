@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,CheckCircle2,Network,Plus,ShieldCheck,Sparkles,X} from 'lucide-react'
 import {dataFlowsApi as api} from '../data/data-flows.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -22,7 +22,7 @@ export default function DataFlowsPage(){
  const [draft,setDraft]=useState<any>({name:'CRM records → Ace Data Hub',source:'Zoho CRM',destination:'Ace Data Hub',object:'CRM records',trigger:'Incremental provider changes',identityField:'provider record ID + modified timestamp',mode:'Every 15 minutes'})
  useDirtyWork({key:'data-flow-builder',label:'Data flow draft',dirty:builder,scope:'feature'})
  const load=async()=>{
-  setLoading(true)
+  beginLoading(setLoading)
   try{
    const [flows,connectors]:any=await Promise.all([api.integrationFlows(),api.integrations()])
    setData(flows);setIntegrations(connectors.items||[])

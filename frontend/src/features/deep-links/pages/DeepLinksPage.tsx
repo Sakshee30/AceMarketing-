@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,Check,CheckCircle2,ChevronRight,Globe2,MousePointer2,Network,Sparkles,X} from 'lucide-react'
 import {deepLinksApi} from '../data/deep-links.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -24,7 +24,7 @@ export default function DeepLinksPage(){
  useDirtyWork({key:'deep-link-draft',label:'Deep link draft',dirty:builder,scope:'feature'})
 
  const load=async()=>{
-  setLoading(true)
+  beginLoading(setLoading)
   try{
    const r:any=await deepLinksApi.load()
    setLinks(r.items||[])

@@ -1,0 +1,358 @@
+
+Running 255 tests using 3 workers
+
+  ✓    3 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Overview (1.3s)
+  ✓    2 [chromium] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000001 / owner / qa_ace_v1_user_000001 (1.7s)
+  ✓    4 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Launchpad (489ms)
+  ✓    6 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Boards (693ms)
+  ✓    1 [chromium] › qa/browser/production.spec.ts:11:1 › Production UI login establishes real session and survives refresh (2.7s)
+  ✓    5 [chromium] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000001 / admin / qa_ace_v1_user_000002 (1.1s)
+  ✓    7 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: AdSync (643ms)
+  ✓    9 [chromium] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000001 / operator / qa_ace_v1_user_000003 (989ms)
+  ✓   10 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: ChatGPT Ads (631ms)
+  ✓    8 [chromium] › qa/browser/production.spec.ts:21:1 › Production UI invalid login displays error without entering application (1.5s)
+  ✓   12 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Funnel (611ms)
+  ✓   11 [chromium] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000001 / analyst / qa_ace_v1_user_000004 (1.1s)
+  ✓   14 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Leak Monitor (563ms)
+  ✓   16 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Events (446ms)
+  ✓   13 [chromium] › qa/browser/production.spec.ts:27:1 › Password visibility control changes input type without losing content (1.5s)
+  ✓   15 [chromium] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000002 / owner / qa_ace_v1_user_000001 (750ms)
+  ✓   17 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Adjustments (495ms)
+  ✓   20 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Diagnostics (462ms)
+  ✓   19 [chromium] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000003 / owner / qa_ace_v1_user_000009 (835ms)
+  ✓   21 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Match Quality (443ms)
+  ✓   18 [chromium] › qa/browser/production.spec.ts:33:1 › Workspace chrome reflects authenticated identity and persisted locale (1.8s)
+  ✓   23 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Reconciliation (535ms)
+  ✓   22 [chromium] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000003 / admin / qa_ace_v1_user_000010 (937ms)
+  ✓   24 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Fraud (492ms)
+  ✓   25 [chromium] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000003 / operator / qa_ace_v1_user_000011 (902ms)
+  ✓   26 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Deep Links (450ms)
+  ✓   29 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Sites (418ms)
+  ✓   28 [chromium] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000003 / analyst / qa_ace_v1_user_000012 (910ms)
+  ✓   30 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Fingerprinting (532ms)
+  ✓   32 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Live Sync (517ms)
+  ✓   31 [chromium] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000004 / owner / qa_ace_v1_user_000009 (947ms)
+  ✓   33 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Data Hub (552ms)
+  ✓   35 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Customer 360 (550ms)
+  ✓   34 [chromium] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000005 / owner / qa_ace_v1_user_000017 (867ms)
+  ✓   36 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Offline Attribution (504ms)
+  ✓   38 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Matchback (539ms)
+  ✓   37 [chromium] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000005 / admin / qa_ace_v1_user_000018 (977ms)
+  ✓   39 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: POS & Stores (618ms)
+  ✓   27 [firefox] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000001 / owner / qa_ace_v1_user_000001 (3.5s)
+  ✓   40 [chromium] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000005 / operator / qa_ace_v1_user_000019 (1.1s)
+  ✓   41 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Journeys (548ms)
+  ✓   44 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Identity (479ms)
+  ✓   43 [chromium] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000005 / analyst / qa_ace_v1_user_000020 (943ms)
+  ✓   45 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Models (530ms)
+  ✓   42 [firefox] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000001 / admin / qa_ace_v1_user_000002 (1.7s)
+  ✓   47 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: AI Intelligence (775ms)
+  ✓   46 [chromium] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000007 / owner / qa_ace_v1_user_000025 (1.0s)
+  ✓   49 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Attribution (508ms)
+  ✓   50 [chromium] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000007 / admin / qa_ace_v1_user_000026 (931ms)
+  ✓   51 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Planner (572ms)
+  ✓   48 [firefox] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000001 / operator / qa_ace_v1_user_000003 (1.6s)
+  ✓   53 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Reports (530ms)
+  ✓   52 [chromium] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000007 / operator / qa_ace_v1_user_000027 (1.0s)
+  ✓   55 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Grouped Performance (577ms)
+  ✓   57 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Executive Briefs (814ms)
+  ✓   54 [firefox] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000001 / analyst / qa_ace_v1_user_000004 (1.7s)
+  ✓   56 [chromium] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000007 / analyst / qa_ace_v1_user_000028 (1.3s)
+  ✓   58 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Enrich (533ms)
+  ✓   61 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Lead Grading (567ms)
+  ✓   59 [firefox] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000002 / owner / qa_ace_v1_user_000001 (1.7s)
+  ✓   62 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Behavior (768ms)
+  ✓   64 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Feed (447ms)
+  ✓   65 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Agents (424ms)
+  ✓   63 [firefox] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000003 / owner / qa_ace_v1_user_000009 (1.2s)
+  ✓   66 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Routing (533ms)
+  ✓   68 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Follow-ups (534ms)
+  ✓   69 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Calls (517ms)
+  ✓   67 [firefox] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000003 / admin / qa_ace_v1_user_000010 (1.3s)
+  ✓   70 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Meetings (406ms)
+  ✓   72 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Feedback (493ms)
+  ✓   71 [firefox] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000003 / operator / qa_ace_v1_user_000011 (1.4s)
+  ✓   73 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Approvals (604ms)
+  ✓   75 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Ask Ace (417ms)
+  ✓   76 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Integrations (504ms)
+  ✓   74 [firefox] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000003 / analyst / qa_ace_v1_user_000012 (1.2s)
+  ✓   77 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Data Flows (402ms)
+  ✓   79 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Real-Time Activation (481ms)
+  ✓   80 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Personalization (527ms)
+  ✓   81 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Exclusions (451ms)
+  ✓   82 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Audiences (521ms)
+  ✓   78 [firefox] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000004 / owner / qa_ace_v1_user_000009 (2.7s)
+  ✓   83 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Delivery (478ms)
+  ✓   85 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Monitoring (842ms)
+  ✓   86 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Alerts (868ms)
+  ✓   87 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Compliance (745ms)
+  ✓   84 [firefox] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000005 / owner / qa_ace_v1_user_000017 (2.7s)
+  ✓   88 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Developers (442ms)
+  ✓   90 [chromium] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Settings (458ms)
+  ✓   91 [chromium] › qa/browser/navigation.spec.ts:25:2 › Production public render smoke: / (454ms)
+  ✓   89 [firefox] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000005 / admin / qa_ace_v1_user_000018 (1.3s)
+  ✓   92 [chromium] › qa/browser/navigation.spec.ts:25:2 › Production public render smoke: /agents (306ms)
+  ✓   94 [chromium] › qa/browser/navigation.spec.ts:25:2 › Production public render smoke: /integrations (326ms)
+  ✓   95 [chromium] › qa/browser/navigation.spec.ts:25:2 › Production public render smoke: /pricing (405ms)
+  ✓   93 [firefox] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000005 / operator / qa_ace_v1_user_000019 (1.4s)
+  ✓   96 [chromium] › qa/browser/navigation.spec.ts:25:2 › Production public render smoke: /case-studies (587ms)
+  ✓   98 [chromium] › qa/browser/navigation.spec.ts:25:2 › Production public render smoke: /resources (383ms)
+  ✘   60 [chromium] › qa/browser/identity.spec.ts:45:1 › Workspace switch updates verified identity and survives refresh (15.8s)
+  ✓   99 [chromium] › qa/browser/navigation.spec.ts:25:2 › Production public render smoke: /security (402ms)
+  ✓   97 [firefox] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000005 / analyst / qa_ace_v1_user_000020 (1.3s)
+  ✓  100 [firefox] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000007 / owner / qa_ace_v1_user_000025 (1.6s)
+  ✓  103 [firefox] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000007 / admin / qa_ace_v1_user_000026 (1.5s)
+  ✓  101 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Overview (2.4s)
+  ✓  104 [firefox] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000007 / operator / qa_ace_v1_user_000027 (2.1s)
+  ✓  105 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Launchpad (1.8s)
+  ✓  102 [firefox] › qa/browser/production.spec.ts:11:1 › Production UI login establishes real session and survives refresh (3.7s)
+  ✓  107 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Boards (1.1s)
+  ✓  108 [firefox] › qa/browser/production.spec.ts:21:1 › Production UI invalid login displays error without entering application (1.2s)
+  ✓  106 [firefox] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000007 / analyst / qa_ace_v1_user_000028 (1.8s)
+  ✓  109 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: AdSync (941ms)
+  ✓  110 [firefox] › qa/browser/production.spec.ts:27:1 › Password visibility control changes input type without losing content (1.2s)
+  ✓  112 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: ChatGPT Ads (1.6s)
+  ✓  114 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Funnel (1.5s)
+  ✓  113 [firefox] › qa/browser/production.spec.ts:33:1 › Workspace chrome reflects authenticated identity and persisted locale (2.9s)
+  ✓  115 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Leak Monitor (1.4s)
+  ✓  117 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Events (767ms)
+  ✓  118 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Adjustments (858ms)
+  ✓  119 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Diagnostics (2.3s)
+  ✓  116 [webkit] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000001 / owner / qa_ace_v1_user_000001 (4.1s)
+  ✓  120 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Match Quality (1.6s)
+  ✓  122 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Reconciliation (993ms)
+  ✓  121 [webkit] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000001 / admin / qa_ace_v1_user_000002 (1.9s)
+  ✓  123 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Fraud (929ms)
+  ✓  125 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Deep Links (923ms)
+  ✓  124 [webkit] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000001 / operator / qa_ace_v1_user_000003 (2.0s)
+  ✓  126 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Sites (941ms)
+  ✓  128 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Fingerprinting (1.2s)
+  ✓  127 [webkit] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000001 / analyst / qa_ace_v1_user_000004 (1.8s)
+  ✓  129 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Live Sync (1.1s)
+  ✘  111 [firefox] › qa/browser/identity.spec.ts:45:1 › Workspace switch updates verified identity and survives refresh (16.6s)
+  ✓  130 [webkit] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000002 / owner / qa_ace_v1_user_000001 (2.2s)
+  ✓  131 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Data Hub (1.4s)
+  ✓  133 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Customer 360 (1.3s)
+  ✓  134 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Overview (1.7s)
+  ✓  132 [webkit] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000003 / owner / qa_ace_v1_user_000009 (2.4s)
+  ✓  136 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Launchpad (1.5s)
+  ✓  137 [webkit] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000003 / admin / qa_ace_v1_user_000010 (2.3s)
+  ✓  135 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Offline Attribution (3.4s)
+  ✓  138 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Boards (1.3s)
+  ✓  140 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Matchback (1.0s)
+  ✓  141 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: AdSync (1.4s)
+  ✓  139 [webkit] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000003 / operator / qa_ace_v1_user_000011 (2.0s)
+  ✓  142 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: POS & Stores (1.0s)
+  ✓  143 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: ChatGPT Ads (1.2s)
+  ✓  145 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Journeys (1.0s)
+  ✓  144 [webkit] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000003 / analyst / qa_ace_v1_user_000012 (1.9s)
+  ✓  147 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Identity (973ms)
+  ✓  146 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Funnel (1.2s)
+  ✓  149 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Models (960ms)
+  ✓  150 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Leak Monitor (1.2s)
+  ✓  148 [webkit] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000004 / owner / qa_ace_v1_user_000009 (1.9s)
+  ✓  151 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: AI Intelligence (1.1s)
+  ✓  152 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Events (1.2s)
+  ✓  154 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Attribution (982ms)
+  ✓  153 [webkit] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000005 / owner / qa_ace_v1_user_000017 (1.8s)
+  ✓  155 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Adjustments (1.2s)
+  ✓  156 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Planner (940ms)
+  ✓  158 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Diagnostics (1.1s)
+  ✓  159 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Reports (1.1s)
+  ✓  157 [webkit] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000005 / admin / qa_ace_v1_user_000018 (2.1s)
+  ✓  160 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Match Quality (1.4s)
+  ✓  163 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Reconciliation (1.2s)
+  ✓  162 [webkit] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000005 / operator / qa_ace_v1_user_000019 (2.0s)
+  ✓  161 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Grouped Performance (3.1s)
+  ✓  164 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Fraud (1.2s)
+  ✓  166 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Executive Briefs (1.2s)
+  ✓  165 [webkit] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000005 / analyst / qa_ace_v1_user_000020 (1.9s)
+  ✓  167 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Deep Links (1.2s)
+  ✓  168 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Enrich (953ms)
+  ✓  170 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Sites (969ms)
+  ✓  171 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Lead Grading (992ms)
+  ✓  169 [webkit] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000007 / owner / qa_ace_v1_user_000025 (2.0s)
+  ✓  172 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Fingerprinting (1.2s)
+  ✓  173 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Behavior (1.0s)
+  ✓  175 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Live Sync (1.1s)
+  ✓  174 [webkit] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000007 / admin / qa_ace_v1_user_000026 (1.9s)
+  ✓  176 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Feed (1.0s)
+  ✓  177 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Data Hub (1.2s)
+  ✓  179 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Agents (1.1s)
+  ✓  180 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Customer 360 (1.3s)
+  ✓  178 [webkit] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000007 / operator / qa_ace_v1_user_000027 (2.0s)
+  ✓  181 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Routing (1.0s)
+  ✓  182 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Offline Attribution (1.2s)
+  ✓  184 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Follow-ups (1.2s)
+  ✓  183 [webkit] › qa/browser/identity.spec.ts:7:2 › Verified workspace identity: qa_ace_v1_workspace_000007 / analyst / qa_ace_v1_user_000028 (1.8s)
+  ✓  185 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Matchback (1.2s)
+  ✓  186 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Calls (1.1s)
+  ✓  188 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: POS & Stores (1.1s)
+  ✓  190 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Journeys (1.1s)
+  ✓  189 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Meetings (2.4s)
+  ✓  191 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Identity (954ms)
+  ✓  192 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Feedback (975ms)
+  ✓  193 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Models (1.4s)
+  ✓  194 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Approvals (1.3s)
+  ✓  195 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: AI Intelligence (1.5s)
+  ✓  196 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Ask Ace (1.5s)
+  ✓  197 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Attribution (1.9s)
+  ✓  198 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Integrations (1.6s)
+  ✓  200 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Data Flows (943ms)
+  ✓  199 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Planner (1.1s)
+  ✓  201 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Real-Time Activation (925ms)
+  ✓  202 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Reports (1.1s)
+  ✓  203 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Personalization (801ms)
+  ✓  204 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Grouped Performance (1.0s)
+  ✓  205 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Exclusions (980ms)
+  ✓  206 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Executive Briefs (1.3s)
+  ✓  207 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Audiences (1.1s)
+  ✓  208 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Enrich (1.2s)
+  ✓  210 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Lead Grading (1.1s)
+  ✓  209 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Delivery (2.6s)
+  ✓  211 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Behavior (946ms)
+  ✓  212 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Monitoring (1.2s)
+  ✘  187 [webkit] › qa/browser/identity.spec.ts:45:1 › Workspace switch updates verified identity and survives refresh (17.1s)
+  ✓  213 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Feed (1.2s)
+  ✓  214 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Alerts (779ms)
+  ✓  215 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Agents (915ms)
+  ✓  217 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Compliance (903ms)
+  ✓  218 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Routing (1.1s)
+  ✓  216 [webkit] › qa/browser/production.spec.ts:11:1 › Production UI login establishes real session and survives refresh (2.0s)
+  ✓  219 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Developers (1.1s)
+  ✓  220 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Follow-ups (1.0s)
+  ✓  222 [firefox] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Settings (812ms)
+  ✓  221 [webkit] › qa/browser/production.spec.ts:21:1 › Production UI invalid login displays error without entering application (1.2s)
+  ✓  224 [firefox] › qa/browser/navigation.spec.ts:25:2 › Production public render smoke: / (794ms)
+  ✓  223 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Calls (1.1s)
+  ✓  225 [webkit] › qa/browser/production.spec.ts:27:1 › Password visibility control changes input type without losing content (1.2s)
+  ✓  226 [firefox] › qa/browser/navigation.spec.ts:25:2 › Production public render smoke: /agents (792ms)
+  ✓  227 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Meetings (1.1s)
+  ✓  229 [firefox] › qa/browser/navigation.spec.ts:25:2 › Production public render smoke: /integrations (761ms)
+  ✓  230 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Feedback (1.0s)
+  ✓  231 [firefox] › qa/browser/navigation.spec.ts:25:2 › Production public render smoke: /pricing (754ms)
+  ✓  228 [webkit] › qa/browser/production.spec.ts:33:1 › Workspace chrome reflects authenticated identity and persisted locale (2.1s)
+  ✓  232 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Approvals (1.0s)
+  ✓  234 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Ask Ace (796ms)
+  ✓  233 [firefox] › qa/browser/navigation.spec.ts:25:2 › Production public render smoke: /case-studies (1.8s)
+  ✓  236 [firefox] › qa/browser/navigation.spec.ts:25:2 › Production public render smoke: /resources (637ms)
+  ✓  235 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Integrations (872ms)
+  ✓  237 [firefox] › qa/browser/navigation.spec.ts:25:2 › Production public render smoke: /security (489ms)
+  ✓  238 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Data Flows (787ms)
+  ✓  239 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Real-Time Activation (733ms)
+  ✓  240 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Personalization (751ms)
+  ✓  241 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Exclusions (768ms)
+  ✓  242 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Audiences (702ms)
+  ✓  243 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Delivery (732ms)
+  ✓  244 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Monitoring (676ms)
+  ✓  245 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Alerts (702ms)
+  ✓  246 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Compliance (754ms)
+  ✓  247 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Developers (690ms)
+  ✓  248 [webkit] › qa/browser/navigation.spec.ts:6:2 › Production render smoke: Settings (779ms)
+  ✓  249 [webkit] › qa/browser/navigation.spec.ts:25:2 › Production public render smoke: / (945ms)
+  ✓  250 [webkit] › qa/browser/navigation.spec.ts:25:2 › Production public render smoke: /agents (509ms)
+  ✓  251 [webkit] › qa/browser/navigation.spec.ts:25:2 › Production public render smoke: /integrations (573ms)
+  ✓  252 [webkit] › qa/browser/navigation.spec.ts:25:2 › Production public render smoke: /pricing (557ms)
+  ✓  253 [webkit] › qa/browser/navigation.spec.ts:25:2 › Production public render smoke: /case-studies (497ms)
+  ✓  254 [webkit] › qa/browser/navigation.spec.ts:25:2 › Production public render smoke: /resources (480ms)
+  ✓  255 [webkit] › qa/browser/navigation.spec.ts:25:2 › Production public render smoke: /security (473ms)
+
+
+  1) [chromium] › qa/browser/identity.spec.ts:45:1 › Workspace switch updates verified identity and survives refresh 
+
+    Error: expect(locator).toHaveText(expected) failed
+
+    Locator:  locator('button.workspace b')
+    Expected: "QA Workspace 002"
+    Received: "QA Workspace 001"
+    Timeout:  15000ms
+
+    Call log:
+      - Expect "toHaveText" locator('button.workspace b') with timeout 15000ms
+      - waiting for locator('button.workspace b')
+        34 × locator resolved to <b>QA Workspace 001</b>
+           - unexpected value "QA Workspace 001"
+
+
+      68 |  await page.locator('.workspace-menu').getByRole('button').filter({hasText:selected.name}).click()
+      69 |  expect((await switched).status()).toBe(200)
+    > 70 |  await expect(page.locator('button.workspace b')).toHaveText(selected.name)
+         |                                                   ^
+      71 |  await expect(page.locator('.profile-mini')).toContainText(actor.email)
+      72 |  await expect.poll(()=>page.evaluate(()=>localStorage.getItem('ace_workspace_id'))).toBe(target.workspaceId)
+      73 |  await page.reload()
+        at /home/aceqa/execution-20261003/qa/browser/identity.spec.ts:70:51
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts/prelive/browser-results/identity-Workspace-switch--9f5f3-entity-and-survives-refresh-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts/prelive/browser-results/identity-Workspace-switch--9f5f3-entity-and-survives-refresh-chromium/error-context.md
+
+  2) [firefox] › qa/browser/identity.spec.ts:45:1 › Workspace switch updates verified identity and survives refresh 
+
+    Error: expect(locator).toHaveText(expected) failed
+
+    Locator:  locator('button.workspace b')
+    Expected: "QA Workspace 002"
+    Received: "QA Workspace 001"
+    Timeout:  15000ms
+
+    Call log:
+      - Expect "toHaveText" locator('button.workspace b') with timeout 15000ms
+      - waiting for locator('button.workspace b')
+        33 × locator resolved to <b>QA Workspace 001</b>
+           - unexpected value "QA Workspace 001"
+
+
+      68 |  await page.locator('.workspace-menu').getByRole('button').filter({hasText:selected.name}).click()
+      69 |  expect((await switched).status()).toBe(200)
+    > 70 |  await expect(page.locator('button.workspace b')).toHaveText(selected.name)
+         |                                                   ^
+      71 |  await expect(page.locator('.profile-mini')).toContainText(actor.email)
+      72 |  await expect.poll(()=>page.evaluate(()=>localStorage.getItem('ace_workspace_id'))).toBe(target.workspaceId)
+      73 |  await page.reload()
+        at /home/aceqa/execution-20261003/qa/browser/identity.spec.ts:70:51
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts/prelive/browser-results/identity-Workspace-switch--9f5f3-entity-and-survives-refresh-firefox/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts/prelive/browser-results/identity-Workspace-switch--9f5f3-entity-and-survives-refresh-firefox/error-context.md
+
+  3) [webkit] › qa/browser/identity.spec.ts:45:1 › Workspace switch updates verified identity and survives refresh 
+
+    Error: expect(locator).toHaveText(expected) failed
+
+    Locator:  locator('button.workspace b')
+    Expected: "QA Workspace 002"
+    Received: "QA Workspace 001"
+    Timeout:  15000ms
+
+    Call log:
+      - Expect "toHaveText" locator('button.workspace b') with timeout 15000ms
+      - waiting for locator('button.workspace b')
+        34 × locator resolved to <b>QA Workspace 001</b>
+           - unexpected value "QA Workspace 001"
+
+
+      68 |  await page.locator('.workspace-menu').getByRole('button').filter({hasText:selected.name}).click()
+      69 |  expect((await switched).status()).toBe(200)
+    > 70 |  await expect(page.locator('button.workspace b')).toHaveText(selected.name)
+         |                                                   ^
+      71 |  await expect(page.locator('.profile-mini')).toContainText(actor.email)
+      72 |  await expect.poll(()=>page.evaluate(()=>localStorage.getItem('ace_workspace_id'))).toBe(target.workspaceId)
+      73 |  await page.reload()
+        at /home/aceqa/execution-20261003/qa/browser/identity.spec.ts:70:51
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts/prelive/browser-results/identity-Workspace-switch--9f5f3-entity-and-survives-refresh-webkit/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts/prelive/browser-results/identity-Workspace-switch--9f5f3-entity-and-survives-refresh-webkit/error-context.md
+
+  3 failed
+    [chromium] › qa/browser/identity.spec.ts:45:1 › Workspace switch updates verified identity and survives refresh 
+    [firefox] › qa/browser/identity.spec.ts:45:1 › Workspace switch updates verified identity and survives refresh 
+    [webkit] › qa/browser/identity.spec.ts:45:1 › Workspace switch updates verified identity and survives refresh 
+  252 passed (2.1m)

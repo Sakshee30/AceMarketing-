@@ -639,7 +639,8 @@ def chronos2_forecast(request) -> dict[str, Any]:
     context_df = pd.DataFrame(
         {
             "id": [request.series_id] * len(history),
-            "timestamp": [point.timestamp for point in history],
+            # Chronos needs timezone-naive timestamps; instants are normalised to UTC first.
+            "timestamp": pd.to_datetime([point.timestamp for point in history], utc=True).tz_localize(None),
             "target": [float(point.value) for point in history],
         }
     )

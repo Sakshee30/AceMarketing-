@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ChevronRight,DatabaseZap,RadioTower,Search,ShieldCheck,Target,UsersRound} from 'lucide-react'
 import {customer360Api} from '../data/customer-360.api'
 import {LoadingState} from '../../../components/system/FrontendStates'
@@ -16,7 +16,7 @@ export default function Customer360Page(){
  const requestSequence=useRef(0)
  const load=async(id?:string)=>{
   const requestId=++requestSequence.current
-  setLoading(true);setNotice('')
+  beginLoading(setLoading);setNotice('')
   try{
    const r:any=await customer360Api.load(id)
    if(requestId!==requestSequence.current)return

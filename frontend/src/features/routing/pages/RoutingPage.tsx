@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,Check,CheckCircle2,ChevronRight,Network,Plus,ShieldCheck,UsersRound,X} from 'lucide-react'
 import {routingApi} from '../data/routing.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -29,7 +29,7 @@ export default function RoutingPage(){
   useDirtyWork({key:'routing-rule-draft',label:'Routing rule draft',dirty:builder,scope:'feature'})
 
   const load=async()=>{
-    setLoading(true)
+    beginLoading(setLoading)
     setLoadError('')
     try{
       const response:any=await routingApi.load()

@@ -1,0 +1,786 @@
+QUALITY ENGINEERING / RELEASE READINESS
+AceMarketing
+Pre-live end-to-end
+qualification plan
+A repository-specific programme for isolated testing, code stabilization and evidence-based release decisions.
+356 planned scenarios
+  ·  
+28 coverage obligations
+13 connector test sets
+  ·  
+12 release gates
+Version 1.0 | 2 October 2026
+Planning baseline — application tests not executed
+Repository: Sakshee30/AceMarketing-
+Baseline: 
+a82f24a8e762b6a60e0c13bcb15347daa78f1b49
+Read with the execution workbook. All scenarios begin as Not run; no release gate is pre-approved. Provider simulations never authorize real advertising, billing or messaging.
+How to use this plan
+Engineering, QA, product, security, data/AI and operations share this baseline. Assign real owners, reconcile the complete implementation inventory, then execute each phase against a frozen candidate. Preserve evidence and reopen affected gates after code or configuration changes.
+1. Objective and honest completion standard
+2. Current baseline and immediate blockers
+3. Scope model: how “everything” becomes measurable
+4. Project coverage inventory
+5. Qualification tiers and safe environments
+6. Deployment-mode test matrix
+7. Synthetic data and independent expected results
+8. Functional/API test pattern for every feature
+9. Mandatory end-to-end business journeys
+10. Provider-specific contract and integration qualification
+11. Data correctness, identity and analytics
+12. AI and ML qualification
+13. Security, privacy and abuse-resistance programme
+14. Browser, accessibility and human testing
+15. Performance, scale and resilience
+16. Jenkins architecture and execution lanes
+17. Sequenced phases, entry and exit conditions
+18. Test-case record and evidence contract
+19. Defect remediation and change control
+20. Required project documentation and ownership
+21. Release gates and acceptance decision
+22. Immediate implementation order
+23. Package contents and use
+24. Sources and review boundaries
+1. Objective and honest completion standard
+Qualify AceMarketing on isolated, production-like infrastructure with synthetic data before exposing real customers, advertising accounts, payment activity or messaging recipients. The objective is to uncover and resolve structural, business-logic, integration, security, data-quality and operational defects early, leaving only explicitly identified account/environment checks and accepted minor issues for a controlled-live phase.
+This package is a test strategy and starting execution catalogue, not a claim that the application is tested or production-ready. It contains 356 planned scenarios, 28 coverage obligations, 13 declared provider connector test sets, 13 phases and 12 release gates. The counts describe this planning catalogue, not every possible input combination or a completed inventory of every route. Phase P0 must reconcile all actual routes, UI actions, operations, jobs, schemas, migrations and advertised capabilities against it. Newly discovered scope adds tests; it does not disappear to preserve a percentage.
+No application feature test, provider sandbox test, load test, scan, restore or deployment was performed for this plan. Selected repository files and existing CI results were inspected. One limited static check was performed: a decoded source excerpt of the connector-ingestion imports failed Node syntax checking. No repository files were modified, no CI job was triggered, and no external business action was taken. [S01–S15]
+A reliable end state is evidence-based: each release-scope requirement has an owner, acceptance criteria, selected tests, reproducible data, actual execution status, defects and final candidate evidence. No finite test programme proves that only minor live changes will remain. Any major issue uncovered in later sandbox/account validation reopens the relevant pre-live phase and blocks that capability.
+2. Current baseline and immediate blockers
+The inspected application has a Node.js backend, TypeScript/Vite frontend build scripts, separate customer/public/platform-control frontend builds, Node test suites, Playwright configurations, and a separate Python ML CI workflow using Ruff, mypy and pytest. Existing automation also addresses migrations, architecture boundaries, AI lifecycle checks, smoke/load checks, deployment, backup and restore. Reuse and strengthen these rather than replace them with an unrelated generic stack. [S03, S04, S10–S14]
+The frozen-head GitHub Actions CI run is 
+2940
+, run ID 
+36919845892
+, completed with 
+failure
+. It stopped at the Docker-free systemd verification step; job logs reported that 
+/usr/bin/node
+ was not executable because the file was absent. Later backend, AI, frontend and browser stages were skipped. This is a runner/installation-path blocker at the observed stage, not proof that every downstream feature is defective or healthy. [S02, S03]
+backend/src/connector-ingestion.mjs
+ contains literal backslash-n characters between import statements and other statements in the fetched text. The base64-decoded first four physical lines reproduce 
+SyntaxError: Invalid or unexpected token
+ using 
+node --check
+ on local Node 22.16.0. Correct the source and scan all runtime modules before attempting integration qualification. This limited parse reproduction is not an application test run. [S08]
+The main inspected CI job sets 
+AUTH_REQUIRED=false
+. Some individual tests may still exercise security, but a dedicated production-mode authenticated lane is required; the existing global setting cannot qualify actual login, authorization and tenant isolation. Its Node 20 pin also needs a supported-runtime migration: official Node documentation lists Node 20 as end-of-life at the review date. Qualify a supported LTS candidate, such as Node 24, and pin an approved patch consistently. [S03, S22, S23]
+The load script's configured 4,000 requests/second is not demonstrated capacity. Its inspected requests have no login setup and treat HTTP 2xx as success without async terminal-state or post-load reconciliation assertions. The default browser configuration is Chromium desktop/mobile; the separate Firefox/WebKit matrix targets only 
+frontend-matrix.spec.ts
+. Both need broader release-specific evidence. [S10, S11, S13, S14]
+The opening README still describes a legacy 
+server/index.mjs
+ demo API while current package scripts run 
+backend/src/index.mjs
+. Reconcile documentation with actual runtime. Registry declarations such as “composed” or a listed provider operation must not be treated as proof of implemented, exercised functionality. [S04–S07]
+3. Scope model: how “everything” becomes measurable
+Create a machine-readable scope ledger from six inputs: public and private routes; visible controls and form states; backend operation/router registrations; database tables/migrations; workers/schedulers/realtime events; and module/connector/capability manifests. Compare this implementation inventory with marketing claims, README descriptions and intended user journeys. A declared feature without reachable implementation is either fixed for the release or explicitly removed/disabled with product approval.
+For every operation, record the request method/path or event name, owner, input schema, auth requirements, tenant and field boundary, business preconditions, persistence, downstream effects, failure states, rate/quota policy and applicable deployment modes. Map it to requirements and automated/manual tests. Avoid relying only on button counts or code coverage.
+Classify each item as implemented-unverified, passing on the candidate, failing, blocked by a dependency, intentionally unsupported, or excluded with documented approval. Keep declared capability, implementation state and qualification state in separate fields. A test that is not run is not passed. A module disabled by the current mode is not “tested successfully”; its disabled behavior is a separate test.
+Use exhaustive boundary and state-transition tests for critical deterministic logic. Use risk-based pairwise combinations for lower-risk browser/configuration combinations, but explicitly enumerate critical tenant × role × write/read/export × capability combinations. Test data covers empty, normal, limit, over-limit, malformed, duplicate, reordered, stale, unauthorized and interrupted cases.
+The companion workbook contains the initial coverage ledger and executable scenario descriptions. Its dashboard reports catalogue execution progress, not an independently established percentage of the entire application.
+4. Project coverage inventory
+The following obligations define the planning scope. Exact endpoint/action counts and any additional discovered modules are established during P0. Registry and script references anchor these obligations; successful implementation is not assumed. [S04–S07]
+Requirement
+Coverage area
+Initial scenarios
+Owner
+REQ-BASE
+Build, source and harness
+10
+DevOps + engineering
+REQ-AUTH
+Authentication and account recovery
+10
+Security + backend
+REQ-TEN
+Organizations, workspaces and authorization
+10
+Security + backend
+REQ-WEB
+Public website and entry journeys
+8
+Frontend + product
+REQ-UI
+Workspace navigation and shared components
+8
+Frontend + QA
+REQ-TRACK
+Tracking SDK and event ingestion
+10
+Data + backend
+REQ-IDENT
+Identity stitching and customer journeys
+8
+Data + product
+REQ-MET
+Analytics, attribution and reconciliation
+12
+Data + product
+REQ-LEAD
+Lead operations and enrichment
+8
+Backend + product
+REQ-ADS
+Conversion manager and AdSync activation
+8
+Integrations + QA
+REQ-AUD
+Audiences and suppression
+8
+Data + integrations
+REQ-FORM
+Forms and custom objects
+8
+Platform + frontend
+REQ-FLOW
+Rules, workflows and approvals
+10
+Platform + QA
+REQ-BOARD
+Boards and realtime collaboration
+8
+Platform + frontend
+REQ-FILE
+Files, documents and authorized search
+10
+Platform + security
+REQ-AI
+AI analyst, agents and model lifecycle
+16
+AI + data + QA
+REQ-BILL
+Billing, plans, entitlements and usage
+10
+Billing + backend
+REQ-COMMS
+Notifications, reports, WhatsApp, calls and calendar
+10
+Integrations + QA
+REQ-JOBS
+Queues, workers, scheduler and outbox
+10
+Platform + DevOps
+REQ-CTRL
+Control center, configuration and optional cells
+8
+Platform + security
+REQ-SEC
+Application and supply-chain security
+10
+Security + engineering
+REQ-PRIV
+Privacy, audit and retention
+8
+Security + product
+REQ-A11Y
+Accessibility, browser and device compatibility
+8
+Frontend + accessibility QA
+REQ-PERF
+Performance, load, stress and soak
+10
+Performance QA + DevOps
+REQ-DEP
+Deployment, upgrades and mode transitions
+10
+DevOps + backend
+REQ-DR
+Backup, restore and operational recovery
+8
+DevOps + security
+REQ-UAT
+Business acceptance and evidence closure
+8
+QA lead + product
+REQ-PROV
+All declared provider connectors
+104
+Integrations + QA
+Native mobile applications, Appium automation, Kubernetes-specific behavior and undeclared external integrations are not automatically added. Responsive web and actual supported mobile browsers are in scope. Add platform-specific coverage only where that platform/capability is actually part of the agreed release. High-scale cell-placement controls are tested when that profile is included; otherwise they remain explicitly disabled and outside the release claim.
+5. Qualification tiers and safe environments
+Tier A — Offline application qualification.
+ Run real frontend artifacts, real APIs, real PostgreSQL, real workers, scheduler and applicable object/AI services. Substitute only external providers with deterministic local simulators. Do not intercept the application's own API responses in acceptance E2E tests. Browser API mocking remains useful for isolated UI/component tests, but those results must be labeled separately. Playwright recommends controlling third-party dependencies for repeatable testing. [S17]
+Tier B — Authorized provider sandbox qualification.
+ After Tier A, run separately authorized developer/test-account checks where the provider offers a suitable safe environment. This tier is not part of the work performed for this plan. Do not assume every provider has a sandbox or that it supports every operation. Record the exact account, API version, scopes, callback configuration, operation and limitations. A provider without adequate safe qualification remains blocked/disabled rather than falsely green.
+Tier C — Controlled-live acceptance.
+ A later, independently approved activity for actual infrastructure/account permissions and narrowly bounded real outcomes. It is not run by this pre-live pipeline. No automatic advertising spend, live conversion uploads, paid messaging, production charges or customer-data use is authorized by this plan.
+Provision ephemeral run-owned functional environments and longer-lived disposable performance/recovery environments. Use separate test databases, object buckets/prefixes, encryption keys, secrets, DNS names, mail capture and provider accounts. A job must verify both a configured allowlist and an environment identity marker before seeding, destructive tests, scanning, load or restoring. Hard-deny production credentials/accounts/destinations. Enforce egress at the network layer as well as in code; a single environment flag is not enough.
+Use valid test TLS and a test-only trust configuration for HTTPS-only connector simulators. Do not weaken production SSRF/HTTPS validation just to make tests pass. Record allowed simulator endpoints and reject redirection outside them. Unknown endpoint overrides fail closed. Secrets are injected through scoped Jenkins credentials, never committed or printed. Untrusted pull-request jobs receive no provider/release secrets and no privileged deployment agent. [S16, S24]
+The embedded PostgreSQL-compatible local store described in the README is useful for developer smoke tests. It does not substitute for real PostgreSQL qualification with a production-like application role, locking, pooling, transactions and RLS. PostgreSQL superusers and BYPASSRLS roles bypass RLS, as do table owners normally; test the actual restricted runtime role and record its attributes. [S05, S19]
+6. Deployment-mode test matrix
+The inspected mode definitions declare 
+core
+, 
+standard
+ and 
+full
+, with environment overrides. Core includes provider reads but disables many optional surfaces; standard enables common SaaS/communication/control capabilities; full enables specialist AI, files and other optional transports. Effective flags and service dependencies must be recorded for each run. [S09]
+Installation
+Core
+Standard
+Full
+Mandatory transitions
+Docker/Compose
+Fresh install + critical journeys
+Same plus enabled services
+All enabled release features
+Core → standard → full; reverse with retained data
+Docker-free Linux/systemd
+Real host install/reboot/permissions
+Claimed supported mode with prerequisites
+Claimed supported mode with prerequisites
+Restart, upgrade, rollback, drain and non-destructive downgrade
+Developer embedded-store mode
+Developer convenience smoke only
+Not a production substitute
+Not a production substitute
+Missing PostgreSQL must not silently alter a production release
+For every supported cell, run startup/readiness, authenticated smoke, critical workflow, worker completion, restart and persistence, configuration failure and enabled/disabled capability tests. Do not run only 
+docker compose config
+ or 
+systemd-analyze verify
+ and call the installation tested.
+Downgrading feature mode must not delete business data. Define what happens to pending jobs, schedules, documents and AI executions before disabling their workers; drain, pause or reject explicitly. Re-enabling a mode must recover retained state safely. Application rollback must use schema-compatible immutable artifacts; never assume reversing SQL migrations is safe. Unsupported installation/mode combinations need explicit product approval and must not remain advertised as supported.
+7. Synthetic data and independent expected results
+All fixtures are synthetic and isolated. Use 
+example.test
+ email domains, synthetic provider account/object IDs and non-deliverable simulator identifiers. Do not generate plausible reachable phone numbers for an outbound transport. A local mail/phone/provider ledger must intercept every delivery. Deterministic seeds, fixed clocks, dataset versions and per-run namespaces prevent interference and make failures reproducible.
+ID
+Profile
+Proposed contents
+Constraint
+D0
+Harness
+Tiny isolated fixtures for deliberate test runner, report, safety-guard and install failures.
+Per run; no business PII.
+D1
+Core functional
+4 tenants, 8 workspaces, 32 users mapped to real roles; distinct tenant canaries; empty and suspended workspaces.
+Logical persona labels must map to actual permission enums during P0.
+D2
+Marketing functional
+10,000 synthetic leads; 100 campaigns; 100,000 events; historical/late/duplicate/refund/consent variants over a fixed 90-day window.
+Planning volume; generated deterministically; independent manifests and assertions.
+D3
+Golden oracle
+Hand-calculated small event/journey datasets and expected metrics, attribution, dedupe and currency decisions.
+Oracle independently authored; never import application calculator to generate expected values.
+D4
+Integration/failure
+Versioned 13-provider simulations plus billing/mail/call/calendar/AI test transports; request/receipt ledgers; injected failures.
+No real account/recipient; supported operations only; simulator networking is test-only.
+D5
+Security/privacy/files
+Canary secrets and PII, benign attack fixtures, file boundaries, deletion and retention cases.
+Harmless synthetic payloads on authorized isolated systems; sensitive reports restricted.
+D6
+AI evaluation
+Fixed questions, grounded answers, adversarial documents and separate train/validation/test partitions.
+Model output evaluated separately from deterministic mock; representative data required for efficacy claims.
+D7
+Scale/soak
+Proposed starting scale: 50 tenants, 100 workspaces, 1,000 users, 100,000 leads, 1,000 campaigns, 1,000,000 events.
+Not a capacity claim; adjust to approved production envelope; separate generator and documented hardware.
+D8
+Business UAT
+Persona-driven synthetic organization with full campaign-to-revenue history and controlled exceptions.
+Seed using supported APIs/imports where practical; no hidden DB patches during acceptance.
+Split three data creation paths: small direct database fixtures for focused internals; supported APIs/importers for application integration; and full UI-driven creation for selected acceptance journeys. Direct database seeding must not bypass the very business process under test. Reset scripts verify run ownership and never use a global truncate against an unverified database.
+Each fixture manifest lists tenant ownership, exact counts, entity IDs, duplicate classes, expected rejects, time boundaries, currency, consent, source IDs, expected aggregates and cleanup scope. Expected results are authored independently from application calculators, not generated by calling the implementation being tested. Version the oracle separately and review it with a data/product owner.
+A supplied small golden metric fixture uses INR spend 1,000; 1,000 impressions; 100 clicks; 20 leads; 5 qualified leads; 2 customers; gross revenue 3,000; refund 300. Expected net revenue is 2,700; conversion rate 0.10; cost per lead 50; cost per qualified lead 200; net-revenue ROAS 2.7. These are arithmetic fixture values, not real marketing results. The inspected 
+calculateMetricSet
+ uses net revenue for ROAS, while 
+deriveMarketingMetrics
+ uses its passed revenue value. Test and label gross versus net semantics explicitly rather than accidentally accepting inconsistent screens. [S15]
+Other golden fixtures cover attribution credit conservation, same-event retry, distinct customer versus payment counts, mixed currency rejection without explicit conversion policy, zero denominators, [start,end) windows, opt-out precedence, workflow versioning and usage reservation races. After every heavy run, compare actual persisted data and simulator receipts with the manifest.
+8. Functional/API test pattern for every feature
+Each discovered feature gets positive, negative and lifecycle coverage. Verify create/read/update/delete or the feature's actual equivalent, field validation, required/optional/default values, boundary lengths, Unicode, time/currency handling, pagination/filtering/sorting, empty/loading/error states, duplicate submission, stale version and concurrent mutation. Do not mechanically impose CRUD where an append-only audit/event object has different intended semantics.
+API tests validate schema, status, content type, meaningful error shape, authorization, idempotency and side effects. Include unknown fields/mass assignment, wrong tenant, wrong role, expired credentials, invalid resource parent, optimistic-lock conflicts, payload limits, rate limits and partial failure. A 200/202 response alone is never sufficient: inspect actual persistence, asynchronous completion and visible business output.
+Use the existing Node test runner and Python pytest stack. Add frontend component tests where needed, keeping component-level mocks separate from true E2E. Playwright can cover browser flows and API request-based assertions; a duplicate Postman/Newman suite is optional for teams that need shareable API collections, not an automatic second source of truth. Reuse existing contract/architecture/AI scripts after reviewing their actual assertions and discovery coverage. [S04, S12]
+Discover all test files and compare to explicit script selections. The pipeline must fail on accidental 
+.only
+, unapproved skips and missing required suites. Tests with unmet prerequisites report BLOCKED, not PASS. Retry results remain visible; a pass only after retry is FLAKY pending triage. Critical flaky tests cannot be quietly quarantined out of a release gate.
+9. Mandatory end-to-end business journeys
+J01 — First-time organization to trusted report.
+ Create a synthetic organization/workspace; onboard actual-role users; connect a provider simulator; backfill known campaign/CRM data; ingest a tracked visit and lead; qualify/convert; reconcile the dashboard and export. Verify UI → API → raw/canonical database → worker/scheduler → report. No application API mock may supply the success result.
+J02 — Paid click to conversion signal return.
+ Capture synthetic click identifier; stitch the authorized identity; create lead and qualified outcome; compute attribution; prepare approved conversion; dispatch only to simulator; inspect acceptance/rejection/unknown-outcome ledger. Repeat with response loss and duplicate retry. Assert one logical effect, correct value/currency/time and accurate visible receipt.
+J03 — Consent withdrawal during queued work.
+ Queue audience/message/AI activation; revoke consent and remove user authorization before dispatch; resume worker. Assert that dispatch-time safety and suppression rules prevent prohibited effects, with clear status and audit history.
+J04 — Historical sync to incremental recovery.
+ Backfill multiple pages, fail a middle page, restart worker, resume from safe checkpoint, receive late updates/deletes and replay a duplicate page. Reconcile source totals and canonical records; no skipped or double-counted history. Freshness and partial-state labels must be correct.
+J05 — Form/rule/workflow/approval.
+ Publish versioned form, submit, evaluate rules, obtain permitted approval, crash after one committed step, resume and perform one simulated action. Change workflow version while approval is pending and verify the frozen-run policy. Self-approval and wrong-tenant decisions must fail.
+J06 — Safe AI analysis and activation.
+ Ingest known source data and approved documents, ask a grounded question, inspect query/source lineage and model/prompt versions, generate a recommendation, reject unauthorized execution, approve valid proposal and dispatch to simulator. Repeat with injected instructions, unavailable data, timeout and disabled kill switch.
+J07 — Subscription and quota correctness.
+ Create test subscription, replay verified billing events, consume quota concurrently, fail/cancel operations, reconcile usage and downgrade plan. No real charge is made; double billing and unauthorized entitlement changes are blockers.
+J08 — Collaboration under conflict.
+ Two users move the same board item and modify shared state while a third reconnects after losing events. Verify conflicts, idempotency, replay/snapshot recovery and cross-tenant realtime denial. Repeat after membership revocation.
+J09 — Document to authorized search and deletion.
+ Upload, quarantine, approve/process/index, retrieve through authorized search/AI, then revoke access and delete. Verify metadata, object storage, search projection, caches and retrieval honor the lifecycle and cannot reveal foreign documents.
+J10 — Multi-channel lead journey.
+ Simulate WhatsApp messages, call callbacks, meeting booking and CRM updates for the same approved fixture identity. Check status ordering, timezone, consent, source lineage and attribution without contacting actual recipients.
+J11 — Security boundary journey.
+ Tenant A attempts all critical read/write/export/search/realtime/AI/admin operations using tenant B identifiers. Exercise real HTTP requests and the restricted database role. Zero cross-tenant disclosure or mutation is tolerated.
+J12 — Operational recovery journey.
+ Run representative workload; record acknowledged IDs; stop worker/API/database; restore service or recover to a clean host; replay eligible work; reconcile data, usage and provider receipts. Then prove a compatible app rollback and non-destructive mode downgrade.
+Every journey attaches a correlation ID, exact seed/version, identity/role, request traces, durable state comparison, worker or provider ledger, UI evidence and audit entries. A screenshot and a green toast without backend proof are insufficient.
+10. Provider-specific contract and integration qualification
+The inspected connector registry lists Meta Ads, Google Ads, X Ads, TikTok Ads, LinkedIn Ads, GA4, HubSpot, Salesforce, Zoho CRM, Pinterest Ads, Microsoft Ads, WhatsApp Cloud and Custom HTTPS. These are declarations to reconcile, not provider-verified capabilities. The workbook has eight planned scenario families for each. Billing, email, call and calendar transports have separate business-flow tests anchored in project scripts/module references. [S04–S07]
+For each connector, separately record authentication, account binding, read, write, history/backfill, incremental synchronization, webhook, deletion/correction, rate limits, version and native/bridge implementation. An unsupported operation is explicitly N/A with rationale. For example, do not require a read-only analytics connector to support campaign writes, or invent webhook support where none is declared.
+The core simulator matrix includes valid response, empty response, invalid schema, missing fields, unknown fields, malformed body, invalid token, expired token, revoked permission, wrong account, 429/Retry-After, 5xx, timeout, connection reset, duplicate page/event, repeated cursor, partial batch failure, delayed/out-of-order callback and response loss after acceptance. Test custom report downloads for redirect/DNS restrictions, content/expansion limits and safe failure.
+Prove that cursor advancement and normalized state commit safely; replay must not skip records or duplicate money/conversion effects. Separate provider acceptance from final delivery, and treat unknown external outcomes as reconciliation work before retrying a potentially irreversible action. Maintain a provider simulator request/receipt ledger independent of the application database.
+Validate the registry, customer UI, account verifier, runtime handler, worker dispatch and source-normalization behavior against the same capability matrix. A connected OAuth credential is not evidence that data is actually being ingested. A native/bridge reporting claim needs handler and execution evidence. Do not inherit older assumptions about Microsoft/X or any other connector from documentation without inspecting the current implementation.
+Tier B later validates real test-account limitations and API version contracts against official provider documentation. Record all live-only residual checks; no expectation of a safe sandbox is assumed. Live credentials and production accounts are never inserted into ordinary pull-request, nightly or offline-release jobs.
+11. Data correctness, identity and analytics
+Test first-party identity capture, anonymous-to-known linking, false-merge resistance, shared devices, cross-device authorized joins, late/out-of-order events, duplicate events and missing identifiers. Tenant context is part of every join and derived record. A plausible-looking journey must not hide incorrect identity merges.
+For each supported attribution model, build a hand-calculated expected journey, including eligible/ineligible lookback touches, direct/unknown traffic, repeated touches, multiple conversions, refunds/corrections, and missing channel information. Assert conservation of eligible credit and approved rounding. Define what changes when late data arrives and whether reports are versioned/recomputed.
+Compare raw provider payloads, canonical records, CRM outcomes, attribution results, dashboard figures, exports and AI-referenced metrics. The metric catalogue's zero-denominator, currency and time-window rules are explicit acceptance inputs. Investigate differences between net and gross definitions, not just numerical equality on refund-free fixtures. [S15]
+Test timezone offsets, daylight-saving boundaries where supported, start-inclusive/end-exclusive windows, future timestamps, clock skew, numeric precision, negative corrections and null fields. Invalid data must be rejected/quarantined or labeled according to a reviewed rule; silently converting malformed values to zero can conceal broken ingestion and must be reviewed.
+No predictive/model-generated conversion or revenue estimate is allowed to masquerade as a recorded payment. Reports must expose source freshness, partial synchronization and insufficient-data states. No local demo fallback should appear as live customer analytics in production-mode qualification.
+12. AI and ML qualification
+Keep three independent evidence types: deterministic orchestration/contract tests with simulated model responses; real model runtime and safety tests in an approved isolated environment; and statistical business-quality evaluation on representative labeled/held-out data. Success in the first category is not model-quality evidence, and synthetic data alone cannot demonstrate forecasting, causal or marketing effectiveness.
+For analyst/knowledge features, test tenant-scoped retrieval, field authorization, grounded numeric answers, source/query lineage, data freshness, absent information, malicious document/provider instructions, tool permission enforcement, allowed destinations, output schema, streaming disconnect, cancellation, token/cost budgets and secrets in logs. Approval, consent, quotas and kill switches are enforced at dispatch, not only when generating an AI proposal.
+For each enabled scoring, forecasting, causal or MMM feature, define task-specific metrics and a simple baseline before evaluation. Record dataset provenance, label quality, minimum sample conditions, training/validation/test partitions, temporal/tenant separation, leakage checks, model/prompt/checkpoint versions, random seeds and applicable uncertainty. Review weak segments and calibration; avoid a universal “AI accuracy” percentage across unrelated tasks.
+Test model loading, incompatible/corrupt/missing checkpoints, unavailable specialist dependencies, resource admission, retry limits, version routing, promotion approval, rollback and deletion. Frozen jobs must retain their intended model/config lineage. Live-model output may need repeated statistical evaluation rather than exact text equality. Unsupported/disabled specialist functions must return an honest unavailable state.
+The existing Python workflow and Node AI scripts supply useful starting checks. Audit path-filtered triggers so backend/client changes that alter ML contracts still select the relevant cross-service tests. Never use a stale trained-model report to qualify a different candidate or checkpoint. [S04, S06, S12]
+13. Security, privacy and abuse-resistance programme
+Use a proposed OWASP ASVS 5.0.0 Level 2 requirements map, adjusted by the threat model and actual release scope; it is a testing baseline, not a certification claim. Combine code/dependency/image/secret scanning with authenticated dynamic scans and manual business-logic abuse tests. Automated scanners alone will not establish tenant isolation, correct approvals or billing safety. [S18, S24]
+Critical boundaries include authentication/recovery, role/resource/field authorization, organization/workspace context, object downloads, search/AI retrieval, realtime subscriptions, connector credentials, custom outbound destinations, inbound signatures, usage reservations and privileged control APIs. Exercise absent/wrong tenant context through real restricted database roles and shared pools/workers. [S19]
+Test safe injection fixtures, stored/reflected XSS, mass assignment, path traversal, unsafe archive expansion, SSRF/private-IP/metadata/DNS rebinding, cross-origin/CSRF behavior where applicable, callback replay, session revocation, exposed secrets and denial-of-service limits. Active scanning and adversarial workloads run only against allowlisted disposable systems under agreed limits.
+Privacy coverage includes consent version and purpose, withdrawal before dispatch, subject export, erasure across derived data/search/AI/queues, retention schedules, authorized holds, log/report redaction, evidence access and deletion after backup restore. Establish the applicable privacy requirements with the responsible owner; this plan does not assert compliance with a jurisdiction or legal regime merely because technical tests pass.
+Scan runtime and build/dev dependencies, generated browser assets and OS/container packages; a production-only npm audit is not the entire supply-chain review. Tie SBOM and scan evidence to the exact artifact. Findings require severity, exploitability/reachability, owner and disposition; scan failure or stale database must not be interpreted as “no vulnerabilities.”
+14. Browser, accessibility and human testing
+Run critical user journeys across Chromium, Firefox and WebKit against production-built artifacts. Add actual supported Edge/Chrome channels and real Android/iOS browser checks according to the support policy. Playwright browser/device emulation is useful but must not be labeled testing of physical phones or native mobile apps. The existing single-file browser matrix is a start, not complete cross-browser regression. [S10, S11]
+Automate axe checks on relevant UI states and perform manual keyboard-only, screen-reader, focus-order, dialog, error-message, zoom/reflow and non-drag board movement checks. Automated accessibility tools do not detect every accessibility problem; manual and inclusive user evaluation remain necessary. Proposed acceptance target is the applicable WCAG 2.2 AA criteria, with exact requirement mapping and exceptions reviewed rather than assumed from an axe score. [S21]
+Visual regression uses approved baselines with deterministic data, time, font and viewport settings. Dynamic content is controlled without masking the element being tested. Snapshot approval requires review; it cannot waive a functional or accessibility defect.
+Exploratory sessions exercise interruption, slow network, refresh/back navigation, long sessions, multiple tabs, workspace switching during requests, inconsistent input and recovery from errors. Human UAT is performed by business personas on realistic synthetic data. A new operator also validates installation/restore/runbooks without relying on the original developer's memory.
+15. Performance, scale and resilience
+Approve workload, hardware, data volume and per-operation objectives before calling a run passing. The repository's 4,000-RPS default and capacity-budget calculations are configuration targets, not demonstrated throughput. Distinguish concurrent users, offered arrival rate, completed requests and completed business operations. A test of forms/read endpoints is not equivalent to validating the whole marketing pipeline. [S13, S14]
+Proposed initial exploration includes 1/10/50/100 concurrent-user steps, steady authenticated mixed traffic, ingestion bursts, queue/backfill workloads, search/export/document/AI resource contention and a noisy-neighbor tenant. Choose eventual arrival-rate targets from business needs and measured hardware. Do not force a default 4,000-RPS claim onto an unqualified environment.
+Suggested starting acceptance budgets, subject to approval, are ordinary authenticated interactive API p95 ≤ 500 ms and p99 ≤ 1,000 ms, unexpected business failure < 0.1%, and critical non-AI async completion p95 ≤ 60 seconds under the agreed workload. Long exports, document processing, AI inference and cold starts require separate budgets. These are proposed targets, not measured performance or universal requirements.
+Require no dropped load-generator iterations at the qualification target; record generator CPU/network utilization and achieved request rate. Use threshold-gated checks for business correctness and distinguish expected rate limiting during overload from unexpected failure at the agreed load. k6 thresholds provide pass/fail decisions; plain response checks alone are inadequate. [S20]
+Run stress-to-break, spike-and-recover, approved multi-hour soak, worker crashes, lease contention, database interruptions, object-store outages, disk pressure and retry storms. Measure connection pools, queue age, memory, CPU, event-loop lag, DB locks/slow queries and final record counts. Verify every acknowledged durable event is recoverable and logical irreversible effects are deduplicated.
+A 2xx/202 acknowledgment is only the first timestamp. Record source received → persisted → queued → processing → completed → visible-on-dashboard durations. After every load/chaos run, reconcile money, quotas, conversion receipts, tenant ownership, dedupe keys and counts independently. No corruption, cross-tenant leakage, duplicate charging or unexplained acknowledged-event loss is acceptable.
+16. Jenkins architecture and execution lanes
+Jenkins orchestrates the existing repository scripts and proposed test harness; it does not replace the tests themselves. Keep one version-controlled command/evidence contract so Jenkins and existing GitHub Actions do not develop conflicting test definitions. Use scoped credentials, isolated agents, pinned toolchains, immutable outputs and explicit failure gates. [S16]
+Lane
+Trigger
+Work
+Deployment authority
+Change verification
+Reviewed commit/change
+Static/type/contract/unit/targeted integration + critical browser smoke
+Ephemeral isolated test only
+Full regression
+Manual or scheduled
+Complete real-service functional/API/E2E, all roles/tenants, provider simulators, browser matrix
+Isolated test only
+Nonfunctional qualification
+Explicit approved run
+Security, load, soak, resilience, mode matrix, fresh-host restore
+Disposable qualification infrastructure only
+Release candidate
+Immutable candidate SHA
+Required combined gates, production artifacts, UAT/evidence review
+No production deployment
+Provider test-account lane
+Separate authorization
+Only approved provider sandbox/developer-account operations
+No production accounts or unrestricted destinations
+The intended pipeline is:
+Freeze revision / verify safety and target identity
+  -> install pinned dependencies and toolchain
+  -> discover scope and tests / static and syntax checks
+  -> unit, component, contract and restricted-PostgreSQL tests
+  -> build immutable customer/public/admin/API/worker/ML artifacts
+  -> provision isolated mode / migrate / seed / assert fixture manifest
+  -> real-service authenticated API and business E2E suites
+  -> provider simulation / worker completion / data reconciliation
+  -> browser and accessibility suites
+  -> separate security, performance, resilience and recovery lanes
+  -> merge JUnit + traces + checksums + defects + coverage ledger
+  -> evaluate required evidence and final candidate gates
+  -> human offline-readiness decision (never auto-live deploy)
+Known existing commands include 
+npm ci
+, 
+npm run check:all
+, 
+npm run backend:architecture
+, 
+npm run test:backend-foundation
+, 
+npm run test:ai-backend
+, 
+npm run build
+, standalone frontend builds, 
+npm run e2e
+, 
+npm run e2e:standalone
+, 
+npm run e2e:matrix
+, 
+npm run security:audit
+, and the migration/smoke/backup/restore scripts. Their presence does not mean every command is safe against an arbitrary target or currently passes. Execute them only under the verified harness. [S04]
+Proposed additions are a safe environment validator, complete test discovery manifest, deterministic seed/reset generator, provider simulator, production-artifact authenticated E2E configuration, JUnit emitters, full reconciliation checks and an evidence/gate evaluator. These are implementation tasks, not commands already claimed to exist. Select a small toolset: existing Node tests, pytest and Playwright; k6 for load; ZAP plus reviewed static/dependency/secret/image scanning for security; a controllable HTTPS simulator and mail capture; Jenkins JUnit/artifact publishing. Extra dashboards such as Allure or SonarQube are optional, not mandatory duplication.
+Publish JUnit from Node/Playwright/pytest with suite identities and statuses; attach traces, screenshots on failure, reports and logs. Use 
+post/always
+-style collection and safe cleanup so early failures still preserve evidence. Missing required artifacts fail the gate. Do not append 
+|| true
+ to mandatory checks or let cleanup overwrite the original failure. Destructive lanes are serialized per disposable environment and can never reuse an unverified persistent target.
+17. Sequenced phases, entry and exit conditions
+Phases are dependency gates, not calendar estimates. Fixes cycle back through the affected gate and regression selection. Work that can safely run in parallel may do so only after its prerequisites and isolated data are ready.
+P0 — Freeze scope and remove baseline blockers
+Entry:
+ Frozen SHA and accessible sources.
+Work:
+ Route/action/operation/job/migration/connector inventory; test-discovery reconciliation; syntax/startup checks; repair CI node path; supported runtime selection.
+Exit:
+ No parser/startup blocker; inventory has owners; isolated execution safety designed.
+Owner:
+ Engineering + QA lead. 
+Evidence:
+ Scope ledger; findings backlog; baseline manifest.
+P1 — Build isolated test harness
+Entry:
+ P0 inventory and safe environment design.
+Work:
+ Jenkins agents; clean environment provisioning; test-only endpoints/credentials; deterministic seed/reset; real PostgreSQL application role; report and cleanup failure tests.
+Exit:
+ Reproducible environment; outbound block proven; evidence pipeline fails closed.
+Owner:
+ DevOps + QA automation. 
+Evidence:
+ Environment runbook; Jenkins design; data manifest; harness self-test.
+P2 — Contracts, components and security foundation
+Entry:
+ Safe harness and bootable application.
+Work:
+ Node/Python/frontend checks; full API schemas; validation; authentication; actual role/tenant/field matrices; migrations against real PostgreSQL.
+Exit:
+ Critical contract/auth/tenant checks pass; no skipped mandatory operation.
+Owner:
+ Backend + security + frontend. 
+Evidence:
+ API inventory; unit/API reports; permission matrix.
+P3 — Data pipelines and provider simulation
+Entry:
+ P2 foundation green.
+Work:
+ Tracking, identity, historical/incremental sync, cursor/dedupe, raw/canonical lineage, independent metric oracles and 13 connector simulations.
+Exit:
+ Complete source-to-report reconciliation; source outage/partial failure accurately represented.
+Owner:
+ Data + integrations. 
+Evidence:
+ Connector matrix; reconciliation report; golden-data results.
+P4 — Business feature E2E
+Entry:
+ Relevant P2/P3 modules green.
+Work:
+ Customer/public/admin flows, leads, AdSync, audiences, forms, boards, communications, billing and reporting using real app services.
+Exit:
+ Every P0 business journey passes without application API mocking or manual DB intervention.
+Owner:
+ QA automation + product. 
+Evidence:
+ Journey traces; screenshots; database and audit evidence.
+P5 — Durable workflows, files, AI and control plane
+Entry:
+ P3/P4 data and auth foundation.
+Work:
+ Workflow approvals/crash-resume; file lifecycle/search; analyst grounding/model checks; governance/kill switches/control versioning.
+Exit:
+ Enabled advanced features have behavior and safety evidence; disabled features are truthful.
+Owner:
+ Platform + AI + security. 
+Evidence:
+ Workflow/AI evaluation pack; control-plane and object-lifecycle results.
+P6 — Security and privacy qualification
+Entry:
+ Authenticated representative deployment.
+Work:
+ ASVS mapping; manual abuse tests; SAST/SCA/secrets/images; authenticated ZAP; consent, export, deletion, retention and evidence redaction.
+Exit:
+ No unresolved exploitable critical/high risk or tenant/secret/consent defect; review signed.
+Owner:
+ Security + engineering. 
+Evidence:
+ Security report; threat model; privacy/data map.
+P7 — Browser, accessibility and usability
+Entry:
+ Stable critical journeys.
+Work:
+ All supported browser projects; real-device critical flows; keyboard/screen reader; axe; reflow; visual regression; long sessions.
+Exit:
+ Critical journeys usable on supported targets; applicable acceptance criteria met.
+Owner:
+ Frontend + accessibility QA. 
+Evidence:
+ Browser matrix; accessibility and exploratory report.
+P8 — Load, resilience and concurrency
+Entry:
+ Correctness green; workload/SLO approved.
+Work:
+ Authenticated workload; offered-rate verification; async completion; stress/spike/soak; worker leases, DB outages, queue saturation and noisy neighbor.
+Exit:
+ Approved SLO/capacity and data-integrity gates pass on documented hardware.
+Owner:
+ Performance QA + DevOps. 
+Evidence:
+ Capacity envelope; resilience results; post-load reconciliation.
+P9 — Deployment and recovery matrix
+Entry:
+ Candidate artifacts and recovery objectives approved.
+Work:
+ Docker and host core/standard/full; cold installs/reboot; upgrade/downgrade; rollback; fresh-host DB/object/key restore.
+Exit:
+ Supported matrix passes; tested artifact digests and measured RPO/RTO documented.
+Owner:
+ DevOps + security. 
+Evidence:
+ Install/upgrade/runbooks; recovery and rollback evidence.
+P10 — Offline UAT and defect closure
+Entry:
+ P2-P9 mandatory gates green.
+Work:
+ Business users execute realistic synthetic scenarios; exploratory sessions; fix/retest; full inventory reconciliation and evidence review.
+Exit:
+ Zero open P0/P1 business blockers; release scope and residual risks approved.
+Owner:
+ Product + QA lead. 
+Evidence:
+ UAT sign-off; defect closure; pre-live acceptance report.
+P11 — Provider sandbox qualification (separately authorized)
+Entry:
+ Offline UAT green plus approved test accounts/credentials.
+Work:
+ Provider-specific sandbox/developer-test validation of auth, scopes, callbacks and supported operations; budgets/recipients locked.
+Exit:
+ Each enabled connector has exact account/version evidence or remains disabled and blocked.
+Owner:
+ Integrations + security + product. 
+Evidence:
+ Provider qualification register; external limitations.
+P12 — Readiness decision and controlled-live handoff
+Entry:
+ Evidence packet complete for requested readiness tier.
+Work:
+ Verify final SHA/digest, retest after fixes, evaluate gates, record signatories and residual live-only checks.
+Exit:
+ Explicit offline-ready or sandbox-qualified status; no automatic production deployment.
+Owner:
+ QA + product + engineering + operations. 
+Evidence:
+ Final report; release manifest; controlled-live handoff checklist.
+18. Test-case record and evidence contract
+Every execution record includes test ID, requirement ID, feature/operation, risk priority, phase/layer, exact SHA, environment/mode/capability fingerprint, fixture version/seed, actual role/account, prerequisites, actions, expected/actual result, start/end timestamps, attempt/retry history, status, defect IDs, evidence hashes and reviewer. Capture method/path/event/version as P0 discovers them; do not invent routes merely to fill a spreadsheet.
+Allowed statuses are NOT RUN, PASS, FAIL, BLOCKED, FLAKY and NOT APPLICABLE. Non-applicability requires a reason and approval; disabled-feature behavior is still tested. An unmet environment or provider prerequisite is BLOCKED, not PASS. Mock-only, sandbox and live evidence are separate qualification fields rather than interchangeable results.
+Evidence for a business test includes sanitized API trace, UI trace/screenshot where useful, database or authorized read-model result, worker completion and provider simulation receipt, plus audit/correlation IDs. Security/load/recovery tests add the exact scan configuration, hardware, offered/achieved rate, measurements, restore manifests and checksums. Retain enough context to reproduce a failure while protecting secrets and synthetic sensitive canaries in shared reports.
+Use per-run paths such as 
+artifacts/qualification/<sha>/<run-id>/
+ with a manifest linking all files. Sign or otherwise protect the final evidence packet against accidental mutation. Expire routine detailed traces according to a reviewed retention policy while retaining final release decisions and necessary audit evidence. No numerical coverage claim may exclude blocked/skipped requirements without disclosing the denominator.
+19. Defect remediation and change control
+The initial findings register distinguishes observed defects, CI/environment blockers and qualification gaps. All are Open, not silently resolved. Prioritize P0 boot/auth/tenant/data-loss/unsafe activation issues, then high-impact functional and operational issues. Do not spend extensive effort executing downstream E2E while the application cannot parse/start.
+For each defect capture reproducible steps, actual versus expected behavior, affected version/mode/roles, source evidence, business impact, root cause, fix owner and required regression. Fix one root cause rather than weakening assertions or painting the UI green. A backend/API contract or schema change triggers relevant clients, workers, model contracts, migrations and backward-compatibility tests.
+A defect closes only after a verified fix on the candidate, reproduction no longer fails, affected regression passes and a reviewer confirms the intended behavior. Later changes invalidate earlier evidence for affected scope. The final release candidate is rebuilt once into immutable artifacts and retested; it is not assembled from successful tests across unrelated commits.
+Critical/high-impact unresolved defects block release. Minor accepted issues need a documented workaround, owner, rationale, affected scope and resolution review date; “minor” does not include tenant leakage, wrong money/metrics, unsafe sending, broken recovery or untested mandatory functionality. Flaky test quarantine requires owner and alternate evidence; it cannot bypass a mandatory critical gate.
+20. Required project documentation and ownership
+Maintain documentation as versioned project assets, not a single accumulating README. The README becomes a concise current entry point linking to the authoritative documents below. The downloadable package is an initial plan; architecture/API/runbook documents must be completed from runtime discovery and actual execution rather than invented.
+Document
+Required content
+Accountable role
+Product scope and feature status
+Personas, workflows, advertised capabilities, supported/excluded modes and verified status
+Product + QA lead
+Architecture and data flow
+Public/customer/control surfaces; API/worker/ML boundaries; stores; source-to-report-to-activation flow
+Technical lead
+API/event/permission reference
+Real routes/events/schemas/errors; auth, tenant and field matrix; limits and versions
+Backend + security
+Data dictionary and metric rules
+Tables, canonical schema, lineage, identity/dedupe, currency/timezone, attribution, gross/net rules
+Data lead
+Connector qualification guide
+Per-provider capability, scopes, credential lifecycle, version, native/bridge, simulation/sandbox/live status
+Integrations lead
+AI/model evaluation guide
+Model/dataset/prompt versions, quality/safety metrics, limitations, promotion/rollback
+AI lead
+Test strategy and traceability
+This plan, scenario catalogue, entry/exit gates, discovered scope, actual evidence links
+QA lead
+Environment and Jenkins guide
+Safe installation, pinned runtimes, secrets, simulators, seed/reset, agent/lane/report behavior
+DevOps
+Deployment/recovery runbooks
+Docker and native modes, migration, downgrade, rollback, backup/object/key restore, measured RPO/RTO
+Operations
+Threat/privacy review
+Threat boundaries, ASVS map, consent/deletion/retention, logging and evidence protection
+Security/privacy owner
+Defect and decision registers
+Root causes, fixes, retests, scope changes, exceptions, owners
+Engineering + product
+Final test/UAT/release report
+Exact candidate, execution totals, gate results, unresolved risks, approvals and live-only residuals
+Release owner
+Each document includes version, owner, last verified date, applicable commit/configuration, and known limitations. A new team member must be able to install and exercise the application from the docs. A second operator must restore and roll back from runbooks. Documentation failures discovered in those drills are tracked defects.
+21. Release gates and acceptance decision
+The following gates are proposed for the final candidate. No gate is marked passed in this planning package. Numerical performance and model-quality thresholds are agreed before execution; they cannot be relaxed after failure merely to meet a deadline.
+Gate
+Requirement
+Acceptance rule
+Owner
+G01 — Frozen baseline
+Exact SHA + lockfiles + runtime/config/schema/image/model/fixture hashes recorded.
+Mandatory; mismatch fails
+Engineering
+G02 — Safe execution
+Isolated targets and test account allowlists; outbound denial self-test passes; no real customers/spend.
+Mandatory; any unsafe target fails
+Security + DevOps
+G03 — Boot and syntax
+All runtime syntax/import/startup checks pass; F01/F02 verified fixed.
+Mandatory; no skipped checks
+Backend + DevOps
+G04 — Scope and test execution
+100% of in-scope operations have test/disposition; all mandatory selected tests executed with evidence.
+No missing reports, unapproved exclusions, .only or skipped P0/P1
+QA lead
+G05 — Critical behavior
+All P0/P1 required functional, auth, tenant, data, workflow, billing and activation checks pass.
+Zero open critical/high-impact business defects
+Product + QA
+G06 — Security and privacy
+No unresolved exploitable critical/high findings; no tenant leak, secret exposure or consent violation.
+Required review signed; scanner failure is not clean result
+Security
+G07 — Data correctness
+Golden metrics/attribution, ingestion/dedupe, billing and provider-ledger reconciliation match oracles.
+Zero unexplained discrepancies; documented numeric tolerance only
+Data lead
+G08 — Performance and resilience
+Approved per-class SLOs pass at agreed load/hardware; offered rate delivered; async/data-integrity pass.
+Capacity target approved before test; no unsupported capacity claim
+Performance + operations
+G09 — Deployment and recovery
+Every supported mode/install matrix and actual restore/rollback drill passes.
+RPO/RTO measured against approved values
+DevOps
+G10 — AI scope
+Enabled AI tasks pass grounded safety, version, budget and task-specific evaluation requirements.
+Synthetic mechanics do not qualify real-world model efficacy
+AI + product
+G11 — Provider qualification tier
+Every connector tagged simulated, sandbox-qualified, live-qualified, unsupported or blocked.
+Offline readiness can pass with live disabled; enabled live connector cannot rely on mocks
+Integrations
+G12 — Final UAT and sign-off
+Candidate retested after changes; docs verified; known minor issues accepted with owner/expiry.
+No automatic production deployment; final QA/product/engineering/operations approval
+Release owner
+Code coverage can be a supporting regression indicator; define thresholds after measuring honest baseline and exclude generated code transparently. It does not prove requirements coverage. If adopting an initial target, consider ≥80% line and ≥75% branch coverage in testable business modules and ≥90% branch coverage for critical deterministic validation/auth/metric logic, with reviewed exceptions. These are proposed targets, not observed values or universal quality rules. Mutation/property tests should challenge important calculations, policies and state transitions.
+For Tier A acceptance, all mandatory offline tests and evidence must pass, and external providers remain visibly simulated/unqualified with live operation disabled. For Tier B acceptance, each enabled connector additionally needs relevant authorized test-account evidence. Production enablement is a different decision requiring environment/account-specific checks and approvals. No provider earns “production verified” from mock responses.
+Final signatories are QA, product, engineering, security for applicable risk, and operations for deployment/recovery. The report states exactly what was tested, not run, blocked, excluded, flaky and accepted. It names any remaining changes and their impact; there is no blanket guarantee of zero future defects.
+22. Immediate implementation order
+First correct F01 and F02 and rerun complete syntax/import/startup validation on the frozen or new reviewed revision. Then establish the supported runtime and production-like authenticated PostgreSQL lane. Next build the target-safety, seed/reset, simulator and evidence harness; map the existing scripts into Jenkins without duplicating GitHub Actions logic.
+After that, reconcile scope and start with tenant/auth/data correctness, provider ingestion and metric oracles before broad UI automation. Add complete business E2E, then workflows/AI/files/control safety, followed by browser/accessibility, security, load/resilience and the Docker/native install and recovery matrix. Resolve root causes and rerun affected plus full critical regression after each candidate change.
+Conclude with human synthetic-data UAT and a reproducible pre-live evidence packet. Only then separately authorize provider test-account qualification. Anything discovered there that changes core logic returns to the relevant pre-live phase; it is not dismissed as a minor live tweak.
+23. Package contents and use
+AceMarketing_Master_Test_Plan.docx
+ is the reviewable master document. 
+MASTER_TEST_PLAN.md
+ is its version-control-friendly source. 
+AceMarketing_Test_Execution_Workbook.xlsx
+ holds a dashboard, requirement inventory, 356 test scenarios, phase plan, findings, data profiles, provider matrix, release gates and sources. 
+test_catalogue.csv
+ is available for importing into a test management tool.
+planning_register.json
+ is the structured planning source; all planned test statuses are Not run. 
+golden_metric_fixture.json
+ supplies an independently calculated synthetic metric example, not a claim of passing application tests. 
+release_readiness_template.json
+ is a fail-closed template with no passing gate or production authority. 
+STATIC_REVIEW_NOTES.md
+ records observed baseline evidence and the limited syntax reproduction.
+To begin execution, assign actual owners, complete P0 inventory and approve data/capacity/retention/recovery assumptions. Update records only from actual evidence. Protect original planning state in version control so scope changes and excluded tests remain visible.
+24. Sources and review boundaries
+Repository sources are frozen at the stated SHA unless the source is an existing CI result. Read ranges and interpretation limits are listed below. Selected source review is not a full line-by-line audit; no unseen handler or unexecuted feature is claimed complete. External sources are official project documentation consulted for the proposed testing design on 2 October 2026.
+S01 — Frozen repository baseline.
+ main head inspected 2 October 2026; commit dated 1 October 2026 UTC.
+Open source reference
+S02 — CI run 2940.
+ Completed failure. Build job stopped at systemd verification; subsequent test/build steps skipped.
+Open source reference
+S03 — CI workflow.
+ Read lines 1-180; Node 20, PostgreSQL 16, AUTH_REQUIRED=false, build and smoke stages.
+Open source reference
+S04 — Package scripts.
+ Scripts inspected; explicit Node test suites, browser suites, deployment, AI, backup and restore entrypoints.
+Open source reference
+S05 — Product README.
+ Read lines 1-190. Product description and legacy demo section; not a source of verified completion.
+Open source reference
+S06 — Platform module registry.
+ Read lines 1-330; declared modules, capabilities, contracts and owners; declarations are not execution proof.
+Open source reference
+S07 — Connector registry.
+ Read lines 1-200; 13 connector manifests. Operations must be reconciled with actual runtime handlers.
+Open source reference
+S08 — Connector ingestion.
+ Read lines 1-210; raw/canonical persistence. Literal backslash-n separators in imports; independently decoded fetched base64 excerpt and syntax-checked first four physical lines.
+Open source reference
+S09 — Deployment modes.
+ Complete mode definitions: core, standard, full; environment overrides.
+Open source reference
+S10 — Default Playwright configuration.
+ Chromium desktop/mobile projects; CI retries and HTML report; dev frontend webServer.
+Open source reference
+S11 — Browser matrix configuration.
+ Chromium/Firefox/WebKit/mobile projects, restricted to frontend-matrix.spec.ts.
+Open source reference
+S12 — ML workflow.
+ Python 3.12, Ruff, mypy, compileall, pytest and ML container build; path-filtered triggers.
+Open source reference
+S13 — Capacity qualification workflow.
+ Manual isolated environment; default target 4,000 offered requests/second; a configuration, not measured capacity.
+Open source reference
+S14 — Load workload.
+ 70/20/5/5 request mix; 2xx acceptance checks; no login setup or async completion verification in the inspected script.
+Open source reference
+S15 — Marketing metric catalogue.
+ Read lines 1-205; [start,end), null zero denominators, explicit currency policy, net-revenue ROAS in calculateMetricSet.
+Open source reference
+S16 — Jenkins pipeline documentation.
+ Pipeline-as-code and test/credential handling reference.
+Open source reference
+S17 — Playwright best practices.
+ Isolated tests; controlled third-party dependencies.
+Open source reference
+S18 — OWASP ASVS.
+ Security requirements reference; use ASVS 5.0.0 Level 2 as the proposed mapping baseline.
+Open source reference
+S19 — PostgreSQL row-level security.
+ Superusers/BYPASSRLS and normally table owners bypass row security; role-sensitive testing is essential.
+Open source reference
+S20 — k6 thresholds.
+ Pass/fail thresholds; use business metrics and dropped-iteration criteria, not status checks alone.
+Open source reference
+S21 — Accessibility testing.
+ Automated scans need manual accessibility and inclusive user testing.
+Open source reference
+S22 — Node supported release schedule.
+ At review, Node 24 is Active LTS, Node 22 Maintenance LTS; pin an approved supported patch.
+Open source reference
+S23 — Node end-of-life reference.
+ Node 20 is listed as EOL at the review date.
+Open source reference
+S24 — ZAP automation framework.
+ Authenticated scoped scanning and job tests.
+Open source reference

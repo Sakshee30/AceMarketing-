@@ -1,0 +1,164 @@
+[
+  [
+    "PHASES",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Dependency-gated programme, not a calendar commitment. P11 external test accounts require separate authorization. P12 is an evidence decision, never automatic live deployment.",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Phase",
+    "Name",
+    "Entry criteria",
+    "Work / scope",
+    "Exit criteria",
+    "Responsible owner",
+    "Evidence / deliverables"
+  ],
+  [
+    "P0",
+    "Freeze scope and remove baseline blockers",
+    "Frozen SHA and accessible sources",
+    "Route/action/operation/job/migration/connector inventory; test-discovery reconciliation; syntax/startup checks; repair CI node path; supported runtime selection.",
+    "No parser/startup blocker; inventory has owners; isolated execution safety designed.",
+    "Engineering + QA lead",
+    "Scope ledger; findings backlog; baseline manifest"
+  ],
+  [
+    "P1",
+    "Build isolated test harness",
+    "P0 inventory and safe environment design",
+    "Jenkins agents; clean environment provisioning; test-only endpoints/credentials; deterministic seed/reset; real PostgreSQL application role; report and cleanup failure tests.",
+    "Reproducible environment; outbound block proven; evidence pipeline fails closed.",
+    "DevOps + QA automation",
+    "Environment runbook; Jenkins design; data manifest; harness self-test"
+  ],
+  [
+    "P2",
+    "Contracts, components and security foundation",
+    "Safe harness and bootable application",
+    "Node/Python/frontend checks; full API schemas; validation; authentication; actual role/tenant/field matrices; migrations against real PostgreSQL.",
+    "Critical contract/auth/tenant checks pass; no skipped mandatory operation.",
+    "Backend + security + frontend",
+    "API inventory; unit/API reports; permission matrix"
+  ],
+  [
+    "P3",
+    "Data pipelines and provider simulation",
+    "P2 foundation green",
+    "Tracking, identity, historical/incremental sync, cursor/dedupe, raw/canonical lineage, independent metric oracles and 13 connector simulations.",
+    "Complete source-to-report reconciliation; source outage/partial failure accurately represented.",
+    "Data + integrations",
+    "Connector matrix; reconciliation report; golden-data results"
+  ],
+  [
+    "P4",
+    "Business feature E2E",
+    "Relevant P2/P3 modules green",
+    "Customer/public/admin flows, leads, AdSync, audiences, forms, boards, communications, billing and reporting using real app services.",
+    "Every P0 business journey passes without application API mocking or manual DB intervention.",
+    "QA automation + product",
+    "Journey traces; screenshots; database and audit evidence"
+  ],
+  [
+    "P5",
+    "Durable workflows, files, AI and control plane",
+    "P3/P4 data and auth foundation",
+    "Workflow approvals/crash-resume; file lifecycle/search; analyst grounding/model checks; governance/kill switches/control versioning.",
+    "Enabled advanced features have behavior and safety evidence; disabled features are truthful.",
+    "Platform + AI + security",
+    "Workflow/AI evaluation pack; control-plane and object-lifecycle results"
+  ],
+  [
+    "P6",
+    "Security and privacy qualification",
+    "Authenticated representative deployment",
+    "ASVS mapping; manual abuse tests; SAST/SCA/secrets/images; authenticated ZAP; consent, export, deletion, retention and evidence redaction.",
+    "No unresolved exploitable critical/high risk or tenant/secret/consent defect; review signed.",
+    "Security + engineering",
+    "Security report; threat model; privacy/data map"
+  ],
+  [
+    "P7",
+    "Browser, accessibility and usability",
+    "Stable critical journeys",
+    "All supported browser projects; real-device critical flows; keyboard/screen reader; axe; reflow; visual regression; long sessions.",
+    "Critical journeys usable on supported targets; applicable acceptance criteria met.",
+    "Frontend + accessibility QA",
+    "Browser matrix; accessibility and exploratory report"
+  ],
+  [
+    "P8",
+    "Load, resilience and concurrency",
+    "Correctness green; workload/SLO approved",
+    "Authenticated workload; offered-rate verification; async completion; stress/spike/soak; worker leases, DB outages, queue saturation and noisy neighbor.",
+    "Approved SLO/capacity and data-integrity gates pass on documented hardware.",
+    "Performance QA + DevOps",
+    "Capacity envelope; resilience results; post-load reconciliation"
+  ],
+  [
+    "P9",
+    "Deployment and recovery matrix",
+    "Candidate artifacts and recovery objectives approved",
+    "Docker and host core/standard/full; cold installs/reboot; upgrade/downgrade; rollback; fresh-host DB/object/key restore.",
+    "Supported matrix passes; tested artifact digests and measured RPO/RTO documented.",
+    "DevOps + security",
+    "Install/upgrade/runbooks; recovery and rollback evidence"
+  ],
+  [
+    "P10",
+    "Offline UAT and defect closure",
+    "P2-P9 mandatory gates green",
+    "Business users execute realistic synthetic scenarios; exploratory sessions; fix/retest; full inventory reconciliation and evidence review.",
+    "Zero open P0/P1 business blockers; release scope and residual risks approved.",
+    "Product + QA lead",
+    "UAT sign-off; defect closure; pre-live acceptance report"
+  ],
+  [
+    "P11",
+    "Provider sandbox qualification (separately authorized)",
+    "Offline UAT green plus approved test accounts/credentials",
+    "Provider-specific sandbox/developer-test validation of auth, scopes, callbacks and supported operations; budgets/recipients locked.",
+    "Each enabled connector has exact account/version evidence or remains disabled and blocked.",
+    "Integrations + security + product",
+    "Provider qualification register; external limitations"
+  ],
+  [
+    "P12",
+    "Readiness decision and controlled-live handoff",
+    "Evidence packet complete for requested readiness tier",
+    "Verify final SHA/digest, retest after fixes, evaluate gates, record signatories and residual live-only checks.",
+    "Explicit offline-ready or sandbox-qualified status; no automatic production deployment.",
+    "QA + product + engineering + operations",
+    "Final report; release manifest; controlled-live handoff checklist"
+  ]
+]

@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {CalendarDays,ChevronDown,ChevronRight,MessageCircle,MessageSquareText,MousePointer2,Network,PhoneCall,Search,Target} from 'lucide-react'
 import {journeysApi} from '../data/journeys.api'
 import {ErrorState,LoadingState} from '../../../components/system/FrontendStates'
@@ -18,7 +18,7 @@ export default function JourneysPage(){
 
  const load=async()=>{
   const requestId=++requestSequence.current
-  setLoading(true)
+  beginLoading(setLoading)
   setError('')
   try{
    const r:any=await journeysApi.load()

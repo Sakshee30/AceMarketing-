@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,CalendarDays,CheckCircle2,ChevronRight,MessageCircle,PhoneOutgoing,ShieldCheck,X} from 'lucide-react'
 import {meetingsApi} from '../data/meetings.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -27,7 +27,7 @@ export default function MeetingsPage(){
  useDirtyWork({key:'voice-scheduler-draft',label:'Voice Scheduler draft',dirty:voiceSchedulerOpen,scope:'feature'})
 
  const load=async()=>{
-  setLoading(true)
+  beginLoading(setLoading)
   try{
    const [response,scheduler]:any=await Promise.all([meetingsApi.load(),meetingsApi.scheduler()])
    const mapped=(response.items||[]).map((item:any)=>({id:item.id,lead:item.lead_ref,time:new Date(item.starts_at).toLocaleString(),startsAt:item.starts_at,owner:item.owner,status:String(item.status||'confirmed').replace(/^./,(m:string)=>m.toUpperCase()),reminder:(item.reminder_plan||[]).join(' + ')||'Voice',risk:String(item.no_show_risk||'low').replace(/^./,(m:string)=>m.toUpperCase()),remindersSent:Number(item.reminders_sent||0),lastReminderAt:item.last_reminder_at,calendarId:item.external_calendar_id||'',meetingLink:item.meeting_link||'',calendarHtmlLink:item.calendar_html_link||'',attendeeEmail:item.attendee_email||'',attendeePhone:item.attendee_phone||''}))

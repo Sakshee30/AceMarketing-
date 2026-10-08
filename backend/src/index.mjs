@@ -7,7 +7,7 @@ import { connectorVaultReady, decryptSecret, encryptSecret } from './vault.mjs'
 import { getJob, queueAvailable, queueStats, requestJobCancellation } from './queue.mjs'
 import { attributionStats, captureClickSession, closeAttributionStore, recordAssistedEvent, reconcileAttribution } from './attribution-store.mjs'
 import { audienceOpsStats, closeLeadOps, createActivationRun, createAudience as createLeadAudience, getAudienceBundle, getLeadProfile, leadIdentityStats, leadOpsStats, listActivationRuns, listAudiences as listLeadAudiences, listLeadProfiles, materializeAudience, overrideLeadGrade as persistLeadGrade, previewAudience as previewLeadAudience, scoreLead, upsertLeadProfile, updateAudienceSyncState } from './lead-ops.mjs'
-import { closeAgentOrchestrator, completeFollowUp as persistCompleteFollowUp, createAgentRun, createFollowUp, createMeeting, getMeeting, listAgentRuns, listFeedback as listPersistedFeedback, listFollowUps as listPersistedFollowUps, listMeetings as listPersistedMeetings, listRoutingDecisions, recordFeedback, rescheduleMeeting, routeLead, updateAgentRun } from './agent-orchestrator.mjs'
+import { closeAgentOrchestrator, completeFollowUp as persistCompleteFollowUp, createAgentRun, createFollowUp, createMeeting, followUpStats, getMeeting, listAgentRuns, listFeedback as listPersistedFeedback, listFollowUps as listPersistedFollowUps, listMeetings as listPersistedMeetings, listRoutingDecisions, recordFeedback, rescheduleMeeting, routeLead, updateAgentRun } from './agent-orchestrator.mjs'
 import { closeCustomIntegrations, createCustomIntegration as persistCustomIntegration, listCustomIntegrations, testCustomIntegration as runCustomIntegrationTest } from './custom-integrations.mjs'
 import { closeObservability, listAlerts as listLiveAlerts, listMonitoringRules as listLiveMonitoringRules, monitoringSnapshot, recordApiTelemetry, resolveAlert as resolveLiveAlert, saveMonitoringRule } from './observability.mjs'
 import { closeEntitlements, finalizeReservation, resourceCountAllowed, subscriptionSummary } from './entitlements.mjs'
@@ -87,6 +87,7 @@ import {handleReconcilePayment} from '../modules/billing/src/application/command
 import {handleSubmitJob} from '../modules/jobs/src/application/commands/submit-job/submit-job.handler.mjs'
 import {handleSendNotification} from '../modules/notifications/src/application/commands/send-notification/send-notification.handler.mjs'
 import {handleRunReport} from '../modules/reporting/src/application/commands/run-report/run-report.handler.mjs'
+import {hostedEvaluationSupported,runHostedGroundingEvaluation} from './ai-hosted-evaluation.mjs'
 import {handleStartLogin} from '../modules/identity/src/application/commands/start-login/start-login.handler.mjs'
 import {handleRecoverAccount} from '../modules/identity/src/application/commands/recover-account/recover-account.handler.mjs'
 import {handleApproveFile} from '../modules/documents/src/application/commands/approve-file/approve-file.handler.mjs'
@@ -773,6 +774,7 @@ const server = http.createServer(async (req,res)=>{
             phone:event.from||null,
             source:event.source||'Telephony',
             campaign:event.campaign||null,
+            keepExistingAcquisition:true,
             lastActivity:event.endedAt||event.startedAt,
             callOutcome:event.disposition||event.status,
             callSummary:[event.status,event.durationSeconds?event.durationSeconds+'s':null,event.disposition].filter(Boolean).join(' · '),
@@ -866,7 +868,7 @@ const server = http.createServer(async (req,res)=>{
   return withWorkspace(workspaceId,async()=>{
   let trackedEvents=trackedEventsByWorkspace.get(workspaceId)
   if(!trackedEvents){
-    trackedEvents=await listTrackedEvents(workspaceId,{limit:5000}).catch(()=>[])
+    trackedEvents=(await listTrackedEvents(workspaceId,{limit:5000}).catch(()=>[])).reverse()
     trackedEventsByWorkspace.set(workspaceId,trackedEvents)
   }
   try {
@@ -3073,7 +3075,7 @@ const server = http.createServer(async (req,res)=>{
     if (req.method === 'GET' && url.pathname === '/api/live-sync') {
       const state=await getState()
       const [recentTracked,eventStats]=await Promise.all([
-        listTrackedEvents(workspaceId,{limit:250}).catch(()=>trackedEvents.slice(-250)),
+        listTrackedEvents(workspaceId,{limit:250}).catch(()=>trackedEvents.slice(-250).reverse()),
         trackedEventStats(workspaceId).catch(()=>({lastMinute:0}))
       ])
       const lastMinuteCount=Number(eventStats?.lastMinute||0)
@@ -3093,7 +3095,7 @@ const server = http.createServer(async (req,res)=>{
       }
       const destinationThroughput=Object.values(byDestination).map(x=>({...x,deliveryRate:x.total?Number((x.delivered/x.total*100).toFixed(2)):0}))
       const recent=[
-        ...recentTracked.slice(-50).map(x=>({
+        ...recentTracked.slice(0,50).map(x=>({
           id:x.id||x.eventId||randomUUID(),
           time:x.receivedAt||x.occurredAt||x.timestamp||null,
           source:x.source||x.channel||'First-party',
@@ -5328,6 +5330,19 @@ const server = http.createServer(async (req,res)=>{
         return send(req,res,400,{error:error instanceof Error?error.message:'evaluation policy could not be saved'})
       }
     }
+    if (req.method === 'POST' && url.pathname === '/api/ai/evaluations/run') {
+      if(!['owner','admin'].includes(authenticatedUser?.role||''))return send(req,res,403,{error:'owner or admin role required'})
+      if(process.env.AI_PROVIDER_TESTS_ENABLED!=='true')return send(req,res,503,{error:'provider evaluation is disabled; set AI_PROVIDER_TESTS_ENABLED=true for an authorized bounded evaluation'})
+      const body=await readBody(req)
+      const task=String(body.task||'').trim()
+      if(!hostedEvaluationSupported(task))return send(req,res,400,{error:'grounding evaluation is implemented for the analyst task only'})
+      try{
+        const item=await runHostedGroundingEvaluation({workspaceId,task,actor:authenticatedUser})
+        return send(req,res,201,{item,note:'Evaluation evidence is recorded. It must still be qualified against the predeclared policy, approved and deployed.'})
+      }catch(error){
+        return send(req,res,error?.status||502,{error:error instanceof Error?error.message:'evaluation failed'})
+      }
+    }
     if (req.method === 'POST' && /^\/api\/ai\/evaluations\/[^/]+\/qualify$/.test(url.pathname)) {
       if(!['owner','admin'].includes(authenticatedUser?.role||''))return send(req,res,403,{error:'owner or admin role required'})
       const parts=url.pathname.split('/')
@@ -5965,7 +5980,8 @@ const server = http.createServer(async (req,res)=>{
       const completed=items.filter(x=>x.status==='completed')
       const completedToday=completed.filter(x=>Date.parse(x.completed_at||0)>=start.getTime()).length
       const overdue=open.filter(x=>x.due_at&&Date.parse(x.due_at)<now).length
-      return send(req,res,200,{items,stats:{open:open.length,completedToday,completedTotal:completed.length,overdue}})
+      const totals=await followUpStats(workspaceId,start.toISOString()).catch(()=>null)
+      return send(req,res,200,{items,stats:totals||{open:open.length,completedToday,completedTotal:completed.length,overdue}})
     }
     if (req.method === 'POST' && url.pathname === '/api/follow-ups') {
       const body=await readBody(req)

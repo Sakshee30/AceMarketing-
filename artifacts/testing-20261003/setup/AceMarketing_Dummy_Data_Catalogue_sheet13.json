@@ -1,0 +1,2396 @@
+[
+  [
+    "260 PROVIDER-NEUTRAL RESPONSE SPECIFICATIONS",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "These are replay specification inputs, not an executable simulator or verified native API payloads.",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Fixture ID",
+    "Provider",
+    "Scenario",
+    "File",
+    "Contract status",
+    "Expected condition",
+    "App status"
+  ],
+  [
+    "D4-META-01",
+    "META",
+    "success",
+    "D4_integration/providers/META/success.json",
+    "Wire mapping required",
+    "Valid bounded records; checkpoint committed only with canonical writes",
+    "Not run"
+  ],
+  [
+    "D4-META-02",
+    "META",
+    "empty",
+    "D4_integration/providers/META/empty.json",
+    "Wire mapping required",
+    "Successful empty result, not an error; no invented records",
+    "Not run"
+  ],
+  [
+    "D4-META-03",
+    "META",
+    "missing_field",
+    "D4_integration/providers/META/missing_field.json",
+    "Wire mapping required",
+    "Schema validation failure; reject/quarantine with reason",
+    "Not run"
+  ],
+  [
+    "D4-META-04",
+    "META",
+    "unknown_field",
+    "D4_integration/providers/META/unknown_field.json",
+    "Wire mapping required",
+    "Ignore or preserve safely under approved schema; no privilege changes",
+    "Not run"
+  ],
+  [
+    "D4-META-05",
+    "META",
+    "malformed_body",
+    "D4_integration/providers/META/malformed_body.json",
+    "Wire mapping required",
+    "Parse error; do not advance cursor",
+    "Not run"
+  ],
+  [
+    "D4-META-06",
+    "META",
+    "invalid_token",
+    "D4_integration/providers/META/invalid_token.json",
+    "Wire mapping required",
+    "Authentication failed; no successful-sync label",
+    "Not run"
+  ],
+  [
+    "D4-META-07",
+    "META",
+    "expired_token",
+    "D4_integration/providers/META/expired_token.json",
+    "Wire mapping required",
+    "Refresh only where supported; bound retries",
+    "Not run"
+  ],
+  [
+    "D4-META-08",
+    "META",
+    "revoked_permission",
+    "D4_integration/providers/META/revoked_permission.json",
+    "Wire mapping required",
+    "Stop affected operation and expose permission error",
+    "Not run"
+  ],
+  [
+    "D4-META-09",
+    "META",
+    "wrong_account",
+    "D4_integration/providers/META/wrong_account.json",
+    "Wire mapping required",
+    "Reject mismatched source account or tenant",
+    "Not run"
+  ],
+  [
+    "D4-META-10",
+    "META",
+    "rate_limit",
+    "D4_integration/providers/META/rate_limit.json",
+    "Wire mapping required",
+    "Honor bounded retry policy and Retry-After",
+    "Not run"
+  ],
+  [
+    "D4-META-11",
+    "META",
+    "server_error",
+    "D4_integration/providers/META/server_error.json",
+    "Wire mapping required",
+    "Bounded retry; preserve checkpoint",
+    "Not run"
+  ],
+  [
+    "D4-META-12",
+    "META",
+    "timeout",
+    "D4_integration/providers/META/timeout.json",
+    "Wire mapping required",
+    "Timeout visible; outcome unknown for writes",
+    "Not run"
+  ],
+  [
+    "D4-META-13",
+    "META",
+    "connection_reset",
+    "D4_integration/providers/META/connection_reset.json",
+    "Wire mapping required",
+    "Network failure does not become success",
+    "Not run"
+  ],
+  [
+    "D4-META-14",
+    "META",
+    "duplicate_page",
+    "D4_integration/providers/META/duplicate_page.json",
+    "Wire mapping required",
+    "One canonical effect per source record",
+    "Not run"
+  ],
+  [
+    "D4-META-15",
+    "META",
+    "repeated_cursor",
+    "D4_integration/providers/META/repeated_cursor.json",
+    "Wire mapping required",
+    "Detect no progress; bound traversal",
+    "Not run"
+  ],
+  [
+    "D4-META-16",
+    "META",
+    "partial_batch",
+    "D4_integration/providers/META/partial_batch.json",
+    "Wire mapping required",
+    "Item-level success/failure and truthful totals",
+    "Not run"
+  ],
+  [
+    "D4-META-17",
+    "META",
+    "out_of_order_callback",
+    "D4_integration/providers/META/out_of_order_callback.json",
+    "Wire mapping required",
+    "Older callback cannot regress terminal state",
+    "Not run"
+  ],
+  [
+    "D4-META-18",
+    "META",
+    "response_lost_after_accept",
+    "D4_integration/providers/META/response_lost_after_accept.json",
+    "Wire mapping required",
+    "Reconcile receipt before unsafe retry",
+    "Not run"
+  ],
+  [
+    "D4-META-19",
+    "META",
+    "schema_type_change",
+    "D4_integration/providers/META/schema_type_change.json",
+    "Wire mapping required",
+    "Reject incompatible type without corrupting canonical data",
+    "Not run"
+  ],
+  [
+    "D4-META-20",
+    "META",
+    "invalid_signature",
+    "D4_integration/providers/META/invalid_signature.json",
+    "Wire mapping required",
+    "Verify native signature contract where supported; reject invalid callback",
+    "Not run"
+  ],
+  [
+    "D4-GOOG-01",
+    "GOOG",
+    "success",
+    "D4_integration/providers/GOOG/success.json",
+    "Wire mapping required",
+    "Valid bounded records; checkpoint committed only with canonical writes",
+    "Not run"
+  ],
+  [
+    "D4-GOOG-02",
+    "GOOG",
+    "empty",
+    "D4_integration/providers/GOOG/empty.json",
+    "Wire mapping required",
+    "Successful empty result, not an error; no invented records",
+    "Not run"
+  ],
+  [
+    "D4-GOOG-03",
+    "GOOG",
+    "missing_field",
+    "D4_integration/providers/GOOG/missing_field.json",
+    "Wire mapping required",
+    "Schema validation failure; reject/quarantine with reason",
+    "Not run"
+  ],
+  [
+    "D4-GOOG-04",
+    "GOOG",
+    "unknown_field",
+    "D4_integration/providers/GOOG/unknown_field.json",
+    "Wire mapping required",
+    "Ignore or preserve safely under approved schema; no privilege changes",
+    "Not run"
+  ],
+  [
+    "D4-GOOG-05",
+    "GOOG",
+    "malformed_body",
+    "D4_integration/providers/GOOG/malformed_body.json",
+    "Wire mapping required",
+    "Parse error; do not advance cursor",
+    "Not run"
+  ],
+  [
+    "D4-GOOG-06",
+    "GOOG",
+    "invalid_token",
+    "D4_integration/providers/GOOG/invalid_token.json",
+    "Wire mapping required",
+    "Authentication failed; no successful-sync label",
+    "Not run"
+  ],
+  [
+    "D4-GOOG-07",
+    "GOOG",
+    "expired_token",
+    "D4_integration/providers/GOOG/expired_token.json",
+    "Wire mapping required",
+    "Refresh only where supported; bound retries",
+    "Not run"
+  ],
+  [
+    "D4-GOOG-08",
+    "GOOG",
+    "revoked_permission",
+    "D4_integration/providers/GOOG/revoked_permission.json",
+    "Wire mapping required",
+    "Stop affected operation and expose permission error",
+    "Not run"
+  ],
+  [
+    "D4-GOOG-09",
+    "GOOG",
+    "wrong_account",
+    "D4_integration/providers/GOOG/wrong_account.json",
+    "Wire mapping required",
+    "Reject mismatched source account or tenant",
+    "Not run"
+  ],
+  [
+    "D4-GOOG-10",
+    "GOOG",
+    "rate_limit",
+    "D4_integration/providers/GOOG/rate_limit.json",
+    "Wire mapping required",
+    "Honor bounded retry policy and Retry-After",
+    "Not run"
+  ],
+  [
+    "D4-GOOG-11",
+    "GOOG",
+    "server_error",
+    "D4_integration/providers/GOOG/server_error.json",
+    "Wire mapping required",
+    "Bounded retry; preserve checkpoint",
+    "Not run"
+  ],
+  [
+    "D4-GOOG-12",
+    "GOOG",
+    "timeout",
+    "D4_integration/providers/GOOG/timeout.json",
+    "Wire mapping required",
+    "Timeout visible; outcome unknown for writes",
+    "Not run"
+  ],
+  [
+    "D4-GOOG-13",
+    "GOOG",
+    "connection_reset",
+    "D4_integration/providers/GOOG/connection_reset.json",
+    "Wire mapping required",
+    "Network failure does not become success",
+    "Not run"
+  ],
+  [
+    "D4-GOOG-14",
+    "GOOG",
+    "duplicate_page",
+    "D4_integration/providers/GOOG/duplicate_page.json",
+    "Wire mapping required",
+    "One canonical effect per source record",
+    "Not run"
+  ],
+  [
+    "D4-GOOG-15",
+    "GOOG",
+    "repeated_cursor",
+    "D4_integration/providers/GOOG/repeated_cursor.json",
+    "Wire mapping required",
+    "Detect no progress; bound traversal",
+    "Not run"
+  ],
+  [
+    "D4-GOOG-16",
+    "GOOG",
+    "partial_batch",
+    "D4_integration/providers/GOOG/partial_batch.json",
+    "Wire mapping required",
+    "Item-level success/failure and truthful totals",
+    "Not run"
+  ],
+  [
+    "D4-GOOG-17",
+    "GOOG",
+    "out_of_order_callback",
+    "D4_integration/providers/GOOG/out_of_order_callback.json",
+    "Wire mapping required",
+    "Older callback cannot regress terminal state",
+    "Not run"
+  ],
+  [
+    "D4-GOOG-18",
+    "GOOG",
+    "response_lost_after_accept",
+    "D4_integration/providers/GOOG/response_lost_after_accept.json",
+    "Wire mapping required",
+    "Reconcile receipt before unsafe retry",
+    "Not run"
+  ],
+  [
+    "D4-GOOG-19",
+    "GOOG",
+    "schema_type_change",
+    "D4_integration/providers/GOOG/schema_type_change.json",
+    "Wire mapping required",
+    "Reject incompatible type without corrupting canonical data",
+    "Not run"
+  ],
+  [
+    "D4-GOOG-20",
+    "GOOG",
+    "invalid_signature",
+    "D4_integration/providers/GOOG/invalid_signature.json",
+    "Wire mapping required",
+    "Verify native signature contract where supported; reject invalid callback",
+    "Not run"
+  ],
+  [
+    "D4-XADS-01",
+    "XADS",
+    "success",
+    "D4_integration/providers/XADS/success.json",
+    "Wire mapping required",
+    "Valid bounded records; checkpoint committed only with canonical writes",
+    "Not run"
+  ],
+  [
+    "D4-XADS-02",
+    "XADS",
+    "empty",
+    "D4_integration/providers/XADS/empty.json",
+    "Wire mapping required",
+    "Successful empty result, not an error; no invented records",
+    "Not run"
+  ],
+  [
+    "D4-XADS-03",
+    "XADS",
+    "missing_field",
+    "D4_integration/providers/XADS/missing_field.json",
+    "Wire mapping required",
+    "Schema validation failure; reject/quarantine with reason",
+    "Not run"
+  ],
+  [
+    "D4-XADS-04",
+    "XADS",
+    "unknown_field",
+    "D4_integration/providers/XADS/unknown_field.json",
+    "Wire mapping required",
+    "Ignore or preserve safely under approved schema; no privilege changes",
+    "Not run"
+  ],
+  [
+    "D4-XADS-05",
+    "XADS",
+    "malformed_body",
+    "D4_integration/providers/XADS/malformed_body.json",
+    "Wire mapping required",
+    "Parse error; do not advance cursor",
+    "Not run"
+  ],
+  [
+    "D4-XADS-06",
+    "XADS",
+    "invalid_token",
+    "D4_integration/providers/XADS/invalid_token.json",
+    "Wire mapping required",
+    "Authentication failed; no successful-sync label",
+    "Not run"
+  ],
+  [
+    "D4-XADS-07",
+    "XADS",
+    "expired_token",
+    "D4_integration/providers/XADS/expired_token.json",
+    "Wire mapping required",
+    "Refresh only where supported; bound retries",
+    "Not run"
+  ],
+  [
+    "D4-XADS-08",
+    "XADS",
+    "revoked_permission",
+    "D4_integration/providers/XADS/revoked_permission.json",
+    "Wire mapping required",
+    "Stop affected operation and expose permission error",
+    "Not run"
+  ],
+  [
+    "D4-XADS-09",
+    "XADS",
+    "wrong_account",
+    "D4_integration/providers/XADS/wrong_account.json",
+    "Wire mapping required",
+    "Reject mismatched source account or tenant",
+    "Not run"
+  ],
+  [
+    "D4-XADS-10",
+    "XADS",
+    "rate_limit",
+    "D4_integration/providers/XADS/rate_limit.json",
+    "Wire mapping required",
+    "Honor bounded retry policy and Retry-After",
+    "Not run"
+  ],
+  [
+    "D4-XADS-11",
+    "XADS",
+    "server_error",
+    "D4_integration/providers/XADS/server_error.json",
+    "Wire mapping required",
+    "Bounded retry; preserve checkpoint",
+    "Not run"
+  ],
+  [
+    "D4-XADS-12",
+    "XADS",
+    "timeout",
+    "D4_integration/providers/XADS/timeout.json",
+    "Wire mapping required",
+    "Timeout visible; outcome unknown for writes",
+    "Not run"
+  ],
+  [
+    "D4-XADS-13",
+    "XADS",
+    "connection_reset",
+    "D4_integration/providers/XADS/connection_reset.json",
+    "Wire mapping required",
+    "Network failure does not become success",
+    "Not run"
+  ],
+  [
+    "D4-XADS-14",
+    "XADS",
+    "duplicate_page",
+    "D4_integration/providers/XADS/duplicate_page.json",
+    "Wire mapping required",
+    "One canonical effect per source record",
+    "Not run"
+  ],
+  [
+    "D4-XADS-15",
+    "XADS",
+    "repeated_cursor",
+    "D4_integration/providers/XADS/repeated_cursor.json",
+    "Wire mapping required",
+    "Detect no progress; bound traversal",
+    "Not run"
+  ],
+  [
+    "D4-XADS-16",
+    "XADS",
+    "partial_batch",
+    "D4_integration/providers/XADS/partial_batch.json",
+    "Wire mapping required",
+    "Item-level success/failure and truthful totals",
+    "Not run"
+  ],
+  [
+    "D4-XADS-17",
+    "XADS",
+    "out_of_order_callback",
+    "D4_integration/providers/XADS/out_of_order_callback.json",
+    "Wire mapping required",
+    "Older callback cannot regress terminal state",
+    "Not run"
+  ],
+  [
+    "D4-XADS-18",
+    "XADS",
+    "response_lost_after_accept",
+    "D4_integration/providers/XADS/response_lost_after_accept.json",
+    "Wire mapping required",
+    "Reconcile receipt before unsafe retry",
+    "Not run"
+  ],
+  [
+    "D4-XADS-19",
+    "XADS",
+    "schema_type_change",
+    "D4_integration/providers/XADS/schema_type_change.json",
+    "Wire mapping required",
+    "Reject incompatible type without corrupting canonical data",
+    "Not run"
+  ],
+  [
+    "D4-XADS-20",
+    "XADS",
+    "invalid_signature",
+    "D4_integration/providers/XADS/invalid_signature.json",
+    "Wire mapping required",
+    "Verify native signature contract where supported; reject invalid callback",
+    "Not run"
+  ],
+  [
+    "D4-TIK-01",
+    "TIK",
+    "success",
+    "D4_integration/providers/TIK/success.json",
+    "Wire mapping required",
+    "Valid bounded records; checkpoint committed only with canonical writes",
+    "Not run"
+  ],
+  [
+    "D4-TIK-02",
+    "TIK",
+    "empty",
+    "D4_integration/providers/TIK/empty.json",
+    "Wire mapping required",
+    "Successful empty result, not an error; no invented records",
+    "Not run"
+  ],
+  [
+    "D4-TIK-03",
+    "TIK",
+    "missing_field",
+    "D4_integration/providers/TIK/missing_field.json",
+    "Wire mapping required",
+    "Schema validation failure; reject/quarantine with reason",
+    "Not run"
+  ],
+  [
+    "D4-TIK-04",
+    "TIK",
+    "unknown_field",
+    "D4_integration/providers/TIK/unknown_field.json",
+    "Wire mapping required",
+    "Ignore or preserve safely under approved schema; no privilege changes",
+    "Not run"
+  ],
+  [
+    "D4-TIK-05",
+    "TIK",
+    "malformed_body",
+    "D4_integration/providers/TIK/malformed_body.json",
+    "Wire mapping required",
+    "Parse error; do not advance cursor",
+    "Not run"
+  ],
+  [
+    "D4-TIK-06",
+    "TIK",
+    "invalid_token",
+    "D4_integration/providers/TIK/invalid_token.json",
+    "Wire mapping required",
+    "Authentication failed; no successful-sync label",
+    "Not run"
+  ],
+  [
+    "D4-TIK-07",
+    "TIK",
+    "expired_token",
+    "D4_integration/providers/TIK/expired_token.json",
+    "Wire mapping required",
+    "Refresh only where supported; bound retries",
+    "Not run"
+  ],
+  [
+    "D4-TIK-08",
+    "TIK",
+    "revoked_permission",
+    "D4_integration/providers/TIK/revoked_permission.json",
+    "Wire mapping required",
+    "Stop affected operation and expose permission error",
+    "Not run"
+  ],
+  [
+    "D4-TIK-09",
+    "TIK",
+    "wrong_account",
+    "D4_integration/providers/TIK/wrong_account.json",
+    "Wire mapping required",
+    "Reject mismatched source account or tenant",
+    "Not run"
+  ],
+  [
+    "D4-TIK-10",
+    "TIK",
+    "rate_limit",
+    "D4_integration/providers/TIK/rate_limit.json",
+    "Wire mapping required",
+    "Honor bounded retry policy and Retry-After",
+    "Not run"
+  ],
+  [
+    "D4-TIK-11",
+    "TIK",
+    "server_error",
+    "D4_integration/providers/TIK/server_error.json",
+    "Wire mapping required",
+    "Bounded retry; preserve checkpoint",
+    "Not run"
+  ],
+  [
+    "D4-TIK-12",
+    "TIK",
+    "timeout",
+    "D4_integration/providers/TIK/timeout.json",
+    "Wire mapping required",
+    "Timeout visible; outcome unknown for writes",
+    "Not run"
+  ],
+  [
+    "D4-TIK-13",
+    "TIK",
+    "connection_reset",
+    "D4_integration/providers/TIK/connection_reset.json",
+    "Wire mapping required",
+    "Network failure does not become success",
+    "Not run"
+  ],
+  [
+    "D4-TIK-14",
+    "TIK",
+    "duplicate_page",
+    "D4_integration/providers/TIK/duplicate_page.json",
+    "Wire mapping required",
+    "One canonical effect per source record",
+    "Not run"
+  ],
+  [
+    "D4-TIK-15",
+    "TIK",
+    "repeated_cursor",
+    "D4_integration/providers/TIK/repeated_cursor.json",
+    "Wire mapping required",
+    "Detect no progress; bound traversal",
+    "Not run"
+  ],
+  [
+    "D4-TIK-16",
+    "TIK",
+    "partial_batch",
+    "D4_integration/providers/TIK/partial_batch.json",
+    "Wire mapping required",
+    "Item-level success/failure and truthful totals",
+    "Not run"
+  ],
+  [
+    "D4-TIK-17",
+    "TIK",
+    "out_of_order_callback",
+    "D4_integration/providers/TIK/out_of_order_callback.json",
+    "Wire mapping required",
+    "Older callback cannot regress terminal state",
+    "Not run"
+  ],
+  [
+    "D4-TIK-18",
+    "TIK",
+    "response_lost_after_accept",
+    "D4_integration/providers/TIK/response_lost_after_accept.json",
+    "Wire mapping required",
+    "Reconcile receipt before unsafe retry",
+    "Not run"
+  ],
+  [
+    "D4-TIK-19",
+    "TIK",
+    "schema_type_change",
+    "D4_integration/providers/TIK/schema_type_change.json",
+    "Wire mapping required",
+    "Reject incompatible type without corrupting canonical data",
+    "Not run"
+  ],
+  [
+    "D4-TIK-20",
+    "TIK",
+    "invalid_signature",
+    "D4_integration/providers/TIK/invalid_signature.json",
+    "Wire mapping required",
+    "Verify native signature contract where supported; reject invalid callback",
+    "Not run"
+  ],
+  [
+    "D4-LINK-01",
+    "LINK",
+    "success",
+    "D4_integration/providers/LINK/success.json",
+    "Wire mapping required",
+    "Valid bounded records; checkpoint committed only with canonical writes",
+    "Not run"
+  ],
+  [
+    "D4-LINK-02",
+    "LINK",
+    "empty",
+    "D4_integration/providers/LINK/empty.json",
+    "Wire mapping required",
+    "Successful empty result, not an error; no invented records",
+    "Not run"
+  ],
+  [
+    "D4-LINK-03",
+    "LINK",
+    "missing_field",
+    "D4_integration/providers/LINK/missing_field.json",
+    "Wire mapping required",
+    "Schema validation failure; reject/quarantine with reason",
+    "Not run"
+  ],
+  [
+    "D4-LINK-04",
+    "LINK",
+    "unknown_field",
+    "D4_integration/providers/LINK/unknown_field.json",
+    "Wire mapping required",
+    "Ignore or preserve safely under approved schema; no privilege changes",
+    "Not run"
+  ],
+  [
+    "D4-LINK-05",
+    "LINK",
+    "malformed_body",
+    "D4_integration/providers/LINK/malformed_body.json",
+    "Wire mapping required",
+    "Parse error; do not advance cursor",
+    "Not run"
+  ],
+  [
+    "D4-LINK-06",
+    "LINK",
+    "invalid_token",
+    "D4_integration/providers/LINK/invalid_token.json",
+    "Wire mapping required",
+    "Authentication failed; no successful-sync label",
+    "Not run"
+  ],
+  [
+    "D4-LINK-07",
+    "LINK",
+    "expired_token",
+    "D4_integration/providers/LINK/expired_token.json",
+    "Wire mapping required",
+    "Refresh only where supported; bound retries",
+    "Not run"
+  ],
+  [
+    "D4-LINK-08",
+    "LINK",
+    "revoked_permission",
+    "D4_integration/providers/LINK/revoked_permission.json",
+    "Wire mapping required",
+    "Stop affected operation and expose permission error",
+    "Not run"
+  ],
+  [
+    "D4-LINK-09",
+    "LINK",
+    "wrong_account",
+    "D4_integration/providers/LINK/wrong_account.json",
+    "Wire mapping required",
+    "Reject mismatched source account or tenant",
+    "Not run"
+  ],
+  [
+    "D4-LINK-10",
+    "LINK",
+    "rate_limit",
+    "D4_integration/providers/LINK/rate_limit.json",
+    "Wire mapping required",
+    "Honor bounded retry policy and Retry-After",
+    "Not run"
+  ],
+  [
+    "D4-LINK-11",
+    "LINK",
+    "server_error",
+    "D4_integration/providers/LINK/server_error.json",
+    "Wire mapping required",
+    "Bounded retry; preserve checkpoint",
+    "Not run"
+  ],
+  [
+    "D4-LINK-12",
+    "LINK",
+    "timeout",
+    "D4_integration/providers/LINK/timeout.json",
+    "Wire mapping required",
+    "Timeout visible; outcome unknown for writes",
+    "Not run"
+  ],
+  [
+    "D4-LINK-13",
+    "LINK",
+    "connection_reset",
+    "D4_integration/providers/LINK/connection_reset.json",
+    "Wire mapping required",
+    "Network failure does not become success",
+    "Not run"
+  ],
+  [
+    "D4-LINK-14",
+    "LINK",
+    "duplicate_page",
+    "D4_integration/providers/LINK/duplicate_page.json",
+    "Wire mapping required",
+    "One canonical effect per source record",
+    "Not run"
+  ],
+  [
+    "D4-LINK-15",
+    "LINK",
+    "repeated_cursor",
+    "D4_integration/providers/LINK/repeated_cursor.json",
+    "Wire mapping required",
+    "Detect no progress; bound traversal",
+    "Not run"
+  ],
+  [
+    "D4-LINK-16",
+    "LINK",
+    "partial_batch",
+    "D4_integration/providers/LINK/partial_batch.json",
+    "Wire mapping required",
+    "Item-level success/failure and truthful totals",
+    "Not run"
+  ],
+  [
+    "D4-LINK-17",
+    "LINK",
+    "out_of_order_callback",
+    "D4_integration/providers/LINK/out_of_order_callback.json",
+    "Wire mapping required",
+    "Older callback cannot regress terminal state",
+    "Not run"
+  ],
+  [
+    "D4-LINK-18",
+    "LINK",
+    "response_lost_after_accept",
+    "D4_integration/providers/LINK/response_lost_after_accept.json",
+    "Wire mapping required",
+    "Reconcile receipt before unsafe retry",
+    "Not run"
+  ],
+  [
+    "D4-LINK-19",
+    "LINK",
+    "schema_type_change",
+    "D4_integration/providers/LINK/schema_type_change.json",
+    "Wire mapping required",
+    "Reject incompatible type without corrupting canonical data",
+    "Not run"
+  ],
+  [
+    "D4-LINK-20",
+    "LINK",
+    "invalid_signature",
+    "D4_integration/providers/LINK/invalid_signature.json",
+    "Wire mapping required",
+    "Verify native signature contract where supported; reject invalid callback",
+    "Not run"
+  ],
+  [
+    "D4-GA4-01",
+    "GA4",
+    "success",
+    "D4_integration/providers/GA4/success.json",
+    "Wire mapping required",
+    "Valid bounded records; checkpoint committed only with canonical writes",
+    "Not run"
+  ],
+  [
+    "D4-GA4-02",
+    "GA4",
+    "empty",
+    "D4_integration/providers/GA4/empty.json",
+    "Wire mapping required",
+    "Successful empty result, not an error; no invented records",
+    "Not run"
+  ],
+  [
+    "D4-GA4-03",
+    "GA4",
+    "missing_field",
+    "D4_integration/providers/GA4/missing_field.json",
+    "Wire mapping required",
+    "Schema validation failure; reject/quarantine with reason",
+    "Not run"
+  ],
+  [
+    "D4-GA4-04",
+    "GA4",
+    "unknown_field",
+    "D4_integration/providers/GA4/unknown_field.json",
+    "Wire mapping required",
+    "Ignore or preserve safely under approved schema; no privilege changes",
+    "Not run"
+  ],
+  [
+    "D4-GA4-05",
+    "GA4",
+    "malformed_body",
+    "D4_integration/providers/GA4/malformed_body.json",
+    "Wire mapping required",
+    "Parse error; do not advance cursor",
+    "Not run"
+  ],
+  [
+    "D4-GA4-06",
+    "GA4",
+    "invalid_token",
+    "D4_integration/providers/GA4/invalid_token.json",
+    "Wire mapping required",
+    "Authentication failed; no successful-sync label",
+    "Not run"
+  ],
+  [
+    "D4-GA4-07",
+    "GA4",
+    "expired_token",
+    "D4_integration/providers/GA4/expired_token.json",
+    "Wire mapping required",
+    "Refresh only where supported; bound retries",
+    "Not run"
+  ],
+  [
+    "D4-GA4-08",
+    "GA4",
+    "revoked_permission",
+    "D4_integration/providers/GA4/revoked_permission.json",
+    "Wire mapping required",
+    "Stop affected operation and expose permission error",
+    "Not run"
+  ],
+  [
+    "D4-GA4-09",
+    "GA4",
+    "wrong_account",
+    "D4_integration/providers/GA4/wrong_account.json",
+    "Wire mapping required",
+    "Reject mismatched source account or tenant",
+    "Not run"
+  ],
+  [
+    "D4-GA4-10",
+    "GA4",
+    "rate_limit",
+    "D4_integration/providers/GA4/rate_limit.json",
+    "Wire mapping required",
+    "Honor bounded retry policy and Retry-After",
+    "Not run"
+  ],
+  [
+    "D4-GA4-11",
+    "GA4",
+    "server_error",
+    "D4_integration/providers/GA4/server_error.json",
+    "Wire mapping required",
+    "Bounded retry; preserve checkpoint",
+    "Not run"
+  ],
+  [
+    "D4-GA4-12",
+    "GA4",
+    "timeout",
+    "D4_integration/providers/GA4/timeout.json",
+    "Wire mapping required",
+    "Timeout visible; outcome unknown for writes",
+    "Not run"
+  ],
+  [
+    "D4-GA4-13",
+    "GA4",
+    "connection_reset",
+    "D4_integration/providers/GA4/connection_reset.json",
+    "Wire mapping required",
+    "Network failure does not become success",
+    "Not run"
+  ],
+  [
+    "D4-GA4-14",
+    "GA4",
+    "duplicate_page",
+    "D4_integration/providers/GA4/duplicate_page.json",
+    "Wire mapping required",
+    "One canonical effect per source record",
+    "Not run"
+  ],
+  [
+    "D4-GA4-15",
+    "GA4",
+    "repeated_cursor",
+    "D4_integration/providers/GA4/repeated_cursor.json",
+    "Wire mapping required",
+    "Detect no progress; bound traversal",
+    "Not run"
+  ],
+  [
+    "D4-GA4-16",
+    "GA4",
+    "partial_batch",
+    "D4_integration/providers/GA4/partial_batch.json",
+    "Wire mapping required",
+    "Item-level success/failure and truthful totals",
+    "Not run"
+  ],
+  [
+    "D4-GA4-17",
+    "GA4",
+    "out_of_order_callback",
+    "D4_integration/providers/GA4/out_of_order_callback.json",
+    "Wire mapping required",
+    "Older callback cannot regress terminal state",
+    "Not run"
+  ],
+  [
+    "D4-GA4-18",
+    "GA4",
+    "response_lost_after_accept",
+    "D4_integration/providers/GA4/response_lost_after_accept.json",
+    "Wire mapping required",
+    "Reconcile receipt before unsafe retry",
+    "Not run"
+  ],
+  [
+    "D4-GA4-19",
+    "GA4",
+    "schema_type_change",
+    "D4_integration/providers/GA4/schema_type_change.json",
+    "Wire mapping required",
+    "Reject incompatible type without corrupting canonical data",
+    "Not run"
+  ],
+  [
+    "D4-GA4-20",
+    "GA4",
+    "invalid_signature",
+    "D4_integration/providers/GA4/invalid_signature.json",
+    "Wire mapping required",
+    "Verify native signature contract where supported; reject invalid callback",
+    "Not run"
+  ],
+  [
+    "D4-HUB-01",
+    "HUB",
+    "success",
+    "D4_integration/providers/HUB/success.json",
+    "Wire mapping required",
+    "Valid bounded records; checkpoint committed only with canonical writes",
+    "Not run"
+  ],
+  [
+    "D4-HUB-02",
+    "HUB",
+    "empty",
+    "D4_integration/providers/HUB/empty.json",
+    "Wire mapping required",
+    "Successful empty result, not an error; no invented records",
+    "Not run"
+  ],
+  [
+    "D4-HUB-03",
+    "HUB",
+    "missing_field",
+    "D4_integration/providers/HUB/missing_field.json",
+    "Wire mapping required",
+    "Schema validation failure; reject/quarantine with reason",
+    "Not run"
+  ],
+  [
+    "D4-HUB-04",
+    "HUB",
+    "unknown_field",
+    "D4_integration/providers/HUB/unknown_field.json",
+    "Wire mapping required",
+    "Ignore or preserve safely under approved schema; no privilege changes",
+    "Not run"
+  ],
+  [
+    "D4-HUB-05",
+    "HUB",
+    "malformed_body",
+    "D4_integration/providers/HUB/malformed_body.json",
+    "Wire mapping required",
+    "Parse error; do not advance cursor",
+    "Not run"
+  ],
+  [
+    "D4-HUB-06",
+    "HUB",
+    "invalid_token",
+    "D4_integration/providers/HUB/invalid_token.json",
+    "Wire mapping required",
+    "Authentication failed; no successful-sync label",
+    "Not run"
+  ],
+  [
+    "D4-HUB-07",
+    "HUB",
+    "expired_token",
+    "D4_integration/providers/HUB/expired_token.json",
+    "Wire mapping required",
+    "Refresh only where supported; bound retries",
+    "Not run"
+  ],
+  [
+    "D4-HUB-08",
+    "HUB",
+    "revoked_permission",
+    "D4_integration/providers/HUB/revoked_permission.json",
+    "Wire mapping required",
+    "Stop affected operation and expose permission error",
+    "Not run"
+  ],
+  [
+    "D4-HUB-09",
+    "HUB",
+    "wrong_account",
+    "D4_integration/providers/HUB/wrong_account.json",
+    "Wire mapping required",
+    "Reject mismatched source account or tenant",
+    "Not run"
+  ],
+  [
+    "D4-HUB-10",
+    "HUB",
+    "rate_limit",
+    "D4_integration/providers/HUB/rate_limit.json",
+    "Wire mapping required",
+    "Honor bounded retry policy and Retry-After",
+    "Not run"
+  ],
+  [
+    "D4-HUB-11",
+    "HUB",
+    "server_error",
+    "D4_integration/providers/HUB/server_error.json",
+    "Wire mapping required",
+    "Bounded retry; preserve checkpoint",
+    "Not run"
+  ],
+  [
+    "D4-HUB-12",
+    "HUB",
+    "timeout",
+    "D4_integration/providers/HUB/timeout.json",
+    "Wire mapping required",
+    "Timeout visible; outcome unknown for writes",
+    "Not run"
+  ],
+  [
+    "D4-HUB-13",
+    "HUB",
+    "connection_reset",
+    "D4_integration/providers/HUB/connection_reset.json",
+    "Wire mapping required",
+    "Network failure does not become success",
+    "Not run"
+  ],
+  [
+    "D4-HUB-14",
+    "HUB",
+    "duplicate_page",
+    "D4_integration/providers/HUB/duplicate_page.json",
+    "Wire mapping required",
+    "One canonical effect per source record",
+    "Not run"
+  ],
+  [
+    "D4-HUB-15",
+    "HUB",
+    "repeated_cursor",
+    "D4_integration/providers/HUB/repeated_cursor.json",
+    "Wire mapping required",
+    "Detect no progress; bound traversal",
+    "Not run"
+  ],
+  [
+    "D4-HUB-16",
+    "HUB",
+    "partial_batch",
+    "D4_integration/providers/HUB/partial_batch.json",
+    "Wire mapping required",
+    "Item-level success/failure and truthful totals",
+    "Not run"
+  ],
+  [
+    "D4-HUB-17",
+    "HUB",
+    "out_of_order_callback",
+    "D4_integration/providers/HUB/out_of_order_callback.json",
+    "Wire mapping required",
+    "Older callback cannot regress terminal state",
+    "Not run"
+  ],
+  [
+    "D4-HUB-18",
+    "HUB",
+    "response_lost_after_accept",
+    "D4_integration/providers/HUB/response_lost_after_accept.json",
+    "Wire mapping required",
+    "Reconcile receipt before unsafe retry",
+    "Not run"
+  ],
+  [
+    "D4-HUB-19",
+    "HUB",
+    "schema_type_change",
+    "D4_integration/providers/HUB/schema_type_change.json",
+    "Wire mapping required",
+    "Reject incompatible type without corrupting canonical data",
+    "Not run"
+  ],
+  [
+    "D4-HUB-20",
+    "HUB",
+    "invalid_signature",
+    "D4_integration/providers/HUB/invalid_signature.json",
+    "Wire mapping required",
+    "Verify native signature contract where supported; reject invalid callback",
+    "Not run"
+  ],
+  [
+    "D4-SF-01",
+    "SF",
+    "success",
+    "D4_integration/providers/SF/success.json",
+    "Wire mapping required",
+    "Valid bounded records; checkpoint committed only with canonical writes",
+    "Not run"
+  ],
+  [
+    "D4-SF-02",
+    "SF",
+    "empty",
+    "D4_integration/providers/SF/empty.json",
+    "Wire mapping required",
+    "Successful empty result, not an error; no invented records",
+    "Not run"
+  ],
+  [
+    "D4-SF-03",
+    "SF",
+    "missing_field",
+    "D4_integration/providers/SF/missing_field.json",
+    "Wire mapping required",
+    "Schema validation failure; reject/quarantine with reason",
+    "Not run"
+  ],
+  [
+    "D4-SF-04",
+    "SF",
+    "unknown_field",
+    "D4_integration/providers/SF/unknown_field.json",
+    "Wire mapping required",
+    "Ignore or preserve safely under approved schema; no privilege changes",
+    "Not run"
+  ],
+  [
+    "D4-SF-05",
+    "SF",
+    "malformed_body",
+    "D4_integration/providers/SF/malformed_body.json",
+    "Wire mapping required",
+    "Parse error; do not advance cursor",
+    "Not run"
+  ],
+  [
+    "D4-SF-06",
+    "SF",
+    "invalid_token",
+    "D4_integration/providers/SF/invalid_token.json",
+    "Wire mapping required",
+    "Authentication failed; no successful-sync label",
+    "Not run"
+  ],
+  [
+    "D4-SF-07",
+    "SF",
+    "expired_token",
+    "D4_integration/providers/SF/expired_token.json",
+    "Wire mapping required",
+    "Refresh only where supported; bound retries",
+    "Not run"
+  ],
+  [
+    "D4-SF-08",
+    "SF",
+    "revoked_permission",
+    "D4_integration/providers/SF/revoked_permission.json",
+    "Wire mapping required",
+    "Stop affected operation and expose permission error",
+    "Not run"
+  ],
+  [
+    "D4-SF-09",
+    "SF",
+    "wrong_account",
+    "D4_integration/providers/SF/wrong_account.json",
+    "Wire mapping required",
+    "Reject mismatched source account or tenant",
+    "Not run"
+  ],
+  [
+    "D4-SF-10",
+    "SF",
+    "rate_limit",
+    "D4_integration/providers/SF/rate_limit.json",
+    "Wire mapping required",
+    "Honor bounded retry policy and Retry-After",
+    "Not run"
+  ],
+  [
+    "D4-SF-11",
+    "SF",
+    "server_error",
+    "D4_integration/providers/SF/server_error.json",
+    "Wire mapping required",
+    "Bounded retry; preserve checkpoint",
+    "Not run"
+  ],
+  [
+    "D4-SF-12",
+    "SF",
+    "timeout",
+    "D4_integration/providers/SF/timeout.json",
+    "Wire mapping required",
+    "Timeout visible; outcome unknown for writes",
+    "Not run"
+  ],
+  [
+    "D4-SF-13",
+    "SF",
+    "connection_reset",
+    "D4_integration/providers/SF/connection_reset.json",
+    "Wire mapping required",
+    "Network failure does not become success",
+    "Not run"
+  ],
+  [
+    "D4-SF-14",
+    "SF",
+    "duplicate_page",
+    "D4_integration/providers/SF/duplicate_page.json",
+    "Wire mapping required",
+    "One canonical effect per source record",
+    "Not run"
+  ],
+  [
+    "D4-SF-15",
+    "SF",
+    "repeated_cursor",
+    "D4_integration/providers/SF/repeated_cursor.json",
+    "Wire mapping required",
+    "Detect no progress; bound traversal",
+    "Not run"
+  ],
+  [
+    "D4-SF-16",
+    "SF",
+    "partial_batch",
+    "D4_integration/providers/SF/partial_batch.json",
+    "Wire mapping required",
+    "Item-level success/failure and truthful totals",
+    "Not run"
+  ],
+  [
+    "D4-SF-17",
+    "SF",
+    "out_of_order_callback",
+    "D4_integration/providers/SF/out_of_order_callback.json",
+    "Wire mapping required",
+    "Older callback cannot regress terminal state",
+    "Not run"
+  ],
+  [
+    "D4-SF-18",
+    "SF",
+    "response_lost_after_accept",
+    "D4_integration/providers/SF/response_lost_after_accept.json",
+    "Wire mapping required",
+    "Reconcile receipt before unsafe retry",
+    "Not run"
+  ],
+  [
+    "D4-SF-19",
+    "SF",
+    "schema_type_change",
+    "D4_integration/providers/SF/schema_type_change.json",
+    "Wire mapping required",
+    "Reject incompatible type without corrupting canonical data",
+    "Not run"
+  ],
+  [
+    "D4-SF-20",
+    "SF",
+    "invalid_signature",
+    "D4_integration/providers/SF/invalid_signature.json",
+    "Wire mapping required",
+    "Verify native signature contract where supported; reject invalid callback",
+    "Not run"
+  ],
+  [
+    "D4-ZOHO-01",
+    "ZOHO",
+    "success",
+    "D4_integration/providers/ZOHO/success.json",
+    "Wire mapping required",
+    "Valid bounded records; checkpoint committed only with canonical writes",
+    "Not run"
+  ],
+  [
+    "D4-ZOHO-02",
+    "ZOHO",
+    "empty",
+    "D4_integration/providers/ZOHO/empty.json",
+    "Wire mapping required",
+    "Successful empty result, not an error; no invented records",
+    "Not run"
+  ],
+  [
+    "D4-ZOHO-03",
+    "ZOHO",
+    "missing_field",
+    "D4_integration/providers/ZOHO/missing_field.json",
+    "Wire mapping required",
+    "Schema validation failure; reject/quarantine with reason",
+    "Not run"
+  ],
+  [
+    "D4-ZOHO-04",
+    "ZOHO",
+    "unknown_field",
+    "D4_integration/providers/ZOHO/unknown_field.json",
+    "Wire mapping required",
+    "Ignore or preserve safely under approved schema; no privilege changes",
+    "Not run"
+  ],
+  [
+    "D4-ZOHO-05",
+    "ZOHO",
+    "malformed_body",
+    "D4_integration/providers/ZOHO/malformed_body.json",
+    "Wire mapping required",
+    "Parse error; do not advance cursor",
+    "Not run"
+  ],
+  [
+    "D4-ZOHO-06",
+    "ZOHO",
+    "invalid_token",
+    "D4_integration/providers/ZOHO/invalid_token.json",
+    "Wire mapping required",
+    "Authentication failed; no successful-sync label",
+    "Not run"
+  ],
+  [
+    "D4-ZOHO-07",
+    "ZOHO",
+    "expired_token",
+    "D4_integration/providers/ZOHO/expired_token.json",
+    "Wire mapping required",
+    "Refresh only where supported; bound retries",
+    "Not run"
+  ],
+  [
+    "D4-ZOHO-08",
+    "ZOHO",
+    "revoked_permission",
+    "D4_integration/providers/ZOHO/revoked_permission.json",
+    "Wire mapping required",
+    "Stop affected operation and expose permission error",
+    "Not run"
+  ],
+  [
+    "D4-ZOHO-09",
+    "ZOHO",
+    "wrong_account",
+    "D4_integration/providers/ZOHO/wrong_account.json",
+    "Wire mapping required",
+    "Reject mismatched source account or tenant",
+    "Not run"
+  ],
+  [
+    "D4-ZOHO-10",
+    "ZOHO",
+    "rate_limit",
+    "D4_integration/providers/ZOHO/rate_limit.json",
+    "Wire mapping required",
+    "Honor bounded retry policy and Retry-After",
+    "Not run"
+  ],
+  [
+    "D4-ZOHO-11",
+    "ZOHO",
+    "server_error",
+    "D4_integration/providers/ZOHO/server_error.json",
+    "Wire mapping required",
+    "Bounded retry; preserve checkpoint",
+    "Not run"
+  ],
+  [
+    "D4-ZOHO-12",
+    "ZOHO",
+    "timeout",
+    "D4_integration/providers/ZOHO/timeout.json",
+    "Wire mapping required",
+    "Timeout visible; outcome unknown for writes",
+    "Not run"
+  ],
+  [
+    "D4-ZOHO-13",
+    "ZOHO",
+    "connection_reset",
+    "D4_integration/providers/ZOHO/connection_reset.json",
+    "Wire mapping required",
+    "Network failure does not become success",
+    "Not run"
+  ],
+  [
+    "D4-ZOHO-14",
+    "ZOHO",
+    "duplicate_page",
+    "D4_integration/providers/ZOHO/duplicate_page.json",
+    "Wire mapping required",
+    "One canonical effect per source record",
+    "Not run"
+  ],
+  [
+    "D4-ZOHO-15",
+    "ZOHO",
+    "repeated_cursor",
+    "D4_integration/providers/ZOHO/repeated_cursor.json",
+    "Wire mapping required",
+    "Detect no progress; bound traversal",
+    "Not run"
+  ],
+  [
+    "D4-ZOHO-16",
+    "ZOHO",
+    "partial_batch",
+    "D4_integration/providers/ZOHO/partial_batch.json",
+    "Wire mapping required",
+    "Item-level success/failure and truthful totals",
+    "Not run"
+  ],
+  [
+    "D4-ZOHO-17",
+    "ZOHO",
+    "out_of_order_callback",
+    "D4_integration/providers/ZOHO/out_of_order_callback.json",
+    "Wire mapping required",
+    "Older callback cannot regress terminal state",
+    "Not run"
+  ],
+  [
+    "D4-ZOHO-18",
+    "ZOHO",
+    "response_lost_after_accept",
+    "D4_integration/providers/ZOHO/response_lost_after_accept.json",
+    "Wire mapping required",
+    "Reconcile receipt before unsafe retry",
+    "Not run"
+  ],
+  [
+    "D4-ZOHO-19",
+    "ZOHO",
+    "schema_type_change",
+    "D4_integration/providers/ZOHO/schema_type_change.json",
+    "Wire mapping required",
+    "Reject incompatible type without corrupting canonical data",
+    "Not run"
+  ],
+  [
+    "D4-ZOHO-20",
+    "ZOHO",
+    "invalid_signature",
+    "D4_integration/providers/ZOHO/invalid_signature.json",
+    "Wire mapping required",
+    "Verify native signature contract where supported; reject invalid callback",
+    "Not run"
+  ],
+  [
+    "D4-PIN-01",
+    "PIN",
+    "success",
+    "D4_integration/providers/PIN/success.json",
+    "Wire mapping required",
+    "Valid bounded records; checkpoint committed only with canonical writes",
+    "Not run"
+  ],
+  [
+    "D4-PIN-02",
+    "PIN",
+    "empty",
+    "D4_integration/providers/PIN/empty.json",
+    "Wire mapping required",
+    "Successful empty result, not an error; no invented records",
+    "Not run"
+  ],
+  [
+    "D4-PIN-03",
+    "PIN",
+    "missing_field",
+    "D4_integration/providers/PIN/missing_field.json",
+    "Wire mapping required",
+    "Schema validation failure; reject/quarantine with reason",
+    "Not run"
+  ],
+  [
+    "D4-PIN-04",
+    "PIN",
+    "unknown_field",
+    "D4_integration/providers/PIN/unknown_field.json",
+    "Wire mapping required",
+    "Ignore or preserve safely under approved schema; no privilege changes",
+    "Not run"
+  ],
+  [
+    "D4-PIN-05",
+    "PIN",
+    "malformed_body",
+    "D4_integration/providers/PIN/malformed_body.json",
+    "Wire mapping required",
+    "Parse error; do not advance cursor",
+    "Not run"
+  ],
+  [
+    "D4-PIN-06",
+    "PIN",
+    "invalid_token",
+    "D4_integration/providers/PIN/invalid_token.json",
+    "Wire mapping required",
+    "Authentication failed; no successful-sync label",
+    "Not run"
+  ],
+  [
+    "D4-PIN-07",
+    "PIN",
+    "expired_token",
+    "D4_integration/providers/PIN/expired_token.json",
+    "Wire mapping required",
+    "Refresh only where supported; bound retries",
+    "Not run"
+  ],
+  [
+    "D4-PIN-08",
+    "PIN",
+    "revoked_permission",
+    "D4_integration/providers/PIN/revoked_permission.json",
+    "Wire mapping required",
+    "Stop affected operation and expose permission error",
+    "Not run"
+  ],
+  [
+    "D4-PIN-09",
+    "PIN",
+    "wrong_account",
+    "D4_integration/providers/PIN/wrong_account.json",
+    "Wire mapping required",
+    "Reject mismatched source account or tenant",
+    "Not run"
+  ],
+  [
+    "D4-PIN-10",
+    "PIN",
+    "rate_limit",
+    "D4_integration/providers/PIN/rate_limit.json",
+    "Wire mapping required",
+    "Honor bounded retry policy and Retry-After",
+    "Not run"
+  ],
+  [
+    "D4-PIN-11",
+    "PIN",
+    "server_error",
+    "D4_integration/providers/PIN/server_error.json",
+    "Wire mapping required",
+    "Bounded retry; preserve checkpoint",
+    "Not run"
+  ],
+  [
+    "D4-PIN-12",
+    "PIN",
+    "timeout",
+    "D4_integration/providers/PIN/timeout.json",
+    "Wire mapping required",
+    "Timeout visible; outcome unknown for writes",
+    "Not run"
+  ],
+  [
+    "D4-PIN-13",
+    "PIN",
+    "connection_reset",
+    "D4_integration/providers/PIN/connection_reset.json",
+    "Wire mapping required",
+    "Network failure does not become success",
+    "Not run"
+  ],
+  [
+    "D4-PIN-14",
+    "PIN",
+    "duplicate_page",
+    "D4_integration/providers/PIN/duplicate_page.json",
+    "Wire mapping required",
+    "One canonical effect per source record",
+    "Not run"
+  ],
+  [
+    "D4-PIN-15",
+    "PIN",
+    "repeated_cursor",
+    "D4_integration/providers/PIN/repeated_cursor.json",
+    "Wire mapping required",
+    "Detect no progress; bound traversal",
+    "Not run"
+  ],
+  [
+    "D4-PIN-16",
+    "PIN",
+    "partial_batch",
+    "D4_integration/providers/PIN/partial_batch.json",
+    "Wire mapping required",
+    "Item-level success/failure and truthful totals",
+    "Not run"
+  ],
+  [
+    "D4-PIN-17",
+    "PIN",
+    "out_of_order_callback",
+    "D4_integration/providers/PIN/out_of_order_callback.json",
+    "Wire mapping required",
+    "Older callback cannot regress terminal state",
+    "Not run"
+  ],
+  [
+    "D4-PIN-18",
+    "PIN",
+    "response_lost_after_accept",
+    "D4_integration/providers/PIN/response_lost_after_accept.json",
+    "Wire mapping required",
+    "Reconcile receipt before unsafe retry",
+    "Not run"
+  ],
+  [
+    "D4-PIN-19",
+    "PIN",
+    "schema_type_change",
+    "D4_integration/providers/PIN/schema_type_change.json",
+    "Wire mapping required",
+    "Reject incompatible type without corrupting canonical data",
+    "Not run"
+  ],
+  [
+    "D4-PIN-20",
+    "PIN",
+    "invalid_signature",
+    "D4_integration/providers/PIN/invalid_signature.json",
+    "Wire mapping required",
+    "Verify native signature contract where supported; reject invalid callback",
+    "Not run"
+  ],
+  [
+    "D4-MS-01",
+    "MS",
+    "success",
+    "D4_integration/providers/MS/success.json",
+    "Wire mapping required",
+    "Valid bounded records; checkpoint committed only with canonical writes",
+    "Not run"
+  ],
+  [
+    "D4-MS-02",
+    "MS",
+    "empty",
+    "D4_integration/providers/MS/empty.json",
+    "Wire mapping required",
+    "Successful empty result, not an error; no invented records",
+    "Not run"
+  ],
+  [
+    "D4-MS-03",
+    "MS",
+    "missing_field",
+    "D4_integration/providers/MS/missing_field.json",
+    "Wire mapping required",
+    "Schema validation failure; reject/quarantine with reason",
+    "Not run"
+  ],
+  [
+    "D4-MS-04",
+    "MS",
+    "unknown_field",
+    "D4_integration/providers/MS/unknown_field.json",
+    "Wire mapping required",
+    "Ignore or preserve safely under approved schema; no privilege changes",
+    "Not run"
+  ],
+  [
+    "D4-MS-05",
+    "MS",
+    "malformed_body",
+    "D4_integration/providers/MS/malformed_body.json",
+    "Wire mapping required",
+    "Parse error; do not advance cursor",
+    "Not run"
+  ],
+  [
+    "D4-MS-06",
+    "MS",
+    "invalid_token",
+    "D4_integration/providers/MS/invalid_token.json",
+    "Wire mapping required",
+    "Authentication failed; no successful-sync label",
+    "Not run"
+  ],
+  [
+    "D4-MS-07",
+    "MS",
+    "expired_token",
+    "D4_integration/providers/MS/expired_token.json",
+    "Wire mapping required",
+    "Refresh only where supported; bound retries",
+    "Not run"
+  ],
+  [
+    "D4-MS-08",
+    "MS",
+    "revoked_permission",
+    "D4_integration/providers/MS/revoked_permission.json",
+    "Wire mapping required",
+    "Stop affected operation and expose permission error",
+    "Not run"
+  ],
+  [
+    "D4-MS-09",
+    "MS",
+    "wrong_account",
+    "D4_integration/providers/MS/wrong_account.json",
+    "Wire mapping required",
+    "Reject mismatched source account or tenant",
+    "Not run"
+  ],
+  [
+    "D4-MS-10",
+    "MS",
+    "rate_limit",
+    "D4_integration/providers/MS/rate_limit.json",
+    "Wire mapping required",
+    "Honor bounded retry policy and Retry-After",
+    "Not run"
+  ],
+  [
+    "D4-MS-11",
+    "MS",
+    "server_error",
+    "D4_integration/providers/MS/server_error.json",
+    "Wire mapping required",
+    "Bounded retry; preserve checkpoint",
+    "Not run"
+  ],
+  [
+    "D4-MS-12",
+    "MS",
+    "timeout",
+    "D4_integration/providers/MS/timeout.json",
+    "Wire mapping required",
+    "Timeout visible; outcome unknown for writes",
+    "Not run"
+  ],
+  [
+    "D4-MS-13",
+    "MS",
+    "connection_reset",
+    "D4_integration/providers/MS/connection_reset.json",
+    "Wire mapping required",
+    "Network failure does not become success",
+    "Not run"
+  ],
+  [
+    "D4-MS-14",
+    "MS",
+    "duplicate_page",
+    "D4_integration/providers/MS/duplicate_page.json",
+    "Wire mapping required",
+    "One canonical effect per source record",
+    "Not run"
+  ],
+  [
+    "D4-MS-15",
+    "MS",
+    "repeated_cursor",
+    "D4_integration/providers/MS/repeated_cursor.json",
+    "Wire mapping required",
+    "Detect no progress; bound traversal",
+    "Not run"
+  ],
+  [
+    "D4-MS-16",
+    "MS",
+    "partial_batch",
+    "D4_integration/providers/MS/partial_batch.json",
+    "Wire mapping required",
+    "Item-level success/failure and truthful totals",
+    "Not run"
+  ],
+  [
+    "D4-MS-17",
+    "MS",
+    "out_of_order_callback",
+    "D4_integration/providers/MS/out_of_order_callback.json",
+    "Wire mapping required",
+    "Older callback cannot regress terminal state",
+    "Not run"
+  ],
+  [
+    "D4-MS-18",
+    "MS",
+    "response_lost_after_accept",
+    "D4_integration/providers/MS/response_lost_after_accept.json",
+    "Wire mapping required",
+    "Reconcile receipt before unsafe retry",
+    "Not run"
+  ],
+  [
+    "D4-MS-19",
+    "MS",
+    "schema_type_change",
+    "D4_integration/providers/MS/schema_type_change.json",
+    "Wire mapping required",
+    "Reject incompatible type without corrupting canonical data",
+    "Not run"
+  ],
+  [
+    "D4-MS-20",
+    "MS",
+    "invalid_signature",
+    "D4_integration/providers/MS/invalid_signature.json",
+    "Wire mapping required",
+    "Verify native signature contract where supported; reject invalid callback",
+    "Not run"
+  ],
+  [
+    "D4-WA-01",
+    "WA",
+    "success",
+    "D4_integration/providers/WA/success.json",
+    "Wire mapping required",
+    "Valid bounded records; checkpoint committed only with canonical writes",
+    "Not run"
+  ],
+  [
+    "D4-WA-02",
+    "WA",
+    "empty",
+    "D4_integration/providers/WA/empty.json",
+    "Wire mapping required",
+    "Successful empty result, not an error; no invented records",
+    "Not run"
+  ],
+  [
+    "D4-WA-03",
+    "WA",
+    "missing_field",
+    "D4_integration/providers/WA/missing_field.json",
+    "Wire mapping required",
+    "Schema validation failure; reject/quarantine with reason",
+    "Not run"
+  ],
+  [
+    "D4-WA-04",
+    "WA",
+    "unknown_field",
+    "D4_integration/providers/WA/unknown_field.json",
+    "Wire mapping required",
+    "Ignore or preserve safely under approved schema; no privilege changes",
+    "Not run"
+  ],
+  [
+    "D4-WA-05",
+    "WA",
+    "malformed_body",
+    "D4_integration/providers/WA/malformed_body.json",
+    "Wire mapping required",
+    "Parse error; do not advance cursor",
+    "Not run"
+  ],
+  [
+    "D4-WA-06",
+    "WA",
+    "invalid_token",
+    "D4_integration/providers/WA/invalid_token.json",
+    "Wire mapping required",
+    "Authentication failed; no successful-sync label",
+    "Not run"
+  ],
+  [
+    "D4-WA-07",
+    "WA",
+    "expired_token",
+    "D4_integration/providers/WA/expired_token.json",
+    "Wire mapping required",
+    "Refresh only where supported; bound retries",
+    "Not run"
+  ],
+  [
+    "D4-WA-08",
+    "WA",
+    "revoked_permission",
+    "D4_integration/providers/WA/revoked_permission.json",
+    "Wire mapping required",
+    "Stop affected operation and expose permission error",
+    "Not run"
+  ],
+  [
+    "D4-WA-09",
+    "WA",
+    "wrong_account",
+    "D4_integration/providers/WA/wrong_account.json",
+    "Wire mapping required",
+    "Reject mismatched source account or tenant",
+    "Not run"
+  ],
+  [
+    "D4-WA-10",
+    "WA",
+    "rate_limit",
+    "D4_integration/providers/WA/rate_limit.json",
+    "Wire mapping required",
+    "Honor bounded retry policy and Retry-After",
+    "Not run"
+  ],
+  [
+    "D4-WA-11",
+    "WA",
+    "server_error",
+    "D4_integration/providers/WA/server_error.json",
+    "Wire mapping required",
+    "Bounded retry; preserve checkpoint",
+    "Not run"
+  ],
+  [
+    "D4-WA-12",
+    "WA",
+    "timeout",
+    "D4_integration/providers/WA/timeout.json",
+    "Wire mapping required",
+    "Timeout visible; outcome unknown for writes",
+    "Not run"
+  ],
+  [
+    "D4-WA-13",
+    "WA",
+    "connection_reset",
+    "D4_integration/providers/WA/connection_reset.json",
+    "Wire mapping required",
+    "Network failure does not become success",
+    "Not run"
+  ],
+  [
+    "D4-WA-14",
+    "WA",
+    "duplicate_page",
+    "D4_integration/providers/WA/duplicate_page.json",
+    "Wire mapping required",
+    "One canonical effect per source record",
+    "Not run"
+  ],
+  [
+    "D4-WA-15",
+    "WA",
+    "repeated_cursor",
+    "D4_integration/providers/WA/repeated_cursor.json",
+    "Wire mapping required",
+    "Detect no progress; bound traversal",
+    "Not run"
+  ],
+  [
+    "D4-WA-16",
+    "WA",
+    "partial_batch",
+    "D4_integration/providers/WA/partial_batch.json",
+    "Wire mapping required",
+    "Item-level success/failure and truthful totals",
+    "Not run"
+  ],
+  [
+    "D4-WA-17",
+    "WA",
+    "out_of_order_callback",
+    "D4_integration/providers/WA/out_of_order_callback.json",
+    "Wire mapping required",
+    "Older callback cannot regress terminal state",
+    "Not run"
+  ],
+  [
+    "D4-WA-18",
+    "WA",
+    "response_lost_after_accept",
+    "D4_integration/providers/WA/response_lost_after_accept.json",
+    "Wire mapping required",
+    "Reconcile receipt before unsafe retry",
+    "Not run"
+  ],
+  [
+    "D4-WA-19",
+    "WA",
+    "schema_type_change",
+    "D4_integration/providers/WA/schema_type_change.json",
+    "Wire mapping required",
+    "Reject incompatible type without corrupting canonical data",
+    "Not run"
+  ],
+  [
+    "D4-WA-20",
+    "WA",
+    "invalid_signature",
+    "D4_integration/providers/WA/invalid_signature.json",
+    "Wire mapping required",
+    "Verify native signature contract where supported; reject invalid callback",
+    "Not run"
+  ],
+  [
+    "D4-HTTP-01",
+    "HTTP",
+    "success",
+    "D4_integration/providers/HTTP/success.json",
+    "Wire mapping required",
+    "Valid bounded records; checkpoint committed only with canonical writes",
+    "Not run"
+  ],
+  [
+    "D4-HTTP-02",
+    "HTTP",
+    "empty",
+    "D4_integration/providers/HTTP/empty.json",
+    "Wire mapping required",
+    "Successful empty result, not an error; no invented records",
+    "Not run"
+  ],
+  [
+    "D4-HTTP-03",
+    "HTTP",
+    "missing_field",
+    "D4_integration/providers/HTTP/missing_field.json",
+    "Wire mapping required",
+    "Schema validation failure; reject/quarantine with reason",
+    "Not run"
+  ],
+  [
+    "D4-HTTP-04",
+    "HTTP",
+    "unknown_field",
+    "D4_integration/providers/HTTP/unknown_field.json",
+    "Wire mapping required",
+    "Ignore or preserve safely under approved schema; no privilege changes",
+    "Not run"
+  ],
+  [
+    "D4-HTTP-05",
+    "HTTP",
+    "malformed_body",
+    "D4_integration/providers/HTTP/malformed_body.json",
+    "Wire mapping required",
+    "Parse error; do not advance cursor",
+    "Not run"
+  ],
+  [
+    "D4-HTTP-06",
+    "HTTP",
+    "invalid_token",
+    "D4_integration/providers/HTTP/invalid_token.json",
+    "Wire mapping required",
+    "Authentication failed; no successful-sync label",
+    "Not run"
+  ],
+  [
+    "D4-HTTP-07",
+    "HTTP",
+    "expired_token",
+    "D4_integration/providers/HTTP/expired_token.json",
+    "Wire mapping required",
+    "Refresh only where supported; bound retries",
+    "Not run"
+  ],
+  [
+    "D4-HTTP-08",
+    "HTTP",
+    "revoked_permission",
+    "D4_integration/providers/HTTP/revoked_permission.json",
+    "Wire mapping required",
+    "Stop affected operation and expose permission error",
+    "Not run"
+  ],
+  [
+    "D4-HTTP-09",
+    "HTTP",
+    "wrong_account",
+    "D4_integration/providers/HTTP/wrong_account.json",
+    "Wire mapping required",
+    "Reject mismatched source account or tenant",
+    "Not run"
+  ],
+  [
+    "D4-HTTP-10",
+    "HTTP",
+    "rate_limit",
+    "D4_integration/providers/HTTP/rate_limit.json",
+    "Wire mapping required",
+    "Honor bounded retry policy and Retry-After",
+    "Not run"
+  ],
+  [
+    "D4-HTTP-11",
+    "HTTP",
+    "server_error",
+    "D4_integration/providers/HTTP/server_error.json",
+    "Wire mapping required",
+    "Bounded retry; preserve checkpoint",
+    "Not run"
+  ],
+  [
+    "D4-HTTP-12",
+    "HTTP",
+    "timeout",
+    "D4_integration/providers/HTTP/timeout.json",
+    "Wire mapping required",
+    "Timeout visible; outcome unknown for writes",
+    "Not run"
+  ],
+  [
+    "D4-HTTP-13",
+    "HTTP",
+    "connection_reset",
+    "D4_integration/providers/HTTP/connection_reset.json",
+    "Wire mapping required",
+    "Network failure does not become success",
+    "Not run"
+  ],
+  [
+    "D4-HTTP-14",
+    "HTTP",
+    "duplicate_page",
+    "D4_integration/providers/HTTP/duplicate_page.json",
+    "Wire mapping required",
+    "One canonical effect per source record",
+    "Not run"
+  ],
+  [
+    "D4-HTTP-15",
+    "HTTP",
+    "repeated_cursor",
+    "D4_integration/providers/HTTP/repeated_cursor.json",
+    "Wire mapping required",
+    "Detect no progress; bound traversal",
+    "Not run"
+  ],
+  [
+    "D4-HTTP-16",
+    "HTTP",
+    "partial_batch",
+    "D4_integration/providers/HTTP/partial_batch.json",
+    "Wire mapping required",
+    "Item-level success/failure and truthful totals",
+    "Not run"
+  ],
+  [
+    "D4-HTTP-17",
+    "HTTP",
+    "out_of_order_callback",
+    "D4_integration/providers/HTTP/out_of_order_callback.json",
+    "Wire mapping required",
+    "Older callback cannot regress terminal state",
+    "Not run"
+  ],
+  [
+    "D4-HTTP-18",
+    "HTTP",
+    "response_lost_after_accept",
+    "D4_integration/providers/HTTP/response_lost_after_accept.json",
+    "Wire mapping required",
+    "Reconcile receipt before unsafe retry",
+    "Not run"
+  ],
+  [
+    "D4-HTTP-19",
+    "HTTP",
+    "schema_type_change",
+    "D4_integration/providers/HTTP/schema_type_change.json",
+    "Wire mapping required",
+    "Reject incompatible type without corrupting canonical data",
+    "Not run"
+  ],
+  [
+    "D4-HTTP-20",
+    "HTTP",
+    "invalid_signature",
+    "D4_integration/providers/HTTP/invalid_signature.json",
+    "Wire mapping required",
+    "Verify native signature contract where supported; reject invalid callback",
+    "Not run"
+  ]
+]

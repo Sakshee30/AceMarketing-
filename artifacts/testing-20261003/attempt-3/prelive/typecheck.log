@@ -1,0 +1,4 @@
+
+> ace-marketing@0.1.0 check:frontend
+> tsc -b
+

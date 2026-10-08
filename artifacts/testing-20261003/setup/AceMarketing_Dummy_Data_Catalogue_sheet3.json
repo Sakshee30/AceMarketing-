@@ -1,0 +1,82 @@
+[
+  [
+    "TENANTS",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Neutral fixture schema. Actual field, ID, status and permission mappings must be approved before import.",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Tenant Id",
+    "Name",
+    "Status",
+    "Canary",
+    "Currency",
+    "Timezone"
+  ],
+  [
+    "qa_ace_v1_tenant_000001",
+    "Cedar Training QA",
+    "active",
+    "QA_TENANT_001_PRIVATE_CANARY",
+    "INR",
+    "UTC"
+  ],
+  [
+    "qa_ace_v1_tenant_000002",
+    "Orion Commerce QA",
+    "active",
+    "QA_TENANT_002_PRIVATE_CANARY",
+    "INR",
+    "UTC"
+  ],
+  [
+    "qa_ace_v1_tenant_000003",
+    "Empty Workspace QA",
+    "active",
+    "QA_TENANT_003_PRIVATE_CANARY",
+    "INR",
+    "UTC"
+  ],
+  [
+    "qa_ace_v1_tenant_000004",
+    "Suspended Tenant QA",
+    "suspended",
+    "QA_TENANT_004_PRIVATE_CANARY",
+    "INR",
+    "UTC"
+  ]
+]

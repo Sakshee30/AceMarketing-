@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,Bell,Check,CheckCircle2,MessageCircle,ShieldCheck,Sparkles} from 'lucide-react'
 import {alertsApi} from '../data/alerts.api'
 import {StaleState} from '../../../components/system/FrontendStates'
@@ -64,7 +64,7 @@ export default function AlertsPage(){
   const [resolveState,setResolveState]=useState(()=>initialMutationLifecycle<any>())
 
   const load=async()=>{
-    setLoading(true)
+    beginLoading(setLoading)
     try{
       const response:any=await alertsApi.list()
       const mapped=mapItems(response)

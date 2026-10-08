@@ -1,0 +1,77 @@
+
+> ace-marketing@0.1.0 build:customer-app
+> vite build --config vite.customer-app.config.ts
+
+[36mvite v6.4.3 [32mbuilding for production...[36m[39m
+transforming...
+[32m✓[39m 1897 modules transformed.
+rendering chunks...
+computing gzip size...
+[2m../../dist/customer-app/[22m[32mindex.html                             [39m[1m[2m  0.90 kB[22m[1m[22m[2m │ gzip:  0.49 kB[22m
+[2m../../dist/customer-app/[22m[32m.vite/manifest.json                    [39m[1m[2m 18.73 kB[22m[1m[22m[2m │ gzip:  1.92 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[35mpublic-FnwB4V-S.css             [39m[1m[2m  3.08 kB[22m[1m[22m[2m │ gzip:  0.99 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[35mindex-B4w3ckai.css              [39m[1m[2m274.05 kB[22m[1m[22m[2m │ gzip: 46.40 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mchevron-right-D80z6EjX.js       [39m[1m[2m  0.30 kB[22m[1m[22m[2m │ gzip:  0.25 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36msmartphone-Bw5S3WtY.js          [39m[1m[2m  0.37 kB[22m[1m[22m[2m │ gzip:  0.29 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mindex-8br_BJIZ.js               [39m[1m[2m  0.68 kB[22m[1m[22m[2m │ gzip:  0.40 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mphone-outgoing-BIrNLPod.js      [39m[1m[2m  0.68 kB[22m[1m[22m[2m │ gzip:  0.43 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mmutation-lifecycle-Cjfwb4ef.js  [39m[1m[2m  1.42 kB[22m[1m[22m[2m │ gzip:  0.65 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36museMutation-Dn10Qava.js         [39m[1m[2m  3.21 kB[22m[1m[22m[2m │ gzip:  1.31 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-Bz6Ip6lY.js              [39m[1m[2m  6.07 kB[22m[1m[22m[2m │ gzip:  2.24 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-pfp138TE.js              [39m[1m[2m  6.09 kB[22m[1m[22m[2m │ gzip:  2.34 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-CIzklrIH.js              [39m[1m[2m  6.13 kB[22m[1m[22m[2m │ gzip:  2.27 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-Ck3h_4uz.js              [39m[1m[2m  6.45 kB[22m[1m[22m[2m │ gzip:  2.58 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-HK2ay5xI.js              [39m[1m[2m  6.56 kB[22m[1m[22m[2m │ gzip:  2.24 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-BYrNlbam.js              [39m[1m[2m  6.80 kB[22m[1m[22m[2m │ gzip:  2.34 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-1Je6DNgN.js              [39m[1m[2m  6.81 kB[22m[1m[22m[2m │ gzip:  2.39 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-D5w0B-_2.js              [39m[1m[2m  7.03 kB[22m[1m[22m[2m │ gzip:  2.42 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-C2JPUQe5.js              [39m[1m[2m  7.06 kB[22m[1m[22m[2m │ gzip:  2.59 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-CQOsk4qh.js              [39m[1m[2m  7.40 kB[22m[1m[22m[2m │ gzip:  2.60 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-CmneXmlK.js              [39m[1m[2m  7.68 kB[22m[1m[22m[2m │ gzip:  2.89 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-BGqvjmWe.js              [39m[1m[2m  7.98 kB[22m[1m[22m[2m │ gzip:  2.95 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-MtjtKSo7.js              [39m[1m[2m  8.01 kB[22m[1m[22m[2m │ gzip:  2.83 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-tUraveER.js              [39m[1m[2m  8.15 kB[22m[1m[22m[2m │ gzip:  2.79 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-_75TKcKr.js              [39m[1m[2m  8.16 kB[22m[1m[22m[2m │ gzip:  2.76 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-DjU8yPE8.js              [39m[1m[2m  8.30 kB[22m[1m[22m[2m │ gzip:  2.60 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-BNVdpciu.js              [39m[1m[2m  8.69 kB[22m[1m[22m[2m │ gzip:  3.06 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-f5Fi2Zto.js              [39m[1m[2m  8.69 kB[22m[1m[22m[2m │ gzip:  2.96 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-DZg8x8pu.js              [39m[1m[2m  8.87 kB[22m[1m[22m[2m │ gzip:  3.16 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-z3W-B_fy.js              [39m[1m[2m  8.92 kB[22m[1m[22m[2m │ gzip:  3.02 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-CjvG0SCK.js              [39m[1m[2m  9.05 kB[22m[1m[22m[2m │ gzip:  3.12 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-LDYKa3Yz.js              [39m[1m[2m  9.25 kB[22m[1m[22m[2m │ gzip:  2.91 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36museQuery-kFJ8t9r3.js            [39m[1m[2m  9.47 kB[22m[1m[22m[2m │ gzip:  3.39 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-3Xf_CRc8.js              [39m[1m[2m  9.55 kB[22m[1m[22m[2m │ gzip:  3.27 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-C3Py_5yk.js              [39m[1m[2m  9.87 kB[22m[1m[22m[2m │ gzip:  3.07 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-2N5j7i6i.js              [39m[1m[2m 10.01 kB[22m[1m[22m[2m │ gzip:  3.40 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-B4TPXyfI.js              [39m[1m[2m 10.16 kB[22m[1m[22m[2m │ gzip:  3.33 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-Bxsye8wA.js              [39m[1m[2m 10.19 kB[22m[1m[22m[2m │ gzip:  3.42 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-CoWqIyRx.js              [39m[1m[2m 10.21 kB[22m[1m[22m[2m │ gzip:  3.41 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-DvSJj_-R.js              [39m[1m[2m 10.29 kB[22m[1m[22m[2m │ gzip:  3.66 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-D8At3ATA.js              [39m[1m[2m 10.43 kB[22m[1m[22m[2m │ gzip:  3.75 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-DZCNvNKY.js              [39m[1m[2m 11.48 kB[22m[1m[22m[2m │ gzip:  3.50 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-GXlEWDjt.js              [39m[1m[2m 11.78 kB[22m[1m[22m[2m │ gzip:  3.51 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-DHHDSe5T.js              [39m[1m[2m 11.79 kB[22m[1m[22m[2m │ gzip:  3.79 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-CNynh1fD.js              [39m[1m[2m 12.51 kB[22m[1m[22m[2m │ gzip:  3.70 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-DZCBFFhn.js              [39m[1m[2m 12.71 kB[22m[1m[22m[2m │ gzip:  4.03 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-8pJ3inFO.js              [39m[1m[2m 12.99 kB[22m[1m[22m[2m │ gzip:  3.41 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mBoardsPage-D3ICCzNF.js          [39m[1m[2m 13.14 kB[22m[1m[22m[2m │ gzip:  4.90 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-Cxm9T_ig.js              [39m[1m[2m 13.24 kB[22m[1m[22m[2m │ gzip:  4.06 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-DxyISWOM.js              [39m[1m[2m 13.34 kB[22m[1m[22m[2m │ gzip:  4.08 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-DoT6qp_t.js              [39m[1m[2m 13.50 kB[22m[1m[22m[2m │ gzip:  4.18 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-BwvfebkG.js              [39m[1m[2m 13.76 kB[22m[1m[22m[2m │ gzip:  3.81 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-DnFv1XrE.js              [39m[1m[2m 13.97 kB[22m[1m[22m[2m │ gzip:  4.12 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-CnjNoU4Y.js              [39m[1m[2m 14.31 kB[22m[1m[22m[2m │ gzip:  4.38 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-2gzmLLIU.js              [39m[1m[2m 14.51 kB[22m[1m[22m[2m │ gzip:  4.36 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-BVr8Jp-R.js              [39m[1m[2m 14.55 kB[22m[1m[22m[2m │ gzip:  4.56 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-BqR7c3BW.js              [39m[1m[2m 14.94 kB[22m[1m[22m[2m │ gzip:  4.29 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-QvPtEbbj.js              [39m[1m[2m 15.11 kB[22m[1m[22m[2m │ gzip:  4.30 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-DcLAWK8G.js              [39m[1m[2m 15.83 kB[22m[1m[22m[2m │ gzip:  4.56 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-OtHJEQ3N.js              [39m[1m[2m 16.06 kB[22m[1m[22m[2m │ gzip:  4.61 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-B8HSL6LA.js              [39m[1m[2m 16.22 kB[22m[1m[22m[2m │ gzip:  4.62 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-C6JqOJfB.js              [39m[1m[2m 18.43 kB[22m[1m[22m[2m │ gzip:  6.36 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-C3bOvl8M.js              [39m[1m[2m 24.44 kB[22m[1m[22m[2m │ gzip:  6.87 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-BAR0widW.js              [39m[1m[2m 25.78 kB[22m[1m[22m[2m │ gzip:  6.85 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-CRyh1D9F.js              [39m[1m[2m 32.87 kB[22m[1m[22m[2m │ gzip:  9.04 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mpublic-CrqKTH2L.js              [39m[1m[2m 55.79 kB[22m[1m[22m[2m │ gzip: 13.86 kB[22m
+[2m../../dist/customer-app/[22m[2massets/[22m[36mindex-Bm5jCCIb.js               [39m[1m[2m282.04 kB[22m[1m[22m[2m │ gzip: 83.50 kB[22m
+[32m✓ built in 6.76s[39m

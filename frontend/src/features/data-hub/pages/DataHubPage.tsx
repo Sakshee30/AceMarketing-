@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,Check,CheckCircle2,ChevronRight,DatabaseZap,ShieldCheck,Sparkles,UsersRound} from 'lucide-react'
 import {dataHubApi} from '../data/data-hub.api'
 import {ErrorState,LoadingState,StaleState} from '../../../components/system/FrontendStates'
@@ -17,7 +17,7 @@ export default function DataHubPage(){
  const [notice,setNotice]=useState<Notice>({kind:'',text:''})
 
  const load=async()=>{
-  setLoading(true)
+  beginLoading(setLoading)
   try{
    const result:any=await dataHubApi.load()
    setHub(result)

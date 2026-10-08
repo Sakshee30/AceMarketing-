@@ -1,0 +1,442 @@
+[
+  {
+    "path": "/auth/me",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/dashboard-summary",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/launchpad",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/workspace/overview",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/integrations",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/integration-flows",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/custom-integrations",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/events",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/adjustments",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/diagnostics",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/match-quality",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/reconciliation",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/fraud",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/deep-links",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/sites",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/fingerprinting",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/fingerprinting/matches",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/funnel",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/leak-monitor",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/live-sync",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/data-hub",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/offline-attribution",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/ctwa-attribution",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/call-events",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/matchback",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/matchback/unmatched",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/attribution-identity/stats",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/pos-stores",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/journeys",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/customer-360",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/identity",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/models",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/attribution",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/reports",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/cohorts?months=6",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/grouped-performance?dimension=category&months=6",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/report-schedules",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/planner",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/enrich",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/lead-grading",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/agents",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/routing",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/follow-ups",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/lead-reactivation?dormantDays=30&recentDays=7",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/voice-scheduler",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/qualification-calls",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/meetings",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/feedback",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/agent-runs",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/approvals",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/personalization-rules",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/activation-rules",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/exclusions",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/audiences",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/audience-schedules",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/activation-runs",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/behavior",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/feed",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/solutions",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/chatgpt-ads",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/signal-deliveries",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/whatsapp/messages",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/connector-health",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/monitoring",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/compliance-center",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/consent/stats",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/privacy/requests",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/billing/usage",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/billing/subscription",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/alerts",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/signal-console",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/security-posture",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/resources",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/case-studies",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/ai-action",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/source-notes",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/event-templates",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/monitoring-rules",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/members",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/settings",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/workspaces",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/webhooks/deliveries",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/webhooks/endpoints",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/audit-log",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "path": "/api-keys",
+    "status": 200,
+    "scope": "read smoke, not full feature qualification"
+  },
+  {
+    "fixture": "leads.json.gz",
+    "imported": 100,
+    "replayed": 100,
+    "distinctPersisted": 100,
+    "mappedFields": [
+      "lead_id",
+      "display_name",
+      "email",
+      "campaign_id",
+      "stage",
+      "updated_at"
+    ],
+    "qualification": "lead import/idempotency/scoping only; not score-band, provider ingestion or all 10,000 leads"
+  }
+]

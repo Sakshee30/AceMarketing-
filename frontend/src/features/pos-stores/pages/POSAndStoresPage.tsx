@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Building2,CheckCircle2,ChevronRight,CircleDollarSign,RadioTower,ShieldCheck,Sparkles,Target,X} from 'lucide-react'
 import {posStoresApi} from '../data/pos-stores.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -22,7 +22,7 @@ export default function POSAndStoresPage(){
  useDirtyWork({key:'pos-import-draft',label:'POS transaction import',dirty:builder,scope:'feature'})
 
  const load=async()=>{
-  setLoading(true)
+  beginLoading(setLoading)
   try{
    const r:any=await posStoresApi.load()
    setData(r)

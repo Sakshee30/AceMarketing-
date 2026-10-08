@@ -1,0 +1,10 @@
+{
+  "candidate": "aafb5f9d0e191e7a976e61547d8b995a11baa709",
+  "node": "v24.21.0",
+  "postgresql": "postgres (PostgreSQL) 18.6 (Ubuntu 18.6-0ubuntu0.26.04.1)",
+  "qaPython": "3.14.4 (main, Aug 20 2026, 10:41:58) [GCC 15.2.0]",
+  "mlPython": "Python 3.13.16",
+  "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+  "nodeLockSha256": "1b648548e76848fcc5bc12fcedca5933292e39c096b590577eb8e617c1f6e962",
+  "mlRequirementsNote": "Resolved version manifest retained; source dependency ranges are not a frozen ML lockfile."
+}

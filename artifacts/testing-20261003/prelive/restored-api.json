@@ -1,0 +1,9 @@
+{
+  "login": "PASS",
+  "authMe": "PASS",
+  "fixtureLeadRead": "PASS",
+  "primaryWorkspaceFixtureLeads": 2500,
+  "applicationWorkspaceLeads": 2501,
+  "fixtureLeadPageRows": 100,
+  "scope": "restored database aggregate and bounded API read; not host or object-store recovery"
+}

@@ -1,0 +1,121 @@
+[
+ {
+  "feature": "Whole application (login and every write)",
+  "symptom": "Login and every write request hung indefinitely; the live feed had been stalled for 7 h 40 min with 14 database sessions queued.",
+  "cause": "When the PC slept, a database session whose client had gone away kept the row lock on the workspace-state row. Nothing timed out: TCP keepalive was the 2-hour system default, lock waits were unlimited, and the API and worker had no handler for a lost database connection (they either hung or, once detected, crashed and stayed down).",
+  "fix": "backend/src/database.mjs (+ live-voice.mjs): connections use TCP keepalive (dead peers detected in about a minute), a 45 s lock timeout, and connection-loss events are handled instead of terminating the process. Proven by terminating all 14 application database sessions: API and worker kept the same process ids and served the next request.",
+  "retest": "pass"
+ },
+ {
+  "feature": "Meetings",
+  "symptom": "New meetings never appeared: the page showed the 200 oldest of 3,230 meetings.",
+  "cause": "The list query ordered by start time ascending with LIMIT 200.",
+  "fix": "backend/src/agent-orchestrator.mjs: return the latest 200 meetings, still in chronological order.",
+  "retest": "pass"
+ },
+ {
+  "feature": "Follow-ups",
+  "symptom": "Totals showed 200 open / 0 completed while the database held 11,359 open and 851 completed.",
+  "cause": "Statistics were computed from the 200-row page instead of the whole queue.",
+  "fix": "backend/src/agent-orchestrator.mjs + index.mjs: totals now come from a database aggregate over the full queue.",
+  "retest": "pass"
+ },
+ {
+  "feature": "Live Sync, Overview activity, Data Hub",
+  "symptom": "The 'recent events' stream was about 9 hours stale and missed new events.",
+  "cause": "Events are loaded newest-first but the code sliced the tail of the list, i.e. the oldest entries; the in-memory buffer mixed both orders after a restart.",
+  "fix": "backend/src/index.mjs: keep the in-memory buffer oldest-to-newest and take the newest 50 for the stream.",
+  "retest": "pass"
+ },
+ {
+  "feature": "Reports, Executive Briefs, Planner",
+  "symptom": "Cohort report was always empty (0 acquired, 0 conversions, 0 revenue) despite 2,400 attributed purchases; Planner had no revenue evidence.",
+  "cause": "Attribution tables enforce row-level security, but the cohort queries ran without the tenant database context and therefore read zero rows.",
+  "fix": "backend/src/cohort-analytics.mjs: run both queries inside the tenant transaction context.",
+  "retest": "pass"
+ },
+ {
+  "feature": "Compliance (privacy export, deletion, retention)",
+  "symptom": "A privacy export for a customer with visits, purchases and a lead profile returned none of them; a deletion request would have left that data in place.",
+  "cause": "Same missing tenant context for the attribution tables, and the customer/visitor selector never matched lead profiles because they are keyed by the customer id.",
+  "fix": "backend/src/privacy-ops.mjs: export, delete and retention purge run in the tenant context; customer and visitor selectors also match the lead profile id.",
+  "retest": "pass"
+ },
+ {
+  "feature": "Local ML pipelines (live feed)",
+  "symptom": "5,668 ML scoring jobs were dead-lettered with 'artifact metadata not found', and the feed never recovered.",
+  "cause": "The feed kept scoring against saved model artifacts that no longer existed and never retrained.",
+  "fix": "scripts/live/generator.mjs and ace_feed.py: a scoring job that fails drops its artifact so the next AI cycle retrains.",
+  "retest": "pass"
+ },
+ {
+  "feature": "Whole application (response time)",
+  "symptom": "Every signed-in API call took 2.5–4.5 s (GET /auth/me 4.3 s; Boards stayed on \"Loading\"), against 0.25 s for the unauthenticated health check.",
+  "cause": "Each request downloaded and re-parsed the entire workspace-state row, which had grown to 23 MB of JSON.",
+  "fix": "backend/src/store.mjs: the parsed state is reused while the row version is unchanged (a cheap version query per request; writers in any process bump the version). GET /auth/me now 0.5 s, GET /boards 0.26 s; feed median request time 569 ms → 228 ms.",
+  "retest": "pass"
+ },
+ {
+  "feature": "Enrich, Lead Grading (lead acquisition source)",
+  "symptom": "After a phone call, a lead acquired from Google or Meta showed \"call\" as its first-touch source.",
+  "cause": "The call webhook overwrote the stored acquisition source and campaign on the existing lead profile.",
+  "fix": "backend/src/lead-ops.mjs + index.mjs: call events keep an existing lead's acquisition source and campaign; they only set them for a lead first seen through the call.",
+  "retest": "pass"
+ },
+ {
+  "feature": "Lead Grading",
+  "symptom": "The \"Average score\" tile displayed 65.08146741303479.",
+  "cause": "The API returned the raw database average.",
+  "fix": "backend/src/lead-ops.mjs: average score is rounded to one decimal (65.1).",
+  "retest": "pass"
+ },
+ {
+  "feature": "AI Intelligence (page load) and every page that loads several panels",
+  "symptom": "AI Intelligence stayed on \"Loading AI intelligence\" for 12 seconds; 20 simultaneous requests took 5.7 s even for the cheapest endpoint.",
+  "cause": "Each request still made a full private copy of the 23 MB workspace state on the single server thread, so parallel requests queued behind one another.",
+  "fix": "backend/src/store.mjs: a request now copies only the parts of the state it reads. 20 simultaneous requests: 5.7 s → 14 ms; AI Intelligence loads in 0.8 s; feed median request time 265 ms → 12 ms. Writes stay consistent with the database (verified after each write).",
+  "retest": "pass"
+ },
+ {
+  "feature": "AI Intelligence (model lifecycle)",
+  "symptom": "0 active routes, 0 qualified evaluations, 0 datasets: trained local models could never become active.",
+  "cause": "No evaluation policy existed, nothing was ever qualified, approved or deployed, and deployment of local models was blocked by a hard-coded \"capability not verified\" flag.",
+  "fix": "The feed now runs the governed lifecycle (point-in-time dataset → train → qualify against a predeclared policy → approve → deploy). The capability flag is now an explicit opt-in, AI_LOCAL_ML_CAPABILITY_VERIFIED, enabled only in this local stack. Result: 6 active routes, 6 qualified evaluations, datasets listed.",
+  "retest": "pass"
+ },
+ {
+  "feature": "AI Intelligence (Chronos-2 forecasting)",
+  "symptom": "Chronos forecasting was unavailable, and once installed every forecast failed with \"Cannot change data-type for array of references\".",
+  "cause": "The optional package and checkpoint were not provisioned; the pipeline also passed timezone-aware timestamps, which the Chronos library cannot process (the code path had never run).",
+  "fix": "Installed chronos-forecasting with CPU PyTorch, provisioned the pinned amazon/chronos-2 snapshot, and ml-service/src/acemarketing_ml/pipelines.py now normalises timestamps to naive UTC. Forecast job succeeds in about 27 s on CPU.",
+  "retest": "pass"
+ },
+ {
+  "feature": "AI Intelligence (incrementality)",
+  "symptom": "Incrementality (causal forest) was unavailable.",
+  "cause": "Optional econml package was not installed.",
+  "fix": "Installed econml 0.17 with the core ML stack pinned unchanged; the feed submits a confounded remarketing-exposure dataset and the job completes.",
+  "retest": "pass"
+ },
+ {
+  "feature": "Follow-ups (queue realism)",
+  "symptom": "The open queue only grew (12,212 open) and the page, which lists the 200 most overdue, never showed anything new.",
+  "cause": "Every lead creates follow-ups automatically but the feed completed far fewer than were created.",
+  "fix": "scripts/live/ace_feed.py: each cycle the feed completes the most overdue tasks, faster while the backlog is large. The backlog is now shrinking.",
+  "retest": "pass"
+ },
+ {
+  "feature": "Whole application (write time)",
+  "symptom": "Every state-changing request took 1.5–3 s; one tracking event took up to 4.4 s.",
+  "cause": "PostgreSQL spent about 3 s recompressing the 24 MB workspace-state row with the default pglz compression on each write.",
+  "fix": "backend/migrations/061_workspace_state_lz4.sql: the column now uses lz4 compression (rewrite 3.0 s → 0.66 s on a copy). Call webhook 1.5 s → 0.6 s; personalization decision 1.8 s → 0.9 s.",
+  "retest": "pass"
+ },
+ {
+  "feature": "AI Intelligence (Grounded analyst)",
+  "symptom": "\"Run governed analysis\" was blocked (\"AI task is not active\"), and once a job did succeed the answer was never shown on the Analyst tab.",
+  "cause": "The analyst route only supported OpenAI's API; no code path could produce the qualified evaluation a hosted model needs to become active; and the page tracked the job status but never fetched or rendered its result.",
+  "fix": "Added an NVIDIA (OpenAI-compatible) analyst provider with access verification and retry on 429/503, a five-case grounding evaluation endpoint, and an answer panel on the Analyst tab. nvidia/nemotron-3-ultra-550b-a55b scored 5/5 (cites evidence, recalls figures, declines unanswerable questions) and is deployed; answers appear in about a minute.",
+  "retest": "pass"
+ }
+]

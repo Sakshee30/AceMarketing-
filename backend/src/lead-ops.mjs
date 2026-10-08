@@ -52,6 +52,11 @@ export const upsertLeadProfile=async(workspaceId,input={})=>{
   // Serialize patches for this identity, including simultaneous first inserts.
   if(!embeddedDatabase)await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',[JSON.stringify([workspaceId,externalLeadId])])
   const existing=await client.query('SELECT * FROM ace_lead_profiles WHERE workspace_id=$1 AND external_lead_id=$2',[workspaceId,externalLeadId])
+  // An interaction such as a call must not replace how an existing lead was acquired.
+  if(input.keepExistingAcquisition&&existing.rows[0]){
+    const stored=existing.rows[0]
+    input={...input,source:stored.source?undefined:input.source,campaign:stored.campaign?undefined:input.campaign}
+  }
   input=mergeLeadEvidence(existing.rows[0],input)
   const scoring=scoreLead(input)
   const emailHash=input.emailSha256||input.email_sha256||(input.email?sha(normEmail(input.email)):null)

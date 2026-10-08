@@ -1,0 +1,2 @@
+AceMarketing worker worker_89965bff-c5bd-47b3-8f29-955a92efac5a started { workerClass: 'all', runEmbeddedSchedulers: false }
+SIGTERM received; draining worker for up to 10000ms

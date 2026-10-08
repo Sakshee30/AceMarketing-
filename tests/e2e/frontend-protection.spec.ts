@@ -40,7 +40,7 @@ test('workspace tab route is direct-linkable and dirty settings require explicit
     await dialog.accept()
   })
   await page.getByRole('button',{name:'Open monitoring center'}).click()
-  await expect(page.getByRole('heading',{name:/Monitoring/i})).toBeVisible()
+  await expect(page.getByRole('heading',{name:'Platform monitoring',exact:true})).toBeVisible()
   await expect(page).toHaveURL(/tab=Monitoring/)
 })
 
@@ -55,12 +55,18 @@ test('audience builder traps focus, closes with Escape, and protects an open dra
   await expect(dialog).toBeVisible()
   await expect(dialog.getByLabel('Audience name')).toBeFocused()
 
+  await page.keyboard.press('Shift+Tab')
+  await expect(dialog.getByRole('button',{name:'Close audience builder'})).toBeFocused()
+  await page.keyboard.press('Shift+Tab')
+  await expect(dialog.getByRole('button',{name:'Preview audience'})).toBeFocused()
+
   page.once('dialog',async confirm=>{
     expect(confirm.type()).toBe('confirm')
     expect(confirm.message()).toContain('unsaved work')
     await confirm.dismiss()
   })
-  await page.getByRole('button',{name:'Open monitoring center'}).click()
+  // App navigation events can arrive while a modal prevents pointer access.
+  await page.evaluate(()=>window.dispatchEvent(new CustomEvent('ace-app-tab',{detail:'Monitoring'})))
   await expect(dialog).toBeVisible()
 
   await page.keyboard.press('Escape')

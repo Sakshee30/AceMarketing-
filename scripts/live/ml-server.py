@@ -6,7 +6,8 @@ import uvicorn
 root = Path(__file__).resolve().parents[2]
 for line in (root / '.env.live.local').read_text().splitlines():
     key, separator, value = line.partition('=')
-    if separator and key in {'ML_SERVICE_AUTH_TOKEN', 'ML_ARTIFACT_DIR', 'CHRONOS_MODEL_ID', 'CHRONOS_LOCAL_FILES_ONLY'}:
+    if separator and key in {'ML_SERVICE_AUTH_TOKEN', 'ML_ARTIFACT_DIR', 'CHRONOS_MODEL_ID', 'CHRONOS_LOCAL_FILES_ONLY',
+                             'CHRONOS2_REVISION', 'CHRONOS2_SNAPSHOT_DIR', 'CHRONOS2_EXPECTED_SHA256'}:
         os.environ[key] = value.strip().strip('"').strip("'")
 os.environ.setdefault('ML_ARTIFACT_DIR', '/home/aceqa/.local/share/ace-live/ml-artifacts' if os.environ.get('ACE_LIVE_WSL') == 'true' else str(root / '.tmp-tools/live/ml-artifacts'))
 os.chdir(root)

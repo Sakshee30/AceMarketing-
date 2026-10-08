@@ -46,6 +46,10 @@ export const syncTenantRegistry=async workspaceId=>{
          DO UPDATE SET
            kind=EXCLUDED.kind,
            provider=EXCLUDED.provider,
+           access_verified=CASE WHEN ace_ai_model_registry.requested_model IS DISTINCT FROM EXCLUDED.requested_model THEN false ELSE ace_ai_model_registry.access_verified END,
+           evaluation_status=CASE WHEN ace_ai_model_registry.requested_model IS DISTINCT FROM EXCLUDED.requested_model THEN EXCLUDED.evaluation_status ELSE ace_ai_model_registry.evaluation_status END,
+           approval_status=CASE WHEN ace_ai_model_registry.requested_model IS DISTINCT FROM EXCLUDED.requested_model THEN EXCLUDED.approval_status ELSE ace_ai_model_registry.approval_status END,
+           deployment_status=CASE WHEN ace_ai_model_registry.requested_model IS DISTINCT FROM EXCLUDED.requested_model THEN EXCLUDED.deployment_status ELSE ace_ai_model_registry.deployment_status END,
            requested_model=EXCLUDED.requested_model,
            documentation_verified=EXCLUDED.documentation_verified,
            documentation_source=EXCLUDED.documentation_source,

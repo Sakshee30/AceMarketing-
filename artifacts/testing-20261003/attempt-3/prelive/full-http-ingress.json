@@ -1,0 +1,28 @@
+{
+  "scope": "Actual authenticated HTTP lead ingress and persisted reconciliation; not a production load/SLO or full event-ingress qualification",
+  "source": {
+    "source": "supplied AceMarketing_Dummy_Data_v1 D2_marketing",
+    "files": {
+      "D2_marketing/leads.csv": "7f2ec6eef33d8730be042a4dc0936f1b5a169fb9e1461269bd35fe98ef52922a",
+      "D2_marketing/events.ndjson": "4065b68dbeca295d65f6b0e1f552a489d7c4b4aab6d93e26358daeaac44c34c8",
+      "D2_marketing/campaigns.csv": "7f5488d0e9dcd813b67d37859441e0ad50ab95f2f025b5bb35ede7f2a639dcce",
+      "D2_marketing/campaign_daily_stats.csv": "583d3b65b68b1cf57c79b34df392a7e4774b96ae824eab5138abfdb2c8eb7682",
+      "D2_marketing/expected_reconciliation.json": "6afd287fb58a22f5c3a1e839bfd28261209af306c76907cd5d12c8da32f72979"
+    },
+    "validated": true
+  },
+  "leads": 10000,
+  "replayed": 1000,
+  "uniqueRecords": 10000,
+  "workspaceCounts": {
+    "qa_ace_v1_workspace_000001": 2500,
+    "qa_ace_v1_workspace_000002": 2500,
+    "qa_ace_v1_workspace_000003": 2500,
+    "qa_ace_v1_workspace_000004": 2500
+  },
+  "seconds": 9.45531147,
+  "checks": [
+    "all source IDs, workspace boundaries, names, stages, campaigns and email hashes match",
+    "duplicate replay retains persisted IDs and unique counts"
+  ]
+}

@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useRef,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,CheckCircle2,CircleDollarSign,ShieldCheck,Table2,Target} from 'lucide-react'
 import {groupedPerformanceApi} from '../data/grouped-performance.api'
 import {ErrorState,LoadingState,StaleState} from '../../../components/system/FrontendStates'
@@ -12,6 +12,7 @@ const unknownMutation=(error:any)=>['timeout','network'].includes(String(error?.
 
 export default function GroupedPerformancePage(){
  const [dimension,setDimension]=useState('category')
+ const [lookbackMonths,setLookbackMonths]=useState(13)
  const [data,setData]=useState<any>({available:false,items:[],totals:{},conversionEvents:[]})
  const [busy,setBusy]=useState('')
  const [loading,setLoading]=useState(true)
@@ -25,10 +26,10 @@ export default function GroupedPerformancePage(){
 
  const load=async(next=dimension)=>{
   const requestId=++requestSequence.current
-  setLoading(true)
+  beginLoading(setLoading)
   setNotice(current=>current.kind==='error'?{kind:'',text:''}:current)
   try{
-   const r:any=await groupedPerformanceApi.load(next,6)
+   const r:any=await groupedPerformanceApi.load(next,lookbackMonths)
    if(requestId!==requestSequence.current)return
    setData(r)
    const drafts=Object.fromEntries((r.items||[]).map((x:any)=>[x.key,x.cost==null?'':String(x.cost)]))
@@ -41,7 +42,7 @@ export default function GroupedPerformancePage(){
   }
  }
 
- useEffect(()=>{void load(dimension);return()=>{requestSequence.current++}},[dimension])
+ useEffect(()=>{void load(dimension);return()=>{requestSequence.current++}},[dimension,lookbackMonths])
  useDevelopmentLiveRefresh(()=>load(dimension))
 
  const money=(n:any)=>'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:0})
@@ -88,7 +89,7 @@ export default function GroupedPerformancePage(){
 
   <div className="grouped-performance-hero app-panel">
    <div><Table2/><div><span>EVIDENCE-BASED GROUPING</span><h3>First-party events → grouped conversion evidence → optional contribution view</h3><p>Revenue is counted only from configured conversion events. Contribution and margin appear only for groups where an operator explicitly supplies cost.</p></div></div>
-   <div className="grouped-dimension-picker">{dims.map(([key,label])=><button key={key} disabled={loading} className={dimension===key?'selected':''} onClick={()=>setDimension(key)}>{label}</button>)}</div>
+   <div className="grouped-dimension-picker">{dims.map(([key,label])=><button key={key} disabled={loading} className={dimension===key?'selected':''} onClick={()=>setDimension(key)}>{label}</button>)}<label>Period <select aria-label="Grouped performance period" value={lookbackMonths} disabled={dirty||loading} onChange={event=>setLookbackMonths(Number(event.target.value))}><option value={3}>3 months</option><option value={6}>6 months</option><option value={12}>12 calendar months</option><option value={13}>Past year + current month</option><option value={24}>24 months</option></select></label></div>
   </div>
 
   <div className="app-panel" aria-busy={loading?'true':undefined}>

@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,BarChart3,ChevronDown,ChevronRight,CircleDollarSign,PieChart,ShieldCheck,Target} from 'lucide-react'
 import {attributionApi} from '../data/attribution.api'
 import {ErrorState,LoadingState} from '../../../components/system/FrontendStates'
@@ -20,7 +20,7 @@ export default function AttributionPage(){
 
  const load=async()=>{
   const requestId=++requestSequence.current
-  setLoading(true)
+  beginLoading(setLoading)
   setError('')
   try{
    const r:any=await attributionApi.load(periodDays)

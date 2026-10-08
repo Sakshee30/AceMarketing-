@@ -1,0 +1,92 @@
+[
+  [
+    "OPEN ITEMS",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Candidate 6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00 | Evidence from isolated run 37064060695",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ID",
+    "Area",
+    "Current limitation / defect",
+    "Required closure"
+  ],
+  [
+    "OPEN-01",
+    "Known UI defect",
+    "CustomerWorkspace.tsx still hard-codes sidebar user name/owner label, example workspace labels and locale values. Page rendering is not proof these values are correct.",
+    "Bind display state to verified session/workspace metadata; add per-role/workspace browser assertions."
+  ],
+  [
+    "OPEN-02",
+    "Scope and acceptance",
+    "356 source scenarios remain unsigned / scope_complete=false. Supporting checks do not constitute their complete acceptance criteria.",
+    "Finish route/action/job inventory and exact case mapping; execute missing scenarios and review evidence."
+  ],
+  [
+    "OPEN-03",
+    "Persona mappings",
+    "16 users seeded from 32; viewer, approver, support_operator and billing_operator have no approved exact role mapping.",
+    "Resolve product role model; implement allowed mappings without privilege escalation and run denial/suspension/recovery combinations."
+  ],
+  [
+    "OPEN-04",
+    "Full data and scale paths",
+    "10000 leads/100000 events passed data-layer integration. Full campaign/provider-daily import and all-record UI/API ingress remain incomplete; D7 million-event qualification not run.",
+    "Complete supported import adapters; reconcile provider totals separately; run approved load/soak/chaos workload."
+  ],
+  [
+    "OPEN-05",
+    "Provider qualification",
+    "Selected Meta/Google/GA4 orchestration cases and bounded generic transport pass with external fetch simulated. All 13 native wire contracts, OAuth/callbacks and account behavior are not qualified.",
+    "Implement remaining native simulations and per-operation applicability; separate approval for provider test accounts."
+  ],
+  [
+    "OPEN-06",
+    "Security, privacy and files",
+    "Selected auth/isolation checks and npm audit are not full security approval. Full 23-document lifecycle, search/erasure, privacy and dynamic scans not executed.",
+    "Run scoped security checks, object/search/deletion acceptance and required security/privacy review."
+  ],
+  [
+    "OPEN-07",
+    "Real AI and human testing",
+    "Synthetic ML/service tests and browser engines do not establish live-model quality, screen-reader usability, physical device coverage or human UAT.",
+    "Run isolated actual-model safety/evaluation; manual accessibility, real-device checks and business sign-off."
+  ],
+  [
+    "OPEN-08",
+    "Deployment and disaster recovery",
+    "Systemd configuration and same-cluster PostgreSQL restore smoke passed. All Docker/native modes, fresh-host/object/key restoration and measured RPO/RTO remain unqualified.",
+    "Exercise supported installation/mode/upgrade/rollback matrix and independent restore runbooks."
+  ],
+  [
+    "OPEN-09",
+    "Jenkins and other CI",
+    "Jenkinsfile is implemented but no Jenkins server execution occurred. General repository CI is tracked separately from the isolated qualification run.",
+    "Configure a trusted disposable Jenkins agent; require final commit-specific gates rather than a workflow color alone."
+  ]
+]

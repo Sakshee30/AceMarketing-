@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useRef,useState,type FormEvent} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,CheckCircle2,ChevronRight,ShieldCheck,Sparkles,Target,X} from 'lucide-react'
 import {
   modelsApi,
@@ -71,7 +71,7 @@ export default function ModelsPage(){
     governanceAbort.current?.abort('superseded_model_governance_read')
     const controller=new AbortController()
     governanceAbort.current=controller
-    setGovernanceLoading(true)
+    beginLoading(setGovernanceLoading)
     setGovernanceError('')
     try{
       const [registryResponse,evaluationResponse,policyResponse]=await Promise.all([
@@ -105,7 +105,7 @@ export default function ModelsPage(){
     loadAbort.current?.abort('superseded_model_catalog_read')
     const controller=new AbortController()
     loadAbort.current=controller
-    setLoading(true)
+    beginLoading(setLoading)
     setLoadError('')
     try{
       const response=await modelsApi.list({signal:controller.signal})
@@ -201,7 +201,7 @@ export default function ModelsPage(){
     validationAbort.current=controller
     setValidation(null)
     setValidationError('')
-    setValidationLoading(true)
+    beginLoading(setValidationLoading)
     setValidationOpen(true)
     try{
       const response=await modelsApi.validation(modelName,{signal:controller.signal})

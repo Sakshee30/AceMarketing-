@@ -1,0 +1,807 @@
+[
+  [
+    "RESTORE DETAILS",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Candidate 6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00 | Evidence from isolated run 37064060695",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Table",
+    "Rows",
+    "Content digest",
+    "Result",
+    "Scope"
+  ],
+  [
+    "ace_activation_runs",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_agent_runs",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_activation_proposals",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_anomaly_items",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_causal_records",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_creative_assets",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_datasets",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_deployment_controls",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_deployment_observations",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_evaluation_policies",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_evaluations",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_feature_snapshots",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_forecast_records",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_knowledge_chunks",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_knowledge_sources",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_live_voice_sessions",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_marketing_mix_records",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_metric_definitions",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_model_registry",
+    "21",
+    "d8b73426c6513d57df298af22e0132f5",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_model_versions",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_outbox_events",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_provider_requests",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_ranking_items",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_results",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_segment_memberships",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_segment_snapshots",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_task_policies",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_transcripts",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_ai_usage_reservations",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_alert_incidents",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_api_metrics",
+    "1741",
+    "fa2a66d3b3e2ad42183ddcefa36cedff",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_assisted_events",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_audience_members",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_audience_refresh_runs",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_audience_schedules",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_audiences",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_backup_evidence",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_billing_events",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_billing_reconciliation_records",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_board_columns",
+    "3",
+    "afe8ed6b2e3e06e56f3ed9e6870c21a6",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_board_items",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_board_operations",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_boards",
+    "1",
+    "c82bb7bc8cb0825f9cf7e90513dde2e0",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_campaign_daily",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_click_sessions",
+    "200",
+    "4329cae9d7cd4674d9981e55adf3c932",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_connector_checkpoints",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_connector_raw_records",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_connector_sync_runs",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_connector_sync_schedules",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_consent_audit",
+    "167",
+    "337cb45d225d6ee267281d34d3cfebc8",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_consent_records",
+    "166",
+    "00bbe50e489780dd2dd4f8fd4f84adf5",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_crm_records",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_custom_integration_tests",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_custom_integrations",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_custom_object_records",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_custom_object_versions",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_custom_objects",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_emergency_controls",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_entitlement_versions",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_event_rule_runs",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_event_rules",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_events",
+    "199",
+    "49f3dbc88d3f7510345fb1c50e20b790",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_feedback_responses",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_followup_tasks",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_form_submissions",
+    "1",
+    "d4842e82ec0d8cea746fed3dca92c7eb",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_form_versions",
+    "1",
+    "b4c0bc75e90f16060f7b5ca149ee646f",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_forms",
+    "1",
+    "001d519fb5e050df9a8bd17bbe248e6c",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_inbox_events",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_jobs",
+    "1",
+    "3a4d25e40f510855ea80bd4be0ceef8f",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_lead_profiles",
+    "101",
+    "020a1a7c58ed230c0843264ed5cd759d",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_meeting_records",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_monitoring_rules",
+    "24",
+    "7ebcbc1d242e35b6321061a514f4d592",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_object_access_grants",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_object_processing_events",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_objects",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_outbox_events",
+    "1",
+    "b12c6fd7eda585d1388e503ba5f9328d",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_platform_audit",
+    "9",
+    "fb5dc61c0a0fed46883c1e294e96b207",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_platform_change_approvals",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_platform_change_events",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_platform_changes",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_platform_control_commands",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_policy_rule_decisions",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_policy_rule_versions",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_policy_rules",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_privacy_requests",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_provider_migrations",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_realtime_events",
+    "1",
+    "e76cb0707350d045d919e69089becae6",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_recovery_exercises",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_report_deliveries",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_report_schedules",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_request_idempotency",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_routing_decisions",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_runtime_config_snapshots",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_schema_migrations",
+    "61",
+    "6d0f870bae0d0c7b8fb0ebcff4bc1711",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_search_documents",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_tenant_placements",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_usage_daily",
+    "4",
+    "7063376a6fd881e2a8846479aae3a0bc",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_usage_ledger",
+    "200",
+    "4596ff9efac5cc71726957e81eb017b8",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_usage_reservations",
+    "206",
+    "cdab059aaff5d79504c0d03cedd512a1",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_webhook_deliveries",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_webhook_delivery_attempts",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_webhook_subscriptions",
+    "0",
+    "d41d8cd98f00b204e9800998ecf8427e",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_workflow_approvals",
+    "1",
+    "459e621e477c9bca7706229f5e4c0133",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_workflow_execution_steps",
+    "3",
+    "12faeec98fd0d5cd73c26c18927e4545",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_workflow_executions",
+    "1",
+    "cbabf1ad132484ca4d585288325f7230",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_workflow_versions",
+    "2",
+    "02235137030e61808fafdf207eacffe6",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_workflows",
+    "1",
+    "56cecc7c99b7c5ce18594b2173923c98",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_workspace_state",
+    "10",
+    "51aa8f706d41dc0be73f8331967e289c",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ],
+  [
+    "ace_workspace_subscriptions",
+    "1",
+    "5de49dcaec7c10e00681a653ef9b1611",
+    "MATCH",
+    "Same-cluster restore; empty tables included"
+  ]
+]

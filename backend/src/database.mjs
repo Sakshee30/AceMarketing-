@@ -68,6 +68,8 @@ const createEmbeddedPool=async()=>{
     // pg-mem does not implement PostgreSQL row-level security. Production applies
     // the RLS migration; embedded tests exercise the application tenant context.
     if(file==='036_platform_rls.sql'||file==='060_attribution_rls.sql')continue
+    // TOAST compression is a PostgreSQL storage setting with no embedded equivalent.
+    if(file==='061_workspace_state_lz4.sql')continue
     if(file==='037_forms_custom_objects.sql')sql=sql.replace(/ALTER TABLE ace_forms ENABLE ROW LEVEL SECURITY;[\s\S]*$/m,'')
     if(file==='038_rules_workflows.sql')sql=sql.replace(/ALTER TABLE ace_policy_rules ENABLE ROW LEVEL SECURITY;[\s\S]*$/m,'')
     if(file==='039_usage_ledger.sql')sql=sql.replace(/ALTER TABLE ace_usage_ledger ENABLE ROW LEVEL SECURITY;[\s\S]*$/m,'')
@@ -115,10 +117,24 @@ const createEmbeddedPool=async()=>{
   return new adapter.Pool()
 }
 
+// A client killed mid-statement can leave its server session holding row locks
+// until TCP keepalive expires (two hours by default). Detect dead peers within
+// a minute, and make lock waiters fail instead of hanging behind such a session.
+const sessionOptions=process.env.DB_SESSION_OPTIONS??'-c tcp_keepalives_idle=30 -c tcp_keepalives_interval=10 -c tcp_keepalives_count=3 -c lock_timeout=45000'
+
 export const pool=databaseUrl?new PostgresPool({
   connectionString:databaseUrl,
+  keepAlive:true,
+  ...(sessionOptions?{options:sessionOptions}:{}),
   max:Number(process.env.DB_POOL_MAX||20),
   idleTimeoutMillis:Number(process.env.DB_IDLE_TIMEOUT_MS||30000),
   connectionTimeoutMillis:Number(process.env.DB_CONNECT_TIMEOUT_MS||5000),
   ...(process.env.DB_SSL==='require'?{ssl:{rejectUnauthorized:false}}:{})
 }):embeddedDatabase?await createEmbeddedPool():null
+
+// A lost connection (database restart, network drop, host sleep) is reported by pg as an
+// 'error' event. Unhandled, it terminates the process; in-flight queries still reject normally.
+if(databaseUrl){
+  pool.on('error',error=>console.error('[database] idle connection lost: '+error.message))
+  pool.on('connect',client=>client.on('error',error=>console.error('[database] connection lost: '+error.message)))
+}

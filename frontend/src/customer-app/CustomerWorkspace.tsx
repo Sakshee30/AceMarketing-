@@ -8,6 +8,7 @@ import {
   Sparkles,Table2,Target,UsersRound,WandSparkles,X,Zap
 } from 'lucide-react'
 import '../ace-platform.css'
+import '../workspace-design.css'
 import {api,cancelWorkspaceRequests} from '../lib/api'
 import {RouteAnnouncer} from '../components/system/FrontendFoundation'
 import {LoadingState} from '../components/system/FrontendStates'

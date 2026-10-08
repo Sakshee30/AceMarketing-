@@ -1,5 +1,6 @@
 import {createHash,randomUUID} from 'node:crypto'
 import {pool} from './database.mjs'
+import {withTenantDbTransaction} from './platform/tenant-db.mjs'
 
 const sha=value=>createHash('sha256').update(String(value)).digest('hex')
 const normalize=(type,value)=>{
@@ -27,8 +28,9 @@ const whereFor=(table,s)=>{
     if(s.type==='lead')return ['external_lead_id=$2',s.normalized]
     if(s.type==='email')return ['email_sha256=$2',s.identityHash]
     if(s.type==='phone')return ['phone_sha256=$2',s.identityHash]
-    if(s.type==='customer')return ["attributes->>'customerId'=$2",s.normalized]
-    if(s.type==='visitor')return ["attributes->>'visitorId'=$2",s.normalized]
+    // Lead profiles are keyed by the customer/visitor id they were captured with.
+    if(s.type==='customer')return ["(external_lead_id=$2 OR attributes->>'customerId'=$2)",s.normalized]
+    if(s.type==='visitor')return ["(external_lead_id=$2 OR attributes->>'visitorId'=$2)",s.normalized]
   }
   if(table==='consent'){
     if(s.type==='visitor')return ["subject_type='visitor' AND subject_id=$2",s.normalized]
@@ -53,8 +55,8 @@ export const exportSubject=async(workspaceId,input={},requestedBy=null)=>{
   if(!pool)throw new Error('privacy store unavailable')
   const s=selectorData(String(input.selectorType||''),input.selector)
   const [cw,cv]=whereFor('click',s), [aw,av]=whereFor('assisted',s), [lw,lv]=whereFor('lead',s), [gw,gv]=whereFor('consent',s)
-  const client=await pool.connect()
-  try{
+  // Attribution tables enforce row-level security; without tenant context they read as empty.
+  return withTenantDbTransaction(workspaceId,async client=>{
     const [clicks,assisted,leads,consent]=await Promise.all([
       client.query(`SELECT * FROM ace_click_sessions WHERE workspace_id=$1 AND ${cw} ORDER BY last_seen_at DESC LIMIT 5000`,[workspaceId,cv]),
       client.query(`SELECT * FROM ace_assisted_events WHERE workspace_id=$1 AND ${aw} ORDER BY occurred_at DESC LIMIT 5000`,[workspaceId,av]),
@@ -71,7 +73,7 @@ export const exportSubject=async(workspaceId,input={},requestedBy=null)=>{
     const counts=Object.fromEntries(Object.entries(data).filter(([,v])=>Array.isArray(v)).map(([k,v])=>[k,v.length]))
     const requestId=await recordRequest(client,workspaceId,{type:'export',selectorType:s.type,selectorHash:s.hash,summary:counts,requestedBy})
     return {requestId,generatedAt:new Date().toISOString(),counts,data}
-  }finally{client.release()}
+  })
 }
 
 export const deleteSubject=async(workspaceId,input={},requestedBy=null)=>{
@@ -79,9 +81,7 @@ export const deleteSubject=async(workspaceId,input={},requestedBy=null)=>{
   if(input.confirm!=='DELETE')throw new Error('confirm must equal DELETE')
   const s=selectorData(String(input.selectorType||''),input.selector)
   const [cw,cv]=whereFor('click',s), [aw,av]=whereFor('assisted',s), [lw,lv]=whereFor('lead',s), [gw,gv]=whereFor('consent',s)
-  const client=await pool.connect()
-  try{
-    await client.query('BEGIN')
+  return withTenantDbTransaction(workspaceId,async client=>{
     const leadRows=await client.query(`SELECT id FROM ace_lead_profiles WHERE workspace_id=$1 AND ${lw}`,[workspaceId,lv])
     const leadIds=leadRows.rows.map(x=>x.id)
     let audienceMembers=0
@@ -95,12 +95,8 @@ export const deleteSubject=async(workspaceId,input={},requestedBy=null)=>{
     const consent=await client.query(`DELETE FROM ace_consent_records WHERE workspace_id=$1 AND ${gw} RETURNING id`,[workspaceId,gv])
     const summary={clickSessions:clicks.rowCount,assistedEvents:assisted.rowCount,leadProfiles:leads.rowCount,audienceMemberships:audienceMembers,consentRecords:consent.rowCount}
     const requestId=await recordRequest(client,workspaceId,{type:'delete',selectorType:s.type,selectorHash:s.hash,summary,requestedBy})
-    await client.query('COMMIT')
     return {requestId,deletedAt:new Date().toISOString(),summary}
-  }catch(error){
-    await client.query('ROLLBACK')
-    throw error
-  }finally{client.release()}
+  })
 }
 
 const days=value=>{const n=Number(value||0);return Number.isFinite(n)&&n>0?Math.floor(n):0}
@@ -114,9 +110,7 @@ export const retentionPolicy=()=>({
 export const purgeRetention=async(workspaceId,{dryRun=false,requestedBy=null}={})=>{
   if(!pool)throw new Error('privacy store unavailable')
   const policy=retentionPolicy()
-  const client=await pool.connect()
-  try{
-    await client.query('BEGIN')
+  return withTenantDbTransaction(workspaceId,async client=>{
     const summary={expiredClickSessions:0,clickSessions:0,assistedEvents:0,leadProfiles:0,consentRecords:0}
     const exec=async(sql,args=[])=>{const r=await client.query(sql,args);return Number(r.rows?.[0]?.count||0)}
     summary.expiredClickSessions=await exec(`SELECT COUNT(*)::int count FROM ace_click_sessions WHERE workspace_id=$1 AND expires_at<now()`,[workspaceId])
@@ -133,10 +127,8 @@ export const purgeRetention=async(workspaceId,{dryRun=false,requestedBy=null}={}
       if(!dryRun)await client.query(`DELETE FROM ${table} WHERE workspace_id=$1 AND ${column}<now()-($2::int*interval '1 day')`,[workspaceId,keepDays])
     }
     const requestId=await recordRequest(client,workspaceId,{type:'retention_purge',summary:{dryRun,policy,...summary},requestedBy})
-    await client.query('COMMIT')
     return {requestId,dryRun,policy,summary,completedAt:new Date().toISOString()}
-  }catch(error){await client.query('ROLLBACK');throw error}
-  finally{client.release()}
+  })
 }
 
 export const listPrivacyRequests=async(workspaceId,limit=100)=>{

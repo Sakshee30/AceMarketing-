@@ -1,0 +1,10 @@
+{
+  "preliveChecksumFilesVerified": 43,
+  "xlsxAllXmlParsed": true,
+  "xlsxExecutedCheckRows": 777,
+  "originalSourceCaseIdsRetained": 356,
+  "all23StagesPassed": true,
+  "allChangedWorkspaceFileHashesMatchTestedSnapshot": true,
+  "fourSourceArchivesReadable": true,
+  "fullAcceptanceComplete": false
+}

@@ -1,0 +1,160 @@
+{
+  "schemaVersion": "qa.execution.v1",
+  "candidate": "530b4e2f5ad8d4a5085a7ec3f6b22f4d1ec33115",
+  "utc": "2026-10-03T05:21:28.055784+00:00",
+  "runtime": "v24.21.0",
+  "executedStages": [
+    {
+      "name": "network-isolation",
+      "status": "PASS",
+      "detail": "Loopback-only namespace; external connection denied",
+      "seconds": 0
+    },
+    {
+      "name": "systemd",
+      "status": "PASS",
+      "detail": "exit=0; see systemd.log",
+      "seconds": 0.116
+    },
+    {
+      "name": "all-runtime-syntax",
+      "status": "PASS",
+      "detail": "338 files checked",
+      "seconds": 0
+    },
+    {
+      "name": "independent-oracles",
+      "status": "PASS",
+      "detail": "exit=0; see independent-oracles.log",
+      "seconds": 0.232
+    },
+    {
+      "name": "release-gate-self-tests",
+      "status": "PASS",
+      "detail": "exit=0; see release-gate-self-tests.log",
+      "seconds": 0.07
+    },
+    {
+      "name": "migrations",
+      "status": "PASS",
+      "detail": "exit=0; see migrations.log",
+      "seconds": 0.642
+    },
+    {
+      "name": "migration-idempotency",
+      "status": "PASS",
+      "detail": "exit=0; see migration-idempotency.log",
+      "seconds": 0.212
+    },
+    {
+      "name": "native-regression",
+      "status": "PASS",
+      "detail": "exit=0; see native-regression.log",
+      "seconds": 82.922
+    },
+    {
+      "name": "typecheck",
+      "status": "PASS",
+      "detail": "exit=0; see typecheck.log",
+      "seconds": 8.329
+    },
+    {
+      "name": "production-bundle",
+      "status": "PASS",
+      "detail": "exit=0; see production-bundle.log",
+      "seconds": 3.284
+    },
+    {
+      "name": "backend-architecture",
+      "status": "PASS",
+      "detail": "exit=0; see backend-architecture.log",
+      "seconds": 0.175
+    },
+    {
+      "name": "customer-bundle",
+      "status": "PASS",
+      "detail": "exit=0; see customer-bundle.log",
+      "seconds": 3.025
+    },
+    {
+      "name": "public-bundle",
+      "status": "PASS",
+      "detail": "exit=0; see public-bundle.log",
+      "seconds": 1.987
+    },
+    {
+      "name": "control-bundle",
+      "status": "PASS",
+      "detail": "exit=0; see control-bundle.log",
+      "seconds": 0.953
+    },
+    {
+      "name": "fixture-seed",
+      "status": "PASS",
+      "detail": "exit=0; see fixture-seed.log",
+      "seconds": 0.654
+    },
+    {
+      "name": "authenticated-api-startup",
+      "status": "PASS",
+      "detail": "Real API: NODE_ENV=production; auth enabled; restricted PostgreSQL role",
+      "seconds": 0
+    },
+    {
+      "name": "authenticated-api",
+      "status": "PASS",
+      "detail": "exit=0; see authenticated-api.log",
+      "seconds": 13.622
+    },
+    {
+      "name": "production-browser",
+      "status": "PASS",
+      "detail": "exit=0; see production-browser.log",
+      "seconds": 117.829
+    },
+    {
+      "name": "worker-runtime",
+      "status": "PASS",
+      "detail": "Worker liveness only; business completion checked in API suite",
+      "seconds": 0
+    },
+    {
+      "name": "backup-smoke",
+      "status": "PASS",
+      "detail": "exit=0; see backup-smoke.log",
+      "seconds": 0.4
+    },
+    {
+      "name": "restore-smoke",
+      "status": "PASS",
+      "detail": "exit=0; see restore-smoke.log",
+      "seconds": 0.744
+    },
+    {
+      "name": "restore-content-reconciliation",
+      "status": "PASS",
+      "detail": "exit=0; see restore-content-reconciliation.log",
+      "seconds": 0.638
+    },
+    {
+      "name": "restored-authenticated-api",
+      "status": "FAIL",
+      "detail": "exit=1; see restored-authenticated-api.log",
+      "seconds": 0.279
+    }
+  ],
+  "offlineQualified": false,
+  "productionQualified": false,
+  "scopeNote": "Executed checks are supporting evidence, not completion of every source scenario.",
+  "sourceScenarioCount": 356,
+  "notQualified": [
+    "full 356-scenario acceptance",
+    "provider native wire/sandbox qualification",
+    "AI real-runtime and efficacy",
+    "full load/soak",
+    "full Docker/native deployment and restore matrix",
+    "manual accessibility",
+    "human UAT"
+  ],
+  "nativeSuiteNote": "Per-file real PG database under bootstrap role; many existing tests inject mocks. Restricted-role evidence is separate."
+}

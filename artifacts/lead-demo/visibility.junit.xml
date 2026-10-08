@@ -1,0 +1,50 @@
+<testsuites id="" name="" tests="18" failures="0" skipped="0" errors="0" time="109.472358">
+<testsuite name="lead-demo-login.spec.ts" timestamp="2026-10-03T15:59:53.945Z" hostname="chromium" tests="2" failures="0" skipped="0" time="3.805" errors="0">
+<testcase name="Local demo launcher opens all four supplied workspaces" classname="lead-demo-login.spec.ts" time="1.679">
+</testcase>
+<testcase name="Explore the Leads demo through the actual login form" classname="lead-demo-login.spec.ts" time="2.126">
+</testcase>
+</testsuite>
+<testsuite name="lead-visibility.spec.ts" timestamp="2026-10-03T15:59:53.945Z" hostname="chromium" tests="4" failures="0" skipped="0" time="25.108" errors="0">
+<testcase name="Every supplied lead is visible: qa_ace_v1_workspace_000001" classname="lead-visibility.spec.ts" time="12.42">
+</testcase>
+<testcase name="Every supplied lead is visible: qa_ace_v1_workspace_000002" classname="lead-visibility.spec.ts" time="4.363">
+</testcase>
+<testcase name="Every supplied lead is visible: qa_ace_v1_workspace_000003" classname="lead-visibility.spec.ts" time="4.162">
+</testcase>
+<testcase name="Every supplied lead is visible: qa_ace_v1_workspace_000004" classname="lead-visibility.spec.ts" time="4.163">
+</testcase>
+</testsuite>
+<testsuite name="lead-demo-login.spec.ts" timestamp="2026-10-03T15:59:53.945Z" hostname="firefox" tests="2" failures="0" skipped="0" time="7.485" errors="0">
+<testcase name="Local demo launcher opens all four supplied workspaces" classname="lead-demo-login.spec.ts" time="2.755">
+</testcase>
+<testcase name="Explore the Leads demo through the actual login form" classname="lead-demo-login.spec.ts" time="4.73">
+</testcase>
+</testsuite>
+<testsuite name="lead-visibility.spec.ts" timestamp="2026-10-03T15:59:53.945Z" hostname="firefox" tests="4" failures="0" skipped="0" time="38.584" errors="0">
+<testcase name="Every supplied lead is visible: qa_ace_v1_workspace_000001" classname="lead-visibility.spec.ts" time="6.619">
+</testcase>
+<testcase name="Every supplied lead is visible: qa_ace_v1_workspace_000002" classname="lead-visibility.spec.ts" time="18.055">
+</testcase>
+<testcase name="Every supplied lead is visible: qa_ace_v1_workspace_000003" classname="lead-visibility.spec.ts" time="7.145">
+</testcase>
+<testcase name="Every supplied lead is visible: qa_ace_v1_workspace_000004" classname="lead-visibility.spec.ts" time="6.765">
+</testcase>
+</testsuite>
+<testsuite name="lead-demo-login.spec.ts" timestamp="2026-10-03T15:59:53.945Z" hostname="webkit" tests="2" failures="0" skipped="0" time="5.058" errors="0">
+<testcase name="Local demo launcher opens all four supplied workspaces" classname="lead-demo-login.spec.ts" time="2.332">
+</testcase>
+<testcase name="Explore the Leads demo through the actual login form" classname="lead-demo-login.spec.ts" time="2.726">
+</testcase>
+</testsuite>
+<testsuite name="lead-visibility.spec.ts" timestamp="2026-10-03T15:59:53.945Z" hostname="webkit" tests="4" failures="0" skipped="0" time="26.451" errors="0">
+<testcase name="Every supplied lead is visible: qa_ace_v1_workspace_000001" classname="lead-visibility.spec.ts" time="8.158">
+</testcase>
+<testcase name="Every supplied lead is visible: qa_ace_v1_workspace_000002" classname="lead-visibility.spec.ts" time="5.907">
+</testcase>
+<testcase name="Every supplied lead is visible: qa_ace_v1_workspace_000003" classname="lead-visibility.spec.ts" time="6.416">
+</testcase>
+<testcase name="Every supplied lead is visible: qa_ace_v1_workspace_000004" classname="lead-visibility.spec.ts" time="5.97">
+</testcase>
+</testsuite>
+</testsuites>

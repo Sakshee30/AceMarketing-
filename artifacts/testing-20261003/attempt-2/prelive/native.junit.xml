@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testcase name="acceptance register contains every G-01 through G-66 control exactly once" time="0.001070" classname="test" file="/home/aceqa/execution-20261003/backend/tests/acceptance-register.test.mjs"/>
+	<testcase name="implemented controls reference repository evidence without claiming verification" time="0.001063" classname="test" file="/home/aceqa/execution-20261003/backend/tests/acceptance-register.test.mjs"/>
+	<testcase name="nonwaivable controls are explicitly marked" time="0.000668" classname="test" file="/home/aceqa/execution-20261003/backend/tests/acceptance-register.test.mjs"/>
+	<testcase name="public snapshot reports status counts honestly" time="0.000422" classname="test" file="/home/aceqa/execution-20261003/backend/tests/acceptance-register.test.mjs"/>
+	<testcase name="access policy keeps read and write permissions explicit" time="0.001273" classname="test" file="/home/aceqa/execution-20261003/backend/tests/access-policy.test.mjs"/>
+	<testcase name="AI sensitive operations keep separate permissions" time="0.000215" classname="test" file="/home/aceqa/execution-20261003/backend/tests/access-policy.test.mjs"/>
+	<testcase name="permission assertion exposes denied permission without changing policy semantics" time="0.000463" classname="test" file="/home/aceqa/execution-20261003/backend/tests/access-policy.test.mjs"/>
+	<testcase name="AI provider-side activation execution is disabled by default" time="0.001865" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-activation-execution.test.mjs"/>
+	<testcase name="audience execution accepts only explicit existing consent-aware adapters" time="0.001875" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-activation-execution.test.mjs"/>
+	<testcase name="CRM execution validates provider and lead reference before queueing" time="0.000222" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-activation-execution.test.mjs"/>
+	<testcase name="Google Ads budget execution requires immutable current/new micros and a scoped resource" time="0.000465" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-activation-execution.test.mjs"/>
+	<testcase name="execution permission is separated from propose and approve permissions" time="0.000850" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-activation-execution.test.mjs"/>
+	<testcase name="terminal durable job states cannot be relabelled as queued activation execution" time="0.000311" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-activation-execution.test.mjs"/>
+	<testcase name="activation egress rejects plaintext and unapproved provider hosts" time="0.000710" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-activation-execution.test.mjs"/>
+	<testcase name="credentialed activation requests reject redirects instead of forwarding secrets" time="0.074085" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-activation-execution.test.mjs"/>
+	<testcase name="Google Ads shared-budget reference count rejects malformed provider values" time="0.000505" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-activation-execution.test.mjs"/>
+	<testcase name="expired activation dispatch is recorded as unknown and continues to block lifecycle changes" time="0.043032" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-activation-execution.test.mjs"/>
+	<testcase name="activation proposal requires immutable evidence and provider adapter" time="0.003099" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-activation-proposals.test.mjs"/>
+	<testcase name="activation proposal expiry is bounded" time="0.001043" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-activation-proposals.test.mjs"/>
+	<testcase name="creator cannot approve own activation proposal" time="0.000748" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-activation-proposals.test.mjs"/>
+	<testcase name="stale or tampered proposals are rejected" time="0.002252" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-activation-proposals.test.mjs"/>
+	<testcase name="budget activation proposal is rejected before review when deterministic change limits fail" time="0.000820" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-activation-proposals.test.mjs"/>
+	<testcase name="invalid budget percentage configuration fails closed" time="0.000414" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-activation-proposals.test.mjs"/>
+	<testcase name="analyst tools expose only the documented read-only allowlist" time="0.003141" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-analyst-tools.test.mjs"/>
+	<testcase name="knowledge analyst tool requires a bounded explicit query" time="0.000733" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-analyst-tools.test.mjs"/>
+	<testcase name="prediction analyst tool accepts only registered prediction tasks" time="0.000410" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-analyst-tools.test.mjs"/>
+	<testcase name="experiment analyst evidence strips arbitrary persisted fields" time="0.001023" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-analyst-tools.test.mjs"/>
+	<testcase name="shared AI result contract manifest matches backend discriminator types" time="0.005627" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-contract-manifest.test.mjs"/>
+	<testcase name="deployment controls validate explicit modes and bounded canary traffic" time="0.002508" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-deployment-controls.test.mjs"/>
+	<testcase name="canary assignment is deterministic and never exceeds configured eligibility semantics" time="0.001464" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-deployment-controls.test.mjs"/>
+	<testcase name="shadow and off modes do not silently serve normal user traffic" time="0.000339" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-deployment-controls.test.mjs"/>
+	<testcase name="AI job idempotency is stable inside a tenant and isolated across tenants" time="0.020837" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-durable-jobs.test.mjs"/>
+	<testcase name="cancellation cannot cross tenant scope" time="0.006592" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-durable-jobs.test.mjs"/>
+	<testcase name="task policy preserves exact registry model identity" time="0.001152" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-governance-store.test.mjs"/>
+	<testcase name="task policy rejects silent model substitution" time="0.000379" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-governance-store.test.mjs"/>
+	<testcase name="task policy rejects invalid concurrency and budgets" time="0.000256" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-governance-store.test.mjs"/>
+	<testcase name="task policy rejects unknown tasks and malformed feature flags" time="0.000203" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-governance-store.test.mjs"/>
+	<testcase name="task policy usage aggregation works with the embedded database" time="0.021621" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-governance-store.test.mjs"/>
+	<testcase name="embedded database supports the PostgreSQL float8 alias" time="0.001279" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-governance-store.test.mjs"/>
+	<testcase name="hosted task validation rejects unknown tasks" time="0.000862" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-input-validation.test.mjs"/>
+	<testcase name="embedding input is bounded" time="0.000186" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-input-validation.test.mjs"/>
+	<testcase name="transcription requires provider-hosted file URI" time="0.000287" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-input-validation.test.mjs"/>
+	<testcase name="reviewer requires immutable recommendation object" time="0.000208" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-input-validation.test.mjs"/>
+	<testcase name="knowledge policy normalizes role allowlists without granting extra roles" time="0.001646" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-knowledge-authorization.test.mjs"/>
+	<testcase name="knowledge without an explicit allowlist remains workspace-readable" time="0.000170" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-knowledge-authorization.test.mjs"/>
+	<testcase name="embedded local retrieval filters restricted chunks and propagates revocation" time="0.036292" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-knowledge-authorization.test.mjs"/>
+	<testcase name="knowledge policy rejects malformed allowlists instead of widening access" time="0.000592" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-knowledge-authorization.test.mjs"/>
+	<testcase name="restricted chunks cannot crowd authorized matches out of embedded retrieval" time="0.059051" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-knowledge-authorization.test.mjs"/>
+	<testcase name="knowledge vector validation rejects malformed provider embeddings and allows lexical fallback" time="0.000615" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-knowledge-authorization.test.mjs"/>
+	<testcase name="knowledge vector dimensions must match the stored embedding contract" time="0.000350" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-knowledge-authorization.test.mjs"/>
+	<testcase name="AI monitoring summarizes queue provider freshness usage and quality evidence without inventing metrics" time="0.001668" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-monitoring.test.mjs"/>
+	<testcase name="AI monitoring leaves unavailable evaluation evidence null rather than fabricating quality scores" time="0.000257" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-monitoring.test.mjs"/>
+	<testcase name="local AI object store persists content-addressed bytes in development" time="0.009513" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-object-store.test.mjs"/>
+	<testcase name="local AI object store is blocked in production by default" time="0.000448" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-object-store.test.mjs"/>
+	<testcase name="platform policy preserves exact registry model identity" time="0.001950" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-platform-policy.test.mjs"/>
+	<testcase name="platform policy blocks tenant values above platform ceilings" time="0.000541" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-platform-policy.test.mjs"/>
+	<testcase name="platform policy snapshot is configuration-only and contains no secret values" time="0.000216" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-platform-policy.test.mjs"/>
+	<testcase name="provider verification stays opt-in even when a credential exists" time="0.001487" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-provider-access.test.mjs"/>
+	<testcase name="Anthropic bounded access check preserves the exact requested identifier" time="0.035935" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-provider-access.test.mjs"/>
+	<testcase name="Anthropic access check rejects a provider-side identifier substitution" time="0.000682" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-provider-access.test.mjs"/>
+	<testcase name="network failure after provider submission is marked unknown to prevent blind retries" time="0.001816" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-provider-access.test.mjs"/>
+	<testcase name="provider rate limits are explicit confirmed failures, not unknown outcomes" time="0.001759" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-provider-access.test.mjs"/>
+	<testcase name="confirmed malformed analyst output is rejected instead of persisted as empty success" time="0.000677" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-provider-access.test.mjs"/>
+	<testcase name="Anthropic access check rejects non-HTTPS model endpoints before sending credentials" time="0.000328" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-provider-access.test.mjs"/>
+	<testcase name="Anthropic access check rejects a blank provider model identifier" time="0.000550" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-provider-access.test.mjs"/>
+	<testcase name="whitespace-only analyst output is rejected as malformed" time="0.000907" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-provider-access.test.mjs"/>
+	<testcase name="Anthropic verification does not follow credentialed redirects" time="0.001625" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-provider-access.test.mjs"/>
+	<testcase name="exact hosted model assignments are preserved without silent substitution" time="0.000587" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-registry.test.mjs"/>
+	<testcase name="numerical assignments remain task-specific even when estimator classes repeat" time="0.000163" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-registry.test.mjs"/>
+	<testcase name="unverified exact reviewer identifier remains unavailable without substitution" time="0.001368" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-registry.test.mjs"/>
+	<testcase name="deterministic forecast baseline remains explicitly labelled" time="0.000629" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-registry.test.mjs"/>
+	<testcase name="worker execution fails closed when tenant or platform disables a task" time="0.001299" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-resilience.test.mjs"/>
+	<testcase name="worker execution respects live shadow and canary changes after a job was queued" time="0.000498" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-resilience.test.mjs"/>
+	<testcase name="worker execution rejects requested model substitution at execution time" time="0.000608" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-resilience.test.mjs"/>
+	<testcase name="durable AI job state does not depend on Redis and worker provider execution is outside a transaction callback" time="0.018253" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-resilience.test.mjs"/>
+	<testcase name="calibrated probability is bounded and horizon-specific" time="0.001022" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-result-contracts.test.mjs"/>
+	<testcase name="forecast distribution requires forecast values" time="0.000157" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-result-contracts.test.mjs"/>
+	<testcase name="causal result cannot omit support state" time="0.000129" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-result-contracts.test.mjs"/>
+	<testcase name="generated approved assets require an explicit reviewer" time="0.000157" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-result-contracts.test.mjs"/>
+	<testcase name="marketing mix results remain distinct from causal estimates" time="0.000145" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-result-contracts.test.mjs"/>
+	<testcase name="model evaluation requires metrics instead of generic confidence" time="0.000217" classname="test" file="/home/aceqa/execution-20261003/backend/tests/ai-result-contracts.test.mjs"/>
+	<testcase name="every backend module carries architecture review metadata" time="0.002291" classname="test" file="/home/aceqa/execution-20261003/backend/tests/architecture-review-registry.test.mjs"/>
+	<testcase name="migration-backed modules point to an existing migration review" time="0.001131" classname="test" file="/home/aceqa/execution-20261003/backend/tests/architecture-review-registry.test.mjs"/>
+	<testcase name="security-sensitive modules point to an existing threat model" time="0.000520" classname="test" file="/home/aceqa/execution-20261003/backend/tests/architecture-review-registry.test.mjs"/>
+	<testcase name="billing lifecycle exposes explicit trial grace suspension cancellation and expiry states" time="0.004104" classname="test" file="/home/aceqa/execution-20261003/backend/tests/billing-lifecycle.test.mjs"/>
+	<testcase name="entitlement changes are versioned and provider events create reconciliation evidence" time="0.050858" classname="test" file="/home/aceqa/execution-20261003/backend/tests/billing-lifecycle.test.mjs"/>
+	<testcase name="status-only billing changes do not rewrite entitlement history version" time="0.010517" classname="test" file="/home/aceqa/execution-20261003/backend/tests/billing-lifecycle.test.mjs"/>
+	<testcase name="board realtime authorization binds token workspace and boards.read permission" time="0.002034" classname="test" file="/home/aceqa/execution-20261003/backend/tests/board-realtime.test.mjs"/>
+	<testcase name="board realtime authorization rejects missing or invalid bearer material" time="0.000346" classname="test" file="/home/aceqa/execution-20261003/backend/tests/board-realtime.test.mjs"/>
+	<testcase name="board move command rejects ambiguous placement input" time="0.001321" classname="test" file="/home/aceqa/execution-20261003/backend/tests/board-store.test.mjs"/>
+	<testcase name="board move is durable idempotent tenant-scoped and version checked" time="0.056060" classname="test" file="/home/aceqa/execution-20261003/backend/tests/board-store.test.mjs"/>
+	<testcase name="board creation produces default governed columns and remains tenant scoped" time="0.013532" classname="test" file="/home/aceqa/execution-20261003/backend/tests/board-store.test.mjs"/>
+	<testcase name="dead-letter replay requires tenant and job identity" time="0.001501" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-audit-replay-handlers.test.mjs"/>
+	<testcase name="audit search bounds page size and preserves cursor" time="0.000239" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-audit-replay-handlers.test.mjs"/>
+	<testcase name="audit export is admitted as durable idempotent job" time="0.000196" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-audit-replay-handlers.test.mjs"/>
+	<testcase name="usage recording validates tenant/event/metric and preserves reservation linkage" time="0.001075" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-billing-usage-handlers.test.mjs"/>
+	<testcase name="quota reservation preserves request id and bounded quantity" time="0.000916" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-billing-usage-handlers.test.mjs"/>
+	<testcase name="billing subscription change delegates existing entitlement validation contract" time="0.000318" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-billing-usage-handlers.test.mjs"/>
+	<testcase name="billing reconciliation requires provider event identity before delegation" time="0.000619" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-billing-usage-handlers.test.mjs"/>
+	<testcase name="runtime configuration activation requires actor and preserves desired-state payload" time="0.001149" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-control-plane-handlers.test.mjs"/>
+	<testcase name="provider migration transition publishes resulting provider override snapshot" time="0.000423" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-control-plane-handlers.test.mjs"/>
+	<testcase name="tenant cell move rejects stale routing epoch and increments authoritative epoch" time="0.000718" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-control-plane-handlers.test.mjs"/>
+	<testcase name="entitlement evaluation requires tenant scope and preserves summary contract" time="0.001755" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-data-foundation-handlers.test.mjs"/>
+	<testcase name="custom-object definition delegates existing schema contract unchanged" time="0.000292" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-data-foundation-handlers.test.mjs"/>
+	<testcase name="search query handler bounds result limit and preserves authorization role" time="0.000261" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-data-foundation-handlers.test.mjs"/>
+	<testcase name="upload authorization preserves quarantine intent contract and normalizes access policy" time="0.000245" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-data-foundation-handlers.test.mjs"/>
+	<testcase name="organization update narrows mutation to organization field" time="0.001476" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-governance-ai-handlers.test.mjs"/>
+	<testcase name="authorization publish policy validates tenant and policy identity" time="0.000228" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-governance-ai-handlers.test.mjs"/>
+	<testcase name="AI inference command preserves immutable source snapshot and execution mode" time="0.000244" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-governance-ai-handlers.test.mjs"/>
+	<testcase name="AI activation execution requires explicit proposal identity" time="0.000486" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-governance-ai-handlers.test.mjs"/>
+	<testcase name="integration connect handler preserves existing custom integration payload" time="0.001322" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-integration-handlers.test.mjs"/>
+	<testcase name="integration reconcile handler requires a target and delegates verification" time="0.000534" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-integration-handlers.test.mjs"/>
+	<testcase name="webhook delivery handler preserves durable worker dispatch contract" time="0.000188" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-integration-handlers.test.mjs"/>
+	<testcase name="webhook replay handler preserves actor and source delivery identity" time="0.000208" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-integration-handlers.test.mjs"/>
+	<testcase name="workspace update accepts only the existing supported settings contract" time="0.001900" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-lifecycle-handlers.test.mjs"/>
+	<testcase name="membership removal deactivates target and revokes all target sessions" time="0.000849" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-lifecycle-handlers.test.mjs"/>
+	<testcase name="policy and workflow publication handlers preserve scope/id contracts" time="0.000345" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-lifecycle-handlers.test.mjs"/>
+	<testcase name="workflow retry preserves actor identity" time="0.000307" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-lifecycle-handlers.test.mjs"/>
+	<testcase name="approval decision validates allowed outcomes and delegates separation-of-duties store" time="0.000408" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-lifecycle-handlers.test.mjs"/>
+	<testcase name="canonical authorization query preserves centralized permission semantics" time="0.001682" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-operation-handlers.test.mjs"/>
+	<testcase name="canonical publish-form handler validates scope and delegates unchanged contract" time="0.000978" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-operation-handlers.test.mjs"/>
+	<testcase name="canonical submit-form handler preserves idempotency key and payload" time="0.000293" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-operation-handlers.test.mjs"/>
+	<testcase name="canonical rule simulation remains bounded and deterministic" time="0.000531" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-operation-handlers.test.mjs"/>
+	<testcase name="job submission preserves idempotency and bounds attempts" time="0.001035" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-runtime-handlers.test.mjs"/>
+	<testcase name="scheduler evaluation bounds batches and returns both schedule classes" time="0.000286" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-runtime-handlers.test.mjs"/>
+	<testcase name="notification handler exposes only implemented notification kinds" time="0.001211" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-runtime-handlers.test.mjs"/>
+	<testcase name="report execution requires tenant and schedule identity before durable queueing" time="0.000259" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-runtime-handlers.test.mjs"/>
+	<testcase name="login handler preserves active-member session creation and token contract" time="0.001542" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-security-document-handlers.test.mjs"/>
+	<testcase name="account recovery request stays enumeration-safe and completion revokes sessions" time="0.001383" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-security-document-handlers.test.mjs"/>
+	<testcase name="document approval validates scan outcome and delegates immutable lifecycle enforcement" time="0.000677" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-security-document-handlers.test.mjs"/>
+	<testcase name="search rebuild requires extracted text and delegates approved-object indexing" time="0.000264" classname="test" file="/home/aceqa/execution-20261003/backend/tests/canonical-security-document-handlers.test.mjs"/>
+	<testcase name="capability manifests declare complete provider semantics" time="0.002524" classname="test" file="/home/aceqa/execution-20261003/backend/tests/capability-manifest.test.mjs"/>
+	<testcase name="required capability cannot be migrated to disabled" time="0.000711" classname="test" file="/home/aceqa/execution-20261003/backend/tests/capability-manifest.test.mjs"/>
+	<testcase name="production cache bypass requires capacity evidence" time="0.000667" classname="test" file="/home/aceqa/execution-20261003/backend/tests/capability-manifest.test.mjs"/>
+	<testcase name="production AI provider changes require data-policy evidence" time="0.001037" classname="test" file="/home/aceqa/execution-20261003/backend/tests/capability-manifest.test.mjs"/>
+	<testcase name="capacity budget accounts for API surge workers control and reserve" time="0.001027" classname="test" file="/home/aceqa/execution-20261003/backend/tests/capacity-budget.test.mjs"/>
+	<testcase name="capacity budget rejects oversubscribed database pools" time="0.000400" classname="test" file="/home/aceqa/execution-20261003/backend/tests/capacity-budget.test.mjs"/>
+	<testcase name="capacity budget environment parsing is bounded" time="0.000304" classname="test" file="/home/aceqa/execution-20261003/backend/tests/capacity-budget.test.mjs"/>
+	<testcase name="tenant placement resolves one home cell and rejects stale routes" time="0.029617" classname="test" file="/home/aceqa/execution-20261003/backend/tests/cell-placement.test.mjs"/>
+	<testcase name="moving placement fails closed until ownership cutover completes" time="0.002589" classname="test" file="/home/aceqa/execution-20261003/backend/tests/cell-placement.test.mjs"/>
+	<testcase name="PROV invalid URL rejects without leaking the default deadline timer" time="0.031152" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-http-url.test.mjs"/>
+	<testcase name="PROV transport preserves method, body and authorization without automatic redirects" time="0.032548" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-http.test.mjs"/>
+	<testcase name="PROV transport rejects malformed successful body" time="0.001847" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-http.test.mjs"/>
+	<testcase name="PROV transport rejects empty successful body" time="0.000983" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-http.test.mjs"/>
+	<testcase name="PROV transport rejects null successful body" time="0.000841" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-http.test.mjs"/>
+	<testcase name="PROV transport rejects primitive successful body" time="0.001196" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-http.test.mjs"/>
+	<testcase name="PROV transport exposes HTTP 400 without leaking provider response" time="0.000997" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-http.test.mjs"/>
+	<testcase name="PROV transport exposes HTTP 401 without leaking provider response" time="0.000441" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-http.test.mjs"/>
+	<testcase name="PROV transport exposes HTTP 403 without leaking provider response" time="0.001199" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-http.test.mjs"/>
+	<testcase name="PROV transport exposes HTTP 429 without leaking provider response" time="0.001088" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-http.test.mjs"/>
+	<testcase name="PROV transport exposes HTTP 500 without leaking provider response" time="0.000987" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-http.test.mjs"/>
+	<testcase name="PROV transport exposes HTTP 503 without leaking provider response" time="0.000520" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-http.test.mjs"/>
+	<testcase name="PROV transport accepts explicit no-content and not-modified responses" time="0.000913" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-http.test.mjs"/>
+	<testcase name="PROV transport rejects HTML with HTTP 200" time="0.000484" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-http.test.mjs"/>
+	<testcase name="PROV transport rejects a declared oversized body" time="0.000390" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-http.test.mjs"/>
+	<testcase name="PROV transport enforces streaming byte limit without Content-Length" time="0.001101" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-http.test.mjs"/>
+	<testcase name="PROV transport accepts exact byte boundary" time="0.000561" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-http.test.mjs"/>
+	<testcase name="PROV transport blocks cross-origin redirects before contacting their target" time="0.000403" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-http.test.mjs"/>
+	<testcase name="PROV transport rejects redirect loops" time="0.000570" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-http.test.mjs"/>
+	<testcase name="PROV transport bounds distinct same-origin redirects" time="0.000735" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-http.test.mjs"/>
+	<testcase name="PROV transport preserves a successful same-origin redirect" time="0.000510" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-http.test.mjs"/>
+	<testcase name="PROV transport times out even when injected fetch fails to observe abort" time="0.015186" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-http.test.mjs"/>
+	<testcase name="PROV transport deadline includes a stalled body" time="0.015946" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-http.test.mjs"/>
+	<testcase name="PROV transport never calls fetch for unsafe URL or absent allowlist" time="0.001048" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-http.test.mjs"/>
+	<testcase name="PROV transport rejects invalid resource budgets" time="0.000444" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-http.test.mjs"/>
+	<testcase name="connector read catalog includes all provider rows exposed for sync testing" time="0.000881" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-ingestion.test.mjs"/>
+	<testcase name="connector ingestion stores are queryable in embedded test database" time="0.034568" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-ingestion.test.mjs"/>
+	<testcase name="Microsoft report ZIP parser extracts canonical CSV fields without external dependencies" time="0.000876" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-ingestion.test.mjs"/>
+	<testcase name="PROV Meta valid pagination persists each source row once and replay reconciles" time="0.123452" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV Meta repeated next cursor fails instead of reporting truncated success" time="0.012829" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV Meta configured page limit cannot advance an incomplete watermark" time="0.011029" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV Meta page-two failure preserves recoverable checkpoint and retry loads complete history" time="0.033245" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV Meta rejects missing data rather than silently succeeding" time="0.013340" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV Meta rejects object data rather than silently succeeding" time="0.012035" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV Meta rejects null data rather than silently succeeding" time="0.011511" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV Meta malformed HTTP-200 JSON records failure without advancing checkpoint" time="0.012523" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV Meta explicitly empty data is distinct from corrupt provider payload" time="0.015295" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV Google Ads rejects non-stream response object before watermark advancement" time="0.015326" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV GA4 cannot report success when declared rows are absent" time="0.014613" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV LinkedIn Ads corrupt envelope 1 fails without advancing checkpoint" time="0.014074" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV LinkedIn Ads corrupt envelope 2 fails without advancing checkpoint" time="0.012688" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV LinkedIn Ads corrupt envelope 3 fails without advancing checkpoint" time="0.011437" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV LinkedIn Ads corrupt envelope 4 fails without advancing checkpoint" time="0.013563" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV LinkedIn Ads explicitly empty native response succeeds" time="0.017942" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV TikTok Ads corrupt envelope 1 fails without advancing checkpoint" time="0.010389" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV TikTok Ads corrupt envelope 2 fails without advancing checkpoint" time="0.011424" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV TikTok Ads corrupt envelope 3 fails without advancing checkpoint" time="0.010945" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV TikTok Ads corrupt envelope 4 fails without advancing checkpoint" time="0.012021" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV TikTok Ads explicitly empty native response succeeds" time="0.010494" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV Pinterest corrupt envelope 1 fails without advancing checkpoint" time="0.010388" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV Pinterest corrupt envelope 2 fails without advancing checkpoint" time="0.010727" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV Pinterest corrupt envelope 3 fails without advancing checkpoint" time="0.011083" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV Pinterest corrupt envelope 4 fails without advancing checkpoint" time="0.011009" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV Pinterest explicitly empty native response succeeds" time="0.015361" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV X corrupt envelope 1 fails without advancing checkpoint" time="0.019300" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV X corrupt envelope 2 fails without advancing checkpoint" time="0.012959" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV X corrupt envelope 3 fails without advancing checkpoint" time="0.011806" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV X corrupt envelope 4 fails without advancing checkpoint" time="0.013383" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="PROV X explicitly empty native response succeeds" time="0.013338" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-pagination.test.mjs"/>
+	<testcase name="connector catalog publishes bounded manifests without credential values" time="0.001627" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-registry.test.mjs"/>
+	<testcase name="connector lifecycle contains explicit degraded and revoked states" time="0.000201" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-registry.test.mjs"/>
+	<testcase name="connector failure mapping distinguishes authorization rate limit transient and unknown outcome" time="0.000269" classname="test" file="/home/aceqa/execution-20261003/backend/tests/connector-registry.test.mjs"/>
+	<testcase name="capability dependency graph is acyclic and bounded" time="0.002128" classname="test" file="/home/aceqa/execution-20261003/backend/tests/control-capability.test.mjs"/>
+	<testcase name="provider catalog reports explicit configured or unconfigured health" time="0.002609" classname="test" file="/home/aceqa/execution-20261003/backend/tests/control-capability.test.mjs"/>
+	<testcase name="control API read model exposes safe operational state without secret values" time="0.013646" classname="test" file="/home/aceqa/execution-20261003/backend/tests/control-capability.test.mjs"/>
+	<testcase name="locked platform features cannot be represented as disabled by runtime feature flags" time="0.000950" classname="test" file="/home/aceqa/execution-20261003/backend/tests/control-capability.test.mjs"/>
+	<testcase name="platform change plan becomes immutable after approval" time="0.069536" classname="test" file="/home/aceqa/execution-20261003/backend/tests/control-change-store.test.mjs"/>
+	<testcase name="change state machine rejects fabricated completion" time="0.005789" classname="test" file="/home/aceqa/execution-20261003/backend/tests/control-change-store.test.mjs"/>
+	<testcase name="control idempotency replays a completed command" time="0.027726" classname="test" file="/home/aceqa/execution-20261003/backend/tests/control-idempotency.test.mjs"/>
+	<testcase name="control idempotency rejects key reuse with a different request" time="0.007937" classname="test" file="/home/aceqa/execution-20261003/backend/tests/control-idempotency.test.mjs"/>
+	<testcase name="custom object schemas are bounded and reject hostile field definitions" time="0.003407" classname="test" file="/home/aceqa/execution-20261003/backend/tests/custom-object-store.test.mjs"/>
+	<testcase name="custom object record validation rejects unknown and invalid fields" time="0.002105" classname="test" file="/home/aceqa/execution-20261003/backend/tests/custom-object-store.test.mjs"/>
+	<testcase name="published custom objects preserve old record schema versions" time="0.100567" classname="test" file="/home/aceqa/execution-20261003/backend/tests/custom-object-store.test.mjs"/>
+	<testcase name="embedded profile supports custom object APIs without pretending RLS support" time="0.000452" classname="test" file="/home/aceqa/execution-20261003/backend/tests/custom-object-store.test.mjs"/>
+	<testcase name="core mode keeps specialist infrastructure optional" time="0.002676" classname="test" file="/home/aceqa/execution-20261003/backend/tests/deployment-mode.test.mjs"/>
+	<testcase name="full mode enables optional platform profiles by default" time="0.000749" classname="test" file="/home/aceqa/execution-20261003/backend/tests/deployment-mode.test.mjs"/>
+	<testcase name="individual feature override can downgrade a larger mode" time="0.000676" classname="test" file="/home/aceqa/execution-20261003/backend/tests/deployment-mode.test.mjs"/>
+	<testcase name="unknown deployment mode fails closed" time="0.001107" classname="test" file="/home/aceqa/execution-20261003/backend/tests/deployment-mode.test.mjs"/>
+	<testcase name="only an approved immutable object version can become searchable" time="0.044196" classname="test" file="/home/aceqa/execution-20261003/backend/tests/document-processing.test.mjs"/>
+	<testcase name="drain controller refuses new tasks after drain begins" time="0.001157" classname="test" file="/home/aceqa/execution-20261003/backend/tests/drain-controller.test.mjs"/>
+	<testcase name="drain controller waits for active tasks to finish" time="0.010012" classname="test" file="/home/aceqa/execution-20261003/backend/tests/drain-controller.test.mjs"/>
+	<testcase name="drain controller times out without acknowledging unfinished work" time="0.006357" classname="test" file="/home/aceqa/execution-20261003/backend/tests/drain-controller.test.mjs"/>
+	<testcase name="egress policy blocks local and reserved addresses" time="0.013203" classname="test" file="/home/aceqa/execution-20261003/backend/tests/egress-policy.test.mjs"/>
+	<testcase name="egress policy rejects embedded credentials and unsafe schemes" time="0.000616" classname="test" file="/home/aceqa/execution-20261003/backend/tests/egress-policy.test.mjs"/>
+	<testcase name="egress policy blocks IPv4-mapped IPv6 and deprecated site-local ranges" time="0.001732" classname="test" file="/home/aceqa/execution-20261003/backend/tests/egress-policy.test.mjs"/>
+	<testcase name="every implemented acceptance control has requirement/feature/commit evidence metadata" time="0.002605" classname="test" file="/home/aceqa/execution-20261003/backend/tests/evidence-registry.test.mjs"/>
+	<testcase name="repository evidence paths exist and remain implemented rather than overclaimed" time="0.001760" classname="test" file="/home/aceqa/execution-20261003/backend/tests/evidence-registry.test.mjs"/>
+	<testcase name="evidence snapshot carries tested commit and does not claim production qualification" time="0.000875" classname="test" file="/home/aceqa/execution-20261003/backend/tests/evidence-registry.test.mjs"/>
+	<testcase name="architecture execution report separates implementation from verification" time="0.005191" classname="test" file="/home/aceqa/execution-20261003/backend/tests/execution-report.test.mjs"/>
+	<testcase name="architecture execution report keeps all acceptance controls in explicit status buckets" time="0.000581" classname="test" file="/home/aceqa/execution-20261003/backend/tests/execution-report.test.mjs"/>
+	<testcase name="every backend module has canonical feature traceability" time="0.002070" classname="test" file="/home/aceqa/execution-20261003/backend/tests/feature-traceability.test.mjs"/>
+	<testcase name="traceability maps each operation to existing implementation and test evidence" time="0.001966" classname="test" file="/home/aceqa/execution-20261003/backend/tests/feature-traceability.test.mjs"/>
+	<testcase name="operation migration is fully canonical without hiding readiness state" time="0.000220" classname="test" file="/home/aceqa/execution-20261003/backend/tests/feature-traceability.test.mjs"/>
+	<testcase name="public traceability snapshot omits private implementation paths from operation metadata" time="0.000867" classname="test" file="/home/aceqa/execution-20261003/backend/tests/feature-traceability.test.mjs"/>
+	<testcase name="migration-backed features expose concrete persistence tables where their migrations create tables" time="0.000308" classname="test" file="/home/aceqa/execution-20261003/backend/tests/feature-traceability.test.mjs"/>
+	<testcase name="form schemas are bounded and reject hostile/unrecognized field types" time="0.002193" classname="test" file="/home/aceqa/execution-20261003/backend/tests/forms-store.test.mjs"/>
+	<testcase name="submission validation rejects unknown fields and invalid values" time="0.000833" classname="test" file="/home/aceqa/execution-20261003/backend/tests/forms-store.test.mjs"/>
+	<testcase name="published forms retain versioned schema for durable submissions" time="0.079585" classname="test" file="/home/aceqa/execution-20261003/backend/tests/forms-store.test.mjs"/>
+	<testcase name="D2 volume: supplied functional source regenerates without byte drift" time="2.393921" classname="test" file="/home/aceqa/execution-20261003/backend/tests/functional-volume.test.mjs"/>
+	<testcase name="D2 volume: actual lead repository imports 10000 supplied leads and replay remains idempotent" time="2.433184" classname="test" file="/home/aceqa/execution-20261003/backend/tests/functional-volume.test.mjs"/>
+	<testcase name="D2 volume: actual event repository persists 100000 original events and deduplicates replay" time="35.868918" classname="test" file="/home/aceqa/execution-20261003/backend/tests/functional-volume.test.mjs"/>
+	<testcase name="D2 volume: persisted event types and monetary minor units match independent oracle" time="0.449393" classname="test" file="/home/aceqa/execution-20261003/backend/tests/functional-volume.test.mjs"/>
+	<testcase name="D2 volume: application readers enforce explicit workspace filters and documented caps" time="0.324418" classname="test" file="/home/aceqa/execution-20261003/backend/tests/functional-volume.test.mjs"/>
+	<testcase name="D2 provider volume: 100 campaigns and 9000 daily rows pass actual connector adapters and replay" time="31.496129" classname="test" file="/home/aceqa/execution-20261003/backend/tests/functional-volume.test.mjs"/>
+	<testcase name="golden board move slice is fully traceable through frontend backend persistence realtime and evidence" time="0.001914" classname="test" file="/home/aceqa/execution-20261003/backend/tests/golden-board-slice.test.mjs"/>
+	<testcase name="golden board move includes recovery accessibility and load evidence" time="0.000407" classname="test" file="/home/aceqa/execution-20261003/backend/tests/golden-board-slice.test.mjs"/>
+	<testcase name="golden slice snapshot is read-only engineering metadata rather than a production qualification claim" time="0.000717" classname="test" file="/home/aceqa/execution-20261003/backend/tests/golden-board-slice.test.mjs"/>
+	<testcase name="metric catalog uses explicit mappings and excludes estimates" time="0.001508" classname="test" file="/home/aceqa/execution-20261003/backend/tests/metric-catalog.test.mjs"/>
+	<testcase name="metric catalog rejects mixed currencies and reports zero denominators" time="0.000554" classname="test" file="/home/aceqa/execution-20261003/backend/tests/metric-catalog.test.mjs"/>
+	<testcase name="derived marketing metrics use one shared formula with null zero denominators" time="0.000383" classname="test" file="/home/aceqa/execution-20261003/backend/tests/metric-catalog.test.mjs"/>
+	<testcase name="backend module registry is unique owned and navigable" time="0.001104" classname="test" file="/home/aceqa/execution-20261003/backend/tests/module-registry.test.mjs"/>
+	<testcase name="registered module implementation paths and migrations exist" time="0.001109" classname="test" file="/home/aceqa/execution-20261003/backend/tests/module-registry.test.mjs"/>
+	<testcase name="module snapshot is safe engineering metadata and does not expose implementation paths" time="0.000535" classname="test" file="/home/aceqa/execution-20261003/backend/tests/module-registry.test.mjs"/>
+	<testcase name="object access policy remains role scoped" time="0.001367" classname="test" file="/home/aceqa/execution-20261003/backend/tests/object-lifecycle.test.mjs"/>
+	<testcase name="secure object lifecycle rejects mismatched upload evidence and promotes only clean scans" time="0.055301" classname="test" file="/home/aceqa/execution-20261003/backend/tests/object-lifecycle.test.mjs"/>
+	<testcase name="upload intent rejects unsafe extension and invalid digest" time="0.000814" classname="test" file="/home/aceqa/execution-20261003/backend/tests/object-lifecycle.test.mjs"/>
+	<testcase name="operation registry maps every module to owned contract and permission evidence" time="0.000989" classname="test" file="/home/aceqa/execution-20261003/backend/tests/operation-registry.test.mjs"/>
+	<testcase name="operation implementation and test paths exist" time="0.001214" classname="test" file="/home/aceqa/execution-20261003/backend/tests/operation-registry.test.mjs"/>
+	<testcase name="golden board move is canonical and the registry migration is complete" time="0.000308" classname="test" file="/home/aceqa/execution-20261003/backend/tests/operation-registry.test.mjs"/>
+	<testcase name="public operation snapshot omits implementation paths" time="0.000590" classname="test" file="/home/aceqa/execution-20261003/backend/tests/operation-registry.test.mjs"/>
+	<testcase name="outbox relay publishes only after a registered handler succeeds" time="0.031201" classname="test" file="/home/aceqa/execution-20261003/backend/tests/outbox-relay.test.mjs"/>
+	<testcase name="feature catalog is internally consistent" time="0.001080" classname="test" file="/home/aceqa/execution-20261003/backend/tests/platform-audit-catalog.test.mjs"/>
+	<testcase name="durable audit redacts obvious secret-shaped metadata keys" time="0.022495" classname="test" file="/home/aceqa/execution-20261003/backend/tests/platform-audit-catalog.test.mjs"/>
+	<testcase name="request context never trusts malformed request IDs" time="0.002259" classname="test" file="/home/aceqa/execution-20261003/backend/tests/platform-foundation.test.mjs"/>
+	<testcase name="admission control is bounded and releases exactly once" time="0.000406" classname="test" file="/home/aceqa/execution-20261003/backend/tests/platform-foundation.test.mjs"/>
+	<testcase name="problem details separates retryable server failures" time="0.000419" classname="test" file="/home/aceqa/execution-20261003/backend/tests/platform-foundation.test.mjs"/>
+	<testcase name="idempotency keys and request fingerprints are deterministic" time="0.000684" classname="test" file="/home/aceqa/execution-20261003/backend/tests/platform-foundation.test.mjs"/>
+	<testcase name="feature catalog includes governed board capability" time="0.000689" classname="test" file="/home/aceqa/execution-20261003/backend/tests/platform-foundation.test.mjs"/>
+	<testcase name="idempotency preserves the first request fingerprint and completed response" time="0.035639" classname="test" file="/home/aceqa/execution-20261003/backend/tests/platform-reliability.test.mjs"/>
+	<testcase name="outbox leasing fences publication to the lease owner" time="0.009272" classname="test" file="/home/aceqa/execution-20261003/backend/tests/platform-reliability.test.mjs"/>
+	<testcase name="inbox deduplicates provider events and detects payload conflicts" time="0.008227" classname="test" file="/home/aceqa/execution-20261003/backend/tests/platform-reliability.test.mjs"/>
+	<testcase name="policy evaluator is bounded, typed and does not execute code" time="0.003436" classname="test" file="/home/aceqa/execution-20261003/backend/tests/policy-workflow.test.mjs"/>
+	<testcase name="workflow action catalogue rejects arbitrary execution and exposes bounded contracts" time="0.001519" classname="test" file="/home/aceqa/execution-20261003/backend/tests/policy-workflow.test.mjs"/>
+	<testcase name="policy simulation is deterministic and does not retain input values" time="0.000293" classname="test" file="/home/aceqa/execution-20261003/backend/tests/policy-workflow.test.mjs"/>
+	<testcase name="workflow validator rejects cycles and unreachable nodes" time="0.000264" classname="test" file="/home/aceqa/execution-20261003/backend/tests/policy-workflow.test.mjs"/>
+	<testcase name="production persistence tests are enabled when PostgreSQL is available" time="0.104549" classname="test" file="/home/aceqa/execution-20261003/backend/tests/policy-workflow.test.mjs"/>
+	<testcase name="liveness remains independent from dependency health" time="0.000962" classname="test" file="/home/aceqa/execution-20261003/backend/tests/process-health.test.mjs"/>
+	<testcase name="startup and readiness become healthy after startup completes" time="0.000578" classname="test" file="/home/aceqa/execution-20261003/backend/tests/process-health.test.mjs"/>
+	<testcase name="readiness reports dependency failure without changing liveness" time="0.000270" classname="test" file="/home/aceqa/execution-20261003/backend/tests/process-health.test.mjs"/>
+	<testcase name="drain mode rejects readiness while keeping process live" time="0.000385" classname="test" file="/home/aceqa/execution-20261003/backend/tests/process-health.test.mjs"/>
+	<testcase name="project profile declares every canonical backend module and keeps qualification claims unverified" time="0.001997" classname="test" file="/home/aceqa/execution-20261003/backend/tests/project-profile.test.mjs"/>
+	<testcase name="project profile publishes the mandatory adoption fields" time="0.000641" classname="test" file="/home/aceqa/execution-20261003/backend/tests/project-profile.test.mjs"/>
+	<testcase name="provider deadline aborts bounded work and marks outcome uncertainty" time="0.252431" classname="test" file="/home/aceqa/execution-20261003/backend/tests/provider-execution.test.mjs"/>
+	<testcase name="provider migration requires compatibility evidence before canary" time="0.028263" classname="test" file="/home/aceqa/execution-20261003/backend/tests/provider-migration.test.mjs"/>
+	<testcase name="provider migration supports gradual canary and controlled rollback" time="0.016870" classname="test" file="/home/aceqa/execution-20261003/backend/tests/provider-migration.test.mjs"/>
+	<testcase name="provider cutover requires explicit boundary and moves to 100 percent" time="0.012050" classname="test" file="/home/aceqa/execution-20261003/backend/tests/provider-migration.test.mjs"/>
+	<testcase name="production cache migration requires capacity evidence" time="0.002076" classname="test" file="/home/aceqa/execution-20261003/backend/tests/provider-migration.test.mjs"/>
+	<testcase name="production cutover requires verification evidence" time="0.009587" classname="test" file="/home/aceqa/execution-20261003/backend/tests/provider-migration.test.mjs"/>
+	<testcase name="point of no return blocks automatic rollback" time="0.008989" classname="test" file="/home/aceqa/execution-20261003/backend/tests/provider-migration.test.mjs"/>
+	<testcase name="realtime event projection is durable ordered and tenant scoped" time="0.035183" classname="test" file="/home/aceqa/execution-20261003/backend/tests/realtime-event-store.test.mjs"/>
+	<testcase name="recovery exercises keep declared and measured objectives distinct" time="0.027057" classname="test" file="/home/aceqa/execution-20261003/backend/tests/recovery-evidence.test.mjs"/>
+	<testcase name="recovery exercise updates use optimistic concurrency" time="0.003259" classname="test" file="/home/aceqa/execution-20261003/backend/tests/recovery-evidence.test.mjs"/>
+	<testcase name="backup evidence records controls without claiming restore success" time="0.002963" classname="test" file="/home/aceqa/execution-20261003/backend/tests/recovery-evidence.test.mjs"/>
+	<testcase name="recovery summary reports measured evidence only from passed exercises" time="0.009838" classname="test" file="/home/aceqa/execution-20261003/backend/tests/recovery-evidence.test.mjs"/>
+	<testcase name="circuit breaker opens after configured failures and rejects until reset" time="0.001136" classname="test" file="/home/aceqa/execution-20261003/backend/tests/resilience.test.mjs"/>
+	<testcase name="bulkhead rejects work beyond its concurrency budget" time="0.000384" classname="test" file="/home/aceqa/execution-20261003/backend/tests/resilience.test.mjs"/>
+	<testcase name="retry budget retries transient known-safe failures only" time="0.005329" classname="test" file="/home/aceqa/execution-20261003/backend/tests/resilience.test.mjs"/>
+	<testcase name="dependency guard combines circuit and bulkhead accounting" time="0.000656" classname="test" file="/home/aceqa/execution-20261003/backend/tests/resilience.test.mjs"/>
+	<testcase name="data-plane runtime guard allows baseline when no snapshot exists" time="0.028980" classname="test" file="/home/aceqa/execution-20261003/backend/tests/runtime-config-runtime.test.mjs"/>
+	<testcase name="data-plane runtime guard blocks suspended AI admission" time="0.018318" classname="test" file="/home/aceqa/execution-20261003/backend/tests/runtime-config-runtime.test.mjs"/>
+	<testcase name="data-plane read-only emergency blocks workspace writes but not reads" time="0.010303" classname="test" file="/home/aceqa/execution-20261003/backend/tests/runtime-config-runtime.test.mjs"/>
+	<testcase name="feature disabled state blocks matching data-plane mutation" time="0.008278" classname="test" file="/home/aceqa/execution-20261003/backend/tests/runtime-config-runtime.test.mjs"/>
+	<testcase name="board feature disabled state blocks move admission" time="0.009666" classname="test" file="/home/aceqa/execution-20261003/backend/tests/runtime-config-runtime.test.mjs"/>
+	<testcase name="signed runtime snapshot verifies and locks safety features" time="0.035727" classname="test" file="/home/aceqa/execution-20261003/backend/tests/runtime-configuration.test.mjs"/>
+	<testcase name="emergency AI control is time bounded and reflected in signed snapshot" time="0.024310" classname="test" file="/home/aceqa/execution-20261003/backend/tests/runtime-configuration.test.mjs"/>
+	<testcase name="tampered runtime snapshots fail closed" time="0.010660" classname="test" file="/home/aceqa/execution-20261003/backend/tests/runtime-configuration.test.mjs"/>
+	<testcase name="latest runtime snapshot exposes one active version per environment" time="0.016828" classname="test" file="/home/aceqa/execution-20261003/backend/tests/runtime-configuration.test.mjs"/>
+	<testcase name="default API role remains unrestricted for compatibility" time="0.000856" classname="test" file="/home/aceqa/execution-20261003/backend/tests/runtime-role.test.mjs"/>
+	<testcase name="integration ingress exposes only verified provider ingress routes" time="0.000251" classname="test" file="/home/aceqa/execution-20261003/backend/tests/runtime-role.test.mjs"/>
+	<testcase name="unknown runtime roles fail closed" time="0.000352" classname="test" file="/home/aceqa/execution-20261003/backend/tests/runtime-role.test.mjs"/>
+	<testcase name="search port advertises explicit reduced capability profile" time="0.001299" classname="test" file="/home/aceqa/execution-20261003/backend/tests/search-port.test.mjs"/>
+	<testcase name="search results enforce workspace and role policy before returning snippets" time="0.044914" classname="test" file="/home/aceqa/execution-20261003/backend/tests/search-port.test.mjs"/>
+	<testcase name="workspace IDs are normalized and bounded" time="0.001615" classname="test" file="/home/aceqa/execution-20261003/backend/tests/tenant-context.test.mjs"/>
+	<testcase name="caller workspace scope is parsed but actor authority remains decisive" time="0.000462" classname="test" file="/home/aceqa/execution-20261003/backend/tests/tenant-context.test.mjs"/>
+	<testcase name="tenant execution scope binds verified actor and workspace" time="0.001298" classname="test" file="/home/aceqa/execution-20261003/backend/tests/tenant-context.test.mjs"/>
+	<testcase name="tenant database context executes in a bounded transaction" time="0.024146" classname="test" file="/home/aceqa/execution-20261003/backend/tests/tenant-db.test.mjs"/>
+	<testcase name="system database context is available for cross-tenant workers" time="0.003279" classname="test" file="/home/aceqa/execution-20261003/backend/tests/tenant-db.test.mjs"/>
+	<testcase name="production RLS migration is intentionally skipped only by embedded pg-mem" time="0.000490" classname="test" file="/home/aceqa/execution-20261003/backend/tests/tenant-db.test.mjs"/>
+	<testcase name="pooled tenant context is transaction-local and clears after commit" time="0.006433" classname="test" file="/home/aceqa/execution-20261003/backend/tests/tenant-db.test.mjs"/>
+	<testcase name="pooled tenant context clears after rollback and cannot leak to the next operation" time="0.006570" classname="test" file="/home/aceqa/execution-20261003/backend/tests/tenant-db.test.mjs"/>
+	<testcase name="tracked events persist durably and are tenant scoped" time="0.095823" classname="test" file="/home/aceqa/execution-20261003/backend/tests/tracked-events.test.mjs"/>
+	<testcase name="embedded profile keeps usage-ledger APIs safe without pretending RLS support" time="0.000643" classname="test" file="/home/aceqa/execution-20261003/backend/tests/usage-ledger.test.mjs"/>
+	<testcase name="quota reservations remain atomic and ledger-backed on PostgreSQL" time="0.052839" classname="test" file="/home/aceqa/execution-20261003/backend/tests/usage-ledger.test.mjs"/>
+	<testcase name="webhook subscriptions return signing secret once and metadata views redact it" time="0.038768" classname="test" file="/home/aceqa/execution-20261003/backend/tests/webhook-delivery.test.mjs"/>
+	<testcase name="webhook delivery deduplicates event identity and supports pause resume and replay" time="0.047001" classname="test" file="/home/aceqa/execution-20261003/backend/tests/webhook-delivery.test.mjs"/>
+	<testcase name="webhook dispatcher signs and records successful delivery without exposing secrets" time="0.091585" classname="test" file="/home/aceqa/execution-20261003/backend/tests/webhook-delivery.test.mjs"/>
+	<testcase name="permanent receiver failures dead-letter instead of blind retry" time="0.015125" classname="test" file="/home/aceqa/execution-20261003/backend/tests/webhook-delivery.test.mjs"/>
+	<testcase name="webhook signatures bind timestamp, delivery id and exact body" time="0.001370" classname="test" file="/home/aceqa/execution-20261003/backend/tests/webhook-signing.test.mjs"/>
+	<testcase name="worker classes are explicit and bounded" time="0.002513" classname="test" file="/home/aceqa/execution-20261003/backend/tests/worker-class.test.mjs"/>
+	<testcase name="general worker excludes isolated provider and document work" time="0.000413" classname="test" file="/home/aceqa/execution-20261003/backend/tests/worker-class.test.mjs"/>
+	<testcase name="workflow worker leases durable workflow work only" time="0.000351" classname="test" file="/home/aceqa/execution-20261003/backend/tests/worker-class.test.mjs"/>
+	<testcase name="webhook worker leases webhook deliveries only" time="0.000198" classname="test" file="/home/aceqa/execution-20261003/backend/tests/worker-class.test.mjs"/>
+	<testcase name="ai-document worker contains expensive or provider-bound job classes" time="0.000210" classname="test" file="/home/aceqa/execution-20261003/backend/tests/worker-class.test.mjs"/>
+	<testcase name="unknown worker class fails closed" time="0.000499" classname="test" file="/home/aceqa/execution-20261003/backend/tests/worker-class.test.mjs"/>
+	<testcase name="queue leasing can isolate webhook jobs from the general worker pool" time="0.038273" classname="test" file="/home/aceqa/execution-20261003/backend/tests/worker-leasing.test.mjs"/>
+	<testcase name="workspace membership matches active user identity, not caller scope text" time="0.001181" classname="test" file="/home/aceqa/execution-20261003/backend/tests/workspace-access.test.mjs"/>
+	<testcase name="workspace creator seeding is additive and idempotent" time="0.000558" classname="test" file="/home/aceqa/execution-20261003/backend/tests/workspace-access.test.mjs"/>
+	<testcase name="backend source does not import frontend implementation or browser-only authority" time="0.029761" classname="test" file="/home/aceqa/execution-20261003/tests/architecture/dependency-boundaries.test.mjs"/>
+	<testcase name="frontend sources do not import server database cloud SDKs or backend internals" time="0.091373" classname="test" file="/home/aceqa/execution-20261003/tests/architecture/dependency-boundaries.test.mjs"/>
+	<testcase name="canonical production profiles preserve locked durability and security controls" time="0.000985" classname="test" file="/home/aceqa/execution-20261003/tests/architecture/dependency-boundaries.test.mjs"/>
+	<testcase name="foundation compatibility policy is complete and repository-backed" time="0.001975" classname="test" file="/home/aceqa/execution-20261003/tests/architecture/reuse-governance.test.mjs"/>
+	<testcase name="breaking removals require notice, migration guidance and compatibility evidence" time="0.000258" classname="test" file="/home/aceqa/execution-20261003/tests/architecture/reuse-governance.test.mjs"/>
+	<testcase name="reference product status does not self-certify production qualification" time="0.000235" classname="test" file="/home/aceqa/execution-20261003/tests/architecture/reuse-governance.test.mjs"/>
+	<testcase name="forms custom objects and search remain workspace isolated" time="0.069967" classname="test" file="/home/aceqa/execution-20261003/tests/security/cross-tenant-platform-isolation.test.mjs"/>
+	<testcase name="tenant-scoped usage APIs never return another workspace ledger rows" time="0.049965" classname="test" file="/home/aceqa/execution-20261003/tests/security/tenant-isolation.test.mjs"/>
+	<testcase name="workspace identity must be explicit and bounded before tenant transaction use" time="0.001565" classname="test" file="/home/aceqa/execution-20261003/tests/security/tenant-isolation.test.mjs"/>
+	<!-- tests 346 -->
+	<!-- suites 0 -->
+	<!-- pass 346 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 82466.341393 -->
+</testsuites>

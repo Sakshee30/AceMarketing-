@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,CheckCircle2,ChevronRight,Plus,RadioTower,ShieldCheck,Sparkles,X,Zap} from 'lucide-react'
 import {eventsApi} from '../data/events.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -25,7 +25,7 @@ export default function EventsPage(){
  useDirtyWork({key:'events-rule-draft',label:'Conversion event rule',dirty:builder,scope:'feature'})
 
  const load=async()=>{
-  setLoading(true)
+  beginLoading(setLoading)
   try{
    const r:any=await eventsApi.load()
    setData(r)

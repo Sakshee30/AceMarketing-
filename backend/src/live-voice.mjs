@@ -12,6 +12,11 @@ const pool=databaseUrl?new Pool({
   connectionTimeoutMillis:Number(process.env.DB_CONNECT_TIMEOUT_MS||5000),
   ...(process.env.DB_SSL==='require'?{ssl:{rejectUnauthorized:false}}:{})
 }):null
+// See database.mjs: an unhandled connection-loss event would terminate the process.
+if(pool){
+  pool.on('error',error=>console.error('[live-voice] idle connection lost: '+error.message))
+  pool.on('connect',client=>client.on('error',error=>console.error('[live-voice] connection lost: '+error.message)))
+}
 
 const sessions=new Map()
 const maxDurationMs=()=>Math.max(60_000,Math.min(Number(process.env.AI_LIVE_VOICE_MAX_DURATION_MS||30*60*1000),60*60*1000))

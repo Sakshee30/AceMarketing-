@@ -1,0 +1,100 @@
+[
+  [
+    "ROLE MAPPING",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Neutral fixture schema. Actual field, ID, status and permission mappings must be approved before import.",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Logical Persona",
+    "Intended Test Responsibility",
+    "Actual App Role",
+    "Mapping Approval",
+    "Notes"
+  ],
+  [
+    "owner",
+    "Workspace settings and membership management",
+    "UNRESOLVED",
+    "Required",
+    "Do not create a new role merely to match this fixture"
+  ],
+  [
+    "administrator",
+    "Operational administration",
+    "UNRESOLVED",
+    "Required",
+    "Do not create a new role merely to match this fixture"
+  ],
+  [
+    "marketing_operator",
+    "Lead/campaign operations without platform control",
+    "UNRESOLVED",
+    "Required",
+    "Do not create a new role merely to match this fixture"
+  ],
+  [
+    "analyst",
+    "Read approved metrics; no activation",
+    "UNRESOLVED",
+    "Required",
+    "Do not create a new role merely to match this fixture"
+  ],
+  [
+    "viewer",
+    "Read permitted resources only",
+    "UNRESOLVED",
+    "Required",
+    "Do not create a new role merely to match this fixture"
+  ],
+  [
+    "approver",
+    "Approve allowed requests subject to separation of duties",
+    "UNRESOLVED",
+    "Required",
+    "Do not create a new role merely to match this fixture"
+  ],
+  [
+    "support_operator",
+    "Restricted support view",
+    "UNRESOLVED",
+    "Required",
+    "Do not create a new role merely to match this fixture"
+  ],
+  [
+    "billing_operator",
+    "Billing only when entitled",
+    "UNRESOLVED",
+    "Required",
+    "Do not create a new role merely to match this fixture"
+  ]
+]

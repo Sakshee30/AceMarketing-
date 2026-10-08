@@ -1,0 +1,263 @@
+[
+  [
+    "23 UPLOAD TEST ASSETS",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Native, image-only, encrypted and intentionally invalid files are separate scenarios. Paths are relative to package root.",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Fixture ID",
+    "Class",
+    "File",
+    "Format",
+    "Bytes",
+    "Expected handling",
+    "Special handling"
+  ],
+  [
+    "UPLOAD-001",
+    "negative",
+    "D5_security_files/uploads/negative/at_limit_1MiB_policy.txt",
+    "txt",
+    "1048576",
+    "Proposed 1 MiB limit: accept below/at and reject above, only if text/plain is allowed",
+    "Assumed test limit; replace or regenerate at actual application limit"
+  ],
+  [
+    "UPLOAD-002",
+    "negative",
+    "D5_security_files/uploads/negative/below_limit_1MiB_policy.txt",
+    "txt",
+    "1048575",
+    "Proposed 1 MiB limit: accept below/at and reject above, only if text/plain is allowed",
+    "Assumed test limit; replace or regenerate at actual application limit"
+  ],
+  [
+    "UPLOAD-003",
+    "negative",
+    "D5_security_files/uploads/negative/invalid_leads.csv",
+    "csv",
+    "5717",
+    "Evaluate each row using D5_security_files/negative_cases.json; includes valid Unicode control",
+    "Read as text; harmless formula literals may evaluate in a spreadsheet"
+  ],
+  [
+    "UPLOAD-004",
+    "negative",
+    "D5_security_files/uploads/negative/malformed.csv",
+    "csv",
+    "47",
+    "Reject or safely quarantine; no server crash, side effect or false success",
+    "Negative test only; never bulk seed"
+  ],
+  [
+    "UPLOAD-005",
+    "negative",
+    "D5_security_files/uploads/negative/malformed.json",
+    "json",
+    "25",
+    "Reject or safely quarantine; no server crash, side effect or false success",
+    "Negative test only; never bulk seed"
+  ],
+  [
+    "UPLOAD-006",
+    "negative",
+    "D5_security_files/uploads/negative/over_limit_1MiB_policy.txt",
+    "txt",
+    "1048577",
+    "Proposed 1 MiB limit: accept below/at and reject above, only if text/plain is allowed",
+    "Assumed test limit; replace or regenerate at actual application limit"
+  ],
+  [
+    "UPLOAD-007",
+    "negative",
+    "D5_security_files/uploads/negative/text_disguised_as.pdf",
+    "pdf",
+    "71",
+    "Reject or safely quarantine; no server crash, side effect or false success",
+    "Negative test only; never bulk seed"
+  ],
+  [
+    "UPLOAD-008",
+    "negative",
+    "D5_security_files/uploads/negative/truncated.pdf",
+    "pdf",
+    "34",
+    "Reject or safely quarantine; no server crash, side effect or false success",
+    "Negative test only; never bulk seed"
+  ],
+  [
+    "UPLOAD-009",
+    "negative",
+    "D5_security_files/uploads/negative/zero_byte.pdf",
+    "pdf",
+    "0",
+    "Reject or safely quarantine; no server crash, side effect or false success",
+    "Negative test only; never bulk seed"
+  ],
+  [
+    "UPLOAD-010",
+    "valid_or_controlled",
+    "D5_security_files/uploads/valid/approval_policy.docx",
+    "docx",
+    "38944",
+    "Accept only when the mapped MIME/size policy permits; authorize, process and preserve tenant scope.",
+    "Supported file-format mapping required"
+  ],
+  [
+    "UPLOAD-011",
+    "valid_or_controlled",
+    "D5_security_files/uploads/valid/campaign_brief.docx",
+    "docx",
+    "39350",
+    "Accept only when the mapped MIME/size policy permits; authorize, process and preserve tenant scope.",
+    "Supported file-format mapping required"
+  ],
+  [
+    "UPLOAD-012",
+    "valid_or_controlled",
+    "D5_security_files/uploads/valid/encrypted_invoice.pdf",
+    "pdf",
+    "44909",
+    "Recognize password gate; no false extraction success; optional authorized password workflow",
+    "Test password: QAOnlyUser-2026"
+  ],
+  [
+    "UPLOAD-013",
+    "valid_or_controlled",
+    "D5_security_files/uploads/valid/image_only_invoice.pdf",
+    "pdf",
+    "85347",
+    "Image-based extraction against DOC-INVOICE oracle; no fabricated native-text claim",
+    "Supported file-format mapping required"
+  ],
+  [
+    "UPLOAD-014",
+    "valid_or_controlled",
+    "D5_security_files/uploads/valid/invoice_image.png",
+    "png",
+    "71916",
+    "Image-based extraction against DOC-INVOICE oracle; no fabricated native-text claim",
+    "Supported file-format mapping required"
+  ],
+  [
+    "UPLOAD-015",
+    "valid_or_controlled",
+    "D5_security_files/uploads/valid/leads_import_100.csv",
+    "csv",
+    "30924",
+    "Accept only when the mapped MIME/size policy permits; authorize, process and preserve tenant scope.",
+    "Neutral 100-row import sample; same IDs as D2 sample, not extra records"
+  ],
+  [
+    "UPLOAD-016",
+    "valid_or_controlled",
+    "D5_security_files/uploads/valid/leads_import_100.xlsx",
+    "xlsx",
+    "11879",
+    "Accept only when the mapped MIME/size policy permits; authorize, process and preserve tenant scope.",
+    "Neutral 100-row import sample; same IDs as D2 sample, not extra records"
+  ],
+  [
+    "UPLOAD-017",
+    "valid_or_controlled",
+    "D5_security_files/uploads/valid/support_knowledge_base.docx",
+    "docx",
+    "38655",
+    "Accept only when the mapped MIME/size policy permits; authorize, process and preserve tenant scope.",
+    "Supported file-format mapping required"
+  ],
+  [
+    "UPLOAD-018",
+    "valid_or_controlled",
+    "D5_security_files/uploads/valid/synthetic_invoice.pdf",
+    "pdf",
+    "44138",
+    "Accept only when the mapped MIME/size policy permits; authorize, process and preserve tenant scope.",
+    "Supported file-format mapping required"
+  ],
+  [
+    "UPLOAD-019",
+    "valid_or_controlled",
+    "D5_security_files/uploads/valid/synthetic_marketing_report.pdf",
+    "pdf",
+    "44052",
+    "Accept only when the mapped MIME/size policy permits; authorize, process and preserve tenant scope.",
+    "Supported file-format mapping required"
+  ],
+  [
+    "UPLOAD-020",
+    "valid_or_controlled",
+    "D5_security_files/uploads/valid/tenant_a_private.txt",
+    "txt",
+    "206",
+    "Only tenant A may read; canary absent from tenant B results",
+    "Supported file-format mapping required"
+  ],
+  [
+    "UPLOAD-021",
+    "valid_or_controlled",
+    "D5_security_files/uploads/valid/tenant_b_private.txt",
+    "txt",
+    "206",
+    "Only tenant B may read; canary absent from tenant A results",
+    "Supported file-format mapping required"
+  ],
+  [
+    "UPLOAD-022",
+    "valid_or_controlled",
+    "D5_security_files/uploads/valid/unicode_roundtrip.txt",
+    "txt",
+    "273",
+    "Preserve/normalize under approved policy without replacement-glyph corruption",
+    "Supported file-format mapping required"
+  ],
+  [
+    "UPLOAD-023",
+    "valid_or_controlled",
+    "D5_security_files/uploads/valid/untrusted_instructions.txt",
+    "txt",
+    "376",
+    "Process as untrusted content; never follow embedded instructions",
+    "Supported file-format mapping required"
+  ]
+]

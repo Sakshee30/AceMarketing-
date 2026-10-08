@@ -1,0 +1,6 @@
+
+> ace-marketing@0.1.0 backend:architecture
+> node scripts/backend-architecture-check.mjs && node scripts/contracts-check.mjs
+
+Backend architecture boundaries verified.
+[contracts] platform contracts and production profiles are structurally valid

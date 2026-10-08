@@ -1,0 +1,1440 @@
+{
+  "note": "Literal route candidates only; regex/dynamic routes and semantics require reconciliation.",
+  "candidates": [
+    {
+      "file": "backend/src/index.mjs",
+      "line": 628,
+      "source": "if(url.pathname==='/api/consent'){"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 645,
+      "source": "if(req.method==='POST'&&url.pathname==='/api/billing/webhook'){"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 655,
+      "source": "if(req.method==='GET'&&url.pathname==='/api/webhooks/whatsapp'){"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 666,
+      "source": "if(req.method==='POST'&&url.pathname==='/api/webhooks/whatsapp'){"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 740,
+      "source": "if(req.method==='POST'&&url.pathname==='/api/webhooks/calls'){"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 809,
+      "source": "if(req.method==='GET'&&url.pathname==='/api/integrations/oauth/callback'){"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 854,
+      "source": "}else if(AUTH_REQUIRED||url.pathname==='/api/auth/me'){"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 901,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/health') return send(req,res,200,{ok:true,service:runtimeRole.role==='integration-ingress'?'ace-marketing-integration-ingress':'ace-marketing-api',time:new Date().toISOString(),requestId:req.requestId})"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 902,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/dashboard-summary') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1036,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/ready') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1042,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/public/navigation') return send(req,res,200,publicNavigation)"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1043,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/public/industries') return send(req,res,200,{items:publicIndustries})"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1044,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/public/agents') return send(req,res,200,{items:publicAgents})"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1045,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/public/integrations') return send(req,res,200,{groups:publicIntegrations})"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1046,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/public/connector-requests') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1070,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/public/challenges') return send(req,res,200,{items:publicChallenges})"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1071,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/public/case-studies') return send(req,res,200,{items:publicCaseStudies})"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1072,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/public/resources') return send(req,res,200,{items:publicResources})"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1073,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/public/resource-center') return send(req,res,200,publicResourceCenter)"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1074,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/ctwa-attribution') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1112,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/call-events') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1116,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/whatsapp/messages') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1120,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/whatsapp/messages') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1159,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/pricing/recommend') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1168,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/pricing/quote') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1180,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/auth/login') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1198,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/auth/google/start') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1220,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/auth/google/callback') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1279,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/auth/google/exchange') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1307,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/auth/password/forgot') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1316,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/auth/password/reset') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1325,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/auth/logout') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1334,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/auth/me') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1337,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/auth/workspace/switch') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1376,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/members') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1380,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/members/invite') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1400,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/members/role') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1415,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/members/deactivate') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1428,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/invitations/activate') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1448,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/demo-requests') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1455,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/demo-bookings') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1484,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/workspace/overview') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1502,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/integrations') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1534,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/integrations/sync-schedules') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1538,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/integrations/sync-schedules') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1553,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/integrations/sync-runs') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1559,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/integrations/data-summary') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1562,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/integrations/sync') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1591,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/integration-flows') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1598,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/integration-flows') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1635,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/integration-flows/test') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1671,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/integration-flows/toggle') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1701,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/integration-requests') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1728,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/webhook-subscriptions'){"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1731,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/webhook-subscriptions'){"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1791,
+      "source": "if(req.method==='GET'&&url.pathname==='/api/webhook-deliveries'){"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1818,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/custom-integrations') return send(req,res,200,{items:await listCustomIntegrations(workspaceId)})"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1819,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/custom-integrations/test') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1829,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/custom-integrations') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1838,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/integrations/connect-secret') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1868,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/integrations/connect') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1907,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/integrations/oauth/callback') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1955,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/integrations/oauth/callback') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 1995,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/integrations/refresh') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2004,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/integrations/disconnect') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2018,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/ask-ace') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2248,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/events') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2264,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/events/rules') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2271,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/events/rules/toggle') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2277,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/adjustments') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2281,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/adjustments') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2317,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/adjustments/preview') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2332,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/adjustments/apply') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2346,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/fingerprinting') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2360,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/fingerprinting/test') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2370,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/fingerprinting/matches') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2374,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/sites') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2407,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/sites') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2428,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/sites/test') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2442,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/sites/debug') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2450,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/match-quality') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2523,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/fraud') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2543,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/fraud/block') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2550,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/fraud/review') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2565,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/deep-links') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2576,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/deep-links') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2590,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/deep-links/event') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2597,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/deep-links/activate') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2604,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/reconciliation') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2652,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/reconciliation/action') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2690,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/diagnostics') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2711,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/diagnostics/scan') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2735,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/diagnostics/replay') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2750,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/leak-monitor') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2838,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/leak-monitor/settings') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2851,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/leak-monitor/recover') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2867,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/funnel') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 2974,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/data-hub') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3030,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/data-hub/rebuild') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3056,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/live-sync') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3109,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/matchback') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3123,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/matchback/rules') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3143,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/matchback/rules/toggle') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3153,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/matchback/unmatched') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3157,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/matchback/reconcile') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3175,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/pos-stores') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3188,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/pos-stores/import') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3256,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/offline-attribution') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3291,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/offline-attribution/rules') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3311,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/offline-attribution/rules/toggle') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3321,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/offline-attribution/test') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3354,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/personalization-rules') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3369,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/personalization-rules') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3389,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/personalization-rules/toggle') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3399,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/personalization/decide') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3433,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/personalization/feedback') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3450,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/activation-rules') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3457,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/activation-rules') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3498,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/activation-rules/toggle') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3508,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/activation-rules/test') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3516,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/track') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3665,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/assisted-events') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3672,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/attribution-identity/stats') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3677,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/journeys') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3755,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/customer-360') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3872,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/planner') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3902,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/planner/scenarios') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3921,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/grouped-performance') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 3989,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/grouped-performance/costs') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4012,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/cohorts') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4016,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/report-schedules') return send(req,res,200,{configured:reportMailConfigured(),items:await listReportSchedules(workspaceId),deliveries:await listReportDeliveries(workspaceId,30)})"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4017,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/report-schedules') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4022,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/report-schedules/run-now') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4028,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/reports') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4032,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/reports/send-test') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4037,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/attribution') return send(req,res,200,await attributionStats(workspaceId))"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4038,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/agents') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4074,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/enrich') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4078,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/enrich/upsert') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4084,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/enrich/writeback') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4093,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/lead-grading/score') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4097,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/lead-grading') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4101,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/lead-grading/override') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4107,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/lead-grading/activate') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4172,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/behavior') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4216,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/feed') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4230,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/feed/attributes') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4238,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/feed/mappings') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4259,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/feed/mappings/toggle') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4269,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/feed/preview') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4297,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/solutions') return send(req,res,200,{items:['Agency','Lead Generation','Enterprise','Mid Market Brand','Attribution Model','Alerts and Monitoring','Server to Server Integration']})"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4298,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/exclusions') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4324,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/exclusions/create') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4347,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/audiences/preview') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4353,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/audiences') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4361,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/audiences/materialize') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4367,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/audiences/sync') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4385,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/audience-schedules') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4388,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/audience-schedules') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4396,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/activation-runs') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4399,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/audiences') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4404,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/alerts') return send(req,res,200,{items:await listLiveAlerts(workspaceId)})"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4405,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/alerts/resolve') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4411,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/chatgpt-ads') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4429,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/chatgpt-ads/validate') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4438,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/chatgpt-ads/send') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4467,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/signal-deliveries') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4478,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/signal-deliveries/dispatch') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4533,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/signal-deliveries/retry') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4563,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/signal-deliveries/replay-dlq') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4593,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/connector-health') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4598,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/webhooks/deliveries') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4602,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/webhooks/endpoints') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4606,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/webhooks/endpoints') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4631,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/webhooks/retry') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4651,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/webhooks/secret/rotate') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4663,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/compliance-center') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4720,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/consent/stats') return send(req,res,200,{stats:await consentStats(workspaceId),audit:await listConsentAudit(workspaceId,50)})"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4721,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/privacy/requests') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4725,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/privacy/export') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4731,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/privacy/delete') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4737,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/privacy/retention/purge') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4743,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/monitoring') return send(req,res,200,await monitoringSnapshot(workspaceId))"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4744,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/billing/usage') return send(req,res,200,await handleEvaluateEntitlement({workspaceId}))"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4745,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/billing/subscription') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4749,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/billing/checkout') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4756,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/billing/portal') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4761,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/billing/entitlements') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4769,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/signal-console') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4810,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/resources') return send(req,res,200,{items:['Custom Events','Server-Side Activation','Attribution','CRM Enrichment','Offline Conversion Tracking','Audience Operations']})"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4811,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/ai-action') return send(req,res,200,{steps:["
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4819,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/source-notes') return send(req,res,200,{notes:["
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4822,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/case-studies') return send(req,res,200,{items:["
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4828,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/event-templates') return send(req,res,200,{items:['Pricing-page Lead','High-value Purchase','Prepaid Order','Fulfilled Order','Returned Order','Partial Payment']})"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4829,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/consent-preferences') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4843,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/monitoring-rules') return send(req,res,200,{items:await listLiveMonitoringRules(workspaceId)})"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4844,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/monitoring-rules') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4849,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/security-posture') return send(req,res,200,{controls:["
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4856,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/launchpad') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4897,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/launchpad') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4907,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/identity') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4952,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/ai/metrics/catalog') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4955,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/ai/datasets') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 4961,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/ai/datasets') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5036,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/ai/task-policies') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5051,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/ai/activation-proposals') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5057,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/ai/activation-proposals') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5138,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/ai/transcripts') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5142,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/ai/creative-assets') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5156,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/ai/registry') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5170,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/ai/monitoring') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5178,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/ai/deployment-controls') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5247,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/ai/live-voice/sessions') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5277,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/ai/evaluations') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5283,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/ai/evaluation-policy') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5289,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/ai/evaluation-policy') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5346,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/ai/knowledge') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5350,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/ai/knowledge') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5373,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/ai/knowledge/search') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5391,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/ai/ml/capabilities') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5465,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/ai/forecast-records') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5471,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/ai/causal-records') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5476,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/ai/marketing-mix-records') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5481,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/ai/anomalies') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5499,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/ai/segments') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5510,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/ai/rankings') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5516,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/ai/results') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5585,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/ai/analyst/tools') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5669,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/ai/analysis') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5758,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/models') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5770,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/models') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5795,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/models/run') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5840,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/models/validation') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5847,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/routing') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5877,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/routing/rules') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5884,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/routing/rules/toggle') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5891,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/routing/test') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5906,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/lead-reactivation') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5913,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/lead-reactivation/run') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5939,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/follow-ups') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5949,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/follow-ups') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5954,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/follow-ups/complete') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5960,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/voice-scheduler') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5964,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/voice-scheduler') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5990,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/qualification-calls') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 5994,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/qualification-calls/retry') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6001,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/qualification-calls') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6008,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/meetings') return send(req,res,200,{items:await listPersistedMeetings(workspaceId)})"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6009,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/meetings') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6031,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/meetings/reschedule') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6052,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/meetings/remind') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6072,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/feedback') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6087,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/feedback') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6093,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/feedback/request') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6100,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/feedback/route') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6131,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/agent-runs') return send(req,res,200,{items:await listAgentRuns(workspaceId,200)})"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6132,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/approvals') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6136,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/approvals/decision') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6156,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/agents/custom') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6173,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/agents/custom/test') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6217,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/settings') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6221,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/settings') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6233,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/workspaces') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6239,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/workspaces') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6265,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/audit-log') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6275,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/audit-log/export') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6289,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/api-keys') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6302,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/api-keys') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6321,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/api-keys/revoke') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6341,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/files') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6345,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/files/upload-intents') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6475,
+      "source": "if(req.method==='GET'&&url.pathname==='/api/search'){"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6534,
+      "source": "if (req.method === 'GET' && url.pathname === '/api/forms') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6538,
+      "source": "if (req.method === 'POST' && url.pathname === '/api/forms') {"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6609,
+      "source": "if(req.method==='GET'&&url.pathname==='/api/custom-objects'){"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6613,
+      "source": "if(req.method==='POST'&&url.pathname==='/api/custom-objects'){"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6678,
+      "source": "if(req.method==='GET'&&url.pathname==='/api/policy-rules'){"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6681,
+      "source": "if(req.method==='POST'&&url.pathname==='/api/policy-rules/simulate'){"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6689,
+      "source": "if(req.method==='POST'&&url.pathname==='/api/policy-rules'){"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6743,
+      "source": "if(req.method==='GET'&&url.pathname==='/api/boards'){"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6752,
+      "source": "if(req.method==='POST'&&url.pathname==='/api/boards'){"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6818,
+      "source": "if(req.method==='GET'&&url.pathname==='/api/workflows/actions'){"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6821,
+      "source": "if(req.method==='POST'&&url.pathname==='/api/workflows/simulate'){"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6829,
+      "source": "if(req.method==='GET'&&url.pathname==='/api/workflows'){"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6832,
+      "source": "if(req.method==='POST'&&url.pathname==='/api/workflows'){"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6842,
+      "source": "if(req.method==='GET'&&url.pathname==='/api/workflows/executions'){"
+    },
+    {
+      "file": "backend/src/index.mjs",
+      "line": 6845,
+      "source": "if(req.method==='GET'&&url.pathname==='/api/workflows/approvals'){"
+    }
+  ]
+}

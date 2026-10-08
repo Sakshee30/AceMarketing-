@@ -1,0 +1,24 @@
+PASS network-isolation Loopback-only namespace; external connection denied
+PASS systemd exit=0; see systemd.log
+PASS all-runtime-syntax 337 files checked
+PASS independent-oracles exit=0; see independent-oracles.log
+PASS release-gate-self-tests exit=0; see release-gate-self-tests.log
+PASS migrations exit=0; see migrations.log
+PASS migration-idempotency exit=0; see migration-idempotency.log
+PASS native-regression exit=0; see native-regression.log
+PASS typecheck exit=0; see typecheck.log
+PASS production-bundle exit=0; see production-bundle.log
+PASS backend-architecture exit=0; see backend-architecture.log
+PASS customer-bundle exit=0; see customer-bundle.log
+PASS public-bundle exit=0; see public-bundle.log
+PASS control-bundle exit=0; see control-bundle.log
+PASS fixture-seed exit=0; see fixture-seed.log
+PASS authenticated-api-startup Real API: NODE_ENV=production; auth enabled; restricted PostgreSQL role
+PASS authenticated-api exit=0; see authenticated-api.log
+FAIL production-browser exit=1; see production-browser.log
+PASS worker-runtime Worker liveness only; business completion checked in API suite
+PASS backup-smoke exit=0; see backup-smoke.log
+PASS restore-smoke exit=0; see restore-smoke.log
+PASS restore-content-reconciliation exit=0; see restore-content-reconciliation.log
+PASS restored-authenticated-api exit=0; see restored-authenticated-api.log
+356 source scenarios retained; no blanket acceptance pass granted.

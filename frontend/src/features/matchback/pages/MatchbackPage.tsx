@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {CheckCircle2,ChevronRight,CircleDollarSign,RadioTower,ShieldCheck,Sparkles,X} from 'lucide-react'
 import {matchbackApi} from '../data/matchback.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -27,7 +27,7 @@ export default function MatchbackPage(){
  useDirtyWork({key:'matchback-rule-draft',label:'Matchback rule draft',dirty:builder,scope:'feature'})
 
  const load=async()=>{
-  setLoading(true)
+  beginLoading(setLoading)
   try{
    const r:any=await matchbackApi.load()
    setData(r)

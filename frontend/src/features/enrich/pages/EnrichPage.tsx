@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,CheckCircle2,ChevronRight,DatabaseZap,RadioTower,Search,ShieldCheck,Target} from 'lucide-react'
 import {enrichApi} from '../data/enrich.api'
 import {ErrorState,LoadingState,StaleState} from '../../../components/system/FrontendStates'
@@ -18,7 +18,7 @@ export default function EnrichPage(){
  const [notice,setNotice]=useState<Notice>({kind:'',text:''})
 
  const load=async()=>{
-  setLoading(true)
+  beginLoading(setLoading)
   try{
    const r:any=await enrichApi.load()
    setLive(r)

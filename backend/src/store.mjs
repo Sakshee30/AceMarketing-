@@ -135,25 +135,76 @@ const ensurePostgresState=async(id,client=pool)=>{
   )
 }
 
+// The workspace row is one large JSON document. Downloading and parsing it on every
+// request costs seconds once it holds real history, so the parsed copy is reused for
+// as long as the row's version is unchanged. Other processes bump the version.
+const stateCache=new Map()
+const stateCacheLimit=Number(process.env.STATE_CACHE_WORKSPACES||32)
+const stamp=row=>String(row.version)+'|'+new Date(row.updated_at).getTime()
+const rememberState=(id,row,state)=>{
+  stateCache.delete(id)
+  stateCache.set(id,{stamp:stamp(row),state})
+  if(stateCache.size>stateCacheLimit)stateCache.delete(stateCache.keys().next().value)
+}
+
+// Callers get a private copy of the state, but copying the whole document for every
+// request blocks the event loop for hundreds of milliseconds. A lazy copy clones each
+// top-level key only when it is first read.
+const lazyCopy=source=>{
+  const copies=new Map()
+  const view={}
+  for(const key of Object.keys(source))Object.defineProperty(view,key,{
+    enumerable:true,configurable:true,
+    get(){if(!copies.has(key))copies.set(key,structuredClone(source[key]));return copies.get(key)},
+    set(value){copies.set(key,value)}
+  })
+  return {view,copies}
+}
+// The document a lazy copy now represents. Keys that were never read are shared with the source.
+const materialize=({view,copies},source)=>{
+  const document={}
+  for(const key of Object.keys(view)){
+    const property=Object.getOwnPropertyDescriptor(view,key)
+    document[key]=property.get?(copies.has(key)?copies.get(key):source[key]):property.value
+  }
+  return document
+}
+
 const getPostgresState=async id=>{
+  const cached=stateCache.get(id)
+  if(cached){
+    const {rows}=await pool.query('SELECT version,updated_at FROM ace_workspace_state WHERE workspace_id=$1',[id])
+    if(rows[0]&&stamp(rows[0])===cached.stamp)return cached.state
+  }
   await ensurePostgresState(id)
-  const {rows}=await pool.query('SELECT state FROM ace_workspace_state WHERE workspace_id=$1',[id])
-  return rows[0]?.state||cloneInitial(id)
+  const {rows}=await pool.query('SELECT state,version,updated_at FROM ace_workspace_state WHERE workspace_id=$1',[id])
+  if(!rows[0])return cloneInitial(id)
+  rememberState(id,rows[0],rows[0].state)
+  return rows[0].state
 }
 const mutatePostgresState=async(id,mutator)=>{
   const client=await pool.connect()
   try{
     await client.query('BEGIN')
     await ensurePostgresState(id,client)
-    const {rows}=await client.query('SELECT state,version FROM ace_workspace_state WHERE workspace_id=$1 FOR UPDATE',[id])
-    const state=rows[0]?.state||cloneInitial(id)
-    await mutator(state)
-    await client.query(
-      'UPDATE ace_workspace_state SET state=$2::jsonb,version=version+1,updated_at=now() WHERE workspace_id=$1',
+    const locked=await client.query('SELECT version,updated_at FROM ace_workspace_state WHERE workspace_id=$1 FOR UPDATE',[id])
+    const cached=stateCache.get(id)
+    // The row lock guarantees the version cannot change, so an up-to-date cached copy is the current state.
+    const source=cached&&locked.rows[0]&&stamp(locked.rows[0])===cached.stamp
+      ?cached.state
+      :(await client.query('SELECT state FROM ace_workspace_state WHERE workspace_id=$1',[id])).rows[0]?.state||cloneInitial(id)
+    const working=lazyCopy(source)
+    await mutator(working.view)
+    const state=materialize(working,source)
+    const updated=await client.query(
+      'UPDATE ace_workspace_state SET state=$2::jsonb,version=version+1,updated_at=now() WHERE workspace_id=$1 RETURNING version,updated_at',
       [id,JSON.stringify(state)]
     )
     await client.query('COMMIT')
-    return structuredClone(state)
+    // The mutator may still hold references into the keys it touched; the cache keeps its own copy of those.
+    for(const key of Object.keys(state))if(state[key]!==source[key])state[key]=structuredClone(state[key])
+    if(updated.rows[0])rememberState(id,updated.rows[0],state)
+    return lazyCopy(state).view
   }catch(error){
     await client.query('ROLLBACK').catch(()=>{})
     throw error
@@ -164,8 +215,8 @@ const mutatePostgresState=async(id,mutator)=>{
 
 export const getState=async()=>{
   const id=safeWorkspaceId(workspaceId())
-  const state=pool?await getPostgresState(id):await loadFile(id)
-  return structuredClone(state)
+  if(pool)return lazyCopy(await getPostgresState(id)).view
+  return structuredClone(await loadFile(id))
 }
 
 export const mutateState=async mutator=>{

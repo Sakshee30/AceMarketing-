@@ -5,8 +5,15 @@ const credentialConfigured=provider=>{
   if(provider==='anthropic') return Boolean(process.env.ANTHROPIC_API_KEY)
   if(provider==='google') return Boolean(process.env.GOOGLE_AI_API_KEY)
   if(provider==='voyage') return Boolean(process.env.VOYAGE_API_KEY)
+  if(provider==='nvidia') return Boolean(process.env.NVIDIA_API_KEY)
   return true
 }
+
+// An operator may serve the grounded analyst from an OpenAI-compatible endpoint (NVIDIA NIM)
+// by setting AI_ANALYST_PROVIDER=nvidia and NVIDIA_MODEL. It is an explicit choice, never a fallback.
+const analystRoute=()=>process.env.AI_ANALYST_PROVIDER==='nvidia'&&String(process.env.NVIDIA_MODEL||'').trim()
+  ?['nvidia',String(process.env.NVIDIA_MODEL).trim()]
+  :['openai','gpt-6-astra']
 
 const providerDocs={
   openai:{
@@ -37,9 +44,18 @@ const providerDocs={
     source:'https://docs.voyageai.com/docs/embeddings; https://docs.voyageai.com/reference/reranker-api',
     note:'voyage-4-large and rerank-2.5 plus their REST endpoints are present in official Voyage documentation; live account access is verified separately.'
   },
+  nvidia:{
+    identifierVerified:true,
+    capabilityVerified:true,
+    verifiedAt:'2026-10-07',
+    source:'https://docs.api.nvidia.com/nim/reference/llm-apis',
+    note:'Operator-configured model served through the NVIDIA OpenAI-compatible chat-completions API. The access verification step confirms the exact identifier against the endpoint model list before the route can be used.'
+  },
   local_ml:{
     identifierVerified:true,
-    capabilityVerified:false,
+    // Deployment of locally fitted models stays blocked unless an operator confirms the
+    // installed ML service runs these estimators (set after its capabilities are verified).
+    capabilityVerified:process.env.AI_LOCAL_ML_CAPABILITY_VERIFIED==='true',
     verifiedAt:'2026-09-28',
     source:'repository-requested assignment',
     note:'Estimator/checkpoint assignment is recorded. Training/evaluation artifacts must exist before serving.'
@@ -92,7 +108,7 @@ const fitted=(task,requestedModel,capability,extra={})=>({
 })
 
 export const MODEL_ASSIGNMENTS=[
-  hosted('analyst','openai','gpt-6-astra','grounded_analysis'),
+  hosted('analyst',...analystRoute(),'grounded_analysis'),
   hosted('recommendation_reviewer','anthropic','claude-fable-5-1','recommendation_review'),
   hosted('multimodal_extraction','google','gemini-3.8-flash','multimodal_extraction'),
   hosted('embedding','voyage','voyage-4-large','embedding'),

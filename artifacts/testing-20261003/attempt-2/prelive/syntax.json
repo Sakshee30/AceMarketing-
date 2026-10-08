@@ -1,0 +1,1687 @@
+[
+  {
+    "path": ".tmp-tools/synthetic-lead-ai-smoke.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/apps/control-api/src/bootstrap.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/apps/customer-bff/src/bootstrap.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/apps/domain-api/src/bootstrap.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/apps/integration-ingress/src/bootstrap.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/apps/realtime-gateway/src/bootstrap.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/apps/scheduler/src/bootstrap.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/apps/workers/documents/src/bootstrap.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/apps/workers/general/src/bootstrap.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/apps/workers/webhook-delivery/src/bootstrap.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/apps/workers/workflow/src/bootstrap.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/ai/module.manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/ai/src/application/commands/activate-model-result/activate-model-result.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/ai/src/application/commands/request-inference/request-inference.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/approvals/module.manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/approvals/src/application/commands/decide-approval/decide-approval.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/audit/module.manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/audit/src/application/commands/export-audit/export-audit.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/audit/src/application/queries/search-audit/search-audit.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/authorization/module.manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/authorization/src/application/commands/publish-policy/publish-policy.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/authorization/src/application/queries/evaluate-access/evaluate-access.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/billing/module.manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/billing/src/application/commands/change-subscription/change-subscription.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/billing/src/application/commands/reconcile-payment/reconcile-payment.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/boards/module.manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/boards/src/application/commands/move-card/move-card.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/boards/src/interfaces/http/move-card.controller.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/capabilities/module.manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/capabilities/src/application/commands/activate-config/activate-config.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/capabilities/src/application/commands/migrate-provider/migrate-provider.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/cells/module.manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/cells/src/application/commands/move-tenant/move-tenant.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/custom-objects/module.manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/custom-objects/src/application/commands/define-object/define-object.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/documents/module.manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/documents/src/application/commands/approve-file/approve-file.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/documents/src/application/commands/authorize-upload/authorize-upload.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/entitlements/module.manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/entitlements/src/application/queries/evaluate-entitlement/evaluate-entitlement.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/forms/module.manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/forms/src/application/commands/publish-form/publish-form.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/forms/src/application/commands/submit-form/submit-form.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/identity/module.manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/identity/src/application/commands/recover-account/recover-account.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/identity/src/application/commands/start-login/start-login.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/integrations/module.manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/integrations/src/application/commands/connect-provider/connect-provider.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/integrations/src/application/commands/reconcile-sync/reconcile-sync.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/jobs/module.manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/jobs/src/application/commands/replay-dead-letter/replay-dead-letter.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/jobs/src/application/commands/submit-job/submit-job.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/memberships/module.manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/memberships/src/application/commands/remove-member/remove-member.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/notifications/module.manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/notifications/src/application/commands/send-notification/send-notification.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/organizations/module.manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/organizations/src/application/commands/update-organization/update-organization.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/reporting/module.manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/reporting/src/application/commands/run-report/run-report.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/rules/module.manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/rules/src/application/commands/publish-rule/publish-rule.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/rules/src/application/queries/simulate-rule/simulate-rule.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/scheduling/module.manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/scheduling/src/application/commands/evaluate-due-schedule/evaluate-due-schedule.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/search/module.manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/search/src/application/commands/rebuild-index/rebuild-index.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/search/src/application/queries/query-search/query-search.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/usage/module.manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/usage/src/application/commands/record-usage/record-usage.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/usage/src/application/commands/reserve-quota/reserve-quota.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/webhooks/module.manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/webhooks/src/application/commands/deliver-webhook/deliver-webhook.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/webhooks/src/application/commands/replay-delivery/replay-delivery.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/workflows/module.manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/workflows/src/application/commands/publish-workflow/publish-workflow.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/workflows/src/application/commands/retry-step/retry-step.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/workspaces/module.manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/modules/workspaces/src/application/commands/update-workspace/update-workspace.handler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/scripts/backup.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/scripts/capacity-budget.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/scripts/capacity-smoke.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/scripts/load-smoke.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/scripts/local-feature-smoke.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/scripts/local-feature-write-smoke.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/scripts/migrate.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/scripts/preflight.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/scripts/privacy-retention.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/scripts/restore.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/scripts/security-smoke.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/scripts/smoke.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/activation-adapters.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/agent-orchestrator.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/ai-activation-execution.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/ai-activation-proposals.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/ai-analyst-tools.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/ai-datasets.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/ai-deployment-controls.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/ai-domain-results.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/ai-governance-store.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/ai-input-validation.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/ai-monitoring.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/ai-object-store.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/ai-platform-policy.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/ai-prompts.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/ai-providers.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/ai-recommendations.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/ai-registry-store.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/ai-registry.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/ai-result-contracts.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/ai-runtime.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/attribution-store.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/audience-scheduler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/auth-mailer.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/billing-provider.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/calendar-provider.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/call-events.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/cohort-analytics.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/connector-auth.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/connector-http.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/connector-ingestion.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/consent.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/control-api.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/custom-integrations.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/database.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/entitlements.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/event-rules.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/index.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/knowledge.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/lead-ops.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/live-voice.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/metric-catalog.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/ml-client.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/observability.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/acceptance-register.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/access-policy.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/admission-control.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/architecture-review-registry.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/audit-store.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/billing-lifecycle.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/board-realtime.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/board-store.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/capability-manifest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/capability-registry.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/capacity-budget.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/cell-placement.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/connector-registry.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/control-change-store.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/control-idempotency.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/custom-object-store.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/deployment-mode.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/document-processing.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/drain-controller.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/egress-policy.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/evidence-registry.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/execution-report.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/feature-catalog.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/feature-traceability.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/forms-store.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/golden-slice-registry.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/idempotency.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/module-registry.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/object-lifecycle.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/object-storage.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/operation-registry.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/outbox-relay.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/persistence-catalog.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/policy-engine.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/problem-details.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/process-health.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/provider-execution.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/provider-migration-store.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/realtime-event-store.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/recovery-evidence.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/reliability-store.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/request-context.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/resilience.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/reuse-governance.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/runtime-config-runtime.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/runtime-configuration.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/runtime-role.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/search-port.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/tenant-context.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/tenant-db.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/usage-ledger.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/webhook-delivery-store.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/webhook-delivery-worker.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/webhook-signing.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/worker-class.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/workflow-action-catalog.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/workflow-store.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/platform/workspace-access.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/privacy-ops.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/providers.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/public-content.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/queue.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/realtime.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/report-scheduler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/scheduler.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/security.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/store.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/tracked-events.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/tracking-input.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/vault.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/whatsapp-cloud.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/src/worker.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/acceptance-register.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/access-policy.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/ai-activation-execution.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/ai-activation-proposals.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/ai-analyst-tools.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/ai-contract-manifest.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/ai-deployment-controls.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/ai-durable-jobs.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/ai-governance-store.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/ai-input-validation.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/ai-knowledge-authorization.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/ai-monitoring.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/ai-object-store.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/ai-platform-policy.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/ai-provider-access.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/ai-registry.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/ai-resilience.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/ai-result-contracts.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/architecture-review-registry.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/billing-lifecycle.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/board-realtime.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/board-store.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/canonical-audit-replay-handlers.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/canonical-billing-usage-handlers.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/canonical-control-plane-handlers.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/canonical-data-foundation-handlers.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/canonical-governance-ai-handlers.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/canonical-integration-handlers.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/canonical-lifecycle-handlers.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/canonical-operation-handlers.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/canonical-runtime-handlers.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/canonical-security-document-handlers.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/capability-manifest.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/capacity-budget.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/cell-placement.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/connector-http-url.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/connector-http.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/connector-ingestion.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/connector-pagination.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/connector-registry.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/control-capability.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/control-change-store.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/control-idempotency.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/custom-object-store.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/deployment-mode.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/document-processing.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/drain-controller.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/egress-policy.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/evidence-registry.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/execution-report.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/feature-traceability.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/forms-store.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/functional-volume.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/golden-board-slice.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/metric-catalog.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/module-registry.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/object-lifecycle.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/operation-registry.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/outbox-relay.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/platform-audit-catalog.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/platform-foundation.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/platform-reliability.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/policy-workflow.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/process-health.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/project-profile.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/provider-execution.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/provider-migration.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/realtime-event-store.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/recovery-evidence.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/resilience.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/runtime-config-runtime.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/runtime-configuration.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/runtime-role.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/search-port.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/tenant-context.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/tenant-db.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/tracked-events.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/usage-ledger.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/webhook-delivery.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/webhook-signing.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/worker-class.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/worker-leasing.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "backend/tests/workspace-access.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "qa/native-db.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "qa/restore-api.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "qa/restore-check.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "qa/seed.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "qa/tests/api.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "qa/tests/business-api.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "qa/tests/golden.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "qa/tests/stream-client.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "qa/tests/token.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "qa/tests/tracking-input.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "qa/workspace-visibility.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/ai/_client.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/ai/backtest.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/ai/checkpoint-smoke.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/ai/dataset-readiness.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/ai/delete.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/ai/evaluate.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/ai/live-provider-smoke.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/ai/promote.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/ai/provider-verify.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/ai/rollback.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/ai/score.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/ai/train.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/architecture-change-impact.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/backend-architecture-check.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/contracts-check.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/dev.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/doctor.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/frontend-architecture-check.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/frontend-budget.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/frontend-evidence.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/frontend-release-check.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/load-env.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/local-release.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/project-profile-check.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/provider-version-check.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/reuse-governance-check.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/rollback.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/run-local.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/stack.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "scripts/static-server.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "tests/architecture/dependency-boundaries.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "tests/architecture/reuse-governance.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "tests/load/board-move.js",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "tests/load/core-traffic.js",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "tests/load/qualification.js",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "tests/security/cross-tenant-platform-isolation.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  },
+  {
+    "path": "tests/security/tenant-isolation.test.mjs",
+    "status": "PASS",
+    "diagnostic": ""
+  }
+]

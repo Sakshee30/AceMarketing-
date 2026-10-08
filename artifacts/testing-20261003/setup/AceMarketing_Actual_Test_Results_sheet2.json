@@ -1,0 +1,5610 @@
+[
+  [
+    "EXECUTED CHECKS",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Candidate 6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00 | Evidence from isolated run 37064060695",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Suite",
+    "Actual testcase",
+    "Status",
+    "Seconds",
+    "Evidence path",
+    "Candidate"
+  ],
+  [
+    "Native Node regression",
+    "acceptance register contains every G-01 through G-66 control exactly once",
+    "PASS",
+    "0.001477",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "implemented controls reference repository evidence without claiming verification",
+    "PASS",
+    "0.001369",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "nonwaivable controls are explicitly marked",
+    "PASS",
+    "0.001137",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "public snapshot reports status counts honestly",
+    "PASS",
+    "0.0007",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "access policy keeps read and write permissions explicit",
+    "PASS",
+    "0.001794",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "AI sensitive operations keep separate permissions",
+    "PASS",
+    "0.00025",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "permission assertion exposes denied permission without changing policy semantics",
+    "PASS",
+    "0.000606",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "AI provider-side activation execution is disabled by default",
+    "PASS",
+    "0.0014",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "audience execution accepts only explicit existing consent-aware adapters",
+    "PASS",
+    "0.001294",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "CRM execution validates provider and lead reference before queueing",
+    "PASS",
+    "0.000235",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "Google Ads budget execution requires immutable current/new micros and a scoped resource",
+    "PASS",
+    "0.000348",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "execution permission is separated from propose and approve permissions",
+    "PASS",
+    "0.000275",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "terminal durable job states cannot be relabelled as queued activation execution",
+    "PASS",
+    "0.000279",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "activation egress rejects plaintext and unapproved provider hosts",
+    "PASS",
+    "0.000636",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "credentialed activation requests reject redirects instead of forwarding secrets",
+    "PASS",
+    "0.028443",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "Google Ads shared-budget reference count rejects malformed provider values",
+    "PASS",
+    "0.000406",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "expired activation dispatch is recorded as unknown and continues to block lifecycle changes",
+    "PASS",
+    "0.032465",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "activation proposal requires immutable evidence and provider adapter",
+    "PASS",
+    "0.001803",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "activation proposal expiry is bounded",
+    "PASS",
+    "0.000268",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "creator cannot approve own activation proposal",
+    "PASS",
+    "0.00032",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "stale or tampered proposals are rejected",
+    "PASS",
+    "0.000712",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "budget activation proposal is rejected before review when deterministic change limits fail",
+    "PASS",
+    "0.000467",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "invalid budget percentage configuration fails closed",
+    "PASS",
+    "0.000233",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "analyst tools expose only the documented read-only allowlist",
+    "PASS",
+    "0.00245",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "knowledge analyst tool requires a bounded explicit query",
+    "PASS",
+    "0.000303",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "prediction analyst tool accepts only registered prediction tasks",
+    "PASS",
+    "0.000215",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "experiment analyst evidence strips arbitrary persisted fields",
+    "PASS",
+    "0.000252",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "shared AI result contract manifest matches backend discriminator types",
+    "PASS",
+    "0.005133",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "deployment controls validate explicit modes and bounded canary traffic",
+    "PASS",
+    "0.002003",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "canary assignment is deterministic and never exceeds configured eligibility semantics",
+    "PASS",
+    "0.001067",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "shadow and off modes do not silently serve normal user traffic",
+    "PASS",
+    "0.000278",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "AI job idempotency is stable inside a tenant and isolated across tenants",
+    "PASS",
+    "0.020119",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "cancellation cannot cross tenant scope",
+    "PASS",
+    "0.005626",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "task policy preserves exact registry model identity",
+    "PASS",
+    "0.001658",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "task policy rejects silent model substitution",
+    "PASS",
+    "0.000692",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "task policy rejects invalid concurrency and budgets",
+    "PASS",
+    "0.000415",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "task policy rejects unknown tasks and malformed feature flags",
+    "PASS",
+    "0.000287",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "task policy usage aggregation works with the embedded database",
+    "PASS",
+    "0.024676",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "embedded database supports the PostgreSQL float8 alias",
+    "PASS",
+    "0.001345",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "hosted task validation rejects unknown tasks",
+    "PASS",
+    "0.001239",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "embedding input is bounded",
+    "PASS",
+    "0.000299",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "transcription requires provider-hosted file URI",
+    "PASS",
+    "0.00044",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "reviewer requires immutable recommendation object",
+    "PASS",
+    "0.000177",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "knowledge policy normalizes role allowlists without granting extra roles",
+    "PASS",
+    "0.00172",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "knowledge without an explicit allowlist remains workspace-readable",
+    "PASS",
+    "0.000187",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "embedded local retrieval filters restricted chunks and propagates revocation",
+    "PASS",
+    "0.041361",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "knowledge policy rejects malformed allowlists instead of widening access",
+    "PASS",
+    "0.00057",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "restricted chunks cannot crowd authorized matches out of embedded retrieval",
+    "PASS",
+    "0.0444",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "knowledge vector validation rejects malformed provider embeddings and allows lexical fallback",
+    "PASS",
+    "0.000405",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "knowledge vector dimensions must match the stored embedding contract",
+    "PASS",
+    "0.000262",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "AI monitoring summarizes queue provider freshness usage and quality evidence without inventing metrics",
+    "PASS",
+    "0.002054",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "AI monitoring leaves unavailable evaluation evidence null rather than fabricating quality scores",
+    "PASS",
+    "0.000288",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "local AI object store persists content-addressed bytes in development",
+    "PASS",
+    "0.006999",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "local AI object store is blocked in production by default",
+    "PASS",
+    "0.000478",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "platform policy preserves exact registry model identity",
+    "PASS",
+    "0.002553",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "platform policy blocks tenant values above platform ceilings",
+    "PASS",
+    "0.000649",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "platform policy snapshot is configuration-only and contains no secret values",
+    "PASS",
+    "0.000396",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "provider verification stays opt-in even when a credential exists",
+    "PASS",
+    "0.002158",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "Anthropic bounded access check preserves the exact requested identifier",
+    "PASS",
+    "0.026396",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "Anthropic access check rejects a provider-side identifier substitution",
+    "PASS",
+    "0.000837",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "network failure after provider submission is marked unknown to prevent blind retries",
+    "PASS",
+    "0.001199",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "provider rate limits are explicit confirmed failures, not unknown outcomes",
+    "PASS",
+    "0.000964",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "confirmed malformed analyst output is rejected instead of persisted as empty success",
+    "PASS",
+    "0.000853",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "Anthropic access check rejects non-HTTPS model endpoints before sending credentials",
+    "PASS",
+    "0.000414",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "Anthropic access check rejects a blank provider model identifier",
+    "PASS",
+    "0.000807",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "whitespace-only analyst output is rejected as malformed",
+    "PASS",
+    "0.000901",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "Anthropic verification does not follow credentialed redirects",
+    "PASS",
+    "0.002205",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "exact hosted model assignments are preserved without silent substitution",
+    "PASS",
+    "0.001208",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "numerical assignments remain task-specific even when estimator classes repeat",
+    "PASS",
+    "0.000369",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "unverified exact reviewer identifier remains unavailable without substitution",
+    "PASS",
+    "0.000777",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "deterministic forecast baseline remains explicitly labelled",
+    "PASS",
+    "0.000251",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "worker execution fails closed when tenant or platform disables a task",
+    "PASS",
+    "0.001069",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "worker execution respects live shadow and canary changes after a job was queued",
+    "PASS",
+    "0.000353",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "worker execution rejects requested model substitution at execution time",
+    "PASS",
+    "0.000249",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "durable AI job state does not depend on Redis and worker provider execution is outside a transaction callback",
+    "PASS",
+    "0.009172",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "calibrated probability is bounded and horizon-specific",
+    "PASS",
+    "0.001657",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "forecast distribution requires forecast values",
+    "PASS",
+    "0.000286",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "causal result cannot omit support state",
+    "PASS",
+    "0.000199",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "generated approved assets require an explicit reviewer",
+    "PASS",
+    "0.000194",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "marketing mix results remain distinct from causal estimates",
+    "PASS",
+    "0.000219",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "model evaluation requires metrics instead of generic confidence",
+    "PASS",
+    "0.000244",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "every backend module carries architecture review metadata",
+    "PASS",
+    "0.001611",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "migration-backed modules point to an existing migration review",
+    "PASS",
+    "0.000909",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "security-sensitive modules point to an existing threat model",
+    "PASS",
+    "0.000479",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "billing lifecycle exposes explicit trial grace suspension cancellation and expiry states",
+    "PASS",
+    "0.001128",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "entitlement changes are versioned and provider events create reconciliation evidence",
+    "PASS",
+    "0.021935",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "status-only billing changes do not rewrite entitlement history version",
+    "PASS",
+    "0.005903",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "board realtime authorization binds token workspace and boards.read permission",
+    "PASS",
+    "0.002314",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "board realtime authorization rejects missing or invalid bearer material",
+    "PASS",
+    "0.00034",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "board move command rejects ambiguous placement input",
+    "PASS",
+    "0.001473",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "board move is durable idempotent tenant-scoped and version checked",
+    "PASS",
+    "0.043059",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "board creation produces default governed columns and remains tenant scoped",
+    "PASS",
+    "0.0115",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "dead-letter replay requires tenant and job identity",
+    "PASS",
+    "0.00185",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "audit search bounds page size and preserves cursor",
+    "PASS",
+    "0.000345",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "audit export is admitted as durable idempotent job",
+    "PASS",
+    "0.000303",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "usage recording validates tenant/event/metric and preserves reservation linkage",
+    "PASS",
+    "0.001278",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "quota reservation preserves request id and bounded quantity",
+    "PASS",
+    "0.000894",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "billing subscription change delegates existing entitlement validation contract",
+    "PASS",
+    "0.000301",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "billing reconciliation requires provider event identity before delegation",
+    "PASS",
+    "0.000729",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "runtime configuration activation requires actor and preserves desired-state payload",
+    "PASS",
+    "0.0012",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "provider migration transition publishes resulting provider override snapshot",
+    "PASS",
+    "0.000503",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "tenant cell move rejects stale routing epoch and increments authoritative epoch",
+    "PASS",
+    "0.000772",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "entitlement evaluation requires tenant scope and preserves summary contract",
+    "PASS",
+    "0.002073",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "custom-object definition delegates existing schema contract unchanged",
+    "PASS",
+    "0.000324",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "search query handler bounds result limit and preserves authorization role",
+    "PASS",
+    "0.000347",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "upload authorization preserves quarantine intent contract and normalizes access policy",
+    "PASS",
+    "0.000363",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "organization update narrows mutation to organization field",
+    "PASS",
+    "0.001745",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "authorization publish policy validates tenant and policy identity",
+    "PASS",
+    "0.000425",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "AI inference command preserves immutable source snapshot and execution mode",
+    "PASS",
+    "0.00039",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "AI activation execution requires explicit proposal identity",
+    "PASS",
+    "0.000791",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "integration connect handler preserves existing custom integration payload",
+    "PASS",
+    "0.001755",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "integration reconcile handler requires a target and delegates verification",
+    "PASS",
+    "0.00071",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "webhook delivery handler preserves durable worker dispatch contract",
+    "PASS",
+    "0.000281",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "webhook replay handler preserves actor and source delivery identity",
+    "PASS",
+    "0.000337",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "workspace update accepts only the existing supported settings contract",
+    "PASS",
+    "0.003289",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "membership removal deactivates target and revokes all target sessions",
+    "PASS",
+    "0.001402",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "policy and workflow publication handlers preserve scope/id contracts",
+    "PASS",
+    "0.000575",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "workflow retry preserves actor identity",
+    "PASS",
+    "0.00042",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "approval decision validates allowed outcomes and delegates separation-of-duties store",
+    "PASS",
+    "0.000669",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "canonical authorization query preserves centralized permission semantics",
+    "PASS",
+    "0.002744",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "canonical publish-form handler validates scope and delegates unchanged contract",
+    "PASS",
+    "0.000759",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "canonical submit-form handler preserves idempotency key and payload",
+    "PASS",
+    "0.000325",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "canonical rule simulation remains bounded and deterministic",
+    "PASS",
+    "0.00066",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "job submission preserves idempotency and bounds attempts",
+    "PASS",
+    "0.001123",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "scheduler evaluation bounds batches and returns both schedule classes",
+    "PASS",
+    "0.000368",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "notification handler exposes only implemented notification kinds",
+    "PASS",
+    "0.001419",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "report execution requires tenant and schedule identity before durable queueing",
+    "PASS",
+    "0.000304",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "login handler preserves active-member session creation and token contract",
+    "PASS",
+    "0.002696",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "account recovery request stays enumeration-safe and completion revokes sessions",
+    "PASS",
+    "0.002395",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "document approval validates scan outcome and delegates immutable lifecycle enforcement",
+    "PASS",
+    "0.001008",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "search rebuild requires extracted text and delegates approved-object indexing",
+    "PASS",
+    "0.000563",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "capability manifests declare complete provider semantics",
+    "PASS",
+    "0.002033",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "required capability cannot be migrated to disabled",
+    "PASS",
+    "0.000467",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "production cache bypass requires capacity evidence",
+    "PASS",
+    "0.000409",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "production AI provider changes require data-policy evidence",
+    "PASS",
+    "0.000387",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "capacity budget accounts for API surge workers control and reserve",
+    "PASS",
+    "0.001552",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "capacity budget rejects oversubscribed database pools",
+    "PASS",
+    "0.000729",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "capacity budget environment parsing is bounded",
+    "PASS",
+    "0.000413",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "tenant placement resolves one home cell and rejects stale routes",
+    "PASS",
+    "0.019209",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "moving placement fails closed until ownership cutover completes",
+    "PASS",
+    "0.002635",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV invalid URL rejects without leaking the default deadline timer",
+    "PASS",
+    "0.028617",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV transport preserves method, body and authorization without automatic redirects",
+    "PASS",
+    "0.030713",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV transport rejects malformed successful body",
+    "PASS",
+    "0.00122",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV transport rejects empty successful body",
+    "PASS",
+    "0.000649",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV transport rejects null successful body",
+    "PASS",
+    "0.000546",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV transport rejects primitive successful body",
+    "PASS",
+    "0.00394",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV transport exposes HTTP 400 without leaking provider response",
+    "PASS",
+    "0.000769",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV transport exposes HTTP 401 without leaking provider response",
+    "PASS",
+    "0.000357",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV transport exposes HTTP 403 without leaking provider response",
+    "PASS",
+    "0.000679",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV transport exposes HTTP 429 without leaking provider response",
+    "PASS",
+    "0.000477",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV transport exposes HTTP 500 without leaking provider response",
+    "PASS",
+    "0.000579",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV transport exposes HTTP 503 without leaking provider response",
+    "PASS",
+    "0.000361",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV transport accepts explicit no-content and not-modified responses",
+    "PASS",
+    "0.001655",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV transport rejects HTML with HTTP 200",
+    "PASS",
+    "0.00036",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV transport rejects a declared oversized body",
+    "PASS",
+    "0.000347",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV transport enforces streaming byte limit without Content-Length",
+    "PASS",
+    "0.000952",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV transport accepts exact byte boundary",
+    "PASS",
+    "0.000455",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV transport blocks cross-origin redirects before contacting their target",
+    "PASS",
+    "0.000286",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV transport rejects redirect loops",
+    "PASS",
+    "0.000258",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV transport bounds distinct same-origin redirects",
+    "PASS",
+    "0.000544",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV transport preserves a successful same-origin redirect",
+    "PASS",
+    "0.000404",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV transport times out even when injected fetch fails to observe abort",
+    "PASS",
+    "0.014815",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV transport deadline includes a stalled body",
+    "PASS",
+    "0.015317",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV transport never calls fetch for unsafe URL or absent allowlist",
+    "PASS",
+    "0.000682",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV transport rejects invalid resource budgets",
+    "PASS",
+    "0.000308",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "connector read catalog includes all provider rows exposed for sync testing",
+    "PASS",
+    "0.001042",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "connector ingestion stores are queryable in embedded test database",
+    "PASS",
+    "0.027975",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "Microsoft report ZIP parser extracts canonical CSV fields without external dependencies",
+    "PASS",
+    "0.001086",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV Meta valid pagination persists each source row once and replay reconciles",
+    "PASS",
+    "0.087085",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV Meta repeated next cursor fails instead of reporting truncated success",
+    "PASS",
+    "0.009347",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV Meta configured page limit cannot advance an incomplete watermark",
+    "PASS",
+    "0.009865",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV Meta page-two failure preserves recoverable checkpoint and retry loads complete history",
+    "PASS",
+    "0.023112",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV Meta rejects missing data rather than silently succeeding",
+    "PASS",
+    "0.008121",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV Meta rejects object data rather than silently succeeding",
+    "PASS",
+    "0.009507",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV Meta rejects null data rather than silently succeeding",
+    "PASS",
+    "0.021605",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV Meta malformed HTTP-200 JSON records failure without advancing checkpoint",
+    "PASS",
+    "0.008917",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV Meta explicitly empty data is distinct from corrupt provider payload",
+    "PASS",
+    "0.009371",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV Google Ads rejects non-stream response object before watermark advancement",
+    "PASS",
+    "0.007982",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "PROV GA4 cannot report success when declared rows are absent",
+    "PASS",
+    "0.008312",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "connector catalog publishes bounded manifests without credential values",
+    "PASS",
+    "0.001754",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "connector lifecycle contains explicit degraded and revoked states",
+    "PASS",
+    "0.000271",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "connector failure mapping distinguishes authorization rate limit transient and unknown outcome",
+    "PASS",
+    "0.000382",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "capability dependency graph is acyclic and bounded",
+    "PASS",
+    "0.002711",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "provider catalog reports explicit configured or unconfigured health",
+    "PASS",
+    "0.003703",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "control API read model exposes safe operational state without secret values",
+    "PASS",
+    "0.013563",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "locked platform features cannot be represented as disabled by runtime feature flags",
+    "PASS",
+    "0.000812",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "platform change plan becomes immutable after approval",
+    "PASS",
+    "0.051676",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "change state machine rejects fabricated completion",
+    "PASS",
+    "0.008454",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "control idempotency replays a completed command",
+    "PASS",
+    "0.015329",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "control idempotency rejects key reuse with a different request",
+    "PASS",
+    "0.008865",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "custom object schemas are bounded and reject hostile field definitions",
+    "PASS",
+    "0.001688",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "custom object record validation rejects unknown and invalid fields",
+    "PASS",
+    "0.001177",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "published custom objects preserve old record schema versions",
+    "PASS",
+    "0.038115",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "embedded profile supports custom object APIs without pretending RLS support",
+    "PASS",
+    "0.000384",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "core mode keeps specialist infrastructure optional",
+    "PASS",
+    "0.001233",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "full mode enables optional platform profiles by default",
+    "PASS",
+    "0.000308",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "individual feature override can downgrade a larger mode",
+    "PASS",
+    "0.000298",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "unknown deployment mode fails closed",
+    "PASS",
+    "0.000552",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "only an approved immutable object version can become searchable",
+    "PASS",
+    "0.035855",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "drain controller refuses new tasks after drain begins",
+    "PASS",
+    "0.001338",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "drain controller waits for active tasks to finish",
+    "PASS",
+    "0.010841",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "drain controller times out without acknowledging unfinished work",
+    "PASS",
+    "0.005013",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "egress policy blocks local and reserved addresses",
+    "PASS",
+    "0.005813",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "egress policy rejects embedded credentials and unsafe schemes",
+    "PASS",
+    "0.000346",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "egress policy blocks IPv4-mapped IPv6 and deprecated site-local ranges",
+    "PASS",
+    "0.00118",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "every implemented acceptance control has requirement/feature/commit evidence metadata",
+    "PASS",
+    "0.001929",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "repository evidence paths exist and remain implemented rather than overclaimed",
+    "PASS",
+    "0.001383",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "evidence snapshot carries tested commit and does not claim production qualification",
+    "PASS",
+    "0.000635",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "architecture execution report separates implementation from verification",
+    "PASS",
+    "0.001635",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "architecture execution report keeps all acceptance controls in explicit status buckets",
+    "PASS",
+    "0.000369",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "every backend module has canonical feature traceability",
+    "PASS",
+    "0.001642",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "traceability maps each operation to existing implementation and test evidence",
+    "PASS",
+    "0.001374",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "operation migration is fully canonical without hiding readiness state",
+    "PASS",
+    "0.000239",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "public traceability snapshot omits private implementation paths from operation metadata",
+    "PASS",
+    "0.000846",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "migration-backed features expose concrete persistence tables where their migrations create tables",
+    "PASS",
+    "0.000231",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "form schemas are bounded and reject hostile/unrecognized field types",
+    "PASS",
+    "0.002294",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "submission validation rejects unknown fields and invalid values",
+    "PASS",
+    "0.000825",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "published forms retain versioned schema for durable submissions",
+    "PASS",
+    "0.02826",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "D2 volume: supplied functional source regenerates without byte drift",
+    "PASS",
+    "2.27163",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "D2 volume: actual lead repository imports 10000 supplied leads and replay remains idempotent",
+    "PASS",
+    "3.12889",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "D2 volume: actual event repository persists 100000 original events and deduplicates replay",
+    "PASS",
+    "34.645185",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "D2 volume: persisted event types and monetary minor units match independent oracle",
+    "PASS",
+    "0.41575",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "D2 volume: application readers enforce explicit workspace filters and documented caps",
+    "PASS",
+    "0.331",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "golden board move slice is fully traceable through frontend backend persistence realtime and evidence",
+    "PASS",
+    "0.001444",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "golden board move includes recovery accessibility and load evidence",
+    "PASS",
+    "0.000322",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "golden slice snapshot is read-only engineering metadata rather than a production qualification claim",
+    "PASS",
+    "0.00062",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "metric catalog uses explicit mappings and excludes estimates",
+    "PASS",
+    "0.001904",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "metric catalog rejects mixed currencies and reports zero denominators",
+    "PASS",
+    "0.000624",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "derived marketing metrics use one shared formula with null zero denominators",
+    "PASS",
+    "0.000319",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "backend module registry is unique owned and navigable",
+    "PASS",
+    "0.001236",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "registered module implementation paths and migrations exist",
+    "PASS",
+    "0.001039",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "module snapshot is safe engineering metadata and does not expose implementation paths",
+    "PASS",
+    "0.000559",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "object access policy remains role scoped",
+    "PASS",
+    "0.001023",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "secure object lifecycle rejects mismatched upload evidence and promotes only clean scans",
+    "PASS",
+    "0.040277",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "upload intent rejects unsafe extension and invalid digest",
+    "PASS",
+    "0.001158",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "operation registry maps every module to owned contract and permission evidence",
+    "PASS",
+    "0.001956",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "operation implementation and test paths exist",
+    "PASS",
+    "0.001745",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "golden board move is canonical and the registry migration is complete",
+    "PASS",
+    "0.000517",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "public operation snapshot omits implementation paths",
+    "PASS",
+    "0.000816",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "outbox relay publishes only after a registered handler succeeds",
+    "PASS",
+    "0.018788",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "feature catalog is internally consistent",
+    "PASS",
+    "0.001144",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "durable audit redacts obvious secret-shaped metadata keys",
+    "PASS",
+    "0.018179",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "request context never trusts malformed request IDs",
+    "PASS",
+    "0.001541",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "admission control is bounded and releases exactly once",
+    "PASS",
+    "0.000317",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "problem details separates retryable server failures",
+    "PASS",
+    "0.000226",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "idempotency keys and request fingerprints are deterministic",
+    "PASS",
+    "0.000572",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "feature catalog includes governed board capability",
+    "PASS",
+    "0.000338",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "idempotency preserves the first request fingerprint and completed response",
+    "PASS",
+    "0.038404",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "outbox leasing fences publication to the lease owner",
+    "PASS",
+    "0.012584",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "inbox deduplicates provider events and detects payload conflicts",
+    "PASS",
+    "0.007909",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "policy evaluator is bounded, typed and does not execute code",
+    "PASS",
+    "0.002362",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "workflow action catalogue rejects arbitrary execution and exposes bounded contracts",
+    "PASS",
+    "0.001699",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "policy simulation is deterministic and does not retain input values",
+    "PASS",
+    "0.00053",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "workflow validator rejects cycles and unreachable nodes",
+    "PASS",
+    "0.00044",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "production persistence tests are enabled when PostgreSQL is available",
+    "PASS",
+    "0.121818",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "liveness remains independent from dependency health",
+    "PASS",
+    "0.002453",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "startup and readiness become healthy after startup completes",
+    "PASS",
+    "0.000472",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "readiness reports dependency failure without changing liveness",
+    "PASS",
+    "0.000879",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "drain mode rejects readiness while keeping process live",
+    "PASS",
+    "0.000562",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "project profile declares every canonical backend module and keeps qualification claims unverified",
+    "PASS",
+    "0.001866",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "project profile publishes the mandatory adoption fields",
+    "PASS",
+    "0.000438",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "provider deadline aborts bounded work and marks outcome uncertainty",
+    "PASS",
+    "0.252914",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "provider migration requires compatibility evidence before canary",
+    "PASS",
+    "0.032443",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "provider migration supports gradual canary and controlled rollback",
+    "PASS",
+    "0.020904",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "provider cutover requires explicit boundary and moves to 100 percent",
+    "PASS",
+    "0.017692",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "production cache migration requires capacity evidence",
+    "PASS",
+    "0.00597",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "production cutover requires verification evidence",
+    "PASS",
+    "0.014771",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "point of no return blocks automatic rollback",
+    "PASS",
+    "0.014202",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "realtime event projection is durable ordered and tenant scoped",
+    "PASS",
+    "0.033239",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "recovery exercises keep declared and measured objectives distinct",
+    "PASS",
+    "0.030794",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "recovery exercise updates use optimistic concurrency",
+    "PASS",
+    "0.005935",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "backup evidence records controls without claiming restore success",
+    "PASS",
+    "0.006188",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "recovery summary reports measured evidence only from passed exercises",
+    "PASS",
+    "0.010287",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "circuit breaker opens after configured failures and rejects until reset",
+    "PASS",
+    "0.002323",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "bulkhead rejects work beyond its concurrency budget",
+    "PASS",
+    "0.000561",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "retry budget retries transient known-safe failures only",
+    "PASS",
+    "0.007283",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "dependency guard combines circuit and bulkhead accounting",
+    "PASS",
+    "0.001981",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "data-plane runtime guard allows baseline when no snapshot exists",
+    "PASS",
+    "0.016436",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "data-plane runtime guard blocks suspended AI admission",
+    "PASS",
+    "0.017005",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "data-plane read-only emergency blocks workspace writes but not reads",
+    "PASS",
+    "0.008949",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "feature disabled state blocks matching data-plane mutation",
+    "PASS",
+    "0.005849",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "board feature disabled state blocks move admission",
+    "PASS",
+    "0.005381",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "signed runtime snapshot verifies and locks safety features",
+    "PASS",
+    "0.032431",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "emergency AI control is time bounded and reflected in signed snapshot",
+    "PASS",
+    "0.017355",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "tampered runtime snapshots fail closed",
+    "PASS",
+    "0.007462",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "latest runtime snapshot exposes one active version per environment",
+    "PASS",
+    "0.017767",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "default API role remains unrestricted for compatibility",
+    "PASS",
+    "0.001088",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "integration ingress exposes only verified provider ingress routes",
+    "PASS",
+    "0.000296",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "unknown runtime roles fail closed",
+    "PASS",
+    "0.000499",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "search port advertises explicit reduced capability profile",
+    "PASS",
+    "0.001405",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "search results enforce workspace and role policy before returning snippets",
+    "PASS",
+    "0.151744",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "workspace IDs are normalized and bounded",
+    "PASS",
+    "0.001257",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "caller workspace scope is parsed but actor authority remains decisive",
+    "PASS",
+    "0.000399",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "tenant execution scope binds verified actor and workspace",
+    "PASS",
+    "0.000843",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "tenant database context executes in a bounded transaction",
+    "PASS",
+    "0.018076",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "system database context is available for cross-tenant workers",
+    "PASS",
+    "0.001952",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "production RLS migration is intentionally skipped only by embedded pg-mem",
+    "PASS",
+    "0.000284",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "pooled tenant context is transaction-local and clears after commit",
+    "PASS",
+    "0.002864",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "pooled tenant context clears after rollback and cannot leak to the next operation",
+    "PASS",
+    "0.002894",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "tracked events persist durably and are tenant scoped",
+    "PASS",
+    "0.362617",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "embedded profile keeps usage-ledger APIs safe without pretending RLS support",
+    "PASS",
+    "0.00119",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "quota reservations remain atomic and ledger-backed on PostgreSQL",
+    "PASS",
+    "0.052346",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "webhook subscriptions return signing secret once and metadata views redact it",
+    "PASS",
+    "0.026688",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "webhook delivery deduplicates event identity and supports pause resume and replay",
+    "PASS",
+    "0.041898",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "webhook dispatcher signs and records successful delivery without exposing secrets",
+    "PASS",
+    "0.074124",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "permanent receiver failures dead-letter instead of blind retry",
+    "PASS",
+    "0.015205",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "webhook signatures bind timestamp, delivery id and exact body",
+    "PASS",
+    "0.002068",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "worker classes are explicit and bounded",
+    "PASS",
+    "0.002472",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "general worker excludes isolated provider and document work",
+    "PASS",
+    "0.000357",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "workflow worker leases durable workflow work only",
+    "PASS",
+    "0.000228",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "webhook worker leases webhook deliveries only",
+    "PASS",
+    "0.000284",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "ai-document worker contains expensive or provider-bound job classes",
+    "PASS",
+    "0.000308",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "unknown worker class fails closed",
+    "PASS",
+    "0.000672",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "queue leasing can isolate webhook jobs from the general worker pool",
+    "PASS",
+    "0.031371",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "workspace membership matches active user identity, not caller scope text",
+    "PASS",
+    "0.00194",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "workspace creator seeding is additive and idempotent",
+    "PASS",
+    "0.000703",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "backend source does not import frontend implementation or browser-only authority",
+    "PASS",
+    "0.035981",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "frontend sources do not import server database cloud SDKs or backend internals",
+    "PASS",
+    "0.020902",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "canonical production profiles preserve locked durability and security controls",
+    "PASS",
+    "0.000683",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "foundation compatibility policy is complete and repository-backed",
+    "PASS",
+    "0.002465",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "breaking removals require notice, migration guidance and compatibility evidence",
+    "PASS",
+    "0.000346",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "reference product status does not self-certify production qualification",
+    "PASS",
+    "0.000374",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "forms custom objects and search remain workspace isolated",
+    "PASS",
+    "0.04889",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "tenant-scoped usage APIs never return another workspace ledger rows",
+    "PASS",
+    "0.039447",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Native Node regression",
+    "workspace identity must be explicit and bounded before tenant transaction use",
+    "PASS",
+    "0.001613",
+    "prelive/native.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "D3 baseline: real metric calculator matches supplied independent oracle",
+    "PASS",
+    "0.006595",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "D3 duplicate_money: real metric calculator matches supplied independent oracle",
+    "PASS",
+    "0.00455",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "D3 window_boundaries: real metric calculator matches supplied independent oracle",
+    "PASS",
+    "0.003315",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "D3 empty: real metric calculator matches supplied independent oracle",
+    "PASS",
+    "0.000256",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "D3 late_arrival: real metric calculator matches supplied independent oracle",
+    "PASS",
+    "0.002214",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "D3 mixed currency cannot silently add INR and USD",
+    "PASS",
+    "0.001046",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "D3 whole-batch retry leaves every metric unchanged",
+    "PASS",
+    "0.004347",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "D3 reverse arrival order preserves all metrics",
+    "PASS",
+    "0.002848",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "D3 reporting currency mismatch is explicit",
+    "PASS",
+    "0.00071",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "D3 invalid reporting windows are rejected",
+    "PASS",
+    "0.000431",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "D3 Asia/Kolkata boundary includes exactly start and last instant",
+    "PASS",
+    "0.000295",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "D3 gross and net revenue inputs are deliberately distinguished",
+    "PASS",
+    "0.000989",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "AI stream decodes chunk-split CRLF and multiline JSON data",
+    "PASS",
+    "0.037087",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "AI stream ignores comments and retains non-JSON multiline data",
+    "PASS",
+    "0.000698",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "AI stream invokes a failing consumer once, not twice",
+    "PASS",
+    "0.001278",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "AI stream uses workspace request and handles HTTP failure",
+    "PASS",
+    "0.001833",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "AUTH real token round trip preserves identity and scope",
+    "PASS",
+    "0.002239",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "AUTH wrong signing key is rejected",
+    "PASS",
+    "0.00025",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "AUTH modified payload is rejected",
+    "PASS",
+    "0.000302",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "AUTH extra token segments are rejected",
+    "PASS",
+    "0.000194",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "AUTH token is invalid at the exact expiry instant",
+    "PASS",
+    "0.000723",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "AUTH expired token is rejected",
+    "PASS",
+    "0.000345",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "AUTH password hash validates only the original password",
+    "PASS",
+    "0.145672",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "AUTH analyst and unknown role cannot inherit owner privileges",
+    "PASS",
+    "0.001347",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "TRACK validation rejects malformed occurredAt",
+    "PASS",
+    "0.001508",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "TRACK validation accepts valid occurredAt",
+    "PASS",
+    "0.000218",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "TRACK validation rejects malformed timestamp",
+    "PASS",
+    "0.001093",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "TRACK validation accepts valid timestamp",
+    "PASS",
+    "0.000172",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "TRACK validation rejects malformed receivedAt",
+    "PASS",
+    "0.000215",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "TRACK validation accepts valid receivedAt",
+    "PASS",
+    "0.000122",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "TRACK rejects non-object body null",
+    "PASS",
+    "0.000191",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "TRACK rejects non-object body []",
+    "PASS",
+    "0.000105",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "TRACK rejects non-object body true",
+    "PASS",
+    "0.000221",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "TRACK rejects non-object body &quot;event&quot;",
+    "PASS",
+    "0.000333",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "TRACK invalid client id and consent category are rejected",
+    "PASS",
+    "0.000286",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "TEN registry hides foreign metadata and uses actual membership role",
+    "PASS",
+    "0.002118",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "TEN revoked membership cannot list registry entry",
+    "PASS",
+    "0.000253",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Independent oracles",
+    "TEN registry accepts an explicitly granted secondary workspace",
+    "PASS",
+    "0.000502",
+    "prelive/oracles.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "AUTH-001 support: production authenticated identity is scoped to actual member",
+    "PASS",
+    "0.210886",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "AUTH-002 support: incorrect password denied in production",
+    "PASS",
+    "0.041438",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "AUTH-006 support: missing credentials denied",
+    "PASS",
+    "0.002486",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "AUTH token-integrity support: tampered token rejected",
+    "PASS",
+    "0.002342",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "TEN-002 support: foreign workspace header denied",
+    "PASS",
+    "0.002447",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "TEN-005 support: analyst cannot create a form",
+    "PASS",
+    "0.004083",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "SEC support: credential fields are absent from member response",
+    "PASS",
+    "0.004015",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "SEC support: unapproved web origin rejected",
+    "PASS",
+    "0.001743",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "TEN support: invalid scope identifier rejected",
+    "PASS",
+    "0.001555",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "AUTH-003 support: actual logout revokes persisted session",
+    "PASS",
+    "0.048489",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "TEN-003 support: runtime database role does not bypass RLS",
+    "PASS",
+    "0.006175",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "FORM lifecycle support: create, publish, submit, replay and observe persisted rows",
+    "PASS",
+    "0.049094",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "BOARD support: real create, retrieve and foreign resource denial",
+    "PASS",
+    "0.013107",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "TRACK-004 support: missing consent denies analytics tracking",
+    "PASS",
+    "0.007308",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "TRACK support: consent, tracking, deduplication, redaction and revoke",
+    "PASS",
+    "0.040309",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "TRACK-005 support: malformed timestamp rejected without durable partial effect",
+    "PASS",
+    "0.007031",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "JOBS support: independent worker finishes one logical audit export after duplicate enqueue",
+    "PASS",
+    "0.20751",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /auth/me",
+    "PASS",
+    "0.203972",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /dashboard-summary",
+    "PASS",
+    "0.033193",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /launchpad",
+    "PASS",
+    "0.010726",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /workspace/overview",
+    "PASS",
+    "0.011205",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /integrations",
+    "PASS",
+    "0.013021",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /integration-flows",
+    "PASS",
+    "0.003991",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /custom-integrations",
+    "PASS",
+    "0.003825",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /events",
+    "PASS",
+    "0.004335",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /adjustments",
+    "PASS",
+    "0.00364",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /diagnostics",
+    "PASS",
+    "0.005215",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /match-quality",
+    "PASS",
+    "0.004019",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /reconciliation",
+    "PASS",
+    "0.005698",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /fraud",
+    "PASS",
+    "0.003638",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /deep-links",
+    "PASS",
+    "0.002973",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /sites",
+    "PASS",
+    "0.003335",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /fingerprinting",
+    "PASS",
+    "0.004516",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /fingerprinting/matches",
+    "PASS",
+    "0.004115",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /funnel",
+    "PASS",
+    "0.003471",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /leak-monitor",
+    "PASS",
+    "0.003558",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /live-sync",
+    "PASS",
+    "0.004932",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /data-hub",
+    "PASS",
+    "0.00747",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /offline-attribution",
+    "PASS",
+    "0.004541",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /ctwa-attribution",
+    "PASS",
+    "0.002645",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /call-events",
+    "PASS",
+    "0.002823",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /matchback",
+    "PASS",
+    "0.006361",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /matchback/unmatched",
+    "PASS",
+    "0.005358",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /attribution-identity/stats",
+    "PASS",
+    "0.004201",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /pos-stores",
+    "PASS",
+    "0.002825",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /journeys",
+    "PASS",
+    "0.004892",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /customer-360",
+    "PASS",
+    "0.004607",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /identity",
+    "PASS",
+    "0.004414",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /models",
+    "PASS",
+    "0.00455",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /attribution",
+    "PASS",
+    "0.003868",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /reports",
+    "PASS",
+    "0.004661",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /cohorts?months=6",
+    "PASS",
+    "0.003085",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /grouped-performance?dimension=category&months=6",
+    "PASS",
+    "0.003986",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /report-schedules",
+    "PASS",
+    "0.002906",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /planner",
+    "PASS",
+    "0.003662",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /enrich",
+    "PASS",
+    "0.00305",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /lead-grading",
+    "PASS",
+    "0.002944",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /agents",
+    "PASS",
+    "0.00584",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /routing",
+    "PASS",
+    "0.003565",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /follow-ups",
+    "PASS",
+    "0.002504",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /lead-reactivation?dormantDays=30&recentDays=7",
+    "PASS",
+    "0.002661",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /voice-scheduler",
+    "PASS",
+    "0.002384",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /qualification-calls",
+    "PASS",
+    "0.002097",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /meetings",
+    "PASS",
+    "0.002337",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /feedback",
+    "PASS",
+    "0.002293",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /agent-runs",
+    "PASS",
+    "0.002126",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /approvals",
+    "PASS",
+    "0.002655",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /personalization-rules",
+    "PASS",
+    "0.00274",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /activation-rules",
+    "PASS",
+    "0.00248",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /exclusions",
+    "PASS",
+    "0.004241",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /audiences",
+    "PASS",
+    "0.00307",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /audience-schedules",
+    "PASS",
+    "0.002601",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /activation-runs",
+    "PASS",
+    "0.00226",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /behavior",
+    "PASS",
+    "0.003953",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /feed",
+    "PASS",
+    "0.003946",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /solutions",
+    "PASS",
+    "0.002001",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /chatgpt-ads",
+    "PASS",
+    "0.00312",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /signal-deliveries",
+    "PASS",
+    "0.002544",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /whatsapp/messages",
+    "PASS",
+    "0.002553",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /connector-health",
+    "PASS",
+    "0.002966",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /monitoring",
+    "PASS",
+    "0.009271",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /compliance-center",
+    "PASS",
+    "0.004922",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /consent/stats",
+    "PASS",
+    "0.002778",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /privacy/requests",
+    "PASS",
+    "0.0023",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /billing/usage",
+    "PASS",
+    "0.021125",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /billing/subscription",
+    "PASS",
+    "0.022362",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /alerts",
+    "PASS",
+    "0.00656",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /signal-console",
+    "PASS",
+    "0.002973",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /security-posture",
+    "PASS",
+    "0.001931",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /resources",
+    "PASS",
+    "0.001941",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /case-studies",
+    "PASS",
+    "0.001963",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /ai-action",
+    "PASS",
+    "0.001815",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /source-notes",
+    "PASS",
+    "0.001816",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /event-templates",
+    "PASS",
+    "0.001836",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /monitoring-rules",
+    "PASS",
+    "0.003388",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /members",
+    "PASS",
+    "0.002528",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /settings",
+    "PASS",
+    "0.002738",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /workspaces",
+    "PASS",
+    "0.007616",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /webhooks/deliveries",
+    "PASS",
+    "0.003465",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /webhooks/endpoints",
+    "PASS",
+    "0.002783",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /audit-log",
+    "PASS",
+    "0.003318",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "Authenticated feature-read smoke /api-keys",
+    "PASS",
+    "0.002297",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "LEAD sample: all 100 supplied source rows upsert and replay in their original workspace",
+    "PASS",
+    "0.678795",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "FLOW: versioned approval lifecycle enforces separation of duties and tenant isolation",
+    "PASS",
+    "0.0415",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "TEN: workspace registry never lists another creator workspace",
+    "PASS",
+    "0.019227",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "DATA: fresh production workspace has no fabricated delivery or customer activity",
+    "PASS",
+    "0.000878",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "SEC: malformed tracking arrays and timestamps are client errors without persisted artifacts",
+    "PASS",
+    "0.013585",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Authenticated API",
+    "MET reconciliation totals equal persisted tracked events in each tenant",
+    "PASS",
+    "0.008689",
+    "prelive/api.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Overview",
+    "PASS",
+    "1.287",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Launchpad",
+    "PASS",
+    "0.988",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Boards",
+    "PASS",
+    "0.757",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: AdSync",
+    "PASS",
+    "1.209",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: ChatGPT Ads",
+    "PASS",
+    "0.895",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Funnel",
+    "PASS",
+    "0.895",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Leak Monitor",
+    "PASS",
+    "0.947",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Events",
+    "PASS",
+    "1.023",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Adjustments",
+    "PASS",
+    "0.872",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Diagnostics",
+    "PASS",
+    "1.006",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Match Quality",
+    "PASS",
+    "1.07",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Reconciliation",
+    "PASS",
+    "1.225",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Fraud",
+    "PASS",
+    "0.916",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Deep Links",
+    "PASS",
+    "0.99",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Sites",
+    "PASS",
+    "0.982",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Fingerprinting",
+    "PASS",
+    "0.828",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Live Sync",
+    "PASS",
+    "0.88",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Data Hub",
+    "PASS",
+    "0.95",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Customer 360",
+    "PASS",
+    "0.868",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Offline Attribution",
+    "PASS",
+    "0.886",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Matchback",
+    "PASS",
+    "0.971",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: POS & Stores",
+    "PASS",
+    "0.788",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Journeys",
+    "PASS",
+    "0.893",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Identity",
+    "PASS",
+    "0.883",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Models",
+    "PASS",
+    "0.808",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: AI Intelligence",
+    "PASS",
+    "1.007",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Attribution",
+    "PASS",
+    "0.914",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Planner",
+    "PASS",
+    "0.922",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Reports",
+    "PASS",
+    "0.82",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Grouped Performance",
+    "PASS",
+    "0.991",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Executive Briefs",
+    "PASS",
+    "1.411",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Enrich",
+    "PASS",
+    "0.965",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Lead Grading",
+    "PASS",
+    "1.036",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Behavior",
+    "PASS",
+    "1.275",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Feed",
+    "PASS",
+    "0.838",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Agents",
+    "PASS",
+    "0.978",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Routing",
+    "PASS",
+    "1.044",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Follow-ups",
+    "PASS",
+    "1.134",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Calls",
+    "PASS",
+    "1.094",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Meetings",
+    "PASS",
+    "1.027",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Feedback",
+    "PASS",
+    "1.044",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Approvals",
+    "PASS",
+    "1.098",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Ask Ace",
+    "PASS",
+    "1.009",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Integrations",
+    "PASS",
+    "1.025",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Data Flows",
+    "PASS",
+    "1.01",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Real-Time Activation",
+    "PASS",
+    "1.148",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Personalization",
+    "PASS",
+    "1.018",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Exclusions",
+    "PASS",
+    "1.13",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Audiences",
+    "PASS",
+    "1.009",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Delivery",
+    "PASS",
+    "0.995",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Monitoring",
+    "PASS",
+    "1.064",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Alerts",
+    "PASS",
+    "0.974",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Compliance",
+    "PASS",
+    "0.954",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Developers",
+    "PASS",
+    "0.867",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Settings",
+    "PASS",
+    "0.879",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production public render smoke: /",
+    "PASS",
+    "0.962",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production public render smoke: /agents",
+    "PASS",
+    "0.721",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production public render smoke: /integrations",
+    "PASS",
+    "0.574",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production public render smoke: /pricing",
+    "PASS",
+    "0.923",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production public render smoke: /case-studies",
+    "PASS",
+    "0.727",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production public render smoke: /resources",
+    "PASS",
+    "0.947",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production public render smoke: /security",
+    "PASS",
+    "0.693",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production UI login establishes real session and survives refresh",
+    "PASS",
+    "2.451",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production UI invalid login displays error without entering application",
+    "PASS",
+    "1.443",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Password visibility control changes input type without losing content",
+    "PASS",
+    "1.701",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Overview",
+    "PASS",
+    "3.471",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Launchpad",
+    "PASS",
+    "1.201",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Boards",
+    "PASS",
+    "1.277",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: AdSync",
+    "PASS",
+    "1.512",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: ChatGPT Ads",
+    "PASS",
+    "1.478",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Funnel",
+    "PASS",
+    "1.442",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Leak Monitor",
+    "PASS",
+    "1.858",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Events",
+    "PASS",
+    "2.32",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Adjustments",
+    "PASS",
+    "1.266",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Diagnostics",
+    "PASS",
+    "2.611",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Match Quality",
+    "PASS",
+    "1.56",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Reconciliation",
+    "PASS",
+    "1.247",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Fraud",
+    "PASS",
+    "1.279",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Deep Links",
+    "PASS",
+    "1.214",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Sites",
+    "PASS",
+    "1.376",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Fingerprinting",
+    "PASS",
+    "1.329",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Live Sync",
+    "PASS",
+    "1.339",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Data Hub",
+    "PASS",
+    "2.027",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Customer 360",
+    "PASS",
+    "1.452",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Offline Attribution",
+    "PASS",
+    "3.525",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Matchback",
+    "PASS",
+    "1.677",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: POS & Stores",
+    "PASS",
+    "1.828",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Journeys",
+    "PASS",
+    "1.69",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Identity",
+    "PASS",
+    "1.819",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Models",
+    "PASS",
+    "1.95",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: AI Intelligence",
+    "PASS",
+    "1.83",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Attribution",
+    "PASS",
+    "1.432",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Planner",
+    "PASS",
+    "1.668",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Reports",
+    "PASS",
+    "1.822",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Grouped Performance",
+    "PASS",
+    "3.758",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Executive Briefs",
+    "PASS",
+    "1.736",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Enrich",
+    "PASS",
+    "1.59",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Lead Grading",
+    "PASS",
+    "1.707",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Behavior",
+    "PASS",
+    "1.438",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Feed",
+    "PASS",
+    "1.59",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Agents",
+    "PASS",
+    "1.455",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Routing",
+    "PASS",
+    "1.822",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Follow-ups",
+    "PASS",
+    "1.498",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Calls",
+    "PASS",
+    "1.507",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Meetings",
+    "PASS",
+    "2.851",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Feedback",
+    "PASS",
+    "1.116",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Approvals",
+    "PASS",
+    "1.172",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Ask Ace",
+    "PASS",
+    "1.094",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Integrations",
+    "PASS",
+    "1.197",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Data Flows",
+    "PASS",
+    "1.093",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Real-Time Activation",
+    "PASS",
+    "1.143",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Personalization",
+    "PASS",
+    "1.149",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Exclusions",
+    "PASS",
+    "1.276",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Audiences",
+    "PASS",
+    "1.158",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Delivery",
+    "PASS",
+    "2.873",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Monitoring",
+    "PASS",
+    "1.148",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Alerts",
+    "PASS",
+    "1.102",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Compliance",
+    "PASS",
+    "1.09",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Developers",
+    "PASS",
+    "1.108",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Settings",
+    "PASS",
+    "1.189",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production public render smoke: /",
+    "PASS",
+    "0.92",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production public render smoke: /agents",
+    "PASS",
+    "0.802",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production public render smoke: /integrations",
+    "PASS",
+    "0.83",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production public render smoke: /pricing",
+    "PASS",
+    "0.884",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production public render smoke: /case-studies",
+    "PASS",
+    "2.354",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production public render smoke: /resources",
+    "PASS",
+    "0.839",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production public render smoke: /security",
+    "PASS",
+    "0.8",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production UI login establishes real session and survives refresh",
+    "PASS",
+    "5.092",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production UI invalid login displays error without entering application",
+    "PASS",
+    "1.593",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Password visibility control changes input type without losing content",
+    "PASS",
+    "1.7",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Overview",
+    "PASS",
+    "10.677",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Launchpad",
+    "PASS",
+    "2.852",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Boards",
+    "PASS",
+    "1.844",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: AdSync",
+    "PASS",
+    "1.732",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: ChatGPT Ads",
+    "PASS",
+    "2.065",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Funnel",
+    "PASS",
+    "1.987",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Leak Monitor",
+    "PASS",
+    "2.01",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Events",
+    "PASS",
+    "1.954",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Adjustments",
+    "PASS",
+    "1.855",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Diagnostics",
+    "PASS",
+    "1.779",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Match Quality",
+    "PASS",
+    "1.912",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Reconciliation",
+    "PASS",
+    "1.841",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Fraud",
+    "PASS",
+    "1.786",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Deep Links",
+    "PASS",
+    "1.511",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Sites",
+    "PASS",
+    "1.573",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Fingerprinting",
+    "PASS",
+    "1.562",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Live Sync",
+    "PASS",
+    "1.956",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Data Hub",
+    "PASS",
+    "1.761",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Customer 360",
+    "PASS",
+    "1.807",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Offline Attribution",
+    "PASS",
+    "1.665",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Matchback",
+    "PASS",
+    "1.917",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: POS & Stores",
+    "PASS",
+    "1.562",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Journeys",
+    "PASS",
+    "1.693",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Identity",
+    "PASS",
+    "1.182",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Models",
+    "PASS",
+    "1.03",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: AI Intelligence",
+    "PASS",
+    "1.038",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Attribution",
+    "PASS",
+    "1.213",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Planner",
+    "PASS",
+    "1.337",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Reports",
+    "PASS",
+    "1.231",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Grouped Performance",
+    "PASS",
+    "1.266",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Executive Briefs",
+    "PASS",
+    "1.165",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Enrich",
+    "PASS",
+    "1.277",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Lead Grading",
+    "PASS",
+    "1.34",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Behavior",
+    "PASS",
+    "1.24",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Feed",
+    "PASS",
+    "1.239",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Agents",
+    "PASS",
+    "1.022",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Routing",
+    "PASS",
+    "1.038",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Follow-ups",
+    "PASS",
+    "1.23",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Calls",
+    "PASS",
+    "1.237",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Meetings",
+    "PASS",
+    "1.179",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Feedback",
+    "PASS",
+    "1.171",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Approvals",
+    "PASS",
+    "1.234",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Ask Ace",
+    "PASS",
+    "1.136",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Integrations",
+    "PASS",
+    "1.296",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Data Flows",
+    "PASS",
+    "1.135",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Real-Time Activation",
+    "PASS",
+    "1.007",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Personalization",
+    "PASS",
+    "1.128",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Exclusions",
+    "PASS",
+    "1.185",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Audiences",
+    "PASS",
+    "0.769",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Delivery",
+    "PASS",
+    "0.882",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Monitoring",
+    "PASS",
+    "0.994",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Alerts",
+    "PASS",
+    "0.777",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Compliance",
+    "PASS",
+    "0.797",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Developers",
+    "PASS",
+    "0.792",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production render smoke: Settings",
+    "PASS",
+    "0.754",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production public render smoke: /",
+    "PASS",
+    "1.883",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production public render smoke: /agents",
+    "PASS",
+    "0.7",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production public render smoke: /integrations",
+    "PASS",
+    "0.653",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production public render smoke: /pricing",
+    "PASS",
+    "0.652",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production public render smoke: /case-studies",
+    "PASS",
+    "0.714",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production public render smoke: /resources",
+    "PASS",
+    "0.614",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production public render smoke: /security",
+    "PASS",
+    "0.61",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production UI login establishes real session and survives refresh",
+    "PASS",
+    "3.442",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Production UI invalid login displays error without entering application",
+    "PASS",
+    "1.967",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Production browser",
+    "Password visibility control changes input type without losing content",
+    "PASS",
+    "1.765",
+    "prelive/browser.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Release-gate self-tests",
+    "test_duplicate_case_fails",
+    "PASS",
+    "0",
+    "prelive/release-gate.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Release-gate self-tests",
+    "test_missing_case_fails",
+    "PASS",
+    "0",
+    "prelive/release-gate.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Release-gate self-tests",
+    "test_modified_evidence_fails",
+    "PASS",
+    "0",
+    "prelive/release-gate.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Release-gate self-tests",
+    "test_no_evidence_fails",
+    "PASS",
+    "0",
+    "prelive/release-gate.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Release-gate self-tests",
+    "test_partial_smoke_never_passes",
+    "PASS",
+    "0",
+    "prelive/release-gate.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Release-gate self-tests",
+    "test_path_escape_fails",
+    "PASS",
+    "0",
+    "prelive/release-gate.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Release-gate self-tests",
+    "test_real_complete_case_passes_case_gate_only",
+    "PASS",
+    "0",
+    "prelive/release-gate.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Release-gate self-tests",
+    "test_retry_only_flaky_fails",
+    "PASS",
+    "0",
+    "prelive/release-gate.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Release-gate self-tests",
+    "test_stale_candidate_fails",
+    "PASS",
+    "0",
+    "prelive/release-gate.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "Release-gate self-tests",
+    "test_unapproved_exclusion_fails",
+    "PASS",
+    "0",
+    "prelive/release-gate.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "ML service",
+    "test_point_in_time_contract_rejects_future_feature",
+    "PASS",
+    "0",
+    "ml/tests.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "ML service",
+    "test_seasonal_naive_preserves_zero_and_rejects_unknown",
+    "PASS",
+    "0.001",
+    "ml/tests.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "ML service",
+    "test_seasonal_naive_rejects_irregular_time_axis",
+    "PASS",
+    "0",
+    "ml/tests.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "ML service",
+    "test_artifact_store_rejects_tampering",
+    "PASS",
+    "0.214",
+    "ml/tests.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "ML service",
+    "test_catboost_challenger_preserves_time_boundary",
+    "PASS",
+    "1.431",
+    "ml/tests.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "ML service",
+    "test_immature_labels_are_censored_and_not_forced_negative",
+    "PASS",
+    "0.001",
+    "ml/tests.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "ML service",
+    "test_unobserved_labels_are_censored",
+    "PASS",
+    "0.001",
+    "ml/tests.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "ML service",
+    "test_forecast_challenger_rejects_incomplete_future_covariates",
+    "PASS",
+    "0.001",
+    "ml/tests.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "ML service",
+    "test_classification_rejects_single_class_partitions",
+    "PASS",
+    "0.045",
+    "ml/tests.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "ML service",
+    "test_shared_result_contract_manifest",
+    "PASS",
+    "0.001",
+    "ml/tests.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "ML service",
+    "test_anomaly_minimum_volume_and_duplicate_suppression",
+    "PASS",
+    "0.124",
+    "ml/tests.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "ML service",
+    "test_segmentation_reports_stability_diagnostics",
+    "PASS",
+    "0.037",
+    "ml/tests.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "ML service",
+    "test_ranker_evaluates_held_out_groups",
+    "PASS",
+    "0.045",
+    "ml/tests.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "ML service",
+    "test_meridian_budget_scenario_constraints_are_feasible_and_bounded",
+    "PASS",
+    "0",
+    "ml/tests.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "ML service",
+    "test_meridian_budget_scenario_rejects_infeasible_or_unknown_channel_constraints",
+    "PASS",
+    "0.001",
+    "ml/tests.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "ML service",
+    "test_forecast_qualification_preserves_baseline_when_candidate_fails_gate",
+    "PASS",
+    "0",
+    "ml/tests.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "ML service",
+    "test_forecast_qualification_selects_better_candidate_for_review_only",
+    "PASS",
+    "0",
+    "ml/tests.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "ML service",
+    "test_forecast_qualification_rejects_inverted_intervals",
+    "PASS",
+    "0",
+    "ml/tests.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "ML service",
+    "test_forecast_qualification_reports_zero_actuals_without_dividing_by_zero",
+    "PASS",
+    "0",
+    "ml/tests.junit.xml",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ]
+]

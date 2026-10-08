@@ -1,0 +1,775 @@
+{
+  "errors": [],
+  "results": [
+    {
+      "width": 1440,
+      "tab": "Overview",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Launchpad",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Boards",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "AdSync",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "ChatGPT Ads",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Funnel",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Leak Monitor",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Events",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Adjustments",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Diagnostics",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Match Quality",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Reconciliation",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Fraud",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Deep Links",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Sites",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Fingerprinting",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Live Sync",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Data Hub",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Customer 360",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Offline Attribution",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Matchback",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "POS & Stores",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Journeys",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Identity",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Models",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "AI Intelligence",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Attribution",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Planner",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Reports",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Grouped Performance",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Executive Briefs",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Enrich",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Lead Grading",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Behavior",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Feed",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Agents",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Routing",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Follow-ups",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Calls",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Meetings",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Feedback",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Approvals",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Ask Ace",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Integrations",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Data Flows",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Real-Time Activation",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Personalization",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Exclusions",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Audiences",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Delivery",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Monitoring",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Alerts",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Compliance",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Developers",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 1440,
+      "tab": "Settings",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Overview",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Launchpad",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Boards",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "AdSync",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "ChatGPT Ads",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Funnel",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Leak Monitor",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Events",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Adjustments",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Diagnostics",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Match Quality",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Reconciliation",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Fraud",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Deep Links",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Sites",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Fingerprinting",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Live Sync",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Data Hub",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Customer 360",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Offline Attribution",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Matchback",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "POS & Stores",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Journeys",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Identity",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Models",
+      "overflow": 3,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "AI Intelligence",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Attribution",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Planner",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Reports",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Grouped Performance",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Executive Briefs",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Enrich",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Lead Grading",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Behavior",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Feed",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Agents",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Routing",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Follow-ups",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Calls",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Meetings",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Feedback",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Approvals",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Ask Ace",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Integrations",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Data Flows",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Real-Time Activation",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Personalization",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Exclusions",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Audiences",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Delivery",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Monitoring",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Alerts",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Compliance",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Developers",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    },
+    {
+      "width": 390,
+      "tab": "Settings",
+      "overflow": 0,
+      "crash": false,
+      "offenders": []
+    }
+  ]
+}

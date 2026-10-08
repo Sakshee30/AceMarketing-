@@ -1,0 +1,76 @@
+[
+  {
+    "name": "frontend-architecture",
+    "status": "PASS",
+    "evidence": "frontend-checks/architecture.log",
+    "candidate": "aafb5f9d0e191e7a976e61547d8b995a11baa709"
+  },
+  {
+    "name": "project-profile",
+    "status": "PASS",
+    "evidence": "frontend-checks/project-profile.log",
+    "candidate": "aafb5f9d0e191e7a976e61547d8b995a11baa709"
+  },
+  {
+    "name": "reuse-governance",
+    "status": "PASS",
+    "evidence": "frontend-checks/reuse.log",
+    "candidate": "aafb5f9d0e191e7a976e61547d8b995a11baa709"
+  },
+  {
+    "name": "frontend-budget",
+    "status": "PASS",
+    "exit": 0,
+    "evidence": "frontend-checks/frontend-budget.log",
+    "candidate": "aafb5f9d0e191e7a976e61547d8b995a11baa709"
+  },
+  {
+    "name": "frontend-release",
+    "status": "PASS",
+    "exit": 0,
+    "evidence": "frontend-checks/frontend-release.log",
+    "candidate": "aafb5f9d0e191e7a976e61547d8b995a11baa709"
+  },
+  {
+    "name": "customer-app-budget",
+    "status": "PASS",
+    "exit": 0,
+    "evidence": "frontend-checks/customer-app-budget.log",
+    "candidate": "aafb5f9d0e191e7a976e61547d8b995a11baa709"
+  },
+  {
+    "name": "customer-app-release",
+    "status": "PASS",
+    "exit": 0,
+    "evidence": "frontend-checks/customer-app-release.log",
+    "candidate": "aafb5f9d0e191e7a976e61547d8b995a11baa709"
+  },
+  {
+    "name": "public-site-budget",
+    "status": "PASS",
+    "exit": 0,
+    "evidence": "frontend-checks/public-site-budget.log",
+    "candidate": "aafb5f9d0e191e7a976e61547d8b995a11baa709"
+  },
+  {
+    "name": "public-site-release",
+    "status": "PASS",
+    "exit": 0,
+    "evidence": "frontend-checks/public-site-release.log",
+    "candidate": "aafb5f9d0e191e7a976e61547d8b995a11baa709"
+  },
+  {
+    "name": "platform-admin-budget",
+    "status": "PASS",
+    "exit": 0,
+    "evidence": "frontend-checks/platform-admin-budget.log",
+    "candidate": "aafb5f9d0e191e7a976e61547d8b995a11baa709"
+  },
+  {
+    "name": "platform-admin-release",
+    "status": "PASS",
+    "exit": 0,
+    "evidence": "frontend-checks/platform-admin-release.log",
+    "candidate": "aafb5f9d0e191e7a976e61547d8b995a11baa709"
+  }
+]

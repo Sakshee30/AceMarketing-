@@ -1,0 +1,205 @@
+[
+  [
+    "STAGE RESULTS",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Candidate 6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00 | Evidence from isolated run 37064060695",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Stage",
+    "Status",
+    "Detail",
+    "Seconds",
+    "Candidate"
+  ],
+  [
+    "network-isolation",
+    "PASS",
+    "Loopback-only namespace; external connection denied",
+    "0",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "systemd",
+    "PASS",
+    "exit=0; see systemd.log",
+    "0.144",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "all-runtime-syntax",
+    "PASS",
+    "337 files checked",
+    "0",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "independent-oracles",
+    "PASS",
+    "exit=0; see independent-oracles.log",
+    "0.284",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "release-gate-self-tests",
+    "PASS",
+    "exit=0; see release-gate-self-tests.log",
+    "0.102",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "migrations",
+    "PASS",
+    "exit=0; see migrations.log",
+    "0.621",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "migration-idempotency",
+    "PASS",
+    "exit=0; see migration-idempotency.log",
+    "0.181",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "native-regression",
+    "PASS",
+    "exit=0; see native-regression.log",
+    "47.686",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "typecheck",
+    "PASS",
+    "exit=0; see typecheck.log",
+    "8.629",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "production-bundle",
+    "PASS",
+    "exit=0; see production-bundle.log",
+    "3.726",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "backend-architecture",
+    "PASS",
+    "exit=0; see backend-architecture.log",
+    "0.176",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "customer-bundle",
+    "PASS",
+    "exit=0; see customer-bundle.log",
+    "3.666",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "public-bundle",
+    "PASS",
+    "exit=0; see public-bundle.log",
+    "2.211",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "control-bundle",
+    "PASS",
+    "exit=0; see control-bundle.log",
+    "1.125",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "fixture-seed",
+    "PASS",
+    "exit=0; see fixture-seed.log",
+    "0.802",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "authenticated-api-startup",
+    "PASS",
+    "Real API: NODE_ENV=production; auth enabled; restricted PostgreSQL role",
+    "0",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "authenticated-api",
+    "PASS",
+    "exit=0; see authenticated-api.log",
+    "2.312",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "production-browser",
+    "PASS",
+    "exit=0; see production-browser.log",
+    "114.304",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "worker-runtime",
+    "PASS",
+    "Worker liveness only; business completion checked in API suite",
+    "0",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "backup-smoke",
+    "PASS",
+    "exit=0; see backup-smoke.log",
+    "0.153",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "restore-smoke",
+    "PASS",
+    "exit=0; see restore-smoke.log",
+    "0.57",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "restore-content-reconciliation",
+    "PASS",
+    "exit=0; see restore-content-reconciliation.log",
+    "0.227",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ],
+  [
+    "restored-authenticated-api",
+    "PASS",
+    "exit=0; see restored-authenticated-api.log",
+    "0.198",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00"
+  ]
+]

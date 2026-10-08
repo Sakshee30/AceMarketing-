@@ -1,0 +1,86 @@
+[
+  [
+    "GOLDEN CASES",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Fresh isolated workspace per case. Null/unsupported-currency representation requires approved product semantics.",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Fixture ID",
+    "File",
+    "Input rows",
+    "Oracle class",
+    "Notes"
+  ],
+  [
+    "D3-BASELINE",
+    "D3_golden/baseline.json",
+    "1129",
+    "EXACT_NUMERIC_ORACLE",
+    "Original plan arithmetic retained. Source amounts are major INR units, not minor units. | Use a fresh isolated workspace for each case."
+  ],
+  [
+    "D3-DUPLICATE_MONEY",
+    "D3_golden/duplicate_money.json",
+    "1131",
+    "EXACT_NUMERIC_ORACLE",
+    "Duplicate event IDs must not duplicate payments or refunds."
+  ],
+  [
+    "D3-WINDOW_BOUNDARIES",
+    "D3_golden/window_boundaries.json",
+    "1133",
+    "EXACT_NUMERIC_ORACLE",
+    "Half-open reporting window [startAt, endAt). | ROAS absolute tolerance 1e-9; monetary input sums exact."
+  ],
+  [
+    "D3-EMPTY",
+    "D3_golden/empty.json",
+    "0",
+    "PROPOSED_ZERO_DENOMINATOR_POLICY",
+    "Null is the proposed fixture representation of an undefined ratio; map to the approved product contract. | Never display NaN, Infinity or a misleading unqualified rate."
+  ],
+  [
+    "D3-MIXED_CURRENCY",
+    "D3_golden/mixed_currency.json",
+    "1130",
+    "POLICY_ASSERTION",
+    "No exchange-rate assumption supplied by the source plan. | Exact UI/error representation requires product mapping."
+  ],
+  [
+    "D3-LATE_ARRIVAL",
+    "D3_golden/late_arrival.json",
+    "1129",
+    "EXACT_NUMERIC_ORACLE",
+    "Same event-time window after late ingestion. Separate freshness labels from numerical inclusion."
+  ]
+]

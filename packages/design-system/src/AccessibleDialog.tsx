@@ -32,9 +32,16 @@ export function AccessibleDialog({
   useEffect(()=>{
     restoreRef.current=document.activeElement instanceof HTMLElement?document.activeElement:null
     const root=rootRef.current
-    const first=root?.querySelector<HTMLElement>(focusableSelector)
-    requestAnimationFrame(()=>first?.focus())
-    return()=>{requestAnimationFrame(()=>restoreRef.current?.focus?.())}
+    const first=root?.querySelector<HTMLElement>('input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled])')
+      ||root?.querySelector<HTMLElement>(focusableSelector)
+    const frame=requestAnimationFrame(()=>first?.focus())
+    return()=>{
+      cancelAnimationFrame(frame)
+      const previous=restoreRef.current
+      requestAnimationFrame(()=>{
+        if(previous?.isConnected&&!rootRef.current?.isConnected)previous.focus()
+      })
+    }
   },[])
 
   const onKeyDown=(event:KeyboardEvent<HTMLDivElement>)=>{

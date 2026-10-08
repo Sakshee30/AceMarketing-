@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,Cable,CheckCircle2,DatabaseZap,Layers3,Plus,ShieldCheck,X} from 'lucide-react'
 import {feedApi} from '../data/feed.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -33,7 +33,7 @@ export default function FeedPage(){
 
   const load=async()=>{
     if(loading&&((data.attributes||[]).length||(data.mappings||[]).length))return
-    setLoading(true)
+    beginLoading(setLoading)
     setLoadError('')
     try{
       const r:any=await feedApi.load()

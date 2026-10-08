@@ -1,0 +1,4 @@
+
+> ace-marketing@0.1.0 migrate
+> node backend/scripts/migrate.mjs
+

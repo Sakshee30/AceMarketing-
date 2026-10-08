@@ -1,4 +1,5 @@
 import {pool,embeddedDatabase} from './database.mjs'
+import {withTenantDbTransaction} from './platform/tenant-db.mjs'
 
 const eventList=(name,fallback)=>String(process.env[name]||fallback).split(',').map(x=>x.trim()).filter(Boolean)
 const qualifiedEvents=()=>eventList('COHORT_QUALIFIED_EVENTS','lead.qualified,qualified_lead,mql,sql')
@@ -9,7 +10,8 @@ const monthsValue=value=>Math.max(1,Math.min(36,Number(value)||6))
 
 const cohortQuery=async(workspaceId,months)=>{
   const q=qualifiedEvents(),c=consultationEvents(),v=conversionEvents()
-  const {rows}=await pool.query(
+  // Attribution tables enforce row-level security; without tenant context they read as empty.
+  const {rows}=await withTenantDbTransaction(workspaceId,db=>db.query(
     `WITH sessions AS (
        SELECT id,
          date_trunc('month',first_seen_at)::date cohort_month,
@@ -37,13 +39,13 @@ const cohortQuery=async(workspaceId,months)=>{
      GROUP BY cohort_month
      ORDER BY cohort_month ASC`,
     [workspaceId,months,q,c,v]
-  )
+  ))
   return rows
 }
 
 const sourceQuery=async(workspaceId,months)=>{
   const v=conversionEvents()
-  const {rows}=await pool.query(
+  const {rows}=await withTenantDbTransaction(workspaceId,db=>db.query(
     `WITH sessions AS (
        SELECT id,
          COALESCE(NULLIF(utm_source,''),'Direct / Unknown') source,
@@ -64,7 +66,7 @@ const sourceQuery=async(workspaceId,months)=>{
      ORDER BY revenue DESC, acquired DESC
      LIMIT 25`,
     [workspaceId,months,v]
-  )
+  ))
   return rows
 }
 

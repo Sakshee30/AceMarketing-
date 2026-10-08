@@ -1,0 +1,7 @@
+{
+  "login": "PASS",
+  "authMe": "PASS",
+  "fixtureLeadRead": "PASS",
+  "primaryWorkspaceFixtureLeads": 25,
+  "scope": "restored database and same candidate/API runtime; not host or object-store recovery"
+}

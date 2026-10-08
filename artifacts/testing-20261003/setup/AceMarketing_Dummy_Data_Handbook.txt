@@ -1,0 +1,336 @@
+PRE-LIVE TEST ASSETS  /  VERSION 1.0
+AceMarketing
+Dummy data handbook
+Data files, upload documents, independent expected results and scenario traceability
+Prepared 2 October 2026 • Fixed fixture seed 20261002
+A companion to the supplied master test plan and its 356-scenario catalogue. This package provides synthetic inputs for isolated testing; it does not implement an application seeder or certify test results.
+FUNCTIONAL PROFILE
+SCALE PROFILE
+4 tenants • 8 workspaces • 32 users
+50 tenants • 100 workspaces • 1,000 users
+10,000 leads • 100 campaigns
+100,000 leads • 1,000 campaigns
+100,000 tracking events
+1,000,000 tracking events
+Start here
+Open AceMarketing_Dummy_Data_Catalogue.xlsx for an overview and the test-to-fixture mapping. Use CSV/JSON/NDJSON files as source inputs; workbook preview rows are not additional records. Read the adapter and safety requirements before loading anything into the application.
+Qualification boundary
+Fixture integrity has been checked locally. Application end-to-end tests, provider wire contracts, migrations, load tests, security scans and restoration have not been run. Every application scenario remains Not run.
+Source baseline: a82f24a8e762b6a60e0c13bcb15347daa78f1b49. This is the supplied plan’s reviewed commit, not a fresh repository inspection.
+FIXTURE HANDBOOK  /  02
+Package map and profile boundaries
+ID
+Supplied content
+Use
+D0
+Environment/guard inputs; expected-failure XML; evidence contract
+Harness and safe-run checks
+D1
+4 tenants, 8 workspaces, 32 users/memberships; invitations; role mapping
+Authentication and isolation
+D2
+10,000 leads, 100 campaigns, 9,000 daily aggregates, 100,000 events
+Functional ingestion and reporting
+D3
+6 golden case files; attribution and timezone oracles
+Exact calculations and edge cases
+D4
+260 response specs for 13 providers; billing, messaging, flows and recovery inputs
+External failure and state transitions
+D5
+23 upload assets; negative values; consent/retention and redaction canaries
+File handling, privacy and abuse tests
+D6
+32 AI cases; corpus; model-output fixtures; 600/200/200 ML split
+Grounding, safety and ML mechanics
+D7
+Full scale dataset with 1 million compressed tracking events
+Separate performance environment
+D8
+20-lead golden UAT history and 12 journey cards
+Business acceptance stories
+Do not add all profile totals together
+D1 and D2 form one functional environment. D7 is an independent scale environment. D3 cases each require an isolated golden workspace. D8 has its own UAT organization. Preview/import copies share source IDs and must not become extra entities. D4 and D5 are intentional state/failure overlays, not a second bulk seed.
+Every generated business identifier is synthetic. The source golden fixture retains its original camelCase event contract and major-INR values; the bulk fixture uses snake_case fields and integer minor units.
+FIXTURE HANDBOOK  /  03
+Safety, provenance and unresolved contracts
+The files do not enforce the environment
+The package contains no production credentials, real customer data, live ad accounts, bank/card details or reachable telephone numbers. Emails end in example.test; recipient and provider identifiers begin SIM_. These conventions are not sufficient protection by themselves: deny external egress, capture all transports, verify an isolated environment identity and refuse production credentials before application execution.
+Map before import
+The supplied plan establishes scope and target volumes, not every application schema or endpoint. All new datasets are a neutral fixture contract. The repository was not re-read in this generation task. Actual API/table names, field mappings, ID types, enums, role permissions, payload limits and native provider wire shapes remain unresolved. Do not bypass validation, invent a route or disable authentication to make imports pass.
+Mapping artifact
+Required decision
+schemas/application_mapping_required.csv
+Resolve each entity to supported API/import or approved test seeding path.
+D1_core/persona_role_mapping.csv
+Map logical personas to real roles without fabricating extra roles.
+schemas/adapter_contract.json
+Implement environment, ID remapping, loading, observation and run-scoped cleanup.
+Provider specifications
+Map only applicable operations to versioned native contracts; approve unsupported cases as N/A.
+Source versus newly authored values
+Source-derived: D0–D8 profile names, target volumes, the 356 test IDs, 13 provider names, 12 journey names, safety principles and baseline golden arithmetic. Newly authored: fictional organizations, record IDs, concrete dates inside the 90-day history, data distributions, quota ten, workflow score 70/80, 1 MiB upload boundary and 30-day retention examples. These example policies require approval; they are not product, pricing or legal facts.
+FIXTURE HANDBOOK  /  04
+Core identities and permission tests
+Tenant
+Fixture state
+Business population
+Cedar Training QA
+Active; workspaces 1–2
+Half of bulk campaigns/leads
+Orion Commerce QA
+Active; workspaces 3–4
+Half of bulk campaigns/leads
+Empty Workspace QA
+Active tenant; workspaces 5–6 empty
+No marketing entities
+Suspended Tenant QA
+Suspended; workspaces 7–8
+No marketing entities
+Each tenant has eight synthetic users. The logical personas are owner, administrator, marketing operator, analyst, viewer, approver, support operator and billing operator. Support users are deliberately disabled; billing users are deliberately invited. The first six are active at the account level, subject to tenant status and actual authorization.
+Credentials and session lifecycle
+users.csv supplies a credential_ref, not a password. The seeding adapter must provision each test identity through the actual authentication path and inject fresh test credentials. For expired or revoked sessions, authenticate first and then exercise a controlled clock/TTL or the real revocation operation. Do not insert forged sessions or commit a universal password.
+Tenant and workspace boundaries
+authorization_cases.json targets tenant B resources using a tenant A actor across read, update, delete, export, search, download, realtime, AI retrieval, worker dispatch and platform control. Canary strings must be absent from unauthorized output. Tenant-owner permission must not be assumed to authorize platform control.
+Core owner, administrator, operator, analyst and approver fixture memberships use the first workspace so positive collaboration/approval stories have a common scope. A viewer and invited billing persona use the second. Tests that need broader access must explicitly grant it using the approved role model.
+FIXTURE HANDBOOK  /  05
+Functional marketing data and reconciliation
+File
+Rows
+Meaning
+leads.csv
+10,000
+Synthetic lifecycle snapshots with parent campaign and scope
+campaigns.csv
+100
+Active/paused/completed snapshots; outbound disabled
+campaign_daily_stats.csv
+9,000
+90 daily rows per campaign; provider aggregate source
+events.ndjson
+100,000
+Ten first-party tracking events per lead
+leads_small_import_100.csv
+100
+First 100 rows of full lead file; shared IDs
+The fixed history is 3 July 2026 00:00 UTC inclusive through 1 October 2026 00:00 UTC exclusive: 90 days. The fixture clock is 2 October 2026 00:00 UTC. Set the test clock/report window explicitly; a “last 30 days” UI filter tied to the real wall clock will eventually exclude this history.
+Expected structure
+The event baseline has 10,000 lead-created events, 2,000 qualified-lead events, 1,000 payment events and 200 refund events. Monetary amounts are nonnegative integer minor INR units; the event type determines payment versus refund. Refunds reference the preceding payment. Lead state and event scope are internally consistent.
+Two independent source series
+Provider daily aggregate impressions/clicks/spend and first-party tracking events are intentionally separate source series. Do not sum them as duplicate representations of one measure or force their counts to match. expected_reconciliation.json reports each series separately. The validator checks each against its own records.
+Overlay behavior
+mutation_overlays.json contains duplicate lead replay, stale updates, consent revocation during queued work, late event replay and shared-device identity cases. Load only the selected overlay after its baseline and restore the isolated state afterward. “Invalid input rejected” can be the correct test outcome; it is not a broken fixture.
+FIXTURE HANDBOOK  /  06
+Golden oracles and exact expectations
+Golden cases are small, independently checkable stories. Their major-INR units intentionally preserve the source plan; do not load them into a minor-unit field without explicit conversion. Each case has its own workspace and reporting interval.
+Metric
+Baseline expected
+Spend
+INR 1,000
+Impressions / clicks
+1,000 / 100
+Leads / qualified leads / customers
+20 / 5 / 2
+Gross revenue / refunds
+INR 3,000 / INR 300
+Net revenue
+INR 2,700
+Customer-to-lead conversion
+0.10 = 10%
+Cost per lead / qualified lead
+INR 50 / INR 200
+Net-revenue ROAS
+2.7
+Variant
+Expected behavior
+duplicate_money
+Repeated payment/refund IDs leave baseline totals unchanged.
+window_boundaries
+Before/end events excluded; start/last instant included. Spend becomes INR 1,650.
+empty
+No data; undefined ratios use proposed null representation, not infinity.
+mixed_currency
+No silent INR+USD addition; exact product representation needs approval.
+late_arrival
+Same event-time results after late ingestion.
+The attribution toy fixture assigns 150,000 minor INR units across three touches. First-touch, last-touch and linear examples each conserve that total; only run model-specific assertions when the model is actually supported. The timezone fixture includes exactly tz-start and tz-last in its one-day Asia/Kolkata window.
+FIXTURE HANDBOOK  /  07
+External response and state-transition assets
+D4 includes 20 scenario specifications for each of the 13 provider names in the source plan: Meta Ads, Google Ads, X Ads, TikTok Ads, LinkedIn Ads, GA4, HubSpot, Salesforce, Zoho CRM, Pinterest Ads, Microsoft Ads, WhatsApp Cloud and Custom HTTPS. The supplied text also calls the last integration Custom HTTP; this package preserves the workbook label Custom HTTPS.
+Replay specifications, not verified wire mocks
+Each specification contains a synthetic account, logical operation, request context, response steps and expected constraints. They are provider-neutral and no simulator server is included. Implement/map the actual native versioned payloads and transport semantics separately. The 260 specifications are not 260 qualified provider tests. GA4 and custom endpoint fixtures are read-oriented; operation-specific unsupported scenarios require approved N/A.
+Scenarios include success, empty, missing/unknown fields, malformed body, invalid/expired credentials, revoked permission, wrong account, rate limit, server error, timeout/reset, duplicate page, repeated cursor, partial batch, out-of-order callback, lost response after acceptance, type drift and invalid signature.
+Business fixture
+Known inputs / expected condition
+Billing
+12 concurrent unit reservations against quota 10: ten accepted, two rejected. Duplicate payment callback: one effect.
+Communications
+One delivered message despite replay/reordering; 180-second call; 10:00 UTC meeting displays 15:30 IST.
+Workflows / boards
+Crash-resume action once; separate approval; two version-1 moves produce one success and one conflict.
+Jobs / controls / recovery
+Lease/idempotency and kill-switch inputs; acknowledged IDs for recovery comparison; no actual backup supplied.
+FIXTURE HANDBOOK  /  08
+Upload documents, invalid files and privacy
+The upload manifest lists 23 files with SHA-256 hashes, byte counts and expected handling. It includes three DOCX documents, four PDF variants, one invoice PNG, TXT source/canary documents and matching CSV/XLSX lead samples. Validity is format- and policy-specific; encrypted/image-only files are controlled cases, not ordinary native-text documents.
+Asset family
+What to verify
+Campaign brief, approval policy, support knowledge base
+Text and tables retained; correct tenant; source-grounded retrieval.
+Native invoice and marketing-report PDFs
+Invoice identifier, currency and amounts; golden metrics.
+Image-only invoice PDF and PNG
+Image extraction against the same invoice oracle; no fabricated native-text result.
+Encrypted invoice PDF
+Password gate detected. Public test password: QAOnlyUser-2026.
+Tenant A/B canaries and untrusted instruction text
+No foreign disclosure, stale retrieval or execution of document instructions.
+Malformed/empty/truncated/disguised files
+Reject/quarantine safely without false processing success.
+Below/at/over 1 MiB text files
+Boundary is a proposed test setting, not the application’s established upload limit.
+Negative CSV handling
+invalid_leads.csv deliberately contains harmless formula-like strings such as =1+1. Use a text editor or explicit text-import mode; do not automatically open it as trusted spreadsheet content. The main catalogue escapes these strings for safe viewing. Malformed email/date, foreign workspace, oversized name and mass-assignment inputs are separated from the valid seed.
+Privacy inputs cover consent chronology, export, erasure, derived projections, redaction and a fictional 30-day retention policy. The source plan does not establish a legal retention period. Record actual policy exceptions rather than silently adopting these values.
+FIXTURE HANDBOOK  /  09
+AI evaluation and synthetic ML partitions
+Three different purposes
+Deterministic model-response fixtures test orchestration and output validation. The 32 question/behavior cases test grounded answers, missing-data honesty, tenant boundaries, consent, authorization, prompt injection and fabricated evidence. The ML CSVs test partition/loading/training mechanics only; none proves real marketing effectiveness.
+Partition
+Feature rows
+Label rows
+Observation month
+Train
+600
+600
+July 2026
+Validation
+200
+200
+August 2026
+Test
+200
+200
+September 2026
+Subjects are disjoint across partitions. Labels are stored separately and observed after each feature cutoff. Only prior_visits, prior_product_views and prior_email_click are intended model inputs. Exclude IDs, split markers, timestamps, outcome dates and target labels from the feature vector. Reserve the test partition until the evaluation design is fixed.
+Ground truth and answer evaluation
+The QA corpus contains a golden metrics report, activation policy and support FAQ. Foreign-tenant and adversarial documents exercise access boundaries. Numeric assertions use explicit expected values; source attribution is required for grounded factual answers. Conversion rate 0.1 is the fractional form of 10%. Wording can vary when semantics remain correct.
+Do not let the evaluation input itself override server-side authorization. The numeric_expected and expected_answer fields are grader data, not model prompt content. Keep the answer key out of retrieval and user messages. A forbidden foreign canary or unauthorized external effect is a failure even when the prose sounds correct.
+Lifecycle controls
+Model versioning, real inference timeouts, cancellation, promotion, rollback and budgets still require a real model runtime and application harness. These fixtures establish inputs; they do not simulate a trained production model or supply a production checkpoint.
+FIXTURE HANDBOOK  /  10
+Business acceptance: twelve journey cards
+ID
+Journey
+Principal fixture
+J01
+Organization to trusted report
+D8 golden organization/history
+J02
+Paid click to conversion signal
+D3 attribution + D4 lost response
+J03
+Consent withdrawal while queued
+D2 consent overlay + D4 comms
+J04
+Historical sync and recovery
+D4 six-record provider pages
+J05
+Form / workflow / approval
+D4 workflow definition and faults
+J06
+Safe AI analysis and activation
+D6 corpus and evaluation cases
+J07
+Subscription and quota correctness
+D4 billing replay/quota inputs
+J08
+Collaboration under conflict
+D4 competing board moves
+J09
+Document search and deletion
+D5 document/privacy fixtures
+J10
+Multi-channel lead journey
+D4 communications sequence
+J11
+Security boundary journey
+D1 authorization + D5 canaries
+J12
+Operational recovery journey
+D4 acknowledged-state checkpoint
+Each JSON journey card supplies fixture paths, actions, expected behavior, namespace guidance and empty actual-result/evidence fields. All start Not run. Use real UI/API, persistence and workers for acceptance; do not replace successful application responses with mocks.
+UAT organization
+Cedar UAT Academy is fictional and independent of the bulk tenants. It has a 20-lead September campaign story with two customers and the original golden totals. Remap its fixture IDs to actual IDs when provisioning. Some journey cards use D4 assets authored against the functional namespace; the adapter must resolve their references into the selected isolated journey environment, not mix cross-profile IDs silently.
+What the 356-row mapping establishes
+catalogue/test_to_fixture_map.csv retains every original test ID and expected result, with supporting fixture paths and setup limitations. It establishes reference traceability, not completed automation or exhaustive input coverage. Source scans, keyboard/screen-reader work, load generation, infrastructure failure and restoration require additional runners/resources that no static dataset can replace.
+FIXTURE HANDBOOK  /  11
+Schema, import order and run isolation
+Use supported interfaces
+Complete schemas/application_mapping_required.csv before import. Map actual enums and permissions, convert fixture IDs to allowed application IDs, and use supported onboarding/import APIs wherever practical. If an approved test seeder writes tables directly for setup, keep that setup distinct from the acceptance flow and preserve all real authorization checks during testing.
+Order
+Input / operation
+Required check
+1
+Verify isolated environment, deny egress, set run ID and clock
+Fail closed before any write.
+2
+Tenants → workspaces → users → memberships
+Parent scope and actual role mapping.
+3
+Simulator accounts → campaigns → leads
+No live IDs; no orphan references.
+4
+Provider daily statistics and/or first-party event replay
+Separate source semantics; stable idempotency.
+5
+Wait for workers and inspect terminal state
+202 Accepted is not completed work.
+6
+Compare API, persisted state, dashboard/export and receipts
+Use independent expected values.
+7
+Apply one named negative/state overlay and retest
+Do not pollute other scenarios.
+8
+Archive sanitized evidence; remove run-owned resources only
+Never broad TRUNCATE/DELETE or wildcards.
+The package does not implement this application adapter or its cleanup. scripts/generate_profiles.py only writes local fixture files and refuses a nonempty destination. Changing a run ID regenerates functional/scale IDs; static D3–D6/D8 scenario references still need explicit adapter remapping. Do not mix regenerated profile IDs with unchanged scenario references without that ledger.
+The dictionary documents 108 core/bulk fields. JSON event schema validates the neutral event envelope only; it is not a provider or application API schema. CSV booleans are True/False and blank phone values are intentional. Preserve UTF-8 and parse dates explicitly.
+FIXTURE HANDBOOK  /  12
+Local commands and Jenkins fixture validation
+Extract the complete ZIP, open a terminal in AceMarketing_Dummy_Data_v1 and run the local checker. On Windows use python; on Linux use python3. It requires Python 3 with the standard library only.
+python scripts/validate_package.py --root .
+The checker validates functional/scale counts and relationships, timestamps and monetary totals, golden arithmetic, source-ID mappings, provider specification inventory, AI split integrity, upload bytes and the package SHA-256 manifest. It emits evidence/fixture_validation.json and a JUnit XML report, then exits nonzero if a check fails.
+Generate a fresh functional profile
+python scripts/generate_profiles.py --profile functional \
+  --run-id qa_ci_001 --out ./generated/qa_ci_001
+Generate a fresh scale profile
+python scripts/generate_profiles.py --profile scale \
+  --run-id qa_scale_001 --out ./generated/qa_scale_001
+The backslash line continuations above are for a POSIX shell. On Windows run each command on one line. Use a new empty output directory. Defaults reproduce the selected record distribution with seed 20261002; identical run ID and seed produce identical CSV/NDJSON profile bytes. Compressed events use a fixed gzip header timestamp.
+Jenkins integration boundary
+scripts/Jenkinsfile.fixture-check is a Linux-agent example for fixture validation only. The agent must already have Python and the extracted package. Its JUnit suite name explicitly says FIXTURE_INTEGRITY_NOT_APPLICATION_TESTS. Do not treat a green fixture job as release approval. An application lane still needs schema mapping, auth, services, native simulator adapters, tests and actual business evidence.
+FIXTURE HANDBOOK  /  13
+Evidence, limitations and source register
+What is verified versus still open
+Prepared / locally checked
+Not performed by this package
+Concrete functional and scale records; valid parent references
+Application import, database migrations or API compatibility
+Independent golden arithmetic and mutation expectations
+Actual dashboard, attribution or export correctness
+260 provider-neutral response specifications
+Native API versions, OAuth, callbacks or real provider accounts
+23 upload files and structural/oracle inputs
+Application scanning, OCR, file permissions or search deletion
+AI prompts, answer keys and disjoint synthetic splits
+Real model performance, efficacy or production safety
+All 356 source IDs linked to supporting assets
+356 application tests executed or any release gate passed
+Intentional invalid files are not corrected by the validator. It checks that their expected bytes/shape are retained. Expected-failure XML under D0 is a harness input, not a report to publish as actual application results. Final fixture validation evidence lives separately under evidence/.
+Source register
+S1. User-supplied Pasted text(20261002-181351).txt: requested plan basis, scope, safety tiers, volumes and golden example. S2. Supplied AceMarketing_PreLive_Testing_Plan.zip / planning_register.json: D0–D8 profiles, 356 test IDs, provider labels and phases. S3. Same archive / golden_metric_fixture.json: preserved baseline event input and numerical oracle. S4. Supplied Master Test Plan section 9: J01–J12 journey terminology and behavior.
+Source copies/extracts and provenance are stored in sources/. The repository commit referenced there is historical context inherited from the plan; no fresh repository inspection or current-state claim is made. Additional fixture policies are explicitly proposed and need product/engineering approval.
+Release discipline
+Continue to record each application test as Not run until it is actually executed against a frozen candidate. Store actual observations separately from expected results. A fixture mapping is not a test pass. A simulated response is not provider qualification. Any missing schema or unsupported capability must be blocked or explicitly excluded—not silently made green.

@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {
   Activity,ArrowRight,Bot,Cable,CheckCircle2,ChevronRight,Gauge,MousePointer2,Network,
   PhoneCall,RadioTower,ShieldCheck,Sparkles,Target,Video,X,Zap
@@ -77,7 +77,7 @@ export default function AdSyncPage(){
   ]
 
   const load=async()=>{
-    setLoading(true)
+    beginLoading(setLoading)
     try{
       const [events,delivery]:any=await Promise.all([adsyncApi.events(),adsyncApi.signalDeliveries()])
       const pipelines=(events.items||[]).filter((item:any)=>

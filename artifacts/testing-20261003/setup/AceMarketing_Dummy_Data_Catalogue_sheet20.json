@@ -1,0 +1,182 @@
+[
+  [
+    "APPLICATION MAPPING CHECKLIST",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "No seed adapter has been implemented. Resolve actual paths, IDs, enums, roles, units and validation before using real application services.",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Fixture entity",
+    "Actual API / table",
+    "Actual primary key",
+    "Field mapping",
+    "State mapping",
+    "Money units",
+    "Status"
+  ],
+  [
+    "tenants",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "as applicable",
+    "Not mapped"
+  ],
+  [
+    "workspaces",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "as applicable",
+    "Not mapped"
+  ],
+  [
+    "users",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "as applicable",
+    "Not mapped"
+  ],
+  [
+    "memberships",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "as applicable",
+    "Not mapped"
+  ],
+  [
+    "campaigns",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "D1/D2/D4/D7 minor integer units; D3/D8 source golden major INR units",
+    "Not mapped"
+  ],
+  [
+    "leads",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "as applicable",
+    "Not mapped"
+  ],
+  [
+    "events",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "D1/D2/D4/D7 minor integer units; D3/D8 source golden major INR units",
+    "Not mapped"
+  ],
+  [
+    "campaign_daily_stats",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "D1/D2/D4/D7 minor integer units; D3/D8 source golden major INR units",
+    "Not mapped"
+  ],
+  [
+    "forms",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "as applicable",
+    "Not mapped"
+  ],
+  [
+    "workflows",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "as applicable",
+    "Not mapped"
+  ],
+  [
+    "boards",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "as applicable",
+    "Not mapped"
+  ],
+  [
+    "subscriptions",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "D1/D2/D4/D7 minor integer units; D3/D8 source golden major INR units",
+    "Not mapped"
+  ],
+  [
+    "documents",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "as applicable",
+    "Not mapped"
+  ],
+  [
+    "model_inputs",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "UNRESOLVED",
+    "as applicable",
+    "Not mapped"
+  ]
+]

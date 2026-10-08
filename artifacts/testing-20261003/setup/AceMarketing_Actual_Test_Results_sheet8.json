@@ -1,0 +1,102 @@
+[
+  [
+    "PROVENANCE",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    ""
+  ],
+  [
+    "Candidate 6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00 | Evidence from isolated run 37064060695",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    ""
+  ],
+  [
+    "Item",
+    "Value / source URL",
+    "Meaning"
+  ],
+  [
+    "Tested candidate",
+    "6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00",
+    "All primary artifacts must match this SHA."
+  ],
+  [
+    "Main baseline",
+    "a82f24a8e762b6a60e0c13bcb15347daa78f1b49",
+    "Main not changed or deployed."
+  ],
+  [
+    "QA branch",
+    "qa/prelive-qualification-20261003",
+    "Unmerged draft PR; not production."
+  ],
+  [
+    "Execution run",
+    "https://github.com/Sakshee30/AceMarketing-/actions/runs/37064060695",
+    "GitHub Actions actual execution, not Jenkins."
+  ],
+  [
+    "Draft pull request",
+    "https://github.com/Sakshee30/AceMarketing-/pull/13",
+    "Review changes and remaining scope."
+  ],
+  [
+    "Fixture seed",
+    "20261002",
+    "Original supplied data/history."
+  ],
+  [
+    "Integrity entries",
+    "45",
+    "All downloaded pre-live manifest entries verified."
+  ],
+  [
+    "Runtime",
+    "v24.21.0",
+    "Recorded by final execution."
+  ],
+  [
+    "Timestamp UTC",
+    "46297.87963534722",
+    "Run completion observation."
+  ],
+  [
+    "D2_marketing/leads.csv",
+    "7f2ec6eef33d8730be042a4dc0936f1b5a169fb9e1461269bd35fe98ef52922a",
+    "Supplied D2 original source bytes"
+  ],
+  [
+    "D2_marketing/events.ndjson",
+    "4065b68dbeca295d65f6b0e1f552a489d7c4b4aab6d93e26358daeaac44c34c8",
+    "Supplied D2 original source bytes"
+  ],
+  [
+    "D2_marketing/campaigns.csv",
+    "7f5488d0e9dcd813b67d37859441e0ad50ab95f2f025b5bb35ede7f2a639dcce",
+    "Supplied D2 original source bytes"
+  ],
+  [
+    "D2_marketing/campaign_daily_stats.csv",
+    "583d3b65b68b1cf57c79b34df392a7e4774b96ae824eab5138abfdb2c8eb7682",
+    "Supplied D2 original source bytes"
+  ],
+  [
+    "D2_marketing/expected_reconciliation.json",
+    "6afd287fb58a22f5c3a1e839bfd28261209af306c76907cd5d12c8da32f72979",
+    "Supplied D2 original source bytes"
+  ]
+]

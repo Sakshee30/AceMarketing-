@@ -1,0 +1,524 @@
+<testsuites id="" name="" tests="252" failures="0" skipped="0" errors="0" time="145.693138">
+<testsuite name="identity.spec.ts" timestamp="2026-10-03T05:09:49.012Z" hostname="chromium" tests="18" failures="0" skipped="0" time="28.18" errors="0">
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000001 / owner / qa_ace_v1_user_000001" classname="identity.spec.ts" time="2.655">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000001 / admin / qa_ace_v1_user_000002" classname="identity.spec.ts" time="1.331">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000001 / operator / qa_ace_v1_user_000003" classname="identity.spec.ts" time="1.602">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000001 / analyst / qa_ace_v1_user_000004" classname="identity.spec.ts" time="1.345">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000002 / owner / qa_ace_v1_user_000001" classname="identity.spec.ts" time="2.131">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000003 / owner / qa_ace_v1_user_000009" classname="identity.spec.ts" time="1.933">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000003 / admin / qa_ace_v1_user_000010" classname="identity.spec.ts" time="2.13">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000003 / operator / qa_ace_v1_user_000011" classname="identity.spec.ts" time="2.069">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000003 / analyst / qa_ace_v1_user_000012" classname="identity.spec.ts" time="2.131">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000004 / owner / qa_ace_v1_user_000009" classname="identity.spec.ts" time="1.546">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000005 / owner / qa_ace_v1_user_000017" classname="identity.spec.ts" time="1.106">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000005 / admin / qa_ace_v1_user_000018" classname="identity.spec.ts" time="1.308">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000005 / operator / qa_ace_v1_user_000019" classname="identity.spec.ts" time="0.968">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000005 / analyst / qa_ace_v1_user_000020" classname="identity.spec.ts" time="1.19">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000007 / owner / qa_ace_v1_user_000025" classname="identity.spec.ts" time="1.072">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000007 / admin / qa_ace_v1_user_000026" classname="identity.spec.ts" time="1.537">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000007 / operator / qa_ace_v1_user_000027" classname="identity.spec.ts" time="1.111">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000007 / analyst / qa_ace_v1_user_000028" classname="identity.spec.ts" time="1.015">
+</testcase>
+</testsuite>
+<testsuite name="navigation.spec.ts" timestamp="2026-10-03T05:09:49.012Z" hostname="chromium" tests="62" failures="0" skipped="0" time="44.43" errors="0">
+<testcase name="Production render smoke: Overview" classname="navigation.spec.ts" time="1.876">
+</testcase>
+<testcase name="Production render smoke: Launchpad" classname="navigation.spec.ts" time="0.999">
+</testcase>
+<testcase name="Production render smoke: Boards" classname="navigation.spec.ts" time="0.758">
+</testcase>
+<testcase name="Production render smoke: AdSync" classname="navigation.spec.ts" time="0.778">
+</testcase>
+<testcase name="Production render smoke: ChatGPT Ads" classname="navigation.spec.ts" time="1.011">
+</testcase>
+<testcase name="Production render smoke: Funnel" classname="navigation.spec.ts" time="0.806">
+</testcase>
+<testcase name="Production render smoke: Leak Monitor" classname="navigation.spec.ts" time="1.017">
+</testcase>
+<testcase name="Production render smoke: Events" classname="navigation.spec.ts" time="1.32">
+</testcase>
+<testcase name="Production render smoke: Adjustments" classname="navigation.spec.ts" time="1.127">
+</testcase>
+<testcase name="Production render smoke: Diagnostics" classname="navigation.spec.ts" time="1.035">
+</testcase>
+<testcase name="Production render smoke: Match Quality" classname="navigation.spec.ts" time="1.172">
+</testcase>
+<testcase name="Production render smoke: Reconciliation" classname="navigation.spec.ts" time="1.021">
+</testcase>
+<testcase name="Production render smoke: Fraud" classname="navigation.spec.ts" time="0.96">
+</testcase>
+<testcase name="Production render smoke: Deep Links" classname="navigation.spec.ts" time="1.038">
+</testcase>
+<testcase name="Production render smoke: Sites" classname="navigation.spec.ts" time="0.988">
+</testcase>
+<testcase name="Production render smoke: Fingerprinting" classname="navigation.spec.ts" time="1.071">
+</testcase>
+<testcase name="Production render smoke: Live Sync" classname="navigation.spec.ts" time="0.901">
+</testcase>
+<testcase name="Production render smoke: Data Hub" classname="navigation.spec.ts" time="0.819">
+</testcase>
+<testcase name="Production render smoke: Customer 360" classname="navigation.spec.ts" time="0.739">
+</testcase>
+<testcase name="Production render smoke: Offline Attribution" classname="navigation.spec.ts" time="0.612">
+</testcase>
+<testcase name="Production render smoke: Matchback" classname="navigation.spec.ts" time="0.872">
+</testcase>
+<testcase name="Production render smoke: POS &amp; Stores" classname="navigation.spec.ts" time="0.652">
+</testcase>
+<testcase name="Production render smoke: Journeys" classname="navigation.spec.ts" time="0.534">
+</testcase>
+<testcase name="Production render smoke: Identity" classname="navigation.spec.ts" time="0.649">
+</testcase>
+<testcase name="Production render smoke: Models" classname="navigation.spec.ts" time="0.657">
+</testcase>
+<testcase name="Production render smoke: AI Intelligence" classname="navigation.spec.ts" time="0.745">
+</testcase>
+<testcase name="Production render smoke: Attribution" classname="navigation.spec.ts" time="0.699">
+</testcase>
+<testcase name="Production render smoke: Planner" classname="navigation.spec.ts" time="0.876">
+</testcase>
+<testcase name="Production render smoke: Reports" classname="navigation.spec.ts" time="0.714">
+</testcase>
+<testcase name="Production render smoke: Grouped Performance" classname="navigation.spec.ts" time="0.676">
+</testcase>
+<testcase name="Production render smoke: Executive Briefs" classname="navigation.spec.ts" time="0.645">
+</testcase>
+<testcase name="Production render smoke: Enrich" classname="navigation.spec.ts" time="0.549">
+</testcase>
+<testcase name="Production render smoke: Lead Grading" classname="navigation.spec.ts" time="0.552">
+</testcase>
+<testcase name="Production render smoke: Behavior" classname="navigation.spec.ts" time="0.444">
+</testcase>
+<testcase name="Production render smoke: Feed" classname="navigation.spec.ts" time="0.541">
+</testcase>
+<testcase name="Production render smoke: Agents" classname="navigation.spec.ts" time="0.511">
+</testcase>
+<testcase name="Production render smoke: Routing" classname="navigation.spec.ts" time="0.5">
+</testcase>
+<testcase name="Production render smoke: Follow-ups" classname="navigation.spec.ts" time="0.792">
+</testcase>
+<testcase name="Production render smoke: Calls" classname="navigation.spec.ts" time="0.592">
+</testcase>
+<testcase name="Production render smoke: Meetings" classname="navigation.spec.ts" time="0.521">
+</testcase>
+<testcase name="Production render smoke: Feedback" classname="navigation.spec.ts" time="0.741">
+</testcase>
+<testcase name="Production render smoke: Approvals" classname="navigation.spec.ts" time="0.491">
+</testcase>
+<testcase name="Production render smoke: Ask Ace" classname="navigation.spec.ts" time="0.737">
+</testcase>
+<testcase name="Production render smoke: Integrations" classname="navigation.spec.ts" time="0.683">
+</testcase>
+<testcase name="Production render smoke: Data Flows" classname="navigation.spec.ts" time="0.475">
+</testcase>
+<testcase name="Production render smoke: Real-Time Activation" classname="navigation.spec.ts" time="0.555">
+</testcase>
+<testcase name="Production render smoke: Personalization" classname="navigation.spec.ts" time="0.695">
+</testcase>
+<testcase name="Production render smoke: Exclusions" classname="navigation.spec.ts" time="0.553">
+</testcase>
+<testcase name="Production render smoke: Audiences" classname="navigation.spec.ts" time="0.519">
+</testcase>
+<testcase name="Production render smoke: Delivery" classname="navigation.spec.ts" time="0.503">
+</testcase>
+<testcase name="Production render smoke: Monitoring" classname="navigation.spec.ts" time="0.608">
+</testcase>
+<testcase name="Production render smoke: Alerts" classname="navigation.spec.ts" time="0.637">
+</testcase>
+<testcase name="Production render smoke: Compliance" classname="navigation.spec.ts" time="0.515">
+</testcase>
+<testcase name="Production render smoke: Developers" classname="navigation.spec.ts" time="0.51">
+</testcase>
+<testcase name="Production render smoke: Settings" classname="navigation.spec.ts" time="0.566">
+</testcase>
+<testcase name="Production public render smoke: /" classname="navigation.spec.ts" time="0.473">
+</testcase>
+<testcase name="Production public render smoke: /agents" classname="navigation.spec.ts" time="0.325">
+</testcase>
+<testcase name="Production public render smoke: /integrations" classname="navigation.spec.ts" time="0.369">
+</testcase>
+<testcase name="Production public render smoke: /pricing" classname="navigation.spec.ts" time="0.44">
+</testcase>
+<testcase name="Production public render smoke: /case-studies" classname="navigation.spec.ts" time="0.431">
+</testcase>
+<testcase name="Production public render smoke: /resources" classname="navigation.spec.ts" time="0.43">
+</testcase>
+<testcase name="Production public render smoke: /security" classname="navigation.spec.ts" time="0.405">
+</testcase>
+</testsuite>
+<testsuite name="production.spec.ts" timestamp="2026-10-03T05:09:49.012Z" hostname="chromium" tests="4" failures="0" skipped="0" time="7.646" errors="0">
+<testcase name="Production UI login establishes real session and survives refresh" classname="production.spec.ts" time="2.757">
+</testcase>
+<testcase name="Production UI invalid login displays error without entering application" classname="production.spec.ts" time="1.15">
+</testcase>
+<testcase name="Password visibility control changes input type without losing content" classname="production.spec.ts" time="1.638">
+</testcase>
+<testcase name="Workspace chrome reflects authenticated identity and persisted locale" classname="production.spec.ts" time="2.101">
+</testcase>
+</testsuite>
+<testsuite name="identity.spec.ts" timestamp="2026-10-03T05:09:49.012Z" hostname="firefox" tests="18" failures="0" skipped="0" time="33.659" errors="0">
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000001 / owner / qa_ace_v1_user_000001" classname="identity.spec.ts" time="4.496">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000001 / admin / qa_ace_v1_user_000002" classname="identity.spec.ts" time="1.757">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000001 / operator / qa_ace_v1_user_000003" classname="identity.spec.ts" time="2.236">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000001 / analyst / qa_ace_v1_user_000004" classname="identity.spec.ts" time="1.996">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000002 / owner / qa_ace_v1_user_000001" classname="identity.spec.ts" time="1.439">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000003 / owner / qa_ace_v1_user_000009" classname="identity.spec.ts" time="1.461">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000003 / admin / qa_ace_v1_user_000010" classname="identity.spec.ts" time="1.694">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000003 / operator / qa_ace_v1_user_000011" classname="identity.spec.ts" time="1.61">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000003 / analyst / qa_ace_v1_user_000012" classname="identity.spec.ts" time="1.816">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000004 / owner / qa_ace_v1_user_000009" classname="identity.spec.ts" time="2.847">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000005 / owner / qa_ace_v1_user_000017" classname="identity.spec.ts" time="1.812">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000005 / admin / qa_ace_v1_user_000018" classname="identity.spec.ts" time="1.546">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000005 / operator / qa_ace_v1_user_000019" classname="identity.spec.ts" time="1.286">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000005 / analyst / qa_ace_v1_user_000020" classname="identity.spec.ts" time="1.467">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000007 / owner / qa_ace_v1_user_000025" classname="identity.spec.ts" time="1.519">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000007 / admin / qa_ace_v1_user_000026" classname="identity.spec.ts" time="1.305">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000007 / operator / qa_ace_v1_user_000027" classname="identity.spec.ts" time="1.796">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000007 / analyst / qa_ace_v1_user_000028" classname="identity.spec.ts" time="1.576">
+</testcase>
+</testsuite>
+<testsuite name="navigation.spec.ts" timestamp="2026-10-03T05:09:49.012Z" hostname="firefox" tests="62" failures="0" skipped="0" time="89.284" errors="0">
+<testcase name="Production render smoke: Overview" classname="navigation.spec.ts" time="2.482">
+</testcase>
+<testcase name="Production render smoke: Launchpad" classname="navigation.spec.ts" time="0.966">
+</testcase>
+<testcase name="Production render smoke: Boards" classname="navigation.spec.ts" time="1.118">
+</testcase>
+<testcase name="Production render smoke: AdSync" classname="navigation.spec.ts" time="1.178">
+</testcase>
+<testcase name="Production render smoke: ChatGPT Ads" classname="navigation.spec.ts" time="1.007">
+</testcase>
+<testcase name="Production render smoke: Funnel" classname="navigation.spec.ts" time="1.257">
+</testcase>
+<testcase name="Production render smoke: Leak Monitor" classname="navigation.spec.ts" time="0.984">
+</testcase>
+<testcase name="Production render smoke: Events" classname="navigation.spec.ts" time="1.026">
+</testcase>
+<testcase name="Production render smoke: Adjustments" classname="navigation.spec.ts" time="1.345">
+</testcase>
+<testcase name="Production render smoke: Diagnostics" classname="navigation.spec.ts" time="2.014">
+</testcase>
+<testcase name="Production render smoke: Match Quality" classname="navigation.spec.ts" time="0.926">
+</testcase>
+<testcase name="Production render smoke: Reconciliation" classname="navigation.spec.ts" time="0.96">
+</testcase>
+<testcase name="Production render smoke: Fraud" classname="navigation.spec.ts" time="0.924">
+</testcase>
+<testcase name="Production render smoke: Deep Links" classname="navigation.spec.ts" time="0.799">
+</testcase>
+<testcase name="Production render smoke: Sites" classname="navigation.spec.ts" time="0.789">
+</testcase>
+<testcase name="Production render smoke: Fingerprinting" classname="navigation.spec.ts" time="0.897">
+</testcase>
+<testcase name="Production render smoke: Live Sync" classname="navigation.spec.ts" time="1.215">
+</testcase>
+<testcase name="Production render smoke: Data Hub" classname="navigation.spec.ts" time="0.955">
+</testcase>
+<testcase name="Production render smoke: Customer 360" classname="navigation.spec.ts" time="1.16">
+</testcase>
+<testcase name="Production render smoke: Offline Attribution" classname="navigation.spec.ts" time="2.303">
+</testcase>
+<testcase name="Production render smoke: Matchback" classname="navigation.spec.ts" time="0.927">
+</testcase>
+<testcase name="Production render smoke: POS &amp; Stores" classname="navigation.spec.ts" time="1.201">
+</testcase>
+<testcase name="Production render smoke: Journeys" classname="navigation.spec.ts" time="1.921">
+</testcase>
+<testcase name="Production render smoke: Identity" classname="navigation.spec.ts" time="1.728">
+</testcase>
+<testcase name="Production render smoke: Models" classname="navigation.spec.ts" time="1.883">
+</testcase>
+<testcase name="Production render smoke: AI Intelligence" classname="navigation.spec.ts" time="2.553">
+</testcase>
+<testcase name="Production render smoke: Attribution" classname="navigation.spec.ts" time="1.641">
+</testcase>
+<testcase name="Production render smoke: Planner" classname="navigation.spec.ts" time="0.792">
+</testcase>
+<testcase name="Production render smoke: Reports" classname="navigation.spec.ts" time="0.735">
+</testcase>
+<testcase name="Production render smoke: Grouped Performance" classname="navigation.spec.ts" time="2.648">
+</testcase>
+<testcase name="Production render smoke: Executive Briefs" classname="navigation.spec.ts" time="1.363">
+</testcase>
+<testcase name="Production render smoke: Enrich" classname="navigation.spec.ts" time="1.149">
+</testcase>
+<testcase name="Production render smoke: Lead Grading" classname="navigation.spec.ts" time="1.056">
+</testcase>
+<testcase name="Production render smoke: Behavior" classname="navigation.spec.ts" time="1.197">
+</testcase>
+<testcase name="Production render smoke: Feed" classname="navigation.spec.ts" time="1.128">
+</testcase>
+<testcase name="Production render smoke: Agents" classname="navigation.spec.ts" time="1.095">
+</testcase>
+<testcase name="Production render smoke: Routing" classname="navigation.spec.ts" time="0.984">
+</testcase>
+<testcase name="Production render smoke: Follow-ups" classname="navigation.spec.ts" time="1.266">
+</testcase>
+<testcase name="Production render smoke: Calls" classname="navigation.spec.ts" time="1.689">
+</testcase>
+<testcase name="Production render smoke: Meetings" classname="navigation.spec.ts" time="3.881">
+</testcase>
+<testcase name="Production render smoke: Feedback" classname="navigation.spec.ts" time="1.186">
+</testcase>
+<testcase name="Production render smoke: Approvals" classname="navigation.spec.ts" time="1.083">
+</testcase>
+<testcase name="Production render smoke: Ask Ace" classname="navigation.spec.ts" time="1.344">
+</testcase>
+<testcase name="Production render smoke: Integrations" classname="navigation.spec.ts" time="0.972">
+</testcase>
+<testcase name="Production render smoke: Data Flows" classname="navigation.spec.ts" time="1.443">
+</testcase>
+<testcase name="Production render smoke: Real-Time Activation" classname="navigation.spec.ts" time="1.515">
+</testcase>
+<testcase name="Production render smoke: Personalization" classname="navigation.spec.ts" time="3.313">
+</testcase>
+<testcase name="Production render smoke: Exclusions" classname="navigation.spec.ts" time="2.367">
+</testcase>
+<testcase name="Production render smoke: Audiences" classname="navigation.spec.ts" time="2.16">
+</testcase>
+<testcase name="Production render smoke: Delivery" classname="navigation.spec.ts" time="5.238">
+</testcase>
+<testcase name="Production render smoke: Monitoring" classname="navigation.spec.ts" time="1.203">
+</testcase>
+<testcase name="Production render smoke: Alerts" classname="navigation.spec.ts" time="1.214">
+</testcase>
+<testcase name="Production render smoke: Compliance" classname="navigation.spec.ts" time="1.738">
+</testcase>
+<testcase name="Production render smoke: Developers" classname="navigation.spec.ts" time="1.128">
+</testcase>
+<testcase name="Production render smoke: Settings" classname="navigation.spec.ts" time="0.971">
+</testcase>
+<testcase name="Production public render smoke: /" classname="navigation.spec.ts" time="0.919">
+</testcase>
+<testcase name="Production public render smoke: /agents" classname="navigation.spec.ts" time="0.716">
+</testcase>
+<testcase name="Production public render smoke: /integrations" classname="navigation.spec.ts" time="0.933">
+</testcase>
+<testcase name="Production public render smoke: /pricing" classname="navigation.spec.ts" time="0.869">
+</testcase>
+<testcase name="Production public render smoke: /case-studies" classname="navigation.spec.ts" time="2.499">
+</testcase>
+<testcase name="Production public render smoke: /resources" classname="navigation.spec.ts" time="0.721">
+</testcase>
+<testcase name="Production public render smoke: /security" classname="navigation.spec.ts" time="0.61">
+</testcase>
+</testsuite>
+<testsuite name="production.spec.ts" timestamp="2026-10-03T05:09:49.012Z" hostname="firefox" tests="4" failures="0" skipped="0" time="7.216" errors="0">
+<testcase name="Production UI login establishes real session and survives refresh" classname="production.spec.ts" time="3.201">
+</testcase>
+<testcase name="Production UI invalid login displays error without entering application" classname="production.spec.ts" time="1.19">
+</testcase>
+<testcase name="Password visibility control changes input type without losing content" classname="production.spec.ts" time="1.284">
+</testcase>
+<testcase name="Workspace chrome reflects authenticated identity and persisted locale" classname="production.spec.ts" time="1.541">
+</testcase>
+</testsuite>
+<testsuite name="identity.spec.ts" timestamp="2026-10-03T05:09:49.012Z" hostname="webkit" tests="18" failures="0" skipped="0" time="53.154" errors="0">
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000001 / owner / qa_ace_v1_user_000001" classname="identity.spec.ts" time="9.325">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000001 / admin / qa_ace_v1_user_000002" classname="identity.spec.ts" time="2.153">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000001 / operator / qa_ace_v1_user_000003" classname="identity.spec.ts" time="2.165">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000001 / analyst / qa_ace_v1_user_000004" classname="identity.spec.ts" time="2.032">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000002 / owner / qa_ace_v1_user_000001" classname="identity.spec.ts" time="1.958">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000003 / owner / qa_ace_v1_user_000009" classname="identity.spec.ts" time="2.235">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000003 / admin / qa_ace_v1_user_000010" classname="identity.spec.ts" time="2.844">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000003 / operator / qa_ace_v1_user_000011" classname="identity.spec.ts" time="2.093">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000003 / analyst / qa_ace_v1_user_000012" classname="identity.spec.ts" time="2.085">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000004 / owner / qa_ace_v1_user_000009" classname="identity.spec.ts" time="2.187">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000005 / owner / qa_ace_v1_user_000017" classname="identity.spec.ts" time="2.433">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000005 / admin / qa_ace_v1_user_000018" classname="identity.spec.ts" time="4.025">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000005 / operator / qa_ace_v1_user_000019" classname="identity.spec.ts" time="3.855">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000005 / analyst / qa_ace_v1_user_000020" classname="identity.spec.ts" time="4.125">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000007 / owner / qa_ace_v1_user_000025" classname="identity.spec.ts" time="3.193">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000007 / admin / qa_ace_v1_user_000026" classname="identity.spec.ts" time="2.231">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000007 / operator / qa_ace_v1_user_000027" classname="identity.spec.ts" time="2.321">
+</testcase>
+<testcase name="Verified workspace identity: qa_ace_v1_workspace_000007 / analyst / qa_ace_v1_user_000028" classname="identity.spec.ts" time="1.894">
+</testcase>
+</testsuite>
+<testsuite name="navigation.spec.ts" timestamp="2026-10-03T05:09:49.012Z" hostname="webkit" tests="62" failures="0" skipped="0" time="82.069" errors="0">
+<testcase name="Production render smoke: Overview" classname="navigation.spec.ts" time="9.969">
+</testcase>
+<testcase name="Production render smoke: Launchpad" classname="navigation.spec.ts" time="1.288">
+</testcase>
+<testcase name="Production render smoke: Boards" classname="navigation.spec.ts" time="1.374">
+</testcase>
+<testcase name="Production render smoke: AdSync" classname="navigation.spec.ts" time="1.628">
+</testcase>
+<testcase name="Production render smoke: ChatGPT Ads" classname="navigation.spec.ts" time="1.818">
+</testcase>
+<testcase name="Production render smoke: Funnel" classname="navigation.spec.ts" time="1.174">
+</testcase>
+<testcase name="Production render smoke: Leak Monitor" classname="navigation.spec.ts" time="1.431">
+</testcase>
+<testcase name="Production render smoke: Events" classname="navigation.spec.ts" time="1.452">
+</testcase>
+<testcase name="Production render smoke: Adjustments" classname="navigation.spec.ts" time="1.83">
+</testcase>
+<testcase name="Production render smoke: Diagnostics" classname="navigation.spec.ts" time="1.638">
+</testcase>
+<testcase name="Production render smoke: Match Quality" classname="navigation.spec.ts" time="1.488">
+</testcase>
+<testcase name="Production render smoke: Reconciliation" classname="navigation.spec.ts" time="1.229">
+</testcase>
+<testcase name="Production render smoke: Fraud" classname="navigation.spec.ts" time="1.23">
+</testcase>
+<testcase name="Production render smoke: Deep Links" classname="navigation.spec.ts" time="1.118">
+</testcase>
+<testcase name="Production render smoke: Sites" classname="navigation.spec.ts" time="1.413">
+</testcase>
+<testcase name="Production render smoke: Fingerprinting" classname="navigation.spec.ts" time="1.282">
+</testcase>
+<testcase name="Production render smoke: Live Sync" classname="navigation.spec.ts" time="1.532">
+</testcase>
+<testcase name="Production render smoke: Data Hub" classname="navigation.spec.ts" time="2.631">
+</testcase>
+<testcase name="Production render smoke: Customer 360" classname="navigation.spec.ts" time="2.641">
+</testcase>
+<testcase name="Production render smoke: Offline Attribution" classname="navigation.spec.ts" time="2.856">
+</testcase>
+<testcase name="Production render smoke: Matchback" classname="navigation.spec.ts" time="2.309">
+</testcase>
+<testcase name="Production render smoke: POS &amp; Stores" classname="navigation.spec.ts" time="1.989">
+</testcase>
+<testcase name="Production render smoke: Journeys" classname="navigation.spec.ts" time="1.934">
+</testcase>
+<testcase name="Production render smoke: Identity" classname="navigation.spec.ts" time="1.151">
+</testcase>
+<testcase name="Production render smoke: Models" classname="navigation.spec.ts" time="1.899">
+</testcase>
+<testcase name="Production render smoke: AI Intelligence" classname="navigation.spec.ts" time="1.379">
+</testcase>
+<testcase name="Production render smoke: Attribution" classname="navigation.spec.ts" time="1.137">
+</testcase>
+<testcase name="Production render smoke: Planner" classname="navigation.spec.ts" time="1.134">
+</testcase>
+<testcase name="Production render smoke: Reports" classname="navigation.spec.ts" time="1.187">
+</testcase>
+<testcase name="Production render smoke: Grouped Performance" classname="navigation.spec.ts" time="1.166">
+</testcase>
+<testcase name="Production render smoke: Executive Briefs" classname="navigation.spec.ts" time="1.378">
+</testcase>
+<testcase name="Production render smoke: Enrich" classname="navigation.spec.ts" time="0.964">
+</testcase>
+<testcase name="Production render smoke: Lead Grading" classname="navigation.spec.ts" time="1.051">
+</testcase>
+<testcase name="Production render smoke: Behavior" classname="navigation.spec.ts" time="1.016">
+</testcase>
+<testcase name="Production render smoke: Feed" classname="navigation.spec.ts" time="1.061">
+</testcase>
+<testcase name="Production render smoke: Agents" classname="navigation.spec.ts" time="0.734">
+</testcase>
+<testcase name="Production render smoke: Routing" classname="navigation.spec.ts" time="0.713">
+</testcase>
+<testcase name="Production render smoke: Follow-ups" classname="navigation.spec.ts" time="0.905">
+</testcase>
+<testcase name="Production render smoke: Calls" classname="navigation.spec.ts" time="1.003">
+</testcase>
+<testcase name="Production render smoke: Meetings" classname="navigation.spec.ts" time="0.72">
+</testcase>
+<testcase name="Production render smoke: Feedback" classname="navigation.spec.ts" time="0.752">
+</testcase>
+<testcase name="Production render smoke: Approvals" classname="navigation.spec.ts" time="0.705">
+</testcase>
+<testcase name="Production render smoke: Ask Ace" classname="navigation.spec.ts" time="0.715">
+</testcase>
+<testcase name="Production render smoke: Integrations" classname="navigation.spec.ts" time="0.785">
+</testcase>
+<testcase name="Production render smoke: Data Flows" classname="navigation.spec.ts" time="0.778">
+</testcase>
+<testcase name="Production render smoke: Real-Time Activation" classname="navigation.spec.ts" time="0.827">
+</testcase>
+<testcase name="Production render smoke: Personalization" classname="navigation.spec.ts" time="0.86">
+</testcase>
+<testcase name="Production render smoke: Exclusions" classname="navigation.spec.ts" time="0.802">
+</testcase>
+<testcase name="Production render smoke: Audiences" classname="navigation.spec.ts" time="0.79">
+</testcase>
+<testcase name="Production render smoke: Delivery" classname="navigation.spec.ts" time="0.755">
+</testcase>
+<testcase name="Production render smoke: Monitoring" classname="navigation.spec.ts" time="0.744">
+</testcase>
+<testcase name="Production render smoke: Alerts" classname="navigation.spec.ts" time="0.734">
+</testcase>
+<testcase name="Production render smoke: Compliance" classname="navigation.spec.ts" time="0.717">
+</testcase>
+<testcase name="Production render smoke: Developers" classname="navigation.spec.ts" time="0.721">
+</testcase>
+<testcase name="Production render smoke: Settings" classname="navigation.spec.ts" time="0.788">
+</testcase>
+<testcase name="Production public render smoke: /" classname="navigation.spec.ts" time="1.612">
+</testcase>
+<testcase name="Production public render smoke: /agents" classname="navigation.spec.ts" time="0.546">
+</testcase>
+<testcase name="Production public render smoke: /integrations" classname="navigation.spec.ts" time="0.552">
+</testcase>
+<testcase name="Production public render smoke: /pricing" classname="navigation.spec.ts" time="0.533">
+</testcase>
+<testcase name="Production public render smoke: /case-studies" classname="navigation.spec.ts" time="0.5">
+</testcase>
+<testcase name="Production public render smoke: /resources" classname="navigation.spec.ts" time="0.516">
+</testcase>
+<testcase name="Production public render smoke: /security" classname="navigation.spec.ts" time="0.485">
+</testcase>
+</testsuite>
+<testsuite name="production.spec.ts" timestamp="2026-10-03T05:09:49.012Z" hostname="webkit" tests="4" failures="0" skipped="0" time="7.617" errors="0">
+<testcase name="Production UI login establishes real session and survives refresh" classname="production.spec.ts" time="3.171">
+</testcase>
+<testcase name="Production UI invalid login displays error without entering application" classname="production.spec.ts" time="1.395">
+</testcase>
+<testcase name="Password visibility control changes input type without losing content" classname="production.spec.ts" time="1.189">
+</testcase>
+<testcase name="Workspace chrome reflects authenticated identity and persisted locale" classname="production.spec.ts" time="1.862">
+</testcase>
+</testsuite>
+</testsuites>

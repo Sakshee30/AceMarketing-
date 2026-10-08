@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,CheckCircle2,ChevronRight,Globe2,MousePointer2,RadioTower,ShieldCheck,Sparkles,X} from 'lucide-react'
 import {sitesApi} from '../data/sites.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -33,7 +33,7 @@ export default function SitesPage(){
  }))
 
  const load=async()=>{
-  setLoading(true)
+  beginLoading(setLoading)
   try{
    const result:any=await sitesApi.load()
    const mapped=normalize(result.items||[])

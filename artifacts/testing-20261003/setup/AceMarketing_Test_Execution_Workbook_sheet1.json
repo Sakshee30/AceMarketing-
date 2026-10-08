@@ -1,0 +1,210 @@
+[
+  [
+    "ACEMARKETING | PRE-LIVE TEST EXECUTION",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PLANNING ONLY \u2022 All application scenarios are Not run. The dashboard tracks this catalogue, not the unknown total application scope. No live actions or release authority.",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PLANNED SCENARIOS",
+    "",
+    "PASS",
+    "",
+    "NOT RUN",
+    "",
+    "P0 PRIORITY",
+    ""
+  ],
+  [
+    "356",
+    "",
+    "0",
+    "",
+    "356",
+    "",
+    "164",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Execution status",
+    "Scenario count",
+    "Priority",
+    "Planned",
+    "Passing"
+  ],
+  [
+    "Not run",
+    "356",
+    "P0",
+    "164",
+    "0"
+  ],
+  [
+    "Pass",
+    "0",
+    "P1",
+    "189",
+    "0"
+  ],
+  [
+    "Fail",
+    "0",
+    "P2",
+    "3",
+    "0"
+  ],
+  [
+    "Blocked",
+    "0"
+  ],
+  [
+    "Flaky",
+    "0",
+    "Requirement groups",
+    "28"
+  ],
+  [
+    "Not applicable",
+    "0",
+    "Unclosed findings",
+    "8"
+  ],
+  [
+    "Passed release gates",
+    "0"
+  ],
+  [
+    "EXECUTION RULES",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "1. Start with P0: freeze the revision; repair CI installation-path and connector source syntax blockers; enumerate all scope.",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "2. Preserve real auth, database, workers and business code. Simulate only external systems; deny real-world outbound actions.",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "3. Open Test Catalogue for scheduling; Execution Detail contains steps and expected results. Record actual evidence separately.",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "4. Pass requires evidence on the candidate. Blocked, skipped, flaky, unapproved N/A and missing reports are not passes.",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "5. Provider Matrix separates simulation, authorized test-account and live qualification. Live actions stay disabled in this package.",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "6. Reopen affected requirements after changes. Final decision needs Release Gates, documentation and human sign-off.",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Baseline: a82f24a8e762b6a60e0c13bcb15347daa78f1b49\nPrepared 2 October 2026 | Source review and planning only; see the master document for limitations.",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ]
+]

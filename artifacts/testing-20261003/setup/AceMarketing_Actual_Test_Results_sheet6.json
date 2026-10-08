@@ -1,0 +1,3622 @@
+[
+  [
+    "SOURCE SCOPE",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Candidate 6deb7c7ff5f8d1276bccd2f7d06f88f3dfe98d00 | Evidence from isolated run 37064060695",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Source ID",
+    "Requirement",
+    "Source scenario",
+    "Priority / phase",
+    "Acceptance status",
+    "Full scope complete",
+    "Supporting evidence",
+    "Reason"
+  ],
+  [
+    "BASE-001",
+    "REQ-BASE",
+    "Pinned clean checkout",
+    "P0 / P0",
+    "NOT RUN",
+    "No",
+    "syntax.json; typecheck.log; production-bundle.log",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BASE-002",
+    "REQ-BASE",
+    "All runtime syntax",
+    "P0 / P0",
+    "NOT RUN",
+    "No",
+    "syntax.json; typecheck.log; production-bundle.log",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BASE-003",
+    "REQ-BASE",
+    "Systemd node path",
+    "P0 / P0",
+    "NOT RUN",
+    "No",
+    "syntax.json; typecheck.log; production-bundle.log",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BASE-004",
+    "REQ-BASE",
+    "API import and startup",
+    "P0 / P0",
+    "NOT RUN",
+    "No",
+    "syntax.json; typecheck.log; production-bundle.log",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BASE-005",
+    "REQ-BASE",
+    "Supported runtime alignment",
+    "P1 / P0",
+    "NOT RUN",
+    "No",
+    "syntax.json; typecheck.log; production-bundle.log",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BASE-006",
+    "REQ-BASE",
+    "Safety guard fails closed",
+    "P0 / P0",
+    "NOT RUN",
+    "No",
+    "syntax.json; typecheck.log; production-bundle.log",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BASE-007",
+    "REQ-BASE",
+    "Missing report detection",
+    "P1 / P0",
+    "NOT RUN",
+    "No",
+    "syntax.json; typecheck.log; production-bundle.log",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BASE-008",
+    "REQ-BASE",
+    "Exit and cleanup handling",
+    "P1 / P0",
+    "NOT RUN",
+    "No",
+    "syntax.json; typecheck.log; production-bundle.log",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BASE-009",
+    "REQ-BASE",
+    "Suite discovery drift",
+    "P1 / P0",
+    "NOT RUN",
+    "No",
+    "syntax.json; typecheck.log; production-bundle.log",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BASE-010",
+    "REQ-BASE",
+    "Frontend artifacts",
+    "P1 / P0",
+    "NOT RUN",
+    "No",
+    "syntax.json; typecheck.log; production-bundle.log",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AUTH-001",
+    "REQ-AUTH",
+    "Authenticated login",
+    "P0 / P2",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; browser.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AUTH-002",
+    "REQ-AUTH",
+    "Invalid credentials",
+    "P0 / P2",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; browser.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AUTH-003",
+    "REQ-AUTH",
+    "Logout and revocation",
+    "P0 / P2",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; browser.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AUTH-004",
+    "REQ-AUTH",
+    "Expired session",
+    "P0 / P2",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; browser.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AUTH-005",
+    "REQ-AUTH",
+    "Recovery token lifecycle",
+    "P1 / P2",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; browser.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AUTH-006",
+    "REQ-AUTH",
+    "Production configuration",
+    "P0 / P2",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; browser.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AUTH-007",
+    "REQ-AUTH",
+    "Session cookie controls",
+    "P1 / P2",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; browser.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AUTH-008",
+    "REQ-AUTH",
+    "Login abuse control",
+    "P1 / P2",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; browser.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AUTH-009",
+    "REQ-AUTH",
+    "OAuth identity binding",
+    "P1 / P2",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; browser.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AUTH-010",
+    "REQ-AUTH",
+    "Parallel sessions",
+    "P1 / P2",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; browser.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "TEN-001",
+    "REQ-TEN",
+    "Cross-tenant object access",
+    "P0 / P2",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "TEN-002",
+    "REQ-TEN",
+    "Workspace header tampering",
+    "P0 / P2",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "TEN-003",
+    "REQ-TEN",
+    "Real database RLS",
+    "P0 / P2",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "TEN-004",
+    "REQ-TEN",
+    "Pool context reuse",
+    "P0 / P2",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "TEN-005",
+    "REQ-TEN",
+    "Role permission matrix",
+    "P0 / P2",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "TEN-006",
+    "REQ-TEN",
+    "Invitation lifecycle",
+    "P1 / P2",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "TEN-007",
+    "REQ-TEN",
+    "Membership removal",
+    "P0 / P2",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "TEN-008",
+    "REQ-TEN",
+    "Tenant lifecycle",
+    "P1 / P2",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "TEN-009",
+    "REQ-TEN",
+    "Control-plane separation",
+    "P0 / P2",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "TEN-010",
+    "REQ-TEN",
+    "Search and cache isolation",
+    "P0 / P2",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "WEB-001",
+    "REQ-WEB",
+    "Public route inventory",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "browser.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "WEB-002",
+    "REQ-WEB",
+    "Demo request persistence",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "browser.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "WEB-003",
+    "REQ-WEB",
+    "Demo form validation",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "browser.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "WEB-004",
+    "REQ-WEB",
+    "Authentication handoff",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "browser.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "WEB-005",
+    "REQ-WEB",
+    "Metadata and indexing",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "browser.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "WEB-006",
+    "REQ-WEB",
+    "Consent choice",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "browser.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "WEB-007",
+    "REQ-WEB",
+    "Failure and offline state",
+    "P2 / P4",
+    "NOT RUN",
+    "No",
+    "browser.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "WEB-008",
+    "REQ-WEB",
+    "Marketing claims audit",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "browser.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "UI-001",
+    "REQ-UI",
+    "Deep-link and refresh",
+    "P1 / P7",
+    "NOT RUN",
+    "No",
+    "browser.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "UI-002",
+    "REQ-UI",
+    "Lists and filters",
+    "P1 / P7",
+    "NOT RUN",
+    "No",
+    "browser.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "UI-003",
+    "REQ-UI",
+    "Create edit delete state",
+    "P1 / P7",
+    "NOT RUN",
+    "No",
+    "browser.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "UI-004",
+    "REQ-UI",
+    "Loading empty error states",
+    "P1 / P7",
+    "NOT RUN",
+    "No",
+    "browser.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "UI-005",
+    "REQ-UI",
+    "Concurrent edits",
+    "P1 / P7",
+    "NOT RUN",
+    "No",
+    "browser.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "UI-006",
+    "REQ-UI",
+    "Double submit",
+    "P1 / P7",
+    "NOT RUN",
+    "No",
+    "browser.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "UI-007",
+    "REQ-UI",
+    "Workspace switching",
+    "P1 / P7",
+    "NOT RUN",
+    "No",
+    "browser.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "UI-008",
+    "REQ-UI",
+    "Shared component behavior",
+    "P2 / P7",
+    "NOT RUN",
+    "No",
+    "browser.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "TRACK-001",
+    "REQ-TRACK",
+    "First-party event path",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "TRACK-002",
+    "REQ-TRACK",
+    "Event deduplication",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "TRACK-003",
+    "REQ-TRACK",
+    "Click identifier capture",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "TRACK-004",
+    "REQ-TRACK",
+    "Consent enforcement",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "TRACK-005",
+    "REQ-TRACK",
+    "Boundary validation",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "TRACK-006",
+    "REQ-TRACK",
+    "Offline and delayed delivery",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "TRACK-007",
+    "REQ-TRACK",
+    "Crash after acknowledgment",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "TRACK-008",
+    "REQ-TRACK",
+    "Source lineage",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "TRACK-009",
+    "REQ-TRACK",
+    "SDK overhead",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "TRACK-010",
+    "REQ-TRACK",
+    "Cross-workspace ingestion",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "IDENT-001",
+    "REQ-IDENT",
+    "Anonymous to known join",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "IDENT-002",
+    "REQ-IDENT",
+    "False-merge prevention",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "IDENT-003",
+    "REQ-IDENT",
+    "Normalization consistency",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "IDENT-004",
+    "REQ-IDENT",
+    "Late-arriving touch",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "IDENT-005",
+    "REQ-IDENT",
+    "Multiple device identities",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "IDENT-006",
+    "REQ-IDENT",
+    "Orphan journey",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "IDENT-007",
+    "REQ-IDENT",
+    "Deletion propagation",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "IDENT-008",
+    "REQ-IDENT",
+    "Chronology and clock skew",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "MET-001",
+    "REQ-MET",
+    "Golden metric reconciliation",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "oracles.junit.xml; api.junit.xml; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "MET-002",
+    "REQ-MET",
+    "Refund semantics",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "oracles.junit.xml; api.junit.xml; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "MET-003",
+    "REQ-MET",
+    "Zero denominator",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "oracles.junit.xml; api.junit.xml; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "MET-004",
+    "REQ-MET",
+    "Mixed currencies",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "oracles.junit.xml; api.junit.xml; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "MET-005",
+    "REQ-MET",
+    "Time-window boundaries",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "oracles.junit.xml; api.junit.xml; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "MET-006",
+    "REQ-MET",
+    "Attribution credit conservation",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "oracles.junit.xml; api.junit.xml; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "MET-007",
+    "REQ-MET",
+    "Model-specific lookback",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "oracles.junit.xml; api.junit.xml; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "MET-008",
+    "REQ-MET",
+    "Source total reconciliation",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "oracles.junit.xml; api.junit.xml; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "MET-009",
+    "REQ-MET",
+    "Stale and absent data",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "oracles.junit.xml; api.junit.xml; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "MET-010",
+    "REQ-MET",
+    "Reported versus inferred outcomes",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "oracles.junit.xml; api.junit.xml; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "MET-011",
+    "REQ-MET",
+    "Gross versus net ROAS functions",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "oracles.junit.xml; api.junit.xml; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "MET-012",
+    "REQ-MET",
+    "Pagination and aggregate query",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "oracles.junit.xml; api.junit.xml; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "LEAD-001",
+    "REQ-LEAD",
+    "Lead lifecycle",
+    "P0 / P4",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; business-observations.json; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "LEAD-002",
+    "REQ-LEAD",
+    "Duplicate lead import",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; business-observations.json; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "LEAD-003",
+    "REQ-LEAD",
+    "Field validation",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; business-observations.json; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "LEAD-004",
+    "REQ-LEAD",
+    "Scoring explanation",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; business-observations.json; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "LEAD-005",
+    "REQ-LEAD",
+    "Sensitive field restrictions",
+    "P0 / P4",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; business-observations.json; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "LEAD-006",
+    "REQ-LEAD",
+    "Assignment concurrency",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; business-observations.json; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "LEAD-007",
+    "REQ-LEAD",
+    "Provider enrichment failure",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; business-observations.json; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "LEAD-008",
+    "REQ-LEAD",
+    "Consent and suppression",
+    "P0 / P4",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; business-observations.json; functional-volume.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "ADS-001",
+    "REQ-ADS",
+    "Conversion mapping",
+    "P0 / P4",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "ADS-002",
+    "REQ-ADS",
+    "Duplicate delivery",
+    "P0 / P4",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "ADS-003",
+    "REQ-ADS",
+    "Unknown provider outcome",
+    "P0 / P4",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "ADS-004",
+    "REQ-ADS",
+    "Partial batch rejection",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "ADS-005",
+    "REQ-ADS",
+    "Test/live separation",
+    "P0 / P4",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "ADS-006",
+    "REQ-ADS",
+    "Approval and kill switch",
+    "P0 / P4",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "ADS-007",
+    "REQ-ADS",
+    "Expired credentials",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "ADS-008",
+    "REQ-ADS",
+    "Reconciliation view",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AUD-001",
+    "REQ-AUD",
+    "Segment membership",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AUD-002",
+    "REQ-AUD",
+    "Suppression precedence",
+    "P0 / P4",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AUD-003",
+    "REQ-AUD",
+    "Scheduled refresh",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AUD-004",
+    "REQ-AUD",
+    "Tenant-safe export",
+    "P0 / P4",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AUD-005",
+    "REQ-AUD",
+    "Delta activation",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AUD-006",
+    "REQ-AUD",
+    "Large audience pagination",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AUD-007",
+    "REQ-AUD",
+    "Invalid audience rule",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AUD-008",
+    "REQ-AUD",
+    "Credential revocation",
+    "P0 / P4",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FORM-001",
+    "REQ-FORM",
+    "Versioned form lifecycle",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FORM-002",
+    "REQ-FORM",
+    "Submission validation",
+    "P0 / P4",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FORM-003",
+    "REQ-FORM",
+    "Conditional fields",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FORM-004",
+    "REQ-FORM",
+    "Custom object schema",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FORM-005",
+    "REQ-FORM",
+    "Schema evolution",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FORM-006",
+    "REQ-FORM",
+    "Public form boundary",
+    "P0 / P4",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FORM-007",
+    "REQ-FORM",
+    "Idempotent submission",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FORM-008",
+    "REQ-FORM",
+    "Delete with references",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FLOW-001",
+    "REQ-FLOW",
+    "Durable workflow path",
+    "P0 / P5",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FLOW-002",
+    "REQ-FLOW",
+    "Crash-resume workflow",
+    "P0 / P5",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FLOW-003",
+    "REQ-FLOW",
+    "Separation of duties",
+    "P0 / P5",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FLOW-004",
+    "REQ-FLOW",
+    "Branch and condition boundaries",
+    "P1 / P5",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FLOW-005",
+    "REQ-FLOW",
+    "Loops and execution bounds",
+    "P1 / P5",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FLOW-006",
+    "REQ-FLOW",
+    "Retry policy",
+    "P1 / P5",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FLOW-007",
+    "REQ-FLOW",
+    "Cancel in-flight execution",
+    "P1 / P5",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FLOW-008",
+    "REQ-FLOW",
+    "Versioned execution",
+    "P1 / P5",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FLOW-009",
+    "REQ-FLOW",
+    "Quota race",
+    "P0 / P5",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FLOW-010",
+    "REQ-FLOW",
+    "Unsupported action node",
+    "P1 / P5",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BOARD-001",
+    "REQ-BOARD",
+    "Board lifecycle",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BOARD-002",
+    "REQ-BOARD",
+    "Accessible movement",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BOARD-003",
+    "REQ-BOARD",
+    "Concurrent move conflict",
+    "P0 / P4",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BOARD-004",
+    "REQ-BOARD",
+    "Realtime propagation",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BOARD-005",
+    "REQ-BOARD",
+    "Realtime tenant isolation",
+    "P0 / P4",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BOARD-006",
+    "REQ-BOARD",
+    "Disconnect and resume",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BOARD-007",
+    "REQ-BOARD",
+    "Backpressure and stale client",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BOARD-008",
+    "REQ-BOARD",
+    "Delete during movement",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FILE-001",
+    "REQ-FILE",
+    "Authorized upload lifecycle",
+    "P0 / P5",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FILE-002",
+    "REQ-FILE",
+    "Foreign object download",
+    "P0 / P5",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FILE-003",
+    "REQ-FILE",
+    "Unsafe file handling",
+    "P0 / P5",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FILE-004",
+    "REQ-FILE",
+    "Large and interrupted upload",
+    "P1 / P5",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FILE-005",
+    "REQ-FILE",
+    "Document processing restart",
+    "P1 / P5",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FILE-006",
+    "REQ-FILE",
+    "Revocation and signed URL expiry",
+    "P0 / P5",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FILE-007",
+    "REQ-FILE",
+    "Delete propagation",
+    "P0 / P5",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FILE-008",
+    "REQ-FILE",
+    "Search quality and pagination",
+    "P1 / P5",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FILE-009",
+    "REQ-FILE",
+    "Object store failure",
+    "P1 / P5",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "FILE-010",
+    "REQ-FILE",
+    "Untrusted document instructions",
+    "P0 / P5",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AI-001",
+    "REQ-AI",
+    "Grounded analyst result",
+    "P0 / P5",
+    "NOT RUN",
+    "No",
+    "native.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AI-002",
+    "REQ-AI",
+    "Missing data honesty",
+    "P0 / P5",
+    "NOT RUN",
+    "No",
+    "native.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AI-003",
+    "REQ-AI",
+    "Cross-tenant retrieval",
+    "P0 / P5",
+    "NOT RUN",
+    "No",
+    "native.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AI-004",
+    "REQ-AI",
+    "Prompt injection",
+    "P0 / P5",
+    "NOT RUN",
+    "No",
+    "native.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AI-005",
+    "REQ-AI",
+    "Provider timeout and invalid output",
+    "P1 / P5",
+    "NOT RUN",
+    "No",
+    "native.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AI-006",
+    "REQ-AI",
+    "Governed AI activation",
+    "P0 / P5",
+    "NOT RUN",
+    "No",
+    "native.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AI-007",
+    "REQ-AI",
+    "Dataset readiness",
+    "P1 / P5",
+    "NOT RUN",
+    "No",
+    "native.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AI-008",
+    "REQ-AI",
+    "Train validation test split",
+    "P1 / P5",
+    "NOT RUN",
+    "No",
+    "native.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AI-009",
+    "REQ-AI",
+    "Prediction benchmark",
+    "P1 / P5",
+    "NOT RUN",
+    "No",
+    "native.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AI-010",
+    "REQ-AI",
+    "Calibration and segment checks",
+    "P1 / P5",
+    "NOT RUN",
+    "No",
+    "native.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AI-011",
+    "REQ-AI",
+    "Checkpoint integrity",
+    "P1 / P5",
+    "NOT RUN",
+    "No",
+    "native.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AI-012",
+    "REQ-AI",
+    "Model promotion and rollback",
+    "P0 / P5",
+    "NOT RUN",
+    "No",
+    "native.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AI-013",
+    "REQ-AI",
+    "Cost and cancellation",
+    "P1 / P5",
+    "NOT RUN",
+    "No",
+    "native.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AI-014",
+    "REQ-AI",
+    "Specialist feature modes",
+    "P1 / P5",
+    "NOT RUN",
+    "No",
+    "native.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AI-015",
+    "REQ-AI",
+    "Statistical repeatability",
+    "P1 / P5",
+    "NOT RUN",
+    "No",
+    "native.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "AI-016",
+    "REQ-AI",
+    "No efficacy overclaim",
+    "P0 / P5",
+    "NOT RUN",
+    "No",
+    "native.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BILL-001",
+    "REQ-BILL",
+    "Checkout state transition",
+    "P0 / P4",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BILL-002",
+    "REQ-BILL",
+    "Signed webhook validation",
+    "P0 / P4",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BILL-003",
+    "REQ-BILL",
+    "Webhook replay ordering",
+    "P0 / P4",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BILL-004",
+    "REQ-BILL",
+    "Concurrent quota reservation",
+    "P0 / P4",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BILL-005",
+    "REQ-BILL",
+    "Upgrade and downgrade",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BILL-006",
+    "REQ-BILL",
+    "Payment failed and recovery",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BILL-007",
+    "REQ-BILL",
+    "Usage reconciliation",
+    "P0 / P4",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BILL-008",
+    "REQ-BILL",
+    "Billing authorization",
+    "P0 / P4",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BILL-009",
+    "REQ-BILL",
+    "Rounding and currency",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "BILL-010",
+    "REQ-BILL",
+    "Mode-disabled billing",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "COMMS-001",
+    "REQ-COMMS",
+    "Captured email delivery",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "COMMS-002",
+    "REQ-COMMS",
+    "Recipient safety",
+    "P0 / P4",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "COMMS-003",
+    "REQ-COMMS",
+    "WhatsApp inbound status",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "COMMS-004",
+    "REQ-COMMS",
+    "Messaging consent",
+    "P0 / P4",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "COMMS-005",
+    "REQ-COMMS",
+    "Call event lifecycle",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "COMMS-006",
+    "REQ-COMMS",
+    "Media authorization",
+    "P0 / P4",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "COMMS-007",
+    "REQ-COMMS",
+    "Calendar conflict",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "COMMS-008",
+    "REQ-COMMS",
+    "Report scheduling",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "COMMS-009",
+    "REQ-COMMS",
+    "Transport outage",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "COMMS-010",
+    "REQ-COMMS",
+    "Disabled communication mode",
+    "P1 / P4",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "JOBS-001",
+    "REQ-JOBS",
+    "Transactional outbox",
+    "P0 / P8",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "JOBS-002",
+    "REQ-JOBS",
+    "Worker lease collision",
+    "P0 / P8",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "JOBS-003",
+    "REQ-JOBS",
+    "Transient retry schedule",
+    "P1 / P8",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "JOBS-004",
+    "REQ-JOBS",
+    "Poison job isolation",
+    "P1 / P8",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "JOBS-005",
+    "REQ-JOBS",
+    "Idempotent replay",
+    "P0 / P8",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "JOBS-006",
+    "REQ-JOBS",
+    "Scheduler leadership",
+    "P1 / P8",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "JOBS-007",
+    "REQ-JOBS",
+    "Backlog saturation",
+    "P1 / P8",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "JOBS-008",
+    "REQ-JOBS",
+    "Shutdown drain",
+    "P0 / P8",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "JOBS-009",
+    "REQ-JOBS",
+    "Tenant fairness",
+    "P0 / P8",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "JOBS-010",
+    "REQ-JOBS",
+    "Usage and audit atomicity",
+    "P1 / P8",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "CTRL-001",
+    "REQ-CTRL",
+    "Privileged control access",
+    "P0 / P5",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "CTRL-002",
+    "REQ-CTRL",
+    "Version conflict and idempotency",
+    "P0 / P5",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "CTRL-003",
+    "REQ-CTRL",
+    "Emergency kill switch",
+    "P0 / P5",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "CTRL-004",
+    "REQ-CTRL",
+    "Configuration propagation",
+    "P1 / P5",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "CTRL-005",
+    "REQ-CTRL",
+    "Provider migration rollback",
+    "P1 / P5",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "CTRL-006",
+    "REQ-CTRL",
+    "Invalid config validation",
+    "P1 / P5",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "CTRL-007",
+    "REQ-CTRL",
+    "Recovery evidence truthfulness",
+    "P1 / P5",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "CTRL-008",
+    "REQ-CTRL",
+    "Cell placement fencing",
+    "P0 / P5",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "SEC-001",
+    "REQ-SEC",
+    "Secret exposure scan",
+    "P0 / P6",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "SEC-002",
+    "REQ-SEC",
+    "Injection and output encoding",
+    "P0 / P6",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "SEC-003",
+    "REQ-SEC",
+    "SSRF and redirects",
+    "P0 / P6",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "SEC-004",
+    "REQ-SEC",
+    "Mass assignment",
+    "P0 / P6",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "SEC-005",
+    "REQ-SEC",
+    "Authenticated dynamic scan",
+    "P1 / P6",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "SEC-006",
+    "REQ-SEC",
+    "Dependency and image scan",
+    "P1 / P6",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "SEC-007",
+    "REQ-SEC",
+    "HTTP trust boundary",
+    "P1 / P6",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "SEC-008",
+    "REQ-SEC",
+    "Resource exhaustion",
+    "P1 / P6",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "SEC-009",
+    "REQ-SEC",
+    "Signing and replay",
+    "P0 / P6",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "SEC-010",
+    "REQ-SEC",
+    "CI untrusted code isolation",
+    "P1 / P6",
+    "NOT RUN",
+    "No",
+    "api.junit.xml; oracles.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PRIV-001",
+    "REQ-PRIV",
+    "Consent audit trail",
+    "P0 / P6",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PRIV-002",
+    "REQ-PRIV",
+    "Erasure completeness",
+    "P0 / P6",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PRIV-003",
+    "REQ-PRIV",
+    "Subject export",
+    "P1 / P6",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PRIV-004",
+    "REQ-PRIV",
+    "Retention scheduler",
+    "P1 / P6",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PRIV-005",
+    "REQ-PRIV",
+    "Audit record integrity",
+    "P0 / P6",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PRIV-006",
+    "REQ-PRIV",
+    "Log and trace redaction",
+    "P0 / P6",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PRIV-007",
+    "REQ-PRIV",
+    "Backup deletion interaction",
+    "P1 / P6",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PRIV-008",
+    "REQ-PRIV",
+    "Evidence retention access",
+    "P1 / P6",
+    "NOT RUN",
+    "No",
+    "api.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "A11Y-001",
+    "REQ-A11Y",
+    "Critical browser journeys",
+    "P1 / P7",
+    "NOT RUN",
+    "No",
+    "browser.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "A11Y-002",
+    "REQ-A11Y",
+    "Real-device checks",
+    "P1 / P7",
+    "NOT RUN",
+    "No",
+    "browser.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "A11Y-003",
+    "REQ-A11Y",
+    "Keyboard-only use",
+    "P1 / P7",
+    "NOT RUN",
+    "No",
+    "browser.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "A11Y-004",
+    "REQ-A11Y",
+    "Screen-reader semantics",
+    "P1 / P7",
+    "NOT RUN",
+    "No",
+    "browser.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "A11Y-005",
+    "REQ-A11Y",
+    "Automated accessibility",
+    "P1 / P7",
+    "NOT RUN",
+    "No",
+    "browser.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "A11Y-006",
+    "REQ-A11Y",
+    "Zoom and reflow",
+    "P1 / P7",
+    "NOT RUN",
+    "No",
+    "browser.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "A11Y-007",
+    "REQ-A11Y",
+    "Visual regression",
+    "P2 / P7",
+    "NOT RUN",
+    "No",
+    "browser.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "A11Y-008",
+    "REQ-A11Y",
+    "Long session",
+    "P1 / P7",
+    "NOT RUN",
+    "No",
+    "browser.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PERF-001",
+    "REQ-PERF",
+    "Authenticated representative load",
+    "P0 / P8",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PERF-002",
+    "REQ-PERF",
+    "Arrival-rate delivery",
+    "P1 / P8",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PERF-003",
+    "REQ-PERF",
+    "Concurrency steps",
+    "P1 / P8",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PERF-004",
+    "REQ-PERF",
+    "Async latency",
+    "P1 / P8",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PERF-005",
+    "REQ-PERF",
+    "Stress and graceful overload",
+    "P1 / P8",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PERF-006",
+    "REQ-PERF",
+    "Spike recovery",
+    "P1 / P8",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PERF-007",
+    "REQ-PERF",
+    "Soak endurance",
+    "P1 / P8",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PERF-008",
+    "REQ-PERF",
+    "Query efficiency",
+    "P1 / P8",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PERF-009",
+    "REQ-PERF",
+    "Cold and warm behavior",
+    "P1 / P8",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PERF-010",
+    "REQ-PERF",
+    "Post-load data integrity",
+    "P0 / P8",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "DEP-001",
+    "REQ-DEP",
+    "Docker core install",
+    "P0 / P9",
+    "NOT RUN",
+    "No",
+    "systemd.log",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "DEP-002",
+    "REQ-DEP",
+    "Docker standard install",
+    "P0 / P9",
+    "NOT RUN",
+    "No",
+    "systemd.log",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "DEP-003",
+    "REQ-DEP",
+    "Docker full install",
+    "P0 / P9",
+    "NOT RUN",
+    "No",
+    "systemd.log",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "DEP-004",
+    "REQ-DEP",
+    "Host core install",
+    "P0 / P9",
+    "NOT RUN",
+    "No",
+    "systemd.log",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "DEP-005",
+    "REQ-DEP",
+    "Host standard/full install",
+    "P0 / P9",
+    "NOT RUN",
+    "No",
+    "systemd.log",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "DEP-006",
+    "REQ-DEP",
+    "Non-destructive mode downgrade",
+    "P0 / P9",
+    "NOT RUN",
+    "No",
+    "systemd.log",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "DEP-007",
+    "REQ-DEP",
+    "Schema upgrade",
+    "P0 / P9",
+    "NOT RUN",
+    "No",
+    "systemd.log",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "DEP-008",
+    "REQ-DEP",
+    "Application rollback",
+    "P0 / P9",
+    "NOT RUN",
+    "No",
+    "systemd.log",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "DEP-009",
+    "REQ-DEP",
+    "Configuration precedence",
+    "P1 / P9",
+    "NOT RUN",
+    "No",
+    "systemd.log",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "DEP-010",
+    "REQ-DEP",
+    "Release artifact parity",
+    "P0 / P9",
+    "NOT RUN",
+    "No",
+    "systemd.log",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "DR-001",
+    "REQ-DR",
+    "Fresh-host restore",
+    "P0 / P9",
+    "NOT RUN",
+    "No",
+    "restore-reconciliation.json; restored-api.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "DR-002",
+    "REQ-DR",
+    "Backup integrity rejection",
+    "P0 / P9",
+    "NOT RUN",
+    "No",
+    "restore-reconciliation.json; restored-api.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "DR-003",
+    "REQ-DR",
+    "Encryption key dependency",
+    "P0 / P9",
+    "NOT RUN",
+    "No",
+    "restore-reconciliation.json; restored-api.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "DR-004",
+    "REQ-DR",
+    "RPO and RTO measurement",
+    "P0 / P9",
+    "NOT RUN",
+    "No",
+    "restore-reconciliation.json; restored-api.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "DR-005",
+    "REQ-DR",
+    "Database outage",
+    "P1 / P9",
+    "NOT RUN",
+    "No",
+    "restore-reconciliation.json; restored-api.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "DR-006",
+    "REQ-DR",
+    "Optional-service outage",
+    "P1 / P9",
+    "NOT RUN",
+    "No",
+    "restore-reconciliation.json; restored-api.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "DR-007",
+    "REQ-DR",
+    "Disk pressure",
+    "P1 / P9",
+    "NOT RUN",
+    "No",
+    "restore-reconciliation.json; restored-api.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "DR-008",
+    "REQ-DR",
+    "Operational runbook handoff",
+    "P0 / P9",
+    "NOT RUN",
+    "No",
+    "restore-reconciliation.json; restored-api.json",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "UAT-001",
+    "REQ-UAT",
+    "Marketing operator story",
+    "P0 / P10",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "UAT-002",
+    "REQ-UAT",
+    "Administrator story",
+    "P0 / P10",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "UAT-003",
+    "REQ-UAT",
+    "Analyst story",
+    "P1 / P10",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "UAT-004",
+    "REQ-UAT",
+    "Support operator story",
+    "P1 / P10",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "UAT-005",
+    "REQ-UAT",
+    "Traceability completeness",
+    "P0 / P10",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "UAT-006",
+    "REQ-UAT",
+    "Defect fix verification",
+    "P0 / P10",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "UAT-007",
+    "REQ-UAT",
+    "Honest pre-live status",
+    "P0 / P10",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "UAT-008",
+    "REQ-UAT",
+    "Release approval packet",
+    "P0 / P10",
+    "NOT RUN",
+    "No",
+    "",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-META-01",
+    "REQ-PROV",
+    "Account and credential binding",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-META-02",
+    "REQ-PROV",
+    "Success contract",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-META-03",
+    "REQ-PROV",
+    "Pagination or message sequence",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-META-04",
+    "REQ-PROV",
+    "Replay and checkpoint",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-META-05",
+    "REQ-PROV",
+    "Rate limit and outage",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-META-06",
+    "REQ-PROV",
+    "Revocation and secret handling",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-META-07",
+    "REQ-PROV",
+    "Schema drift and partial failure",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-META-08",
+    "REQ-PROV",
+    "Cross-layer reconciliation",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-GOOG-01",
+    "REQ-PROV",
+    "Account and credential binding",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-GOOG-02",
+    "REQ-PROV",
+    "Success contract",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-GOOG-03",
+    "REQ-PROV",
+    "Pagination or message sequence",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-GOOG-04",
+    "REQ-PROV",
+    "Replay and checkpoint",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-GOOG-05",
+    "REQ-PROV",
+    "Rate limit and outage",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-GOOG-06",
+    "REQ-PROV",
+    "Revocation and secret handling",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-GOOG-07",
+    "REQ-PROV",
+    "Schema drift and partial failure",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-GOOG-08",
+    "REQ-PROV",
+    "Cross-layer reconciliation",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-XADS-01",
+    "REQ-PROV",
+    "Account and credential binding",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-XADS-02",
+    "REQ-PROV",
+    "Success contract",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-XADS-03",
+    "REQ-PROV",
+    "Pagination or message sequence",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-XADS-04",
+    "REQ-PROV",
+    "Replay and checkpoint",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-XADS-05",
+    "REQ-PROV",
+    "Rate limit and outage",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-XADS-06",
+    "REQ-PROV",
+    "Revocation and secret handling",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-XADS-07",
+    "REQ-PROV",
+    "Schema drift and partial failure",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-XADS-08",
+    "REQ-PROV",
+    "Cross-layer reconciliation",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-TIK-01",
+    "REQ-PROV",
+    "Account and credential binding",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-TIK-02",
+    "REQ-PROV",
+    "Success contract",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-TIK-03",
+    "REQ-PROV",
+    "Pagination or message sequence",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-TIK-04",
+    "REQ-PROV",
+    "Replay and checkpoint",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-TIK-05",
+    "REQ-PROV",
+    "Rate limit and outage",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-TIK-06",
+    "REQ-PROV",
+    "Revocation and secret handling",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-TIK-07",
+    "REQ-PROV",
+    "Schema drift and partial failure",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-TIK-08",
+    "REQ-PROV",
+    "Cross-layer reconciliation",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-LINK-01",
+    "REQ-PROV",
+    "Account and credential binding",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-LINK-02",
+    "REQ-PROV",
+    "Success contract",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-LINK-03",
+    "REQ-PROV",
+    "Pagination or message sequence",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-LINK-04",
+    "REQ-PROV",
+    "Replay and checkpoint",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-LINK-05",
+    "REQ-PROV",
+    "Rate limit and outage",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-LINK-06",
+    "REQ-PROV",
+    "Revocation and secret handling",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-LINK-07",
+    "REQ-PROV",
+    "Schema drift and partial failure",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-LINK-08",
+    "REQ-PROV",
+    "Cross-layer reconciliation",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-GA4-01",
+    "REQ-PROV",
+    "Account and credential binding",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-GA4-02",
+    "REQ-PROV",
+    "Success contract",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-GA4-03",
+    "REQ-PROV",
+    "Pagination or message sequence",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-GA4-04",
+    "REQ-PROV",
+    "Replay and checkpoint",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-GA4-05",
+    "REQ-PROV",
+    "Rate limit and outage",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-GA4-06",
+    "REQ-PROV",
+    "Revocation and secret handling",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-GA4-07",
+    "REQ-PROV",
+    "Schema drift and partial failure",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-GA4-08",
+    "REQ-PROV",
+    "Cross-layer reconciliation",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-HUB-01",
+    "REQ-PROV",
+    "Account and credential binding",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-HUB-02",
+    "REQ-PROV",
+    "Success contract",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-HUB-03",
+    "REQ-PROV",
+    "Pagination or message sequence",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-HUB-04",
+    "REQ-PROV",
+    "Replay and checkpoint",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-HUB-05",
+    "REQ-PROV",
+    "Rate limit and outage",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-HUB-06",
+    "REQ-PROV",
+    "Revocation and secret handling",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-HUB-07",
+    "REQ-PROV",
+    "Schema drift and partial failure",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-HUB-08",
+    "REQ-PROV",
+    "Cross-layer reconciliation",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-SF-01",
+    "REQ-PROV",
+    "Account and credential binding",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-SF-02",
+    "REQ-PROV",
+    "Success contract",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-SF-03",
+    "REQ-PROV",
+    "Pagination or message sequence",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-SF-04",
+    "REQ-PROV",
+    "Replay and checkpoint",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-SF-05",
+    "REQ-PROV",
+    "Rate limit and outage",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-SF-06",
+    "REQ-PROV",
+    "Revocation and secret handling",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-SF-07",
+    "REQ-PROV",
+    "Schema drift and partial failure",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-SF-08",
+    "REQ-PROV",
+    "Cross-layer reconciliation",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-ZOHO-01",
+    "REQ-PROV",
+    "Account and credential binding",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-ZOHO-02",
+    "REQ-PROV",
+    "Success contract",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-ZOHO-03",
+    "REQ-PROV",
+    "Pagination or message sequence",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-ZOHO-04",
+    "REQ-PROV",
+    "Replay and checkpoint",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-ZOHO-05",
+    "REQ-PROV",
+    "Rate limit and outage",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-ZOHO-06",
+    "REQ-PROV",
+    "Revocation and secret handling",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-ZOHO-07",
+    "REQ-PROV",
+    "Schema drift and partial failure",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-ZOHO-08",
+    "REQ-PROV",
+    "Cross-layer reconciliation",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-PIN-01",
+    "REQ-PROV",
+    "Account and credential binding",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-PIN-02",
+    "REQ-PROV",
+    "Success contract",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-PIN-03",
+    "REQ-PROV",
+    "Pagination or message sequence",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-PIN-04",
+    "REQ-PROV",
+    "Replay and checkpoint",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-PIN-05",
+    "REQ-PROV",
+    "Rate limit and outage",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-PIN-06",
+    "REQ-PROV",
+    "Revocation and secret handling",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-PIN-07",
+    "REQ-PROV",
+    "Schema drift and partial failure",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-PIN-08",
+    "REQ-PROV",
+    "Cross-layer reconciliation",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-MS-01",
+    "REQ-PROV",
+    "Account and credential binding",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-MS-02",
+    "REQ-PROV",
+    "Success contract",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-MS-03",
+    "REQ-PROV",
+    "Pagination or message sequence",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-MS-04",
+    "REQ-PROV",
+    "Replay and checkpoint",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-MS-05",
+    "REQ-PROV",
+    "Rate limit and outage",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-MS-06",
+    "REQ-PROV",
+    "Revocation and secret handling",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-MS-07",
+    "REQ-PROV",
+    "Schema drift and partial failure",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-MS-08",
+    "REQ-PROV",
+    "Cross-layer reconciliation",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-WA-01",
+    "REQ-PROV",
+    "Account and credential binding",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-WA-02",
+    "REQ-PROV",
+    "Success contract",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-WA-03",
+    "REQ-PROV",
+    "Pagination or message sequence",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-WA-04",
+    "REQ-PROV",
+    "Replay and checkpoint",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-WA-05",
+    "REQ-PROV",
+    "Rate limit and outage",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-WA-06",
+    "REQ-PROV",
+    "Revocation and secret handling",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-WA-07",
+    "REQ-PROV",
+    "Schema drift and partial failure",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-WA-08",
+    "REQ-PROV",
+    "Cross-layer reconciliation",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-HTTP-01",
+    "REQ-PROV",
+    "Account and credential binding",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-HTTP-02",
+    "REQ-PROV",
+    "Success contract",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-HTTP-03",
+    "REQ-PROV",
+    "Pagination or message sequence",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-HTTP-04",
+    "REQ-PROV",
+    "Replay and checkpoint",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-HTTP-05",
+    "REQ-PROV",
+    "Rate limit and outage",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-HTTP-06",
+    "REQ-PROV",
+    "Revocation and secret handling",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-HTTP-07",
+    "REQ-PROV",
+    "Schema drift and partial failure",
+    "P1 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ],
+  [
+    "PROV-HTTP-08",
+    "REQ-PROV",
+    "Cross-layer reconciliation",
+    "P0 / P3",
+    "NOT RUN",
+    "No",
+    "native.junit.xml",
+    "Complete source acceptance criteria have not been signed off. Supporting checks are not a full-scenario PASS."
+  ]
+]

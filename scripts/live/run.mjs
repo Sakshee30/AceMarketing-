@@ -69,6 +69,12 @@ try{
   start('worker',process.execPath,watch('backend/src/worker.mjs'))
   start('frontend',process.execPath,['node_modules/vite/bin/vite.js','--host','127.0.0.1','--strictPort'])
   await Promise.all([wait('http://127.0.0.1:3001/api/health'),wait('http://127.0.0.1:5173'),wait(env.ML_SERVICE_URL+'/health')])
-  if(!process.argv.includes('--no-feed'))start('generator',process.execPath,process.platform==='linux'?['--watch','scripts/live/generator.mjs']:['--watch','--watch-path=scripts/live','scripts/live/generator.mjs'])
-  console.log('[live] Application http://localhost:5173 | Live feed and coverage http://localhost:5174')
+  // The Python feed needs an interpreter that can reach this API. WSL's Python cannot,
+  // so ACE_FEED_PYTHON names a native one; without it the JavaScript feed is the fallback.
+  const feedPython=env.ACE_FEED_PYTHON||(env.ACE_LIVE_WSL==='true'?'':env.PYTHON_BIN)
+  const yearly=process.argv.includes('--year-feed')
+  if(yearly&&!feedPython)throw new Error('The daily year feed requires a native Python interpreter. Set ACE_FEED_PYTHON in .env.live.local.')
+  const feed=feedPython?[feedPython,[yearly?'scripts/live/year_feed.py':'scripts/live/ace_feed.py',...(yearly?process.argv.slice(2).filter(arg=>!['--year-feed','--no-feed'].includes(arg)):[])]]:[process.execPath,process.platform==='linux'?['--watch','scripts/live/generator.mjs']:['--watch','--watch-path=scripts/live','scripts/live/generator.mjs']]
+  if(!process.argv.includes('--no-feed'))start('generator',...feed)
+  console.log('[live] Application http://127.0.0.1:5173 | Live feed and coverage http://127.0.0.1:5174')
 }catch(error){console.error(error.message);stop(1)}

@@ -1,0 +1,154 @@
+[
+  [
+    "13 PROVIDERS  |  DECLARED PLAN SCOPE",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "No native wire contract or live provider account was verified. GA4 is read-only; unsupported operation-specific cases need approved N/A.",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Code",
+    "Provider",
+    "Source plan scope",
+    "Specs",
+    "Contract status",
+    "Folder"
+  ],
+  [
+    "META",
+    "Meta Ads",
+    "conversion/audience delivery and declared reporting",
+    "20",
+    "UNVERIFIED",
+    "D4_integration/providers/META"
+  ],
+  [
+    "GOOG",
+    "Google Ads",
+    "declared conversion/audience delivery; reconcile reporting capability with runtime",
+    "20",
+    "UNVERIFIED",
+    "D4_integration/providers/GOOG"
+  ],
+  [
+    "XADS",
+    "X Ads",
+    "declared reporting/conversion; verify native-versus-bridge implementation",
+    "20",
+    "UNVERIFIED",
+    "D4_integration/providers/XADS"
+  ],
+  [
+    "TIK",
+    "TikTok Ads",
+    "declared conversion delivery; reconcile reporting capability with runtime",
+    "20",
+    "UNVERIFIED",
+    "D4_integration/providers/TIK"
+  ],
+  [
+    "LINK",
+    "LinkedIn Ads",
+    "declared reporting and conversion delivery",
+    "20",
+    "UNVERIFIED",
+    "D4_integration/providers/LINK"
+  ],
+  [
+    "GA4",
+    "GA4",
+    "read-only reporting, property/date/dimension normalization",
+    "20",
+    "UNVERIFIED",
+    "D4_integration/providers/GA4"
+  ],
+  [
+    "HUB",
+    "HubSpot",
+    "CRM entities, lifecycle mapping and declared lead writes",
+    "20",
+    "UNVERIFIED",
+    "D4_integration/providers/HUB"
+  ],
+  [
+    "SF",
+    "Salesforce",
+    "CRM entities, change tracking and declared lead writes",
+    "20",
+    "UNVERIFIED",
+    "D4_integration/providers/SF"
+  ],
+  [
+    "ZOHO",
+    "Zoho CRM",
+    "module mapping, regional/account handling and declared writes",
+    "20",
+    "UNVERIFIED",
+    "D4_integration/providers/ZOHO"
+  ],
+  [
+    "PIN",
+    "Pinterest Ads",
+    "declared reporting and conversion delivery",
+    "20",
+    "UNVERIFIED",
+    "D4_integration/providers/PIN"
+  ],
+  [
+    "MS",
+    "Microsoft Ads",
+    "declared reporting/conversion; verify native-versus-bridge implementation",
+    "20",
+    "UNVERIFIED",
+    "D4_integration/providers/MS"
+  ],
+  [
+    "WA",
+    "WhatsApp Cloud",
+    "message/template/status and webhook operations",
+    "20",
+    "UNVERIFIED",
+    "D4_integration/providers/WA"
+  ],
+  [
+    "HTTP",
+    "Custom HTTPS",
+    "approved endpoint verification, mapping and read synchronization",
+    "20",
+    "UNVERIFIED",
+    "D4_integration/providers/HTTP"
+  ]
+]

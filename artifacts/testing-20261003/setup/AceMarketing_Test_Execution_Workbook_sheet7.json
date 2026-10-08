@@ -1,0 +1,86 @@
+[
+  [
+    "DATA PROFILES",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Proposed deterministic synthetic-data profiles. Existing example JSON covers only the metric oracle, not a complete seed implementation. Do not import production customers.",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Fixture",
+    "Profile",
+    "Synthetic contents",
+    "Constraints / purpose"
+  ],
+  [
+    "D0",
+    "Harness",
+    "Tiny isolated fixtures for deliberate test runner, report, safety-guard and install failures.",
+    "Per run; no business PII."
+  ],
+  [
+    "D1",
+    "Core functional",
+    "4 tenants, 8 workspaces, 32 users mapped to real roles; distinct tenant canaries; empty and suspended workspaces.",
+    "Logical persona labels must map to actual permission enums during P0."
+  ],
+  [
+    "D2",
+    "Marketing functional",
+    "10,000 synthetic leads; 100 campaigns; 100,000 events; historical/late/duplicate/refund/consent variants over a fixed 90-day window.",
+    "Planning volume; generated deterministically; independent manifests and assertions."
+  ],
+  [
+    "D3",
+    "Golden oracle",
+    "Hand-calculated small event/journey datasets and expected metrics, attribution, dedupe and currency decisions.",
+    "Oracle independently authored; never import application calculator to generate expected values."
+  ],
+  [
+    "D4",
+    "Integration/failure",
+    "Versioned 13-provider simulations plus billing/mail/call/calendar/AI test transports; request/receipt ledgers; injected failures.",
+    "No real account/recipient; supported operations only; simulator networking is test-only."
+  ],
+  [
+    "D5",
+    "Security/privacy/files",
+    "Canary secrets and PII, benign attack fixtures, file boundaries, deletion and retention cases.",
+    "Harmless synthetic payloads on authorized isolated systems; sensitive reports restricted."
+  ],
+  [
+    "D6",
+    "AI evaluation",
+    "Fixed questions, grounded answers, adversarial documents and separate train/validation/test partitions.",
+    "Model output evaluated separately from deterministic mock; representative data required for efficacy claims."
+  ],
+  [
+    "D7",
+    "Scale/soak",
+    "Proposed starting scale: 50 tenants, 100 workspaces, 1,000 users, 100,000 leads, 1,000 campaigns, 1,000,000 events.",
+    "Not a capacity claim; adjust to approved production envelope; separate generator and documented hardware."
+  ],
+  [
+    "D8",
+    "Business UAT",
+    "Persona-driven synthetic organization with full campaign-to-revenue history and controlled exceptions.",
+    "Seed using supported APIs/imports where practical; no hidden DB patches during acceptance."
+  ]
+]

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testcase name="AUTH-001 support: production authenticated identity is scoped to actual member" time="0.178506" classname="test" file="/home/aceqa/execution-20261003/qa/tests/api.test.mjs"/>
+	<testcase name="AUTH-002 support: incorrect password denied in production" time="0.034202" classname="test" file="/home/aceqa/execution-20261003/qa/tests/api.test.mjs"/>
+	<testcase name="AUTH-006 support: missing credentials denied" time="0.002572" classname="test" file="/home/aceqa/execution-20261003/qa/tests/api.test.mjs"/>
+	<testcase name="AUTH token-integrity support: tampered token rejected" time="0.002273" classname="test" file="/home/aceqa/execution-20261003/qa/tests/api.test.mjs"/>
+	<testcase name="TEN-002 support: foreign workspace header denied" time="0.002871" classname="test" file="/home/aceqa/execution-20261003/qa/tests/api.test.mjs"/>
+	<testcase name="TEN-005 support: analyst cannot create a form" time="0.003775" classname="test" file="/home/aceqa/execution-20261003/qa/tests/api.test.mjs"/>
+	<testcase name="SEC support: credential fields are absent from member response" time="0.005573" classname="test" file="/home/aceqa/execution-20261003/qa/tests/api.test.mjs"/>
+	<testcase name="SEC support: unapproved web origin rejected" time="0.002433" classname="test" file="/home/aceqa/execution-20261003/qa/tests/api.test.mjs"/>
+	<testcase name="TEN support: invalid scope identifier rejected" time="0.002579" classname="test" file="/home/aceqa/execution-20261003/qa/tests/api.test.mjs"/>
+	<testcase name="AUTH-003 support: actual logout revokes persisted session" time="0.050367" classname="test" file="/home/aceqa/execution-20261003/qa/tests/api.test.mjs"/>
+	<testcase name="TEN-003 support: runtime database role does not bypass RLS" time="0.009714" classname="test" file="/home/aceqa/execution-20261003/qa/tests/api.test.mjs"/>
+	<testcase name="FORM lifecycle support: create, publish, submit, replay and observe persisted rows" time="0.075542" classname="test" file="/home/aceqa/execution-20261003/qa/tests/api.test.mjs"/>
+	<testcase name="BOARD support: real create, retrieve and foreign resource denial" time="0.017994" classname="test" file="/home/aceqa/execution-20261003/qa/tests/api.test.mjs"/>
+	<testcase name="TRACK-004 support: missing consent denies analytics tracking" time="0.009630" classname="test" file="/home/aceqa/execution-20261003/qa/tests/api.test.mjs"/>
+	<testcase name="TRACK support: consent, tracking, deduplication, redaction and revoke" time="0.056774" classname="test" file="/home/aceqa/execution-20261003/qa/tests/api.test.mjs"/>
+	<testcase name="TRACK-005 support: malformed timestamp rejected without durable partial effect" time="0.008506" classname="test" file="/home/aceqa/execution-20261003/qa/tests/api.test.mjs"/>
+	<testcase name="JOBS support: independent worker finishes one logical audit export after duplicate enqueue" time="0.209739" classname="test" file="/home/aceqa/execution-20261003/qa/tests/api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /auth/me" time="0.143122" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /dashboard-summary" time="0.029399" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /launchpad" time="0.009134" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /workspace/overview" time="0.007690" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /integrations" time="0.007032" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /integration-flows" time="0.004588" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /custom-integrations" time="0.004193" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /events" time="0.005650" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /adjustments" time="0.004403" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /diagnostics" time="0.006246" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /match-quality" time="0.005303" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /reconciliation" time="0.005750" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /fraud" time="0.006026" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /deep-links" time="0.004561" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /sites" time="0.004897" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /fingerprinting" time="0.005008" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /fingerprinting/matches" time="0.004353" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /funnel" time="0.003753" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /leak-monitor" time="0.004846" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /live-sync" time="0.005818" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /data-hub" time="0.008644" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /offline-attribution" time="0.005397" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /ctwa-attribution" time="0.004272" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /call-events" time="0.004051" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /matchback" time="0.005066" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /matchback/unmatched" time="0.005412" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /attribution-identity/stats" time="0.004485" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /pos-stores" time="0.004449" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /journeys" time="0.006046" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /customer-360" time="0.005841" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /identity" time="0.004662" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /models" time="0.005896" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /attribution" time="0.005156" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /reports" time="0.005347" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /cohorts?months=6" time="0.004212" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /grouped-performance?dimension=category&amp;months=6" time="0.006940" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /report-schedules" time="0.004195" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /planner" time="0.005521" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /enrich" time="0.003698" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /lead-grading" time="0.005326" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /agents" time="0.005603" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /routing" time="0.005135" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /follow-ups" time="0.003848" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /lead-reactivation?dormantDays=30&amp;recentDays=7" time="0.004784" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /voice-scheduler" time="0.003516" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /qualification-calls" time="0.002554" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /meetings" time="0.004032" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /feedback" time="0.003255" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /agent-runs" time="0.003255" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /approvals" time="0.004565" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /personalization-rules" time="0.004179" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /activation-rules" time="0.004163" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /exclusions" time="0.006495" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /audiences" time="0.004114" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /audience-schedules" time="0.003946" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /activation-runs" time="0.003992" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /behavior" time="0.005095" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /feed" time="0.003694" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /solutions" time="0.002679" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /chatgpt-ads" time="0.004300" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /signal-deliveries" time="0.004003" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /whatsapp/messages" time="0.003775" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /connector-health" time="0.004407" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /monitoring" time="0.012641" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /compliance-center" time="0.004726" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /consent/stats" time="0.003947" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /privacy/requests" time="0.005722" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /billing/usage" time="0.034275" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /billing/subscription" time="0.032317" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /alerts" time="0.008324" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /signal-console" time="0.004840" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /security-posture" time="0.003422" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /resources" time="0.002822" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /case-studies" time="0.002643" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /ai-action" time="0.002645" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /source-notes" time="0.001988" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /event-templates" time="0.002113" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /monitoring-rules" time="0.004431" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /members" time="0.003449" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /settings" time="0.003986" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /workspaces" time="0.010546" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /webhooks/deliveries" time="0.004033" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /webhooks/endpoints" time="0.005086" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /audit-log" time="0.006071" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="Authenticated feature-read smoke /api-keys" time="0.003737" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="LEAD sample: all 100 supplied source rows upsert and replay in their original workspace" time="0.922693" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="FLOW: versioned approval lifecycle enforces separation of duties and tenant isolation" time="0.056609" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="TEN: workspace registry never lists another creator workspace" time="0.026914" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="DATA: fresh production workspace has no fabricated delivery or customer activity" time="0.001772" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="SEC: malformed tracking arrays and timestamps are client errors without persisted artifacts" time="0.017966" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<testcase name="MET reconciliation totals equal persisted tracked events in each tenant" time="0.009874" classname="test" file="/home/aceqa/execution-20261003/qa/tests/business-api.test.mjs"/>
+	<!-- tests 108 -->
+	<!-- suites 0 -->
+	<!-- pass 108 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 2615.9602 -->
+</testsuites>

@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {Activity,ArrowRight,ChevronRight,MousePointer2,Network,ShieldCheck,X} from 'lucide-react'
 import {fingerprintingApi} from '../data/fingerprinting.api'
 import {AccessibleDialog} from '../../../components/system/AccessibleDialog'
@@ -28,7 +28,7 @@ export default function FingerprintingPage(){
  const [notice,setNotice]=useState<Notice>({kind:'',text:''})
 
  const load=async()=>{
-  setLoading(true)
+  beginLoading(setLoading)
   try{
    const result:any=await fingerprintingApi.load()
    setData(result)

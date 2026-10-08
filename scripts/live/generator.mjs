@@ -280,6 +280,8 @@ async function pollJobs(){
       mark('AI '+entry.task,'exercised','Worker completed job '+id+'; result persisted')
     }else if(['dead_letter','cancelled','unknown_outcome'].includes(job.status)){
       pending.delete(id);training.delete(entry.task)
+      // A scoring job that cannot find its artifact would fail forever; retrain on the next AI cycle.
+      if(!entry.training)artifacts.delete(entry.task)
       mark('AI '+entry.task,'failed',job.last_error||job.status)
     }
   }

@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react'
-import {useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
+import {beginLoading,useDevelopmentLiveRefresh} from '../../../lib/development-live-refresh'
 import {
   Activity,AlertTriangle,ArrowRight,CheckCircle2,MessageCircle,ShieldCheck,Sparkles,X
 } from 'lucide-react'
@@ -62,7 +62,7 @@ export default function LeakMonitorPage(){
   })
 
   const load=async()=>{
-    setLoading(true)
+    beginLoading(setLoading)
     try{
       const result:any=await leakMonitorApi.load()
       setData(result)

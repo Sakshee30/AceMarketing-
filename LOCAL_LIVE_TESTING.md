@@ -2,6 +2,34 @@
 
 The application runs without Docker. The feed generates realistic **synthetic** customer activity and sends actual HTTP requests to the existing APIs. Customer IDs, click IDs, campaign names, timestamps, stages, consent, product values, and interaction records remain linked across a journey. This exercises backend validation, persistence, attribution, automation, audiences, reporting, and the ML queue. It does not insert invented successful provider responses into the database.
 
+## Python data feed and feature-wise test
+
+For three initial calendar months followed by daily replay of a full year and continuous live activity, see [the daily year-feed guide](YEAR_DATA_FEED.md). Start the complete stack with `npm run dev:live -- --year-feed --customers-per-day=4`. The year feed has its own checkpoint and a live dashboard linking inputs to the corresponding application panels.
+
+`scripts/live/ace_feed.py` (Python 3.9+, standard library only) is the continuous feed. The launcher starts it when a native interpreter is available: `ACE_FEED_PYTHON` in `.env.live.local`, or `PYTHON_BIN` in native mode. With `ACE_LIVE_WSL=true` and no `ACE_FEED_PYTHON`, the launcher falls back to the original `generator.mjs` feed, because WSL's Python cannot reach the Windows-hosted API.
+
+It runs until stopped and never exhausts: every cycle creates a new synthetic customer with a realistic name, city, device, campaign, product and price, and moves customers already in flight through consent, visits, enquiry, qualification, calls, WhatsApp, consultation, purchase or abandonment. Lead-quality mix is about 30% low quality, 30% nurture, 22% strong fit and 18% high intent; the backend still computes every grade. It also works the follow-up queue the way a sales team would, so the open queue does not grow forever. Contacts use reserved `example.com` addresses and fictional `+1555` numbers.
+
+| Command | Purpose |
+|---|---|
+| `npm run dev:live` | Application plus the continuous feed. Dashboard: http://127.0.0.1:5174, feature report: http://127.0.0.1:5174/report |
+| `npm run live:verify:features` | Full test of the running stack: one complete journey per grade, every feature's write and read APIs, refusal checks, local ML, a browser visit to every page, and a merged report |
+| `npm run live:verify:features -- --out=artifacts/testing-YYYYMMDD` | Same, keeping the report and screenshots in a dated folder |
+
+The report (`feature-report.html` and `.json`) has one row per product feature with its backend checks and its browser result. **Blocked** marks a capability that needs a real third-party test account; it is never reported as passing. Replace the feed with real integrations by starting the launcher with `--no-feed`; nothing in the application depends on the feed.
+
+### AI Intelligence in the local stack
+
+The feed takes the local models through the governed lifecycle on the real APIs: it declares an evaluation policy per task, creates a point-in-time dataset, trains from that dataset, qualifies the resulting evaluation against the policy, then approves and deploys the model. Six routes become active this way (lead qualification, paid conversion, churn, future customer value, forecast challenger, offer ranking). A model that misses its thresholds is reported as failed, not deployed.
+
+- `AI_LOCAL_ML_CAPABILITY_VERIFIED=true` in `.env.live.local` permits deployment of local models. It defaults to `false`; set it only after `GET /api/ai/ml/capabilities` confirms the estimators run on that machine.
+- Chronos-2 forecasting needs `pip install "chronos-forecasting==2.3.2"` (CPU PyTorch is sufficient), a provisioned snapshot directory in `CHRONOS2_SNAPSHOT_DIR`, and its pinned revision in `CHRONOS2_REVISION`. Incrementality needs `pip install "econml>=0.16,<1"`. Pin the installed core packages with a constraints file so these installs cannot change them.
+- Marketing mix (`google-meridian 2.1.0`) requires numpy below 2.4 and is not installed alongside the core stack; run it as a separate service via `ML_MMM_SERVICE_URL`.
+- **Grounded analyst** can run on an OpenAI-compatible NVIDIA endpoint: set `AI_ANALYST_PROVIDER=nvidia`, `NVIDIA_API_KEY`, `NVIDIA_MODEL`, `AI_LIVE_PROVIDER_CALLS=true` and `AI_PROVIDER_TESTS_ENABLED=true` in `.env.live.local`. On start the feed verifies model access, runs a five-case grounding evaluation (`POST /api/ai/evaluations/run`), qualifies it against a predeclared gate, then approves and deploys the route. Each question sends the workspace evidence snapshot (aggregates, about 350 KB) to that provider and takes roughly one minute. The feed asks one question about every fifteen minutes.
+- The other hosted routes (reviewer, extraction, embeddings, reranking, transcription, live voice, creative image) need Anthropic, Google and Voyage API keys.
+
+Use **http://127.0.0.1:5173**, not `localhost`, if another local project is running a dev server: a second Vite process can own the IPv6 `localhost:5173` listener and show a different application.
+
 ## 1. Open the running application
 
 ### First run on another machine (without Docker)

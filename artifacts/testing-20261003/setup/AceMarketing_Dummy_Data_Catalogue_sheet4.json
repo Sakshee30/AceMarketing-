@@ -1,0 +1,114 @@
+[
+  [
+    "WORKSPACES",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Neutral fixture schema. Actual field, ID, status and permission mappings must be approved before import.",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "Workspace Id",
+    "Tenant Id",
+    "Name",
+    "Fixture State",
+    "Timezone",
+    "Currency"
+  ],
+  [
+    "qa_ace_v1_workspace_000001",
+    "qa_ace_v1_tenant_000001",
+    "QA Workspace 001",
+    "active",
+    "UTC",
+    "INR"
+  ],
+  [
+    "qa_ace_v1_workspace_000002",
+    "qa_ace_v1_tenant_000001",
+    "QA Workspace 002",
+    "active",
+    "UTC",
+    "INR"
+  ],
+  [
+    "qa_ace_v1_workspace_000003",
+    "qa_ace_v1_tenant_000002",
+    "QA Workspace 003",
+    "active",
+    "UTC",
+    "INR"
+  ],
+  [
+    "qa_ace_v1_workspace_000004",
+    "qa_ace_v1_tenant_000002",
+    "QA Workspace 004",
+    "active",
+    "UTC",
+    "INR"
+  ],
+  [
+    "qa_ace_v1_workspace_000005",
+    "qa_ace_v1_tenant_000003",
+    "QA Workspace 005",
+    "empty",
+    "UTC",
+    "INR"
+  ],
+  [
+    "qa_ace_v1_workspace_000006",
+    "qa_ace_v1_tenant_000003",
+    "QA Workspace 006",
+    "empty",
+    "UTC",
+    "INR"
+  ],
+  [
+    "qa_ace_v1_workspace_000007",
+    "qa_ace_v1_tenant_000004",
+    "QA Workspace 007",
+    "suspended",
+    "UTC",
+    "INR"
+  ],
+  [
+    "qa_ace_v1_workspace_000008",
+    "qa_ace_v1_tenant_000004",
+    "QA Workspace 008",
+    "suspended",
+    "UTC",
+    "INR"
+  ]
+]

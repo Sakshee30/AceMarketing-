@@ -13,4 +13,5 @@ backend/data/
 # Qualification reports are not source
 artifacts/prelive/
 qa/__pycache__/
+scripts/live/__pycache__/
 ml-service/**/__pycache__/

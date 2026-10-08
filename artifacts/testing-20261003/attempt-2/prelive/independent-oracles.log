@@ -1,0 +1,46 @@
+✔ D3 baseline: real metric calculator matches supplied independent oracle (3.698366ms)
+✔ D3 duplicate_money: real metric calculator matches supplied independent oracle (6.166908ms)
+✔ D3 window_boundaries: real metric calculator matches supplied independent oracle (1.498892ms)
+✔ D3 empty: real metric calculator matches supplied independent oracle (0.169254ms)
+✔ D3 late_arrival: real metric calculator matches supplied independent oracle (1.61626ms)
+✔ D3 mixed currency cannot silently add INR and USD (1.025223ms)
+✔ D3 whole-batch retry leaves every metric unchanged (4.869809ms)
+✔ D3 reverse arrival order preserves all metrics (2.159374ms)
+✔ D3 reporting currency mismatch is explicit (0.637293ms)
+✔ D3 invalid reporting windows are rejected (0.327218ms)
+✔ D3 Asia/Kolkata boundary includes exactly start and last instant (0.250555ms)
+✔ D3 gross and net revenue inputs are deliberately distinguished (0.823018ms)
+✔ AI stream decodes chunk-split CRLF and multiline JSON data (24.825947ms)
+✔ AI stream ignores comments and retains non-JSON multiline data (0.828568ms)
+✔ AI stream invokes a failing consumer once, not twice (0.852883ms)
+✔ AI stream uses workspace request and handles HTTP failure (1.026736ms)
+✔ AUTH real token round trip preserves identity and scope (2.34906ms)
+✔ AUTH wrong signing key is rejected (0.324052ms)
+✔ AUTH modified payload is rejected (0.354388ms)
+✔ AUTH extra token segments are rejected (0.225028ms)
+✔ AUTH token is invalid at the exact expiry instant (0.949443ms)
+✔ AUTH expired token is rejected (0.334992ms)
+✔ AUTH password hash validates only the original password (149.421165ms)
+✔ AUTH analyst and unknown role cannot inherit owner privileges (0.162392ms)
+✔ TRACK validation rejects malformed occurredAt (1.292279ms)
+✔ TRACK validation accepts valid occurredAt (0.177649ms)
+✔ TRACK validation rejects malformed timestamp (1.23955ms)
+✔ TRACK validation accepts valid timestamp (0.168533ms)
+✔ TRACK validation rejects malformed receivedAt (0.260303ms)
+✔ TRACK validation accepts valid receivedAt (0.133378ms)
+✔ TRACK rejects non-object body null (0.218145ms)
+✔ TRACK rejects non-object body [] (0.089125ms)
+✔ TRACK rejects non-object body true (0.202846ms)
+✔ TRACK rejects non-object body "event" (0.249463ms)
+✔ TRACK invalid client id and consent category are rejected (0.218205ms)
+✔ TEN registry hides foreign metadata and uses actual membership role (2.233336ms)
+✔ TEN revoked membership cannot list registry entry (0.240095ms)
+✔ TEN registry accepts an explicitly granted secondary workspace (0.245956ms)
+ℹ tests 38
+ℹ suites 0
+ℹ pass 38
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 248.066805

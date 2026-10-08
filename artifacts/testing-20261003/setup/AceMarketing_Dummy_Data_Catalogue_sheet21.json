@@ -1,0 +1,74 @@
+[
+  [
+    "READ ME  |  SAFETY AND PROVENANCE",
+    ""
+  ],
+  [
+    "",
+    ""
+  ],
+  [
+    "Source: supplied plan and prior planning package. No fresh repository review or application execution in this generation task.",
+    ""
+  ],
+  [
+    "",
+    ""
+  ],
+  [
+    "",
+    ""
+  ],
+  [
+    "Topic",
+    "Instruction"
+  ],
+  [
+    "Source documents",
+    "sources/user_supplied_plan.txt; sources/plan_tests.json; sources/plan_golden_metric_fixture.json"
+  ],
+  [
+    "Source baseline",
+    "a82f24a8e762b6a60e0c13bcb15347daa78f1b49 is inherited from the supplied plan, not newly verified."
+  ],
+  [
+    "Synthetic values",
+    "Organizations, recipient IDs, distributions and policy examples are authored test values, not real product/customer claims."
+  ],
+  [
+    "Run validation",
+    "python scripts/validate_package.py --root .  (or python3 on Linux)"
+  ],
+  [
+    "Unit boundary",
+    "D2/D4/D7 money: integer minor INR units. D3/D8 golden source: major INR units."
+  ],
+  [
+    "Credential safety",
+    "No passwords, live tokens or reachable phone numbers supplied. Provision real test authentication and local transport capture."
+  ],
+  [
+    "Provider boundary",
+    "Replay specifications only; native wire mapping and simulator implementation required."
+  ],
+  [
+    "Regeneration",
+    "generate_profiles.py regenerates functional/scale files only. Static scenario references need adapter ID remapping."
+  ],
+  [
+    "What a pass means",
+    "Fixture integrity is separate from application testing. The 356 application scenarios remain Not run."
+  ],
+  [
+    "Raw negative CSV",
+    "Contains harmless formula literals; open as text, not as trusted spreadsheet formulas."
+  ],
+  [
+    "Full lead/event data",
+    "Full CSV/NDJSON lives in the ZIP. Workbook previews and upload copies share existing IDs."
+  ],
+  [
+    "Further setup",
+    "Actual authorization, migrations, loaders, browsers, model runtimes, scans, load drivers and recovery infrastructure remain required."
+  ]
+]

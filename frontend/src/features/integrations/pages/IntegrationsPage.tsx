@@ -82,7 +82,8 @@ export default function IntegrationsPage(){
  const webhookSubscriptions:any[]=((workspaceQuery.data as any)?.webhookSubscriptions?.items||[])
  const webhookDeliveries:any[]=((workspaceQuery.data as any)?.webhookDeliveries?.items||[])
  const connected=integrationItems.filter((x:any)=>x.status==='connected').map((x:any)=>x.name)
- const integrationLoading=workspaceQuery.isPending||workspaceQuery.isFetching
+ const [manualRefresh,setManualRefresh]=useState(false)
+ const integrationLoading=workspaceQuery.isPending||manualRefresh
  const builtInCount=groups.reduce((sum:any,g:any)=>sum+g[1].length,0)
  useDirtyWork({
   key:'integration-builder-draft',
@@ -107,7 +108,8 @@ export default function IntegrationsPage(){
  }
  const loadIntegrations=async()=>{
   setConnectionNotice(null)
-  const result=await workspaceQuery.refetch()
+  setManualRefresh(true)
+  const result=await workspaceQuery.refetch().finally(()=>setManualRefresh(false))
   if(result.error)setConnectionNotice({type:'error',text:(result.error as any)?.message||'Integration workspace could not be loaded. Existing connector state was preserved.'})
  }
  const connectorMutation=useMutation({
