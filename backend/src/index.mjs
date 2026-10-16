@@ -529,11 +529,11 @@ const readRawBody = req => new Promise((resolve,reject)=>{
   req.on('error',reject)
 })
 
-const readBody = req => new Promise((resolve,reject)=>{
+const readBody = (req,maxBytes=1_000_000) => new Promise((resolve,reject)=>{
   let body=''
   req.on('data', chunk => {
     body += chunk
-    if (body.length > 1_000_000) { reject(new Error('payload too large')); req.destroy() }
+    if (body.length > maxBytes) { reject(new Error('payload too large')); req.destroy() }
   })
   req.on('end', () => {
     if (!body) return resolve({})
@@ -3001,7 +3001,7 @@ const server = http.createServer(async (req,res)=>{
         return send(req,res,200,{feature,fixture:fixture||null,operationalDataChanged:false})
       }
       if(!['owner','admin','operator'].includes(req.user.role))return send(req,res,403,{error:'Write permission required'})
-      const body=await readBody(req)
+      const body=await readBody(req,2_800_000)
       if(typeof body?.base64!=='string'||body.base64.length>2_800_000||!/^[A-Za-z0-9+/]+={0,2}$/.test(body.base64))return send(req,res,400,{error:'Valid XLSX data (maximum 2 MB) required'})
       const filename=String(body.filename||'').slice(0,200)
       if(!/\.xlsx$/i.test(filename))return send(req,res,400,{error:'Only .xlsx files supported'})
