@@ -35,12 +35,12 @@ export function parseQaWorkbook(bytes){
  const entries=archiveEntries(bytes)
  const sheet=entries.get('xl/worksheets/sheet2.xml')
  if(!sheet)throw new Error('Expected a second sheet containing feature test data')
- const strings=[...(entries.get('xl/sharedStrings.xml')||'').matchAll(/<si(?:\s[^>]*)?>([\s\S]*?)<\/si>/g)].map(m=>[...m[1].matchAll(/<t(?:\s[^>]*)?>([\s\S]*?)<\/t>/g)].map(t=>decode(t[1])).join(''))
+ const strings=[...(entries.get('xl/sharedStrings.xml')||'').matchAll(/<(?:\w+:)?si(?:\s[^>]*)?>([\s\S]*?)<\/(?:\w+:)?si>/g)].map(m=>[...m[1].matchAll(/<(?:\w+:)?t(?:\s[^>]*)?>([\s\S]*?)<\/(?:\w+:)?t>/g)].map(t=>decode(t[1])).join(''))
  const rows=[]
- for(const m of sheet.matchAll(/<row\b[^>]*>([\s\S]*?)<\/row>/g)){
+ for(const m of sheet.matchAll(/<(?:\w+:)?row\b[^>]*>([\s\S]*?)<\/(?:\w+:)?row>/g)){
   if(rows.length>=1000)throw new Error('Maximum 1000 rows per test upload')
   const values=[]
-  for(const c of m[1].matchAll(/<c\b([^>]*)>([\s\S]*?)<\/c>/g)){
+  for(const c of m[1].matchAll(/<(?:\w+:)?c\b([^>]*)>([\s\S]*?)<\/(?:\w+:)?c>/g)){
    const col=c[1].match(/\br="([A-Z]+)[0-9]+"/i)
    if(!col)continue
    const idx=columnIndex(col[1]);if(idx<0||idx>79)throw new Error('Maximum 80 columns')
