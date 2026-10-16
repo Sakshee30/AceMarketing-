@@ -1,4 +1,5 @@
 import http from 'node:http'
+import { parseQaWorkbook } from './qa-excel-fixtures.mjs'
 import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto'
 import { URL } from 'node:url'
 import { createToken, verifyToken, hashPassword, hasPermission, createRateLimiter, securityHeaders, resolveCorsOrigin } from './security.mjs'
@@ -2987,6 +2988,4035 @@ const server = http.createServer(async (req,res)=>{
         },
         generatedAt:new Date().toISOString()
       })
+    }
+    // QA fixtures are deliberately isolated from operational entities and connectors.
+    const qaMatch=url.pathname.match(/^\/api\/qa-fixtures\/([a-z0-9-]{1,48})$/)
+    if(qaMatch&&(req.method==='GET'||req.method==='POST')){
+      const feature=qaMatch[1]
+      const allowed=new Set(['adjustments','adsync','agents','alerts','approvals','ask-ace','attribution','audiences','behavior','calls','chatgpt-ads','compliance','customer-360','data-flows','data-hub','deep-links','delivery','developers','diagnostics','enrich','events','exclusions','executive-briefs','feed','feedback','fingerprinting','follow-ups','fraud','funnel','grouped-performance','identity','integrations','intelligence','journeys','launchpad','lead-grading','leak-monitor','live-sync','match-quality','matchback','meetings','models','monitoring','offline-attribution','overview','personalization','planner','pos-stores','real-time-activation','reconciliation','reports','routing','settings','sites'])
+      if(!allowed.has(feature))return send(req,res,404,{error:'Unknown feature'})
+      if(!req.user)return send(req,res,401,{error:'Authenticated workspace membership required'})
+      if(req.method==='GET'){
+        const state=await getState(),fixture=state.qaFeatureFixtures?.[feature]
+        return send(req,res,200,{feature,fixture:fixture||null,operationalDataChanged:false})
+      }
+      if(!['owner','admin','operator'].includes(req.user.role))return send(req,res,403,{error:'Write permission required'})
+      const body=await readBody(req)
+      if(typeof body?.base64!=='string'||body.base64.length>2_800_000||!/^[A-Za-z0-9+/]+={0,2}$/.test(body.base64))return send(req,res,400,{error:'Valid XLSX data (maximum 2 MB) required'})
+      const filename=String(body.filename||'').slice(0,200)
+      if(!/\.xlsx$/i.test(filename))return send(req,res,400,{error:'Only .xlsx files supported'})
+      const expected=feature.replace(/-/g,'_')
+      if(!new RegExp('(?:^|_)'+expected+'\\.xlsx
+      const [state,leadStats,attr,providerData]=await Promise.all([getState(),leadOpsStats(workspaceId),attributionStats(workspaceId),connectorDataSummary(workspaceId).catch(()=>({available:false,raw:[],campaigns:[],crm:[]}))])
+      const now=Date.now()
+      const sourceMap=new Map()
+      const touch=(name,type,eventTime,count=1,status='healthy',fields=[])=>{
+        const key=String(name||'Unknown')
+        const current=sourceMap.get(key)||{name:key,type,records:0,lastEventAt:null,status,fields:new Set()}
+        current.records+=Number(count||0)
+        if(eventTime&&(!current.lastEventAt||Date.parse(eventTime)>Date.parse(current.lastEventAt)))current.lastEventAt=eventTime
+        if(status!=='healthy')current.status=status
+        for(const field of fields)current.fields.add(field)
+        sourceMap.set(key,current)
+      }
+      for(const event of trackedEvents){
+        const source=event.source||event.channel||event.utm_source||'First-party web/app'
+        touch(source,'first_party',event.receivedAt||event.occurredAt||event.timestamp,1,'healthy',Object.keys(event).filter(k=>!['id','receivedAt'].includes(k)).slice(0,12))
+      }
+      const waEvents=(state.whatsappEvents||[])
+      const waLatest=waEvents.map(x=>x.timestamp||x.receivedAt).filter(Boolean).sort().at(-1)||null
+      if(waEvents.length)touch('WhatsApp','messaging',waLatest,waEvents.length,'healthy',['phone','message','status','timestamp'])
+      const callEvents=(state.callEvents||[])
+      const callLatest=callEvents.map(x=>x.endedAt||x.startedAt||x.receivedAt).filter(Boolean).sort().at(-1)||null
+      if(callEvents.length)touch('Telephony','calling',callLatest,callEvents.length,'healthy',['phone','duration','status','campaign'])
+      if(leadStats?.available)touch('Lead profiles','crm_identity',new Date().toISOString(),Number(leadStats.total||0),'healthy',['customer_id','email_hash','phone_hash','stage','grade','device_id'])
+      if(attr?.available)touch('Attribution store','measurement',new Date().toISOString(),Number(attr.assistedEvents||0)+Number(attr.activeClickSessions||0),'healthy',['click_id','session','event','match_method','value'])
+      const deliveries=(state.signalDeliveries||[])
+      if(deliveries.length)touch('Activation deliveries','activation',deliveries[0]?.updatedAt||deliveries[0]?.createdAt||null,deliveries.length,deliveries.some(x=>['failed','dead_letter'].includes(String(x.status||'').toLowerCase()))?'review':'healthy',['event','destination','status','attempts'])
+      for(const item of providerData.raw||[]){
+        touch(item.connector,'provider_sync',item.last_ingested_at,Number(item.rows||0),'healthy',[item.stream,'raw_record'])
+      }
+      for(const item of providerData.campaigns||[]){
+        if(!sourceMap.has(item.connector))touch(item.connector,'provider_campaigns',item.max_day,Number(item.rows||0),'healthy',['campaign','spend','impressions','clicks','conversions','conversion_value'])
+      }
+      for(const health of state.connectorHealth||[]){
+        if(!sourceMap.has(health.name))touch(health.name,'connector',health.checkedAt||health.updatedAt||null,0,['healthy','connected','active'].includes(String(health.status||'').toLowerCase())?'healthy':'review',['connection_state'])
+      }
+      const sources=[...sourceMap.values()].map(x=>({
+        name:x.name,
+        type:x.type,
+        records:x.records,
+        lastEventAt:x.lastEventAt,
+        freshnessSeconds:x.lastEventAt?Math.max(0,Math.floor((now-Date.parse(x.lastEventAt))/1000)):null,
+        status:x.status,
+        fields:[...x.fields]
+      })).sort((a,b)=>b.records-a.records)
+      const records=sources.reduce((sum,x)=>sum+x.records,0)
+      const quarantined=Number((state.quarantinedEvents||[]).length)
+      const schemaHealth=records?Number((Math.max(0,records-quarantined)/records*100).toFixed(2)):100
+      const recent=[
+        ...trackedEvents.slice(-40).map(x=>({id:x.id||randomUUID(),time:x.receivedAt||x.occurredAt||x.timestamp,source:x.source||x.channel||x.utm_source||'First-party',kind:'event',operation:'append',status:'healthy'})),
+        ...waEvents.slice(0,20).map(x=>({id:'wa:'+x.id,time:x.timestamp||x.receivedAt,source:'WhatsApp',kind:x.kind||'message',operation:'append',status:x.error?'review':'healthy'})),
+        ...callEvents.slice(0,20).map(x=>({id:'call:'+x.id,time:x.endedAt||x.startedAt||x.receivedAt,source:'Telephony',kind:'call',operation:'append',status:'healthy'})),
+        ...deliveries.slice(0,20).map(x=>({id:'delivery:'+x.id,time:x.updatedAt||x.createdAt,source:x.destination||'Activation',kind:x.event||'signal',operation:'deliver',status:['failed','dead_letter'].includes(String(x.status||'').toLowerCase())?'review':'healthy'}))
+      ].filter(x=>x.time).sort((a,b)=>Date.parse(b.time)-Date.parse(a.time)).slice(0,50)
+      return send(req,res,200,{available:true,records,knownIdentities:Number(leadStats?.total||0),schemaHealth,quarantined,matchedEvents:Number(attr?.matchedEvents||0),sources,recent,providerData,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/data-hub/rebuild') {
+      const [state,leadStats,attr,eventStats]=await Promise.all([getState(),leadOpsStats(workspaceId),attributionStats(workspaceId),trackedEventStats(workspaceId).catch(()=>({total:trackedEvents.length}))])
+      const snapshot={
+        id:'dh_'+randomUUID(),
+        scope:'canonical_view',
+        status:'completed',
+        trackedEvents:trackedEvents.length,
+        leadProfiles:Number(leadStats?.total||0),
+        assistedEvents:Number(attr?.assistedEvents||0),
+        clickSessions:Number(attr?.activeClickSessions||0),
+        whatsappEvents:Number((state.whatsappEvents||[]).length),
+        callEvents:Number((state.callEvents||[]).length),
+        signalDeliveries:Number((state.signalDeliveries||[]).length),
+        quarantinedEvents:Number((state.quarantinedEvents||[]).length),
+        completedAt:new Date().toISOString()
+      }
+      await mutateState(s=>{
+        s.dataHubRebuilds=s.dataHubRebuilds||[]
+        s.dataHubRebuilds.unshift(snapshot)
+        s.dataHubRebuilds=s.dataHubRebuilds.slice(0,100)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'data_hub.canonical_snapshot_rebuilt',entityId:snapshot.id,at:snapshot.completedAt})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,200,snapshot)
+    }
+    if (req.method === 'GET' && url.pathname === '/api/live-sync') {
+      const state=await getState()
+      const [recentTracked,eventStats]=await Promise.all([
+        listTrackedEvents(workspaceId,{limit:250}).catch(()=>trackedEvents.slice(-250)),
+        trackedEventStats(workspaceId).catch(()=>({lastMinute:0}))
+      ])
+      const lastMinuteCount=Number(eventStats?.lastMinute||0)
+      const deliveries=(state.signalDeliveries||[]).slice(0,1000)
+      const delivered=deliveries.filter(x=>x.status==='delivered')
+      const successful=deliveries.filter(x=>['delivered','succeeded'].includes(String(x.status||'').toLowerCase())).length
+      const terminal=deliveries.filter(x=>['delivered','succeeded','dead_letter','failed'].includes(String(x.status||'').toLowerCase())).length
+      const latencies=delivered.map(x=>Number(x.latencyMs||x.providerResponse?.latencyMs||0)).filter(x=>Number.isFinite(x)&&x>=0).sort((a,b)=>a-b)
+      const medianLatencyMs=latencies.length?latencies[Math.floor(latencies.length/2)]:null
+      const byDestination={}
+      for(const item of deliveries){
+        const key=String(item.destination||'Unknown')
+        byDestination[key]=byDestination[key]||{destination:key,total:0,delivered:0,failed:0}
+        byDestination[key].total++
+        if(['delivered','succeeded'].includes(String(item.status||'').toLowerCase()))byDestination[key].delivered++
+        if(['dead_letter','failed'].includes(String(item.status||'').toLowerCase()))byDestination[key].failed++
+      }
+      const destinationThroughput=Object.values(byDestination).map(x=>({...x,deliveryRate:x.total?Number((x.delivered/x.total*100).toFixed(2)):0}))
+      const recent=[
+        ...recentTracked.slice(-50).map(x=>({
+          id:x.id||x.eventId||randomUUID(),
+          time:x.receivedAt||x.occurredAt||x.timestamp||null,
+          source:x.source||x.channel||'First-party',
+          event:x.event||x.eventType||x.name||'event',
+          destination:'Ingestion',
+          status:'accepted',
+          matchKey:x.customerId?'customer_id':x.deviceId||x.device_id?'device_id':x.gclid?'gclid':x.fbclid?'fbclid':x.visitorId?'visitor_id':'event_id'
+        })),
+        ...deliveries.slice(0,50).map(x=>({
+          id:x.id,
+          time:x.updatedAt||x.createdAt||null,
+          source:'Activation queue',
+          event:x.event||'signal',
+          destination:x.destination||'Unknown',
+          status:x.status||'queued',
+          matchKey:x.customerId?'customer_id':x.replayPayload?.gclid?'gclid':x.replayPayload?.emailSha256?'email_sha256':x.replayPayload?.phoneSha256?'phone_sha256':'event_id'
+        }))
+      ].sort((a,b)=>Date.parse(b.time||0)-Date.parse(a.time||0)).slice(0,50)
+      return send(req,res,200,{
+        available:true,
+        status:recentTracked.length||deliveries.length?'active':'idle',
+        medianLatencyMs,
+        deliveryRate:terminal?Number((successful/terminal*100).toFixed(2)):null,
+        eventsPerMinute:lastMinuteCount,
+        recent,
+        destinations:destinationThroughput,
+        generatedAt:new Date().toISOString()
+      })
+    }
+    if (req.method === 'GET' && url.pathname === '/api/matchback') {
+      const [live,state]=await Promise.all([attributionStats(workspaceId),getState()])
+      return send(req,res,200,{
+        live,
+        rules:state.matchbackRules||[],
+        unmatched:live.available?Number(live.unmatchedEvents||0):0,
+        templates:[
+          {name:'Closed-won revenue',source:'crm_billing',eventType:'closed_won',destination:'Google Ads',identityMethod:'customer_id + click ID'},
+          {name:'Enrolment conversion',source:'crm',eventType:'enrolment',destination:'Meta Ads',identityMethod:'customer_id + hashed contact'},
+          {name:'WhatsApp consultation sale',source:'crm_whatsapp',eventType:'closed_won',destination:'Google Ads + Meta Ads',identityMethod:'phone + click history'},
+          {name:'Offline store sale',source:'pos_crm',eventType:'store_sale',destination:'Google Ads + Meta Ads',identityMethod:'customer_id / hashed contact / click ID'}
+        ]
+      })
+    }
+    if (req.method === 'POST' && url.pathname === '/api/matchback/rules') {
+      const body=await readBody(req)
+      const name=String(body.name||'').trim()
+      const source=String(body.source||'').trim()
+      const eventType=String(body.eventType||'').trim()
+      const destination=String(body.destination||'').trim()
+      const identityMethod=String(body.identityMethod||'').trim()
+      if(!name||!source||!eventType||!destination||!identityMethod) return send(req,res,400,{error:'name, source, eventType, destination and identityMethod are required'})
+      const now=new Date().toISOString()
+      const item={id:'mb_'+randomUUID(),name:name.slice(0,160),source:source.slice(0,120),eventType:eventType.slice(0,120),destination:destination.slice(0,160),identityMethod:identityMethod.slice(0,240),status:'active',createdAt:now}
+      await mutateState(s=>{
+        s.matchbackRules=s.matchbackRules||[]
+        s.matchbackRules.unshift(item)
+        s.matchbackRules=s.matchbackRules.slice(0,200)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'matchback.rule_created',entityId:item.id,name:item.name,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,{item})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/matchback/rules/toggle') {
+      const body=await readBody(req)
+      if(!body.id||typeof body.enabled!=='boolean') return send(req,res,400,{error:'id and enabled are required'})
+      let updated=null
+      await mutateState(s=>{
+        const item=(s.matchbackRules||[]).find(x=>x.id===body.id)
+        if(item){item.status=body.enabled?'active':'paused';item.updatedAt=new Date().toISOString();updated={...item}}
+      })
+      return updated?send(req,res,200,{item:updated}):send(req,res,404,{error:'matchback rule not found'})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/matchback/unmatched') {
+      const live=await attributionStats(workspaceId)
+      return send(req,res,200,{items:(live?.recent||[]).filter(x=>x.status==='unmatched'),total:Number(live?.unmatchedEvents||0)})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/matchback/reconcile') {
+      const body=await readBody(req)
+      if(!body.ruleId) return send(req,res,400,{error:'ruleId required'})
+      const state=await getState()
+      const rule=(state.matchbackRules||[]).find(x=>x.id===body.ruleId)
+      if(!rule) return send(req,res,404,{error:'matchback rule not found'})
+      if(rule.status==='paused') return send(req,res,409,{error:'matchback rule is paused'})
+      const result=await reconcileAttribution(workspaceId,body.limit||250)
+      const completedAt=new Date().toISOString()
+      await mutateState(s=>{
+        const item=(s.matchbackRules||[]).find(x=>x.id===body.ruleId)
+        if(item){item.lastRunAt=completedAt;item.lastRunStatus='reconciled';item.lastRunMatched=Number(result?.matched||0);item.lastRunUnmatched=Number(result?.unmatched||0)}
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'matchback.reconciled',entityId:body.ruleId,name:rule.name,matched:Number(result?.matched||0),unmatched:Number(result?.unmatched||0),at:completedAt})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,200,{ruleId:body.ruleId,rule:rule.name,status:'reconciled',...result,completedAt})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/pos-stores') {
+      const state=await getState()
+      const batches=state.posBatches||[]
+      const locations=new Map()
+      for(const batch of batches){
+        const key=String(batch.location)
+        const row=locations.get(key)||{name:batch.locationName||key,id:key,transactions:0,revenue:0,matched:0,imports:0,lastImportAt:null}
+        row.transactions+=Number(batch.records||0);row.revenue+=Number(batch.revenue||0);row.matched+=Number(batch.matched||0);row.imports++;row.lastImportAt=batch.createdAt
+        locations.set(key,row)
+      }
+      const items=[...locations.values()].map(x=>({...x,matchRate:x.transactions?Number((x.matched/x.transactions*100).toFixed(1)):0,status:x.transactions&&x.matched<x.transactions?'review':'healthy'}))
+      return send(req,res,200,{locations:items,totals:{transactions:items.reduce((n,x)=>n+x.transactions,0),revenue:items.reduce((n,x)=>n+x.revenue,0),matched:items.reduce((n,x)=>n+x.matched,0),imports:batches.length},recent:batches.slice(0,50),generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/pos-stores/import') {
+      const body=await readBody(req)
+      const location=String(body.location||'').trim()
+      const rows=Array.isArray(body.transactions)?body.transactions.slice(0,500):[]
+      if(!location||!rows.length) return send(req,res,400,{error:'location and at least one transaction row are required'})
+      const createdAt=new Date().toISOString()
+      const normalized=[]
+      let matched=0
+      let revenue=0
+      for(let index=0;index<rows.length;index++){
+        const row=rows[index]||{}
+        const transactionId=String(row.transactionId||row.transaction_id||'').trim()||('row_'+(index+1))
+        const value=Math.max(0,Number(row.netRevenue??row.net_revenue??row.value??0)||0)
+        const occurredAt=row.occurredAt||row.occurred_at||createdAt
+        const currency=String(row.currency||body.currency||'INR').slice(0,12)
+        const event=await recordAssistedEvent(workspaceId,{
+          event:'store_sale',
+          eventType:'store_sale',
+          eventId:'pos_'+location+'_'+transactionId,
+          customerId:row.customerId||row.customer_id||null,
+          email:row.email||null,
+          phone:row.phone||null,
+          gclid:row.gclid||null,
+          fbclid:row.fbclid||null,
+          msclkid:row.msclkid||null,
+          ttclid:row.ttclid||null,
+          twclid:row.twclid||null,
+          source:'pos',
+          occurredAt,
+          value,
+          currency,
+          data:{location,transactionId,batchImport:true}
+        }).catch(()=>null)
+        if(event?.status==='matched')matched++
+        revenue+=value
+        normalized.push({
+          transactionId,
+          status:event?.status||'unavailable',
+          matchMethod:event?.match_method||null,
+          value,
+          currency,
+          occurredAt
+        })
+      }
+      const records=normalized.length
+      const batch={
+        batchId:'pos_'+randomUUID(),
+        location,
+        locationName:String(body.locationName||location),
+        records,
+        revenue:Number(revenue.toFixed(2)),
+        matched,
+        unmatched:records-matched,
+        matchRate:records?Number((matched/records*100).toFixed(1)):0,
+        status:'processed',
+        createdAt,
+        sample:normalized.slice(0,25)
+      }
+      await mutateState(s=>{
+        s.posBatches=s.posBatches||[]
+        s.posBatches.unshift(batch)
+        s.posBatches=s.posBatches.slice(0,2000)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'pos.import_processed',entityId:batch.batchId,location:batch.location,records,matched,revenue:batch.revenue,at:batch.createdAt})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,batch)
+    }
+    if (req.method === 'GET' && url.pathname === '/api/offline-attribution') {
+      const [state,stats]=await Promise.all([getState(),attributionStats(workspaceId)])
+      const calls=(state.callEvents||[])
+      const whatsapp=(state.whatsappEvents||[]).filter(x=>x.kind==='message')
+      const connectedCalls=calls.filter(x=>['answered','completed','connected','qualified'].includes(String(x.status||'').toLowerCase()))
+      const waWithIdentity=whatsapp.filter(x=>x.from)
+      return send(req,res,200,{
+        generatedAt:new Date().toISOString(),
+        callAttribution:{
+          events:calls.length,
+          connected:connectedCalls.length,
+          providers:[...new Set(calls.map(x=>x.provider).filter(Boolean))],
+          method:'first-party identity + click/session reconciliation'
+        },
+        whatsapp:{
+          messages:whatsapp.length,
+          identifiable:waWithIdentity.length,
+          identifiers:['phone','gclid','fbclid','customer_id']
+        },
+        attribution:{
+          available:Boolean(stats?.available),
+          matchedEvents:Number(stats?.matchedEvents||0),
+          unmatchedEvents:Number(stats?.unmatchedEvents||0),
+          matchRate:Number(stats?.matchRate||0),
+          matchedValue:Number(stats?.matchedValue||0)
+        },
+        rules:state.offlineAttributionRules||[],
+        templates:[
+          {conversion:'Inbound Call',source:'Telephony',match:'first-party identity + session/click reconciliation',identifier:'Phone / click ID',destination:['Google Ads','Meta Ads']},
+          {conversion:'WhatsApp Enquiry',source:'WhatsApp',match:'persisted click/customer identity + phone',identifier:'Phone / GCLID / FBCLID',destination:['Google Ads','Meta Ads']},
+          {conversion:'Partial Payment',source:'Custom Backend',match:'customer_id + order mapping',identifier:'Customer ID / order ID',destination:['Google Ads']},
+          {conversion:'Walk-in / Offline Sale',source:'CRM / POS',match:'hashed phone/email + click history',identifier:'Hashed contact / click ID',destination:['Google Ads','Meta Ads']}
+        ]
+      })
+    }
+    if (req.method === 'POST' && url.pathname === '/api/offline-attribution/rules') {
+      const body=await readBody(req)
+      const conversion=String(body.conversion||'').trim()
+      const source=String(body.source||'').trim()
+      const match=String(body.match||'').trim()
+      const identifier=String(body.identifier||'').trim()
+      const destination=Array.isArray(body.destination)?body.destination.map(String).filter(Boolean):[String(body.destination||'').trim()].filter(Boolean)
+      if(!conversion||!source||!match||!identifier||!destination.length) return send(req,res,400,{error:'conversion, source, match, identifier and destination are required'})
+      const now=new Date().toISOString()
+      const item={id:'off_'+randomUUID(),conversion:conversion.slice(0,160),source:source.slice(0,160),match:match.slice(0,300),identifier:identifier.slice(0,200),destination:destination.slice(0,5),status:'active',createdAt:now}
+      await mutateState(s=>{
+        s.offlineAttributionRules=s.offlineAttributionRules||[]
+        s.offlineAttributionRules.unshift(item)
+        s.offlineAttributionRules=s.offlineAttributionRules.slice(0,200)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'offline_attribution.rule_created',entityId:item.id,conversion:item.conversion,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,{item})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/offline-attribution/rules/toggle') {
+      const body=await readBody(req)
+      if(!body.id||typeof body.enabled!=='boolean') return send(req,res,400,{error:'id and enabled are required'})
+      let updated=null
+      await mutateState(s=>{
+        const item=(s.offlineAttributionRules||[]).find(x=>x.id===body.id)
+        if(item){item.status=body.enabled?'active':'paused';item.updatedAt=new Date().toISOString();updated={...item}}
+      })
+      return updated?send(req,res,200,{item:updated}):send(req,res,404,{error:'offline attribution rule not found'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/offline-attribution/test') {
+      const body=await readBody(req)
+      const state=await getState()
+      const rule=(state.offlineAttributionRules||[]).find(x=>x.id===body.ruleId)
+      if(!rule) return send(req,res,404,{error:'offline attribution rule not found'})
+      if(rule.status==='paused') return send(req,res,409,{error:'offline attribution rule is paused'})
+      const eventId='offtest_'+randomUUID()
+      const item=await recordAssistedEvent(workspaceId,{
+        event:body.event||rule.conversion.toLowerCase().replace(/[^a-z0-9]+/g,'_'),
+        eventType:body.eventType||rule.conversion.toLowerCase().replace(/[^a-z0-9]+/g,'_'),
+        eventId,
+        customerId:body.customerId||null,
+        email:body.email||null,
+        phone:body.phone||null,
+        gclid:body.gclid||null,
+        fbclid:body.fbclid||null,
+        source:rule.source,
+        occurredAt:new Date().toISOString(),
+        value:Number(body.value||0),
+        currency:String(body.currency||'INR'),
+        data:{offlineRuleId:rule.id,test:true}
+      })
+      if(!item) return send(req,res,503,{error:'attribution store unavailable'})
+      const now=new Date().toISOString()
+      await mutateState(s=>{
+        const saved=(s.offlineAttributionRules||[]).find(x=>x.id===rule.id)
+        if(saved){saved.lastTestAt=now;saved.lastTestStatus=item.status;saved.lastTestMethod=item.match_method||null}
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'offline_attribution.rule_tested',entityId:rule.id,eventId,status:item.status,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,{id:item.id,status:item.status,matchMethod:item.match_method,matchConfidence:item.match_confidence,matchedSessionId:item.matched_session_id})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/personalization-rules') {
+      const state=await getState()
+      const items=(state.personalizationRules||[]).slice().sort((a,b)=>Number(b.priority||0)-Number(a.priority||0)||Date.parse(b.updatedAt||b.createdAt||0)-Date.parse(a.updatedAt||a.createdAt||0))
+      const decisions=state.personalizationDecisions||[]
+      const feedback=state.personalizationFeedback||[]
+      const performance=items.map(rule=>{
+        const ruleDecisions=decisions.filter(x=>x.ruleId===rule.id)
+        const ruleFeedback=feedback.filter(x=>x.ruleId===rule.id)
+        const impressions=ruleFeedback.filter(x=>x.kind==='impression').length
+        const clicks=ruleFeedback.filter(x=>x.kind==='click').length
+        const conversions=ruleFeedback.filter(x=>x.kind==='conversion').length
+        return {ruleId:rule.id,decisions:ruleDecisions.length,impressions,clicks,conversions,ctr:impressions?Number((clicks/impressions*100).toFixed(1)):0,conversionRate:impressions?Number((conversions/impressions*100).toFixed(1)):0}
+      })
+      return send(req,res,200,{items,performance,recentDecisions:decisions.slice(0,100),recentFeedback:feedback.slice(0,100),stats:{total:items.length,active:items.filter(x=>x.status==='active').length,decisions:decisions.length,impressions:feedback.filter(x=>x.kind==='impression').length,clicks:feedback.filter(x=>x.kind==='click').length,conversions:feedback.filter(x=>x.kind==='conversion').length}})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/personalization-rules') {
+      const body=await readBody(req)
+      const name=String(body.name||'').trim()
+      const surface=String(body.surface||'website').trim()
+      const variant=String(body.variant||'').trim()
+      if(name.length<3||name.length>120) return send(req,res,400,{error:'name must be 3-120 characters'})
+      if(!variant) return send(req,res,400,{error:'variant required'})
+      const conditions=(Array.isArray(body.conditions)?body.conditions:[]).slice(0,8).map(x=>({field:String(x.field||'').trim(),operator:String(x.operator||'equals'),value:x.value??''})).filter(x=>x.field)
+      const now=new Date().toISOString()
+      const item={id:'pers_'+randomUUID(),name,surface,variant,message:String(body.message||'').trim(),cta:String(body.cta||'').trim(),destination:String(body.destination||'').trim(),conditions,priority:Math.max(0,Math.min(1000,Number(body.priority||100))),status:body.enabled===false?'paused':'active',requiresPersonalizationConsent:body.requiresPersonalizationConsent!==false,createdAt:now,updatedAt:now,createdBy:req.user?.email||req.user?.userId||'workspace'}
+      await mutateState(s=>{
+        s.personalizationRules=s.personalizationRules||[]
+        s.personalizationRules.unshift(item)
+        s.personalizationRules=s.personalizationRules.slice(0,500)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'personalization_rule.created',entityId:item.id,surface:item.surface,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,{item})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/personalization-rules/toggle') {
+      const body=await readBody(req)
+      const id=String(body.id||'')
+      let updated=null
+      await mutateState(s=>{
+        const item=(s.personalizationRules||[]).find(x=>x.id===id)
+        if(item){item.status=body.enabled?'active':'paused';item.updatedAt=new Date().toISOString();updated={...item}}
+      })
+      return updated?send(req,res,200,{item:updated}):send(req,res,404,{error:'personalization rule not found'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/personalization/decide') {
+      const body=await readBody(req)
+      const customerRef=String(body.customerId||body.leadId||body.visitorId||body.deviceId||'').trim()
+      if(!customerRef) return send(req,res,400,{error:'customerId, leadId, visitorId, or deviceId required'})
+      const consent=await consentAllows(workspaceId,{subjectType:body.customerId?'customer':'visitor',subjectId:customerRef,category:'personalization'})
+      const profile=await getLeadProfile(workspaceId,customerRef).catch(()=>null)
+      const state=await getState()
+      const context={
+        ...body,
+        ...(profile?.attributes||{}),
+        ...(profile?.journey||{}),
+        grade:profile?.grade??body.grade,
+        score:profile?.score??body.score,
+        stage:profile?.crm_stage??body.stage,
+        source:profile?.source??body.source,
+        campaign:profile?.campaign??body.campaign,
+        devicePlatform:profile?.device_platform??body.devicePlatform,
+        ltvTier:profile?.journey?.ltvTier??body.ltvTier,
+        conversionPropensity:profile?.journey?.conversionPropensity??body.conversionPropensity
+      }
+      const rules=(state.personalizationRules||[]).filter(x=>x.status==='active'&&(!body.surface||String(x.surface)===String(body.surface))).sort((a,b)=>Number(b.priority||0)-Number(a.priority||0))
+      const matched=rules.find(rule=>(rule.conditions||[]).every(condition=>activationConditionMatches(condition,context)))
+      const blocked=matched?.requiresPersonalizationConsent&&!consent.allowed
+      const decision={id:'pdec_'+randomUUID(),customerRef,surface:String(body.surface||matched?.surface||'website'),ruleId:matched?.id||null,ruleName:matched?.name||null,variant:blocked?null:(matched?.variant||null),message:blocked?null:(matched?.message||null),cta:blocked?null:(matched?.cta||null),destination:blocked?null:(matched?.destination||null),matched:Boolean(matched),status:blocked?'consent_blocked':matched?'decided':'no_match',createdAt:new Date().toISOString()}
+      await mutateState(s=>{
+        s.personalizationDecisions=s.personalizationDecisions||[]
+        s.personalizationDecisions.unshift(decision)
+        s.personalizationDecisions=s.personalizationDecisions.slice(0,5000)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'personalization.decided',entityId:decision.id,ruleId:decision.ruleId,status:decision.status,at:decision.createdAt})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,200,{decision,consent:{allowed:consent.allowed,reason:consent.reason},profileFound:Boolean(profile)})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/personalization/feedback') {
+      const body=await readBody(req)
+      if(!body.decisionId||!['impression','click','conversion'].includes(String(body.kind))) return send(req,res,400,{error:'decisionId and kind impression/click/conversion required'})
+      const state=await getState()
+      const decision=(state.personalizationDecisions||[]).find(x=>x.id===String(body.decisionId))
+      if(!decision) return send(req,res,404,{error:'personalization decision not found'})
+      const item={id:'pfb_'+randomUUID(),decisionId:decision.id,ruleId:decision.ruleId,customerRef:decision.customerRef,kind:String(body.kind),value:body.value==null?null:Number(body.value),currency:body.currency||null,createdAt:new Date().toISOString()}
+      await mutateState(s=>{
+        s.personalizationFeedback=s.personalizationFeedback||[]
+        s.personalizationFeedback.unshift(item)
+        s.personalizationFeedback=s.personalizationFeedback.slice(0,10000)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'personalization.feedback',entityId:item.id,decisionId:item.decisionId,kind:item.kind,at:item.createdAt})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,{item})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/activation-rules') {
+      const state=await getState()
+      const items=(state.activationRules||[]).slice().sort((a,b)=>Date.parse(b.updatedAt||b.createdAt||0)-Date.parse(a.updatedAt||a.createdAt||0))
+      const runs=(state.activationRuleRuns||[]).slice(0,100)
+      const active=items.filter(x=>x.status==='active').length
+      return send(req,res,200,{items,runs,stats:{total:items.length,active,paused:items.length-active,runs:runs.length,succeeded:runs.filter(x=>x.status==='succeeded').length,skipped:runs.filter(x=>x.status==='skipped').length}})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/activation-rules') {
+      const body=await readBody(req)
+      const name=String(body.name||'').trim()
+      const triggerEvent=String(body.triggerEvent||'').trim()
+      const actionType=String(body.actionType||'').trim()
+      if(name.length<3||name.length>120) return send(req,res,400,{error:'name must be 3-120 characters'})
+      if(!triggerEvent) return send(req,res,400,{error:'triggerEvent required'})
+      if(!['signal','follow_up','route'].includes(actionType)) return send(req,res,400,{error:'actionType must be signal, follow_up, or route'})
+      if(actionType==='signal'&&!String(body.destination||'').trim()) return send(req,res,400,{error:'signal destination required'})
+      if(actionType==='route'&&!String(body.destination||'').trim()) return send(req,res,400,{error:'routing destination required'})
+      const conditions=(Array.isArray(body.conditions)?body.conditions:[]).slice(0,5).map(x=>({field:String(x.field||'').trim(),operator:String(x.operator||'equals'),value:x.value??''})).filter(x=>x.field)
+      const now=new Date().toISOString()
+      const item={
+        id:'actrule_'+randomUUID(),
+        name,
+        triggerEvent,
+        conditions,
+        actionType,
+        destination:String(body.destination||'').trim()||null,
+        outputEvent:String(body.outputEvent||triggerEvent).trim()||triggerEvent,
+        channel:String(body.channel||'whatsapp').trim(),
+        owner:String(body.owner||'Marketing automation').trim(),
+        priority:String(body.priority||'medium').trim(),
+        delayMinutes:Math.max(0,Math.min(10080,Number(body.delayMinutes||0))),
+        reason:String(body.reason||name).trim(),
+        status:body.enabled===false?'paused':'active',
+        requiresMarketingConsent:body.requiresMarketingConsent!==false,
+        createdAt:now,
+        updatedAt:now,
+        createdBy:req.user?.email||req.user?.userId||'workspace'
+      }
+      await mutateState(s=>{
+        s.activationRules=s.activationRules||[]
+        s.activationRules.unshift(item)
+        s.activationRules=s.activationRules.slice(0,500)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'activation_rule.created',entityId:item.id,triggerEvent:item.triggerEvent,actionType:item.actionType,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,{item})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/activation-rules/toggle') {
+      const body=await readBody(req)
+      const id=String(body.id||'')
+      let updated=null
+      await mutateState(s=>{
+        const item=(s.activationRules||[]).find(x=>x.id===id)
+        if(item){item.status=body.enabled?'active':'paused';item.updatedAt=new Date().toISOString();updated={...item}}
+      })
+      return updated?send(req,res,200,{item:updated}):send(req,res,404,{error:'activation rule not found'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/activation-rules/test') {
+      const body=await readBody(req)
+      const state=await getState()
+      const rule=(state.activationRules||[]).find(x=>x.id===String(body.id||''))
+      if(!rule) return send(req,res,404,{error:'activation rule not found'})
+      const sample=body.event&&typeof body.event==='object'?body.event:{event:rule.triggerEvent,customerId:'activation_test_customer',value:100}
+      return send(req,res,200,{matched:activationRuleMatches({...rule,status:'active'},sample),ruleId:rule.id,sample,evaluatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/track') {
+      const body=await readBody(req)
+      const inputError=trackingInputError(body)
+      if(inputError)return send(req,res,400,{accepted:false,error:inputError})
+      const authorization=String(req.headers.authorization||'')
+      const suppliedKey=authorization.replace(/^Bearer\s+/i,'')
+      if(suppliedKey.startsWith('ace_')){
+        const fingerprint=createHash('sha256').update(suppliedKey).digest('hex')
+        const keyState=await getState()
+        const apiKey=(keyState.apiKeys||[]).find(x=>x.fingerprint===fingerprint&&x.status!=='revoked')
+        if(!apiKey) return send(req,res,401,{accepted:false,error:'invalid or revoked api key'})
+        const usedAt=new Date().toISOString()
+        await mutateState(s=>{
+          const key=(s.apiKeys||[]).find(x=>x.id===apiKey.id)
+          if(key) key.lastUsedAt=usedAt
+        })
+      }
+      const category=['essential','analytics','marketing','personalization'].includes(String(body.eventCategory))?String(body.eventCategory):'analytics'
+      const trackingSubjectId=body.customerId||body.visitorId||body.deviceId||body.device_id
+      if(!trackingSubjectId) return send(req,res,400,{accepted:false,error:'customerId, visitorId, or deviceId required'})
+      const consent=await consentAllows(workspaceId,{subjectType:body.customerId?'customer':'visitor',subjectId:trackingSubjectId,category})
+      if(!consent.allowed) return send(req,res,403,{accepted:false,error:'consent required',reason:consent.reason,category})
+      const event={...body,id:body.id||randomUUID(),receivedAt:new Date().toISOString(),consentCategory:category}
+      trackedEvents.push(event)
+      if(trackedEvents.length>5000) trackedEvents.splice(0,trackedEvents.length-5000)
+      const persistedEvent={...event}
+      if(persistedEvent.email){
+        persistedEvent.emailSha256=persistedEvent.emailSha256||persistedEvent.email_sha256||sha256Normalized(persistedEvent.email)
+        delete persistedEvent.email
+      }
+      if(persistedEvent.phone){
+        persistedEvent.phoneSha256=persistedEvent.phoneSha256||persistedEvent.phone_sha256||sha256Phone(persistedEvent.phone)
+        delete persistedEvent.phone
+      }
+      await mutateState(s=>{
+        s.recentEvents=s.recentEvents||[]
+        s.recentEvents.unshift(persistedEvent)
+        s.recentEvents=s.recentEvents.slice(0,5000)
+      })
+      await appendTrackedEvent(workspaceId,persistedEvent)
+      let leadProfile=null
+      if(body.customerId||body.email||body.phone||body.emailSha256||body.email_sha256||body.phoneSha256||body.phone_sha256||body.deviceId||body.device_id){
+        leadProfile=await upsertLeadProfile(workspaceId,{
+          externalLeadId:body.customerId||body.leadId||body.visitorId||body.deviceId||body.device_id,
+          customerId:body.customerId,
+          leadId:body.leadId,
+          email:body.email,
+          phone:body.phone,
+          emailSha256:body.emailSha256||body.email_sha256,
+          phoneSha256:body.phoneSha256||body.phone_sha256,
+          deviceId:body.deviceId||body.device_id,
+          devicePlatform:body.devicePlatform||body.device_platform,
+          appId:body.appId||body.app_id,
+          source:body.source||body.utm_source||'first_party',
+          campaign:body.campaign||body.utm_campaign||null,
+          crmStage:body.crmStage||body.stage||null,
+          journeyDepth:body.journeyDepth||body.pagesViewed||0,
+          pricingPageViews:body.pricingPageViews||0,
+          conversionPropensity:body.conversionPropensity||0,
+          ltvTier:body.ltvTier||null,
+          lastActivity:body.occurredAt||event.receivedAt,
+          attributes:{channel:body.channel||null,event:body.event||body.name||null,platform:body.platform||null,consentSubjectType:body.customerId?'customer':'visitor',consentSubjectId:trackingSubjectId}
+        }).catch(()=>null)
+      }
+      let clickSession=null
+      let assisted=null
+      if(body.gclid||body.gbraid||body.wbraid||body.fbclid||body.msclkid||body.utm_source||body.utm_campaign||body.visitorId||body.deviceId||body.device_id){
+        clickSession=await captureClickSession(workspaceId,{...body,eventId:event.id,userAgent:req.headers['user-agent']}).catch(()=>null)
+      }
+      if(body.assisted===true||['call','whatsapp','crm','pos','billing','offline'].includes(String(body.source||'').toLowerCase())){
+        assisted=await recordAssistedEvent(workspaceId,{...body,eventId:body.eventId||event.id}).catch(()=>null)
+      }
+      const derived=await evaluateEventRules(workspaceId,{...body,eventId:body.eventId||event.id},{sourceEventId:event.id}).catch(()=>[])
+      const derivedDeliveries=[]
+      const activationRuns=[]
+      if(derived.length){
+        const marketingConsent=await consentAllows(workspaceId,{subjectType:body.customerId?'customer':'visitor',subjectId:trackingSubjectId,category:'marketing'})
+        for(const match of derived){
+          let queued=0
+          if(marketingConsent.allowed){
+            for(const destination of match.destinations){
+              const deliveryId='sig_'+randomUUID()
+              const idempotencyKey=createHash('sha256').update('event-rule:'+match.runId+':'+destination).digest('hex')
+              const now=new Date().toISOString()
+              const item={id:deliveryId,event:match.outputEvent,destination,customerId:body.customerId?String(body.customerId):null,externalEventId:match.assistedEvent?.id||match.runId,status:'queued',attempts:0,idempotencyKey,createdAt:now,updatedAt:now,nextAttemptAt:now}
+              item.replayPayload=buildSignalReplayPayload({...body,event:match.outputEvent,destination,value:match.assistedEvent?.value??body.value??null,currency:match.assistedEvent?.currency||body.currency||null},{...item,idempotencyKey})
+              await mutateState(s=>{s.signalDeliveries=s.signalDeliveries||[];s.signalDeliveries.unshift(item);s.signalDeliveries=s.signalDeliveries.slice(0,10000);s.audit.unshift({id:randomUUID(),action:'event-rule.signal.queued',entityId:deliveryId,ruleId:match.ruleId,destination,event:match.outputEvent,at:now});s.audit=s.audit.slice(0,1000)})
+              const job=await handleSubmitJob({workspaceId,kind:'signal_delivery',idempotencyKey:'rule-signal:'+idempotencyKey,payload:item.replayPayload})
+              derivedDeliveries.push({ruleId:match.ruleId,outputEvent:match.outputEvent,destination,deliveryId,jobId:job?.id||null})
+              queued++
+            }
+          }
+          await markEventRuleActivation(workspaceId,match.runId,queued).catch(()=>{})
+        }
+      }
+      const activationState=await getState()
+      const activationRules=(activationState.activationRules||[]).filter(rule=>activationRuleMatches(rule,body))
+      if(activationRules.length){
+        const marketingConsent=await consentAllows(workspaceId,{subjectType:body.customerId?'customer':'visitor',subjectId:trackingSubjectId,category:'marketing'})
+        for(const rule of activationRules){
+          const run={id:'actrun_'+randomUUID(),ruleId:rule.id,ruleName:rule.name,eventId:event.id,customerRef:String(body.customerId||body.leadId||body.visitorId||body.deviceId||body.device_id||''),actionType:rule.actionType,status:'queued',detail:'',createdAt:new Date().toISOString()}
+          if(rule.requiresMarketingConsent&& !marketingConsent.allowed){
+            run.status='skipped'
+            run.detail='Marketing consent unavailable'
+          }else{
+            try{
+              if(rule.actionType==='follow_up'){
+                const task=await createFollowUp(workspaceId,{leadRef:run.customerRef,reason:rule.reason||rule.name,channel:rule.channel||'whatsapp',priority:rule.priority||'medium',delayMinutes:Number(rule.delayMinutes||0),owner:rule.owner||'Marketing automation'})
+                run.status=task?'succeeded':'failed'
+                run.detail=task?'Follow-up '+task.id+' created':'Follow-up store unavailable'
+                run.operationId=task?.id||null
+              }else if(rule.actionType==='route'){
+                const routed=await routeLead(workspaceId,{leadRef:run.customerRef,score:Number(leadProfile?.score||body.score||0),source:body.source||'Real-time activation',routingRule:{name:rule.name,destination:rule.destination,reason:rule.reason||rule.name,slaSeconds:Math.max(60,Number(rule.slaSeconds||300))}})
+                run.status=routed?'succeeded':'failed'
+                run.detail=routed?'Routed to '+rule.destination:'Routing store unavailable'
+                run.operationId=routed?.id||null
+              }else if(rule.actionType==='signal'){
+                const deliveryId='sig_'+randomUUID()
+                const idempotencyKey=createHash('sha256').update('activation-rule:'+rule.id+':'+event.id+':'+rule.destination).digest('hex')
+                const now=new Date().toISOString()
+                const item={id:deliveryId,event:rule.outputEvent||body.event||body.eventType||'activation_event',destination:rule.destination,customerId:body.customerId?String(body.customerId):null,externalEventId:event.id,status:'queued',attempts:0,idempotencyKey,createdAt:now,updatedAt:now,nextAttemptAt:now}
+                item.replayPayload=buildSignalReplayPayload({...body,event:item.event,destination:item.destination},{...item,idempotencyKey})
+                const validationError=validateSignalDispatch(item.replayPayload)
+                if(validationError){
+                  run.status='failed';run.detail=validationError
+                }else{
+                  await mutateState(s=>{s.signalDeliveries=s.signalDeliveries||[];s.signalDeliveries.unshift(item);s.signalDeliveries=s.signalDeliveries.slice(0,10000)})
+                  const job=await handleSubmitJob({workspaceId,kind:'signal_delivery',idempotencyKey:'activation:'+idempotencyKey,payload:item.replayPayload})
+                  run.status='succeeded';run.detail='Signal queued for '+rule.destination;run.operationId=deliveryId;run.jobId=job?.id||null
+                }
+              }
+            }catch(error){
+              run.status='failed'
+              run.detail=error instanceof Error?error.message:'Activation execution failed'
+            }
+          }
+          activationRuns.push(run)
+          await mutateState(s=>{
+            s.activationRuleRuns=s.activationRuleRuns||[]
+            s.activationRuleRuns.unshift(run)
+            s.activationRuleRuns=s.activationRuleRuns.slice(0,2000)
+            s.audit=s.audit||[]
+            s.audit.unshift({id:randomUUID(),action:'activation_rule.executed',entityId:run.id,ruleId:rule.id,status:run.status,eventId:event.id,at:new Date().toISOString()})
+            s.audit=s.audit.slice(0,1000)
+          })
+        }
+      }
+      return send(req,res,202,{accepted:true,eventId:event.id,leadProfileId:leadProfile?.id||null,clickSessionId:clickSession?.id||null,assistedEventId:assisted?.id||null,derivedEvents:derived.map(x=>({runId:x.runId,ruleId:x.ruleId,outputEvent:x.outputEvent,assistedEventId:x.assistedEvent?.id||null,destinations:x.destinations})),derivedDeliveries,activationRuns,match:assisted?{status:assisted.status,method:assisted.match_method,confidence:assisted.match_confidence}:null})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/assisted-events') {
+      const body=await readBody(req)
+      if(!body.event&&!body.eventType) return send(req,res,400,{error:'event or eventType required'})
+      const item=await recordAssistedEvent(workspaceId,body)
+      if(!item) return send(req,res,503,{error:'attribution store unavailable'})
+      return send(req,res,201,{id:item.id,status:item.status,matchMethod:item.match_method,matchConfidence:item.match_confidence,matchedSessionId:item.matched_session_id})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/attribution-identity/stats') {
+      const periodDays=Number(url.searchParams.get('periodDays')||0)||null
+      const stats=await attributionStats(workspaceId,{periodDays})
+      return send(req,res,200,stats)
+    }
+    if (req.method === 'GET' && url.pathname === '/api/journeys') {
+      const [profiles,journeyEvents,meetings,followUps,feedbackResult,routingDecisions,state]=await Promise.all([
+        listLeadProfiles(workspaceId,5000),
+        listTrackedEvents(workspaceId,{limit:50000}).catch(()=>trackedEvents),
+        listPersistedMeetings(workspaceId),
+        listPersistedFollowUps(workspaceId),
+        listPersistedFeedback(workspaceId),
+        listRoutingDecisions(workspaceId,5000),
+        getState()
+      ])
+      const feedback=feedbackResult?.items||[]
+      const humanDuration=(from,to)=>{
+        const ms=Math.max(0,Date.parse(to||'')-Date.parse(from||''))
+        if(!Number.isFinite(ms)||ms<=0)return '—'
+        const minutes=Math.round(ms/60000)
+        if(minutes<60)return minutes+'m'
+        const hours=Math.round(minutes/60)
+        if(hours<48)return hours+'h'
+        return Math.round(hours/24)+'d'
+      }
+      const sameLead=(lead,ref)=>{
+        const value=String(ref||'').toLowerCase()
+        if(!value)return false
+        return [lead.id,lead.external_lead_id,lead.name].filter(Boolean).some(x=>String(x).toLowerCase()===value)
+      }
+      const trackedForLead=lead=>journeyEvents.filter(event=>{
+        const refs=[event.customerId,event.leadId,event.externalLeadId,event.visitorId,event.deviceId,event.device_id]
+        return refs.some(ref=>sameLead(lead,ref))||(lead.device_id&&refs.some(ref=>String(ref||'')===String(lead.device_id)))
+      })
+      const items=profiles.map(lead=>{
+        const journey=lead.journey||{}
+        const timeline=[]
+        const push=(type,source,title,detail,at,meta={})=>{
+          if(!at)return
+          timeline.push({id:type+'_'+randomUUID(),type,source,title,detail,at,...meta})
+        }
+        push('lead','CRM / identity','Lead profile created','First persisted lead profile',lead.created_at,{stage:lead.crm_stage||lead.grade||'Lead'})
+        for(const event of trackedForLead(lead)){
+          push('event',event.source||event.channel||'First-party',String(event.event||event.eventType||event.name||'Tracked event').replaceAll('_',' '),'First-party tracked activity',event.occurredAt||event.receivedAt||event.timestamp,{event:event.event||event.eventType||event.name||null})
+        }
+        for(const item of routingDecisions.filter(x=>sameLead(lead,x.lead_ref))){
+          push('routing','Routing',item.rule_name||'Lead routed',item.destination||item.reason||'Routing decision',item.created_at,{destination:item.destination||null})
+        }
+        for(const item of followUps.filter(x=>sameLead(lead,x.lead_ref))){
+          push('follow_up','Follow-up',item.reason||'Follow-up created',(item.channel||'channel')+' · '+(item.status||'open'),item.created_at,{status:item.status||null,dueAt:item.due_at||null})
+          if(item.completed_at)push('follow_up_completed','Follow-up','Follow-up completed',item.reason||'',item.completed_at,{status:'completed'})
+        }
+        for(const item of meetings.filter(x=>sameLead(lead,x.lead_ref))){
+          push('meeting','Meetings','Consultation scheduled',(item.owner||'Counsellor')+' · '+(item.status||'confirmed'),item.created_at||item.starts_at,{startsAt:item.starts_at,status:item.status||null,meetingLink:item.meeting_link||null})
+          if(item.last_reminder_at)push('reminder','Meetings','Meeting reminder sent',String(item.reminders_sent||1)+' reminder(s) sent',item.last_reminder_at)
+        }
+        for(const item of feedback.filter(x=>sameLead(lead,x.lead_ref))){
+          push('feedback','Feedback','Feedback recorded',(item.theme||'Uncategorized')+(item.score!=null?' · '+item.score+'/5':''),item.created_at,{score:item.score,theme:item.theme||null})
+        }
+        const callSummary=lead.call_summary||journey.callOutcome
+        if(callSummary)push('call','Calls','Call context updated',String(callSummary),lead.updated_at)
+        const whatsappSummary=lead.whatsapp_summary||(journey.whatsappEngaged?'WhatsApp engagement recorded':null)
+        if(whatsappSummary)push('whatsapp','WhatsApp','WhatsApp context updated',String(whatsappSummary),lead.updated_at)
+        if(lead.crm_stage)push('stage','CRM','Current CRM stage',String(lead.crm_stage),lead.updated_at,{stage:lead.crm_stage})
+        timeline.sort((a,b)=>Date.parse(a.at||0)-Date.parse(b.at||0))
+        const lastAt=timeline[timeline.length-1]?.at||journey.lastActivity||lead.updated_at
+        return {
+          id:lead.id,
+          lead:lead.name||lead.external_lead_id,
+          externalLeadId:lead.external_lead_id,
+          source:lead.source||'First-party',
+          campaign:lead.campaign||null,
+          stage:lead.crm_stage||lead.grade||'Lead',
+          grade:lead.grade,
+          score:lead.score,
+          touchpoints:timeline.length,
+          duration:humanDuration(lead.created_at,lastAt),
+          lastActivity:lastAt,
+          devicePlatform:lead.device_platform||null,
+          timeline
+        }
+      })
+      return send(req,res,200,{available:true,items,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/customer-360') {
+      const [profiles,customerEvents,meetings,followUps,feedbackResult,routingDecisions,agentRuns,audiences]=await Promise.all([
+        listLeadProfiles(workspaceId,5000),
+        listTrackedEvents(workspaceId,{limit:50000}).catch(()=>trackedEvents),
+        listPersistedMeetings(workspaceId),
+        listPersistedFollowUps(workspaceId),
+        listPersistedFeedback(workspaceId),
+        listRoutingDecisions(workspaceId,5000),
+        listAgentRuns(workspaceId,5000),
+        listLeadAudiences(workspaceId)
+      ])
+      const feedback=feedbackResult?.items||[]
+      const sameLead=(lead,ref)=>{
+        const value=String(ref||'').trim().toLowerCase()
+        if(!value)return false
+        return [lead.id,lead.external_lead_id,lead.name].filter(Boolean).some(x=>String(x).trim().toLowerCase()===value)
+      }
+      const trackedForLead=lead=>customerEvents.filter(event=>{
+        const refs=[event.customerId,event.leadId,event.externalLeadId,event.visitorId,event.deviceId,event.device_id]
+        return refs.some(ref=>sameLead(lead,ref))||(lead.device_id&&refs.some(ref=>String(ref||'')===String(lead.device_id)))
+      })
+      const summaries=profiles.map(lead=>{
+        const events=trackedForLead(lead)
+        const leadMeetings=meetings.filter(x=>sameLead(lead,x.lead_ref))
+        const leadFollowUps=followUps.filter(x=>sameLead(lead,x.lead_ref))
+        const leadFeedback=feedback.filter(x=>sameLead(lead,x.lead_ref))
+        const leadRoutes=routingDecisions.filter(x=>sameLead(lead,x.lead_ref))
+        const leadRuns=agentRuns.filter(x=>sameLead(lead,x.entity_id)||sameLead(lead,x.input?.lead)||sameLead(lead,x.input?.leadRef))
+        return {
+          id:lead.id,
+          externalLeadId:lead.external_lead_id,
+          name:lead.name||lead.external_lead_id,
+          source:lead.source||'First-party',
+          campaign:lead.campaign||null,
+          stage:lead.crm_stage||'Lead',
+          grade:lead.grade||null,
+          score:Number(lead.score||0),
+          intent:Number(lead.intent||0),
+          updatedAt:lead.updated_at,
+          activityCount:events.length+leadMeetings.length+leadFollowUps.length+leadFeedback.length+leadRoutes.length+leadRuns.length,
+          meetings:leadMeetings.length,
+          followUps:leadFollowUps.length,
+          feedback:leadFeedback.length
+        }
+      })
+      const requested=String(url.searchParams.get('id')||'').trim()
+      const selected=requested
+        ?profiles.find(x=>[x.id,x.external_lead_id,x.name].filter(Boolean).some(v=>String(v)===requested))
+        :profiles[0]
+      if(!selected) return send(req,res,200,{available:true,total:summaries.length,items:summaries,customer:null,generatedAt:new Date().toISOString()})
+
+      const events=trackedForLead(selected)
+      const leadMeetings=meetings.filter(x=>sameLead(selected,x.lead_ref))
+      const leadFollowUps=followUps.filter(x=>sameLead(selected,x.lead_ref))
+      const leadFeedback=feedback.filter(x=>sameLead(selected,x.lead_ref))
+      const leadRoutes=routingDecisions.filter(x=>sameLead(selected,x.lead_ref))
+      const leadRuns=agentRuns.filter(x=>sameLead(selected,x.entity_id)||sameLead(selected,x.input?.lead)||sameLead(selected,x.input?.leadRef))
+      const audienceBundles=await Promise.all(audiences.slice(0,50).map(async audience=>{
+        const bundle=await getAudienceBundle(workspaceId,audience.id).catch(()=>null)
+        const member=(bundle?.members||[]).find(x=>sameLead(selected,x.external_lead_id)||String(x.device_id||'')===String(selected.device_id||'__none__'))
+        return member?{id:audience.id,name:audience.name,mode:audience.mode,destination:audience.destination,status:audience.status,action:member.action||audience.mode}:null
+      }))
+      const timeline=[]
+      const push=(type,title,detail,at,source,meta={})=>{if(at)timeline.push({id:type+'_'+randomUUID(),type,title,detail,at,source,...meta})}
+      push('profile','Customer profile created','Canonical lead/customer profile entered the workspace.',selected.created_at,'CRM / identity')
+      for(const event of events)push('event',String(event.event||event.eventType||event.name||'Tracked event').replaceAll('_',' '),'First-party activity captured.',event.occurredAt||event.receivedAt||event.timestamp,event.source||event.channel||'Tracking',{value:event.value||null})
+      for(const item of leadRoutes)push('routing',item.rule_name||'Lead routed',item.destination||item.reason||'Routing decision',item.created_at,'Routing',{destination:item.destination||null})
+      for(const item of leadFollowUps){
+        push('follow_up',item.reason||'Follow-up created',(item.channel||'channel')+' · '+(item.status||'open'),item.created_at,'Follow-up',{status:item.status||null})
+        if(item.completed_at)push('follow_up_completed','Follow-up completed',item.reason||'',item.completed_at,'Follow-up',{status:'completed'})
+      }
+      for(const item of leadMeetings){
+        push('meeting','Meeting scheduled',(item.owner||'Owner')+' · '+(item.status||'confirmed'),item.starts_at||item.created_at,'Meetings',{meetingLink:item.meeting_link||null})
+        if(item.last_reminder_at)push('reminder','Meeting reminder sent',String(item.reminders_sent||1)+' reminder(s)',item.last_reminder_at,'Meetings')
+      }
+      for(const item of leadFeedback)push('feedback','Feedback recorded',(item.theme||'Uncategorized')+(item.score!=null?' · '+item.score+'/5':''),item.created_at,'Feedback',{score:item.score,theme:item.theme||null})
+      for(const item of leadRuns)push('agent',String(item.agent_type||item.action_type||'Agent run').replaceAll('_',' '),String(item.status||'queued'),item.created_at,'Agents',{status:item.status||null})
+      if(selected.call_summary)push('call','Call context',String(selected.call_summary),selected.updated_at,'Calls')
+      if(selected.whatsapp_summary)push('whatsapp','WhatsApp context',String(selected.whatsapp_summary),selected.updated_at,'WhatsApp')
+      timeline.sort((a,b)=>Date.parse(b.at||0)-Date.parse(a.at||0))
+
+      const journey=selected.journey||{}
+      const customer={
+        id:selected.id,
+        externalLeadId:selected.external_lead_id,
+        name:selected.name||selected.external_lead_id,
+        source:selected.source||'First-party',
+        campaign:selected.campaign||null,
+        stage:selected.crm_stage||'Lead',
+        grade:selected.grade||null,
+        score:Number(selected.score||0),
+        intent:Number(selected.intent||0),
+        createdAt:selected.created_at,
+        updatedAt:selected.updated_at,
+        identity:{
+          deviceId:selected.device_id||null,
+          platform:selected.device_platform||null,
+          appId:selected.app_id||null,
+          hasEmailHash:Boolean(selected.email_sha256),
+          hasPhoneHash:Boolean(selected.phone_sha256)
+        },
+        attributes:selected.attributes||{},
+        journey,
+        callSummary:selected.call_summary||null,
+        whatsappSummary:selected.whatsapp_summary||null,
+        audiences:audienceBundles.filter(Boolean),
+        operations:{
+          meetings:leadMeetings.length,
+          followUps:leadFollowUps.length,
+          feedback:leadFeedback.length,
+          routes:leadRoutes.length,
+          agentRuns:leadRuns.length,
+          trackedEvents:events.length
+        },
+        timeline
+      }
+      return send(req,res,200,{available:true,total:summaries.length,items:summaries,customer,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/planner') {
+      const analytics=await cohortAnalytics(workspaceId,{months:6})
+      const sources=analytics?.sources||[]
+      const totalRevenue=sources.reduce((n,x)=>n+Number(x.revenue||0),0)
+      const totalAcquired=sources.reduce((n,x)=>n+Number(x.acquired||0),0)
+      const channels=sources.map(x=>{
+        const revenue=Number(x.revenue||0),acquired=Number(x.acquired||0),conversions=Number(x.conversions||0)
+        const shareBase=totalRevenue>0?revenue:acquired
+        const shareTotal=totalRevenue>0?totalRevenue:totalAcquired
+        const share=shareTotal?Number((shareBase/shareTotal*100).toFixed(1)):0
+        return {
+          name:x.source,
+          share,
+          acquired,
+          conversions,
+          conversionRate:Number(x.conversionRate||0),
+          revenue,
+          revenuePerAcquired:Number(x.revenuePerAcquired||0),
+          evidence:totalRevenue>0?'revenue_contribution':'acquisition_volume'
+        }
+      }).sort((a,b)=>b.share-a.share)
+      const state=await getState()
+      return send(req,res,200,{
+        available:Boolean(analytics?.available&&channels.length),
+        channels,
+        evidence:{months:analytics?.lookbackMonths||6,totalRevenue,totalAcquired,eventDefinitions:analytics?.eventDefinitions||null},
+        savedScenarios:(state.plannerScenarios||[]).slice(0,20),
+        notice:channels.length?'Allocation weights are derived from observed '+(totalRevenue>0?'attributed revenue':'acquisition volume')+'. Spend/CAC is not inferred when spend data is unavailable.':'Not enough source-level cohort evidence to recommend an allocation.'
+      })
+    }
+    if (req.method === 'POST' && url.pathname === '/api/planner/scenarios') {
+      const body=await readBody(req)
+      const budget=Number(body.budget)
+      if(!Number.isFinite(budget)||budget<=0) return send(req,res,400,{error:'positive budget required'})
+      const allocations=Array.isArray(body.allocations)?body.allocations:[]
+      if(!allocations.length) return send(req,res,400,{error:'allocations required'})
+      const totalShare=allocations.reduce((n,x)=>n+Number(x.share||0),0)
+      if(Math.abs(totalShare-100)>0.5) return send(req,res,400,{error:'allocation shares must total 100%'})
+      const item={id:'plan_'+randomUUID(),name:String(body.name||'Media scenario'),budget,allocations,createdAt:new Date().toISOString(),createdBy:req.user?.email||req.user?.userId||null}
+      await mutateState(s=>{
+        s.plannerScenarios=s.plannerScenarios||[]
+        s.plannerScenarios.unshift(item)
+        s.plannerScenarios=s.plannerScenarios.slice(0,100)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'planner.scenario_saved',entityId:item.id,budget,at:item.createdAt})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,item)
+    }
+    if (req.method === 'GET' && url.pathname === '/api/grouped-performance') {
+      const state=await getState()
+      const dimension=String(url.searchParams.get('dimension')||'category')
+      const allowed=new Set(['category','productCategory','product','brand','source','campaign'])
+      if(!allowed.has(dimension)) return send(req,res,400,{error:'unsupported grouping dimension'})
+      const analytics=await cohortAnalytics(workspaceId,{months:Number(url.searchParams.get('months')||6)}).catch(()=>({available:false,eventDefinitions:{conversion:[]}}))
+      const conversionContract=(analytics.eventDefinitions?.conversion?.length?analytics.eventDefinitions.conversion:String(process.env.COHORT_CONVERSION_EVENTS||'purchase,enrolment,enrollment,booking,revenue.closed,closed_won,sale').split(',').map(x=>x.trim()).filter(Boolean))
+      const conversionEvents=new Set(conversionContract.map(x=>String(x).toLowerCase()))
+      const events=(state.recentEvents||[]).slice(0,5000)
+      const costs=state.groupingCosts?.[dimension]||{}
+      const rows=new Map()
+      const pick=(event,key)=>{
+        const aliases={
+          category:['category','productCategory','product_category'],
+          productCategory:['productCategory','product_category','category'],
+          product:['product','productName','product_name','sku'],
+          brand:['brand'],
+          source:['source','utm_source'],
+          campaign:['campaign','utm_campaign']
+        }[key]||[key]
+        for(const name of aliases){
+          if(event[name]!=null&&String(event[name]).trim())return String(event[name]).trim()
+          if(event.data&&event.data[name]!=null&&String(event.data[name]).trim())return String(event.data[name]).trim()
+          if(event.properties&&event.properties[name]!=null&&String(event.properties[name]).trim())return String(event.properties[name]).trim()
+        }
+        return 'Unassigned'
+      }
+      const subject=e=>String(e.customerId||e.leadId||e.visitorId||e.deviceId||e.device_id||e.emailSha256||e.phoneSha256||e.id||'')
+      for(const event of events){
+        const key=pick(event,dimension)
+        const row=rows.get(key)||{key,events:0,subjects:new Set(),conversions:new Set(),revenue:0}
+        row.events++
+        row.subjects.add(subject(event))
+        const eventName=String(event.event||event.eventType||event.name||'').toLowerCase()
+        if(conversionEvents.has(eventName)){
+          row.conversions.add(subject(event))
+          const value=Number(event.value??event.revenue??event.amount??event.data?.value??0)
+          if(Number.isFinite(value))row.revenue+=value
+        }
+        rows.set(key,row)
+      }
+      const items=[...rows.values()].map(row=>{
+        const costRaw=costs[row.key]
+        const cost=costRaw==null?null:Number(costRaw)
+        const contribution=cost==null?null:Number((row.revenue-cost).toFixed(2))
+        const marginRate=cost==null||row.revenue<=0?null:Number(((row.revenue-cost)/row.revenue*100).toFixed(1))
+        return {
+          key:row.key,
+          events:row.events,
+          subjects:row.subjects.size,
+          conversions:row.conversions.size,
+          conversionRate:row.subjects.size?Number((row.conversions.size/row.subjects.size*100).toFixed(1)):0,
+          revenue:Number(row.revenue.toFixed(2)),
+          cost,
+          contribution,
+          marginRate
+        }
+      }).sort((a,b)=>b.revenue-a.revenue||b.conversions-a.conversions||b.subjects-a.subjects)
+      const totals=items.reduce((a,x)=>({events:a.events+x.events,subjects:a.subjects+x.subjects,conversions:a.conversions+x.conversions,revenue:a.revenue+x.revenue,cost:a.cost+(x.cost||0),costedGroups:a.costedGroups+(x.cost!=null?1:0)}),{events:0,subjects:0,conversions:0,revenue:0,cost:0,costedGroups:0})
+      return send(req,res,200,{
+        dimension,
+        available:events.length>0,
+        conversionEvents:[...conversionEvents],
+        totals:{...totals,conversionRate:totals.subjects?Number((totals.conversions/totals.subjects*100).toFixed(1)):0,contribution:totals.costedGroups?Number((totals.revenue-totals.cost).toFixed(2)):null,marginRate:totals.costedGroups&&totals.revenue>0?Number(((totals.revenue-totals.cost)/totals.revenue*100).toFixed(1)):null},
+        items,
+        generatedAt:new Date().toISOString()
+      })
+    }
+    if (req.method === 'POST' && url.pathname === '/api/grouped-performance/costs') {
+      const body=await readBody(req)
+      const dimension=String(body.dimension||'')
+      const key=String(body.key||'').trim()
+      const allowed=new Set(['category','productCategory','product','brand','source','campaign'])
+      if(!allowed.has(dimension)) return send(req,res,400,{error:'unsupported grouping dimension'})
+      if(!key) return send(req,res,400,{error:'group key required'})
+      if(body.cost===null||body.cost===''){
+        await mutateState(s=>{s.groupingCosts=s.groupingCosts||{};s.groupingCosts[dimension]=s.groupingCosts[dimension]||{};delete s.groupingCosts[dimension][key]})
+        return send(req,res,200,{dimension,key,cost:null})
+      }
+      const cost=Number(body.cost)
+      if(!Number.isFinite(cost)||cost<0) return send(req,res,400,{error:'cost must be a non-negative number'})
+      await mutateState(s=>{
+        s.groupingCosts=s.groupingCosts||{}
+        s.groupingCosts[dimension]=s.groupingCosts[dimension]||{}
+        s.groupingCosts[dimension][key]=Number(cost.toFixed(2))
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'grouped_performance.cost_saved',dimension,group:key,cost:Number(cost.toFixed(2)),at:new Date().toISOString()})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,200,{dimension,key,cost:Number(cost.toFixed(2))})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/cohorts') {
+      const months=Number(url.searchParams.get('months')||6)
+      return send(req,res,200,await cohortAnalytics(workspaceId,{months}))
+    }
+    if (req.method === 'GET' && url.pathname === '/api/report-schedules') return send(req,res,200,{configured:reportMailConfigured(),items:await listReportSchedules(workspaceId),deliveries:await listReportDeliveries(workspaceId,30)})
+    if (req.method === 'POST' && url.pathname === '/api/report-schedules') {
+      const body=await readBody(req)
+      try{return send(req,res,200,await saveReportSchedule(workspaceId,body,req.user?.email||req.user?.userId||null))}
+      catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'invalid report schedule'})}
+    }
+    if (req.method === 'POST' && url.pathname === '/api/report-schedules/run-now') {
+      const body=await readBody(req)
+      if(!body.id)return send(req,res,400,{error:'id required'})
+      try{return send(req,res,202,await handleRunReport({workspaceId,scheduleId:String(body.id)}))}
+      catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'report queue failed'})}
+    }
+    if (req.method === 'GET' && url.pathname === '/api/reports') {
+      const [analytics,schedules,deliveries]=await Promise.all([cohortAnalytics(workspaceId,{months:6}),listReportSchedules(workspaceId),listReportDeliveries(workspaceId,30)])
+      return send(req,res,200,{analytics,schedules,deliveries,configured:reportMailConfigured()})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/reports/send-test') {
+      const body=await readBody(req)
+      if(!body.report) return send(req,res,400,{error:'report required'})
+      return send(req,res,200,{sent:true,report:body.report,delivery:'email',at:new Date().toISOString()})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/attribution') return send(req,res,200,await attributionStats(workspaceId))
+    if (req.method === 'GET' && url.pathname === '/api/agents') {
+      const [state,profiles,runs,customIntegrations,eventRules,audiences,attribution]=await Promise.all([
+        getState(),
+        listLeadProfiles(workspaceId,1),
+        listAgentRuns(workspaceId),
+        listCustomIntegrations(workspaceId),
+        listEventRules(workspaceId).catch(()=>[]),
+        listLeadAudiences(workspaceId).catch(()=>[]),
+        attributionStats(workspaceId).catch(()=>({available:false}))
+      ])
+      const connected=new Set((state.connectorConnections||[]).filter(x=>String(x.status||'').toLowerCase()==='connected').map(x=>x.connector))
+      const hasProfiles=profiles.length>0
+      const builtIn=agents.map((name,i)=>{
+        let status='available'
+        if(name==='Meta Advanced CAPI'&&connected.has('Meta Ads'))status='configured'
+        else if(name==='Google ECL / OCI'&&connected.has('Google Ads'))status='configured'
+        else if(name==='Call Tracking Events'&&(state.callEvents||[]).length)status='configured'
+        else if(name==='Custom Integration'&&customIntegrations.length)status='configured'
+        else if((name==='Lead Grading'||name==='CRM Enrichment')&&hasProfiles)status='configured'
+        else if(name==='Voice Lead Qualification'&&(process.env.VOICE_QUALIFICATION_WEBHOOK_URL||process.env.VOICE_AGENT_WEBHOOK_URL))status='configured'
+        else if(name==='Voice Scheduler'&&(process.env.VOICE_SCHEDULER_WEBHOOK_URL||process.env.VOICE_AGENT_WEBHOOK_URL))status='configured'
+        else if(name==='Meeting Reminder'&&process.env.MEETING_REMINDER_WEBHOOK_URL)status='configured'
+        else if(name==='Feedback Agent'&&process.env.FEEDBACK_WEBHOOK_URL)status='configured'
+        else if(name==='Lead Reactivation'&&hasProfiles)status='configured'
+        else if(name==='Attribution Agent'&&Boolean(attribution?.available)&&(Number(attribution?.matchedEvents||0)>0||Number(attribution?.activeClickSessions||0)>0))status='configured'
+        else if(name==='Deep Linking Agent'&&(state.deepLinks||[]).length)status='configured'
+        else if(name==='Fraud Detection Agent'&&(state.fraudPatterns||[]).length)status='configured'
+        else if(name==='Customer Journey Agent'&&hasProfiles)status='configured'
+        else if(name==='Audiences Agent'&&audiences.length)status='configured'
+        else if(name==='Event Agent'&&eventRules.length)status='configured'
+        else if(name==='Ask Ace')status='available'
+        const meta=agentCatalog[name]||{}
+        return {id:'builtin_'+i,name,status,type:'built_in',...meta}
+      })
+      return send(req,res,200,{items:[...builtIn,...(state.customAgents||[])],runs:runs.slice(0,50),configured:builtIn.filter(x=>x.status==='configured').length,custom:(state.customAgents||[]).length})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/enrich') {
+      const [items,stats,runs]=await Promise.all([listLeadProfiles(workspaceId,100),leadOpsStats(workspaceId),listActivationRuns(workspaceId,50)])
+      return send(req,res,200,{stats,writebacks:runs.filter(x=>x.kind==='crm_writeback'),items:items.map(x=>({id:x.id,leadId:x.external_lead_id,name:x.name,source:x.source,campaign:x.campaign,stage:x.crm_stage,intent:x.intent,score:x.score,grade:x.grade,drivers:x.score_drivers,attributes:x.attributes,journey:x.journey,callSummary:x.call_summary,whatsappSummary:x.whatsapp_summary,updatedAt:x.updated_at}))})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/enrich/upsert') {
+      const body=await readBody(req)
+      const item=await upsertLeadProfile(workspaceId,body)
+      if(!item) return send(req,res,503,{error:'lead operations store unavailable'})
+      return send(req,res,201,{id:item.id,leadId:item.external_lead_id,name:item.name,score:item.score,grade:item.grade,drivers:item.score_drivers,updatedAt:item.updated_at})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/enrich/writeback') {
+      const body=await readBody(req)
+      if(!body.lead || !body.provider) return send(req,res,400,{error:'lead and provider required'})
+      const lead=await getLeadProfile(workspaceId,String(body.lead))
+      if(!lead) return send(req,res,404,{error:'lead not found'})
+      const run=await createActivationRun(workspaceId,{kind:'crm_writeback',entityId:lead.id,provider:String(body.provider),requestSummary:{lead:lead.external_lead_id,grade:lead.grade,score:lead.score}})
+      const job=await handleSubmitJob({workspaceId,kind:'crm_writeback',idempotencyKey:'crm:'+run.id,payload:{leadRef:lead.id,provider:String(body.provider),fields:body.fields||{},activationRunId:run.id}})
+      return send(req,res,202,{runId:run.id,jobId:job?.id||null,status:'queued',provider:body.provider})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/lead-grading/score') {
+      const body=await readBody(req)
+      return send(req,res,200,scoreLead(body))
+    }
+    if (req.method === 'GET' && url.pathname === '/api/lead-grading') {
+      const [items,stats]=await Promise.all([listLeadProfiles(workspaceId,100),leadOpsStats(workspaceId)])
+      return send(req,res,200,{version:'v2.0',stats,items:items.map(x=>({id:x.id,lead:x.name||x.external_lead_id,leadId:x.external_lead_id,score:x.score,grade:x.grade,source:x.source,stage:x.crm_stage||'lead',reason:(x.score_drivers||[]).slice(0,3).map(d=>d.label).join(' · '),drivers:x.score_drivers,updatedAt:x.updated_at}))})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/lead-grading/override') {
+      const body=await readBody(req)
+      if(!body.lead || !['A','B','C','D'].includes(body.grade)) return send(req,res,400,{error:'lead and grade A-D required'})
+      const item=await persistLeadGrade(workspaceId,String(body.lead),String(body.grade))
+      return item?send(req,res,200,{lead:item.name||item.external_lead_id,grade:item.grade,score:item.score,overridden:true,auditId:randomUUID(),updatedAt:item.updated_at}):send(req,res,404,{error:'lead not found'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/lead-grading/activate') {
+      const body=await readBody(req)
+      if(!body.lead) return send(req,res,400,{error:'lead required'})
+      const profiles=await listLeadProfiles(workspaceId,500)
+      const lead=profiles.find(x=>x.external_lead_id===body.lead||x.name===body.lead)
+      if(!lead) return send(req,res,404,{error:'lead not found'})
+      const grade=String(lead.grade||'D').toUpperCase()
+      let operation=null
+      let nextTab='Audiences'
+      let action='suppression_review'
+      if(grade==='A'||grade==='B'){
+        const destination=grade==='A'?'Priority sales queue':'Sales queue'
+        operation=await routeLead(workspaceId,{
+          leadRef:lead.external_lead_id,
+          score:lead.score,
+          source:lead.source||'Lead grading',
+          routingRule:{
+            name:'Grade '+grade+' activation',
+            destination,
+            reason:'Lead grading activation · grade '+grade+' · score '+Number(lead.score||0),
+            slaSeconds:grade==='A'?120:300
+          }
+        })
+        nextTab='Routing'
+        action='routing'
+      }else if(grade==='C'){
+        operation=await createFollowUp(workspaceId,{
+          leadRef:lead.external_lead_id,
+          reason:'Lead grading nurture · grade C · score '+Number(lead.score||0),
+          channel:'whatsapp',
+          priority:'medium',
+          delayMinutes:60,
+          owner:'Nurture queue'
+        })
+        nextTab='Follow-ups'
+        action='nurture_followup'
+      }else{
+        operation=await createFollowUp(workspaceId,{
+          leadRef:lead.external_lead_id,
+          reason:'Review Grade D lead for acquisition suppression',
+          channel:'review',
+          priority:'low',
+          delayMinutes:15,
+          owner:'Marketing operations'
+        })
+        nextTab='Audiences'
+        action='suppression_review'
+      }
+      const now=new Date().toISOString()
+      await mutateState(s=>{
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'lead_grade.activated',entityId:lead.id,leadRef:lead.external_lead_id,grade,operationType:action,operationId:operation?.id||null,nextTab,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,202,{
+        lead:lead.name||lead.external_lead_id,
+        leadId:lead.external_lead_id,
+        grade,
+        status:'activated',
+        action,
+        nextTab,
+        operation:operation?{id:operation.id,status:operation.status||'open',destination:operation.destination||operation.owner||null,dueAt:operation.due_at||null}:null,
+        queuedAt:now
+      })
+    }
+    if (req.method === 'GET' && url.pathname === '/api/behavior') {
+      const state=await getState()
+      const sourceEvents=(state.recentEvents||[]).length?(state.recentEvents||[]):trackedEvents
+      const countBy=(selector)=>{
+        const map=new Map()
+        for(const event of sourceEvents){
+          const key=String(selector(event)||'Unknown').trim()||'Unknown'
+          map.set(key,(map.get(key)||0)+1)
+        }
+        return [...map.entries()].map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count)
+      }
+      const eventCounts=new Map()
+      let known=0,highIntent=0,deviceIdentified=0
+      for(const event of sourceEvents){
+        const name=String(event.event||event.eventType||event.name||'event')
+        eventCounts.set(name,(eventCounts.get(name)||0)+1)
+        if(event.customerId||event.visitorId||event.deviceId||event.device_id||event.emailSha256||event.email_sha256||event.phoneSha256||event.phone_sha256)known++
+        if(event.deviceId||event.device_id)deviceIdentified++
+        if(/pricing|checkout|book|consult|apply|purchase|revenue|qualified|enrol|closed_won/i.test(name))highIntent++
+      }
+      const events=[...eventCounts.entries()].map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count)
+      const sources=countBy(event=>event.utm_source||event.source||event.channel||'Direct / First-party')
+      const campaigns=countBy(event=>event.utm_campaign||event.campaign||'Unattributed campaign')
+      const devices=countBy(event=>event.devicePlatform||event.device_platform||event.platform||'Unknown device')
+      const total=sourceEvents.length
+      return send(req,res,200,{
+        events,
+        sources,
+        campaigns,
+        devices,
+        stats:{
+          events:total,
+          knownIdentities:known,
+          knownIdentityRate:total?Number((known/total*100).toFixed(1)):0,
+          deviceIdentifiedEvents:deviceIdentified,
+          deviceIdentityRate:total?Number((deviceIdentified/total*100).toFixed(1)):0,
+          highIntentEvents:highIntent,
+          highIntentRate:total?Number((highIntent/total*100).toFixed(1)):0
+        },
+        recent:sourceEvents.slice(0,100),
+        persistence:(state.recentEvents||[]).length?'workspace_store':'process_window',
+        generatedAt:new Date().toISOString()
+      })
+    }
+    if (req.method === 'GET' && url.pathname === '/api/feed') {
+      const [profiles,state]=await Promise.all([listLeadProfiles(workspaceId,200),getState()])
+      const attrs=new Map()
+      const add=(key,source,value)=>{if(!key)return;const entry=attrs.get(key)||{key,source,count:0,sample:null,status:'mapped'};entry.count++;if(entry.sample==null&&value!=null&&typeof value!=='object')entry.sample=String(value).slice(0,120);attrs.set(key,entry)}
+      for(const p of profiles){
+        add('lead_score','model',p.score);add('lead_grade','model',p.grade);add('lifecycle_stage','crm',p.crm_stage);add('device_platform','identity',p.device_platform);add('app_id','identity',p.app_id)
+        for(const [k,v] of Object.entries(p.attributes||{}))add(k,'profile',v)
+        for(const [k,v] of Object.entries(p.journey||{}))add(k,'journey',v)
+      }
+      for(const x of state.customFeedAttributes||[])attrs.set(x.key,{...x,status:'mapped'})
+      const deliveries=state.signalDeliveries||[]
+      const destinations=[...new Set(deliveries.map(x=>x.destination).filter(Boolean))].map(destination=>{const list=deliveries.filter(x=>x.destination===destination);const enriched=list.filter(x=>Object.keys(x.replayPayload?.data||{}).length>0).length;return {destination,total:list.length,enriched,enrichedRate:list.length?Number((enriched/list.length*100).toFixed(1)):0}})
+      return send(req,res,200,{attributes:[...attrs.values()],mappings:(state.feedMappings||[]),stats:{activeAttributes:attrs.size,profiles:profiles.length,deliveries:deliveries.length,quarantined:Number((state.quarantinedEvents||[]).length)},destinations})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/feed/attributes') {
+      const body=await readBody(req)
+      const key=String(body.key||'').trim()
+      if(!/^[A-Za-z][A-Za-z0-9_]{1,63}$/.test(key))return send(req,res,400,{error:'attribute key must be 2-64 alphanumeric/underscore characters'})
+      const item={key,source:String(body.source||'custom'),sample:body.sample==null?null:String(body.sample).slice(0,120),status:'mapped',createdAt:new Date().toISOString()}
+      await mutateState(s=>{s.customFeedAttributes=s.customFeedAttributes||[];const i=s.customFeedAttributes.findIndex(x=>x.key===key);if(i>=0)s.customFeedAttributes[i]=item;else s.customFeedAttributes.unshift(item);s.customFeedAttributes=s.customFeedAttributes.slice(0,500)})
+      return send(req,res,201,item)
+    }
+    if (req.method === 'POST' && url.pathname === '/api/feed/mappings') {
+      const body=await readBody(req)
+      const sourceKey=String(body.sourceKey||'').trim()
+      const destination=String(body.destination||'').trim()
+      const targetKey=String(body.targetKey||'').trim()
+      if(!/^[A-Za-z][A-Za-z0-9_]{1,63}$/.test(sourceKey))return send(req,res,400,{error:'sourceKey must be 2-64 alphanumeric/underscore characters'})
+      if(!destination||!targetKey)return send(req,res,400,{error:'destination and targetKey are required'})
+      const now=new Date().toISOString()
+      const item={id:'feedmap_'+randomUUID(),sourceKey,destination:destination.slice(0,120),targetKey:targetKey.slice(0,120),transform:String(body.transform||'copy').slice(0,60),enabled:true,createdAt:now}
+      await mutateState(s=>{
+        s.feedMappings=s.feedMappings||[]
+        const i=s.feedMappings.findIndex(x=>x.sourceKey===sourceKey&&x.destination===item.destination&&x.targetKey===item.targetKey)
+        if(i>=0)s.feedMappings[i]={...s.feedMappings[i],...item,id:s.feedMappings[i].id,createdAt:s.feedMappings[i].createdAt,updatedAt:now}
+        else s.feedMappings.unshift(item)
+        s.feedMappings=s.feedMappings.slice(0,500)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'feed.mapping_saved',entityId:item.id,sourceKey,destination:item.destination,targetKey:item.targetKey,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,{item})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/feed/mappings/toggle') {
+      const body=await readBody(req)
+      if(!body.id||typeof body.enabled!=='boolean')return send(req,res,400,{error:'id and enabled required'})
+      let updated=null
+      await mutateState(s=>{
+        const item=(s.feedMappings||[]).find(x=>x.id===body.id)
+        if(item){item.enabled=body.enabled;item.updatedAt=new Date().toISOString();updated={...item}}
+      })
+      return updated?send(req,res,200,{item:updated}):send(req,res,404,{error:'feed mapping not found'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/feed/preview') {
+      const body=await readBody(req)
+      const state=await getState()
+      const profiles=await listLeadProfiles(workspaceId,20)
+      const destination=String(body.destination||'').trim()
+      const mappings=(state.feedMappings||[]).filter(x=>x.enabled!==false&&(!destination||x.destination===destination))
+      const profile=profiles[0]||null
+      const lookup=(key)=>{
+        if(!profile)return null
+        if(key==='lead_score')return profile.score
+        if(key==='lead_grade')return profile.grade
+        if(key==='lifecycle_stage')return profile.crm_stage
+        if(key==='device_platform')return profile.device_platform
+        if(key==='app_id')return profile.app_id
+        if(Object.prototype.hasOwnProperty.call(profile.attributes||{},key))return profile.attributes[key]
+        if(Object.prototype.hasOwnProperty.call(profile.journey||{},key))return profile.journey[key]
+        const custom=(state.customFeedAttributes||[]).find(x=>x.key===key)
+        return custom?.sample??null
+      }
+      const payload={}
+      for(const mapping of mappings){
+        let value=lookup(mapping.sourceKey)
+        if(mapping.transform==='string'&&value!=null)value=String(value)
+        if(mapping.transform==='number'&&value!=null&&Number.isFinite(Number(value)))value=Number(value)
+        payload[mapping.targetKey]=value
+      }
+      return send(req,res,200,{destination:destination||null,profileId:profile?.id||null,mappings:mappings.length,payload,generatedAt:new Date().toISOString(),notice:profile?'Preview generated from the latest persisted profile plus custom attribute samples.':'No persisted profile available; custom samples may still appear.'})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/solutions') return send(req,res,200,{items:['Agency','Lead Generation','Enterprise','Mid Market Brand','Attribution Model','Alerts and Monitoring','Server to Server Integration']})
+    if (req.method === 'GET' && url.pathname === '/api/exclusions') {
+      const [audiences,stats]=await Promise.all([listLeadAudiences(workspaceId),audienceOpsStats(workspaceId)])
+      const suppressions=audiences.filter(x=>String(x.mode||'').toLowerCase()==='suppress')
+      const presets=[
+        {key:'converted_customers',name:'Converted customers',description:'Exclude customers who already reached a converted/customer stage.',condition:'CRM stage',operator:'is one of',value:'converted,enrolled,closed_won,customer',identityMode:'auto'},
+        {key:'low_quality_leads',name:'Low-quality leads',description:'Exclude Grade C/D leads from acquisition optimization or prospecting.',condition:'Lead grade',operator:'is one of',value:'C,D',identityMode:'auto'},
+        {key:'device_ids',name:'Known device IDs',description:'Exclude known first-party device IDs to reduce repeat prospecting exposure.',condition:'Device ID present',operator:'is',value:'yes',identityMode:'device'}
+      ]
+      const previews=[]
+      for(const preset of presets){
+        const preview=await previewLeadAudience(workspaceId,{name:preset.name,condition:preset.condition,operator:preset.operator,value:preset.value,destination:'Meta Ads, Google Ads',mode:'Suppress',identityMode:preset.identityMode}).catch(()=>({available:false,estimatedSize:0,matchedPercent:0}))
+        previews.push({...preset,preview})
+      }
+      return send(req,res,200,{
+        items:suppressions.map(x=>({id:x.id,name:x.name,size:x.matched_size,estimatedSize:x.estimated_size,destination:x.destination,identityMode:x.identity_mode,status:x.status,definition:x.definition,providerState:x.provider_state,lastSyncedAt:x.last_synced_at,lastSyncError:x.last_sync_error})),
+        presets:previews,
+        stats:{
+          total:suppressions.length,
+          active:suppressions.filter(x=>['active','ready_for_sync','syncing'].includes(String(x.status||'').toLowerCase())).length,
+          suppressedIdentities:Number(stats?.audiences?.suppressedIdentities||0),
+          converted:Number(stats?.exclusions?.converted||0),
+          lowQuality:Number(stats?.exclusions?.lowQuality||0),
+          deviceIds:Number(stats?.exclusions?.deviceIds||0)
+        }
+      })
+    }
+    if (req.method === 'POST' && url.pathname === '/api/exclusions/create') {
+      const body=await readBody(req)
+      const presets={
+        converted_customers:{name:'Converted customers',condition:'CRM stage',operator:'is one of',value:'converted,enrolled,closed_won,customer',identityMode:'auto'},
+        low_quality_leads:{name:'Low-quality leads',condition:'Lead grade',operator:'is one of',value:'C,D',identityMode:'auto'},
+        device_ids:{name:'Known device IDs',condition:'Device ID present',operator:'is',value:'yes',identityMode:'device'}
+      }
+      const preset=presets[String(body.preset||'')]
+      if(!preset) return send(req,res,400,{error:'valid exclusion preset required'})
+      const destination=String(body.destination||'Meta Ads, Google Ads').trim()
+      if(!destination) return send(req,res,400,{error:'destination required'})
+      const existing=(await listLeadAudiences(workspaceId)).find(x=>String(x.mode||'').toLowerCase()==='suppress'&&String(x.name||'')===String(body.name||preset.name)&&String(x.destination||'')===destination)
+      if(existing) return send(req,res,200,{duplicate:true,item:{id:existing.id,name:existing.name,status:existing.status,size:existing.matched_size,destination:existing.destination}})
+      const item=await createLeadAudience(workspaceId,{name:String(body.name||preset.name),destination,mode:'Suppress',condition:preset.condition,operator:preset.operator,value:preset.value,identityMode:preset.identityMode})
+      if(!item) return send(req,res,503,{error:'audience store unavailable'})
+      const now=new Date().toISOString()
+      await mutateState(s=>{
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'exclusion.created',entityId:item.id,preset:String(body.preset),destination,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,{duplicate:false,item:{id:item.id,name:item.name,status:item.status,size:item.matched_size,estimatedSize:item.estimated_size,destination:item.destination,identityMode:item.identity_mode}})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/audiences/preview') {
+      const body=await readBody(req)
+      if(!body.name || !body.condition) return send(req,res,400,{error:'name and condition required'})
+      const preview=await previewLeadAudience(workspaceId,body)
+      return send(req,res,200,preview)
+    }
+    if (req.method === 'POST' && url.pathname === '/api/audiences') {
+      const body=await readBody(req)
+      if(!body.name || !body.destination || !body.condition) return send(req,res,400,{error:'name, destination and condition required'})
+      const item=await createLeadAudience(workspaceId,body)
+      if(!item) return send(req,res,503,{error:'audience store unavailable'})
+      await mutateState(s=>{s.audit.unshift({id:randomUUID(),action:'audience.materialized',entityId:item.id,at:new Date().toISOString()});s.audit=s.audit.slice(0,1000)})
+      return send(req,res,201,{id:item.id,name:item.name,status:item.status,destination:item.destination,mode:item.mode,size:item.matched_size,estimatedSize:item.estimated_size,createdAt:item.created_at})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/audiences/materialize') {
+      const body=await readBody(req)
+      if(!body.id) return send(req,res,400,{error:'id required'})
+      const result=await materializeAudience(workspaceId,String(body.id))
+      return result?send(req,res,200,result):send(req,res,404,{error:'audience not found'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/audiences/sync') {
+      const body=await readBody(req)
+      if(!body.id) return send(req,res,400,{error:'id required'})
+      const bundle=await getAudienceBundle(workspaceId,String(body.id))
+      if(!bundle) return send(req,res,404,{error:'audience not found'})
+      const configured=String(body.provider||bundle.audience.destination||'').split(/·|,/).map(x=>x.trim()).filter(Boolean)
+      const providers=configured.map(x=>x.toLowerCase().includes('meta')?'Meta Ads':x.toLowerCase().includes('google')?'Google Ads':null).filter(Boolean)
+      if(!providers.length) return send(req,res,400,{error:'audience destination must include Meta Ads or Google Ads'})
+      const queued=[]
+      for(const provider of [...new Set(providers)]){
+        const key=provider==='Meta Ads'?'meta':'google'
+        await updateAudienceSyncState(workspaceId,bundle.audience.id,key,{status:'queued',error:null})
+        const run=await createActivationRun(workspaceId,{kind:'audience_sync',entityId:bundle.audience.id,provider,requestSummary:{audience:bundle.audience.name,members:bundle.members.length,mode:bundle.audience.mode}})
+        const job=await handleSubmitJob({workspaceId,kind:'audience_sync',idempotencyKey:'audience:'+bundle.audience.id+':'+key+':'+Date.now(),payload:{audienceId:bundle.audience.id,provider,activationRunId:run.id}})
+        queued.push({provider,runId:run.id,jobId:job?.id||null})
+      }
+      return send(req,res,202,{id:bundle.audience.id,status:'syncing',queued})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/audience-schedules') {
+      return send(req,res,200,{items:await listAudienceSchedules(workspaceId),runs:await listAudienceRefreshRuns(workspaceId,null,50)})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/audience-schedules') {
+      const body=await readBody(req)
+      if(!body.id) return send(req,res,400,{error:'id required'})
+      try{
+        const item=await saveAudienceSchedule(workspaceId,String(body.id),body)
+        return item?send(req,res,200,item):send(req,res,404,{error:'audience not found'})
+      }catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'invalid audience schedule'})}
+    }
+    if (req.method === 'GET' && url.pathname === '/api/activation-runs') {
+      return send(req,res,200,{items:await listActivationRuns(workspaceId,100)})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/audiences') {
+      const [items,schedules,stats]=await Promise.all([listLeadAudiences(workspaceId),listAudienceSchedules(workspaceId),audienceOpsStats(workspaceId)])
+      const scheduleById=Object.fromEntries(schedules.map(x=>[x.audience_id,x]))
+      return send(req,res,200,{items:items.map(x=>{const s=scheduleById[x.id];return {id:x.id,name:x.name,size:x.matched_size,estimatedSize:x.estimated_size,mode:x.mode,destination:x.destination,identityMode:x.identity_mode,status:x.status,cadence:s?.cadenceLabel||'Manual',schedule:s||null,definition:x.definition,providerState:x.provider_state,lastSyncError:x.last_sync_error,lastSyncedAt:x.last_synced_at,lastMaterializedAt:x.last_materialized_at}}),stats})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/alerts') return send(req,res,200,{items:await listLiveAlerts(workspaceId)})
+    if (req.method === 'POST' && url.pathname === '/api/alerts/resolve') {
+      const body=await readBody(req)
+      if(!body.id) return send(req,res,400,{error:'id required'})
+      const item=await resolveLiveAlert(workspaceId,String(body.id))
+      return item?send(req,res,200,item):send(req,res,404,{error:'alert not found'})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/chatgpt-ads') {
+      const state=await getState()
+      const deliveries=(state.signalDeliveries||[]).filter(x=>/chatgpt|openai/i.test(String(x.destination||'')))
+      const recent=(state.recentEvents||[]).slice(0,500)
+      const withOppref=recent.filter(x=>Boolean(x.oppref||x.openaiClickRef)).length
+      const terminal=deliveries.filter(x=>['delivered','succeeded','failed','dead_letter'].includes(String(x.status||'').toLowerCase()))
+      const delivered=terminal.filter(x=>['delivered','succeeded'].includes(String(x.status||'').toLowerCase())).length
+      return send(req,res,200,{
+        configured:Boolean(process.env.OPENAI_CONVERSIONS_API_KEY&&process.env.OPENAI_ADS_PIXEL_ID),
+        pixelConfigured:Boolean(process.env.OPENAI_ADS_PIXEL_ID),
+        conversionsKeyConfigured:Boolean(process.env.OPENAI_CONVERSIONS_API_KEY),
+        supportedEventTypes:['appointment_scheduled','checkout_started','contents_viewed','custom','items_added','lead_created','order_created','page_viewed','registration_completed','subscription_created','trial_started','app_installed','app_opened'],
+        deliveries:{total:deliveries.length,delivered,failed:terminal.length-delivered,queued:deliveries.filter(x=>['queued','retrying'].includes(String(x.status||'').toLowerCase())).length,deliveryRate:terminal.length?Number((delivered/terminal.length*100).toFixed(1)):null,recent:deliveries.slice(0,25)},
+        matching:{recentEvents:recent.length,opprefEvents:withOppref,opprefCoverage:recent.length?Number((withOppref/recent.length*100).toFixed(1)):0},
+        requiredEnvironment:['OPENAI_CONVERSIONS_API_KEY','OPENAI_ADS_PIXEL_ID'],
+        generatedAt:new Date().toISOString()
+      })
+    }
+    if (req.method === 'POST' && url.pathname === '/api/chatgpt-ads/validate') {
+      const body=await readBody(req)
+      const candidate={...body,destination:'ChatGPT Ads',event:String(body.event||'lead_created'),actionSource:body.actionSource||'web'}
+      const error=validateSignalDispatch(candidate)
+      if(error) return send(req,res,400,{valid:false,error})
+      const allowedTypes=new Set(['appointment_scheduled','checkout_started','contents_viewed','custom','items_added','lead_created','order_created','page_viewed','registration_completed','subscription_created','trial_started','app_installed','app_opened'])
+      if(body.openaiEventType&&!allowedTypes.has(String(body.openaiEventType))) return send(req,res,400,{valid:false,error:'unsupported ChatGPT Ads event type'})
+      return send(req,res,200,{valid:true,configured:Boolean(process.env.OPENAI_CONVERSIONS_API_KEY&&process.env.OPENAI_ADS_PIXEL_ID),payload:buildSignalReplayPayload(candidate,{id:'validation_only',idempotencyKey:'validation_only'}),notice:'Local payload validation only; no provider request was sent.'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/chatgpt-ads/send') {
+      const body=await readBody(req)
+      if(!queueAvailable()) return send(req,res,503,{error:'signal delivery queue unavailable',required:'DATABASE_URL'})
+      const candidate={...body,destination:'ChatGPT Ads'}
+      const validationError=validateSignalDispatch(candidate)
+      if(validationError) return send(req,res,400,{error:validationError})
+      if(body.customerId||body.visitorId){
+        const consent=await consentAllows(workspaceId,{subjectType:body.customerId?'customer':'visitor',subjectId:body.customerId||body.visitorId,category:'marketing'})
+        if(!consent.allowed) return send(req,res,403,{error:'marketing consent required',reason:consent.reason})
+      }
+      const rawKey=String(body.idempotencyKey||JSON.stringify([body.event,body.customerId||'',body.externalEventId||'',body.occurredAt||'',body.oppref||'']))
+      const idempotencyKey=createHash('sha256').update('chatgpt-ads:'+rawKey).digest('hex')
+      const state=await getState()
+      const existing=(state.signalDeliveries||[]).find(x=>x.idempotencyKey===idempotencyKey)
+      if(existing) return send(req,res,200,{duplicate:true,item:existing})
+      const now=new Date().toISOString()
+      const item={id:'sig_'+randomUUID(),event:String(body.event),destination:'ChatGPT Ads',customerId:body.customerId?String(body.customerId):null,externalEventId:body.externalEventId?String(body.externalEventId):null,status:'queued',attempts:0,idempotencyKey,createdAt:now,updatedAt:now,nextAttemptAt:now}
+      item.replayPayload=buildSignalReplayPayload(candidate,{...item,idempotencyKey})
+      await mutateState(s=>{
+        s.signalDeliveries=s.signalDeliveries||[]
+        s.signalDeliveries.unshift(item)
+        s.signalDeliveries=s.signalDeliveries.slice(0,10000)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'chatgpt_ads.signal_queued',entityId:item.id,event:item.event,oppref:Boolean(body.oppref),at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      const job=await handleSubmitJob({workspaceId,kind:'signal_delivery',idempotencyKey:'chatgpt-ads:'+idempotencyKey,payload:item.replayPayload})
+      return send(req,res,202,{duplicate:false,item,job:job?{id:job.id,status:job.status}:null})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/signal-deliveries') {
+      const state=await getState()
+      const items=(state.signalDeliveries||[]).slice().sort((a,b)=>String(b.updatedAt||b.createdAt).localeCompare(String(a.updatedAt||a.createdAt)))
+      const summary={
+        total:items.length,
+        delivered:items.filter(x=>x.status==='delivered').length,
+        retrying:items.filter(x=>x.status==='retrying'||x.status==='queued').length,
+        deadLetter:items.filter(x=>x.status==='dead_letter').length
+      }
+      return send(req,res,200,{summary,items})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/signal-deliveries/dispatch') {
+      const body=await readBody(req)
+      const validationError=validateSignalDispatch(body)
+      if(validationError) return send(req,res,400,{error:validationError})
+      if(String(body.destination||'').toLowerCase().includes('webhook')&&body.webhookUrl){
+        try{
+          const validatedWebhook=await validateOutboundDestination(body.webhookUrl,{
+            allowHttp:!IS_PROD&&process.env.CUSTOM_INTEGRATION_ALLOW_HTTP==='true',
+            purpose:'webhook destination'
+          })
+          body.webhookUrl=validatedWebhook.url.toString()
+        }catch(error){
+          return send(req,res,400,{error:error instanceof Error?error.message:'invalid webhook URL',code:error?.code||'invalid_webhook_destination'})
+        }
+      }
+      if(!queueAvailable()) return send(req,res,503,{error:'signal delivery queue unavailable',required:'DATABASE_URL'})
+      if(body.customerId||body.visitorId){
+        const consent=await consentAllows(workspaceId,{subjectType:body.customerId?'customer':'visitor',subjectId:body.customerId||body.visitorId,category:'marketing'})
+        if(!consent.allowed) return send(req,res,403,{error:'marketing consent required',reason:consent.reason})
+      }
+      const rawKey=String(body.idempotencyKey||JSON.stringify([body.event,body.destination,body.customerId||'',body.externalEventId||'',body.occurredAt||'']))
+      const idempotencyKey=createHash('sha256').update(rawKey).digest('hex')
+      const state=await getState()
+      const existing=(state.signalDeliveries||[]).find(x=>x.idempotencyKey===idempotencyKey)
+      if(existing) return send(req,res,200,{duplicate:true,item:existing})
+      const now=new Date().toISOString()
+      const item={
+        id:'sig_'+randomUUID(),
+        event:String(body.event),
+        destination:String(body.destination),
+        customerId:body.customerId?String(body.customerId):null,
+        externalEventId:body.externalEventId?String(body.externalEventId):null,
+        status:'queued',
+        attempts:0,
+        idempotencyKey,
+        createdAt:now,
+        updatedAt:now,
+        nextAttemptAt:now
+      }
+      item.replayPayload=buildSignalReplayPayload(body,{...item,idempotencyKey})
+      await mutateState(s=>{
+        s.signalDeliveries=s.signalDeliveries||[]
+        s.signalDeliveries.unshift(item)
+        s.signalDeliveries=s.signalDeliveries.slice(0,10000)
+        s.audit.unshift({id:randomUUID(),action:'signal.queued',entityId:item.id,destination:item.destination,event:item.event,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      const job=await handleSubmitJob({
+        workspaceId,
+        kind:'signal_delivery',
+        idempotencyKey:'signal:'+idempotencyKey,
+        payload:item.replayPayload
+      })
+      return send(req,res,202,{duplicate:false,item,job:job?{id:job.id,status:job.status}:null})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/signal-deliveries/retry') {
+      const body=await readBody(req)
+      if(!body.id) return send(req,res,400,{error:'id required'})
+      if(!queueAvailable()) return send(req,res,503,{error:'signal delivery queue unavailable',required:'DATABASE_URL'})
+      let updated=null
+      const now=new Date().toISOString()
+      await mutateState(s=>{
+        const item=(s.signalDeliveries||[]).find(x=>x.id===body.id)
+        if(item){
+          item.status='queued'
+          item.nextAttemptAt=now
+          item.updatedAt=now
+          item.lastError=null
+          updated={...item}
+        }
+        s.audit.unshift({id:randomUUID(),action:'signal.retry_queued',entityId:String(body.id),at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      if(updated){
+        const replayPayload=updated.replayPayload||buildSignalReplayPayload(updated,updated)
+        await handleSubmitJob({
+          workspaceId,
+          kind:'signal_delivery',
+          idempotencyKey:'retry:'+updated.id+':'+Date.now(),
+          payload:{...replayPayload,deliveryId:updated.id,event:updated.event,destination:updated.destination,idempotencyKey:updated.idempotencyKey}
+        })
+        return send(req,res,202,updated)
+      }
+      return send(req,res,404,{error:'delivery not found'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/signal-deliveries/replay-dlq') {
+      if(!queueAvailable()) return send(req,res,503,{error:'signal delivery queue unavailable',required:'DATABASE_URL'})
+      const now=new Date().toISOString()
+      const replayItems=[]
+      await mutateState(s=>{
+        for(const item of (s.signalDeliveries||[])){
+          if(item.status==='dead_letter'){
+            item.status='queued'
+            item.nextAttemptAt=now
+            item.updatedAt=now
+            item.lastError=null
+            replayItems.push({...item})
+          }
+        }
+        s.audit.unshift({id:randomUUID(),action:'signal.dlq_replayed',count:replayItems.length,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      const jobs=[]
+      for(const item of replayItems){
+        const replayPayload=item.replayPayload||buildSignalReplayPayload(item,item)
+        const job=await handleSubmitJob({
+          workspaceId,
+          kind:'signal_delivery',
+          idempotencyKey:'dlq-replay:'+item.id+':'+Date.now(),
+          payload:{...replayPayload,deliveryId:item.id,event:item.event,destination:item.destination,idempotencyKey:item.idempotencyKey}
+        })
+        jobs.push(job?.id||null)
+      }
+      return send(req,res,202,{replayed:replayItems.length,jobs:jobs.filter(Boolean),queuedAt:now})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/connector-health') {
+      const state=await getState()
+      const jobs=await queueStats(workspaceId)
+      return send(req,res,200,{items:state.connectorHealth||[],jobs,checkedAt:new Date().toISOString()})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/webhooks/deliveries') {
+      const state=await getState()
+      return send(req,res,200,{items:(state.webhookDeliveries||[]).slice(0,250),endpoints:(state.webhookEndpoints||[]).slice(0,100)})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/webhooks/endpoints') {
+      const state=await getState()
+      return send(req,res,200,{items:(state.webhookEndpoints||[]).slice(0,100)})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/webhooks/endpoints') {
+      const body=await readBody(req)
+      const event=String(body.event||'').trim()
+      const target=String(body.url||'').trim()
+      if(!event||!target) return send(req,res,400,{error:'event and url required'})
+      let validatedTarget
+      try{
+        validatedTarget=await validateOutboundDestination(target,{
+          allowHttp:!IS_PROD&&process.env.CUSTOM_INTEGRATION_ALLOW_HTTP==='true',
+          purpose:'webhook destination'
+        })
+      }catch(error){
+        return send(req,res,400,{error:error instanceof Error?error.message:'invalid webhook URL',code:error?.code||'invalid_webhook_destination'})
+      }
+      const now=new Date().toISOString()
+      const item={id:'wh_'+randomUUID(),event,url:validatedTarget.url.toString(),status:'active',createdAt:now,updatedAt:now}
+      await mutateState(s=>{
+        s.webhookEndpoints=s.webhookEndpoints||[]
+        s.webhookEndpoints.unshift(item)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'webhook.endpoint_created',entityId:item.id,event:item.event,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,item)
+    }
+    if (req.method === 'POST' && url.pathname === '/api/webhooks/retry') {
+      const body=await readBody(req)
+      if(!body.id) return send(req,res,400,{error:'id required'})
+      let item=null
+      const now=new Date().toISOString()
+      await mutateState(s=>{
+        const delivery=(s.webhookDeliveries||[]).find(x=>x.id===body.id)
+        if(delivery){
+          delivery.status='queued'
+          delivery.updatedAt=now
+          delivery.attempts=Number(delivery.attempts||0)+1
+          delivery.lastError=null
+          item={...delivery}
+        }
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'webhook.retry_queued',entityId:String(body.id),at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return item?send(req,res,202,item):send(req,res,404,{error:'webhook delivery not found'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/webhooks/secret/rotate') {
+      const secret='whsec_'+randomUUID().replaceAll('-','')+randomBytes(8).toString('hex')
+      const fingerprint=createHash('sha256').update(secret).digest('hex')
+      const createdAt=new Date().toISOString()
+      await mutateState(s=>{
+        s.webhookSigningSecret={fingerprint,createdAt}
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'webhook.secret_rotated',entityId:fingerprint.slice(0,12),at:createdAt})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,{secret,createdAt,notice:'Store this secret now; only its SHA-256 fingerprint is persisted.'})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/compliance-center') {
+      const [consent,consentAudit,privacyRequests,state]=await Promise.all([
+        consentStats(workspaceId),
+        listConsentAudit(workspaceId,100),
+        listPrivacyRequests(workspaceId,100),
+        getState()
+      ])
+      const policy=retentionPolicy()
+      const total=Number(consent?.total||0)
+      const pct=value=>total?Number((Number(value||0)/total*100).toFixed(1)):0
+      const recentPrivacy=privacyRequests.slice(0,20)
+      const deletionRequests=privacyRequests.filter(x=>x.request_type==='delete').length
+      const exportRequests=privacyRequests.filter(x=>x.request_type==='export').length
+      const retentionRuns=privacyRequests.filter(x=>x.request_type==='retention_purge').length
+      const blockedPersonalization=(state.personalizationDecisions||[]).filter(x=>x.status==='consent_blocked').length
+      const skippedActivation=(state.activationRuleRuns||[]).filter(x=>x.status==='skipped'&&String(x.detail||'').toLowerCase().includes('consent')).length
+      const marketingGuarded=(state.signalDeliveries||[]).length
+      const retentionConfigured=Object.values(policy).some(days=>Number(days)>0)
+      const readinessChecks=[
+        {key:'consent_store',label:'Consent records',ready:total>0,detail:total+' subjects recorded'},
+        {key:'audit_trail',label:'Consent audit trail',ready:consentAudit.length>0,detail:consentAudit.length+' recent audit entries'},
+        {key:'privacy_ops',label:'Subject request operations',ready:true,detail:'Export and delete workflows enabled for owners/admins'},
+        {key:'retention',label:'Retention policy',ready:retentionConfigured,detail:retentionConfigured?'Retention windows configured':'Set PRIVACY_RETENTION_*_DAYS in production'},
+        {key:'activation_guard',label:'Activation consent guard',ready:true,detail:skippedActivation+' activation actions blocked by consent'},
+        {key:'personalization_guard',label:'Personalization consent guard',ready:true,detail:blockedPersonalization+' personalization decisions blocked'}
+      ]
+      const readiness=Math.round(readinessChecks.filter(x=>x.ready).length/readinessChecks.length*100)
+      return send(req,res,200,{
+        readiness,
+        consent:{
+          total,
+          analytics:Number(consent?.analytics||0),
+          marketing:Number(consent?.marketing||0),
+          personalization:Number(consent?.personalization||0),
+          revoked:Number(consent?.revoked||0),
+          analyticsRate:pct(consent?.analytics),
+          marketingRate:pct(consent?.marketing),
+          personalizationRate:pct(consent?.personalization)
+        },
+        policy,
+        privacy:{
+          totalRequests:privacyRequests.length,
+          exports:exportRequests,
+          deletions:deletionRequests,
+          retentionRuns,
+          recent:recentPrivacy
+        },
+        guards:{
+          skippedActivation,
+          blockedPersonalization,
+          signalDeliveries:marketingGuarded
+        },
+        checks:readinessChecks,
+        consentAudit:consentAudit.slice(0,50),
+        generatedAt:new Date().toISOString()
+      })
+    }
+    if (req.method === 'GET' && url.pathname === '/api/consent/stats') return send(req,res,200,{stats:await consentStats(workspaceId),audit:await listConsentAudit(workspaceId,50)})
+    if (req.method === 'GET' && url.pathname === '/api/privacy/requests') {
+      if(!['owner','admin'].includes(req.user?.role||'')) return send(req,res,403,{error:'owner or admin role required'})
+      return send(req,res,200,{policy:retentionPolicy(),items:await listPrivacyRequests(workspaceId,100)})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/privacy/export') {
+      if(!['owner','admin'].includes(req.user?.role||'')) return send(req,res,403,{error:'owner or admin role required'})
+      const body=await readBody(req)
+      try{return send(req,res,200,await exportSubject(workspaceId,body,req.user?.email||req.user?.userId||null))}
+      catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'privacy export failed'})}
+    }
+    if (req.method === 'POST' && url.pathname === '/api/privacy/delete') {
+      if(!['owner','admin'].includes(req.user?.role||'')) return send(req,res,403,{error:'owner or admin role required'})
+      const body=await readBody(req)
+      try{return send(req,res,200,await deleteSubject(workspaceId,body,req.user?.email||req.user?.userId||null))}
+      catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'privacy deletion failed'})}
+    }
+    if (req.method === 'POST' && url.pathname === '/api/privacy/retention/purge') {
+      if(!['owner','admin'].includes(req.user?.role||'')) return send(req,res,403,{error:'owner or admin role required'})
+      const body=await readBody(req)
+      try{return send(req,res,200,await purgeRetention(workspaceId,{dryRun:body.dryRun!==false,requestedBy:req.user?.email||req.user?.userId||null}))}
+      catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'retention purge failed'})}
+    }
+    if (req.method === 'GET' && url.pathname === '/api/monitoring') return send(req,res,200,await monitoringSnapshot(workspaceId))
+    if (req.method === 'GET' && url.pathname === '/api/billing/usage') return send(req,res,200,await handleEvaluateEntitlement({workspaceId}))
+    if (req.method === 'GET' && url.pathname === '/api/billing/subscription') {
+      const summary=await handleEvaluateEntitlement({workspaceId})
+      return send(req,res,200,{...summary,providerConfigured:billingConfigured(),events:await billingEventHistory(workspaceId,20),reconciliation:await billingReconciliationHistory(workspaceId,20)})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/billing/checkout') {
+      if(req.user?.role!=='owner') return send(req,res,403,{error:'owner role required'})
+      const body=await readBody(req)
+      if(!body.planCode) return send(req,res,400,{error:'planCode required'})
+      try{return send(req,res,201,await createCheckoutSession(workspaceId,body))}
+      catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'checkout creation failed'})}
+    }
+    if (req.method === 'POST' && url.pathname === '/api/billing/portal') {
+      if(req.user?.role!=='owner') return send(req,res,403,{error:'owner role required'})
+      try{return send(req,res,201,await createPortalSession(workspaceId))}
+      catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'billing portal unavailable'})}
+    }
+    if (req.method === 'POST' && url.pathname === '/api/billing/entitlements') {
+      if(req.user?.role!=='owner') return send(req,res,403,{error:'owner role required'})
+      const body=await readBody(req)
+      try{
+        await handleChangeSubscription({workspaceId,input:body})
+        return send(req,res,200,await subscriptionSummary(workspaceId))
+      }catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'invalid entitlements'})}
+    }
+    if (req.method === 'GET' && url.pathname === '/api/signal-console') {
+      const [state,jobs]=await Promise.all([getState(),queueStats(workspaceId)])
+      const deliveries=(state.signalDeliveries||[]).slice()
+      const aggregate=provider=>{
+        const selected=deliveries.filter(x=>String(x.destination||'').toLowerCase().includes(provider))
+        const grouped=new Map()
+        for(const item of selected){
+          const key=String(item.event||'Unknown')
+          const row=grouped.get(key)||{event:key,total:0,delivered:0,retrying:0,deadLetter:0,latencyMs:[]}
+          row.total+=1
+          if(item.status==='delivered') row.delivered+=1
+          if(item.status==='queued'||item.status==='retrying') row.retrying+=1
+          if(item.status==='dead_letter') row.deadLetter+=1
+          if(Number.isFinite(Number(item.latencyMs))) row.latencyMs.push(Number(item.latencyMs))
+          grouped.set(key,row)
+        }
+        return [...grouped.values()].map(row=>({
+          event:row.event,
+          total:row.total,
+          delivered:row.delivered,
+          retrying:row.retrying,
+          deadLetter:row.deadLetter,
+          deliveryRate:row.total?Number((row.delivered/row.total*100).toFixed(2)):0,
+          averageLatencyMs:row.latencyMs.length?Math.round(row.latencyMs.reduce((a,b)=>a+b,0)/row.latencyMs.length):null
+        })).sort((a,b)=>b.total-a.total)
+      }
+      return send(req,res,200,{
+        generatedAt:new Date().toISOString(),
+        queue:jobs,
+        summary:{
+          total:deliveries.length,
+          delivered:deliveries.filter(x=>x.status==='delivered').length,
+          retrying:deliveries.filter(x=>x.status==='queued'||x.status==='retrying').length,
+          deadLetter:deliveries.filter(x=>x.status==='dead_letter').length
+        },
+        google:aggregate('google'),
+        meta:aggregate('meta'),
+        webhook:aggregate('webhook'),
+        recent:deliveries.sort((a,b)=>String(b.updatedAt||b.createdAt).localeCompare(String(a.updatedAt||a.createdAt))).slice(0,25)
+      })
+    }
+    if (req.method === 'GET' && url.pathname === '/api/resources') return send(req,res,200,{items:['Custom Events','Server-Side Activation','Attribution','CRM Enrichment','Offline Conversion Tracking','Audience Operations']})
+    if (req.method === 'GET' && url.pathname === '/api/ai-action') return send(req,res,200,{steps:[
+      {step:1,agent:'Lead Grading',action:'score_intent'},
+      {step:2,agent:'CRM Enrichment',action:'assemble_context'},
+      {step:3,agent:'Voice Lead Qualification',action:'qualify'},
+      {step:4,agent:'Voice Scheduler',action:'schedule'},
+      {step:5,agent:'Meeting Reminder',action:'remind'},
+      {step:6,agent:'Signal Return',action:'match_and_activate'}
+    ]})
+    if (req.method === 'GET' && url.pathname === '/api/source-notes') return send(req,res,200,{notes:[
+      {topic:'Shopify support',publicSite:'Current demo page says ecommerce Shopify is unsupported',brochure:'Shopify appears in integration list',aceMarketing:'planned_connector_with_source_conflict_label'}
+    ]})
+    if (req.method === 'GET' && url.pathname === '/api/case-studies') return send(req,res,200,{items:[
+      {name:'Apollo Ayurvaid',sector:'Healthcare',pattern:'Call + WhatsApp attribution'},
+      {name:'Jaro Education',sector:'EdTech',pattern:'High-volume OCI/ECL'},
+      {name:'GemPundit',sector:'High AOV',pattern:'WhatsApp + partial payment'},
+      {name:'Berger Paints',sector:'Home Services',pattern:'CAPI + CTWA quality optimization'}
+    ]})
+    if (req.method === 'GET' && url.pathname === '/api/event-templates') return send(req,res,200,{items:['Pricing-page Lead','High-value Purchase','Prepaid Order','Fulfilled Order','Returned Order','Partial Payment']})
+    if (req.method === 'POST' && url.pathname === '/api/consent-preferences') {
+      const body = await readBody(req)
+      const preferences={necessary:true,analytics:Boolean(body.analytics),advertising:Boolean(body.advertising),functionality:Boolean(body.functionality)}
+      const savedAt=new Date().toISOString()
+      await mutateState(s=>{
+        s.publicConsentPreferences=s.publicConsentPreferences||[]
+        s.publicConsentPreferences.unshift({id:randomUUID(),preferences,savedAt,source:'public_cookie_banner'})
+        s.publicConsentPreferences=s.publicConsentPreferences.slice(0,5000)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'public.consent_saved',entityId:'cookie_preferences',preferences,savedAt,at:savedAt})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,200,{saved:true,preferences,savedAt})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/monitoring-rules') return send(req,res,200,{items:await listLiveMonitoringRules(workspaceId)})
+    if (req.method === 'POST' && url.pathname === '/api/monitoring-rules') {
+      const body=await readBody(req)
+      try{return send(req,res,201,await saveMonitoringRule(workspaceId,body))}
+      catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'invalid monitoring rule'})}
+    }
+    if (req.method === 'GET' && url.pathname === '/api/security-posture') return send(req,res,200,{controls:[
+      {name:'ISO 27001',status:'roadmap'},
+      {name:'SHA-256 hashing',status:'design_implemented'},
+      {name:'GDPR',status:'roadmap'},
+      {name:'HIPAA',status:'roadmap'},
+      {name:'India DPDP',status:'roadmap'}
+    ]})
+    if (req.method === 'GET' && url.pathname === '/api/launchpad') {
+      const state=await getState()
+      const safe=async(fn,fallback)=>{try{return await fn()}catch{return fallback}}
+      const [leadStats,attr,audiences,queue,eventRules,agentRuns]=await Promise.all([
+        safe(()=>leadOpsStats(workspaceId),{available:false,total:0}),
+        safe(()=>attributionStats(workspaceId),{available:false,matchedEvents:0,activeClickSessions:0}),
+        safe(()=>audienceOpsStats(workspaceId),{available:false,audiences:{total:0}}),
+        safe(()=>queueStats(workspaceId),{backend:'disabled',pending:0,retry:0,deadLetter:0}),
+        safe(()=>listEventRules(workspaceId),[]),
+        safe(()=>listAgentRuns(workspaceId),[])
+      ])
+      const settings=state.workspaceSettings||{}
+      const connectors=state.connectorConnections||[]
+      const connected=connectors.filter(x=>['connected','healthy','active'].includes(String(x.status||'').toLowerCase()))
+      const tracked=trackedEvents.length
+      const deliveries=state.signalDeliveries||[]
+      const steps=[
+        {key:'workspace',title:'Workspace',ready:Boolean(settings.organization||settings.primaryDomain||state.launchpad?.workspaceConfigured),detail:settings.organization||'Workspace profile not completed',tab:'Settings'},
+        {key:'connect',title:'Connect data',ready:connected.length>0,detail:connected.length+' connected system(s)',tab:'Integrations'},
+        {key:'funnel',title:'Map funnel',ready:Number(leadStats?.total||0)>0||Boolean(state.launchpad?.funnelConfigured),detail:Number(leadStats?.total||0)+' lead profile(s)',tab:'Funnel'},
+        {key:'tracking',title:'Install tracking',ready:tracked>0||Boolean(settings.primaryDomain),detail:tracked+' tracked event(s)',tab:'Sites'},
+        {key:'signal',title:'Test signal',ready:deliveries.length>0||eventRules.length>0,detail:eventRules.length+' event rule(s) · '+deliveries.length+' delivery record(s)',tab:'Delivery'},
+        {key:'agents',title:'Activate agents',ready:agentRuns.length>0||Boolean((state.customAgents||[]).length),detail:agentRuns.length+' run(s) · '+(state.customAgents||[]).length+' custom agent(s)',tab:'Agents'}
+      ]
+      return send(req,res,200,{
+        ...(state.launchpad||{}),
+        readiness:Math.round(steps.filter(x=>x.ready).length/steps.length*100),
+        steps,
+        evidence:{
+          connectedConnectors:connected.length,
+          trackedEvents:tracked,
+          profiles:Number(leadStats?.total||0),
+          activeClickSessions:Number(attr?.activeClickSessions||0),
+          matchedEvents:Number(attr?.matchedEvents||0),
+          audiences:Number(audiences?.audiences?.total||0),
+          eventRules:eventRules.length,
+          deliveries:deliveries.length,
+          queue
+        }
+      })
+    }
+    if (req.method === 'POST' && url.pathname === '/api/launchpad') {
+      const body=await readBody(req)
+      const updatedAt=new Date().toISOString()
+      await mutateState(s=>{
+        s.launchpad={...(s.launchpad||{}),...body,updatedAt}
+        s.audit.unshift({id:randomUUID(),action:'launchpad.updated',entityId:'workspace',at:updatedAt})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,200,{saved:true,updatedAt})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/identity') {
+      const [recentProfiles,identityStats,attr]=await Promise.all([
+        listLeadProfiles(workspaceId,50),
+        leadIdentityStats(workspaceId),
+        attributionStats(workspaceId).catch(()=>({available:false}))
+      ])
+      const idCount=lead=>[lead.external_lead_id,lead.email_sha256,lead.phone_sha256,lead.device_id].filter(Boolean).length
+      const identifiers=[
+        identityStats?.identifiers?.customer_id?'customer_id':null,
+        identityStats?.identifiers?.email_sha256?'email_sha256':null,
+        identityStats?.identifiers?.phone_sha256?'phone_sha256':null,
+        identityStats?.identifiers?.device_id?'device_id':null,
+        Number(attr?.clickIdCoverage?.gclid||0)>0?'gclid':null,
+        Number(attr?.clickIdCoverage?.fbclid||0)>0?'fbclid':null,
+        Number(attr?.clickIdCoverage?.braid||0)>0?'gbraid/wbraid':null
+      ].filter(Boolean)
+      const recent=recentProfiles.map(lead=>({
+        id:lead.external_lead_id||lead.id,
+        name:lead.name||lead.external_lead_id||'Anonymous profile',
+        identifierCount:idCount(lead),
+        touchpoints:Math.max(0,Number(lead.journey?.journeyDepth||0))+Number(lead.journey?.pricingPageViews||0)+(lead.journey?.whatsappEngaged?1:0)+(lead.journey?.callOutcome?1:0)+(lead.journey?.meetingStatus?1:0),
+        confidence:idCount(lead)>=3?'High':idCount(lead)>=2?'Medium':'Single-key',
+        identifiers:{
+          customerId:Boolean(lead.external_lead_id),
+          email:Boolean(lead.email_sha256),
+          phone:Boolean(lead.phone_sha256),
+          device:Boolean(lead.device_id)
+        }
+      }))
+      const total=Number(identityStats?.total||0)
+      const stitchedProfiles=Number(identityStats?.stitchedProfiles||0)
+      const deterministicRate=total?Number((stitchedProfiles/total*100).toFixed(1)):null
+      return send(req,res,200,{
+        available:true,
+        profiles:total,
+        stitchedProfiles,
+        deterministicMatchRate:deterministicRate,
+        clickCoverage:attr?.clickIdCoverage||{},
+        identifiers,
+        rules:[
+          {priority:1,key:'customer_id',mode:'exact'},
+          {priority:2,key:'email_sha256',mode:'exact'},
+          {priority:3,key:'phone_sha256',mode:'exact'},
+          {priority:4,key:'device_id',mode:'supporting'},
+          {priority:5,key:'click_id + session',mode:'deterministic'}
+        ],
+        recent
+      })
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/metrics/catalog') {
+      return send(req,res,200,metricCatalog())
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/datasets') {
+      const task=String(url.searchParams.get('task')||'').trim()||null
+      const limit=Math.max(1,Math.min(Number(url.searchParams.get('limit')||50),200))
+      const items=await listAiDatasets({workspaceId,task,limit}).catch(()=>[])
+      return send(req,res,200,{items,task,limit,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/ai/datasets') {
+      const body=await readBody(req)
+      try{
+        const item=await createAiDataset({
+          workspaceId,
+          task:String(body.task||''),
+          rows:body.rows,
+          schemaVersion:String(body.schemaVersion||'point-in-time.v1'),
+          featureDefinitionVersion:String(body.featureDefinitionVersion||'features.v1'),
+          labelDefinitionVersion:String(body.labelDefinitionVersion||'labels.v1'),
+          labelObservationCutoff:body.labelObservationCutoff,
+          sourceSnapshot:body.sourceSnapshot&&typeof body.sourceSnapshot==='object'?body.sourceSnapshot:{},
+          createdBy:authenticatedUser?.userId||null
+        })
+        return send(req,res,201,{item})
+      }catch(error){
+        return send(req,res,422,{error:error instanceof Error?error.message:'dataset could not be created'})
+      }
+    }
+    if (req.method === 'GET' && /^\/api\/ai\/datasets\/[^/]+$/.test(url.pathname)) {
+      const id=decodeURIComponent(url.pathname.split('/')[4]||'')
+      const item=await getAiDataset({workspaceId,id,includeRows:false}).catch(()=>null)
+      return item?send(req,res,200,{item}):send(req,res,404,{error:'dataset not found'})
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/datasets\/[^/]+\/retire$/.test(url.pathname)) {
+      if(!['owner','admin'].includes(authenticatedUser?.role||''))return send(req,res,403,{error:'owner or admin role required'})
+      const id=decodeURIComponent(url.pathname.split('/')[4]||'')
+      const item=await retireAiDataset({workspaceId,id})
+      return item?send(req,res,200,{item}):send(req,res,404,{error:'dataset not found'})
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/datasets\/[^/]+\/train$/.test(url.pathname)) {
+      if(!mlServiceConfigured())return send(req,res,503,{error:'ML service is not configured'})
+      const id=decodeURIComponent(url.pathname.split('/')[4]||'')
+      const body=await readBody(req)
+      try{
+        const dataset=await getAiDataset({workspaceId,id,includeRows:false})
+        if(!dataset)return send(req,res,404,{error:'dataset not found'})
+        const task=String(dataset.task||'')
+        const datasetAdmission=await evaluateAiTaskAdmission({workspaceId,task,requestedModel:modelRegistryItem(task)?.requestedModel||task,reservedUnits:1})
+        if(!datasetAdmission.allowed)return send(req,res,429,{error:'training task is blocked by tenant policy',prerequisites:datasetAdmission.reasons,policy:datasetAdmission.policy,usage:datasetAdmission.usage})
+        const request=task==='future_customer_value'
+          ?await trainingRequestFromDatasetWithHorizon({
+            workspaceId,id,horizon:String(body.horizon||''),randomSeed:Number(body.randomSeed||42),categoricalFeatures:body.categoricalFeatures||[]
+          })
+          :await trainingRequestFromDataset({
+            workspaceId,id,randomSeed:Number(body.randomSeed||42),calibrationMethod:String(body.calibrationMethod||'sigmoid'),categoricalFeatures:body.categoricalFeatures||[]
+          })
+        const operation=task==='future_customer_value'?'regression_train':'classification_train'
+        const requestKey=String(req.headers['idempotency-key']||req.requestId||randomUUID())
+        const deadlineAt=new Date(Date.now()+Number(process.env.ML_JOB_DEADLINE_MS||15*60*1000)).toISOString()
+        const job=await handleSubmitJob({
+          workspaceId,
+          kind:'ml_task',
+          payload:{operation,task,request},
+          idempotencyKey:'ml:dataset:'+id+':'+requestKey,
+          maxAttempts:Number(process.env.ML_JOB_MAX_ATTEMPTS||2),
+          deadlineAt,
+          inputSnapshot:{
+            schemaVersion:'ml-dataset-input.v1',
+            task,operation,datasetId:id,datasetHash:dataset.content_hash,
+            featureSchemaVersion:dataset.feature_definition_version,
+            labelSchemaVersion:dataset.label_definition_version,
+            capturedAt:new Date().toISOString(),
+            actor:authenticatedUser?{userId:authenticatedUser.userId||null,role:authenticatedUser.role||null}:null
+          },
+          resultSchemaVersion:'ml-result.v1',
+          aiUsageReservation:{task,provider:'local_ml',requestedModel:task,reservedUnits:1},
+          outboxEvent:{eventType:'ai.job.accepted',schemaVersion:'ai-job-event.v1',payload:{task,operation,datasetId:id}}
+        })
+        if(!job)return send(req,res,503,{error:'durable queue requires DATABASE_URL'})
+        return send(req,res,202,{jobId:job.id,status:job.status,task,operation,datasetId:id,deadlineAt:job.deadline_at||deadlineAt,resultSchemaVersion:'ml-result.v1'})
+      }catch(error){
+        return send(req,res,422,{error:error instanceof Error?error.message:'dataset training could not be submitted'})
+      }
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/task-policies') {
+      const items=await listAiTaskPolicies(workspaceId)
+      return send(req,res,200,{items,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/task-policies\/[^/]+$/.test(url.pathname)) {
+      if(!['owner','admin'].includes(authenticatedUser?.role||''))return send(req,res,403,{error:'owner or admin role required'})
+      const task=decodeURIComponent(url.pathname.split('/')[4]||'')
+      const body=await readBody(req)
+      try{
+        const item=await saveAiTaskPolicy({workspaceId,task,input:body,actor:authenticatedUser})
+        return send(req,res,200,{item})
+      }catch(error){
+        return send(req,res,400,{error:error instanceof Error?error.message:'AI task policy could not be saved'})
+      }
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/activation-proposals') {
+      const status=url.searchParams.get('status')
+      const limit=Math.max(1,Math.min(Number(url.searchParams.get('limit')||100),500))
+      const items=await listAiActivationProposals({workspaceId,status:status||null,limit})
+      return send(req,res,200,{items,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/ai/activation-proposals') {
+      const body=await readBody(req)
+      try{
+        const item=await createAiActivationProposal({workspaceId,input:body,actor:authenticatedUser})
+        const reviewerSubmission=await handleRequestInference({
+          workspaceId,
+          task:'recommendation_reviewer',
+          input:{
+            recommendation:item.payload,
+            evidence:item.evidence_snapshot,
+            policy:item.policy_result
+          },
+          sourceSnapshot:{
+            schemaVersion:'activation-review.v1',
+            proposalId:item.id,
+            proposalHash:item.proposal_hash,
+            evidenceIds:Array.isArray(item.evidence_snapshot?.evidenceRefs)?item.evidence_snapshot.evidenceRefs:[],
+            capturedAt:new Date().toISOString()
+          },
+          idempotencyKey:'activation-review:'+item.proposal_hash,
+          actor:authenticatedUser
+        })
+        if(!reviewerSubmission.accepted){
+          const blocked=await markActivationProposalReviewerBlocked({
+            workspaceId,
+            id:item.id,
+            reason:[reviewerSubmission.error,...(reviewerSubmission.prerequisites||[])].filter(Boolean).join('; ')
+          })
+          return send(req,res,409,{
+            error:'required recommendation reviewer is blocked',
+            item:blocked||item,
+            prerequisites:reviewerSubmission.prerequisites||[],
+            note:'The proposal is preserved but cannot be approved without required reviewer evidence.'
+          })
+        }
+        const reviewed=await attachActivationProposalReviewerJob({workspaceId,id:item.id,jobId:reviewerSubmission.job.id})
+        return send(req,res,202,{
+          item:reviewed||item,
+          reviewerJobId:reviewerSubmission.job.id,
+          reviewerStatus:'queued',
+          note:'Reviewer output is evidence only and cannot authorize or execute the proposal.'
+        })
+      }catch(error){
+        return send(req,res,409,{error:error instanceof Error?error.message:'activation proposal could not be created'})
+      }
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/activation-proposals\/[^/]+\/approve$/.test(url.pathname)) {
+      const id=decodeURIComponent(url.pathname.split('/')[4]||'')
+      try{
+        const item=await approveAiActivationProposal({workspaceId,id,actor:authenticatedUser})
+        return send(req,res,200,{item})
+      }catch(error){
+        return send(req,res,409,{error:error instanceof Error?error.message:'activation proposal approval failed'})
+      }
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/activation-proposals\/[^/]+\/reject$/.test(url.pathname)) {
+      const id=decodeURIComponent(url.pathname.split('/')[4]||'')
+      const body=await readBody(req)
+      try{
+        const item=await rejectAiActivationProposal({workspaceId,id,actor:authenticatedUser,reason:body.reason||null})
+        return item?send(req,res,200,{item}):send(req,res,404,{error:'activation proposal not found or no longer pending'})
+      }catch(error){
+        return send(req,res,409,{error:error instanceof Error?error.message:'activation proposal rejection failed'})
+      }
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/activation-proposals\/[^/]+\/execute$/.test(url.pathname)) {
+      const id=decodeURIComponent(url.pathname.split('/')[4]||'')
+      try{
+        const execution=await handleActivateModelResult({workspaceId,proposalId:id,actor:authenticatedUser})
+        return send(req,res,202,{
+          item:execution.proposal,
+          jobId:execution.job?.id||null,
+          status:execution.job?.status||'queued',
+          note:'Approved activation execution was queued for a worker. The worker rechecks proposal freshness and the execution safety gate before any provider side effect.'
+        })
+      }catch(error){
+        const message=error instanceof Error?error.message:'activation proposal execution could not be queued'
+        const blocked=/disabled|unsupported|blocked/i.test(message)
+        return send(req,res,blocked?409:422,{error:message})
+      }
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/transcripts') {
+      const items=await listTranscripts(workspaceId)
+      return send(req,res,200,{items,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/creative-assets') {
+      const items=await listCreativeAssets(workspaceId)
+      return send(req,res,200,{items,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/creative-assets\/[^/]+\/review$/.test(url.pathname)) {
+      const id=decodeURIComponent(url.pathname.split('/')[4]||'')
+      const body=await readBody(req)
+      try{
+        const item=await reviewCreativeAsset({workspaceId,id,status:String(body.status||''),actor:authenticatedUser,reason:body.reason||null})
+        return item?send(req,res,200,{item}):send(req,res,404,{error:'creative asset not found or no longer reviewable'})
+      }catch(error){
+        return send(req,res,400,{error:error instanceof Error?error.message:'creative review failed'})
+      }
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/registry') {
+      const staticRegistry=registrySummary()
+      let tenantItems=[]
+      let persistence='unavailable'
+      try{
+        await syncTenantRegistry(workspaceId)
+        tenantItems=await getTenantRegistry(workspaceId)
+        persistence='postgres'
+      }catch(error){
+        tenantItems=staticRegistry.items
+        persistence='static_fallback'
+      }
+      return send(req,res,200,{...staticRegistry,tenantItems,persistence})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/monitoring') {
+      const windowHours=Math.max(1,Math.min(Number(url.searchParams.get('windowHours')||24),24*90))
+      try{
+        return send(req,res,200,await aiMonitoringSnapshot({workspaceId,windowHours}))
+      }catch(error){
+        return send(req,res,503,{error:error instanceof Error?error.message:'AI monitoring unavailable'})
+      }
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/deployment-controls') {
+      const controls=await listDeploymentControls(workspaceId)
+      const items=await Promise.all(controls.map(async control=>({
+        ...control,
+        health:await deploymentHealth({workspaceId,task:control.task}).catch(()=>null)
+      })))
+      return send(req,res,200,{items,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/deployment-controls\/[^/]+$/.test(url.pathname)) {
+      if(!['owner','admin'].includes(authenticatedUser?.role||''))return send(req,res,403,{error:'owner or admin role required'})
+      const task=decodeURIComponent(url.pathname.split('/')[4]||'')
+      const body=await readBody(req)
+      try{
+        const item=await saveDeploymentControl({workspaceId,task,input:body,actor:authenticatedUser})
+        const health=await deploymentHealth({workspaceId,task}).catch(()=>null)
+        return send(req,res,200,{item,health,note:'Deployment control changes traffic policy only; they do not qualify, approve or deploy an unqualified model.'})
+      }catch(error){
+        return send(req,res,400,{error:error instanceof Error?error.message:'deployment control could not be saved'})
+      }
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/providers\/[^/]+\/verify$/.test(url.pathname)) {
+      if(!['owner','admin'].includes(authenticatedUser?.role||''))return send(req,res,403,{error:'owner or admin role required'})
+      const task=decodeURIComponent(url.pathname.split('/')[4]||'')
+      try{
+        const verification=await verifyProviderAccess(task)
+        const registryEntry=await recordProviderAccessVerification({
+          workspaceId,
+          task,
+          resolvedModel:verification.resolvedModel||null,
+          verified:true
+        })
+        return send(req,res,200,{
+          task,
+          provider:verification.provider,
+          requestedModel:verification.requestedModel,
+          resolvedModel:verification.resolvedModel||null,
+          accessVerified:true,
+          usage:verification.usage||null,
+          registryEntry,
+          note:'Credential/model access was verified by an explicitly enabled bounded provider test. This does not qualify, approve or deploy the model.'
+        })
+      }catch(error){
+        return send(req,res,error?.status||503,{
+          error:error instanceof Error?error.message:'provider access verification failed',
+          task,
+          accessVerified:false
+        })
+      }
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/models\/[^/]+\/deploy$/.test(url.pathname)) {
+      if(!['owner','admin'].includes(authenticatedUser?.role||''))return send(req,res,403,{error:'owner or admin role required'})
+      const task=decodeURIComponent(url.pathname.split('/')[4]||'')
+      try{
+        const item=await deployModel({workspaceId,task,actor:authenticatedUser})
+        return send(req,res,200,{item})
+      }catch(error){
+        return send(req,res,409,{error:error instanceof Error?error.message:'deployment gate failed'})
+      }
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/models\/[^/]+\/undeploy$/.test(url.pathname)) {
+      if(!['owner','admin'].includes(authenticatedUser?.role||''))return send(req,res,403,{error:'owner or admin role required'})
+      const task=decodeURIComponent(url.pathname.split('/')[4]||'')
+      try{
+        const item=await undeployModel({workspaceId,task,actor:authenticatedUser})
+        return send(req,res,200,{item})
+      }catch(error){
+        return send(req,res,409,{error:error instanceof Error?error.message:'undeploy failed'})
+      }
+    }
+    if (req.method === 'POST' && url.pathname === '/api/ai/live-voice/sessions') {
+      try{
+        await syncTenantRegistry(workspaceId)
+        const registry=await getTenantRegistry(workspaceId)
+        const route=registry.find(item=>item.task==='live_voice')
+        const liveAdmission=await evaluateAiTaskAdmission({workspaceId,task:'live_voice',requestedModel:route?.requestedModel||'',reservedUnits:1})
+        if(!liveAdmission.allowed)return send(req,res,429,{error:'live voice is blocked by tenant policy',prerequisites:liveAdmission.reasons,policy:liveAdmission.policy,usage:liveAdmission.usage})
+        const missing=[]
+        if(route?.documentationVerified!==true)missing.push('documentation verification')
+        if(route?.accessVerified!==true)missing.push('provider access verification')
+        if(route?.evaluationStatus!=='qualified')missing.push('qualified evaluation')
+        if(route?.approvalStatus!=='approved')missing.push('approval')
+        if(route?.deploymentStatus!=='deployed')missing.push('deployment')
+        if(missing.length)return send(req,res,409,{error:'live voice is blocked by governance prerequisites',prerequisites:missing})
+        const session=await createLiveVoiceSession({workspaceId,userId:authenticatedUser?.userId||null})
+        return send(req,res,201,session)
+      }catch(error){
+        return send(req,res,503,{error:error instanceof Error?error.message:'live voice session could not be created'})
+      }
+    }
+    if (req.method === 'GET' && /^\/api\/ai\/live-voice\/sessions\/[^/]+$/.test(url.pathname)) {
+      const id=decodeURIComponent(url.pathname.split('/')[5]||'')
+      const item=await getLiveVoiceSession({workspaceId,id}).catch(()=>null)
+      return item?send(req,res,200,{item}):send(req,res,404,{error:'live voice session not found'})
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/live-voice\/sessions\/[^/]+\/terminate$/.test(url.pathname)) {
+      const id=decodeURIComponent(url.pathname.split('/')[5]||'')
+      const item=await terminateLiveVoiceSession({workspaceId,id})
+      return item?send(req,res,200,{item}):send(req,res,404,{error:'live voice session not found'})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/evaluations') {
+      const task=String(url.searchParams.get('task')||'').trim()||null
+      const limit=Math.max(1,Math.min(Number(url.searchParams.get('limit')||100),500))
+      const items=await listEvaluations({workspaceId,task,limit}).catch(()=>[])
+      return send(req,res,200,{items,task,limit,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/evaluation-policy') {
+      const task=String(url.searchParams.get('task')||'').trim()
+      if(!task)return send(req,res,400,{error:'task required'})
+      const item=await getEvaluationPolicy({workspaceId,task})
+      return send(req,res,200,{item,task})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/ai/evaluation-policy') {
+      if(!['owner','admin'].includes(authenticatedUser?.role||''))return send(req,res,403,{error:'owner or admin role required'})
+      const body=await readBody(req)
+      const task=String(body.task||'').trim()
+      const version=String(body.version||'').trim()
+      if(!task||!version)return send(req,res,400,{error:'task and version required'})
+      if(!body.thresholds||typeof body.thresholds!=='object'||Array.isArray(body.thresholds))return send(req,res,400,{error:'thresholds object required'})
+      try{
+        const item=await upsertEvaluationPolicy({
+          workspaceId,
+          task,
+          version:version.slice(0,120),
+          thresholds:body.thresholds,
+          notes:body.notes?String(body.notes).slice(0,2000):null,
+          actor:authenticatedUser
+        })
+        return send(req,res,200,{item})
+      }catch(error){
+        return send(req,res,400,{error:error instanceof Error?error.message:'evaluation policy could not be saved'})
+      }
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/evaluations\/[^/]+\/qualify$/.test(url.pathname)) {
+      if(!['owner','admin'].includes(authenticatedUser?.role||''))return send(req,res,403,{error:'owner or admin role required'})
+      const parts=url.pathname.split('/')
+      const evaluationId=decodeURIComponent(parts[4]||'')
+      try{
+        const item=await qualifyEvaluation({workspaceId,evaluationId,actor:authenticatedUser})
+        return send(req,res,200,{item})
+      }catch(error){
+        return send(req,res,409,{error:error instanceof Error?error.message:'evaluation qualification failed'})
+      }
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/models\/[^/]+\/promote$/.test(url.pathname)) {
+      if(!['owner','admin'].includes(authenticatedUser?.role||''))return send(req,res,403,{error:'owner or admin role required'})
+      const parts=url.pathname.split('/')
+      const task=decodeURIComponent(parts[4]||'')
+      const body=await readBody(req)
+      const evaluationId=String(body.evaluationId||'').trim()
+      if(!evaluationId)return send(req,res,400,{error:'evaluationId required'})
+      try{
+        const item=await promoteModel({workspaceId,task,evaluationId,actor:authenticatedUser})
+        return send(req,res,200,{item})
+      }catch(error){
+        return send(req,res,409,{error:error instanceof Error?error.message:'model promotion failed'})
+      }
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/models\/[^/]+\/rollback$/.test(url.pathname)) {
+      if(!['owner','admin'].includes(authenticatedUser?.role||''))return send(req,res,403,{error:'owner or admin role required'})
+      const parts=url.pathname.split('/')
+      const task=decodeURIComponent(parts[4]||'')
+      try{
+        const item=await rollbackModel({workspaceId,task,actor:authenticatedUser})
+        return send(req,res,200,{item})
+      }catch(error){
+        return send(req,res,409,{error:error instanceof Error?error.message:'model rollback failed'})
+      }
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/knowledge') {
+      const items=await listKnowledgeSources({workspaceId,role:authenticatedUser?.role||'viewer'})
+      return send(req,res,200,{items,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/ai/knowledge') {
+      const body=await readBody(req)
+      const text=String(body.text||'')
+      const name=String(body.name||'').trim()
+      if(!name)return send(req,res,400,{error:'name required'})
+      if(!text.trim())return send(req,res,400,{error:'text required'})
+      const result=await ingestKnowledgeText({
+        workspaceId,
+        name,
+        text,
+        sourceLocation:body.sourceLocation?String(body.sourceLocation):null,
+        documentVersion:String(body.documentVersion||'v1'),
+        accessPolicy:body.accessPolicy&&typeof body.accessPolicy==='object'?body.accessPolicy:{},
+        actor:authenticatedUser
+      })
+      return send(req,res,201,result)
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/knowledge\/[^/]+\/revoke$/.test(url.pathname)) {
+      const parts=url.pathname.split('/')
+      const id=decodeURIComponent(parts[4]||'')
+      const result=await revokeKnowledgeSource({workspaceId,id})
+      return result?send(req,res,200,result):send(req,res,404,{error:'knowledge source not found'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/ai/knowledge/search') {
+      const body=await readBody(req)
+      const query=String(body.query||'').trim()
+      if(!query)return send(req,res,400,{error:'query required'})
+      if(query.length>1000)return send(req,res,400,{error:'query exceeds 1000 characters'})
+      const job=await handleSubmitJob({
+        workspaceId,
+        kind:'knowledge_search',
+        payload:{query,role:authenticatedUser?.role||'viewer',limit:Math.max(1,Math.min(Number(body.limit||10),20))},
+        idempotencyKey:'knowledge-search:'+String(req.headers['idempotency-key']||req.requestId||randomUUID()),
+        maxAttempts:Number(process.env.AI_JOB_MAX_ATTEMPTS||2),
+        deadlineAt:new Date(Date.now()+Number(process.env.KNOWLEDGE_SEARCH_DEADLINE_MS||120000)).toISOString(),
+        inputSnapshot:{schemaVersion:'knowledge-search.v1',query,capturedAt:new Date().toISOString(),role:authenticatedUser?.role||'viewer'},
+        resultSchemaVersion:'knowledge-search-result.v1'
+      })
+      if(!job)return send(req,res,503,{error:'durable queue requires DATABASE_URL'})
+      return send(req,res,202,{jobId:job.id,status:job.status,resultSchemaVersion:'knowledge-search-result.v1'})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/ml/capabilities') {
+      if(!mlServiceConfigured()){
+        return send(req,res,200,{
+          configured:false,
+          items:registrySummary().items.filter(item=>item.provider==='local_ml'||item.kind==='deterministic_baseline'),
+          warning:'ML service URL/authentication are not configured; training and specialist inference remain blocked.'
+        })
+      }
+      try{
+        const capabilities=await getMlCapabilities()
+        return send(req,res,200,{configured:true,...capabilities})
+      }catch(error){
+        return send(req,res,503,{configured:true,error:error instanceof Error?error.message:'ML service unavailable'})
+      }
+    }
+    const mlOperationByPath={
+      '/api/ai/ml/train/classification':{operation:'classification_train',taskFromBody:true},
+      '/api/ai/ml/train/regression':{operation:'regression_train',taskFromBody:true},
+      '/api/ai/ml/score':{operation:'artifact_score',taskFromBody:true},
+      '/api/ai/ml/forecast/seasonal-naive':{operation:'forecast_baseline',task:'forecast_baseline'},
+      '/api/ai/ml/forecast/chronos-2':{operation:'forecast_chronos',task:'forecast_primary'},
+      '/api/ai/ml/forecast/qualify':{operation:'forecast_qualification',task:'forecast_primary'},
+      '/api/ai/ml/forecast/catboost-challenger':{operation:'forecast_challenger',task:'forecast_challenger'},
+      '/api/ai/ml/incrementality':{operation:'incrementality',task:'incrementality'},
+      '/api/ai/ml/marketing-mix':{operation:'marketing_mix',task:'marketing_mix'},
+      '/api/ai/ml/anomalies':{operation:'anomaly_detection',task:'anomaly_detection'},
+      '/api/ai/ml/segments':{operation:'behavioral_segments',task:'behavioral_segments'},
+      '/api/ai/ml/rank':{operation:'offer_ranking',task:'offer_ranking'},
+      '/api/ai/ml/rank/score':{operation:'offer_ranking_score',task:'offer_ranking'}
+    }
+    if(req.method==='POST'&&mlOperationByPath[url.pathname]){
+      const spec=mlOperationByPath[url.pathname]
+      if(!mlServiceConfigured(spec.operation)) return send(req,res,503,{error:'ML service profile for '+spec.operation+' is not configured'})
+      const body=await readBody(req)
+      const task=spec.taskFromBody?String(body.task||''):spec.task
+      if(!task)return send(req,res,400,{error:'task required'})
+      if(IS_PROD&&['classification_train','regression_train'].includes(spec.operation)&&process.env.AI_ALLOW_INLINE_TRAINING!=='true'){
+        return send(req,res,409,{error:'production supervised training requires an immutable dataset snapshot; create /api/ai/datasets and submit /api/ai/datasets/:id/train'})
+      }
+      const allowedTasks=new Set(['lead_qualification','paid_conversion','customer_churn','future_customer_value','forecast_baseline','forecast_primary','forecast_challenger','incrementality','marketing_mix','anomaly_detection','behavioral_segments','offer_ranking'])
+      if(!allowedTasks.has(task))return send(req,res,400,{error:'unsupported ML task'})
+      const admission=await evaluateAiTaskAdmission({workspaceId,task,requestedModel:modelRegistryItem(task)?.requestedModel||task,reservedUnits:1})
+      if(!admission.allowed)return send(req,res,429,{error:'ML task is blocked by tenant policy',prerequisites:admission.reasons,policy:admission.policy,usage:admission.usage})
+      const requestKey=String(req.headers['idempotency-key']||req.requestId||randomUUID())
+      const deadlineAt=new Date(Date.now()+Number(process.env.ML_JOB_DEADLINE_MS||15*60*1000)).toISOString()
+      const job=await handleSubmitJob({
+        workspaceId,
+        kind:'ml_task',
+        payload:{operation:spec.operation,task,request:body},
+        idempotencyKey:'ml:'+spec.operation+':'+requestKey,
+        maxAttempts:Number(process.env.ML_JOB_MAX_ATTEMPTS||2),
+        deadlineAt,
+        inputSnapshot:{
+          schemaVersion:'ml-input.v1',
+          task,
+          operation:spec.operation,
+          capturedAt:new Date().toISOString(),
+          actor:authenticatedUser?{userId:authenticatedUser.userId||null,role:authenticatedUser.role||null}:null,
+          request:body
+        },
+        resultSchemaVersion:'ml-result.v1',
+        aiUsageReservation:{task,provider:'local_ml',requestedModel:task,reservedUnits:1},
+        outboxEvent:{eventType:'ai.job.accepted',schemaVersion:'ai-job-event.v1',payload:{task,operation:spec.operation}}
+      })
+      if(!job)return send(req,res,503,{error:'durable queue requires DATABASE_URL'})
+      return send(req,res,202,{
+        jobId:job.id,
+        status:job.status,
+        task,
+        operation:spec.operation,
+        deadlineAt:job.deadline_at||deadlineAt,
+        resultSchemaVersion:'ml-result.v1'
+      })
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/forecast-records') {
+      const task=String(url.searchParams.get('task')||'').trim()||null
+      const limit=Math.max(1,Math.min(Number(url.searchParams.get('limit')||100),500))
+      const items=await listForecastRecords({workspaceId,task,limit})
+      return send(req,res,200,{items,task,limit,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/causal-records') {
+      const limit=Math.max(1,Math.min(Number(url.searchParams.get('limit')||100),500))
+      const items=await listCausalRecords({workspaceId,limit})
+      return send(req,res,200,{items,limit,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/marketing-mix-records') {
+      const limit=Math.max(1,Math.min(Number(url.searchParams.get('limit')||100),500))
+      const items=await listMarketingMixRecords({workspaceId,limit})
+      return send(req,res,200,{items,limit,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/anomalies') {
+      const status=String(url.searchParams.get('status')||'').trim()||null
+      const limit=Math.max(1,Math.min(Number(url.searchParams.get('limit')||200),1000))
+      const items=await listAnomalyItems({workspaceId,status,limit})
+      return send(req,res,200,{items,status,limit,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/anomalies\/[^/]+\/[^/]+\/review$/.test(url.pathname)) {
+      const parts=url.pathname.split('/')
+      const resultId=decodeURIComponent(parts[4]||'')
+      const entityId=decodeURIComponent(parts[5]||'')
+      const body=await readBody(req)
+      try{
+        const item=await reviewAnomalyItem({workspaceId,resultId,entityId,status:String(body.status||''),feedback:body.feedback||null,suppressedUntil:body.suppressedUntil||null,actor:authenticatedUser})
+        return item?send(req,res,200,{item}):send(req,res,404,{error:'anomaly item not found'})
+      }catch(error){
+        return send(req,res,400,{error:error instanceof Error?error.message:'anomaly review failed'})
+      }
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/segments') {
+      const limit=Math.max(1,Math.min(Number(url.searchParams.get('limit')||50),200))
+      const items=await listSegmentSnapshots({workspaceId,limit})
+      return send(req,res,200,{items,limit,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'GET' && /^\/api\/ai\/segments\/[^/]+\/members$/.test(url.pathname)) {
+      const snapshotId=decodeURIComponent(url.pathname.split('/')[4]||'')
+      const limit=Math.max(1,Math.min(Number(url.searchParams.get('limit')||1000),5000))
+      const items=await getSegmentMemberships({workspaceId,snapshotId,limit})
+      return send(req,res,200,{items,snapshotId,limit})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/rankings') {
+      const resultId=String(url.searchParams.get('resultId')||'').trim()||null
+      const limit=Math.max(1,Math.min(Number(url.searchParams.get('limit')||500),5000))
+      const items=await listRankingItems({workspaceId,resultId,limit})
+      return send(req,res,200,{items,resultId,limit,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/results') {
+      const task=String(url.searchParams.get('task')||'').trim()||null
+      const limit=Math.max(1,Math.min(Number(url.searchParams.get('limit')||50),200))
+      const items=await listAiResults({workspaceId,task,limit}).catch(()=>[])
+      return send(req,res,200,{items,task,limit,generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'GET' && /^\/api\/ai\/jobs\/[^/]+$/.test(url.pathname)) {
+      const id=decodeURIComponent(url.pathname.split('/').pop()||'')
+      const job=await getJob({workspaceId,id})
+      return job?send(req,res,200,{job}):send(req,res,404,{error:'AI job not found'})
+    }
+    if (req.method === 'GET' && /^\/api\/ai\/jobs\/[^/]+\/events$/.test(url.pathname)) {
+      const parts=url.pathname.split('/')
+      const id=decodeURIComponent(parts[4]||'')
+      const initial=await getJob({workspaceId,id})
+      if(!initial)return send(req,res,404,{error:'AI job not found'})
+      res.writeHead(200,{
+        'Content-Type':'text/event-stream; charset=utf-8',
+        'Cache-Control':'no-cache, no-transform',
+        'Connection':'keep-alive',
+        'X-Accel-Buffering':'no'
+      })
+      let closed=false
+      let lastSignature=''
+      const terminal=new Set(['succeeded','completed','failed','cancelled','dead_letter','unknown'])
+      const writeEvent=(event,data)=>{
+        if(closed)return
+        res.write('event: '+event+'\n')
+        res.write('data: '+JSON.stringify(data)+'\n\n')
+      }
+      const emit=async()=>{
+        if(closed)return
+        const job=await getJob({workspaceId,id}).catch(()=>null)
+        if(!job){writeEvent('error',{error:'AI job disappeared from tenant scope'});closed=true;return res.end()}
+        const signature=JSON.stringify([job.status,job.updated_at,job.completed_at,job.last_error,job.cancel_requested_at])
+        if(signature!==lastSignature){
+          lastSignature=signature
+          writeEvent('status',{jobId:job.id,status:job.status,attempts:job.attempts,updatedAt:job.updated_at,completedAt:job.completed_at||null,lastError:job.last_error||null,cancelRequestedAt:job.cancel_requested_at||null})
+        }
+        if(terminal.has(String(job.status||'').toLowerCase())){writeEvent('complete',{jobId:job.id,status:job.status});closed=true;return res.end()}
+      }
+      req.on('close',()=>{closed=true})
+      writeEvent('ready',{jobId:id,status:initial.status})
+      await emit()
+      if(closed)return
+      const interval=setInterval(()=>void emit(),1000)
+      interval.unref?.()
+      const timeout=setTimeout(()=>{if(!closed){writeEvent('timeout',{jobId:id});closed=true;res.end()}},Number(process.env.AI_JOB_EVENT_STREAM_MAX_MS||120000))
+      timeout.unref?.()
+      res.on('close',()=>{closed=true;clearInterval(interval);clearTimeout(timeout)})
+      return
+    }
+
+    if (req.method === 'POST' && /^\/api\/ai\/jobs\/[^/]+\/replay$/.test(url.pathname)) {
+      const parts=url.pathname.split('/')
+      const id=decodeURIComponent(parts[4]||'')
+      try{
+        const job=await handleReplayDeadLetter({workspaceId,jobId:id})
+        return send(req,res,202,{job})
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'dead-letter replay failed',code:error?.code||'dead_letter_replay_failed'})
+      }
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/jobs\/[^/]+\/cancel$/.test(url.pathname)) {
+      const parts=url.pathname.split('/')
+      const id=decodeURIComponent(parts[4]||'')
+      const job=await requestJobCancellation({workspaceId,id})
+      return job?send(req,res,200,{job}):send(req,res,404,{error:'cancellable AI job not found'})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/ai/analyst/tools') {
+      return send(req,res,200,{items:analystToolNames(),schemaVersion:'analyst-tool-catalog.v1'})
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/analyst\/tools\/[^/]+$/.test(url.pathname)) {
+      const tool=decodeURIComponent(url.pathname.split('/')[5]||'')
+      const body=await readBody(req)
+      try{
+        const item=await executeAnalystTool({workspaceId,name:tool,args:body,principal:authenticatedUser})
+        return send(req,res,200,{item})
+      }catch(error){
+        return send(req,res,400,{error:error instanceof Error?error.message:'analyst tool execution failed'})
+      }
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/tasks\/[^/]+\/shadow$/.test(url.pathname)) {
+      const task=decodeURIComponent(url.pathname.split('/')[4]||'')
+      if(task==='live_voice')return send(req,res,400,{error:'live_voice uses the dedicated session endpoint'})
+      const body=await readBody(req)
+      const validated=validateHostedTaskInput(task,body)
+      if(!validated.ok)return send(req,res,400,{error:validated.error,task})
+      const sourceSnapshot={
+        schemaVersion:'hosted-task-shadow-input.v1',
+        task,
+        capturedAt:new Date().toISOString(),
+        evidenceIds:Array.isArray(body.evidenceIds)?body.evidenceIds.map(String).slice(0,100):[],
+        clientMetadata:body.clientMetadata&&typeof body.clientMetadata==='object'?body.clientMetadata:{},
+        shadow:true
+      }
+      const submission=await handleRequestInference({
+        workspaceId,
+        task,
+        input:validated.input,
+        sourceSnapshot,
+        idempotencyKey:String(req.headers['idempotency-key']||req.requestId||randomUUID()),
+        actor:authenticatedUser,
+        executionMode:'shadow'
+      })
+      if(!submission.accepted){
+        return send(req,res,submission.status||409,{error:submission.error,task,readiness:submission.readiness||null,prerequisites:submission.prerequisites||[]})
+      }
+      return send(req,res,202,{
+        jobId:submission.job.id,
+        status:submission.job.status,
+        task,
+        shadow:true,
+        deployment:submission.deployment,
+        requestedModel:submission.route.requestedModel,
+        resultSchemaVersion:'ai-result.v1'
+      })
+    }
+    if (req.method === 'POST' && /^\/api\/ai\/tasks\/[^/]+\/submit$/.test(url.pathname)) {
+      const task=decodeURIComponent(url.pathname.split('/')[4]||'')
+      if(task==='live_voice')return send(req,res,400,{error:'live_voice uses the dedicated session endpoint'})
+      const body=await readBody(req)
+      const validated=validateHostedTaskInput(task,body)
+      if(!validated.ok)return send(req,res,400,{error:validated.error,task})
+      const sourceSnapshot={
+        schemaVersion:'hosted-task-input.v1',
+        task,
+        capturedAt:new Date().toISOString(),
+        evidenceIds:Array.isArray(body.evidenceIds)?body.evidenceIds.map(String).slice(0,100):[],
+        clientMetadata:body.clientMetadata&&typeof body.clientMetadata==='object'?body.clientMetadata:{}
+      }
+      const submission=await handleRequestInference({
+        workspaceId,
+        task,
+        input:validated.input,
+        sourceSnapshot,
+        idempotencyKey:String(req.headers['idempotency-key']||req.requestId||randomUUID()),
+        actor:authenticatedUser
+      })
+      if(!submission.accepted){
+        return send(req,res,submission.status||409,{error:submission.error,task,readiness:submission.readiness||null,prerequisites:submission.prerequisites||[]})
+      }
+      return send(req,res,202,{
+        jobId:submission.job.id,
+        status:submission.job.status,
+        task,
+        provider:submission.route.provider,
+        requestedModel:submission.route.requestedModel,
+        readiness:submission.route.readiness,
+        deployment:submission.deployment||null,
+        resultSchemaVersion:'ai-result.v1'
+      })
+    }
+    if (req.method === 'POST' && url.pathname === '/api/ai/analysis') {
+      const body=await readBody(req)
+      const question=String(body.question||'').trim()
+      if(!question)return send(req,res,400,{error:'question required'})
+      if(question.length>8000)return send(req,res,400,{error:'question exceeds 8000 characters'})
+      const requestedTools=Array.isArray(body.tools)
+        ?body.tools.slice(0,9)
+        :[
+          {name:'campaign_performance',args:{limit:20}},
+          {name:'funnel_comparison',args:{limit:50}},
+          {name:'customer_aggregates',args:{limit:25}},
+          {name:'attribution_summary',args:{}},
+          {name:'forecasts',args:{limit:20}},
+          {name:'prediction_explanations',args:{limit:20}},
+          {name:'anomalies',args:{limit:20}},
+          {name:'experiment_results',args:{limit:20}}
+        ]
+      let analystTools=[]
+      try{
+        analystTools=await executeAnalystToolSet({workspaceId,requests:requestedTools,principal:authenticatedUser})
+      }catch(error){
+        return send(req,res,400,{error:error instanceof Error?error.message:'invalid analyst tool request'})
+      }
+      const [leadStats,attr,state]=await Promise.all([
+        leadOpsStats(workspaceId).catch(()=>({available:false,total:0,averageScore:0})),
+        attributionStats(workspaceId).catch(()=>({available:false,matchedEvents:0,unmatchedEvents:0,assistedEvents:0})),
+        getState()
+      ])
+      const deliveries=state.signalDeliveries||[]
+      const connectors=state.connectorConnections||[]
+      const evidenceIds=[
+        'lead_ops:'+workspaceId,
+        'attribution:'+workspaceId,
+        'connector_state:'+workspaceId,
+        'signal_delivery:'+workspaceId
+      ]
+      const sourceSnapshot={
+        schemaVersion:'workspace-analytics.v1',
+        capturedAt:new Date().toISOString(),
+        evidenceIds,
+        leadOps:{
+          available:Boolean(leadStats?.available),
+          total:Number(leadStats?.total||0),
+          averageScore:Number(leadStats?.averageScore||0),
+          aGrade:Number(leadStats?.aGrade||0),
+          abQuality:Number(leadStats?.abQuality||0)
+        },
+        attribution:{
+          available:Boolean(attr?.available),
+          matchedEvents:Number(attr?.matchedEvents||0),
+          unmatchedEvents:Number(attr?.unmatchedEvents||0),
+          assistedEvents:Number(attr?.assistedEvents||0)
+        },
+        operations:{
+          connectors:connectors.length,
+          connectedConnectors:connectors.filter(x=>['connected','healthy','active'].includes(String(x.status||'').toLowerCase())).length,
+          signalDeliveries:deliveries.length,
+          deliveryFailures:deliveries.filter(x=>['failed','dead_letter'].includes(String(x.status||'').toLowerCase())).length
+        },
+        analystTools
+      }
+      const submission=await handleRequestInference({
+        workspaceId,
+        task:'analyst',
+        input:{
+          question,
+          evidence:sourceSnapshot,
+          instructions:'Use only the supplied immutable workspace snapshot. Every numerical statement must be traceable to an evidence ID. Distinguish observed facts from hypotheses and do not invent forecasts.'
+        },
+        sourceSnapshot,
+        idempotencyKey:String(req.headers['idempotency-key']||req.requestId||randomUUID()),
+        actor:authenticatedUser
+      })
+      if(!submission.accepted){
+        return send(req,res,submission.status||409,{
+          error:submission.error,
+          readiness:submission.readiness||null,
+          prerequisites:submission.prerequisites||[]
+        })
+      }
+      return send(req,res,202,{
+        jobId:submission.job.id,
+        status:submission.job.status,
+        task:'analyst',
+        readiness:submission.route.readiness,
+        requestedModel:submission.route.requestedModel,
+        resultSchemaVersion:'ai-result.v1'
+      })
+    }
+    if (req.method === 'GET' && url.pathname === '/api/models') {
+      const state=await getState()
+      const stats=await leadOpsStats(workspaceId).catch(()=>({available:false,total:0,averageScore:0}))
+      const runs=(state.agentRuns||[]).filter(x=>x.kind==='model').slice(0,20)
+      const builtIn=[
+        {id:'builtin_lead_quality',name:'Lead quality scoring',version:'v2.0',status:Number(stats?.total||0)>0?'active':'ready',type:'Scoring',metric:'Average lead score',value:Number(stats?.averageScore||0),description:'Explainable scoring over persisted CRM, journey and interaction evidence.',builtIn:true},
+        {id:'builtin_journey_features',name:'Journey propensity features',version:'workspace',status:Number(stats?.total||0)>0?'active':'ready',type:'Feature set',metric:'Profiles available',value:Number(stats?.total||0),description:'Uses persisted journey depth, pricing views, messaging, calls, meetings and CRM stage as model features.',builtIn:true}
+      ]
+      const custom=(state.customModels||[]).map(x=>({...x,builtIn:false,status:x.status||'ready',type:'Weighted scoring',metric:'Average custom score',value:x.lastAverageScore??'—'}))
+      const registry=modelCatalogItems()
+      return send(req,res,200,{items:[...builtIn,...custom,...registry],runs})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/models') {
+      const body=await readBody(req)
+      const name=String(body.name||'').trim()
+      if(!name)return send(req,res,400,{error:'name required'})
+      const rawWeights=body.weights&&typeof body.weights==='object'?body.weights:{}
+      const allowed=['lead_score','journey_depth','pricing_views','whatsapp_engaged','meeting_present']
+      const weights={}
+      for(const key of allowed){
+        const value=Number(rawWeights[key]??0)
+        if(Number.isFinite(value))weights[key]=Math.max(-100,Math.min(100,value))
+      }
+      const totalWeight=Object.values(weights).reduce((n,x)=>n+Math.abs(Number(x||0)),0)
+      if(totalWeight<=0)return send(req,res,400,{error:'at least one non-zero feature weight required'})
+      const now=new Date().toISOString()
+      const item={id:'model_'+randomUUID(),name:name.slice(0,160),version:'workspace-1',description:String(body.description||'Workspace-defined explainable weighted scoring model.').slice(0,500),weights,status:'ready',createdAt:now,updatedAt:now}
+      await mutateState(s=>{
+        s.customModels=s.customModels||[]
+        s.customModels.unshift(item)
+        s.customModels=s.customModels.slice(0,100)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'model.created',entityId:item.id,name:item.name,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,{item})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/models/run') {
+      const body=await readBody(req)
+      if(!body.name) return send(req,res,400,{error:'name required'})
+      const registryModel=modelCatalogItems().find(x=>x.name===String(body.name)||x.id===String(body.id||''))
+      if(registryModel){
+        return send(req,res,409,{
+          error:registryModel.blockedReason||'This registry model must use its task-specific endpoint.',
+          readiness:registryModel.governance?.readiness||registryModel.status,
+          task:registryModel.governance?.task||null
+        })
+      }
+      const [profiles,state,stats]=await Promise.all([listLeadProfiles(workspaceId,500),getState(),leadOpsStats(workspaceId).catch(()=>({averageScore:0}))])
+      const custom=(state.customModels||[]).find(x=>x.name===String(body.name)||x.id===String(body.id||''))
+      const scoreProfile=lead=>{
+        if(!custom)return Number(lead.score||0)
+        const f={
+          lead_score:Math.max(0,Math.min(1,Number(lead.score||0)/100)),
+          journey_depth:Math.max(0,Math.min(1,Number(lead.journey?.journeyDepth||0)/10)),
+          pricing_views:Math.max(0,Math.min(1,Number(lead.journey?.pricingPageViews||0)/5)),
+          whatsapp_engaged:lead.journey?.whatsappEngaged?1:0,
+          meeting_present:lead.journey?.meetingStatus?1:0
+        }
+        const entries=Object.entries(custom.weights||{})
+        const denominator=entries.reduce((n,[,w])=>n+Math.abs(Number(w||0)),0)||1
+        const weighted=entries.reduce((n,[key,w])=>n+Number(f[key]||0)*Number(w||0),0)
+        return Number(Math.max(0,Math.min(100,weighted/denominator*100)).toFixed(1))
+      }
+      const scores=profiles.map(scoreProfile)
+      const average=scores.length?Number((scores.reduce((n,x)=>n+x,0)/scores.length).toFixed(1)):0
+      const startedAt=new Date().toISOString()
+      const run={id:'modelrun_'+randomUUID(),kind:'model',name:String(body.name),modelId:custom?.id||null,status:profiles.length?'completed':'no_data',rowsScored:profiles.length,averageScore:custom?average:Number(stats?.averageScore||0),scoreMin:scores.length?Math.min(...scores):0,scoreMax:scores.length?Math.max(...scores):0,startedAt,completedAt:new Date().toISOString()}
+      await mutateState(s=>{
+        s.agentRuns=s.agentRuns||[]
+        s.agentRuns.unshift(run)
+        s.agentRuns=s.agentRuns.slice(0,500)
+        if(custom){
+          const model=(s.customModels||[]).find(x=>x.id===custom.id)
+          if(model){model.lastRunAt=run.completedAt;model.lastAverageScore=run.averageScore;model.lastRowsScored=run.rowsScored;model.status=profiles.length?'active':'ready';model.updatedAt=run.completedAt}
+        }
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'model.run',entityId:run.id,modelId:custom?.id||null,rowsScored:run.rowsScored,status:run.status,at:run.completedAt})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,202,run)
+    }
+    if (req.method === 'GET' && url.pathname === '/api/models/validation') {
+      const name=String(url.searchParams.get('name')||'')
+      const state=await getState()
+      const runs=(state.agentRuns||[]).filter(x=>x.kind==='model'&&(!name||x.name===name)).slice(0,20)
+      const leadStats=await leadOpsStats(workspaceId).catch(()=>({}))
+      return send(req,res,200,{name:name||null,runs,leadPopulation:Number(leadStats?.total||0),averageLeadScore:Number(leadStats?.averageScore||0),generatedAt:new Date().toISOString(),notice:'Validation surface reflects persisted scoring runs and lead population; it is not a substitute for offline statistical validation.'})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/routing') {
+      const recent=await listRoutingDecisions(workspaceId,200)
+      const state=await getState()
+      const defaults=[
+        {id:'rr_1',name:'High-intent education lead',when:'score >= 85',destination:'Senior counsellor pool',slaSeconds:60,status:'active',priority:'Priority',builtIn:true},
+        {id:'rr_2',name:'Financing requested',when:'financingInterest = true',destination:'Finance-trained counsellor',slaSeconds:300,status:'active',priority:'Priority',builtIn:true},
+        {id:'rr_3',name:'WhatsApp re-engagement',when:'source = whatsapp',destination:'WhatsApp nurture',slaSeconds:180,status:'active',priority:'Automated',builtIn:true},
+        {id:'rr_4',name:'Low confidence review',when:'identityConfidence < 0.65',destination:'Manual review',slaSeconds:900,status:'active',priority:'Review',builtIn:true},
+        {id:'rr_default',name:'Default routing',when:'fallback',destination:'General admissions queue',slaSeconds:600,status:'active',priority:'Fallback',builtIn:true}
+      ]
+      const rules=[...defaults,...(state.routingRules||[])]
+      const today=new Date();today.setHours(0,0,0,0)
+      const routedToday=recent.filter(x=>Date.parse(x.created_at||x.createdAt||0)>=today.getTime())
+      const destinations={}
+      for(const row of recent){
+        const key=String(row.destination||'Unknown')
+        destinations[key]=(destinations[key]||0)+1
+      }
+      return send(req,res,200,{
+        rules,
+        recent:recent.slice(0,50),
+        stats:{
+          routedToday:routedToday.length,
+          totalDecisions:recent.length,
+          destinations:Object.keys(destinations).length,
+          matchedRules:new Set(recent.map(x=>x.rule_name).filter(Boolean)).size
+        },
+        destinationLoad:Object.entries(destinations).map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count)
+      })
+    }
+    if (req.method === 'POST' && url.pathname === '/api/routing/rules') {
+      const body=await readBody(req)
+      if(!body.name||!body.when||!body.destination)return send(req,res,400,{error:'name, when and destination required'})
+      const item={id:'rr_'+randomUUID(),name:String(body.name).slice(0,160),when:String(body.when).slice(0,240),destination:String(body.destination).slice(0,160),slaSeconds:Math.max(0,Number(body.slaSeconds||600)),status:'active',priority:String(body.priority||'Custom').slice(0,40),builtIn:false,createdAt:new Date().toISOString()}
+      await mutateState(s=>{s.routingRules=s.routingRules||[];s.routingRules.unshift(item);s.routingRules=s.routingRules.slice(0,200);s.audit=s.audit||[];s.audit.unshift({id:randomUUID(),action:'routing.rule_created',entityId:item.id,name:item.name,at:item.createdAt});s.audit=s.audit.slice(0,1000)})
+      return send(req,res,201,{item})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/routing/rules/toggle') {
+      const body=await readBody(req)
+      if(!body.id||typeof body.enabled!=='boolean')return send(req,res,400,{error:'id and enabled required'})
+      let updated=null
+      await mutateState(s=>{const item=(s.routingRules||[]).find(x=>x.id===body.id);if(item){item.status=body.enabled?'active':'paused';item.updatedAt=new Date().toISOString();updated={...item}}})
+      return updated?send(req,res,200,{item:updated}):send(req,res,404,{error:'custom routing rule not found'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/routing/test') {
+      const body=await readBody(req)
+      const state=await getState()
+      const custom=(state.routingRules||[]).find(x=>x.id===body.ruleId&&x.status!=='paused')
+      const fallback=[
+        {id:'rr_1',name:'High-intent education lead',when:'score >= 85',destination:'Senior counsellor pool',slaSeconds:60},
+        {id:'rr_2',name:'Financing requested',when:'financingInterest = true',destination:'Finance-trained counsellor',slaSeconds:300},
+        {id:'rr_3',name:'WhatsApp re-engagement',when:'source = whatsapp',destination:'WhatsApp nurture',slaSeconds:180},
+        {id:'rr_4',name:'Low confidence review',when:'identityConfidence < 0.65',destination:'Manual review',slaSeconds:900},
+        {id:'rr_default',name:'Default routing',when:'fallback',destination:'General admissions queue',slaSeconds:600}
+      ].find(x=>x.id===body.ruleId)
+      const selected=custom||fallback||null
+      const decision=await routeLead(workspaceId,{leadRef:body.leadRef||'test_lead',score:body.score??90,source:body.source||'web',financingInterest:body.financingInterest,identityConfidence:body.identityConfidence??0.95,...(selected?{routingRule:{...selected,reason:'manual test of '+selected.when}}:{})})
+      return send(req,res,200,{rule:decision.rule_name,matched:true,destination:decision.destination,reason:decision.reason,slaSeconds:decision.sla_seconds,evaluatedAt:decision.created_at})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/lead-reactivation') {
+      const dormantDays=Number(url.searchParams.get('dormantDays')||30)
+      const recentDays=Number(url.searchParams.get('recentDays')||7)
+      const [profiles,followUps]=await Promise.all([listLeadProfiles(workspaceId,500),listPersistedFollowUps(workspaceId)])
+      const candidates=leadReactivationCandidates(profiles,trackedEvents,followUps,{dormantDays,recentDays})
+      return send(req,res,200,{items:candidates,stats:{candidates:candidates.length,dormantDays,recentDays},generatedAt:new Date().toISOString()})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/lead-reactivation/run') {
+      const body=await readBody(req)
+      const leadRef=String(body.leadRef||'').trim()
+      if(!leadRef)return send(req,res,400,{error:'leadRef required'})
+      const dormantDays=Number(body.dormantDays||30)
+      const recentDays=Number(body.recentDays||7)
+      const [profiles,followUps]=await Promise.all([listLeadProfiles(workspaceId,500),listPersistedFollowUps(workspaceId)])
+      const candidates=leadReactivationCandidates(profiles,trackedEvents,followUps,{dormantDays,recentDays})
+      const candidate=candidates.find(x=>x.leadRef===leadRef||x.name===leadRef)
+      if(!candidate)return send(req,res,409,{error:'lead is not currently eligible for reactivation'})
+      const item=await createFollowUp(workspaceId,{
+        leadRef:candidate.leadRef,
+        reason:candidate.reason+' · '+candidate.renewedEvent,
+        channel:String(body.channel||'WhatsApp'),
+        priority:String(body.priority||'high'),
+        delayMinutes:Number(body.delayMinutes??5),
+        owner:String(body.owner||'Reactivation queue')
+      })
+      const now=new Date().toISOString()
+      await mutateState(s=>{
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'lead_reactivation.followup_created',entityId:item?.id||null,leadRef:candidate.leadRef,renewedEvent:candidate.renewedEvent,renewedAt:candidate.renewedAt,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,201,{item,candidate})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/follow-ups') {
+      const items=await listPersistedFollowUps(workspaceId)
+      const now=Date.now()
+      const start=new Date();start.setHours(0,0,0,0)
+      const open=items.filter(x=>x.status==='open')
+      const completed=items.filter(x=>x.status==='completed')
+      const completedToday=completed.filter(x=>Date.parse(x.completed_at||0)>=start.getTime()).length
+      const overdue=open.filter(x=>x.due_at&&Date.parse(x.due_at)<now).length
+      return send(req,res,200,{items,stats:{open:open.length,completedToday,completedTotal:completed.length,overdue}})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/follow-ups') {
+      const body=await readBody(req)
+      const item=await createFollowUp(workspaceId,body)
+      return send(req,res,201,item)
+    }
+    if (req.method === 'POST' && url.pathname === '/api/follow-ups/complete') {
+      const body=await readBody(req)
+      if(!body.id) return send(req,res,400,{error:'id required'})
+      const updated=await persistCompleteFollowUp(workspaceId,String(body.id))
+      return updated?send(req,res,200,updated):send(req,res,404,{error:'follow-up not found'})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/voice-scheduler') {
+      const runs=(await listAgentRuns(workspaceId,100)).filter(x=>x.agent_type==='voice_scheduler')
+      return send(req,res,200,{items:runs.map(x=>({id:x.id,lead:x.input?.lead||x.input?.leadRef||x.entity_id||'Lead',phone:x.input?.phone||x.input?.attendeePhone||'',status:x.status,preferredWindow:x.input?.preferredWindow||null,proposedStartsAt:x.input?.proposedStartsAt||null,meetingId:x.output?.meetingId||null,startsAt:x.output?.startsAt||null,meetingLink:x.output?.meetingLink||null,calendarSynced:Boolean(x.output?.calendarSynced),schedulerStatus:x.output?.schedulerStatus||null,externalId:x.external_id,lastError:x.last_error,createdAt:x.created_at}))})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/voice-scheduler') {
+      const body=await readBody(req)
+      const leadRef=String(body.leadRef||body.lead||'').trim()
+      const phone=String(body.phone||body.attendeePhone||'').trim()
+      if(!leadRef)return send(req,res,400,{error:'leadRef or lead required'})
+      if(!phone)return send(req,res,400,{error:'phone required'})
+      if(body.proposedStartsAt&&Number.isNaN(Date.parse(String(body.proposedStartsAt))))return send(req,res,400,{error:'invalid proposedStartsAt'})
+      const input={
+        leadRef,
+        lead:String(body.lead||leadRef),
+        phone,
+        attendeePhone:phone,
+        attendeeEmail:String(body.attendeeEmail||'').trim(),
+        preferredWindow:String(body.preferredWindow||'').trim(),
+        proposedStartsAt:body.proposedStartsAt?new Date(body.proposedStartsAt).toISOString():null,
+        durationMinutes:Math.max(15,Math.min(180,Number(body.durationMinutes||45))),
+        owner:String(body.owner||'Voice Scheduler'),
+        title:String(body.title||('Consultation · '+leadRef)),
+        syncCalendar:body.syncCalendar!==false,
+        requireCalendar:body.requireCalendar===true,
+        timezone:String(body.timezone||'Asia/Kolkata')
+      }
+      const run=await createAgentRun(workspaceId,{agentType:'voice_scheduler',entityId:leadRef,triggerKey:String(body.trigger||'manual_voice_scheduler'),input})
+      const job=await handleSubmitJob({workspaceId,kind:'agent_action',idempotencyKey:'agent:'+run.id,payload:{agentRunId:run.id,actionType:'voice_scheduler',payload:{...input,runId:run.id}}})
+      return send(req,res,202,{id:run.id,status:'queued',jobId:job?.id||null,leadRef})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/qualification-calls') {
+      const runs=(await listAgentRuns(workspaceId,100)).filter(x=>x.agent_type==='voice_qualification')
+      return send(req,res,200,{items:runs.map(x=>({id:x.id,lead:x.input?.lead||x.entity_id||'Lead',source:x.input?.source||'Unknown',agent:'Voice Lead Qualification',status:x.status,duration:x.output?.duration||'—',intent:x.output?.intent??x.input?.intent??0,next:x.output?.next||'Awaiting execution',attempts:x.attempts,externalId:x.external_id,lastError:x.last_error,createdAt:x.created_at}))})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/qualification-calls/retry') {
+      const body=await readBody(req)
+      if(!body.id) return send(req,res,400,{error:'id required'})
+      const run=await createAgentRun(workspaceId,{agentType:'voice_qualification',entityId:String(body.id),triggerKey:'manual_retry',input:{lead:body.lead||'Lead',source:body.source||'workspace',intent:body.intent||0}})
+      const job=await handleSubmitJob({workspaceId,kind:'agent_action',idempotencyKey:'agent:'+run.id,payload:{agentRunId:run.id,actionType:'voice_qualification',payload:{lead:body.lead||'Lead',source:body.source||'workspace',intent:body.intent||0,runId:run.id}}})
+      return send(req,res,202,{id:run.id,status:'queued',jobId:job?.id||null})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/qualification-calls') {
+      const body=await readBody(req)
+      if(!body.lead) return send(req,res,400,{error:'lead required'})
+      const run=await createAgentRun(workspaceId,{agentType:'voice_qualification',entityId:String(body.leadRef||body.lead),triggerKey:String(body.trigger||'lead_created'),input:body})
+      const job=await handleSubmitJob({workspaceId,kind:'agent_action',idempotencyKey:'agent:'+run.id,payload:{agentRunId:run.id,actionType:'voice_qualification',payload:{...body,runId:run.id}}})
+      return send(req,res,202,{id:run.id,status:'queued',jobId:job?.id||null})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/meetings') return send(req,res,200,{items:await listPersistedMeetings(workspaceId)})
+    if (req.method === 'POST' && url.pathname === '/api/meetings') {
+      const body=await readBody(req)
+      if(!body.leadRef&&!body.lead) return send(req,res,400,{error:'leadRef or lead required'})
+      if(!body.startsAt) return send(req,res,400,{error:'startsAt required'})
+      try{
+        let calendar=null
+        if(body.syncCalendar!==false){
+          calendar=await createCalendarEvent(workspaceId,{
+            ...body,
+            title:body.title||('Consultation · '+String(body.leadRef||body.lead)),
+            attendees:body.attendees||[]
+          })
+        }
+        const item=await createMeeting(workspaceId,{
+          ...body,
+          externalCalendarId:calendar?.externalId||body.externalCalendarId||'',
+          meetingLink:calendar?.meetingLink||body.meetingLink||'',
+          calendarHtmlLink:calendar?.htmlLink||body.calendarHtmlLink||''
+        })
+        return send(req,res,201,{...item,calendar})
+      }catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'meeting creation failed'})}
+    }
+    if (req.method === 'POST' && url.pathname === '/api/meetings/reschedule') {
+      const body=await readBody(req)
+      if(!body.id||!body.startsAt) return send(req,res,400,{error:'id and startsAt required'})
+      const current=await getMeeting(workspaceId,String(body.id))
+      if(!current) return send(req,res,404,{error:'meeting not found'})
+      try{
+        let calendar=null
+        if(current.external_calendar_id){
+          calendar=await updateCalendarEvent(workspaceId,current.external_calendar_id,{...body,startsAt:body.startsAt})
+        }else if(body.syncCalendar!==false){
+          calendar=await createCalendarEvent(workspaceId,{...body,leadRef:current.lead_ref,startsAt:body.startsAt,title:'Consultation · '+current.lead_ref})
+        }
+        const item=await rescheduleMeeting(workspaceId,String(body.id),{
+          startsAt:body.startsAt,
+          externalCalendarId:calendar?.externalId||null,
+          meetingLink:calendar?.meetingLink||null,
+          calendarHtmlLink:calendar?.htmlLink||null
+        })
+        return send(req,res,200,{...item,calendar})
+      }catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'meeting reschedule failed'})}
+    }
+    if (req.method === 'POST' && url.pathname === '/api/meetings/remind') {
+      const body=await readBody(req)
+      if(!body.id) return send(req,res,400,{error:'id required'})
+      const meeting=await getMeeting(workspaceId,String(body.id))
+      if(!meeting) return send(req,res,404,{error:'meeting not found'})
+      if(!meeting.attendee_phone&&!meeting.attendee_email) return send(req,res,400,{error:'meeting has no attendee contact; add attendeePhone or attendeeEmail when scheduling'})
+      const reminderPayload={
+        meetingId:meeting.id,
+        leadRef:meeting.lead_ref,
+        startsAt:meeting.starts_at,
+        owner:meeting.owner,
+        attendeePhone:meeting.attendee_phone||null,
+        attendeeEmail:meeting.attendee_email||null,
+        meetingLink:meeting.meeting_link||null,
+        calendarHtmlLink:meeting.calendar_html_link||null
+      }
+      const run=await createAgentRun(workspaceId,{agentType:'meeting_reminder',entityId:String(body.id),triggerKey:'manual_reminder',input:reminderPayload})
+      const job=await handleSubmitJob({workspaceId,kind:'agent_action',idempotencyKey:'agent:'+run.id,payload:{agentRunId:run.id,actionType:'meeting_reminder',payload:{...reminderPayload,runId:run.id}}})
+      return send(req,res,202,{id:body.id,runId:run.id,status:'queued',jobId:job?.id||null})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/feedback') {
+      const result=await listPersistedFeedback(workspaceId)
+      const items=result.items||[]
+      const themes={}
+      for(const item of items){
+        const key=String(item.theme||'Uncategorized')
+        themes[key]=(themes[key]||0)+1
+      }
+      const low=items.filter(x=>x.score!=null&&Number(x.score)<=2).length
+      return send(req,res,200,{
+        ...result,
+        stats:{responses:items.length,average:result.average,lowSatisfaction:low,themes:Object.keys(themes).length},
+        themes:Object.entries(themes).map(([theme,count])=>({theme,count})).sort((a,b)=>b.count-a.count)
+      })
+    }
+    if (req.method === 'POST' && url.pathname === '/api/feedback') {
+      const body=await readBody(req)
+      if(!body.lead) return send(req,res,400,{error:'lead required'})
+      const item=await recordFeedback(workspaceId,body)
+      return send(req,res,201,item)
+    }
+    if (req.method === 'POST' && url.pathname === '/api/feedback/request') {
+      const body=await readBody(req)
+      if(!body.lead) return send(req,res,400,{error:'lead required'})
+      const run=await createAgentRun(workspaceId,{agentType:'feedback',entityId:String(body.leadRef||body.lead),triggerKey:'manual_feedback',input:body})
+      const job=await handleSubmitJob({workspaceId,kind:'agent_action',idempotencyKey:'agent:'+run.id,payload:{agentRunId:run.id,actionType:'feedback',payload:{...body,runId:run.id}}})
+      return send(req,res,202,{runId:run.id,status:'queued',jobId:job?.id||null})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/feedback/route') {
+      const body=await readBody(req)
+      if(!body.id) return send(req,res,400,{error:'feedback id required'})
+      const result=await listPersistedFeedback(workspaceId)
+      const item=(result.items||[]).find(x=>x.id===String(body.id))
+      if(!item) return send(req,res,404,{error:'feedback not found'})
+      const score=Number(item.score||0)
+      const theme=String(item.theme||'Uncategorized')
+      let priority='medium'
+      let owner='Customer success'
+      let reason='Review customer feedback · '+theme
+      let channel='review'
+      let delayMinutes=60
+      if(score>0&&score<=2){
+        priority='high';owner='Customer recovery';reason='Low-satisfaction recovery · '+theme;channel='call';delayMinutes=15
+      }else if(/pricing|fee|cost|budget/i.test(theme)){
+        priority='high';owner='Sales manager';reason='Pricing objection follow-up · '+theme;channel='call';delayMinutes=30
+      }else if(/mismatch|program|product|fit/i.test(theme)){
+        priority='medium';owner='Sales operations';reason='Disposition review · '+theme;channel='review';delayMinutes=60
+      }else if(score>=4){
+        priority='low';owner='Marketing';reason='Promoter / testimonial review · '+theme;channel='email';delayMinutes=240
+      }
+      const task=await createFollowUp(workspaceId,{leadRef:item.lead_ref,reason,channel,priority,delayMinutes,owner})
+      const now=new Date().toISOString()
+      await mutateState(s=>{
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'feedback.routed',entityId:item.id,leadRef:item.lead_ref,theme,score,followUpId:task?.id||null,owner,priority,at:now})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,202,{feedbackId:item.id,lead:item.lead_ref,theme,score,status:'routed',nextTab:'Follow-ups',task:task?{id:task.id,status:task.status,owner:task.owner,priority:task.priority,channel:task.channel,dueAt:task.due_at,reason:task.reason}:null})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/agent-runs') return send(req,res,200,{items:await listAgentRuns(workspaceId,200)})
+    if (req.method === 'GET' && url.pathname === '/api/approvals') {
+      const state=await getState()
+      return send(req,res,200,{items:state.approvals||[]})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/approvals/decision') {
+      const body=await readBody(req)
+      if(!body.id || !['approved','rejected'].includes(body.decision)) return send(req,res,400,{error:'id and approved|rejected decision required'})
+      let updated=null
+      await mutateState(s=>{
+        s.approvals=s.approvals||[]
+        const item=s.approvals.find(x=>x.id===body.id)
+        if(item){
+          item.status=body.decision
+          item.decidedAt=new Date().toISOString()
+          updated={...item}
+          if(item.agentId){
+            const agent=(s.customAgents||[]).find(x=>x.id===item.agentId)
+            if(agent) agent.status=body.decision==='approved'?'active':'rejected'
+          }
+        }
+        s.audit.unshift({id:randomUUID(),action:'approval.'+body.decision,entityId:String(body.id),at:new Date().toISOString()})
+      })
+      return updated?send(req,res,200,updated):send(req,res,404,{error:'approval not found'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/agents/custom') {
+      const body=await readBody(req)
+      if(!body.name || !body.trigger || !body.action) return send(req,res,400,{error:'name, trigger and action required'})
+      const createdAt=new Date().toISOString()
+      const requiresApproval=body.requiresApproval!==false
+      const agent={id:'agent_'+randomUUID(),name:String(body.name),trigger:String(body.trigger),action:String(body.action),description:String(body.description||''),status:requiresApproval?'pending_approval':'active',type:'custom',createdAt}
+      await mutateState(s=>{
+        s.customAgents=s.customAgents||[]
+        s.customAgents.unshift(agent)
+        if(requiresApproval){
+          s.approvals=s.approvals||[]
+          s.approvals.unshift({id:'ap_'+randomUUID(),kind:'custom_agent_activation',title:'Activate custom agent: '+agent.name,status:'pending',risk:String(body.risk||'medium'),agentId:agent.id,createdAt})
+        }
+        s.audit.unshift({id:randomUUID(),action:'agent.custom_created',entityId:agent.id,at:createdAt})
+      })
+      return send(req,res,201,agent)
+    }
+    if (req.method === 'POST' && url.pathname === '/api/agents/custom/test') {
+      const body=await readBody(req)
+      if(!body.id) return send(req,res,400,{error:'id required'})
+      const state=await getState()
+      const agent=(state.customAgents||[]).find(x=>x.id===String(body.id))
+      if(!agent) return send(req,res,404,{error:'custom agent not found'})
+      if(agent.status==='pending_approval') return send(req,res,409,{error:'custom agent requires approval before testing',status:agent.status,agentId:agent.id})
+      if(agent.status==='rejected') return send(req,res,409,{error:'custom agent activation was rejected',status:agent.status,agentId:agent.id})
+      if(agent.status!=='active') return send(req,res,409,{error:'custom agent is not active',status:agent.status,agentId:agent.id})
+      const entityId=String(body.leadRef||body.entityId||'agent_test')
+      const input={
+        test:true,
+        leadRef:body.leadRef||null,
+        trigger:agent.trigger,
+        action:agent.action,
+        context:body.context&&typeof body.context==='object'?body.context:{}
+      }
+      const run=await createAgentRun(workspaceId,{agentType:'custom:'+agent.id,entityId,triggerKey:'manual_test',input})
+      if(!run) return send(req,res,503,{error:'agent run store unavailable'})
+      let operation=null
+      if(agent.action==='Route to sales queue'){
+        operation=await routeLead(workspaceId,{
+          leadRef:entityId,
+          score:Number(body.context?.score||85),
+          source:String(body.context?.source||'Custom agent'),
+          routingRule:{name:agent.name,destination:String(body.context?.destination||'Sales queue'),reason:'Custom agent test: '+agent.trigger,slaSeconds:Number(body.context?.slaSeconds||300)}
+        })
+      }
+      const output={
+        test:true,
+        evaluated:true,
+        trigger:agent.trigger,
+        action:agent.action,
+        operation:operation?{kind:'routing',id:operation.id,destination:operation.destination,status:operation.status}:null,
+        note:operation?'Safe routing action executed and persisted.':'Definition validated. External mutation requires the destination-specific operational workflow and configured integration.'
+      }
+      const completed=await updateAgentRun(workspaceId,run.id,{status:'succeeded',output})
+      await mutateState(s=>{
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'agent.custom_tested',entityId:agent.id,runId:run.id,operationId:operation?.id||null,at:new Date().toISOString()})
+        s.audit=s.audit.slice(0,1000)
+      })
+      return send(req,res,200,{run:completed||run,output})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/settings') {
+      const state=await getState()
+      return send(req,res,200,state.workspaceSettings||{})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/settings') {
+      const body=await readBody(req)
+      try{
+        const keys=Object.keys(body&&typeof body==='object'?body:{})
+        const saved=keys.length===1&&keys[0]==='organization'
+          ?await handleUpdateOrganization({workspaceId,organization:body.organization,actorId:req.user?.userId||null})
+          :await handleUpdateWorkspace({workspaceId,patch:body,actorId:req.user?.userId||null})
+        return send(req,res,200,saved)
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'workspace settings update failed',code:error?.code||'workspace_settings_update_failed'})
+      }
+    }
+    if (req.method === 'GET' && url.pathname === '/api/workspaces') {
+      const registry=await withWorkspace('ws_default',()=>getState())
+      const currentState=await getState()
+      const items=await listActorWorkspaces({registry,currentState,currentWorkspaceId:workspaceId,actor:req.user,loadWorkspace:id=>withWorkspace(id,()=>getState())})
+      return send(req,res,200,{items})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/workspaces') {
+      const body=await readBody(req)
+      const name=String(body.name||'').trim()
+      if(name.length<2) return send(req,res,400,{error:'workspace name required'})
+      const now=new Date().toISOString()
+      let item=null
+      await withWorkspace('ws_default',()=>mutateState(s=>{
+        s.workspaces=s.workspaces||[]
+        if(s.workspaces.some(x=>String(x.name).toLowerCase()===name.toLowerCase())) return
+        item={id:'ws_'+randomUUID().replaceAll('-','').slice(0,12),name,environment:String(body.environment||'Production'),initials:String(body.initials||name.split(/\s+/).map(x=>x[0]).join('').slice(0,3)).toUpperCase(),createdAt:now,createdByUserId:req.user?.userId||null}
+        s.workspaces.push(item)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'workspace.created',entityId:item.id,name:item.name,at:now})
+        s.audit=s.audit.slice(0,1000)
+      }))
+      if(item){
+        await withWorkspace(item.id,()=>mutateState(s=>{
+          seedWorkspaceCreator(s,req.user)
+          s.audit=s.audit||[]
+          s.audit.unshift({id:randomUUID(),action:'workspace.creator_membership_seeded',entityId:req.user?.userId||'unknown',at:now})
+          s.audit=s.audit.slice(0,1000)
+        }))
+        await appendAuditRecord({workspaceId:item.id,actorId:req.user?.userId,action:'workspace.created',entityType:'workspace',entityId:item.id,requestId:req.requestId,traceId:req.context?.traceId,metadata:{name:item.name}}).catch(()=>{})
+      }
+      return item?send(req,res,201,item):send(req,res,409,{error:'workspace name already exists'})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/audit-log') {
+      const durable=await handleSearchAudit({
+        workspaceId,
+        limit:Number(url.searchParams.get('limit')||250),
+        before:url.searchParams.get('before')||null
+      }).catch(()=>[])
+      if(durable.length)return send(req,res,200,{items:durable,source:'durable'})
+      const state=await getState()
+      return send(req,res,200,{items:(state.audit||[]).slice(0,250),source:'compatibility'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/audit-log/export') {
+      try{
+        const job=await handleExportAudit({
+          workspaceId,
+          limit:Number(url.searchParams.get('limit')||500),
+          before:url.searchParams.get('before')||null,
+          actorId:req.user?.userId||null,
+          requestId:req.requestId
+        })
+        return send(req,res,202,{jobId:job.id,status:job.status,resultSchemaVersion:'audit-export.v1'})
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'audit export failed',code:error?.code||'audit_export_failed'})
+      }
+    }
+    if (req.method === 'GET' && url.pathname === '/api/api-keys') {
+      const state=await getState()
+      const items=(state.apiKeys||[]).map(x=>({
+        id:x.id,
+        name:x.name,
+        prefix:x.prefix,
+        status:x.status||'active',
+        createdAt:x.createdAt,
+        revokedAt:x.revokedAt||null,
+        lastUsedAt:x.lastUsedAt||null
+      })).sort((a,b)=>Date.parse(b.createdAt||0)-Date.parse(a.createdAt||0))
+      return send(req,res,200,{items,active:items.filter(x=>x.status==='active').length})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/api-keys') {
+      const body=await readBody(req)
+      const label=String(body.name||'workspace').trim()
+      if(label.length<2||label.length>80) return send(req,res,400,{error:'name must be 2-80 characters'})
+      const secret='ace_'+randomBytes(24).toString('base64url')
+      const fingerprint=createHash('sha256').update(secret).digest('hex')
+      const createdAt=new Date().toISOString()
+      const record={id:'key_'+randomUUID(),name:label,prefix:secret.slice(0,12),fingerprint,status:'active',createdAt,lastUsedAt:null,revokedAt:null}
+      await mutateState(s=>{
+        s.apiKeys=s.apiKeys||[]
+        s.apiKeys.unshift(record)
+        s.apiKeys=s.apiKeys.slice(0,200)
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'api_key.created',entityId:record.id,name:record.name,at:createdAt})
+        s.audit=s.audit.slice(0,1000)
+      })
+      await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'api_key.created',entityType:'api_key',entityId:record.id,requestId:req.requestId,traceId:req.context?.traceId,metadata:{name:record.name,prefix:record.prefix}})
+      return send(req,res,201,{id:record.id,name:record.name,prefix:record.prefix,key:secret,createdAt,notice:'Store this key now; only its SHA-256 fingerprint is persisted.'})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/api-keys/revoke') {
+      const body=await readBody(req)
+      const id=String(body.id||'')
+      if(!id) return send(req,res,400,{error:'id required'})
+      const snapshot=await getState()
+      const existing=(snapshot.apiKeys||[]).find(x=>x.id===id)
+      if(!existing) return send(req,res,404,{error:'api key not found'})
+      if(existing.status==='revoked') return send(req,res,200,{id,status:'revoked',revokedAt:existing.revokedAt||null})
+      const revokedAt=new Date().toISOString()
+      await mutateState(s=>{
+        const key=(s.apiKeys||[]).find(x=>x.id===id)
+        if(key){key.status='revoked';key.revokedAt=revokedAt}
+        s.audit=s.audit||[]
+        s.audit.unshift({id:randomUUID(),action:'api_key.revoked',entityId:id,at:revokedAt})
+        s.audit=s.audit.slice(0,1000)
+      })
+      await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'api_key.revoked',entityType:'api_key',entityId:id,requestId:req.requestId,traceId:req.context?.traceId})
+      return send(req,res,200,{id,status:'revoked',revokedAt})
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/files') {
+      const limit=Number(url.searchParams.get('limit')||100)
+      return send(req,res,200,{items:await listObjects({workspaceId,role:req.user?.role||'viewer',limit})})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/files/upload-intents') {
+      const body=await readBody(req)
+      try{
+        const intent=await handleAuthorizeUpload({
+          workspaceId,
+          name:body.name,
+          mime:body.mime,
+          size:body.size,
+          sha256:body.sha256,
+          accessPolicy:body.accessPolicy||{},
+          actorId:req.user?.userId||null
+        })
+        await appendAuditRecord({
+          workspaceId,
+          actorId:req.user?.userId,
+          action:'object.upload_intent_created',
+          entityType:'object',
+          entityId:intent.object.id,
+          requestId:req.requestId,
+          traceId:req.context?.traceId,
+          metadata:{name:intent.object.original_name,size:Number(intent.object.expected_size)}
+        }).catch(()=>{})
+        return send(req,res,201,intent)
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{
+          error:error instanceof Error?error.message:'upload intent creation failed',
+          code:error?.code||'object_upload_intent_failed'
+        })
+      }
+    }
+    const objectQuarantineMatch=url.pathname.match(/^\/api\/files\/([^/]+)\/quarantine-confirm$/)
+    if(req.method==='POST'&&objectQuarantineMatch){
+      if(!OBJECT_WORKER_TOKEN)return send(req,res,503,{error:'object verification worker is not configured',code:'object_worker_unavailable'})
+      const supplied=String(req.headers['x-object-worker-token']||'')
+      const expected=Buffer.from(OBJECT_WORKER_TOKEN)
+      const actual=Buffer.from(supplied)
+      if(actual.length!==expected.length||!timingSafeEqual(actual,expected)){
+        return send(req,res,403,{error:'object worker authorization failed',code:'object_worker_forbidden'})
+      }
+      const body=await readBody(req)
+      try{
+        const result=await markObjectQuarantined({
+          workspaceId,
+          objectId:decodeURIComponent(objectQuarantineMatch[1]),
+          grantToken:body.grantToken,
+          actualSize:body.actualSize,
+          actualSha256:body.actualSha256,
+          detectedMime:body.detectedMime,
+          storageProvider:body.storageProvider||'s3',
+          storageVersion:body.storageVersion||null
+        })
+        return send(req,res,result.integrityMatched?200:422,result)
+      }catch(error){
+        return send(req,res,400,{error:error instanceof Error?error.message:'object quarantine confirmation failed'})
+      }
+    }
+    const objectScanMatch=url.pathname.match(/^\/api\/files\/([^/]+)\/scan-result$/)
+    if(req.method==='POST'&&objectScanMatch){
+      if(!OBJECT_WORKER_TOKEN)return send(req,res,503,{error:'object scanning worker is not configured',code:'object_worker_unavailable'})
+      const supplied=String(req.headers['x-object-worker-token']||'')
+      const expected=Buffer.from(OBJECT_WORKER_TOKEN)
+      const actual=Buffer.from(supplied)
+      if(actual.length!==expected.length||!timingSafeEqual(actual,expected)){
+        return send(req,res,403,{error:'object worker authorization failed',code:'object_worker_forbidden'})
+      }
+      const body=await readBody(req)
+      try{
+        const item=await handleApproveFile({
+          workspaceId,
+          objectId:decodeURIComponent(objectScanMatch[1]),
+          result:body.result,
+          evidence:body.evidence||{},
+          actorId:req.user?.userId||'object-worker'
+        })
+        await appendAuditRecord({
+          workspaceId,
+          actorId:req.user?.userId||'object-worker',
+          action:'object.scan_recorded',
+          entityType:'object',
+          entityId:item.id,
+          requestId:req.requestId,
+          traceId:req.context?.traceId,
+          metadata:{scanStatus:item.scan_status,status:item.status}
+        }).catch(()=>{})
+        return send(req,res,200,item)
+      }catch(error){
+        return send(req,res,400,{error:error instanceof Error?error.message:'object scan recording failed'})
+      }
+    }
+    const objectIndexMatch=url.pathname.match(/^\/api\/files\/([^/]+)\/index-extracted$/)
+    if(req.method==='POST'&&objectIndexMatch){
+      if(!OBJECT_WORKER_TOKEN)return send(req,res,503,{error:'document processing worker is not configured',code:'object_worker_unavailable'})
+      const supplied=String(req.headers['x-object-worker-token']||'')
+      const expected=Buffer.from(OBJECT_WORKER_TOKEN)
+      const actual=Buffer.from(supplied)
+      if(actual.length!==expected.length||!timingSafeEqual(actual,expected)){
+        return send(req,res,403,{error:'object worker authorization failed',code:'object_worker_forbidden'})
+      }
+      const body=await readBody(req)
+      const objectId=decodeURIComponent(objectIndexMatch[1])
+      try{
+        const item=await handleRebuildSearchIndex({
+          workspaceId,
+          objectId,
+          text:body.text,
+          evidence:body.evidence||{}
+        })
+        await appendAuditRecord({
+          workspaceId,
+          actorId:req.user?.userId||'document-worker',
+          action:'object.indexed',
+          entityType:'object',
+          entityId:objectId,
+          requestId:req.requestId,
+          traceId:req.context?.traceId,
+          metadata:{storageVersion:item.approved_storage_version,sha256:item.approved_sha256}
+        }).catch(()=>{})
+        return send(req,res,200,item)
+      }catch(error){
+        await markObjectProcessingFailure({
+          workspaceId,
+          objectId,
+          stage:'index',
+          error:error instanceof Error?error.message:'document indexing failed',
+          evidence:body.evidence||{}
+        }).catch(()=>{})
+        return send(req,res,400,{error:error instanceof Error?error.message:'document indexing failed'})
+      }
+    }
+
+    if(req.method==='GET'&&url.pathname==='/api/search'){
+      const query=url.searchParams.get('q')||''
+      const limit=Number(url.searchParams.get('limit')||20)
+      const sourceType=url.searchParams.get('sourceType')||null
+      try{
+        const result=await handleQuerySearch({
+          workspaceId,
+          query,
+          role:req.user?.role||'viewer',
+          limit,
+          sourceType
+        })
+        return send(req,res,200,result)
+      }catch(error){
+        return send(req,res,400,{error:error instanceof Error?error.message:'search failed',profile:searchCapabilityProfile()})
+      }
+    }
+
+    const objectDownloadMatch=url.pathname.match(/^\/api\/files\/([^/]+)\/download-grant$/)
+    if(req.method==='POST'&&objectDownloadMatch){
+      try{
+        const grant=await createDownloadGrant({
+          workspaceId,
+          objectId:decodeURIComponent(objectDownloadMatch[1]),
+          role:req.user?.role||'viewer',
+          actorId:req.user?.userId||null
+        })
+        return send(req,res,201,grant)
+      }catch(error){
+        const message=error instanceof Error?error.message:'download grant failed'
+        const status=/denied/.test(message)?403:/not found/.test(message)?404:400
+        return send(req,res,status,{error:message})
+      }
+    }
+    const objectDeleteMatch=url.pathname.match(/^\/api\/files\/([^/]+)$/)
+    if(req.method==='DELETE'&&objectDeleteMatch){
+      if(!['owner','admin'].includes(req.user?.role||''))return send(req,res,403,{error:'owner or admin role required'})
+      try{
+        const item=await softDeleteObject({
+          workspaceId,
+          objectId:decodeURIComponent(objectDeleteMatch[1]),
+          actorId:req.user?.userId||null
+        })
+        if(!item)return send(req,res,404,{error:'object not found'})
+        await appendAuditRecord({
+          workspaceId,
+          actorId:req.user?.userId,
+          action:'object.deleted',
+          entityType:'object',
+          entityId:item.id,
+          requestId:req.requestId,
+          traceId:req.context?.traceId
+        }).catch(()=>{})
+        return send(req,res,200,item)
+      }catch(error){
+        return send(req,res,409,{error:error instanceof Error?error.message:'object deletion blocked'})
+      }
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/forms') {
+      const limit=Number(url.searchParams.get('limit')||100)
+      return send(req,res,200,{items:await listForms({workspaceId,limit})})
+    }
+    if (req.method === 'POST' && url.pathname === '/api/forms') {
+      const body=await readBody(req)
+      try{
+        const form=await createForm({
+          workspaceId,
+          name:body.name,
+          slug:body.slug,
+          description:body.description,
+          schema:body.schema,
+          actorId:req.user?.userId||null
+        })
+        await appendAuditRecord({
+          workspaceId,
+          actorId:req.user?.userId,
+          action:'form.created',
+          entityType:'form',
+          entityId:form.id,
+          requestId:req.requestId,
+          traceId:req.context?.traceId,
+          metadata:{slug:form.slug}
+        }).catch(()=>{})
+        return send(req,res,201,form)
+      }catch(error){
+        const status=Number(error?.status||(/unique|duplicate/i.test(String(error?.message||''))?409:400))
+        return send(req,res,status,{error:error instanceof Error?error.message:'form creation failed',code:error?.code||'form_create_failed'})
+      }
+    }
+    const formMatch=url.pathname.match(/^\/api\/forms\/([^/]+)$/)
+    if(req.method==='GET'&&formMatch){
+      const form=await getForm({workspaceId,id:decodeURIComponent(formMatch[1])})
+      return form?send(req,res,200,form):send(req,res,404,{error:'form not found'})
+    }
+    const publishMatch=url.pathname.match(/^\/api\/forms\/([^/]+)\/publish$/)
+    if(req.method==='POST'&&publishMatch){
+      const form=await handlePublishForm({workspaceId,id:decodeURIComponent(publishMatch[1]),actorId:req.user?.userId||null})
+      if(!form)return send(req,res,404,{error:'form not found'})
+      await appendAuditRecord({
+        workspaceId,
+        actorId:req.user?.userId,
+        action:'form.published',
+        entityType:'form',
+        entityId:form.id,
+        requestId:req.requestId,
+        traceId:req.context?.traceId,
+        metadata:{version:Number(form.published_version||0)}
+      }).catch(()=>{})
+      return send(req,res,200,form)
+    }
+    const submissionsMatch=url.pathname.match(/^\/api\/forms\/([^/]+)\/submissions$/)
+    if(req.method==='POST'&&submissionsMatch){
+      const body=await readBody(req)
+      try{
+        const submission=await handleSubmitForm({
+          workspaceId,
+          id:decodeURIComponent(submissionsMatch[1]),
+          data:body.data,
+          actorId:req.user?.userId||null,
+          submissionId:body.submissionId||req.headers['idempotency-key']||null
+        })
+        if(!submission)return send(req,res,404,{error:'published form not found'})
+        return send(req,res,201,submission)
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'submission failed',code:error?.code||'form_submission_failed'})
+      }
+    }
+    if(req.method==='GET'&&submissionsMatch){
+      const limit=Number(url.searchParams.get('limit')||100)
+      return send(req,res,200,{items:await listFormSubmissions({workspaceId,id:decodeURIComponent(submissionsMatch[1]),limit})})
+    }
+
+
+    if(req.method==='GET'&&url.pathname==='/api/custom-objects'){
+      const limit=Number(url.searchParams.get('limit')||100)
+      return send(req,res,200,{items:await listCustomObjects({workspaceId,limit})})
+    }
+    if(req.method==='POST'&&url.pathname==='/api/custom-objects'){
+      const body=await readBody(req)
+      try{
+        const object=await handleDefineCustomObject({
+          workspaceId,
+          objectKey:body.objectKey,
+          name:body.name,
+          description:body.description,
+          schema:body.schema,
+          actorId:req.user?.userId||null
+        })
+        await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'custom_object.created',entityType:'custom_object',entityId:object.id,requestId:req.requestId,traceId:req.context?.traceId,metadata:{objectKey:object.object_key}}).catch(()=>{})
+        return send(req,res,201,object)
+      }catch(error){
+        const status=Number(error?.status||(/unique|duplicate/i.test(String(error?.message||''))?409:400))
+        return send(req,res,status,{error:error instanceof Error?error.message:'custom object creation failed',code:error?.code||'custom_object_create_failed'})
+      }
+    }
+    const customObjectMatch=url.pathname.match(/^\/api\/custom-objects\/([^/]+)$/)
+    if(req.method==='GET'&&customObjectMatch){
+      const object=await getCustomObject({workspaceId,id:decodeURIComponent(customObjectMatch[1])})
+      return object?send(req,res,200,object):send(req,res,404,{error:'custom object not found'})
+    }
+    const customObjectVersionMatch=url.pathname.match(/^\/api\/custom-objects\/([^/]+)\/versions$/)
+    if(req.method==='POST'&&customObjectVersionMatch){
+      const body=await readBody(req)
+      try{
+        const object=await createCustomObjectVersion({workspaceId,id:decodeURIComponent(customObjectVersionMatch[1]),schema:body.schema,actorId:req.user?.userId||null})
+        if(!object)return send(req,res,404,{error:'custom object not found'})
+        await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'custom_object.version_created',entityType:'custom_object',entityId:object.id,requestId:req.requestId,traceId:req.context?.traceId,metadata:{version:Number(object.version||object.latest_version||0)}}).catch(()=>{})
+        return send(req,res,201,object)
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'custom object version failed',code:error?.code||'custom_object_version_failed'})
+      }
+    }
+    const customObjectPublishMatch=url.pathname.match(/^\/api\/custom-objects\/([^/]+)\/publish$/)
+    if(req.method==='POST'&&customObjectPublishMatch){
+      const object=await publishCustomObject({workspaceId,id:decodeURIComponent(customObjectPublishMatch[1]),actorId:req.user?.userId||null})
+      if(!object)return send(req,res,404,{error:'custom object not found'})
+      await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'custom_object.published',entityType:'custom_object',entityId:object.id,requestId:req.requestId,traceId:req.context?.traceId,metadata:{version:Number(object.published_version||0)}}).catch(()=>{})
+      return send(req,res,200,object)
+    }
+    const customObjectRecordsMatch=url.pathname.match(/^\/api\/custom-objects\/([^/]+)\/records$/)
+    if(req.method==='POST'&&customObjectRecordsMatch){
+      const body=await readBody(req)
+      try{
+        const record=await createCustomObjectRecord({
+          workspaceId,
+          id:decodeURIComponent(customObjectRecordsMatch[1]),
+          data:body.data,
+          actorId:req.user?.userId||null,
+          recordId:body.recordId||req.headers['idempotency-key']||null
+        })
+        if(!record)return send(req,res,404,{error:'published custom object not found'})
+        return send(req,res,201,record)
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'custom object record failed',code:error?.code||'custom_object_record_failed'})
+      }
+    }
+    if(req.method==='GET'&&customObjectRecordsMatch){
+      const limit=Number(url.searchParams.get('limit')||100)
+      return send(req,res,200,{items:await listCustomObjectRecords({workspaceId,id:decodeURIComponent(customObjectRecordsMatch[1]),limit})})
+    }
+
+
+    if(req.method==='GET'&&url.pathname==='/api/policy-rules'){
+      return send(req,res,200,{items:await listPolicyRules({workspaceId,limit:Number(url.searchParams.get('limit')||100)})})
+    }
+    if(req.method==='POST'&&url.pathname==='/api/policy-rules/simulate'){
+      const body=await readBody(req)
+      try{
+        return send(req,res,200,handleSimulateRule({expression:body.expression,input:body.input||{}}))
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'policy simulation failed',code:error?.code||'policy_simulation_failed'})
+      }
+    }
+    if(req.method==='POST'&&url.pathname==='/api/policy-rules'){
+      const body=await readBody(req)
+      try{
+        const rule=await createPolicyRule({workspaceId,name:body.name,expression:body.expression,inputSchemaVersion:body.inputSchemaVersion,actorId:req.user?.userId||null})
+        await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'policy_rule.created',entityType:'policy_rule',entityId:rule.id,requestId:req.requestId,traceId:req.context?.traceId}).catch(()=>{})
+        return send(req,res,201,rule)
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'policy rule creation failed',code:error?.code||'policy_rule_create_failed'})
+      }
+    }
+    const policyMatch=url.pathname.match(/^\/api\/policy-rules\/([^/]+)$/)
+    if(req.method==='GET'&&policyMatch){
+      const rule=await getPolicyRule({workspaceId,id:decodeURIComponent(policyMatch[1])})
+      return rule?send(req,res,200,rule):send(req,res,404,{error:'policy rule not found'})
+    }
+    const policyVersionMatch=url.pathname.match(/^\/api\/policy-rules\/([^/]+)\/versions$/)
+    if(req.method==='POST'&&policyVersionMatch){
+      const body=await readBody(req)
+      try{
+        const rule=await createPolicyRuleVersion({
+          workspaceId,
+          id:decodeURIComponent(policyVersionMatch[1]),
+          expression:body.expression,
+          inputSchemaVersion:body.inputSchemaVersion,
+          actorId:req.user?.userId||null
+        })
+        if(!rule)return send(req,res,404,{error:'policy rule not found'})
+        await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'policy_rule.version_created',entityType:'policy_rule',entityId:rule.id,requestId:req.requestId,traceId:req.context?.traceId,metadata:{version:Number(rule.version||rule.latest_version||0)}}).catch(()=>{})
+        return send(req,res,201,rule)
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'policy rule version failed',code:error?.code||'policy_rule_version_failed'})
+      }
+    }
+    const policyPublishMatch=url.pathname.match(/^\/api\/policy-rules\/([^/]+)\/publish$/)
+    if(req.method==='POST'&&policyPublishMatch){
+      const rule=await handlePublishPolicy({workspaceId,id:decodeURIComponent(policyPublishMatch[1])})
+      if(!rule)return send(req,res,404,{error:'policy rule not found'})
+      await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'policy_rule.published',entityType:'policy_rule',entityId:rule.id,requestId:req.requestId,traceId:req.context?.traceId,metadata:{version:Number(rule.published_version||0)}}).catch(()=>{})
+      return send(req,res,200,rule)
+    }
+    const policyArchiveMatch=url.pathname.match(/^\/api\/policy-rules\/([^/]+)\/archive$/)
+    if(req.method==='POST'&&policyArchiveMatch){
+      const rule=await archivePolicyRule({workspaceId,id:decodeURIComponent(policyArchiveMatch[1])})
+      if(!rule)return send(req,res,404,{error:'policy rule not found'})
+      await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'policy_rule.archived',entityType:'policy_rule',entityId:rule.id,requestId:req.requestId,traceId:req.context?.traceId}).catch(()=>{})
+      return send(req,res,200,rule)
+    }
+    const policyEvaluateMatch=url.pathname.match(/^\/api\/policy-rules\/([^/]+)\/evaluate$/)
+    if(req.method==='POST'&&policyEvaluateMatch){
+      const body=await readBody(req)
+      const decision=await evaluatePublishedPolicyRule({workspaceId,id:decodeURIComponent(policyEvaluateMatch[1]),input:body.input||{}})
+      return decision?send(req,res,200,decision):send(req,res,404,{error:'published policy rule not found'})
+    }
+
+    if(req.method==='GET'&&url.pathname==='/api/boards'){
+      try{
+        const items=await listBoards({workspaceId,limit:Number(url.searchParams.get('limit')||100)})
+        return send(req,res,200,{items})
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'board list failed',code:error?.code||'BOARD_LIST_FAILED'})
+      }
+    }
+
+    if(req.method==='POST'&&url.pathname==='/api/boards'){
+      const body=await readBody(req)
+      try{
+        const item=await createBoard({
+          workspaceId,
+          actorId:req.user?.userId||null,
+          name:body?.name
+        })
+        return send(req,res,201,{item})
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'board creation failed',code:error?.code||'BOARD_CREATE_FAILED'})
+      }
+    }
+
+    const boardSnapshotMatch=url.pathname.match(/^\/api\/boards\/([^/]+)$/)
+    if(req.method==='GET'&&boardSnapshotMatch){
+      try{
+        const snapshot=await getBoardSnapshot({workspaceId,boardId:decodeURIComponent(boardSnapshotMatch[1])})
+        return snapshot?send(req,res,200,snapshot):send(req,res,404,{error:'board not found',code:'BOARD_NOT_FOUND'})
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'board read failed',code:error?.code||'BOARD_READ_FAILED'})
+      }
+    }
+
+    const boardMoveMatch=url.pathname.match(/^\/api\/boards\/([^/]+)\/moves$/)
+    if(req.method==='POST'&&boardMoveMatch){
+      const body=await readBody(req)
+      const boardId=decodeURIComponent(boardMoveMatch[1])
+      try{
+        const result=await moveCardController({
+          workspaceId,
+          actorId:req.user?.userId||null,
+          requestId:req.requestId,
+          correlationId:req.context?.traceId||req.requestId,
+          boardId,
+          body,
+          canMove:Boolean(req.user?hasPermission(req.user.role,'boards.move'):!AUTH_REQUIRED)
+        })
+        return send(req,res,200,result)
+      }catch(error){
+        const status=Number(error?.status||500)
+        return send(req,res,status,{
+          error:error instanceof Error?error.message:'board move failed',
+          code:error?.code||'BOARD_MOVE_FAILED',
+          operationId:body?.operationId||null,
+          retryable:Boolean(error?.retryable),
+          ...(error?.currentVersion?{currentVersion:error.currentVersion}:{}),
+          ...(error?.currentPolicyVersion?{currentPolicyVersion:error.currentPolicyVersion}:{})
+        })
+      }
+    }
+
+    const boardOperationMatch=url.pathname.match(/^\/api\/boards\/([^/]+)\/operations\/([^/]+)$/)
+    if(req.method==='GET'&&boardOperationMatch){
+      try{
+        const operation=await getBoardOperation({
+          workspaceId,
+          boardId:decodeURIComponent(boardOperationMatch[1]),
+          operationId:decodeURIComponent(boardOperationMatch[2])
+        })
+        return operation?send(req,res,200,operation):send(req,res,404,{error:'board operation not found',code:'BOARD_OPERATION_NOT_FOUND'})
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'board operation lookup failed',code:error?.code||'BOARD_OPERATION_LOOKUP_FAILED'})
+      }
+    }
+
+    if(req.method==='GET'&&url.pathname==='/api/workflows/actions'){
+      return send(req,res,200,{version:1,items:workflowActionCatalog()})
+    }
+    if(req.method==='POST'&&url.pathname==='/api/workflows/simulate'){
+      const body=await readBody(req)
+      try{
+        return send(req,res,200,simulateWorkflowDefinition(body.definition))
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'workflow simulation failed',code:error?.code||'workflow_simulation_failed'})
+      }
+    }
+    if(req.method==='GET'&&url.pathname==='/api/workflows'){
+      return send(req,res,200,{items:await listWorkflows({workspaceId,limit:Number(url.searchParams.get('limit')||100)})})
+    }
+    if(req.method==='POST'&&url.pathname==='/api/workflows'){
+      const body=await readBody(req)
+      try{
+        const workflow=await createWorkflow({workspaceId,name:body.name,definition:body.definition,actorId:req.user?.userId||null})
+        await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'workflow.created',entityType:'workflow',entityId:workflow.id,requestId:req.requestId,traceId:req.context?.traceId}).catch(()=>{})
+        return send(req,res,201,workflow)
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'workflow creation failed',code:error?.code||'workflow_create_failed'})
+      }
+    }
+    if(req.method==='GET'&&url.pathname==='/api/workflows/executions'){
+      return send(req,res,200,{items:await listWorkflowExecutions({workspaceId,workflowId:url.searchParams.get('workflowId')||null,limit:Number(url.searchParams.get('limit')||100)})})
+    }
+    if(req.method==='GET'&&url.pathname==='/api/workflows/approvals'){
+      return send(req,res,200,{items:await listWorkflowApprovals({workspaceId,status:url.searchParams.get('status')||null,limit:Number(url.searchParams.get('limit')||100)})})
+    }
+    const workflowExecutionStepsMatch=url.pathname.match(/^\/api\/workflows\/executions\/([^/]+)\/steps$/)
+    if(req.method==='GET'&&workflowExecutionStepsMatch){
+      return send(req,res,200,{items:await listWorkflowExecutionSteps({workspaceId,executionId:decodeURIComponent(workflowExecutionStepsMatch[1])})})
+    }
+    const workflowExecutionCancelMatch=url.pathname.match(/^\/api\/workflows\/executions\/([^/]+)\/cancel$/)
+    if(req.method==='POST'&&workflowExecutionCancelMatch){
+      const execution=await cancelWorkflowExecution({workspaceId,executionId:decodeURIComponent(workflowExecutionCancelMatch[1]),actorId:req.user?.userId||null})
+      if(!execution)return send(req,res,404,{error:'workflow execution not found'})
+      await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'workflow.execution_cancelled',entityType:'workflow_execution',entityId:execution.id,requestId:req.requestId,traceId:req.context?.traceId}).catch(()=>{})
+      return send(req,res,200,execution)
+    }
+    const workflowExecutionRetryMatch=url.pathname.match(/^\/api\/workflows\/executions\/([^/]+)\/retry$/)
+    if(req.method==='POST'&&workflowExecutionRetryMatch){
+      try{
+        const execution=await handleRetryWorkflowExecution({workspaceId,executionId:decodeURIComponent(workflowExecutionRetryMatch[1]),actorId:req.user?.userId||null})
+        if(!execution)return send(req,res,404,{error:'workflow execution not found'})
+        await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'workflow.execution_retried',entityType:'workflow_execution',entityId:execution.id,requestId:req.requestId,traceId:req.context?.traceId,metadata:{attempts:Number(execution.attempts||0)}}).catch(()=>{})
+        return send(req,res,200,execution)
+      }catch(error){
+        return send(req,res,Number(error?.status||409),{error:error instanceof Error?error.message:'workflow retry failed',code:error?.code||'workflow_retry_failed'})
+      }
+    }
+    const workflowMatch=url.pathname.match(/^\/api\/workflows\/([^/]+)$/)
+    if(req.method==='GET'&&workflowMatch){
+      const workflow=await getWorkflow({workspaceId,id:decodeURIComponent(workflowMatch[1])})
+      return workflow?send(req,res,200,workflow):send(req,res,404,{error:'workflow not found'})
+    }
+    const workflowVersionMatch=url.pathname.match(/^\/api\/workflows\/([^/]+)\/versions$/)
+    if(req.method==='POST'&&workflowVersionMatch){
+      const body=await readBody(req)
+      try{
+        const workflow=await createWorkflowVersion({workspaceId,id:decodeURIComponent(workflowVersionMatch[1]),definition:body.definition,actorId:req.user?.userId||null})
+        if(!workflow)return send(req,res,404,{error:'workflow not found'})
+        await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'workflow.version_created',entityType:'workflow',entityId:workflow.id,requestId:req.requestId,traceId:req.context?.traceId,metadata:{version:Number(workflow.version||workflow.latest_version||0)}}).catch(()=>{})
+        return send(req,res,201,workflow)
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'workflow version failed',code:error?.code||'workflow_version_failed'})
+      }
+    }
+    const workflowArchiveMatch=url.pathname.match(/^\/api\/workflows\/([^/]+)\/archive$/)
+    if(req.method==='POST'&&workflowArchiveMatch){
+      try{
+        const workflow=await archiveWorkflow({workspaceId,id:decodeURIComponent(workflowArchiveMatch[1]),actorId:req.user?.userId||null})
+        if(!workflow)return send(req,res,404,{error:'workflow not found'})
+        await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'workflow.archived',entityType:'workflow',entityId:workflow.id,requestId:req.requestId,traceId:req.context?.traceId}).catch(()=>{})
+        return send(req,res,200,workflow)
+      }catch(error){
+        return send(req,res,Number(error?.status||409),{error:error instanceof Error?error.message:'workflow archive failed',code:error?.code||'workflow_archive_failed'})
+      }
+    }
+    const workflowPublishMatch=url.pathname.match(/^\/api\/workflows\/([^/]+)\/publish$/)
+    if(req.method==='POST'&&workflowPublishMatch){
+      const workflow=await handlePublishWorkflow({workspaceId,id:decodeURIComponent(workflowPublishMatch[1])})
+      if(!workflow)return send(req,res,404,{error:'workflow not found'})
+      await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'workflow.published',entityType:'workflow',entityId:workflow.id,requestId:req.requestId,traceId:req.context?.traceId,metadata:{version:Number(workflow.published_version||0)}}).catch(()=>{})
+      return send(req,res,200,workflow)
+    }
+    const workflowStartMatch=url.pathname.match(/^\/api\/workflows\/([^/]+)\/executions$/)
+    if(req.method==='POST'&&workflowStartMatch){
+      const body=await readBody(req)
+      const execution=await startWorkflowExecution({
+        workspaceId,
+        id:decodeURIComponent(workflowStartMatch[1]),
+        actorId:req.user?.userId||null,
+        triggerType:body.triggerType||'manual',
+        triggerRef:body.triggerRef||null,
+        correlationId:req.context?.requestId||null,
+        causationId:body.causationId||null,
+        deadlineAt:body.deadlineAt||null
+      })
+      return execution?send(req,res,202,execution):send(req,res,404,{error:'published workflow not found'})
+    }
+    const approvalCreateMatch=url.pathname.match(/^\/api\/workflows\/executions\/([^/]+)\/approvals$/)
+    if(req.method==='POST'&&approvalCreateMatch){
+      const body=await readBody(req)
+      const approval=await createWorkflowApproval({
+        workspaceId,
+        executionId:decodeURIComponent(approvalCreateMatch[1]),
+        nodeId:String(body.nodeId||''),
+        requestedBy:req.user?.userId||null,
+        approverScope:body.approverScope||null,
+        policyVersion:body.policyVersion||null
+      })
+      return approval?send(req,res,201,approval):send(req,res,404,{error:'workflow execution not found'})
+    }
+    const approvalDecisionMatch=url.pathname.match(/^\/api\/workflows\/approvals\/([^/]+)\/decision$/)
+    if(req.method==='POST'&&approvalDecisionMatch){
+      const body=await readBody(req)
+      try{
+        const approval=await handleDecideApproval({
+          workspaceId,
+          approvalId:decodeURIComponent(approvalDecisionMatch[1]),
+          actorId:req.user?.userId||null,
+          decision:body.decision,
+          comment:body.comment||''
+        })
+        if(!approval)return send(req,res,404,{error:'workflow approval not found'})
+        await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'workflow.approval_decided',entityType:'workflow_approval',entityId:approval.id,requestId:req.requestId,traceId:req.context?.traceId,metadata:{decision:approval.status}}).catch(()=>{})
+        return send(req,res,200,approval)
+      }catch(error){
+        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'workflow approval failed',code:error?.code||'workflow_approval_failed'})
+      }
+    }
+
+    return send(req,res,404,{error:'not found'})
+  } catch (error) {
+    return send(req,res,500,{error:error instanceof Error?error.message:'internal error'})
+  }
+  })
+})
+
+installLiveVoiceWebSocket(server)
+server.keepAliveTimeout=65_000
+server.headersTimeout=66_000
+server.requestTimeout=30_000
+server.listen(PORT,()=>{markStartupComplete();console.log(`AceMarketing API listening on http://localhost:${PORT}`)})
+const shutdown=signal=>{beginProcessDrain();console.log(`${signal} received; draining before shutdown`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations(),closeObservability(),closeEntitlements(),closeBillingProvider(),closeConsentStore(),closePrivacyOps(),closeAudienceScheduler(),closeCohortAnalytics(),closeEventRules(),closeAiRuntime(),closeKnowledge(),closeAiDatasets(),closeLiveVoice()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
+process.on('SIGTERM',()=>shutdown('SIGTERM'))
+process.on('SIGINT',()=>shutdown('SIGINT'))
+,'i').test(filename))return send(req,res,400,{error:'Workbook filename must match the current feature'})
+      let parsed
+      try{parsed=parseQaWorkbook(Buffer.from(body.base64,'base64'))}catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'Invalid XLSX'})}
+      const fixture={filename,columns:parsed.columns,records:parsed.records,recordCount:parsed.records.length,uploadedAt:new Date().toISOString(),uploadedBy:req.user.userId}
+      await mutateState(state=>{
+        state.qaFeatureFixtures=state.qaFeatureFixtures||{}
+        state.qaFeatureFixtures[feature]=fixture
+        state.audit=state.audit||[]
+        state.audit.unshift({id:randomUUID(),action:'qa_fixture.upload',feature,records:fixture.recordCount,actorId:req.user.userId,at:fixture.uploadedAt})
+        state.audit=state.audit.slice(0,1000)
+      })
+      return send(req,res,200,{feature,fixture,operationalDataChanged:false})
     }
     if (req.method === 'GET' && url.pathname === '/api/data-hub') {
       const [state,leadStats,attr,providerData]=await Promise.all([getState(),leadOpsStats(workspaceId),attributionStats(workspaceId),connectorDataSummary(workspaceId).catch(()=>({available:false,raw:[],campaigns:[],crm:[]}))])
