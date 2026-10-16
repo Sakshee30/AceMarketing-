@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react'
-import {Activity,ArrowRight,Check,CheckCircle2,ChevronRight,DatabaseZap,ShieldCheck,Sparkles,UsersRound} from 'lucide-react'
+import {Activity,ArrowRight,Check,CheckCircle2,ChevronRight,DatabaseZap,ShieldCheck,Sparkles,UsersRound,UploadCloud} from 'lucide-react'
 import {dataHubApi} from '../data/data-hub.api'
 import {ErrorState,LoadingState,StaleState} from '../../../components/system/FrontendStates'
 
@@ -9,6 +9,7 @@ type Notice={kind:'ok'|'error'|'unknown'|'',text:string}
 const unknownMutation=(error:any)=>['timeout','network'].includes(String(error?.details?.cause||''))
 
 export default function DataHubPage(){
+ const [excelSelection,setExcelSelection]=useState<{name:string;size:number;error?:string}|null>(null)
  const [hub,setHub]=useState<any>(null)
  const [selected,setSelected]=useState('')
  const [rebuilding,setRebuilding]=useState(false)
@@ -56,6 +57,18 @@ export default function DataHubPage(){
  const recent=(hub?.recent||[]).slice(0,100)
 
  return <>
+  <section className="app-panel" aria-label="Excel QA file staging">
+   <div className="panel-head"><div><h3>Excel test-data upload</h3><p>Select a feature-specific XLSX workbook for import review. Selection is local only; no data is sent or saved until a validated backend importer is connected.</p></div></div>
+   <label className="app-primary" htmlFor="ace-qa-excel-upload" style={{display:'inline-flex',alignItems:'center',gap:8,cursor:'pointer'}}><UploadCloud/>Select Excel file</label>
+   <input id="ace-qa-excel-upload" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style={{position:'absolute',width:1,height:1,opacity:0}} onChange={event=>{
+     const file=event.currentTarget.files?.[0]
+     if(!file){setExcelSelection(null);return}
+     const error=!file.name.toLowerCase().endsWith('.xlsx')?'Only .xlsx workbooks are supported.':file.size>10*1024*1024?'The selected workbook exceeds 10 MB.':file.size===0?'The selected workbook is empty.':undefined
+     setExcelSelection({name:file.name,size:file.size,error})
+     event.currentTarget.value=''
+   }}/>
+   {excelSelection&&<p role={excelSelection.error?'alert':'status'}>{excelSelection.error||('Selected: '+excelSelection.name+' ('+Math.round(excelSelection.size/1024)+' KB). Not imported. Backend schema mapping and save must be implemented before activation.')}</p>}
+  </section>
   <PageHead crumb="Data / Data Hub" title="Unified customer data hub" sub="Normalize connected first-party sources into one governed customer, journey and revenue truth for attribution, activation and agents." action="Add data source" onAction={addSource}/>
 
   {loading&&!hub&&<LoadingState title="Loading Data Hub" description="Reading source registry, identity, attribution and schema-health evidence."/>}
