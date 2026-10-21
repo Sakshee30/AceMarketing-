@@ -3,6 +3,7 @@ import {StdioServerTransport} from '@modelcontextprotocol/server/stdio'
 import * as z from 'zod/v4'
 import {randomUUID} from 'node:crypto'
 import {authenticateMcpToken,getMcpCatalog,getMcpStatus,readMcpResource,prepareMcpAction,confirmMcpAction,MCP_SERVER_VERSION} from '../src/mcp-service.mjs'
+import {getJob} from '../src/queue.mjs'
 
 const token=process.env.ACE_MCP_TOKEN||''
 const workspaceId=process.env.ACE_MCP_WORKSPACE_ID||process.env.DEFAULT_WORKSPACE_ID||'ws_default'
@@ -41,6 +42,22 @@ server.registerTool('ace_get_campaign_performance',{title:'Campaign performance'
   try{assertScope('mcp.analyze');assertRole('reports.read');const data=await readMcpResource({workspaceId,uri:'ace://campaigns/performance'});return result({workspaceId,campaigns:(data.campaigns||[]).slice(0,limit)})}catch(error){return fail(error)}
 })
 
+server.registerTool('ace_analyze_lead_quality',{title:'Analyze lead quality',description:'Summarize bounded lead-quality evidence.',inputSchema:z.object({limit:z.number().int().min(1).max(100).default(50)}),outputSchema:z.object({workspaceId:z.string(),leads:z.array(z.unknown()),limitations:z.array(z.string())}).passthrough()},async({limit=50})=>{
+  try{assertScope('mcp.analyze');assertRole('ai.analysis.run');const data=await readMcpResource({workspaceId,uri:'ace://leads/quality'});return result({workspaceId,leads:(data.leads||[]).slice(0,limit),limitations:['Lead-quality analysis is bounded to persisted workspace evidence.']})}catch(error){return fail(error)}
+})
+
+server.registerTool('ace_get_customer_journey',{title:'Customer journeys',description:'Read recent customer journey evidence.',inputSchema:z.object({limit:z.number().int().min(1).max(100).default(50)}),outputSchema:z.object({workspaceId:z.string(),journeys:z.array(z.unknown())}).passthrough()},async({limit=50})=>{
+  try{assertScope('mcp.read');assertRole('workspace.read');const data=await readMcpResource({workspaceId,uri:'ace://journeys/recent'});return result({workspaceId,journeys:(data.journeys||[]).slice(0,limit)})}catch(error){return fail(error)}
+})
+
+server.registerTool('ace_get_monitoring_status',{title:'Monitoring status',description:'Read alert and integration monitoring evidence.',inputSchema:z.object({}),outputSchema:z.object({workspaceId:z.string(),alerts:z.array(z.unknown()),integrations:z.unknown()}).passthrough()},async()=>{
+  try{assertScope('mcp.read');assertRole('monitoring.read');const [alerts,integrations]=await Promise.all([readMcpResource({workspaceId,uri:'ace://monitoring/alerts'}),readMcpResource({workspaceId,uri:'ace://integrations/health'})]);return result({workspaceId,alerts:alerts.alerts||[],integrations})}catch(error){return fail(error)}
+})
+
+server.registerTool('ace_find_conversion_leakage',{title:'Find conversion leakage',description:'Identify persisted evidence that may indicate conversion leakage.',inputSchema:z.object({}),outputSchema:z.object({workspaceId:z.string(),signals:z.array(z.unknown()),limitations:z.array(z.string())}).passthrough()},async()=>{
+  try{assertScope('mcp.analyze');assertRole('ai.analysis.run');const data=await readMcpResource({workspaceId,uri:'ace://integrations/health'});const signals=(data.deliveries||[]).filter(item=>['failed','dead_letter','retrying'].includes(String(item.status||'').toLowerCase()));return result({workspaceId,signals,limitations:['Leakage signals are based on persisted delivery outcomes; provider-side attribution freshness may vary.']})}catch(error){return fail(error)}
+})
+
 server.registerTool('ace_get_attribution_summary',{title:'Attribution summary',description:'Read attribution evidence for the current workspace.',inputSchema:z.object({limit:z.number().int().min(1).max(100).default(50)}),outputSchema:z.object({workspaceId:z.string(),events:z.array(z.unknown())}).passthrough()},async({limit=50})=>{
   try{assertScope('mcp.analyze');assertRole('attribution.read');const data=await readMcpResource({workspaceId,uri:'ace://attribution/summary'});return result({workspaceId,events:(data.events||[]).slice(0,limit)})}catch(error){return fail(error)}
 })
@@ -65,13 +82,18 @@ server.registerTool('ace_confirm_action',{title:'Confirm action',description:'Co
   try{assertScope('mcp.execute');return result(await confirmMcpAction({workspaceId,actorId:auth.actorId,role:auth.role,actionId,idempotencyKey,requestId:requestId()}))}catch(error){return fail(error)}
 })
 
-server.registerTool('ace_get_job_status',{title:'Get job status',description:'Read a bounded job result from the current workspace.',inputSchema:z.object({jobId:z.string().min(1).max(160)}),outputSchema:z.object({jobId:z.string(),status:z.string()})},async({jobId})=>{
-  try{assertScope('mcp.read');assertRole('workspace.read');return result({jobId,status:'Use the AceMarketing job and audit APIs for the current durable job state.',workspaceId})}catch(error){return fail(error)}
+server.registerTool('ace_get_job_status',{title:'Get job status',description:'Read a bounded job result from the current workspace.',inputSchema:z.object({jobId:z.string().min(1).max(160)}),outputSchema:z.object({jobId:z.string(),status:z.string()}).passthrough()},async({jobId})=>{
+  try{assertScope('mcp.read');assertRole('workspace.read');const job=await getJob({workspaceId,id:jobId});return job?result({jobId,status:job.status,job}):fail(new Error('job not found'))}catch(error){return fail(error)}
 })
 
 server.registerResource('ace-workspace-overview','ace://workspace/overview',{title:'Workspace overview',description:'Workspace overview and connector state.',mimeType:'application/json'},async uri=>({contents:[{uri:uri.href,mimeType:'application/json',text:JSON.stringify(await readMcpResource({workspaceId,uri:uri.href}))}]}))
 server.registerResource('ace-campaign-performance','ace://campaigns/performance',{title:'Campaign performance',description:'Persisted campaign performance evidence.',mimeType:'application/json'},async uri=>({contents:[{uri:uri.href,mimeType:'application/json',text:JSON.stringify(await readMcpResource({workspaceId,uri:uri.href}))}]}))
 server.registerResource('ace-integration-health','ace://integrations/health',{title:'Integration health',description:'Connector health and delivery evidence.',mimeType:'application/json'},async uri=>({contents:[{uri:uri.href,mimeType:'application/json',text:JSON.stringify(await readMcpResource({workspaceId,uri:uri.href}))}]}))
+server.registerResource('ace-lead-quality','ace://leads/quality',{title:'Lead quality',description:'Persisted lead quality evidence.',mimeType:'application/json'},async uri=>({contents:[{uri:uri.href,mimeType:'application/json',text:JSON.stringify(await readMcpResource({workspaceId,uri:uri.href}))}]}))
+server.registerResource('ace-journeys-recent','ace://journeys/recent',{title:'Recent journeys',description:'Recent customer journey evidence.',mimeType:'application/json'},async uri=>({contents:[{uri:uri.href,mimeType:'application/json',text:JSON.stringify(await readMcpResource({workspaceId,uri:uri.href}))}]}))
+server.registerResource('ace-monitoring-alerts','ace://monitoring/alerts',{title:'Monitoring alerts',description:'Persisted monitoring alerts.',mimeType:'application/json'},async uri=>({contents:[{uri:uri.href,mimeType:'application/json',text:JSON.stringify(await readMcpResource({workspaceId,uri:uri.href}))}]}))
+server.registerResource('ace-ai-evaluations','ace://ai/evaluations',{title:'AI evaluations',description:'Persisted AI evaluation evidence.',mimeType:'application/json'},async uri=>({contents:[{uri:uri.href,mimeType:'application/json',text:JSON.stringify(await readMcpResource({workspaceId,uri:uri.href}))}]}))
+server.registerResource('ace-audit-recent','ace://audit/recent',{title:'Recent audit',description:'Recent workspace audit events.',mimeType:'application/json'},async uri=>({contents:[{uri:uri.href,mimeType:'application/json',text:JSON.stringify(await readMcpResource({workspaceId,uri:uri.href}))}]}))
 
 server.registerPrompt('ace_campaign_review',{title:'Campaign review',description:'Review campaign performance using evidence from the current workspace.',argsSchema:z.object({question:z.string().optional()} )},({question=''})=>({messages:[{role:'user',content:{type:'text',text:`Review current campaign performance for this workspace. ${question}\nUse evidence, distinguish facts from inferences, identify limitations, and recommend only governed next steps.`}}]}))
 server.registerPrompt('ace_executive_brief',{title:'Executive brief',description:'Prepare an executive marketing brief from workspace evidence.',argsSchema:z.object({period:z.string().optional()} )},({period='current period'})=>({messages:[{role:'user',content:{type:'text',text:`Prepare an executive brief for ${period}. Use AceMarketing evidence, report uncertainty, and separate recommendations from confirmed facts.`}}]}))
