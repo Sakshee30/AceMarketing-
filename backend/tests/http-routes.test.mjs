@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {handleMcpRoutes} from '../src/http/routes/mcp-routes.mjs'
 import {handleWorkflowRoutes} from '../src/http/routes/workflow-routes.mjs'
 import {handlePlatformRoutes} from '../src/http/routes/platform-routes.mjs'
+import {handleAiRoutes} from '../src/http/routes/ai-routes.mjs'
 
 const request={method:'GET',user:{userId:'test-user',role:'owner'},requestId:'route-test',context:{traceId:'trace-test'}}
 const response=()=>{
@@ -63,4 +64,20 @@ test('platform route composer leaves unrelated routes untouched',async()=>{
   })
   assert.equal(handled,false)
   assert.equal(output.calls.length,0)
+})
+
+test('AI route module exposes the metric catalog through its own boundary',async()=>{
+  const output=response()
+  const handled=await handleAiRoutes({
+    req:request,
+    res:{},
+    url:new URL('http://localhost/api/ai/metrics/catalog'),
+    workspaceId:'ws_test',
+    readBody:async()=>({}),
+    send:output.send.bind(output),
+    authenticatedUser:request.user,
+    isProd:false
+  })
+  assert.equal(handled,true)
+  assert.equal(output.calls[0][2],200)
 })
