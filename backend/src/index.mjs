@@ -54,8 +54,7 @@ import {createWebhookSubscription,createWebhookTestDelivery,listWebhookDeliverie
 import {createForm,getForm,listForms,listFormSubmissions,publishForm,submitForm} from './platform/forms-store.mjs'
 import {createCustomObject,createCustomObjectRecord,createCustomObjectVersion,getCustomObject,listCustomObjectRecords,listCustomObjects,publishCustomObject} from './platform/custom-object-store.mjs'
 import {archivePolicyRule,createPolicyRule,createPolicyRuleVersion,evaluatePublishedPolicyRule,getPolicyRule,listPolicyRules,publishPolicyRule,simulatePolicyExpression} from './platform/policy-engine.mjs'
-import {archiveWorkflow,cancelWorkflowExecution,createWorkflow,createWorkflowApproval,createWorkflowVersion,decideWorkflowApproval,getWorkflow,listWorkflowApprovals,listWorkflowExecutionSteps,listWorkflowExecutions,listWorkflows,publishWorkflow,retryWorkflowExecution,simulateWorkflowDefinition,startWorkflowExecution} from './platform/workflow-store.mjs'
-import {workflowActionCatalog} from './platform/workflow-action-catalog.mjs'
+import { handleWorkflowRoutes } from './http/routes/workflow-routes.mjs'
 import {createDownloadGrant,createUploadIntent,listObjects,markObjectQuarantined,softDeleteObject} from './platform/object-lifecycle.mjs'
 import {markObjectProcessingFailure} from './platform/document-processing.mjs'
 import {querySearch,searchCapabilityProfile} from './platform/search-port.mjs'
@@ -72,9 +71,6 @@ import {handleSimulateRule} from '../modules/rules/src/application/queries/simul
 import {handleUpdateWorkspace} from '../modules/workspaces/src/application/commands/update-workspace/update-workspace.handler.mjs'
 import {handleRemoveMember} from '../modules/memberships/src/application/commands/remove-member/remove-member.handler.mjs'
 import {handlePublishRule} from '../modules/rules/src/application/commands/publish-rule/publish-rule.handler.mjs'
-import {handlePublishWorkflow} from '../modules/workflows/src/application/commands/publish-workflow/publish-workflow.handler.mjs'
-import {handleRetryWorkflowExecution} from '../modules/workflows/src/application/commands/retry-step/retry-step.handler.mjs'
-import {handleDecideApproval} from '../modules/approvals/src/application/commands/decide-approval/decide-approval.handler.mjs'
 import {handleEvaluateEntitlement} from '../modules/entitlements/src/application/queries/evaluate-entitlement/evaluate-entitlement.handler.mjs'
 import {handleDefineCustomObject} from '../modules/custom-objects/src/application/commands/define-object/define-object.handler.mjs'
 import {handleQuerySearch} from '../modules/search/src/application/queries/query-search/query-search.handler.mjs'
@@ -100,7 +96,7 @@ import {handleActivateModelResult} from '../modules/ai/src/application/commands/
 import {handleReplayDeadLetter} from '../modules/jobs/src/application/commands/replay-dead-letter/replay-dead-letter.handler.mjs'
 import {handleSearchAudit} from '../modules/audit/src/application/queries/search-audit/search-audit.handler.mjs'
 import {handleExportAudit} from '../modules/audit/src/application/commands/export-audit/export-audit.handler.mjs'
-import {MCP_SERVER_VERSION,MCP_SCOPES,MCP_SCOPE_PRESETS,MCP_POLICY_GROUPS,MCP_DEFAULT_POLICY,createMcpToken,listMcpTokens,revokeMcpToken,rotateMcpToken,getMcpPolicy,saveMcpPolicy,listMcpActivity,getMcpStatus,getMcpCatalog,runMcpDiagnostics} from './mcp-service.mjs'
+import { handleMcpRoutes } from './http/routes/mcp-routes.mjs'
 
 const runtimeRole=runtimeRolePolicy()
 
@@ -6415,39 +6411,7 @@ const server = http.createServer(async (req,res)=>{
         return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'workspace settings update failed',code:error?.code||'workspace_settings_update_failed'})
       }
     }
-    if (req.method === 'GET' && url.pathname === '/api/mcp/status') return send(req,res,200,await getMcpStatus(workspaceId))
-    if (req.method === 'GET' && url.pathname === '/api/mcp/catalog') {
-      const category=url.searchParams.get('category')||null
-      const kind=url.searchParams.get('kind')||null
-      return send(req,res,200,{serverVersion:MCP_SERVER_VERSION,scopes:MCP_SCOPES,presets:MCP_SCOPE_PRESETS,policyGroups:MCP_POLICY_GROUPS,items:getMcpCatalog({category,kind})})
-    }
-    if (req.method === 'GET' && url.pathname === '/api/mcp/tokens') return send(req,res,200,{items:await listMcpTokens(workspaceId),presets:MCP_SCOPE_PRESETS,scopes:MCP_SCOPES})
-    if (req.method === 'POST' && url.pathname === '/api/mcp/tokens') {
-      const body=await readBody(req)
-      try{
-        const created=await createMcpToken({workspaceId,actorId:req.user?.userId,role:req.user?.role,label:body.label,expiresIn:body.expiresIn||body.expiresAt||'1h',scopes:body.scopes,preset:body.preset||'analyst',requestId:req.requestId,traceId:req.context?.traceId})
-        return send(req,res,201,created)
-      }catch(error){return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'MCP token creation failed',code:error?.code||'mcp_token_creation_failed'})}
-    }
-    const mcpTokenAction=url.pathname.match(/^\/api\/mcp\/tokens\/([^/]+)\/(revoke|rotate)$/)
-    if(req.method==='POST'&&mcpTokenAction){
-      try{
-        const id=decodeURIComponent(mcpTokenAction[1])
-        if(mcpTokenAction[2]==='revoke')return send(req,res,200,await revokeMcpToken({workspaceId,id,actorId:req.user?.userId,requestId:req.requestId,traceId:req.context?.traceId}))
-        return send(req,res,201,await rotateMcpToken({workspaceId,id,actorId:req.user?.userId,role:req.user?.role,requestId:req.requestId,traceId:req.context?.traceId}))
-      }catch(error){return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'MCP token action failed',code:error?.code||'mcp_token_action_failed'})}
-    }
-    if (req.method === 'GET' && url.pathname === '/api/mcp/policy') return send(req,res,200,{policy:await getMcpPolicy(workspaceId),groups:MCP_POLICY_GROUPS,defaults:MCP_DEFAULT_POLICY})
-    if (req.method === 'PUT' && url.pathname === '/api/mcp/policy') {
-      const body=await readBody(req)
-      try{return send(req,res,200,{policy:await saveMcpPolicy({workspaceId,policy:body.policy||body,actorId:req.user?.userId,requestId:req.requestId,traceId:req.context?.traceId})})}
-      catch(error){return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'MCP policy update failed',code:error?.code||'mcp_policy_update_failed'})}
-    }
-    if (req.method === 'GET' && url.pathname === '/api/mcp/activity') return send(req,res,200,{items:await listMcpActivity({workspaceId,limit:Number(url.searchParams.get('limit')||100)})})
-    if (req.method === 'POST' && url.pathname === '/api/mcp/diagnostics') {
-      try{return send(req,res,200,await runMcpDiagnostics(workspaceId))}
-      catch(error){return send(req,res,503,{error:error instanceof Error?error.message:'MCP diagnostics unavailable',code:'mcp_diagnostics_unavailable'})}
-    }
+    if (await handleMcpRoutes({req,res,url,workspaceId,readBody,send})) return
     if (req.method === 'GET' && url.pathname === '/api/workspaces') {
       const registry=await withWorkspace('ws_default',()=>getState())
       const currentState=await getState()
@@ -7033,139 +6997,7 @@ const server = http.createServer(async (req,res)=>{
       }
     }
 
-    if(req.method==='GET'&&url.pathname==='/api/workflows/actions'){
-      return send(req,res,200,{version:1,items:workflowActionCatalog()})
-    }
-    if(req.method==='POST'&&url.pathname==='/api/workflows/simulate'){
-      const body=await readBody(req)
-      try{
-        return send(req,res,200,simulateWorkflowDefinition(body.definition))
-      }catch(error){
-        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'workflow simulation failed',code:error?.code||'workflow_simulation_failed'})
-      }
-    }
-    if(req.method==='GET'&&url.pathname==='/api/workflows'){
-      return send(req,res,200,{items:await listWorkflows({workspaceId,limit:Number(url.searchParams.get('limit')||100)})})
-    }
-    if(req.method==='POST'&&url.pathname==='/api/workflows'){
-      const body=await readBody(req)
-      try{
-        const workflow=await createWorkflow({workspaceId,name:body.name,definition:body.definition,actorId:req.user?.userId||null})
-        await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'workflow.created',entityType:'workflow',entityId:workflow.id,requestId:req.requestId,traceId:req.context?.traceId}).catch(()=>{})
-        return send(req,res,201,workflow)
-      }catch(error){
-        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'workflow creation failed',code:error?.code||'workflow_create_failed'})
-      }
-    }
-    if(req.method==='GET'&&url.pathname==='/api/workflows/executions'){
-      return send(req,res,200,{items:await listWorkflowExecutions({workspaceId,workflowId:url.searchParams.get('workflowId')||null,limit:Number(url.searchParams.get('limit')||100)})})
-    }
-    if(req.method==='GET'&&url.pathname==='/api/workflows/approvals'){
-      return send(req,res,200,{items:await listWorkflowApprovals({workspaceId,status:url.searchParams.get('status')||null,limit:Number(url.searchParams.get('limit')||100)})})
-    }
-    const workflowExecutionStepsMatch=url.pathname.match(/^\/api\/workflows\/executions\/([^/]+)\/steps$/)
-    if(req.method==='GET'&&workflowExecutionStepsMatch){
-      return send(req,res,200,{items:await listWorkflowExecutionSteps({workspaceId,executionId:decodeURIComponent(workflowExecutionStepsMatch[1])})})
-    }
-    const workflowExecutionCancelMatch=url.pathname.match(/^\/api\/workflows\/executions\/([^/]+)\/cancel$/)
-    if(req.method==='POST'&&workflowExecutionCancelMatch){
-      const execution=await cancelWorkflowExecution({workspaceId,executionId:decodeURIComponent(workflowExecutionCancelMatch[1]),actorId:req.user?.userId||null})
-      if(!execution)return send(req,res,404,{error:'workflow execution not found'})
-      await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'workflow.execution_cancelled',entityType:'workflow_execution',entityId:execution.id,requestId:req.requestId,traceId:req.context?.traceId}).catch(()=>{})
-      return send(req,res,200,execution)
-    }
-    const workflowExecutionRetryMatch=url.pathname.match(/^\/api\/workflows\/executions\/([^/]+)\/retry$/)
-    if(req.method==='POST'&&workflowExecutionRetryMatch){
-      try{
-        const execution=await handleRetryWorkflowExecution({workspaceId,executionId:decodeURIComponent(workflowExecutionRetryMatch[1]),actorId:req.user?.userId||null})
-        if(!execution)return send(req,res,404,{error:'workflow execution not found'})
-        await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'workflow.execution_retried',entityType:'workflow_execution',entityId:execution.id,requestId:req.requestId,traceId:req.context?.traceId,metadata:{attempts:Number(execution.attempts||0)}}).catch(()=>{})
-        return send(req,res,200,execution)
-      }catch(error){
-        return send(req,res,Number(error?.status||409),{error:error instanceof Error?error.message:'workflow retry failed',code:error?.code||'workflow_retry_failed'})
-      }
-    }
-    const workflowMatch=url.pathname.match(/^\/api\/workflows\/([^/]+)$/)
-    if(req.method==='GET'&&workflowMatch){
-      const workflow=await getWorkflow({workspaceId,id:decodeURIComponent(workflowMatch[1])})
-      return workflow?send(req,res,200,workflow):send(req,res,404,{error:'workflow not found'})
-    }
-    const workflowVersionMatch=url.pathname.match(/^\/api\/workflows\/([^/]+)\/versions$/)
-    if(req.method==='POST'&&workflowVersionMatch){
-      const body=await readBody(req)
-      try{
-        const workflow=await createWorkflowVersion({workspaceId,id:decodeURIComponent(workflowVersionMatch[1]),definition:body.definition,actorId:req.user?.userId||null})
-        if(!workflow)return send(req,res,404,{error:'workflow not found'})
-        await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'workflow.version_created',entityType:'workflow',entityId:workflow.id,requestId:req.requestId,traceId:req.context?.traceId,metadata:{version:Number(workflow.version||workflow.latest_version||0)}}).catch(()=>{})
-        return send(req,res,201,workflow)
-      }catch(error){
-        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'workflow version failed',code:error?.code||'workflow_version_failed'})
-      }
-    }
-    const workflowArchiveMatch=url.pathname.match(/^\/api\/workflows\/([^/]+)\/archive$/)
-    if(req.method==='POST'&&workflowArchiveMatch){
-      try{
-        const workflow=await archiveWorkflow({workspaceId,id:decodeURIComponent(workflowArchiveMatch[1]),actorId:req.user?.userId||null})
-        if(!workflow)return send(req,res,404,{error:'workflow not found'})
-        await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'workflow.archived',entityType:'workflow',entityId:workflow.id,requestId:req.requestId,traceId:req.context?.traceId}).catch(()=>{})
-        return send(req,res,200,workflow)
-      }catch(error){
-        return send(req,res,Number(error?.status||409),{error:error instanceof Error?error.message:'workflow archive failed',code:error?.code||'workflow_archive_failed'})
-      }
-    }
-    const workflowPublishMatch=url.pathname.match(/^\/api\/workflows\/([^/]+)\/publish$/)
-    if(req.method==='POST'&&workflowPublishMatch){
-      const workflow=await handlePublishWorkflow({workspaceId,id:decodeURIComponent(workflowPublishMatch[1])})
-      if(!workflow)return send(req,res,404,{error:'workflow not found'})
-      await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'workflow.published',entityType:'workflow',entityId:workflow.id,requestId:req.requestId,traceId:req.context?.traceId,metadata:{version:Number(workflow.published_version||0)}}).catch(()=>{})
-      return send(req,res,200,workflow)
-    }
-    const workflowStartMatch=url.pathname.match(/^\/api\/workflows\/([^/]+)\/executions$/)
-    if(req.method==='POST'&&workflowStartMatch){
-      const body=await readBody(req)
-      const execution=await startWorkflowExecution({
-        workspaceId,
-        id:decodeURIComponent(workflowStartMatch[1]),
-        actorId:req.user?.userId||null,
-        triggerType:body.triggerType||'manual',
-        triggerRef:body.triggerRef||null,
-        correlationId:req.context?.requestId||null,
-        causationId:body.causationId||null,
-        deadlineAt:body.deadlineAt||null
-      })
-      return execution?send(req,res,202,execution):send(req,res,404,{error:'published workflow not found'})
-    }
-    const approvalCreateMatch=url.pathname.match(/^\/api\/workflows\/executions\/([^/]+)\/approvals$/)
-    if(req.method==='POST'&&approvalCreateMatch){
-      const body=await readBody(req)
-      const approval=await createWorkflowApproval({
-        workspaceId,
-        executionId:decodeURIComponent(approvalCreateMatch[1]),
-        nodeId:String(body.nodeId||''),
-        requestedBy:req.user?.userId||null,
-        approverScope:body.approverScope||null,
-        policyVersion:body.policyVersion||null
-      })
-      return approval?send(req,res,201,approval):send(req,res,404,{error:'workflow execution not found'})
-    }
-    const approvalDecisionMatch=url.pathname.match(/^\/api\/workflows\/approvals\/([^/]+)\/decision$/)
-    if(req.method==='POST'&&approvalDecisionMatch){
-      const body=await readBody(req)
-      try{
-        const approval=await handleDecideApproval({
-          workspaceId,
-          approvalId:decodeURIComponent(approvalDecisionMatch[1]),
-          actorId:req.user?.userId||null,
-          decision:body.decision,
-          comment:body.comment||''
-        })
-        if(!approval)return send(req,res,404,{error:'workflow approval not found'})
-        await appendAuditRecord({workspaceId,actorId:req.user?.userId,action:'workflow.approval_decided',entityType:'workflow_approval',entityId:approval.id,requestId:req.requestId,traceId:req.context?.traceId,metadata:{decision:approval.status}}).catch(()=>{})
-        return send(req,res,200,approval)
-      }catch(error){
-        return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'workflow approval failed',code:error?.code||'workflow_approval_failed'})
-      }
-    }
+    if (await handleWorkflowRoutes({req,res,url,workspaceId,readBody,send})) return
 
     return send(req,res,404,{error:'not found'})
   } catch (error) {
