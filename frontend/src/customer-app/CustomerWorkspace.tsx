@@ -17,6 +17,7 @@ import {buildWorkspaceHash,parseWorkspaceIdFromHash,parseWorkspaceTabFromHash,wo
 import {AccessibleDialog} from '../components/system/AccessibleDialog'
 import {getSessionGeneration} from '../../../packages/client-core/src/session-authority'
 import {customerQueryKeys,currentWorkspaceScopeId,customerRetryDelay,shouldRetryCustomerRead} from '../../../packages/client-core/src/query-scope'
+import FeatureExcelUpload from './FeatureExcelUpload'
 
 type AppTab='Launchpad'|'Overview'|'Boards'|'AdSync'|'ChatGPT Ads'|'Funnel'|'Leak Monitor'|'Events'|'Adjustments'|'Diagnostics'|'Match Quality'|'Reconciliation'|'Fraud'|'Deep Links'|'Sites'|'Fingerprinting'|'Live Sync'|'Data Hub'|'Customer 360'|'Offline Attribution'|'Matchback'|'POS & Stores'|'Journeys'|'Identity'|'Models'|'AI Intelligence'|'Attribution'|'Planner'|'Reports'|'Grouped Performance'|'Executive Briefs'|'Enrich'|'Lead Grading'|'Behavior'|'Feed'|'Agents'|'Routing'|'Follow-ups'|'Calls'|'Meetings'|'Feedback'|'Approvals'|'Ask Ace'|'Integrations'|'Data Flows'|'Real-Time Activation'|'Personalization'|'Exclusions'|'Audiences'|'Delivery'|'Monitoring'|'Alerts'|'Compliance'|'Developers'|'Settings'
 
@@ -136,6 +137,7 @@ function CustomerWorkspaceShell({back,queryClient}:{back:()=>void;queryClient:Qu
  const [mobileNavOpen,setMobileNavOpen]=useState(false)
  const [workspace,setWorkspace]=useState('')
  const [workspaceGeneration,setWorkspaceGeneration]=useState(0)
+ const [fixtureGeneration,setFixtureGeneration]=useState(0)
  const [sessionUser,setSessionUser]=useState<any>(null)
  const [workspaceSettings,setWorkspaceSettings]=useState<any>(null)
  const [workspaceTransition,setWorkspaceTransition]=useState<any>(null)
@@ -206,6 +208,11 @@ function CustomerWorkspaceShell({back,queryClient}:{back:()=>void;queryClient:Qu
   return()=>{active=false;window.clearInterval(id)}
  },[workspaceGeneration,queryClient])
  useEffect(()=>{window.localStorage.setItem('ace_active_tab',tab)},[tab])
+ useEffect(()=>{
+  const onFixture=()=>setFixtureGeneration(value=>value+1)
+  window.addEventListener('ace-qa-fixture-uploaded',onFixture)
+  return()=>window.removeEventListener('ace-qa-fixture-uploaded',onFixture)
+ },[])
  useEffect(()=>{window.localStorage.setItem('ace_nav_sections',JSON.stringify(navOpen))},[navOpen])
  useEffect(()=>{const section=dashboardSections.find(s=>s.tabs.includes(tab as any));if(section&&!navOpen[section.id])setNavOpen(Object.fromEntries(dashboardSections.map(item=>[item.id,item.id===section.id])))},[tab])
  useEffect(()=>{const openTab=(event:any)=>{const next=event?.detail as AppTab;if(appTabs.some(([name])=>name===next))navigateToTab(next)};window.addEventListener('ace-app-tab',openTab as EventListener);return()=>window.removeEventListener('ace-app-tab',openTab as EventListener)},[tab])
@@ -313,7 +320,7 @@ function CustomerWorkspaceShell({back,queryClient}:{back:()=>void;queryClient:Qu
    return <button key={section.id} className={active?'active':''} aria-label={section.label} onClick={()=>navigateToTab(target as AppTab)}><span><Icon/></span><div><b aria-hidden="true">{section.label}</b><small>{area?.ready?'Ready':sectionSummary?'Needs setup':'Checking…'}</small></div><i className={area?.ready?'ready':'setup'}/></button>
   })}
  </div>
- <div className="product-body">{workspaceTransition?<div className={'app-panel workspace-transition '+workspaceTransition.state} role={workspaceTransition.state==='error'?'alert':'status'}><div className="workspace-transition-icon">{workspaceTransition.state==='error'?<AlertTriangle/>:<Activity/>}</div><div><span>{workspaceTransition.state==='error'?'WORKSPACE SWITCH BLOCKED':'SWITCHING WORKSPACE'}</span><h1 tabIndex={-1}>{workspaceTransition.item?.name||'Workspace'}</h1><p>{workspaceTransition.message}</p>{workspaceTransition.state==='resolving'&&<small>Previous workspace content is intentionally hidden until the target scope is confirmed.</small>}</div>{workspaceTransition.state==='error'&&<div className="workspace-transition-actions"><button onClick={()=>setWorkspaceTransition(null)}>Stay in {workspace}</button><button className="app-primary" onClick={retryWorkspace}><RefreshCw/>Retry</button></div>}</div>:<WorkspaceSectionBoundary key={workspaceGeneration+':'+tab} tab={tab}>{view}</WorkspaceSectionBoundary>}</div></main>
+  <div className="product-body">{workspaceTransition?<div className={'app-panel workspace-transition '+workspaceTransition.state} role={workspaceTransition.state==='error'?'alert':'status'}><div className="workspace-transition-icon">{workspaceTransition.state==='error'?<AlertTriangle/>:<Activity/>}</div><div><span>{workspaceTransition.state==='error'?'WORKSPACE SWITCH BLOCKED':'SWITCHING WORKSPACE'}</span><h1 tabIndex={-1}>{workspaceTransition.item?.name||'Workspace'}</h1><p>{workspaceTransition.message}</p>{workspaceTransition.state==='resolving'&&<small>Previous workspace content is intentionally hidden until the target scope is confirmed.</small>}</div>{workspaceTransition.state==='error'&&<div className="workspace-transition-actions"><button onClick={()=>setWorkspaceTransition(null)}>Stay in {workspace}</button><button className="app-primary" onClick={retryWorkspace}><RefreshCw/>Retry</button></div>}</div>:<><FeatureExcelUpload key={workspaceGeneration+':qa:'+tab} feature={tab} workspaceId={workspaceScopeId}/><WorkspaceSectionBoundary key={workspaceGeneration+':'+fixtureGeneration+':'+tab} tab={tab}>{view}</WorkspaceSectionBoundary></>}</div></main>
  {createOpen&&<AccessibleDialog ariaLabel="Create workspace" onClose={()=>setCreateOpen(false)}><div className="connector-card"><div className="connector-modal-head"><div><Building2/><div><b>Create workspace</b><small>Create a persisted tenant workspace.</small></div></div><button aria-label="Close create workspace dialog" onClick={()=>setCreateOpen(false)}><X/></button></div><div className="connector-step"><label>Workspace name<input value={workspaceDraft.name} onChange={e=>{setWorkspaceDraft({...workspaceDraft,name:e.target.value});setWorkspaceCreateError('')}} placeholder="Ace Retail" aria-describedby="workspace-name-help"/></label><small id="workspace-name-help">Use at least 2 characters.</small><label>Environment<select value={workspaceDraft.environment} onChange={e=>setWorkspaceDraft({...workspaceDraft,environment:e.target.value})}><option>Production</option><option>Sandbox</option></select></label>{workspaceCreateError&&<div className="connector-form-error" role="alert">{workspaceCreateError}</div>}<button disabled={workspaceBusy||workspaceDraft.name.trim().length<2} onClick={createWorkspace}>{workspaceBusy?'Creating…':'Create workspace'}</button></div></div></AccessibleDialog>}
  </div>
 }

@@ -78,16 +78,8 @@ export const upsertLeadProfile=async(workspaceId,input={})=>{
       crm_stage=COALESCE(EXCLUDED.crm_stage,ace_lead_profiles.crm_stage),
       intent=COALESCE(EXCLUDED.intent,ace_lead_profiles.intent),
       score=EXCLUDED.score,grade=EXCLUDED.grade,score_version=EXCLUDED.score_version,score_drivers=EXCLUDED.score_drivers,
-      attributes=ace_lead_profiles.attributes||EXCLUDED.attributes,
-      journey=ace_lead_profiles.journey
-        || CASE
-          WHEN EXCLUDED.journey->>'lastActivity' IS NOT NULL
-           AND ace_lead_profiles.journey->>'lastActivity' IS NOT NULL
-           AND EXCLUDED.journey->>'lastActivity' IS DISTINCT FROM ace_lead_profiles.journey->>'lastActivity'
-          THEN jsonb_build_object('previousLastActivity',ace_lead_profiles.journey->>'lastActivity')
-          ELSE '{}'::jsonb
-        END
-        || EXCLUDED.journey,
+      attributes=EXCLUDED.attributes,
+      journey=EXCLUDED.journey,
       call_summary=COALESCE(EXCLUDED.call_summary,ace_lead_profiles.call_summary),
       whatsapp_summary=COALESCE(EXCLUDED.whatsapp_summary,ace_lead_profiles.whatsapp_summary),
       updated_at=now()
@@ -162,7 +154,7 @@ export const overrideLeadGrade=async(workspaceId,externalLeadId,grade)=>{
   if(!pool)return null
   const score={A:90,B:75,C:55,D:35}[grade]
   const {rows}=await pool.query(
-    `UPDATE ace_lead_profiles SET grade=$3,score=$4,score_drivers=score_drivers||$5::jsonb,updated_at=now()
+    `UPDATE ace_lead_profiles SET grade=$3,score=$4,score_drivers=$5::jsonb,updated_at=now()
      WHERE workspace_id=$1 AND (external_lead_id=$2 OR name=$2) RETURNING *`,
     [workspaceId,externalLeadId,grade,score,JSON.stringify([{key:'manual_override',label:'Manual override',points:0,evidence:'Workspace operator set grade '+grade}])]
   )

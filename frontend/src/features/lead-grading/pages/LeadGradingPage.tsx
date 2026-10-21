@@ -42,7 +42,7 @@ export default function LeadGradingPage(){
   }finally{setLoading(false)}
  }
 
- useEffect(()=>{void load()},[])
+ useEffect(()=>{void load();const onFixture=(event:any)=>{if(event.detail?.feature==='lead-grading')void load()};window.addEventListener('ace-qa-fixture-uploaded',onFixture);return()=>window.removeEventListener('ace-qa-fixture-uploaded',onFixture)},[])
  useDevelopmentLiveRefresh(()=>load(),!busy,true)
 
  const current=leads.find(x=>x.leadId===selected)||leads[0]

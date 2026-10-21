@@ -1,4 +1,5 @@
 import http from 'node:http'
+import {parseQaWorkbook} from './qa-excel-fixtures.mjs'
 import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto'
 import { URL } from 'node:url'
 import { createToken, verifyToken, hashPassword, hasPermission, createRateLimiter, securityHeaders, resolveCorsOrigin } from './security.mjs'
@@ -16,7 +17,7 @@ import { closeConsentStore, consentAllows, consentStats, getConsent, listConsent
 import { closePrivacyOps, deleteSubject, exportSubject, listPrivacyRequests, purgeRetention, retentionPolicy } from './privacy-ops.mjs'
 import { closeAudienceScheduler, listAudienceRefreshRuns, listAudienceSchedules, saveAudienceSchedule } from './audience-scheduler.mjs'
 import { closeCohortAnalytics, cohortAnalytics } from './cohort-analytics.mjs'
-import {connectorReadCatalog,listConnectorSyncRuns,connectorDataSummary,listConnectorSyncSchedules,saveConnectorSyncSchedule} from './connector-ingestion.mjs'
+import {connectorReadCatalog,listConnectorSyncRuns,connectorDataSummary,listConnectorSyncSchedules,saveConnectorSyncSchedule,upsertCampaignDailyFact} from './connector-ingestion.mjs'
 import {appendTrackedEvent,listTrackedEvents,trackedEventStats} from './tracked-events.mjs'
 import {trackingInputError} from './tracking-input.mjs'
 import { closeReportScheduler, listReportDeliveries, listReportSchedules, queueReportNow, reportMailConfigured, saveReportSchedule } from './report-scheduler.mjs'
@@ -529,11 +530,11 @@ const readRawBody = req => new Promise((resolve,reject)=>{
   req.on('error',reject)
 })
 
-const readBody = req => new Promise((resolve,reject)=>{
+const readBody = (req,maxBytes=1_000_000) => new Promise((resolve,reject)=>{
   let body=''
   req.on('data', chunk => {
     body += chunk
-    if (body.length > 1_000_000) { reject(new Error('payload too large')); req.destroy() }
+    if (body.length > maxBytes) { reject(new Error('payload too large')); req.destroy() }
   })
   req.on('end', () => {
     if (!body) return resolve({})
@@ -2989,6 +2990,152 @@ const server = http.createServer(async (req,res)=>{
         },
         generatedAt:new Date().toISOString()
       })
+    }
+    const qaMatch=url.pathname.match(/^\/api\/qa-fixtures\/([a-z0-9-]{1,80})$/)
+    if(qaMatch&&(req.method==='GET'||req.method==='POST')){
+      const feature=qaMatch[1]
+      if(!req.user)return send(req,res,401,{error:'Authenticated workspace membership required'})
+      if(req.method==='GET'){
+        const state=await getState()
+        return send(req,res,200,{feature,fixture:state.qaFeatureFixtures?.[workspaceId]?.[feature]||null})
+      }
+      if(!['owner','admin','operator'].includes(req.user.role))return send(req,res,403,{error:'Write permission required'})
+      const body=await readBody(req,2_800_000)
+      if(typeof body?.base64!=='string'||body.base64.length>2_700_000||!/^[A-Za-z0-9+/]+={0,2}$/.test(body.base64))return send(req,res,400,{error:'Valid XLSX data (maximum 2 MB) required'})
+      const filename=String(body.filename||'').slice(0,200)
+      if(!/\.xlsx$/i.test(filename))return send(req,res,400,{error:'Only XLSX files supported'})
+      let parsed
+      try{parsed=parseQaWorkbook(Buffer.from(body.base64,'base64'))}catch(error){return send(req,res,400,{error:error instanceof Error?error.message:'Invalid XLSX workbook'})}
+      const emptyCells=parsed.records.reduce((total,row)=>total+parsed.columns.filter(column=>row[column]===null||row[column]===undefined||String(row[column]).trim()==='').length,0)
+      const numeric=parsed.columns.filter(column=>!/\b(id|phone|mobile|tel|zip|postal|date|year|code)\b/i.test(column)).map(column=>{
+        const values=parsed.records.map(row=>Number(row[column])).filter(value=>Number.isFinite(value))
+        return values.length?{column,count:values.length,total:Number(values.reduce((sum,value)=>sum+value,0).toFixed(2)),average:Number((values.reduce((sum,value)=>sum+value,0)/values.length).toFixed(2))}:null
+      }).filter(Boolean).slice(0,8)
+      const fixture={filename,columns:parsed.columns,records:parsed.records,recordCount:parsed.records.length,uploadedAt:new Date().toISOString(),uploadedBy:req.user.userId,result:{status:emptyCells?'passed_with_warnings':'passed',feature,validRows:parsed.records.length,columns:parsed.columns.length,emptyCells,numeric}}
+      await mutateState(state=>{state.qaFeatureFixtures=state.qaFeatureFixtures||{};state.qaFeatureFixtures[workspaceId]=state.qaFeatureFixtures[workspaceId]||{};state.qaFeatureFixtures[workspaceId][feature]=fixture;state.audit=state.audit||[];state.audit.unshift({id:randomUUID(),action:'qa_fixture.upload',feature,workspaceId,records:fixture.recordCount,actorId:req.user.userId,at:fixture.uploadedAt});state.audit=state.audit.slice(0,1000)})
+      let applied={target:'test result',records:0}
+      if(['enrich','lead-grading','customer-360','identity'].includes(feature)){
+        const persisted=[]
+        for(const row of parsed.records){
+          const item=await upsertLeadProfile(workspaceId,{externalLeadId:row.lead_id||row.customer_id||row.email,name:row.full_name||row.name,email:row.email,phone:row.phone,source:row.source,campaign:row.campaign||row.campaign_id,crmStage:row.lead_status||row.stage,attributes:{qaFixture:true,fixture:filename,city:row.city,marketingConsent:row.marketing_consent},lastActivity:row.created_date||new Date().toISOString()})
+          if(item)persisted.push(item.id)
+        }
+        applied={target:feature==='lead-grading'?'lead grading':feature==='customer-360'?'customer profiles':feature==='identity'?'identity profiles':'CRM enrichment',records:persisted.length}
+      }
+      if(['events','journeys','live-sync'].includes(feature)){
+        let persisted=0
+        for(const row of parsed.records){
+          await appendTrackedEvent(workspaceId,{eventId:row.event_id||row.touch_id||row.id||randomUUID(),event:row.event||row.event_name||row.touch_type||'test_event',eventType:row.event_type||row.touch_type||row.event||'test_event',customerId:row.customer_id||row.lead_id||null,leadId:row.lead_id||null,sessionId:row.session_id||null,source:row.source||row.channel||'QA workbook',channel:row.channel||row.source||null,campaign:row.campaign||row.campaign_id||null,occurredAt:row.occurred_at||row.timestamp||row.date||new Date().toISOString(),attributes:{qaFixture:true,fixture:filename,...row}})
+          persisted++
+        }
+        applied={target:feature==='journeys'?'customer journeys':feature==='live-sync'?'live event stream':'event manager',records:persisted}
+      }
+      if(feature==='follow-ups'){
+        let persisted=0
+        for(const row of parsed.records){await createFollowUp(workspaceId,{leadRef:row.lead_id||row.customer_id||row.lead||'QA lead',title:row.title||row.action||row.follow_up||'QA follow-up',dueAt:row.due_at||row.due_date||row.date||new Date().toISOString(),owner:row.owner||'QA tester',status:row.status||'open',notes:row.notes||row.description||'Imported test fixture'});persisted++}
+        applied={target:'follow-up actions',records:persisted}
+      }
+      if(feature==='meetings'){
+        let persisted=0
+        for(const row of parsed.records){await createMeeting(workspaceId,{leadRef:row.lead_id||row.customer_id||row.lead||'QA lead',title:row.title||row.meeting_title||'QA meeting',startsAt:row.starts_at||row.date||new Date().toISOString(),durationMinutes:Number(row.duration_minutes||row.duration||30),attendees:[],status:row.status||'scheduled',meetingLink:'',externalCalendarId:'',source:'qa_fixture'});persisted++}
+        applied={target:'meetings',records:persisted}
+      }
+      if(feature==='adjustments'){
+        const imported=parsed.records.map(row=>({id:'adj_'+randomUUID(),event:'campaign performance',source:row.channel||'QA workbook',destination:row.campaign_id||'campaign',fromValue:Number(row.spend||0),toValue:Number(row.revenue||0),currency:row.currency||'INR',reason:'Imported QA adjustment for '+String(row.date||'test date'),status:'pending',createdAt:new Date().toISOString(),createdBy:req.user?.userId||null}))
+        await mutateState(state=>{state.adjustments=[...imported,...(state.adjustments||[])].slice(0,1000)})
+        applied={target:'adjustments',records:imported.length}
+      }
+      if(feature==='pos-stores'){
+        const imported=parsed.records.map(row=>({batchId:'pos_'+randomUUID(),location:row.store_id||row.store_name,locationName:row.store_name||row.store_id,records:1,revenue:0,matched:0,createdAt:new Date().toISOString(),currency:row.currency||'INR',qaFixture:true,store:{city:row.city,region:row.region,mode:row.mode}}))
+        await mutateState(state=>{state.posBatches=[...imported,...(state.posBatches||[])].slice(0,1000)})
+        applied={target:'POS stores',records:imported.length}
+      }
+      // Workbook rows are deliberately written to the same local stores that power
+      // the feature pages.  Nothing in this import invokes a provider, webhook, or
+      // activation action; it is a safe way to exercise the existing UI with data.
+      const leadProfileFeatures=new Set(['agents','compliance','customer-360','data-hub','enrich','identity','lead-grading','routing'])
+      const eventFeatures=new Set(['behavior','data-flows','delivery','developers','events','feed','fingerprinting','funnel','live-sync','real-time-activation','sites'])
+      const performanceFeatures=new Set(['adjustments','alerts','ask-ace','executive-briefs','grouped-performance','intelligence','leak-monitor','models','monitoring','overview','reports'])
+      const campaignFeatures=new Set(['adsync','approvals','chatgpt-ads','integrations','launchpad','planner','settings'])
+      if(leadProfileFeatures.has(feature)&&!['enrich','lead-grading','customer-360','identity'].includes(feature)){
+        let persisted=0
+        for(const row of parsed.records){
+          const item=await upsertLeadProfile(workspaceId,{externalLeadId:row.lead_id||row.customer_id||row.email,name:row.full_name||row.name,email:row.email,phone:row.phone,source:row.source,campaign:row.campaign||row.campaign_id,crmStage:row.lead_status||row.stage,attributes:{qaFixture:true,fixture:filename,city:row.city,marketingConsent:row.marketing_consent},lastActivity:row.created_date||new Date().toISOString()})
+          if(item)persisted++
+        }
+        applied={target:feature==='agents'?'agent lead context':feature==='compliance'?'consent profiles':feature==='routing'?'routing lead queue':'customer data hub',records:persisted}
+      }
+      if(eventFeatures.has(feature)&&!['events','live-sync'].includes(feature)){
+        let persisted=0
+        for(const row of parsed.records){
+          await appendTrackedEvent(workspaceId,{eventId:row.event_id||row.id||randomUUID(),event:row.event||row.event_name||'test_event',eventType:row.event_type||row.event_name||'test_event',customerId:row.customer_id||row.lead_id||null,leadId:row.lead_id||null,sessionId:row.session_id||null,source:row.source||row.channel||'QA workbook',channel:row.channel||row.source||null,campaign:row.campaign||row.campaign_id||null,occurredAt:row.occurred_at_utc||row.occurred_at||row.timestamp||row.date||new Date().toISOString(),attributes:{qaFixture:true,fixture:filename,...row}})
+          persisted++
+        }
+        applied={target:feature==='behavior'?'behavior timeline':feature==='funnel'?'funnel events':feature==='delivery'?'delivery event stream':feature==='real-time-activation'?'activation event stream':'event stream',records:persisted}
+      }
+      if(['attribution','deep-links','journeys','match-quality'].includes(feature)&&feature!=='journeys'){
+        let persisted=0
+        for(const row of parsed.records){
+          const body={eventId:row.touch_id||row.event_id||randomUUID(),customerId:row.customer_id||null,visitorId:row.session_id||null,utm_source:row.channel||row.source||'QA workbook',utm_campaign:row.campaign_id||null,event:row.touch_type||'touch',eventType:row.touch_type||'touch',source:row.channel||row.source||'QA workbook',occurredAt:row.date||new Date().toISOString(),data:{qaFixture:true,fixture:filename,...row}}
+          await captureClickSession(workspaceId,body)
+          await recordAssistedEvent(workspaceId,body)
+          persisted++
+        }
+        applied={target:feature==='attribution'?'attribution journeys':feature==='deep-links'?'deep-link attribution':feature==='match-quality'?'match-quality evidence':'customer journeys',records:persisted}
+      }
+      if(performanceFeatures.has(feature)&&feature!=='adjustments'){
+        let persisted=0
+        for(const row of parsed.records){
+          const day=String(row.date||new Date().toISOString().slice(0,10)).slice(0,10)
+          await upsertCampaignDailyFact({workspaceId,connector:'qa_fixture',accountId:'local_test',campaignId:row.campaign_id||row.campaign||'qa_campaign',campaignName:row.campaign_name||row.campaign_id||'QA campaign',day,currency:row.currency||'INR',spend:row.spend||0,impressions:row.impressions||0,clicks:row.clicks||0,conversions:row.conversions||0,conversionValue:row.revenue||0,extra:{qaFixture:true,fixture:filename,channel:row.channel||null}})
+          await appendTrackedEvent(workspaceId,{eventId:'qa_performance_'+feature+'_'+row.campaign_id+'_'+day,event:'purchase',eventType:'purchase',source:row.channel||'QA workbook',channel:row.channel||null,campaign:row.campaign_id||null,occurredAt:day,value:Number(row.revenue||0),attributes:{qaFixture:true,fixture:filename,spend:Number(row.spend||0),impressions:Number(row.impressions||0),clicks:Number(row.clicks||0),conversions:Number(row.conversions||0)}})
+          persisted++
+        }
+        applied={target:'campaign analytics',records:persisted}
+      }
+      if(campaignFeatures.has(feature)){
+        let persisted=0
+        for(const row of parsed.records){
+          const day=String(row.start_date||new Date().toISOString().slice(0,10)).slice(0,10)
+          await upsertCampaignDailyFact({workspaceId,connector:'qa_fixture',accountId:'local_test',campaignId:row.campaign_id||'qa_campaign',campaignName:row.campaign_name||row.campaign_id||'QA campaign',day,currency:row.currency||'INR',extra:{qaFixture:true,fixture:filename,channel:row.channel,status:row.status,budget:Number(row.budget||0),endDate:row.end_date||null}})
+          persisted++
+        }
+        applied={target:'campaign configuration',records:persisted}
+      }
+      if(['audiences','exclusions','personalization'].includes(feature)){
+        let persisted=0
+        for(const row of parsed.records){
+          const item=await createLeadAudience(workspaceId,{name:row.audience_name||row.audience_id||'QA audience',mode:feature==='exclusions'?'Suppress':'Activate',destination:'local_test',condition:'source',operator:'equals',value:'__qa_fixture_no_external_delivery__',identityMode:'auto'})
+          if(item)persisted++
+        }
+        applied={target:feature==='exclusions'?'suppression audiences':feature==='personalization'?'personalization audiences':'audiences',records:persisted}
+      }
+      if(feature==='calls'){
+        const imported=parsed.records.map(row=>({id:row.call_id||randomUUID(),customerId:row.customer_id||null,startedAt:row.call_time_utc||new Date().toISOString(),endedAt:row.call_time_utc||new Date().toISOString(),durationSeconds:Number(row.duration_seconds||0),status:row.outcome||'completed',campaign:row.campaign_id||null,source:'QA workbook',qaFixture:true}))
+        await mutateState(state=>{state.callEvents=[...imported,...(state.callEvents||[])].slice(0,1000)})
+        applied={target:'call history',records:imported.length}
+      }
+      if(feature==='feedback'){
+        let persisted=0
+        for(const row of parsed.records){const item=await recordFeedback(workspaceId,{leadRef:row.customer_id||row.lead_id||'QA lead',channel:'QA workbook',score:row.score||row.rating||null,theme:row.outcome||row.theme||'Call feedback',response:row.notes||row.response||row.outcome||'Imported QA feedback'});if(item)persisted++}
+        applied={target:'feedback responses',records:persisted}
+      }
+      if(['diagnostics','fraud'].includes(feature)){
+        const imported=parsed.records.map(row=>({id:row.case_id||randomUUID(),...row,qaFixture:true,fixture:filename,createdAt:new Date().toISOString()}))
+        await mutateState(state=>{state.qaDiagnostics=state.qaDiagnostics||{};state.qaDiagnostics[workspaceId]=state.qaDiagnostics[workspaceId]||{};state.qaDiagnostics[workspaceId][feature]=imported})
+        applied={target:feature==='fraud'?'fraud review queue':'diagnostic findings',records:imported.length}
+      }
+      if(['matchback','offline-attribution'].includes(feature)){
+        let persisted=0
+        for(const row of parsed.records){await recordAssistedEvent(workspaceId,{eventId:row.conversion_id||randomUUID(),customerId:row.customer_id||null,event:'conversion',eventType:row.conversion_type||'conversion',source:'QA workbook',occurredAt:row.date||new Date().toISOString(),value:row.value||0,currency:row.currency||'INR',data:{qaFixture:true,fixture:filename,...row}});persisted++}
+        applied={target:feature==='matchback'?'conversion matchbacks':'offline attribution',records:persisted}
+      }
+      if(feature==='reconciliation'){
+        const imported=parsed.records.map(row=>({id:row.order_id||randomUUID(),...row,qaFixture:true,fixture:filename,importedAt:new Date().toISOString()}))
+        await mutateState(state=>{state.qaReconciliation=state.qaReconciliation||{};state.qaReconciliation[workspaceId]=imported})
+        applied={target:'reconciliation ledger',records:imported.length}
+      }
+      return send(req,res,200,{feature,fixture,applied})
     }
     if (req.method === 'GET' && url.pathname === '/api/data-hub') {
       const [state,leadStats,attr,providerData]=await Promise.all([getState(),leadOpsStats(workspaceId),attributionStats(workspaceId),connectorDataSummary(workspaceId).catch(()=>({available:false,raw:[],campaigns:[],crm:[]}))])

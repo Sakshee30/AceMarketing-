@@ -12,7 +12,30 @@ const json=(value:any)=>JSON.stringify(value,null,2)
 const short=(value:any)=>typeof value==='string'?value:json(value)
 const opId=(prefix:string)=>prefix+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,8)
 
-// The analyst's answer for the job submitted from this panel. Model text is rendered as text, never as HTML.
+const localDummyAnalysis=(question:string)=>{
+ const q=question.toLowerCase()
+ const revenue=128450,orders=342,conversion=3.8,forecast=141300
+ const sections=[
+  '**Revenue answer (local demo)**',
+  `Revenue this month is **₹${revenue.toLocaleString('en-IN')}** from **${orders} orders**, with an average order value of **₹${Math.round(revenue/orders).toLocaleString('en-IN')}**.`,
+  '**Performance summary**',
+  `- Revenue: **₹${revenue.toLocaleString('en-IN')}**\n- Orders: **${orders}**\n- Average order value: **₹${Math.round(revenue/orders).toLocaleString('en-IN')}**\n- Conversion rate: **${conversion}%**\n- Month-over-month change: **+12.4%**`,
+  '**Trend and channel drivers**',
+  'Revenue is up **12.4%** versus last month, approximately **₹114,279**. Paid Search contributes **₹52,600**, Organic **₹38,200**, and Lifecycle **₹21,450**. These channels represent the majority of observed revenue.',
+  '**Funnel interpretation**',
+  `The current **${conversion}%** conversion rate is the main operating lever. Improving conversion by 0.5 percentage points would add approximately **₹16,900** at the current average order value.`,
+  '**Prediction and confidence**',
+  `The next-month baseline forecast is **₹${forecast.toLocaleString('en-IN')}** (**+10.0%**), with a planning range of **₹132,000–₹151,000**. Expected orders are approximately **365** at a **3.9%** conversion rate. Confidence is **medium** because this demo uses one synthetic snapshot.`,
+  '**Risks and assumptions**',
+  'The forecast assumes stable traffic, channel mix, average order value, tracking coverage, and conversion quality. It is less reliable if Paid Search efficiency declines, attribution is incomplete, or seasonal demand changes.',
+  '**Recommended actions**',
+  '1. Protect efficient Paid Search campaigns.\n2. Inspect the largest conversion drop-off before increasing spend.\n3. Use **₹141,300** as the planning baseline and **₹132,000** as the conservative case.',
+  '**Evidence**',
+  'Deterministic local dataset: `dummy:workspace-analytics`. No live provider or production revenue data was used.'
+ ]
+ return sections.join('\n\n')
+}
+// Analyst answer renderer
 function AnalystAnswer({job,fallbackStatus}:{job:any,fallbackStatus?:string}){
  const status=String(job?.status||fallbackStatus||'pending')
  const text=String(job?.result?.text||'')
@@ -113,7 +136,10 @@ export default function IntelligencePage(){
  useDevelopmentLiveRefresh(()=>load(),!hasPolicyEdits&&!busy)
  useEffect(()=>{
   const id=activeJob?.jobId
-  if(!id)return
+  // Demo jobs are completed locally and do not exist in the durable API queue.
+  // Do not open an SSE connection for them; doing so creates a misleading 404
+  // after the local fallback has already produced a valid answer.
+  if(!id||String(id).startsWith('dummy_ai_'))return
   const controller=new AbortController()
   void intelligenceApi.streamJob(id,event=>{
    if(event.event==='status'){
@@ -245,7 +271,25 @@ export default function IntelligencePage(){
    const response:any=await intelligenceApi.analysis(question.trim(),opId('analysis'))
    setActiveJob(response)
    setNotice({kind:'ok',text:'Analysis accepted as a durable job. Completion is separate from queue receipt.'})
-  }catch(e:any){setNotice({kind:'error',text:e?.message||'Analysis could not be submitted.'})}
+  }catch(e:any){
+   const message=String(e?.message||'Analysis could not be submitted.')
+   // Local development has no provider credentials or deployed AI route. Keep
+   // production policy enforcement intact, but provide deterministic workspace
+   // data so the screen can be exercised end-to-end without a live provider.
+   if(import.meta.env.DEV&&/not active|blocked|DATABASE_URL|provider|durable/i.test(message)){
+    const jobId='dummy_ai_'+Date.now()
+    const now=new Date().toISOString()
+    setActiveJob({
+     jobId,task:'analyst',status:'completed',
+     job:{id:jobId,status:'succeeded',completed_at:now,result:{
+      text:localDummyAnalysis(question.trim()),
+      requestedModel:'local-dummy',resolvedModel:'local-dummy',
+      evidenceIds:['dummy:workspace-analytics']
+     }}
+    })
+    setNotice({kind:'ok',text:'Local demo analysis completed with deterministic dummy data. Live provider execution remains disabled.'})
+   }else setNotice({kind:'error',text:message})
+  }
   finally{setBusy('')}
  }
 

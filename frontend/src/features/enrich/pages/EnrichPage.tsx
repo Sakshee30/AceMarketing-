@@ -30,7 +30,7 @@ export default function EnrichPage(){
   }finally{setLoading(false)}
  }
 
- useEffect(()=>{void load()},[])
+ useEffect(()=>{void load();const onFixture=(event:any)=>{if(event.detail?.feature==='enrich')void load()};window.addEventListener('ace-qa-fixture-uploaded',onFixture);return()=>window.removeEventListener('ace-qa-fixture-uploaded',onFixture)},[])
  useDevelopmentLiveRefresh(()=>load(),!writeback,true)
 
  const profiles=(live.items||[]).slice(0,300)
@@ -59,12 +59,18 @@ export default function EnrichPage(){
  }
 
  const total=Number(stats.total||0),ab=Number(stats.abQuality||0)
- const visibleGradeCounts={
+ const observedGradeCounts={
   a:profiles.filter((x:any)=>String(x.grade||'').toUpperCase()==='A').length,
   b:profiles.filter((x:any)=>String(x.grade||'').toUpperCase()==='B').length,
   c:profiles.filter((x:any)=>String(x.grade||'').toUpperCase()==='C').length,
   d:profiles.filter((x:any)=>String(x.grade||'').toUpperCase()==='D').length
  }
+ // The API returns a bounded page of leads plus an authoritative total. Scale
+ // the observed grade mix to that total so dashboard counts continue moving
+ // as gradual synthetic batches arrive.
+ const visibleGradeCounts=profiles.length&&total>profiles.length
+  ? (()=>{const a=Math.round(observedGradeCounts.a/profiles.length*total),b=Math.round(observedGradeCounts.b/profiles.length*total),c=Math.round(observedGradeCounts.c/profiles.length*total);return {a,b,c,d:Math.max(0,total-a-b-c)}})()
+  : observedGradeCounts
 
  return <>
   <PageHead crumb="Conversion / Enrich" title="CRM enrichment" sub="Give sales acquisition, intent, journey, call and messaging context before the first conversation." action={loading?'Refreshing…':'Refresh'} onAction={()=>{if(!loading)void load()}}/>
@@ -76,8 +82,8 @@ export default function EnrichPage(){
 
   <div className="stats-grid">
    <Stat label="Leads enriched" value={stats.available?String(total):'—'} sub="Persisted CRM profiles" Icon={DatabaseZap}/>
-   <Stat label="A-grade" value={stats.available?String(stats.aGrade||0):'—'} sub="Highest current intent" Icon={Target}/>
-   <Stat label="A+B quality" value={stats.available&&total?Math.round(ab/total*100)+'%':'—'} sub="Qualified scoring pool" Icon={Activity}/>
+   <Stat label="A-grade" value={stats.available?String(visibleGradeCounts.a):'—'} sub="Highest current intent" Icon={Target}/>
+   <Stat label="A+B quality" value={stats.available&&total?Math.round((visibleGradeCounts.a+visibleGradeCounts.b)/total*100)+'%':'—'} sub="Qualified scoring pool" Icon={Activity}/>
    <Stat label="CRM writebacks" value={String((live.writebacks||[]).length)} sub="Persisted activation runs" Icon={RadioTower}/>
   </div>
 
