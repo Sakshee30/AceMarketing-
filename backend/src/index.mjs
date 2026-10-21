@@ -100,6 +100,7 @@ import {handleActivateModelResult} from '../modules/ai/src/application/commands/
 import {handleReplayDeadLetter} from '../modules/jobs/src/application/commands/replay-dead-letter/replay-dead-letter.handler.mjs'
 import {handleSearchAudit} from '../modules/audit/src/application/queries/search-audit/search-audit.handler.mjs'
 import {handleExportAudit} from '../modules/audit/src/application/commands/export-audit/export-audit.handler.mjs'
+import {MCP_SERVER_VERSION,MCP_SCOPES,MCP_SCOPE_PRESETS,MCP_POLICY_GROUPS,MCP_DEFAULT_POLICY,createMcpToken,listMcpTokens,revokeMcpToken,rotateMcpToken,getMcpPolicy,saveMcpPolicy,listMcpActivity,getMcpStatus,getMcpCatalog,runMcpDiagnostics} from './mcp-service.mjs'
 
 const runtimeRole=runtimeRolePolicy()
 
@@ -6413,6 +6414,39 @@ const server = http.createServer(async (req,res)=>{
       }catch(error){
         return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'workspace settings update failed',code:error?.code||'workspace_settings_update_failed'})
       }
+    }
+    if (req.method === 'GET' && url.pathname === '/api/mcp/status') return send(req,res,200,await getMcpStatus(workspaceId))
+    if (req.method === 'GET' && url.pathname === '/api/mcp/catalog') {
+      const category=url.searchParams.get('category')||null
+      const kind=url.searchParams.get('kind')||null
+      return send(req,res,200,{serverVersion:MCP_SERVER_VERSION,scopes:MCP_SCOPES,presets:MCP_SCOPE_PRESETS,policyGroups:MCP_POLICY_GROUPS,items:getMcpCatalog({category,kind})})
+    }
+    if (req.method === 'GET' && url.pathname === '/api/mcp/tokens') return send(req,res,200,{items:await listMcpTokens(workspaceId),presets:MCP_SCOPE_PRESETS,scopes:MCP_SCOPES})
+    if (req.method === 'POST' && url.pathname === '/api/mcp/tokens') {
+      const body=await readBody(req)
+      try{
+        const created=await createMcpToken({workspaceId,actorId:req.user?.userId,role:req.user?.role,label:body.label,expiresIn:body.expiresIn||body.expiresAt||'1h',scopes:body.scopes,preset:body.preset||'analyst',requestId:req.requestId,traceId:req.context?.traceId})
+        return send(req,res,201,created)
+      }catch(error){return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'MCP token creation failed',code:error?.code||'mcp_token_creation_failed'})}
+    }
+    const mcpTokenAction=url.pathname.match(/^\/api\/mcp\/tokens\/([^/]+)\/(revoke|rotate)$/)
+    if(req.method==='POST'&&mcpTokenAction){
+      try{
+        const id=decodeURIComponent(mcpTokenAction[1])
+        if(mcpTokenAction[2]==='revoke')return send(req,res,200,await revokeMcpToken({workspaceId,id,actorId:req.user?.userId,requestId:req.requestId,traceId:req.context?.traceId}))
+        return send(req,res,201,await rotateMcpToken({workspaceId,id,actorId:req.user?.userId,role:req.user?.role,requestId:req.requestId,traceId:req.context?.traceId}))
+      }catch(error){return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'MCP token action failed',code:error?.code||'mcp_token_action_failed'})}
+    }
+    if (req.method === 'GET' && url.pathname === '/api/mcp/policy') return send(req,res,200,{policy:await getMcpPolicy(workspaceId),groups:MCP_POLICY_GROUPS,defaults:MCP_DEFAULT_POLICY})
+    if (req.method === 'PUT' && url.pathname === '/api/mcp/policy') {
+      const body=await readBody(req)
+      try{return send(req,res,200,{policy:await saveMcpPolicy({workspaceId,policy:body.policy||body,actorId:req.user?.userId,requestId:req.requestId,traceId:req.context?.traceId})})}
+      catch(error){return send(req,res,Number(error?.status||400),{error:error instanceof Error?error.message:'MCP policy update failed',code:error?.code||'mcp_policy_update_failed'})}
+    }
+    if (req.method === 'GET' && url.pathname === '/api/mcp/activity') return send(req,res,200,{items:await listMcpActivity({workspaceId,limit:Number(url.searchParams.get('limit')||100)})})
+    if (req.method === 'POST' && url.pathname === '/api/mcp/diagnostics') {
+      try{return send(req,res,200,await runMcpDiagnostics(workspaceId))}
+      catch(error){return send(req,res,503,{error:error instanceof Error?error.message:'MCP diagnostics unavailable',code:'mcp_diagnostics_unavailable'})}
     }
     if (req.method === 'GET' && url.pathname === '/api/workspaces') {
       const registry=await withWorkspace('ws_default',()=>getState())

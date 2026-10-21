@@ -1,4 +1,6 @@
 const readMappings=[
+  [/^\/api\/mcp\/(?:status|catalog|policy|activity|diagnostics)(?:\/|$)/,'mcp.read'],
+  [/^\/api\/mcp\/tokens(?:\/|$)/,'mcp.manage'],
   [/^\/api\/(policy-rules|workflows)(?:\/|$)/,'workspace.read'],
   [/^\/api\/(forms|custom-objects)(?:\/|$)/,'workspace.read'],
   [/^\/api\/boards(?:\/|$)/,'boards.read'],
@@ -8,6 +10,9 @@ const readMappings=[
 ]
 
 const writeMappings=[
+  [/^\/api\/mcp\/tokens(?:\/|$)/,'mcp.manage'],
+  [/^\/api\/mcp\/policy(?:\/|$)/,'mcp.policy.write'],
+  [/^\/api\/mcp\/diagnostics(?:\/|$)/,'mcp.read'],
   [/^\/api\/boards$/,'boards.create'],
   [/^\/api\/boards\/[^/]+\/moves$/,'boards.move'],
   [/^\/api\/boards(?:\/|$)/,'boards.configure'],

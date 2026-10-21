@@ -74,9 +74,9 @@ export const resolveCorsOrigin = (origin, allowedOrigins) => {
 
 const rolePermissions={
   owner:['*'],
-  admin:['workspace.read','workspace.write','boards.read','boards.create','boards.move','boards.configure','members.read','members.write','integrations.write','agents.write','audiences.write','reports.write','developer.write','ai.analysis.run','ai.training.run','ai.evaluation.write','ai.promotion.write','ai.providers.manage','ai.knowledge.write','ai.activation.propose','ai.activation.approve','ai.activation.execute'],
-  analyst:['workspace.read','boards.read','members.read','reports.read','journeys.read','attribution.read','audiences.read','monitoring.read','ai.analysis.run'],
-  operator:['workspace.read','boards.read','boards.move','integrations.read','agents.run','approvals.write','followups.write','calls.write','meetings.write','delivery.write','monitoring.read','ai.analysis.run','ai.activation.propose']
+  admin:['workspace.read','workspace.write','boards.read','boards.create','boards.move','boards.configure','members.read','members.write','integrations.write','agents.write','audiences.write','reports.read','reports.write','attribution.read','journeys.read','monitoring.read','developer.write','ai.analysis.run','ai.training.run','ai.evaluation.write','ai.promotion.write','ai.providers.manage','ai.knowledge.write','ai.activation.propose','ai.activation.approve','ai.activation.execute','followups.write','mcp.read','mcp.manage','mcp.policy.write','mcp.activity.read'],
+  analyst:['workspace.read','boards.read','members.read','reports.read','journeys.read','attribution.read','audiences.read','monitoring.read','ai.analysis.run','mcp.read','mcp.activity.read'],
+  operator:['workspace.read','boards.read','boards.move','integrations.read','agents.run','approvals.write','followups.write','calls.write','meetings.write','delivery.write','monitoring.read','ai.analysis.run','ai.activation.propose','mcp.read','mcp.activity.read']
 }
 
 export const permissionsForRole=role=>rolePermissions[role]||[]

@@ -6,9 +6,10 @@ import {SettingsPageHead as PageHead} from '../ui/SettingsPrimitives'
 import {UsersRolesSettings} from '../components/UsersRolesSettings'
 import {GovernanceSettings} from '../components/GovernanceSettings'
 import {BillingUsageSettings} from '../components/BillingUsageSettings'
+import {McpAccessSettings} from '../components/McpAccessSettings'
 
 export default function SettingsPage(){
- const sections=['Workspace','Users & roles','Tracking','Governance','API & webhooks','Agent approvals','Notifications','Billing & usage']
+ const sections=['Workspace','Users & roles','Tracking','Governance','API & webhooks','MCP Access','Agent approvals','Notifications','Billing & usage']
  const settingsDefaults:any={
   organization:'Ace EdTech',timezone:'Asia/Kolkata',currency:'INR',reportingWeek:'Monday',defaultAttribution:'Full path',environment:'Production',
   primaryDomain:'www.example.com',crossDomainTracking:'Enabled',gclidPersistenceDays:90,fbclidPersistenceDays:90,
@@ -59,6 +60,7 @@ export default function SettingsPage(){
   'Tracking':<div className="settings-detail"><h3>Tracking configuration</h3><p>Update first-party collection defaults without editing code.</p><div className="setup-form-grid"><label><span>Primary domain</span><input value={settings.primaryDomain||''} onChange={e=>setSettings({...settings,primaryDomain:e.target.value})}/></label><label><span>Cross-domain tracking</span><select value={settings.crossDomainTracking||'Enabled'} onChange={e=>setSettings({...settings,crossDomainTracking:e.target.value})}><option>Enabled</option><option>Disabled</option></select></label><label><span>GCLID persistence days</span><input type="number" min="1" max="365" value={settings.gclidPersistenceDays||90} onChange={e=>setSettings({...settings,gclidPersistenceDays:Number(e.target.value)})}/></label><label><span>FBCLID persistence days</span><input type="number" min="1" max="365" value={settings.fbclidPersistenceDays||90} onChange={e=>setSettings({...settings,fbclidPersistenceDays:Number(e.target.value)})}/></label></div><div className="setting-line"><span>Server event endpoint</span><b>/api/track</b><span className="healthy">Active</span></div><button className="app-primary" disabled={busy==='save'} onClick={()=>save(['primaryDomain','crossDomainTracking','gclidPersistenceDays','fbclidPersistenceDays'])}>{busy==='save'?'Saving…':'Save tracking settings'}</button></div>,
   'Governance':<GovernanceSettings/>,
   'API & webhooks':<div className="settings-detail"><h3>API keys & webhooks</h3><div className="api-key-box"><div><span>Workspace API key</span><code>{apiKey||'Hidden until created or rotated'}</code></div><button onClick={makeKey}>{apiKey?'Rotate key':'Create key'}</button></div><p>Outbound webhook subscriptions are managed in the Developer console, where endpoints and delivery history are persisted.</p></div>,
+  'MCP Access':<McpAccessSettings/>,
   'Agent approvals':<div className="settings-detail"><h3>Agent approval boundaries</h3><p>Persist the workspace policy that determines which automated actions require human approval.</p>{[
     ['approvalSignalReturn','Signal return','Low risk'],
     ['approvalCrmEnrichment','CRM enrichment','Low risk'],

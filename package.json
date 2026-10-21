@@ -18,6 +18,14 @@
     "dev:frontend": "vite",
     "dev:backend": "node --watch --watch-path=backend/src --watch-path=backend/modules --watch-path=backend/migrations backend/src/index.mjs",
     "api": "node backend/src/index.mjs",
+    "mcp:stdio": "node backend/mcp/server.mjs",
+    "mcp:token:create": "node scripts/mcp.mjs token create",
+    "mcp:token:list": "node scripts/mcp.mjs token list",
+    "mcp:token:revoke": "node scripts/mcp.mjs token revoke",
+    "mcp:token:rotate": "node scripts/mcp.mjs token rotate",
+    "mcp:catalog": "node scripts/mcp.mjs catalog",
+    "mcp:config": "node scripts/mcp.mjs config",
+    "mcp:doctor": "node scripts/mcp.mjs doctor",
     "build": "tsc -b && vite build",
     "build:frontend": "tsc -b && vite build",
     "preview": "vite preview",
@@ -115,6 +123,8 @@
     "release:local:rollback": "node scripts/local-release.mjs rollback"
   },
   "dependencies": {
+    "@modelcontextprotocol/client": "^2.3.1",
+    "@modelcontextprotocol/server": "^2.3.1",
     "@tanstack/react-query": "^5.59.0",
     "lucide-react": "^0.468.0",
     "nodemailer": "10.0.10",
