@@ -25,6 +25,8 @@ Current route modules:
 Additional route groups:
 
 - `routes/platform-routes.mjs` composes the platform route groups.
+- `routes/ai-routes.mjs` owns AI datasets, governance, providers, jobs, analyst tools, and inference APIs.
+- `routes/engagement-routes.mjs` owns routing, reactivation, follow-ups, meetings, feedback, approvals, and custom agents.
 - `routes/object-routes.mjs` owns object lifecycle, document worker callbacks, and search.
 - `routes/form-routes.mjs` owns form definitions, publishing, and submissions.
 - `routes/custom-object-routes.mjs` owns custom object definitions, versions, publishing, and records.

@@ -4,6 +4,7 @@ import {handleMcpRoutes} from '../src/http/routes/mcp-routes.mjs'
 import {handleWorkflowRoutes} from '../src/http/routes/workflow-routes.mjs'
 import {handlePlatformRoutes} from '../src/http/routes/platform-routes.mjs'
 import {handleAiRoutes} from '../src/http/routes/ai-routes.mjs'
+import {handleEngagementRoutes} from '../src/http/routes/engagement-routes.mjs'
 
 const request={method:'GET',user:{userId:'test-user',role:'owner'},requestId:'route-test',context:{traceId:'trace-test'}}
 const response=()=>{
@@ -77,6 +78,24 @@ test('AI route module exposes the metric catalog through its own boundary',async
     send:output.send.bind(output),
     authenticatedUser:request.user,
     isProd:false
+  })
+  assert.equal(handled,true)
+  assert.equal(output.calls[0][2],200)
+})
+
+test('engagement route module owns routing reads',async()=>{
+  const output=response()
+  const handled=await handleEngagementRoutes({
+    req:request,
+    res:{},
+    url:new URL('http://localhost/api/routing'),
+    workspaceId:'ws_test',
+    readBody:async()=>({}),
+    send:output.send.bind(output),
+    authenticatedUser:request.user,
+    authRequired:true,
+    trackedEvents:[],
+    leadReactivationCandidates:()=>[]
   })
   assert.equal(handled,true)
   assert.equal(output.calls[0][2],200)
