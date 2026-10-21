@@ -1,9 +1,14 @@
 import {createHash,randomBytes,randomUUID} from 'node:crypto'
 import {getState,mutateState,storageHealth,withWorkspace} from './store.mjs'
-import {queueStats} from './queue.mjs'
+import {queueStats,replayDeadLetterJob,requestJobCancellation} from './queue.mjs'
 import {appendAuditRecord} from './platform/audit-store.mjs'
 import {hasPermission} from './security.mjs'
-import {createFollowUp} from './agent-orchestrator.mjs'
+import {createAgentRun,createFollowUp} from './agent-orchestrator.mjs'
+import {createAudience,createActivationRun,getAudienceBundle,getLeadProfile,materializeAudience,previewAudience,updateAudienceSyncState} from './lead-ops.mjs'
+import {handleSubmitJob} from '../modules/jobs/src/application/commands/submit-job/submit-job.handler.mjs'
+import {queueReportNow} from './report-scheduler.mjs'
+import {createAiActivationProposal} from './ai-activation-proposals.mjs'
+import {deleteSubject,exportSubject} from './privacy-ops.mjs'
 
 export const MCP_SERVER_VERSION=process.env.ACE_MCP_SERVER_VERSION||'0.1.0'
 
@@ -44,14 +49,24 @@ export const MCP_CATALOG=Object.freeze([
   {name:'ace_generate_executive_brief',kind:'tool',category:'analyze',description:'Generate an evidence-backed executive brief draft.',requiredPermission:'reports.read',requiredScope:'mcp.analyze',risk:'low',queued:false},
   {name:'ace_prepare_follow_up',kind:'tool',category:'draft',description:'Prepare a follow-up action without sending it.',requiredPermission:'followups.write',requiredScope:'mcp.draft',risk:'medium',queued:false},
   {name:'ace_prepare_campaign_report',kind:'tool',category:'draft',description:'Prepare a campaign report draft.',requiredPermission:'reports.write',requiredScope:'mcp.draft',risk:'medium',queued:false},
+  {name:'ace_prepare_audience',kind:'tool',category:'draft',description:'Preview and prepare a governed audience creation.',requiredPermission:'workspace.write',requiredScope:'mcp.draft',risk:'high',queued:false},
+  {name:'ace_prepare_crm_sync',kind:'tool',category:'integration',description:'Prepare a queued CRM writeback after confirmation.',requiredPermission:'workspace.write',requiredScope:'mcp.draft',risk:'high',queued:true},
+  {name:'ace_prepare_activation',kind:'tool',category:'integration',description:'Prepare a queued audience activation after human approval.',requiredPermission:'workspace.write',requiredScope:'mcp.draft',risk:'high',queued:true},
+  {name:'ace_prepare_message',kind:'tool',category:'draft',description:'Prepare a message draft without sending it.',requiredPermission:'workspace.write',requiredScope:'mcp.draft',risk:'high',queued:false},
+  {name:'ace_prepare_qualification_workflow',kind:'tool',category:'execute',description:'Prepare a queued qualification workflow after confirmation.',requiredPermission:'followups.write',requiredScope:'mcp.draft',risk:'high',queued:true},
+  {name:'ace_prepare_ai_activation',kind:'tool',category:'ai',description:'Prepare an AI activation proposal for existing review and approval.',requiredPermission:'workspace.write',requiredScope:'mcp.draft',risk:'high',queued:false},
+  {name:'ace_prepare_privacy_export',kind:'tool',category:'admin',description:'Prepare a bounded privacy export request.',requiredPermission:'workspace.write',requiredScope:'mcp.draft',risk:'high',queued:false},
+  {name:'ace_prepare_privacy_delete',kind:'tool',category:'admin',description:'Prepare a destructive privacy deletion request.',requiredPermission:'workspace.write',requiredScope:'mcp.draft',risk:'critical',queued:false},
   {name:'ace_confirm_action',kind:'tool',category:'execute',description:'Confirm a previously previewed action.',requiredPermission:'workspace.write',requiredScope:'mcp.execute',risk:'high',queued:true},
+  {name:'ace_approve_action',kind:'tool',category:'admin',description:'Approve an action held for human approval.',requiredPermission:'mcp.admin',requiredScope:'mcp.admin',risk:'critical',queued:true},
   {name:'ace_get_job_status',kind:'tool',category:'read',description:'Read a queued operation status.',requiredPermission:'workspace.read',requiredScope:'mcp.read',risk:'low',queued:false},
+  {name:'ace_cancel_job',kind:'tool',category:'execute',description:'Prepare cancellation of a queued job; confirm separately.',requiredPermission:'workspace.write',requiredScope:'mcp.draft',risk:'high',queued:false},
+  {name:'ace_retry_job',kind:'tool',category:'execute',description:'Prepare replay of a dead-letter job; confirm separately.',requiredPermission:'workspace.write',requiredScope:'mcp.draft',risk:'high',queued:false},
   {name:'ace_get_workspace_overview',kind:'resource',category:'read',description:'Workspace overview resource.',requiredPermission:'workspace.read',requiredScope:'mcp.read',risk:'low',queued:false},
   {name:'ace_get_lead_quality',kind:'resource',category:'read',description:'Lead quality resource.',requiredPermission:'workspace.read',requiredScope:'mcp.read',risk:'low',queued:false},
   {name:'ace_get_recent_journeys',kind:'resource',category:'read',description:'Recent journeys resource.',requiredPermission:'workspace.read',requiredScope:'mcp.read',risk:'low',queued:false},
   {name:'ace_get_monitoring_alerts',kind:'resource',category:'read',description:'Monitoring alerts resource.',requiredPermission:'workspace.read',requiredScope:'mcp.read',risk:'low',queued:false},
   {name:'ace_get_ai_evaluations',kind:'resource',category:'read',description:'AI evaluation resource.',requiredPermission:'workspace.read',requiredScope:'mcp.read',risk:'low',queued:false},
-  {name:'ace_get_recent_audit',kind:'resource',category:'read',description:'Recent workspace audit resource.',requiredPermission:'workspace.read',requiredScope:'mcp.read',risk:'low',queued:false},
   {name:'ace_get_recent_audit',kind:'resource',category:'read',description:'Recent workspace audit resource.',requiredPermission:'workspace.read',requiredScope:'mcp.read',risk:'low',queued:false},
   {name:'ace_campaign_review',kind:'prompt',category:'analyze',description:'Evidence-based campaign review prompt.',requiredPermission:'reports.read',requiredScope:'mcp.analyze',risk:'low',queued:false},
   {name:'ace_executive_brief',kind:'prompt',category:'analyze',description:'Executive brief prompt using workspace evidence.',requiredPermission:'reports.read',requiredScope:'mcp.analyze',risk:'low',queued:false}
@@ -177,6 +192,8 @@ const safeData=value=>{
   return output
 }
 
+export const sanitizeMcpValue=value=>safeData(value)
+
 export const readMcpResource=async({workspaceId,uri})=>withWorkspace(safeWorkspace(workspaceId),async()=>{
   const state=await getState();const value={
     'ace://workspace/overview':{workspaceId,settings:state.workspaceSettings||{},connectors:(state.connectorConnections||[]).map(item=>({id:item.id,connector:item.connector,status:item.status}))},
@@ -193,47 +210,183 @@ export const readMcpResource=async({workspaceId,uri})=>withWorkspace(safeWorkspa
   return safeData(value)
 })
 
+const actionPolicyGroup=actionType=>({
+  'follow_up.create':'followups',
+  'report.prepare':'reports',
+  'report.queue':'reports',
+  'audience.create':'audience_preparation',
+  'audience.materialize':'audience_preparation',
+  'audience.sync':'audience_activation',
+  'crm.sync':'crm_sync',
+  'message.prepare':'messaging',
+  'qualification.workflow':'ai_operations',
+  'ai.activation.proposal':'ai_operations',
+  'privacy.export':'exports',
+  'privacy.delete':'deletion',
+  'job.cancel':'workspace_administration',
+  'job.retry':'workspace_administration'
+}[actionType]||'workspace_administration')
+
+const sanitizeActionInput=(actionType,input={})=>{
+  const safe=safeData(input)
+  if(actionType!=='message.prepare')return safe
+  const text=String(input.text||'')
+  return {...safe,text:undefined,bodyFingerprint:createHash('sha256').update(text).digest('hex'),hasText:Boolean(text),textLength:text.length}
+}
+
+const policyForAction=async(workspaceId,actionType)=>{
+  const policy=await getMcpPolicy(workspaceId)
+  return {group:actionPolicyGroup(actionType),mode:policy[actionPolicyGroup(actionType)]||'disabled'}
+}
+
 export const prepareMcpAction=async({workspaceId,actorId,role,actionType,input,requiredPermission='workspace.write',requiredScope='mcp.draft',risk='medium',requestId=null,traceId=null})=>{
   if(!hasPermission(role,requiredPermission))throw Object.assign(new Error('permission denied'),{status:403,code:'permission_denied'})
-  const sanitized=safeData(input||{})
+  const policy=await policyForAction(workspaceId,actionType)
+  if(policy.mode==='disabled')throw Object.assign(new Error('MCP policy disables '+policy.group+' actions'),{status:403,code:'mcp_policy_disabled'})
+  const sanitized=sanitizeActionInput(actionType,input||{})
   const fingerprint=createHash('sha256').update(JSON.stringify({actionType,sanitized})).digest('hex')
-  const action={id:'mcp_act_'+randomUUID(),workspaceId,actorId,actionType,input:sanitized,inputFingerprint:fingerprint,requiredPermission,requiredScope,risk,status:'awaiting_confirmation',createdAt:now(),expiresAt:new Date(Date.now()+10*60*1000).toISOString(),confirmedAt:null,jobId:null}
-  await withWorkspace(workspaceId,()=>mutateState(state=>{state.mcpActions=state.mcpActions||[];state.mcpActions.unshift(action);state.mcpActions=state.mcpActions.slice(0,500);state.mcpActivity=state.mcpActivity||[];state.mcpActivity.unshift({id:'mcp_evt_'+randomUUID(),action:'mcp.action.prepared',actorId,actionId:action.id,at:action.createdAt,outcome:'success',metadata:{actionType,risk}});state.mcpActivity=state.mcpActivity.slice(0,1000)}))
-  await appendAuditRecord({workspaceId,actorId,action:'mcp.action.prepared',entityType:'mcp_action',entityId:action.id,requestId,traceId,metadata:{actionType,risk}}).catch(()=>{})
-  return {actionId:action.id,actionType,risk,status:action.status,preview:sanitized,expiresAt:action.expiresAt,inputFingerprint:fingerprint,requiredPermission,requiredScope}
+  const action={id:'mcp_act_'+randomUUID(),workspaceId,actorId,actionType,input:sanitized,inputFingerprint:fingerprint,requiredPermission,requiredScope,risk,policyGroup:policy.group,policyMode:policy.mode,status:'awaiting_confirmation',createdAt:now(),expiresAt:new Date(Date.now()+10*60*1000).toISOString(),confirmedAt:null,jobId:null}
+  await withWorkspace(workspaceId,()=>mutateState(state=>{state.mcpActions=state.mcpActions||[];state.mcpActions.unshift(action);state.mcpActions=state.mcpActions.slice(0,500);state.mcpActivity=state.mcpActivity||[];state.mcpActivity.unshift({id:'mcp_evt_'+randomUUID(),action:'mcp.action.prepared',actorId,actionId:action.id,at:action.createdAt,outcome:'success',metadata:{actionType,risk,policyGroup:policy.group,policyMode:policy.mode}});state.mcpActivity=state.mcpActivity.slice(0,1000)}))
+  await appendAuditRecord({workspaceId,actorId,action:'mcp.action.prepared',entityType:'mcp_action',entityId:action.id,requestId,traceId,metadata:{actionType,risk,policyGroup:policy.group,policyMode:policy.mode}}).catch(()=>{})
+  return {actionId:action.id,actionType,risk,status:action.status,policyGroup:policy.group,policyMode:policy.mode,preview:sanitized,expiresAt:action.expiresAt,inputFingerprint:fingerprint,requiredPermission,requiredScope}
+}
+
+const executeMcpAction=async({workspaceId,actorId,action})=>{
+  const input=action.input||{}
+  if(action.actionType==='follow_up.create'){
+    const created=await createFollowUp(workspaceId,{leadRef:input.leadRef,reason:input.title||input.reason||'Follow-up required',channel:input.channel||'voice',priority:input.priority||'medium',dueAt:input.dueAt,owner:input.owner||actorId})
+    if(!created)throw Object.assign(new Error('follow-up store unavailable'),{status:503,code:'mcp_action_store_unavailable'})
+    return {status:'succeeded',actionType:action.actionType,entityId:created.id,entityType:'follow_up'}
+  }
+  if(action.actionType==='report.prepare'||action.actionType==='message.prepare')return {status:'prepared',actionType:action.actionType,preview:action.input,sideEffect:false}
+  if(action.actionType==='report.queue'){
+    const queued=await queueReportNow(workspaceId,String(input.scheduleId))
+    return {status:'queued',actionType:action.actionType,...queued}
+  }
+  if(action.actionType==='audience.create'){
+    const created=await createAudience(workspaceId,input)
+    if(!created)throw Object.assign(new Error('audience store unavailable'),{status:503,code:'mcp_action_store_unavailable'})
+    return {status:'succeeded',actionType:action.actionType,entityId:created.id,entityType:'audience',matchedSize:created.matched_size}
+  }
+  if(action.actionType==='audience.materialize'){
+    const materialized=await materializeAudience(workspaceId,String(input.audienceId||input.id))
+    if(!materialized)throw Object.assign(new Error('audience not found'),{status:404,code:'audience_not_found'})
+    return {status:'succeeded',actionType:action.actionType,...materialized}
+  }
+  if(action.actionType==='audience.sync'){
+    const bundle=await getAudienceBundle(workspaceId,String(input.audienceId||input.id))
+    if(!bundle)throw Object.assign(new Error('audience not found'),{status:404,code:'audience_not_found'})
+    const names=String(input.provider||bundle.audience.destination||'').split(/·|,/).map(x=>x.trim()).filter(Boolean)
+    const providers=names.map(x=>x.toLowerCase().includes('meta')?'Meta Ads':x.toLowerCase().includes('google')?'Google Ads':null).filter(Boolean)
+    if(!providers.length)throw Object.assign(new Error('audience destination must include Meta Ads or Google Ads'),{status:400,code:'audience_provider_required'})
+    const queued=[]
+    for(const provider of [...new Set(providers)]){
+      const key=provider==='Meta Ads'?'meta':'google'
+      await updateAudienceSyncState(workspaceId,bundle.audience.id,key,{status:'queued',error:null})
+      const run=await createActivationRun(workspaceId,{kind:'audience_sync',entityId:bundle.audience.id,provider,requestSummary:{audience:bundle.audience.name,members:bundle.members.length,mode:bundle.audience.mode}})
+      if(!run)throw Object.assign(new Error('activation store unavailable'),{status:503,code:'mcp_action_store_unavailable'})
+      const job=await handleSubmitJob({workspaceId,kind:'audience_sync',idempotencyKey:'audience:'+bundle.audience.id+':'+key+':'+action.id,payload:{audienceId:bundle.audience.id,provider,activationRunId:run.id}})
+      if(!job)throw Object.assign(new Error('durable audience queue unavailable'),{status:503,code:'mcp_queue_unavailable'})
+      queued.push({provider,runId:run.id,jobId:job.id})
+    }
+    return {status:'queued',actionType:action.actionType,audienceId:bundle.audience.id,queued}
+  }
+  if(action.actionType==='crm.sync'){
+    const lead=await getLeadProfile(workspaceId,String(input.lead||input.leadRef||''))
+    if(!lead)throw Object.assign(new Error('lead not found'),{status:404,code:'lead_not_found'})
+    const run=await createActivationRun(workspaceId,{kind:'crm_writeback',entityId:lead.id,provider:String(input.provider),requestSummary:{lead:lead.external_lead_id,grade:lead.grade,score:lead.score}})
+    if(!run)throw Object.assign(new Error('activation store unavailable'),{status:503,code:'mcp_action_store_unavailable'})
+    const job=await handleSubmitJob({workspaceId,kind:'crm_writeback',idempotencyKey:'crm:'+run.id,payload:{leadRef:lead.id,provider:String(input.provider),fields:input.fields||{},activationRunId:run.id}})
+    if(!job)throw Object.assign(new Error('durable CRM queue unavailable'),{status:503,code:'mcp_queue_unavailable'})
+    return {status:'queued',actionType:action.actionType,runId:run.id,jobId:job.id,provider:input.provider}
+  }
+  if(action.actionType==='qualification.workflow'){
+    const run=await createAgentRun(workspaceId,{agentType:'voice_qualification',entityId:String(input.leadRef||input.lead||''),triggerKey:String(input.trigger||'mcp_qualification'),input})
+    if(!run)throw Object.assign(new Error('agent store unavailable'),{status:503,code:'mcp_action_store_unavailable'})
+    const job=await handleSubmitJob({workspaceId,kind:'agent_action',idempotencyKey:'agent:'+run.id,payload:{agentRunId:run.id,actionType:'voice_qualification',payload:{...input,runId:run.id}}})
+    if(!job)throw Object.assign(new Error('durable qualification queue unavailable'),{status:503,code:'mcp_queue_unavailable'})
+    return {status:'queued',actionType:action.actionType,runId:run.id,jobId:job.id}
+  }
+  if(action.actionType==='ai.activation.proposal'){
+    const proposal=await createAiActivationProposal({workspaceId,input,actor:{userId:actorId}})
+    return {status:'pending_review',actionType:action.actionType,proposalId:proposal.id,proposalStatus:proposal.status}
+  }
+  if(action.actionType==='privacy.export'){
+    const exported=await exportSubject(workspaceId,input,actorId)
+    return {status:'succeeded',actionType:action.actionType,requestId:exported.requestId,generatedAt:exported.generatedAt,counts:exported.counts}
+  }
+  if(action.actionType==='privacy.delete'){
+    const deleted=await deleteSubject(workspaceId,input,actorId)
+    return {status:'succeeded',actionType:action.actionType,requestId:deleted.requestId,deletedAt:deleted.deletedAt,summary:deleted.summary}
+  }
+  if(action.actionType==='job.cancel'){
+    const job=await requestJobCancellation({workspaceId,id:String(input.jobId)})
+    if(!job)throw Object.assign(new Error('job not found or cannot be cancelled'),{status:404,code:'job_not_cancellable'})
+    return {status:'succeeded',actionType:action.actionType,jobId:job.id,jobStatus:job.status}
+  }
+  if(action.actionType==='job.retry'){
+    const job=await replayDeadLetterJob({workspaceId,id:String(input.jobId)})
+    if(!job)throw Object.assign(new Error('dead-letter job not found'),{status:404,code:'job_not_retryable'})
+    return {status:'queued',actionType:action.actionType,jobId:job.id,jobStatus:job.status}
+  }
+  throw Object.assign(new Error('MCP action handler is not implemented: '+action.actionType),{status:501,code:'mcp_action_not_implemented'})
+}
+
+const claimAction=async(workspaceId,actionId,status,idempotencyKey)=>{
+  let claimed=false;let action=null
+  await withWorkspace(workspaceId,()=>mutateState(state=>{
+    const current=(state.mcpActions||[]).find(item=>item.id===actionId)
+    if(current&&current.status===status){current.status='executing';current.idempotencyKey=idempotencyKey;claimed=true;action=current}
+  }))
+  if(!claimed)throw Object.assign(new Error('MCP action is already executing or has been claimed'),{status:409,code:'mcp_action_claimed'})
+  return action
+}
+
+const finishAction=async({workspaceId,actorId,action,result,idempotencyKey,requestId,traceId})=>{
+  await withWorkspace(workspaceId,()=>mutateState(state=>{
+    const current=(state.mcpActions||[]).find(item=>item.id===action.id)
+    if(current){current.status='succeeded';current.confirmedAt=now();current.idempotencyKey=idempotencyKey;current.result=result;current.jobId=result.jobId||null}
+  }))
+  await appendAuditRecord({workspaceId,actorId,action:'mcp.action.confirmed',entityType:'mcp_action',entityId:action.id,requestId,traceId,metadata:{actionType:action.actionType,idempotencyKey,result}}).catch(()=>{})
+  return {actionId:action.id,status:'succeeded',result,idempotencyKey}
+}
+
+const runClaimedAction=async({workspaceId,actorId,action,idempotencyKey,requestId,traceId})=>{
+  try{return await finishAction({workspaceId,actorId,action,result:await executeMcpAction({workspaceId,actorId,action}),idempotencyKey,requestId,traceId})}
+  catch(error){await withWorkspace(workspaceId,()=>mutateState(state=>{const current=(state.mcpActions||[]).find(item=>item.id===action.id);if(current){current.status='failed';current.error=error instanceof Error?error.message:String(error)}}));throw error}
 }
 
 export const confirmMcpAction=async({workspaceId,actorId,role,actionId,idempotencyKey,requestId=null,traceId=null})=>{
   if(!idempotencyKey)throw Object.assign(new Error('idempotencyKey is required'),{status:400,code:'idempotency_key_required'})
-  let action=await withWorkspace(workspaceId,async()=>{const state=await getState();return (state.mcpActions||[]).find(item=>item.id===actionId)})
+  const action=await withWorkspace(workspaceId,async()=>{const state=await getState();return (state.mcpActions||[]).find(item=>item.id===actionId)})
   if(!action)throw Object.assign(new Error('MCP action not found'),{status:404,code:'mcp_action_not_found'})
   if(action.status==='succeeded')return {actionId,status:'succeeded',result:action.result,idempotencyKey:action.idempotencyKey||idempotencyKey}
+  if(action.status==='previewed')return {actionId,status:'preview_only',result:action.result,idempotencyKey:action.idempotencyKey||idempotencyKey}
+  if(action.status==='awaiting_human_approval')return {actionId,status:'awaiting_human_approval',policyGroup:action.policyGroup,approvalRequired:true,idempotencyKey:action.idempotencyKey||idempotencyKey}
   if(action.status!=='awaiting_confirmation')throw Object.assign(new Error('MCP action cannot be confirmed: '+action.status),{status:409,code:'mcp_action_not_confirmable'})
   if(Date.parse(action.expiresAt)<=Date.now())throw Object.assign(new Error('MCP action preview expired'),{status:409,code:'mcp_action_expired'})
   if(action.actorId!==actorId||!hasPermission(role,action.requiredPermission))throw Object.assign(new Error('MCP action permission denied'),{status:403,code:'permission_denied'})
-  let claimed=false
-  await withWorkspace(workspaceId,()=>mutateState(state=>{
-    const current=(state.mcpActions||[]).find(item=>item.id===actionId)
-    if(current&&current.status==='awaiting_confirmation'){current.status='executing';current.idempotencyKey=idempotencyKey;claimed=true;action=current}
-  }))
-  if(!claimed)throw Object.assign(new Error('MCP action is already executing or has been claimed'),{status:409,code:'mcp_action_claimed'})
-  let executionResult={status:'confirmed',actionType:action.actionType}
-  try{
-    if(action.actionType==='follow_up.create'){
-      const created=await createFollowUp(workspaceId,{leadRef:action.input.leadRef,title:action.input.title,dueAt:action.input.dueAt||now(),owner:action.input.owner||actorId,status:'open',notes:action.input.notes||'Created through governed MCP action'})
-      if(!created)throw Object.assign(new Error('follow-up store unavailable'),{status:503,code:'mcp_action_store_unavailable'})
-      executionResult={status:'succeeded',actionType:action.actionType,entityId:created.id,entityType:'follow_up'}
-    }
-  }catch(error){
-    await withWorkspace(workspaceId,()=>mutateState(state=>{const current=(state.mcpActions||[]).find(item=>item.id===actionId);if(current){current.status='failed';current.error=error instanceof Error?error.message:String(error)}}))
-    throw error
+  if(action.policyMode==='human_approval'){
+    await withWorkspace(workspaceId,()=>mutateState(state=>{const current=(state.mcpActions||[]).find(item=>item.id===actionId);if(current){current.status='awaiting_human_approval';current.idempotencyKey=idempotencyKey}}))
+    return {actionId,status:'awaiting_human_approval',policyGroup:action.policyGroup,approvalRequired:true,idempotencyKey}
   }
-  await withWorkspace(workspaceId,()=>mutateState(state=>{
-    const current=(state.mcpActions||[]).find(item=>item.id===actionId)
-    if(current&&current.status==='awaiting_confirmation'){current.status='succeeded';current.confirmedAt=now();current.idempotencyKey=idempotencyKey;current.result=executionResult;action=current}
-  }))
-  await appendAuditRecord({workspaceId,actorId,action:'mcp.action.confirmed',entityType:'mcp_action',entityId:actionId,requestId,traceId,metadata:{actionType:action.actionType,idempotencyKey,result:executionResult}}).catch(()=>{})
-  return {actionId,status:'succeeded',result:executionResult,idempotencyKey}
+  if(action.policyMode==='preview'){
+    const previewResult={status:'preview_only',actionType:action.actionType,policyGroup:action.policyGroup,sideEffect:false}
+    await withWorkspace(workspaceId,()=>mutateState(state=>{const current=(state.mcpActions||[]).find(item=>item.id===actionId);if(current){current.status='previewed';current.confirmedAt=now();current.idempotencyKey=idempotencyKey;current.result=previewResult}}))
+    return {actionId,status:'preview_only',result:previewResult,idempotencyKey}
+  }
+  return runClaimedAction({workspaceId,actorId,action:await claimAction(workspaceId,actionId,'awaiting_confirmation',idempotencyKey),idempotencyKey,requestId,traceId})
+}
+
+export const approveMcpAction=async({workspaceId,actorId,role,actionId,idempotencyKey,requestId=null,traceId=null})=>{
+  if(!['owner','admin'].includes(role)||!hasPermission(role,'workspace.write'))throw Object.assign(new Error('owner or admin approval required'),{status:403,code:'mcp_approval_forbidden'})
+  const action=await withWorkspace(workspaceId,async()=>{const state=await getState();return (state.mcpActions||[]).find(item=>item.id===actionId)})
+  if(!action)throw Object.assign(new Error('MCP action not found'),{status:404,code:'mcp_action_not_found'})
+  if(action.actorId===actorId)throw Object.assign(new Error('separation of duties requires a different approver'),{status:403,code:'mcp_separation_of_duties'})
+  if(action.status!=='awaiting_human_approval')throw Object.assign(new Error('MCP action is not awaiting human approval'),{status:409,code:'mcp_action_not_awaiting_approval'})
+  if(Date.parse(action.expiresAt)<=Date.now())throw Object.assign(new Error('MCP action preview expired'),{status:409,code:'mcp_action_expired'})
+  const key=idempotencyKey||'approval:'+randomUUID()
+  return runClaimedAction({workspaceId,actorId,action:await claimAction(workspaceId,actionId,'awaiting_human_approval',key),idempotencyKey:key,requestId,traceId})
 }
 
 export const runMcpDiagnostics=async workspaceId=>{

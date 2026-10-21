@@ -2,7 +2,7 @@ import {McpServer} from '@modelcontextprotocol/server'
 import {StdioServerTransport} from '@modelcontextprotocol/server/stdio'
 import * as z from 'zod/v4'
 import {randomUUID} from 'node:crypto'
-import {authenticateMcpToken,getMcpCatalog,getMcpStatus,readMcpResource,prepareMcpAction,confirmMcpAction,MCP_SERVER_VERSION} from '../src/mcp-service.mjs'
+import {approveMcpAction,authenticateMcpToken,getMcpCatalog,getMcpStatus,readMcpResource,prepareMcpAction,confirmMcpAction,sanitizeMcpValue,MCP_SERVER_VERSION} from '../src/mcp-service.mjs'
 import {getJob} from '../src/queue.mjs'
 
 const token=process.env.ACE_MCP_TOKEN||''
@@ -23,7 +23,8 @@ const assertRole=permission=>{
     'ai.analysis.run':['owner','admin','analyst','operator'],
     'followups.write':['owner','admin','operator'],
     'reports.write':['owner','admin'],
-    'workspace.write':['owner','admin']
+    'workspace.write':['owner','admin'],
+    'mcp.admin':['owner','admin']
   }
   if(!map[permission]?.includes(role)&&role!=='owner')throw new Error('AceMarketing permission required: '+permission)
 }
@@ -78,12 +79,60 @@ server.registerTool('ace_prepare_follow_up',{title:'Prepare follow-up',descripti
   try{assertScope('mcp.draft');assertRole('followups.write');return result(await prepareMcpAction({workspaceId,actorId:auth.actorId,role:auth.role,actionType:'follow_up.create',input,requiredPermission:'followups.write',requiredScope:'mcp.execute',risk:'medium',requestId:requestId()}))}catch(error){return fail(error)}
 })
 
+server.registerTool('ace_prepare_campaign_report',{title:'Prepare campaign report',description:'Prepare a report draft. If scheduleId is supplied, confirmation queues the existing report schedule.',inputSchema:z.object({scheduleId:z.string().max(160).optional(),period:z.string().max(80).default('current period'),name:z.string().max(160).optional(),reportType:z.string().max(40).optional(),recipients:z.array(z.string()).max(25).optional()}),outputSchema:z.object({actionId:z.string(),status:z.string(),preview:z.unknown(),expiresAt:z.string()}).passthrough()},async(input)=>{
+  try{assertScope('mcp.draft');assertRole('reports.write');return result(await prepareMcpAction({workspaceId,actorId:auth.actorId,role:auth.role,actionType:input.scheduleId?'report.queue':'report.prepare',input,requiredPermission:'reports.write',requiredScope:'mcp.execute',risk:input.scheduleId?'high':'medium',requestId:requestId()}))}catch(error){return fail(error)}
+})
+
+server.registerTool('ace_prepare_audience',{title:'Prepare audience',description:'Preview and prepare audience creation; confirmation materializes it in the current workspace.',inputSchema:z.object({name:z.string().min(1).max(160),destination:z.string().min(1).max(160),condition:z.string().min(1).max(80),operator:z.string().max(40).optional(),value:z.unknown(),mode:z.string().max(40).optional(),identityMode:z.string().max(40).optional()}),outputSchema:z.object({actionId:z.string(),status:z.string(),preview:z.unknown(),expiresAt:z.string()}).passthrough()},async(input)=>{
+  try{assertScope('mcp.draft');assertRole('workspace.write');const preview=await previewAudience(workspaceId,input);return result({...await prepareMcpAction({workspaceId,actorId:auth.actorId,role:auth.role,actionType:'audience.create',input:{...input,preview},requiredPermission:'workspace.write',requiredScope:'mcp.execute',risk:'high',requestId:requestId()}),audiencePreview:preview})}catch(error){return fail(error)}
+})
+
+server.registerTool('ace_prepare_crm_sync',{title:'Prepare CRM sync',description:'Prepare a CRM writeback that will be queued only after confirmation and policy approval.',inputSchema:z.object({lead:z.string().min(1).max(160),provider:z.string().min(1).max(80),fields:z.record(z.string(),z.unknown()).optional()}),outputSchema:z.object({actionId:z.string(),status:z.string(),preview:z.unknown(),expiresAt:z.string()}).passthrough()},async(input)=>{
+  try{assertScope('mcp.draft');assertRole('workspace.write');return result(await prepareMcpAction({workspaceId,actorId:auth.actorId,role:auth.role,actionType:'crm.sync',input,requiredPermission:'workspace.write',requiredScope:'mcp.execute',risk:'high',requestId:requestId()}))}catch(error){return fail(error)}
+})
+
+server.registerTool('ace_prepare_activation',{title:'Prepare audience activation',description:'Prepare an audience activation. Default policy holds this for a separate human approval.',inputSchema:z.object({audienceId:z.string().min(1).max(160),provider:z.string().max(80).optional()}),outputSchema:z.object({actionId:z.string(),status:z.string(),preview:z.unknown(),expiresAt:z.string()}).passthrough()},async(input)=>{
+  try{assertScope('mcp.draft');assertRole('workspace.write');return result(await prepareMcpAction({workspaceId,actorId:auth.actorId,role:auth.role,actionType:'audience.sync',input,requiredPermission:'workspace.write',requiredScope:'mcp.execute',risk:'critical',requestId:requestId()}))}catch(error){return fail(error)}
+})
+
+server.registerTool('ace_prepare_message',{title:'Prepare message',description:'Prepare a message draft without storing the full body or sending anything.',inputSchema:z.object({to:z.string().min(1).max(80),text:z.string().max(4096).optional(),templateName:z.string().max(160).optional(),languageCode:z.string().max(40).optional()}),outputSchema:z.object({actionId:z.string(),status:z.string(),preview:z.unknown(),expiresAt:z.string()}).passthrough()},async(input)=>{
+  try{assertScope('mcp.draft');assertRole('workspace.write');return result(await prepareMcpAction({workspaceId,actorId:auth.actorId,role:auth.role,actionType:'message.prepare',input,requiredPermission:'workspace.write',requiredScope:'mcp.execute',risk:'high',requestId:requestId()}))}catch(error){return fail(error)}
+})
+
+server.registerTool('ace_prepare_qualification_workflow',{title:'Prepare qualification workflow',description:'Prepare a provider-backed qualification workflow for explicit confirmation.',inputSchema:z.object({lead:z.string().min(1).max(160),leadRef:z.string().max(160).optional(),source:z.string().max(120).optional(),intent:z.number().optional(),trigger:z.string().max(120).optional()}),outputSchema:z.object({actionId:z.string(),status:z.string(),preview:z.unknown(),expiresAt:z.string()}).passthrough()},async(input)=>{
+  try{assertScope('mcp.draft');assertRole('followups.write');return result(await prepareMcpAction({workspaceId,actorId:auth.actorId,role:auth.role,actionType:'qualification.workflow',input,requiredPermission:'followups.write',requiredScope:'mcp.execute',risk:'high',requestId:requestId()}))}catch(error){return fail(error)}
+})
+
+server.registerTool('ace_prepare_ai_activation',{title:'Prepare AI activation',description:'Create a bounded AI activation proposal for the existing model review workflow; it does not activate a provider.',inputSchema:z.object({task:z.string().min(1).max(120),proposalType:z.string().min(1).max(80),payload:z.record(z.string(),z.unknown()),evidenceSnapshot:z.record(z.string(),z.unknown()),expiresAt:z.string()}),outputSchema:z.object({actionId:z.string(),status:z.string(),preview:z.unknown(),expiresAt:z.string()}).passthrough()},async(input)=>{
+  try{assertScope('mcp.draft');assertRole('workspace.write');return result(await prepareMcpAction({workspaceId,actorId:auth.actorId,role:auth.role,actionType:'ai.activation.proposal',input,requiredPermission:'workspace.write',requiredScope:'mcp.execute',risk:'critical',requestId:requestId()}))}catch(error){return fail(error)}
+})
+
+server.registerTool('ace_prepare_privacy_export',{title:'Prepare privacy export',description:'Prepare a bounded privacy export. Confirmation returns counts and a request id, not unbounded customer data.',inputSchema:z.object({selectorType:z.enum(['visitor','customer','email','phone','lead']),selector:z.string().min(1).max(240)}),outputSchema:z.object({actionId:z.string(),status:z.string(),preview:z.unknown(),expiresAt:z.string()}).passthrough()},async(input)=>{
+  try{assertScope('mcp.draft');assertRole('workspace.write');return result(await prepareMcpAction({workspaceId,actorId:auth.actorId,role:auth.role,actionType:'privacy.export',input,requiredPermission:'workspace.write',requiredScope:'mcp.data_export',risk:'critical',requestId:requestId()}))}catch(error){return fail(error)}
+})
+
+server.registerTool('ace_prepare_privacy_delete',{title:'Prepare privacy deletion',description:'Prepare a destructive privacy deletion. Disabled by default and always requires human approval.',inputSchema:z.object({selectorType:z.enum(['visitor','customer','email','phone','lead']),selector:z.string().min(1).max(240),confirm:z.literal('DELETE')}),outputSchema:z.object({actionId:z.string(),status:z.string(),preview:z.unknown(),expiresAt:z.string()}).passthrough()},async(input)=>{
+  try{assertScope('mcp.draft');assertRole('workspace.write');return result(await prepareMcpAction({workspaceId,actorId:auth.actorId,role:auth.role,actionType:'privacy.delete',input,requiredPermission:'workspace.write',requiredScope:'mcp.destructive',risk:'critical',requestId:requestId()}))}catch(error){return fail(error)}
+})
+
 server.registerTool('ace_confirm_action',{title:'Confirm action',description:'Confirm a previously prepared action after reviewing its preview.',inputSchema:z.object({actionId:z.string().min(1),idempotencyKey:z.string().min(8).max(160)}),outputSchema:z.object({actionId:z.string(),status:z.string()}).passthrough()},async({actionId,idempotencyKey})=>{
   try{assertScope('mcp.execute');return result(await confirmMcpAction({workspaceId,actorId:auth.actorId,role:auth.role,actionId,idempotencyKey,requestId:requestId()}))}catch(error){return fail(error)}
 })
 
+server.registerTool('ace_approve_action',{title:'Approve action',description:'Approve an action held for human approval. Use a different owner/admin token from the token that prepared it.',inputSchema:z.object({actionId:z.string().min(1),idempotencyKey:z.string().min(8).max(160).optional()}),outputSchema:z.object({actionId:z.string(),status:z.string()}).passthrough()},async({actionId,idempotencyKey})=>{
+  try{assertScope('mcp.admin');assertRole('mcp.admin');return result(await approveMcpAction({workspaceId,actorId:auth.actorId,role:auth.role,actionId,idempotencyKey,requestId:requestId()}))}catch(error){return fail(error)}
+})
+
 server.registerTool('ace_get_job_status',{title:'Get job status',description:'Read a bounded job result from the current workspace.',inputSchema:z.object({jobId:z.string().min(1).max(160)}),outputSchema:z.object({jobId:z.string(),status:z.string()}).passthrough()},async({jobId})=>{
-  try{assertScope('mcp.read');assertRole('workspace.read');const job=await getJob({workspaceId,id:jobId});return job?result({jobId,status:job.status,job}):fail(new Error('job not found'))}catch(error){return fail(error)}
+  try{assertScope('mcp.read');assertRole('workspace.read');const job=await getJob({workspaceId,id:jobId});return job?result({jobId,status:job.status,job:sanitizeMcpValue(job)}):fail(new Error('job not found'))}catch(error){return fail(error)}
+})
+
+server.registerTool('ace_cancel_job',{title:'Cancel job',description:'Prepare cancellation of a queued job; call ace_confirm_action with the returned action id.',inputSchema:z.object({jobId:z.string().min(1).max(160)}),outputSchema:z.object({actionId:z.string(),status:z.string(),preview:z.unknown(),expiresAt:z.string()}).passthrough()},async({jobId})=>{
+  try{assertScope('mcp.draft');assertRole('workspace.write');return result(await prepareMcpAction({workspaceId,actorId:auth.actorId,role:auth.role,actionType:'job.cancel',input:{jobId},requiredPermission:'workspace.write',requiredScope:'mcp.execute',risk:'high',requestId:requestId()}))}catch(error){return fail(error)}
+})
+
+server.registerTool('ace_retry_job',{title:'Retry job',description:'Prepare replay of a dead-letter job; call ace_confirm_action with the returned action id.',inputSchema:z.object({jobId:z.string().min(1).max(160)}),outputSchema:z.object({actionId:z.string(),status:z.string(),preview:z.unknown(),expiresAt:z.string()}).passthrough()},async({jobId})=>{
+  try{assertScope('mcp.draft');assertRole('workspace.write');return result(await prepareMcpAction({workspaceId,actorId:auth.actorId,role:auth.role,actionType:'job.retry',input:{jobId},requiredPermission:'workspace.write',requiredScope:'mcp.execute',risk:'high',requestId:requestId()}))}catch(error){return fail(error)}
 })
 
 server.registerResource('ace-workspace-overview','ace://workspace/overview',{title:'Workspace overview',description:'Workspace overview and connector state.',mimeType:'application/json'},async uri=>({contents:[{uri:uri.href,mimeType:'application/json',text:JSON.stringify(await readMcpResource({workspaceId,uri:uri.href}))}]}))
