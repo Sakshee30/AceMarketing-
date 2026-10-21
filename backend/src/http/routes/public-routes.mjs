@@ -147,4 +147,3 @@ export async function handlePublicRoutes({req,res,url,workspaceId,readBody,send:
 
     return false
 }
-

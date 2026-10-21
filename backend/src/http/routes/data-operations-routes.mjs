@@ -390,4 +390,3 @@ export async function handleDataOperationsRoutes({req,res,url,workspaceId,readBo
 
     return false
 }
-

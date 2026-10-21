@@ -19,6 +19,10 @@ import {handleComplianceRoutes} from '../src/http/routes/compliance-routes.mjs'
 import {handleConsoleRoutes} from '../src/http/routes/console-routes.mjs'
 import {handleWorkspaceOperationsRoutes} from '../src/http/routes/workspace-operations-routes.mjs'
 import {handleModelRoutes} from '../src/http/routes/model-routes.mjs'
+import {handleAiGovernanceRoutes} from '../src/http/routes/ai-governance-routes.mjs'
+import {handleAiKnowledgeRoutes} from '../src/http/routes/ai-knowledge-routes.mjs'
+import {handleEventQualityRoutes} from '../src/http/routes/event-quality-routes.mjs'
+import {handleAttributionReportingRoutes} from '../src/http/routes/attribution-reporting-routes.mjs'
 
 const request={method:'GET',user:{userId:'test-user',role:'owner'},requestId:'route-test',context:{traceId:'trace-test'}}
 const response=()=>{
@@ -282,4 +286,25 @@ test('model route module owns model catalog reads',async()=>{
   assert.equal(handled,true)
   assert.equal(output.calls[0][2],200)
   assert.ok(Array.isArray(output.calls[0][3].items))
+})
+
+test('AI knowledge subdomain owns knowledge reads',async()=>{
+  const output=response()
+  const handled=await handleAiKnowledgeRoutes({req:request,res:{},url:new URL('http://localhost/api/ai/knowledge'),workspaceId:'ws_test',readBody:async()=>({}),send:output.send.bind(output),authenticatedUser:request.user,isProd:false})
+  assert.equal(handled,true)
+  assert.equal(output.calls[0][2],200)
+})
+
+test('event quality subdomain owns event-rule reads',async()=>{
+  const output=response()
+  const handled=await handleEventQualityRoutes({req:request,res:{},url:new URL('http://localhost/api/events'),workspaceId:'ws_test',readBody:async()=>({}),send:output.send.bind(output),trackedEvents:[],buildSignalReplayPayload:()=>({})})
+  assert.equal(handled,true)
+  assert.equal(output.calls[0][2],200)
+})
+
+test('attribution reporting subdomain owns attribution reads',async()=>{
+  const output=response()
+  const handled=await handleAttributionReportingRoutes({req:request,res:{},url:new URL('http://localhost/api/attribution'),workspaceId:'ws_test',readBody:async()=>({}),send:output.send.bind(output),trackedEvents:[]})
+  assert.equal(handled,true)
+  assert.equal(output.calls[0][2],200)
 })

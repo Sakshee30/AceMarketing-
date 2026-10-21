@@ -147,4 +147,3 @@ export async function handleLeadOperationsRoutes({req,res,url,workspaceId,readBo
 
     return false
 }
-

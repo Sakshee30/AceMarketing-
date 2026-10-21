@@ -95,4 +95,3 @@ export async function handleConsoleRoutes({req,res,url,workspaceId,readBody,send
 
   return false
 }
-
