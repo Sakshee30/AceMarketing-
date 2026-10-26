@@ -129,7 +129,6 @@ export async function handlePublicRoutes({req,res,url,workspaceId,readBody,send:
       const names=[]
       if(challenges.includes('Lead quality')) names.push('Meta Advanced CAPI','Google ECL / OCI','Call Tracking Events','Custom Integration')
       if(challenges.includes('Conversion leakage')) names.push('Lead Grading','CRM Enrichment','Voice Lead Qualification','Voice Scheduler','Meeting Reminder','Feedback Agent','Lead Reactivation')
-      if(challenges.includes('Attribution')) names.push('Ask Ace')
       return send(req,res,200,{recommended:[...new Set(names)],generatedAt:new Date().toISOString()})
     }
     if (req.method === 'POST' && url.pathname === '/api/pricing/quote') {

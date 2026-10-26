@@ -12,8 +12,8 @@ import {ErrorState,LoadingState,StaleState} from '../../../components/system/Fro
 const dashboardSections=[
   {id:'workspace',label:'Workspace',icon:Gauge,tabs:['Overview','Launchpad']},
   {id:'tracking',label:'Tracking & Data',icon:DatabaseZap,tabs:['AdSync','ChatGPT Ads','Funnel','Leak Monitor','Events','Adjustments','Diagnostics','Match Quality','Reconciliation','Fraud','Deep Links','Sites','Fingerprinting','Live Sync','Data Hub','Customer 360','Offline Attribution','Matchback','POS & Stores']},
-  {id:'measurement',label:'Measurement & Intelligence',icon:PieChart,tabs:['Journeys','Identity','Models','Attribution','Planner','Reports','Grouped Performance','Executive Briefs']},
-  {id:'conversion',label:'Lead & Conversion',icon:Target,tabs:['Enrich','Lead Grading','Behavior','Feed','Agents','Routing','Follow-ups','Calls','Meetings','Feedback','Approvals','Ask Ace']},
+  {id:'measurement',label:'Measurement & Intelligence',icon:PieChart,tabs:['Journeys','Identity','Attribution','Planner','Reports','Grouped Performance','Executive Briefs']},
+  {id:'conversion',label:'Lead & Conversion',icon:Target,tabs:['Enrich','Lead Grading','Behavior','Feed','Agents','Routing','Follow-ups','Calls','Meetings','Feedback','Approvals']},
   {id:'activation',label:'Activation & Integrations',icon:RadioTower,tabs:['Integrations','Data Flows','Real-Time Activation','Personalization','Exclusions','Audiences','Delivery']},
   {id:'operations',label:'Operations & Developer',icon:Activity,tabs:['Monitoring','Alerts','Compliance','Developers','Settings']}
 ] as const
@@ -124,7 +124,6 @@ export default function OverviewPage(){
     ['Inspect customer journeys','Journeys',Network,'See stitched lead and revenue paths'],
     ['Build audience','Audiences',UsersRound,'Activate or suppress first-party segments'],
     ['Open delivery center','Delivery',RadioTower,'Inspect provider receipts, retry and DLQ'],
-    ['Ask Ace','Ask Ace',Sparkles,'Query journey, funnel and attribution evidence']
   ]
 
   return <>

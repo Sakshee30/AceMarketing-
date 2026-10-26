@@ -1,5 +1,4 @@
 import {platformFeatureCatalog,validateFeatureCatalog} from './feature-catalog.mjs'
-import {modelRegistrySnapshot} from '../ai-registry.mjs'
 import {connectorCatalogSnapshot} from './connector-registry.mjs'
 import {capabilityManifestSnapshot} from './capability-manifest.mjs'
 import {moduleRegistrySnapshot} from './module-registry.mjs'
@@ -84,7 +83,6 @@ const featureActual=item=>{
   if(configured==='false')return 'disabled'
   if(configured==='true')return 'enabled'
   const mode=deploymentModeSnapshot()
-  if(item.id==='ai'&&!mode.features.ai)return 'disabled'
   if(item.id==='billing'&&!mode.features.billing)return 'disabled'
   if(['files','documents'].includes(item.id)&&!mode.features.files)return 'disabled'
   return 'enabled'
@@ -97,7 +95,6 @@ export const capabilitySnapshot=()=>{
     configured:contract.configured(),
     health:contract.configured()?'configured':'unconfigured'
   }))
-  const ai=modelRegistrySnapshot()
   const features=platformFeatureCatalog.map(item=>{
     const actual=featureActual(item)
     const desired=item.locked?'enabled':actual
@@ -119,16 +116,7 @@ export const capabilitySnapshot=()=>{
     connectors:connectorCatalogSnapshot().items,
     capabilityContracts:capabilityManifestSnapshot().items,
     modules:moduleRegistrySnapshot().items,
-    aiProviders:ai.map(item=>({
-      id:'ai:'+item.task,
-      provider:item.provider,
-      requestedModel:item.requestedModel,
-      capability:item.capability,
-      readiness:item.readiness,
-      fallbackPolicy:item.fallbackPolicy,
-      documentationVerified:item.documentationVerified,
-      credentialConfigured:item.credentialConfigured
-    }))
+    aiProviders:[]
   }
 }
 
@@ -160,7 +148,6 @@ export const providerSnapshot=()=>{
     providers:[
       ...snapshot.providers,
       ...snapshot.connectors.map(item=>({...item,capability:'connector',configured:false,health:'unconfigured',configurationScope:'tenant-workspace'})),
-      ...snapshot.aiProviders
     ],
     capabilityContracts:snapshot.capabilityContracts
   }

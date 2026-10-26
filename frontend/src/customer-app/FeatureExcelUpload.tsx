@@ -2,7 +2,7 @@ import {useEffect,useRef,useState} from 'react'
 import {RefreshCw,UploadCloud} from 'lucide-react'
 import {api} from '../lib/api'
 
-const suppliedFeatureIds:Record<string,string>={'AI Intelligence':'intelligence','POS & Stores':'pos-stores'}
+const suppliedFeatureIds:Record<string,string>={'POS & Stores':'pos-stores'}
 const featureId=(feature:string)=>suppliedFeatureIds[feature]||feature.toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')
 const read=(row:any,...keys:string[])=>{const key=Object.keys(row||{}).find(column=>keys.includes(column.toLowerCase()));return key?String(row[key]??'—'):'—'}
 function FeatureFixtureOutput({feature,fixture}:{feature:string;fixture:any}){

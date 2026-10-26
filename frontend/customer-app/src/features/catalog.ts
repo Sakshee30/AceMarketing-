@@ -14,7 +14,6 @@ import {billingFeatureManifest} from './billing/feature.manifest'
 import {usageFeatureManifest} from './usage/feature.manifest'
 import {auditFeatureManifest} from './audit/feature.manifest'
 import {settingsFeatureManifest} from './settings/feature.manifest'
-import {aiFeatureManifest} from './ai/feature.manifest'
 
 export const customerFoundationFeatureCatalog=Object.freeze([
   accountFeatureManifest,
@@ -32,8 +31,7 @@ export const customerFoundationFeatureCatalog=Object.freeze([
   billingFeatureManifest,
   usageFeatureManifest,
   auditFeatureManifest,
-  settingsFeatureManifest,
-  aiFeatureManifest
+  settingsFeatureManifest
 ])
 
 export const customerFoundationFeatureById=new Map(customerFoundationFeatureCatalog.map(item=>[item.id,item]))

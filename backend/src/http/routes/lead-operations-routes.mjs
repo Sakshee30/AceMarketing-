@@ -40,7 +40,6 @@ export async function handleLeadOperationsRoutes({req,res,url,workspaceId,readBo
         else if(name==='Customer Journey Agent'&&hasProfiles)status='configured'
         else if(name==='Audiences Agent'&&audiences.length)status='configured'
         else if(name==='Event Agent'&&eventRules.length)status='configured'
-        else if(name==='Ask Ace')status='available'
         const meta=agentCatalog[name]||{}
         return {id:'builtin_'+i,name,status,type:'built_in',...meta}
       })

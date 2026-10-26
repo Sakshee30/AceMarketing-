@@ -26,8 +26,8 @@ export type WorkspaceFeatureManifest = {
 const groupTabs:Record<WorkspaceFeatureGroupId,readonly string[]>={
   workspace:['Overview','Launchpad','Boards'],
   tracking:['AdSync','ChatGPT Ads','Funnel','Leak Monitor','Events','Adjustments','Diagnostics','Match Quality','Reconciliation','Fraud','Deep Links','Sites','Fingerprinting','Live Sync','Data Hub','Customer 360','Offline Attribution','Matchback','POS & Stores'],
-  measurement:['Journeys','Identity','Models','AI Intelligence','Attribution','Planner','Reports','Grouped Performance','Executive Briefs'],
-  conversion:['Enrich','Lead Grading','Behavior','Feed','Agents','Routing','Follow-ups','Calls','Meetings','Feedback','Approvals','Ask Ace'],
+  measurement:['Journeys','Identity','Attribution','Planner','Reports','Grouped Performance','Executive Briefs'],
+  conversion:['Enrich','Lead Grading','Behavior','Feed','Agents','Routing','Follow-ups','Calls','Meetings','Feedback','Approvals'],
   activation:['Integrations','Data Flows','Real-Time Activation','Personalization','Exclusions','Audiences','Delivery'],
   operations:['Monitoring','Alerts','Compliance','Developers','Settings']
 }
@@ -69,8 +69,6 @@ const longFormFeatures=new Set([
   'Lead Grading',
   'Behavior',
   'Data Flows',
-  'Models',
-  'AI Intelligence',
   'Planner',
   'Audiences',
   'Settings',
@@ -98,7 +96,7 @@ export const workspaceFeatureManifest:readonly WorkspaceFeatureManifest[]=(Objec
       workspaceRequired:true as const,
       permission:(label==='Boards'?'boards.read':'workspace.read') as WorkspaceFeatureManifest['permission'],
       unsavedWork:longFormFeatures.has(label)?'confirm' as const:'allow' as const,
-      implementation:((label==='Launchpad'||label==='Overview'||label==='Boards'||label==='AdSync'||label==='ChatGPT Ads'||label==='Funnel'||label==='Leak Monitor'||label==='Events'||label==='Deep Links'||label==='Sites'||label==='Fingerprinting'||label==='Live Sync'||label==='Data Hub'||label==='Matchback'||label==='POS & Stores'||label==='Journeys'||label==='Identity'||label==='Attribution'||label==='Grouped Performance'||label==='Enrich'||label==='Lead Grading'||label==='Behavior'||label==='Approvals'||label==='Monitoring'||label==='Alerts'||label==='Reports'||label==='Executive Briefs'||label==='Integrations'||label==='Data Flows'||label==='Audiences'||label==='Planner'||label==='Models'||label==='AI Intelligence'||label==='Settings'||label==='Compliance'||label==='Developers'||label==='Delivery'||label==='Real-Time Activation'||label==='Personalization'||label==='Exclusions'||label==='Adjustments'||label==='Diagnostics'||label==='Match Quality'||label==='Reconciliation'||label==='Fraud')?'feature-chunk':'current-composition') as WorkspaceFeatureManifest['implementation'],
+      implementation:((label==='Launchpad'||label==='Overview'||label==='Boards'||label==='AdSync'||label==='ChatGPT Ads'||label==='Funnel'||label==='Leak Monitor'||label==='Events'||label==='Deep Links'||label==='Sites'||label==='Fingerprinting'||label==='Live Sync'||label==='Data Hub'||label==='Matchback'||label==='POS & Stores'||label==='Journeys'||label==='Identity'||label==='Attribution'||label==='Grouped Performance'||label==='Enrich'||label==='Lead Grading'||label==='Behavior'||label==='Approvals'||label==='Monitoring'||label==='Alerts'||label==='Reports'||label==='Executive Briefs'||label==='Integrations'||label==='Data Flows'||label==='Audiences'||label==='Planner'||label==='Models'||label==='Settings'||label==='Compliance'||label==='Developers'||label==='Delivery'||label==='Real-Time Activation'||label==='Personalization'||label==='Exclusions'||label==='Adjustments'||label==='Diagnostics'||label==='Match Quality'||label==='Reconciliation'||label==='Fraud')?'feature-chunk':'current-composition') as WorkspaceFeatureManifest['implementation'],
       errorBoundary:'workspace-section' as const
     }
   }))

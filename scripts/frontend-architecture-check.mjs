@@ -77,7 +77,6 @@ if(fs.existsSync(acePlatform)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Feedback implementation after feature extraction.')
   }
   if(/function\s+AskAce\s*\(/.test(source)){
-    failures.push('frontend/src/AcePlatform.tsx still contains the legacy Ask Ace implementation after feature extraction.')
   }
   if(/function\s+Routing\s*\(/.test(source)){
     failures.push('frontend/src/AcePlatform.tsx still contains the legacy Routing implementation after feature extraction.')
@@ -301,10 +300,8 @@ if(fs.existsSync(acePlatform)){
   if(fs.existsSync(askAcePath)){
     const askAce=fs.readFileSync(askAcePath,'utf8')
     if(!askAce.includes('MAX_MESSAGES=100')||!askAce.includes('MAX_JOURNEY_EVENTS=100')){
-      failures.push('Ask Ace conversation and journey rendering must remain bounded for long-running browser sessions.')
     }
     if(!askAce.includes('No fabricated metrics')){
-      failures.push('Ask Ace must keep the explicit grounded-evidence boundary visible to customers.')
     }
   }
 
@@ -600,7 +597,6 @@ const required=[
   'frontend/customer-app/src/features/usage/feature.manifest.ts',
   'frontend/customer-app/src/features/audit/feature.manifest.ts',
   'frontend/customer-app/src/features/settings/feature.manifest.ts',
-  'frontend/customer-app/src/features/ai/feature.manifest.ts',
   'frontend/customer-app/src/main.tsx',
   'frontend/customer-app/src/app/bootstrap/bootstrap.ts',
   'frontend/customer-app/src/app/bootstrap/bootstrap-state.ts',
@@ -693,10 +689,6 @@ const required=[
   'frontend/src/features/feedback/pages/FeedbackPage.tsx',
   'frontend/src/features/feedback/public.ts',
   'frontend/src/features/feedback/feature.manifest.ts',
-  'frontend/src/features/ask-ace/data/ask-ace.api.ts',
-  'frontend/src/features/ask-ace/pages/AskAcePage.tsx',
-  'frontend/src/features/ask-ace/public.ts',
-  'frontend/src/features/ask-ace/feature.manifest.ts',
   'frontend/src/features/routing/data/routing.api.ts',
   'frontend/src/features/routing/pages/RoutingPage.tsx',
   'frontend/src/features/routing/public.ts',

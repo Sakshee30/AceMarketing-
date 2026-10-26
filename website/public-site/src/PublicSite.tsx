@@ -39,7 +39,6 @@ const agents=[
  ['Voice Scheduler','Book meetings for qualified leads and synchronize calendars.','Conversion','+45% bookings'],
  ['Meeting Reminder','Re-engage scheduled leads before appointments to reduce drop-off.','Conversion','10–25% leads recovered'],
  ['Feedback Agent','Collect post-interaction feedback and surface objections.','Conversion','5× more feedback'],
- ['Ask Ace','Ask journey, funnel and attribution questions in plain language.','Visibility','+20–40% qualified leads']
 ]
 const integrations=['Google Ads','Meta Ads','ChatGPT Ads','LinkedIn Ads','Microsoft Ads','GA4','Zoho CRM','Salesforce','HubSpot','LeadSquared','Meritto','HighLevel','Microsoft Dynamics 365','WhatsApp','WATI','Gupshup','MoEngage','CleverTap','Bitespeed','AiSensy','Exotel','Knowlarity','Tata Tele','MyOperator','Shopify','WooCommerce','Magento','WordPress','Custom Backend']
 const industries=[
@@ -95,7 +94,6 @@ function Header({openHome,openApp,openLogin,openPricing,openDemo,openCompany,ope
   ['Voice Scheduler agent','Books meetings for qualified leads and syncs calendars.',CalendarDays],
   ['Call Based Meeting Reminder agent','Re-engages scheduled leads before meetings.',Bell],
   ['Call Based Feedback agent','Collects post-interaction feedback and objections.',MessageSquareText],
-  ['Ask Ace – User Journey & Attribution','Answers journey, funnel and attribution questions in plain language.',Sparkles]
  ]
  const resourceItems:any[]=[
   ['About Us','Know about our people, values and what we stand for',Building2,openCompany],
@@ -164,7 +162,7 @@ function Marketing({openHome,openApp,openLogin,openPricing,openDemo,openCompany,
  const heroSlides=[
   {eyebrow:'Connect every touchpoint',title:'Website forms, calls & WhatsApp messages.',rows:[['Google Ads','Click captured'],['Website','High-intent pages'],['WhatsApp','Conversation started'],['CRM','Qualified lead'],['Revenue','Closed outcome']]},
   {eyebrow:'Return stronger outcomes',title:'Teach ad platforms from qualified and closed revenue.',rows:[['Lead Grading','Intent scored'],['CRM','Stage enriched'],['Google Ads','Qualified signal'],['Meta CAPI','Server event'],['Bidding','Learning updated']]},
-  {eyebrow:'Act on the stitched journey',title:'Let specialized agents work every revenue handoff.',rows:[['Lead','Arrives'],['Voice Agent','Qualifies'],['Scheduler','Books meeting'],['Reminder','Protects show rate'],['Ask Ace','Explains performance']]}
+  {eyebrow:'Act on the stitched journey',title:'Let specialized agents work every revenue handoff.',rows:[['Lead','Arrives'],['Voice Agent','Qualifies'],['Scheduler','Books meeting'],['Reminder','Protects show rate']]}
  ]
  const fallbackChallenges=[
   {key:'operations',label:'Business & operational impact',title:'Teams lose speed when every system tells a different story.',points:['Acquisition cost rises while lead quality becomes harder to explain','Marketing, sales, and leadership work from different numbers','Teams spend time repairing tracking instead of scaling campaigns','Budget decisions are made without reliable funnel evidence'],action:'Connect the operating truth'},

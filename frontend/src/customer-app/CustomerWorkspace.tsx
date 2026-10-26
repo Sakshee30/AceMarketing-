@@ -19,7 +19,7 @@ import {getSessionGeneration} from '../../../packages/client-core/src/session-au
 import {customerQueryKeys,currentWorkspaceScopeId,customerRetryDelay,shouldRetryCustomerRead} from '../../../packages/client-core/src/query-scope'
 import FeatureExcelUpload from './FeatureExcelUpload'
 
-type AppTab='Launchpad'|'Overview'|'Boards'|'AdSync'|'ChatGPT Ads'|'Funnel'|'Leak Monitor'|'Events'|'Adjustments'|'Diagnostics'|'Match Quality'|'Reconciliation'|'Fraud'|'Deep Links'|'Sites'|'Fingerprinting'|'Live Sync'|'Data Hub'|'Customer 360'|'Offline Attribution'|'Matchback'|'POS & Stores'|'Journeys'|'Identity'|'Models'|'AI Intelligence'|'Attribution'|'Planner'|'Reports'|'Grouped Performance'|'Executive Briefs'|'Enrich'|'Lead Grading'|'Behavior'|'Feed'|'Agents'|'Routing'|'Follow-ups'|'Calls'|'Meetings'|'Feedback'|'Approvals'|'Ask Ace'|'Integrations'|'Data Flows'|'Real-Time Activation'|'Personalization'|'Exclusions'|'Audiences'|'Delivery'|'Monitoring'|'Alerts'|'Compliance'|'Developers'|'Settings'
+type AppTab='Launchpad'|'Overview'|'Boards'|'AdSync'|'ChatGPT Ads'|'Funnel'|'Leak Monitor'|'Events'|'Adjustments'|'Diagnostics'|'Match Quality'|'Reconciliation'|'Fraud'|'Deep Links'|'Sites'|'Fingerprinting'|'Live Sync'|'Data Hub'|'Customer 360'|'Offline Attribution'|'Matchback'|'POS & Stores'|'Journeys'|'Identity'|'Models'|'Attribution'|'Planner'|'Reports'|'Grouped Performance'|'Executive Briefs'|'Enrich'|'Lead Grading'|'Behavior'|'Feed'|'Agents'|'Routing'|'Follow-ups'|'Calls'|'Meetings'|'Feedback'|'Approvals'|'Integrations'|'Data Flows'|'Real-Time Activation'|'Personalization'|'Exclusions'|'Audiences'|'Delivery'|'Monitoring'|'Alerts'|'Compliance'|'Developers'|'Settings'
 
 const Launchpad=lazy(()=>import('../features/launchpad/public'))
 const Overview=lazy(()=>import('../features/overview/public'))
@@ -48,7 +48,6 @@ const Behavior=lazy(()=>import('../features/behavior/public'))
 const Feed=lazy(()=>import('../features/feed/public'))
 const Agents=lazy(()=>import('../features/agents/public'))
 const Routing=lazy(()=>import('../features/routing/public'))
-const AskAce=lazy(()=>import('../features/ask-ace/public'))
 const Feedback=lazy(()=>import('../features/feedback/public'))
 const FollowUps=lazy(()=>import('../features/follow-ups/public'))
 const Calls=lazy(()=>import('../features/calls/public'))
@@ -63,7 +62,6 @@ const DataFlows=lazy(()=>import('../features/data-flows/public'))
 const Audiences=lazy(()=>import('../features/audiences/public'))
 const Planner=lazy(()=>import('../features/planner/public'))
 const Models=lazy(()=>import('../features/models/public'))
-const Intelligence=lazy(()=>import('../features/intelligence/public'))
 const Settings=lazy(()=>import('../features/settings/public'))
 const Compliance=lazy(()=>import('../features/compliance/public'))
 const Developers=lazy(()=>import('../features/developers/public'))
@@ -82,14 +80,14 @@ function Brand(){
 }
 
 const appTabs=[
- ['Launchpad',WandSparkles],['Overview',Gauge],['Boards',Table2],['AdSync',RadioTower],['ChatGPT Ads',Bot],['Funnel',BarChart3],['Leak Monitor',AlertTriangle],['Events',Zap],['Adjustments',CircleDollarSign],['Diagnostics',ShieldCheck],['Match Quality',Gauge],['Reconciliation',Activity],['Fraud',ShieldCheck],['Deep Links',Network],['Sites',Globe2],['Fingerprinting',MousePointer2],['Live Sync',Activity],['Data Hub',DatabaseZap],['Customer 360',UsersRound],['Offline Attribution',PhoneCall],['Matchback',CircleDollarSign],['POS & Stores',Building2],['Journeys',Network],['Identity',UsersRound],['Models',Target],['AI Intelligence',Bot],['Attribution',PieChart],['Planner',CircleDollarSign],['Reports',BarChart3],['Grouped Performance',Table2],['Executive Briefs',MessageSquareText],['Enrich',DatabaseZap],['Lead Grading',Target],['Behavior',MousePointer2],['Feed',Layers3],['Agents',Bot],['Routing',Network],['Follow-ups',MessageCircle],['Calls',PhoneIncoming],['Meetings',CalendarDays],['Feedback',MessageSquareText],['Approvals',CheckCircle2],['Ask Ace',Sparkles],['Integrations',Cable],['Data Flows',Network],['Real-Time Activation',Zap],['Personalization',Sparkles],['Exclusions',ShieldCheck],['Audiences',UsersRound],['Delivery',RadioTower],['Monitoring',Activity],['Alerts',Bell],['Compliance',ShieldCheck],['Developers',Code2],['Settings',Settings2]
+ ['Launchpad',WandSparkles],['Overview',Gauge],['Boards',Table2],['AdSync',RadioTower],['ChatGPT Ads',Bot],['Funnel',BarChart3],['Leak Monitor',AlertTriangle],['Events',Zap],['Adjustments',CircleDollarSign],['Diagnostics',ShieldCheck],['Match Quality',Gauge],['Reconciliation',Activity],['Fraud',ShieldCheck],['Deep Links',Network],['Sites',Globe2],['Fingerprinting',MousePointer2],['Live Sync',Activity],['Data Hub',DatabaseZap],['Customer 360',UsersRound],['Offline Attribution',PhoneCall],['Matchback',CircleDollarSign],['POS & Stores',Building2],['Journeys',Network],['Identity',UsersRound],['Models',Target],['Attribution',PieChart],['Planner',CircleDollarSign],['Reports',BarChart3],['Grouped Performance',Table2],['Executive Briefs',MessageSquareText],['Enrich',DatabaseZap],['Lead Grading',Target],['Behavior',MousePointer2],['Feed',Layers3],['Agents',Bot],['Routing',Network],['Follow-ups',MessageCircle],['Calls',PhoneIncoming],['Meetings',CalendarDays],['Feedback',MessageSquareText],['Approvals',CheckCircle2],['Integrations',Cable],['Data Flows',Network],['Real-Time Activation',Zap],['Personalization',Sparkles],['Exclusions',ShieldCheck],['Audiences',UsersRound],['Delivery',RadioTower],['Monitoring',Activity],['Alerts',Bell],['Compliance',ShieldCheck],['Developers',Code2],['Settings',Settings2]
 
 ] as const
 const dashboardSections=[
  {id:'workspace',label:'Workspace',icon:Gauge,tabs:['Overview','Launchpad','Boards']},
  {id:'tracking',label:'Tracking & Data',icon:DatabaseZap,tabs:['AdSync','ChatGPT Ads','Funnel','Leak Monitor','Events','Adjustments','Diagnostics','Match Quality','Reconciliation','Fraud','Deep Links','Sites','Fingerprinting','Live Sync','Data Hub','Customer 360','Offline Attribution','Matchback','POS & Stores']},
- {id:'measurement',label:'Measurement & Intelligence',icon:PieChart,tabs:['Journeys','Identity','Models','AI Intelligence','Attribution','Planner','Reports','Grouped Performance','Executive Briefs']},
- {id:'conversion',label:'Lead & Conversion',icon:Target,tabs:['Enrich','Lead Grading','Behavior','Feed','Agents','Routing','Follow-ups','Calls','Meetings','Feedback','Approvals','Ask Ace']},
+ {id:'measurement',label:'Measurement & Intelligence',icon:PieChart,tabs:['Journeys','Identity','Attribution','Planner','Reports','Grouped Performance','Executive Briefs']},
+ {id:'conversion',label:'Lead & Conversion',icon:Target,tabs:['Enrich','Lead Grading','Behavior','Feed','Agents','Routing','Follow-ups','Calls','Meetings','Feedback','Approvals']},
  {id:'activation',label:'Activation & Integrations',icon:RadioTower,tabs:['Integrations','Data Flows','Real-Time Activation','Personalization','Exclusions','Audiences','Delivery']},
  {id:'operations',label:'Operations & Developer',icon:Activity,tabs:['Monitoring','Alerts','Compliance','Developers','Settings']}
 ] as const

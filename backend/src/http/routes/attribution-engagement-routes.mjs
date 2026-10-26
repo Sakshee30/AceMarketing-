@@ -9,6 +9,33 @@ import {trackingInputError} from '../../tracking-input.mjs'
 import { closeEventRules, createEventRule, evaluateEventRules, eventRuleStats, listEventRuleRuns, listEventRules, markEventRuleActivation, setEventRuleEnabled } from '../../event-rules.mjs'
 import {handleSubmitJob} from '../../../modules/jobs/src/application/commands/submit-job/submit-job.handler.mjs'
 
+const activationValue=(body,field)=>{
+  if(!field)return null
+  if(Object.prototype.hasOwnProperty.call(body,field))return body[field]
+  if(body.data&&typeof body.data==='object'&&Object.prototype.hasOwnProperty.call(body.data,field))return body.data[field]
+  return null
+}
+const activationConditionMatches=(condition,body)=>{
+  if(!condition||!condition.field)return true
+  const actual=activationValue(body,String(condition.field))
+  const expected=condition.value
+  const op=String(condition.operator||'equals')
+  if(op==='exists')return actual!==null&&actual!==undefined&&String(actual)!==''
+  if(op==='not_exists')return actual===null||actual===undefined||String(actual)===''
+  if(op==='contains')return String(actual||'').toLowerCase().includes(String(expected||'').toLowerCase())
+  if(op==='greater_than')return Number(actual)>Number(expected)
+  if(op==='less_than')return Number(actual)<Number(expected)
+  if(op==='one_of')return String(expected||'').split(',').map(x=>x.trim().toLowerCase()).filter(Boolean).includes(String(actual||'').toLowerCase())
+  return String(actual??'').toLowerCase()===String(expected??'').toLowerCase()
+}
+const activationRuleMatches=(rule,body)=>{
+  if(String(rule.status||'active')!=='active')return false
+  const trigger=String(rule.triggerEvent||'*').trim().toLowerCase()
+  const eventName=String(body.event||body.eventType||body.name||'').trim().toLowerCase()
+  if(trigger!=='*'&&trigger!==eventName)return false
+  return (rule.conditions||[]).every(condition=>activationConditionMatches(condition,body))
+}
+
 export async function handleAttributionEngagementRoutes({req,res,url,workspaceId,readBody,send:writeResponse,trackedEvents}) {
   const send=(...args)=>{writeResponse(...args);return true}
     if (req.method === 'GET' && url.pathname === '/api/personalization-rules') {

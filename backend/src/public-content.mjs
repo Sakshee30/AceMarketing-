@@ -27,7 +27,6 @@ export const publicNavigation = {
     { name:'Voice Scheduler', summary:'Coordinate meeting booking for qualified prospects.' },
     { name:'Meeting Reminder', summary:'Reduce no-shows with contextual reminder workflows.' },
     { name:'Feedback Agent', summary:'Capture objections and post-interaction feedback.' },
-    { name:'Ask Ace', summary:'Query journey and attribution evidence in natural language.' },
   ],
   resources: [
     { name:'About Us', summary:'How AceMarketing approaches connected growth operations.', target:'company' },
@@ -83,7 +82,6 @@ export const publicAgents = [
   {number:8,name:'Voice Scheduler',category:'Conversion',summary:'Schedule meetings for qualified prospects and coordinate the booking workflow.'},
   {number:9,name:'Meeting Reminder',category:'Conversion',summary:'Reduce no-shows with contextual reminders and recovery sequences.'},
   {number:10,name:'Feedback Agent',category:'Conversion',summary:'Capture objections and post-interaction feedback for funnel improvement.'},
-  {number:11,name:'Ask Ace',category:'Visibility',summary:'Query journey and attribution evidence in natural language inside the workspace.'},
   {number:12,name:'Lead Reactivation',category:'Conversion',summary:'Detect renewed high-intent behavior from dormant leads and create governed re-engagement work.'},
   {number:13,name:'Attribution Agent',category:'Visibility',summary:'Inspect first-touch, last-touch and assisted conversion evidence from stitched journeys.'},
   {number:14,name:'Deep Linking Agent',category:'Tracking',summary:'Operate governed deep-link routes with destination and fallback evidence.'},

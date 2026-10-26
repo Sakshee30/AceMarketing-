@@ -26,11 +26,6 @@ import { publicNavigation, publicIndustries, publicAgents, publicIntegrations, p
 import { parseWhatsAppWebhook, resolveWhatsAppWorkspace, sendWhatsAppMessage, verifyWhatsAppWebhookChallenge, verifyWhatsAppWebhookSignature } from './whatsapp-cloud.mjs'
 import { normalizeCallEvent, resolveCallWorkspace, verifyCallWebhook } from './call-events.mjs'
 import { createCalendarEvent, updateCalendarEvent } from './calendar-provider.mjs'
-import { closeAiRuntime } from './ai-runtime.mjs'
-import { closeKnowledge, ingestKnowledgeText, listKnowledgeSources, revokeKnowledgeSource } from './knowledge.mjs'
-import { deployModel, getEvaluationPolicy, getTenantRegistry, listEvaluations, promoteModel, qualifyEvaluation, recordProviderAccessVerification, rollbackModel, syncTenantRegistry, undeployModel, upsertEvaluationPolicy } from './ai-registry-store.mjs'
-import { closeAiDatasets } from './ai-datasets.mjs'
-import { closeLiveVoice, installLiveVoiceWebSocket } from './live-voice.mjs'
 import {bindActorToRequestContext,createRequestContext} from './platform/request-context.mjs'
 import {globalAdmission} from './platform/admission-control.mjs'
 import {assertActorWorkspace,requestedWorkspaceId,tenantExecutionScope} from './platform/tenant-context.mjs'
@@ -42,13 +37,11 @@ import {markInboxProcessed,recordInboxEvent} from './platform/reliability-store.
 import {createWebhookSubscription,createWebhookTestDelivery,listWebhookDeliveries,listWebhookDeliveryAttempts,listWebhookSubscriptions,replayWebhookDelivery,setWebhookSubscriptionStatus} from './platform/webhook-delivery-store.mjs'
 import { handleWorkflowRoutes } from './http/routes/workflow-routes.mjs'
 import { handlePlatformRoutes } from './http/routes/platform-routes.mjs'
-import { handleAiRoutes } from './http/routes/ai-routes.mjs'
 import { handleEngagementRoutes } from './http/routes/engagement-routes.mjs'
 import { handleAdminRoutes } from './http/routes/admin-routes.mjs'
 import { handlePublicRoutes } from './http/routes/public-routes.mjs'
 import { handleIdentityRoutes } from './http/routes/identity-routes.mjs'
 import { handleIntegrationRoutes } from './http/routes/integration-routes.mjs'
-import { handleAskAceRoutes } from './http/routes/ask-ace-routes.mjs'
 import { handleDataQualityRoutes } from './http/routes/data-quality-routes.mjs'
 import { handleDataOperationsRoutes } from './http/routes/data-operations-routes.mjs'
 import { handleAttributionRoutes } from './http/routes/attribution-routes.mjs'
@@ -58,7 +51,6 @@ import { handleDeliveryRoutes } from './http/routes/delivery-routes.mjs'
 import { handleComplianceRoutes } from './http/routes/compliance-routes.mjs'
 import { handleConsoleRoutes } from './http/routes/console-routes.mjs'
 import { handleWorkspaceOperationsRoutes } from './http/routes/workspace-operations-routes.mjs'
-import { handleModelRoutes } from './http/routes/model-routes.mjs'
 import {runtimeGuardForRequest} from './platform/runtime-config-runtime.mjs'
 import {beginProcessDrain,livenessState,markStartupComplete,readinessState,startupState} from './platform/process-health.mjs'
 import {runtimeRoleAllows,runtimeRolePolicy} from './platform/runtime-role.mjs'
@@ -1086,7 +1078,6 @@ const server = http.createServer(async (req,res)=>{
       })
     }
     if (await handleIntegrationRoutes({req,res,url,workspaceId,readBody,send,integrations,CONNECTOR_PROVIDERS,SERVER_SECRET_CONNECTORS,CONNECTOR_REDIRECT_URI,CONNECTOR_SUCCESS_URL,connectorTokenHealth,refreshConnectorCredential,createOAuthState,hashOAuthState,createPkce})) return
-    if (await handleAskAceRoutes({req,res,url,workspaceId,readBody,send,trackedEvents})) return
     if (await handleDataQualityRoutes({req,res,url,workspaceId,readBody,send,trackedEvents,buildSignalReplayPayload})) return
     if (await handleDataOperationsRoutes({req,res,url,workspaceId,readBody,send,trackedEvents})) return
     if (await handleAttributionRoutes({req,res,url,workspaceId,readBody,send,trackedEvents})) return
@@ -1096,8 +1087,6 @@ const server = http.createServer(async (req,res)=>{
     if (await handleComplianceRoutes({req,res,url,workspaceId,readBody,send})) return
     if (await handleConsoleRoutes({req,res,url,workspaceId,readBody,send})) return
     if (await handleWorkspaceOperationsRoutes({req,res,url,workspaceId,readBody,send,trackedEvents})) return
-    if (await handleModelRoutes({req,res,url,workspaceId,readBody,send})) return
-    if (await handleAiRoutes({req,res,url,workspaceId,readBody,send,authenticatedUser,isProd:IS_PROD})) return
     if (await handleEngagementRoutes({req,res,url,workspaceId,readBody,send,authenticatedUser,authRequired:AUTH_REQUIRED,trackedEvents,leadReactivationCandidates})) return
     if (await handleAdminRoutes({req,res,url,workspaceId,readBody,send})) return
     if (await handleMcpRoutes({req,res,url,workspaceId,readBody,send})) return
@@ -1111,11 +1100,10 @@ const server = http.createServer(async (req,res)=>{
   })
 })
 
-installLiveVoiceWebSocket(server)
 server.keepAliveTimeout=65_000
 server.headersTimeout=66_000
 server.requestTimeout=30_000
 server.listen(PORT,()=>{markStartupComplete();console.log(`AceMarketing API listening on http://localhost:${PORT}`)})
-const shutdown=signal=>{beginProcessDrain();console.log(`${signal} received; draining before shutdown`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations(),closeObservability(),closeEntitlements(),closeBillingProvider(),closeConsentStore(),closePrivacyOps(),closeAudienceScheduler(),closeCohortAnalytics(),closeEventRules(),closeAiRuntime(),closeKnowledge(),closeAiDatasets(),closeLiveVoice()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
+const shutdown=signal=>{beginProcessDrain();console.log(`${signal} received; draining before shutdown`);server.close(async err=>{await Promise.allSettled([closeStore(),closeAttributionStore(),closeLeadOps(),closeAgentOrchestrator(),closeCustomIntegrations(),closeObservability(),closeEntitlements(),closeBillingProvider(),closeConsentStore(),closePrivacyOps(),closeAudienceScheduler(),closeCohortAnalytics(),closeEventRules()]);process.exit(err?1:0)});setTimeout(()=>process.exit(1),10_000).unref()}
 process.on('SIGTERM',()=>shutdown('SIGTERM'))
 process.on('SIGINT',()=>shutdown('SIGINT'))

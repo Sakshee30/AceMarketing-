@@ -5,7 +5,6 @@ import {createRateLimiter,securityHeaders,verifyPassword,verifyToken} from './se
 import {pool,embeddedDatabase} from './database.mjs'
 import {capabilitySnapshot,dependencySnapshot,providerSnapshot} from './platform/capability-registry.mjs'
 import {platformFeatureCatalog} from './platform/feature-catalog.mjs'
-import {registrySummary} from './ai-registry.mjs'
 import {createPlatformChange,decidePlatformChange,getPlatformChange,listPlatformChanges,requestPlatformRollback,transitionPlatformChange,updatePlatformChangePlan} from './platform/control-change-store.mjs'
 import {beginControlCommand,finishControlCommand} from './platform/control-idempotency.mjs'
 import {createEmergencyControl,latestRuntimeSnapshot,listEmergencyControls,publishRuntimeSnapshot,revokeEmergencyControl,verifyRuntimeSnapshot} from './platform/runtime-configuration.mjs'
@@ -179,7 +178,6 @@ const observedPage=async page=>{
     generatedAt:new Date().toISOString(),
     database:await dbHealth(),
     providers:capabilities.providers.map(x=>({id:x.id,health:x.health,capability:x.capability})),
-    ai:registrySummary().counts
   }
   if(page==='security')return {
     schemaVersion:'platform-security-summary.v1',

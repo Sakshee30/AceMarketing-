@@ -1,5 +1,4 @@
 import http from 'node:http'
-import {installLiveVoiceWebSocket,closeLiveVoice} from './live-voice.mjs'
 import {createDrainController} from './platform/drain-controller.mjs'
 import {closeBoardRealtime,installBoardRealtimeWebSocket} from './platform/board-realtime.mjs'
 
@@ -31,7 +30,6 @@ const server=http.createServer((req,res)=>{
   res.end(JSON.stringify({error:'not found'}))
 })
 
-installLiveVoiceWebSocket(server)
 installBoardRealtimeWebSocket(server)
 
 server.listen(port,()=>{
@@ -44,7 +42,7 @@ const shutdown=async signal=>{
   drainController.beginDrain()
   console.log(signal+' received; draining realtime runtime')
   await new Promise(resolve=>server.close(()=>resolve()))
-  await Promise.allSettled([closeLiveVoice(),closeBoardRealtime()])
+  await Promise.allSettled([closeBoardRealtime()])
 }
 
 for(const signal of ['SIGTERM','SIGINT']){

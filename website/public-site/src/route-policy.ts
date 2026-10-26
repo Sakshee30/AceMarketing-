@@ -19,7 +19,6 @@ export const publicRoutePolicies:PublicRoutePolicy[]=[
   {path:'/security',view:'security',title:'Security | AceMarketing',description:'AceMarketing security architecture and verification-status information.',index:true,cache:'public-cacheable'},
   {path:'/solutions',view:'solutions',title:'Solutions | AceMarketing',description:'Explore AceMarketing solutions across signal quality, conversion and measurement.',index:true,cache:'public-cacheable'},
   {path:'/industries',view:'industries',title:'Industries | AceMarketing',description:'Explore industry workflows supported by the AceMarketing platform.',index:true,cache:'public-cacheable'},
-  {path:'/agents',view:'agents-public',title:'AI agents | AceMarketing',description:'Explore governed AceMarketing agents for acquisition and conversion workflows.',index:true,cache:'public-cacheable'},
   {path:'/integrations',view:'integrations-public',title:'Integrations | AceMarketing',description:'Connect advertising, CRM, messaging, analytics and revenue systems.',index:true,cache:'public-cacheable'}
 ]
 

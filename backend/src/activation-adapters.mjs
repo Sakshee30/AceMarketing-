@@ -1,7 +1,7 @@
 import {connectorCredential} from './connector-auth.mjs'
 import {getAudienceBundle,getLeadProfile} from './lead-ops.mjs'
 import {consentAllows} from './consent.mjs'
-import {ProviderExecutionError} from './ai-providers.mjs'
+class ProviderExecutionError extends Error{constructor(message,details={}){super(message);this.name='ProviderExecutionError';Object.assign(this,details)}}
 
 const credentialFor=async(workspaceId,connector)=>{
   const result=await connectorCredential(workspaceId,connector)

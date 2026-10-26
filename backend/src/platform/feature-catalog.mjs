@@ -37,7 +37,6 @@ export const platformFeatureCatalog=Object.freeze([
   feature({id:'audit',owner:'platform-security',locked:true,dependsOn:['persistence'],permissions:['audit.read','audit.export'],dataClassification:'restricted',offBehaviour:{newWork:'fail_closed_for_sensitive_changes',existingReads:'policy_controlled',committedWork:'preserve'}}),
   feature({id:'capabilities',owner:'platform-operations',locked:true,dependsOn:['audit','persistence'],permissions:['platform.capabilities.read','platform.capabilities.change'],dataClassification:'restricted',offBehaviour:{newWork:'freeze_changes',existingReads:'serve_last_valid_snapshot',committedWork:'preserve'}}),
   feature({id:'cells',owner:'platform-operations',locked:true,dependsOn:['workspaces','persistence','audit'],permissions:['platform.placement.read','platform.placement.change'],dataClassification:'restricted',offBehaviour:{newWork:'freeze_moves',existingReads:'serve_current_placement',committedWork:'preserve'}}),
-  feature({id:'ai',owner:'platform-ai',dependsOn:['jobs','audit'],permissions:['ai.read','ai.execute','ai.manage'],dataClassification:'restricted',offBehaviour:{newWork:'suspend_admission',existingReads:'policy_controlled',committedWork:'drain_or_cancel_by_policy'}})
 ])
 
 const byId=new Map(platformFeatureCatalog.map(item=>[item.id,item]))

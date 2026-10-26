@@ -52,7 +52,6 @@ const groups:ShortcutGroup[]=[
       {label:'POS & Stores',tab:'POS & Stores',icon:DatabaseZap,description:'Import and attribute store/POS revenue'},
       {label:'Journeys',tab:'Journeys',icon:Network,description:'Customer paths across online and offline touchpoints'},
       {label:'Identity',tab:'Identity',icon:UsersRound,description:'Inspect deterministic identity evidence'},
-      {label:'Models',tab:'Models',icon:BarChart3,description:'Configure and validate attribution models'},
       {label:'Attribution',tab:'Attribution',icon:Target,description:'Channel, campaign and revenue credit'},
       {label:'Planner',tab:'Planner',icon:BarChart3,description:'Model budget and growth scenarios'},
       {label:'Reports',tab:'Reports',icon:BarChart3,description:'Operational and scheduled reporting'},
@@ -75,7 +74,6 @@ const groups:ShortcutGroup[]=[
       {label:'Meetings',tab:'Meetings',icon:CalendarDays,description:'Schedule, reschedule and remind leads'},
       {label:'Feedback',tab:'Feedback',icon:Activity,description:'Collect post-interaction feedback'},
       {label:'Approvals',tab:'Approvals',icon:ShieldCheck,description:'Human review for sensitive actions'},
-      {label:'Ask Ace',tab:'Ask Ace',icon:Bot,description:'Grounded journey and attribution assistant'}
     ]
   },
   {

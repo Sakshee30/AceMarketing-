@@ -227,15 +227,6 @@ export const platformModuleRegistry=Object.freeze([
     events:['tenant.placement.changed'],
     supportedProfiles:['high-scale']
   }),
-  moduleDefinition({
-    id:'ai',owner:'platform-ai',
-    permissions:['ai.read','ai.execute','ai.manage'],
-    capabilities:['model-registry','authorized-retrieval','governed-activation'],
-    contracts:['ai-request','ai-result','ai-activation'],
-    implementationFiles:['backend/src/ai-registry.mjs','backend/src/ai-runtime.mjs','backend/src/ai-activation-execution.mjs'],
-    events:['ai.execution.completed'],
-    supportedProfiles:['ai-enabled']
-  })
 ])
 
 const byId=new Map(platformModuleRegistry.map(item=>[item.id,item]))

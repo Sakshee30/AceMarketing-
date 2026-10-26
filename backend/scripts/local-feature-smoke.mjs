@@ -13,7 +13,7 @@ const endpoints=[
   '/events','/adjustments','/diagnostics','/match-quality','/reconciliation','/fraud','/deep-links','/sites','/fingerprinting',
   '/fingerprinting/matches','/funnel','/leak-monitor','/live-sync','/data-hub','/offline-attribution','/ctwa-attribution',
   '/call-events','/matchback','/matchback/unmatched','/attribution-identity/stats','/pos-stores','/journeys','/customer-360',
-  '/identity','/models','/attribution','/reports','/cohorts?months=6','/grouped-performance?dimension=category&months=6',
+  '/identity','/attribution','/reports','/cohorts?months=6','/grouped-performance?dimension=category&months=6',
   '/report-schedules','/planner','/enrich','/lead-grading','/agents','/routing','/follow-ups',
   '/lead-reactivation?dormantDays=30&recentDays=7','/voice-scheduler','/qualification-calls','/meetings','/feedback',
   '/agent-runs','/approvals','/personalization-rules','/activation-rules','/exclusions','/audiences','/audience-schedules',

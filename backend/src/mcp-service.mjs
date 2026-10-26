@@ -7,7 +7,6 @@ import {createAgentRun,createFollowUp} from './agent-orchestrator.mjs'
 import {createAudience,createActivationRun,getAudienceBundle,getLeadProfile,materializeAudience,previewAudience,updateAudienceSyncState} from './lead-ops.mjs'
 import {handleSubmitJob} from '../modules/jobs/src/application/commands/submit-job/submit-job.handler.mjs'
 import {queueReportNow} from './report-scheduler.mjs'
-import {createAiActivationProposal} from './ai-activation-proposals.mjs'
 import {deleteSubject,exportSubject} from './privacy-ops.mjs'
 
 export const MCP_SERVER_VERSION=process.env.ACE_MCP_SERVER_VERSION||'0.1.0'
@@ -25,13 +24,13 @@ export const MCP_SCOPE_PRESETS=Object.freeze({
 
 export const MCP_POLICY_GROUPS=Object.freeze([
   'analytics','reports','followups','crm_sync','audience_preparation','audience_activation',
-  'messaging','integrations','ai_operations','exports','deletion','billing','workspace_administration'
+  'messaging','integrations','exports','deletion','billing','workspace_administration'
 ])
 
 export const MCP_DEFAULT_POLICY=Object.freeze({
   analytics:'allowed',reports:'preview',followups:'confirmation',crm_sync:'confirmation',
   audience_preparation:'preview',audience_activation:'human_approval',messaging:'human_approval',
-  integrations:'human_approval',ai_operations:'confirmation',exports:'human_approval',
+  integrations:'human_approval',exports:'human_approval',
   deletion:'disabled',billing:'disabled',workspace_administration:'human_approval'
 })
 
@@ -54,7 +53,6 @@ export const MCP_CATALOG=Object.freeze([
   {name:'ace_prepare_activation',kind:'tool',category:'integration',description:'Prepare a queued audience activation after human approval.',requiredPermission:'workspace.write',requiredScope:'mcp.draft',risk:'high',queued:true},
   {name:'ace_prepare_message',kind:'tool',category:'draft',description:'Prepare a message draft without sending it.',requiredPermission:'workspace.write',requiredScope:'mcp.draft',risk:'high',queued:false},
   {name:'ace_prepare_qualification_workflow',kind:'tool',category:'execute',description:'Prepare a queued qualification workflow after confirmation.',requiredPermission:'followups.write',requiredScope:'mcp.draft',risk:'high',queued:true},
-  {name:'ace_prepare_ai_activation',kind:'tool',category:'ai',description:'Prepare an AI activation proposal for existing review and approval.',requiredPermission:'workspace.write',requiredScope:'mcp.draft',risk:'high',queued:false},
   {name:'ace_prepare_privacy_export',kind:'tool',category:'admin',description:'Prepare a bounded privacy export request.',requiredPermission:'workspace.write',requiredScope:'mcp.draft',risk:'high',queued:false},
   {name:'ace_prepare_privacy_delete',kind:'tool',category:'admin',description:'Prepare a destructive privacy deletion request.',requiredPermission:'workspace.write',requiredScope:'mcp.draft',risk:'critical',queued:false},
   {name:'ace_confirm_action',kind:'tool',category:'execute',description:'Confirm a previously previewed action.',requiredPermission:'workspace.write',requiredScope:'mcp.execute',risk:'high',queued:true},
@@ -66,7 +64,6 @@ export const MCP_CATALOG=Object.freeze([
   {name:'ace_get_lead_quality',kind:'resource',category:'read',description:'Lead quality resource.',requiredPermission:'workspace.read',requiredScope:'mcp.read',risk:'low',queued:false},
   {name:'ace_get_recent_journeys',kind:'resource',category:'read',description:'Recent journeys resource.',requiredPermission:'workspace.read',requiredScope:'mcp.read',risk:'low',queued:false},
   {name:'ace_get_monitoring_alerts',kind:'resource',category:'read',description:'Monitoring alerts resource.',requiredPermission:'workspace.read',requiredScope:'mcp.read',risk:'low',queued:false},
-  {name:'ace_get_ai_evaluations',kind:'resource',category:'read',description:'AI evaluation resource.',requiredPermission:'workspace.read',requiredScope:'mcp.read',risk:'low',queued:false},
   {name:'ace_get_recent_audit',kind:'resource',category:'read',description:'Recent workspace audit resource.',requiredPermission:'workspace.read',requiredScope:'mcp.read',risk:'low',queued:false},
   {name:'ace_campaign_review',kind:'prompt',category:'analyze',description:'Evidence-based campaign review prompt.',requiredPermission:'reports.read',requiredScope:'mcp.analyze',risk:'low',queued:false},
   {name:'ace_executive_brief',kind:'prompt',category:'analyze',description:'Executive brief prompt using workspace evidence.',requiredPermission:'reports.read',requiredScope:'mcp.analyze',risk:'low',queued:false}
@@ -306,10 +303,6 @@ const executeMcpAction=async({workspaceId,actorId,action})=>{
     const job=await handleSubmitJob({workspaceId,kind:'agent_action',idempotencyKey:'agent:'+run.id,payload:{agentRunId:run.id,actionType:'voice_qualification',payload:{...input,runId:run.id}}})
     if(!job)throw Object.assign(new Error('durable qualification queue unavailable'),{status:503,code:'mcp_queue_unavailable'})
     return {status:'queued',actionType:action.actionType,runId:run.id,jobId:job.id}
-  }
-  if(action.actionType==='ai.activation.proposal'){
-    const proposal=await createAiActivationProposal({workspaceId,input,actor:{userId:actorId}})
-    return {status:'pending_review',actionType:action.actionType,proposalId:proposal.id,proposalStatus:proposal.status}
   }
   if(action.actionType==='privacy.export'){
     const exported=await exportSubject(workspaceId,input,actorId)
