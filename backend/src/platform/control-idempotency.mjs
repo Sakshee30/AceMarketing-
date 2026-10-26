@@ -24,9 +24,12 @@ export const beginControlCommand=async({actor,key,operation,requestBody})=>{
      RETURNING *`,
     [id,normalizedKey,actor,operation,requestHash]
   )
-  if(inserted.rows[0])return {execute:true,command:inserted.rows[0]}
+  // PostgreSQL returns no row for DO NOTHING conflicts. Some compatible
+  // embedded adapters return the existing row instead, so only a row carrying
+  // this attempt's generated ID proves that this caller owns execution.
+  if(inserted.rows[0]?.id===id)return {execute:true,command:inserted.rows[0]}
 
-  const existing=(await pool.query(
+  const existing=inserted.rows[0]||(await pool.query(
     `SELECT * FROM ace_platform_control_commands
      WHERE actor=$1 AND idempotency_key=$2`,
     [actor,normalizedKey]

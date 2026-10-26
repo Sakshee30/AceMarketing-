@@ -126,7 +126,7 @@ test('loads extracted alerts feature from its direct workspace route',async({pag
   await dismissConsent(page)
   await expect(page).toHaveURL(/#\/workspace\?tab=Alerts/)
   await expect(page.getByRole('heading',{name:'Alert Center'})).toBeVisible()
-  await expect(page.getByText(/Operational incidents/i)).toBeVisible()
+  await expect(page.getByRole('heading',{name:'Operational incidents'})).toBeVisible()
 })
 
 
@@ -144,7 +144,7 @@ test('loads extracted executive briefs feature from its direct workspace route',
   await dismissConsent(page)
   await expect(page).toHaveURL(/#\/workspace\?tab=Executive%20Briefs/)
   await expect(page.getByRole('heading',{name:'Executive data snippets'})).toBeVisible()
-  await expect(page.getByText(/Schedule executive brief/i)).toBeVisible()
+  await expect(page.getByRole('heading',{name:'Schedule executive brief'})).toBeVisible()
 })
 
 
@@ -214,7 +214,7 @@ test('loads extracted developers feature from its direct workspace route',async(
   await dismissConsent(page)
   await expect(page).toHaveURL(/#\/workspace\?tab=Developers/)
   await expect(page.getByRole('heading',{name:'Developer & webhook console'})).toBeVisible()
-  await expect(page.getByText(/API keys/i)).toBeVisible()
+  await expect(page.getByRole('heading',{name:'API keys'})).toBeVisible()
 })
 
 test('loads extracted delivery feature from its direct workspace route',async({page})=>{
@@ -255,8 +255,8 @@ test('loads extracted adjustments feature from its direct workspace route',async
   await page.goto('/#/workspace?tab=Adjustments')
   await dismissConsent(page)
   await expect(page).toHaveURL(/#\/workspace\?tab=Adjustments/)
-  await expect(page.getByRole('heading',{name:'Conversion adjustments'})).toBeVisible()
-  await expect(page.getByText(/Conversion adjustments/i)).toBeVisible()
+  await expect(page.getByRole('heading',{name:'Conversion adjustments',level:1})).toBeVisible()
+  await expect(page.getByRole('heading',{name:'Conversion adjustments',level:3})).toBeVisible()
 })
 
 test('loads extracted diagnostics feature from its direct workspace route',async({page})=>{

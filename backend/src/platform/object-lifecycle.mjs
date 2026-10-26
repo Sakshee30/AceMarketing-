@@ -286,12 +286,15 @@ export const softDeleteObject=async({workspaceId,objectId,actorId=null})=>{
     if(!object)return null
     if(object.legal_hold)throw new Error('object is under legal hold')
     if(object.retention_until&&Date.parse(object.retention_until)>Date.now())throw new Error('object retention period has not expired')
+    const existingEvidence=typeof object.scan_evidence==='string'
+      ?JSON.parse(object.scan_evidence||'{}')
+      :(object.scan_evidence||{})
     const {rows}=await client.query(
       `UPDATE ace_objects SET status='deleted',deleted_at=now(),updated_at=now(),
          extraction_status='deleted',indexing_status='deleted',searchable_at=NULL,
-         scan_evidence=scan_evidence||$3::jsonb
+         scan_evidence=$3::jsonb
        WHERE workspace_id=$1 AND id=$2 RETURNING id,status,deleted_at`,
-      [workspaceId,objectId,JSON.stringify({deletedBy:actorId||null})]
+      [workspaceId,objectId,JSON.stringify({...existingEvidence,deletedBy:actorId||null})]
     )
     return rows[0]||null
   })

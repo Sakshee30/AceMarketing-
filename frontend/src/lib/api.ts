@@ -4,7 +4,6 @@ import {clearSessionToken,getSessionToken,setSessionToken} from '../../../packag
 export type DemoRequest = Record<string, FormDataEntryValue>
 
 const getToken = () => getSessionToken()
-const getWorkspace = () => typeof window !== 'undefined' ? (window.localStorage.getItem('ace_workspace_id') || 'ws_default') : 'ws_default'
 const tokenWorkspace = (token:string|null) => {
   try{
     if(!token)return null
@@ -15,6 +14,14 @@ const tokenWorkspace = (token:string|null) => {
     const normalized=encoded.replace(/-/g,'+').replace(/_/g,'/')
     return String(JSON.parse(atob(normalized)).workspaceId||'')||null
   }catch{return null}
+}
+// The signed session is authoritative. Browser storage can outlive a login or
+// workspace switch, so never send a stale workspace header when the token has
+// an explicit workspace claim.
+const getWorkspace = () => {
+  const fromToken=tokenWorkspace(getToken())
+  if(fromToken)return fromToken
+  return typeof window !== 'undefined' ? (window.localStorage.getItem('ace_workspace_id') || 'ws_default') : 'ws_default'
 }
 
 export class AceApiError extends Error {
@@ -285,6 +292,8 @@ export const api = {
   saveLeakMonitorSettings: (payload: Record<string,unknown>) => request('/leak-monitor/settings',{method:'POST',body:JSON.stringify(payload)}),
   recoverLeak: (payload: Record<string,unknown>) => request('/leak-monitor/recover',{method:'POST',body:JSON.stringify(payload)}),
   liveSync: (options?:{signal?:AbortSignal}) => request('/live-sync',{signal:options?.signal}),
+  getQaFixture: (feature:string) => request('/qa-fixtures/'+encodeURIComponent(feature)),
+  uploadQaFixture: (feature:string,payload:{filename:string;base64:string}) => request('/qa-fixtures/'+encodeURIComponent(feature),{method:'POST',body:JSON.stringify(payload),timeoutMs:60000}),
   dataHub: () => request('/data-hub'),
   rebuildDataHub: () => request('/data-hub/rebuild', { method: 'POST', body: JSON.stringify({}) }),
   offlineAttribution: () => request('/offline-attribution'),

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-01T05:25:14.749Z",
+  "generatedAt": "2026-10-03T11:48:16.790Z",
   "commit": "local",
   "surfaces": [
     {
@@ -9,50 +9,50 @@
       "entries": [
         {
           "key": "index.html",
-          "file": "assets/index-C2YpYHky.js"
+          "file": "assets/index-C837V4J0.js"
         }
       ],
-      "totalJsGzipKb": 335.42,
+      "totalJsGzipKb": 335.98,
       "cssGzipKb": 47.99,
       "largestJsChunks": [
         {
-          "file": "assets/index-C2YpYHky.js",
-          "gzipKb": 52.8
+          "file": "assets/index-C837V4J0.js",
+          "gzipKb": 52.81
         },
         {
-          "file": "assets/public-Dz-ffJaI.js",
+          "file": "assets/public-C7q8ImKR.js",
           "gzipKb": 24.92
         },
         {
-          "file": "assets/public-DMsq-8Yd.js",
-          "gzipKb": 20.19
+          "file": "assets/public-Bc6glfm4.js",
+          "gzipKb": 20.35
         },
         {
-          "file": "assets/public-PyYWD0js.js",
+          "file": "assets/public-CEFdUNKd.js",
           "gzipKb": 13.54
         },
         {
-          "file": "assets/public-DE15RdYM.js",
-          "gzipKb": 8.85
+          "file": "assets/public-DbiRL-1A.js",
+          "gzipKb": 8.92
         },
         {
-          "file": "assets/api-BQmJC9cY.js",
-          "gzipKb": 6.85
+          "file": "assets/api-cCMi40Wn.js",
+          "gzipKb": 7.01
         },
         {
-          "file": "assets/public-CpOftqYR.js",
+          "file": "assets/public-Cwy_bb2j.js",
           "gzipKb": 6.77
         },
         {
-          "file": "assets/public-CI9hNnWY.js",
+          "file": "assets/public-DOWdHfTt.js",
           "gzipKb": 6.76
         },
         {
-          "file": "assets/public-5jevi571.js",
+          "file": "assets/public-oj2NRqRM.js",
           "gzipKb": 6.28
         },
         {
-          "file": "assets/BoardsPage-Cqglm-SY.js",
+          "file": "assets/BoardsPage-CnhjYTw9.js",
           "gzipKb": 4.89
         }
       ],
@@ -70,50 +70,50 @@
       "entries": [
         {
           "key": "index.html",
-          "file": "assets/index-CUDNR923.js"
+          "file": "assets/index-2Q0QKE-9.js"
         }
       ],
-      "totalJsGzipKb": 294.84,
+      "totalJsGzipKb": 295.24,
       "cssGzipKb": 46.28,
       "largestJsChunks": [
         {
-          "file": "assets/index-CUDNR923.js",
-          "gzipKb": 81.28
+          "file": "assets/index-2Q0QKE-9.js",
+          "gzipKb": 81.58
         },
         {
-          "file": "assets/public-BE4th4tu.js",
-          "gzipKb": 13.54
+          "file": "assets/public-QIug5Ywr.js",
+          "gzipKb": 13.53
         },
         {
-          "file": "assets/public-DqlDCA-A.js",
-          "gzipKb": 8.76
+          "file": "assets/public-DO29jUtT.js",
+          "gzipKb": 8.83
         },
         {
-          "file": "assets/public-CjqqyEQB.js",
+          "file": "assets/public-C4KU6LbD.js",
           "gzipKb": 6.71
         },
         {
-          "file": "assets/public-CnG3LgxA.js",
+          "file": "assets/public-D0AYLnlJ.js",
           "gzipKb": 6.69
         },
         {
-          "file": "assets/public-B41IXu74.js",
+          "file": "assets/public-CKrp-NcI.js",
           "gzipKb": 6.21
         },
         {
-          "file": "assets/BoardsPage-Dwx1mOLe.js",
+          "file": "assets/BoardsPage-51mbET6L.js",
           "gzipKb": 4.79
         },
         {
-          "file": "assets/public-_A6b8rp8.js",
-          "gzipKb": 4.52
+          "file": "assets/public-Bl3Yc_PK.js",
+          "gzipKb": 4.51
         },
         {
-          "file": "assets/public-CrfKDfp0.js",
+          "file": "assets/public-7Y5dfWp1.js",
           "gzipKb": 4.5
         },
         {
-          "file": "assets/public-MrzWV2-R.js",
+          "file": "assets/public-Cra0WQ-R.js",
           "gzipKb": 4.45
         }
       ],

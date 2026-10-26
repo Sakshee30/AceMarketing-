@@ -4,6 +4,7 @@ import {scoreLead} from '../backend/src/lead-ops.mjs'
 
 const source=process.argv[2]
 const output=process.argv[3]||'.tmp-tools/synthetic-lead-ai-report.json'
+const uploadOutput=process.argv[4]||'.tmp-tools/synthetic-leads-upload.json'
 if(!source)throw new Error('CSV path required')
 
 const parseCsv=text=>{
@@ -92,7 +93,40 @@ const report={
   passed:Object.values(invariants).every(Boolean),
   sample:synthetic.slice(0,3).map(({externalLeadId,email,phone,crmStage,source,campaign,course,score,grade,drivers})=>({externalLeadId,email,phone,crmStage,source,campaign,course,score,grade,drivers}))
 }
+const uploadRows=synthetic.map((row,index)=>{
+  const featureAvailableAt=new Date(Date.UTC(2026,6,1)+(index%45)*86_400_000)
+  const predictionCutoff=new Date(featureAvailableAt.getTime()+3_600_000)
+  const positive=['qualified','consultation','opportunity','converted','enrolled','closed_won'].includes(row.crmStage)||index%7===0
+  const labelObservedAt=new Date(predictionCutoff.getTime()+(positive?7:21)*86_400_000)
+  return {
+    entityId:row.externalLeadId,
+    features:{
+      source:row.source,
+      campaign:row.campaign,
+      course:row.course,
+      crmStage:row.crmStage,
+      journeyDepth:row.journeyDepth,
+      pricingViews:row.pricingViews,
+      whatsappEngaged:row.whatsappEngaged,
+      callOutcome:row.callOutcome,
+      meetingStatus:row.meetingStatus,
+      propensity:row.propensity,
+      invalidContact:row.invalidContact,
+      duplicate:row.duplicate,
+      fraudScore:row.fraudScore,
+      deterministicScore:row.score,
+      deterministicGrade:row.grade
+    },
+    featureAvailableAt:featureAvailableAt.toISOString(),
+    predictionCutoff:predictionCutoff.toISOString(),
+    label:positive?1:0,
+    labelObservedAt:labelObservedAt.toISOString(),
+    provenance:{source:'synthetic_csv_distribution_test',synthetic:true,eventTime:featureAvailableAt.toISOString()}
+  }
+})
 await mkdir(dirname(resolve(output)),{recursive:true})
 await writeFile(output,JSON.stringify(report,null,2),'utf8')
+await mkdir(dirname(resolve(uploadOutput)),{recursive:true})
+await writeFile(uploadOutput,JSON.stringify(uploadRows,null,2),'utf8')
 console.log(JSON.stringify({...report,sample:undefined},null,2))
 if(!report.passed)process.exitCode=1

@@ -37,7 +37,7 @@ export const appendTrackedEvent=async(workspaceId,event)=>{
 
 export const listTrackedEvents=async(workspaceId,{limit=500,minutes=null}={})=>{
   if(!pool)return []
-  const safeLimit=Math.max(1,Math.min(Number(limit||500),5000))
+  const safeLimit=Math.max(1,Math.min(Number(limit||500),50000))
   const params=[workspaceId]
   let where='workspace_id=$1'
   if(minutes!=null){

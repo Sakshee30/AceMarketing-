@@ -10,6 +10,7 @@ import {
 import '../ace-platform.css'
 import '../workspace-design.css'
 import {api,cancelWorkspaceRequests} from '../lib/api'
+import FeatureExcelUpload from './FeatureExcelUpload'
 import {RouteAnnouncer} from '../components/system/FrontendFoundation'
 import {LoadingState} from '../components/system/FrontendStates'
 import {confirmDiscardDirtyWork} from '../lib/dirty-work'
@@ -95,7 +96,7 @@ const tabMeta=Object.fromEntries(appTabs.map(([name,Icon])=>[name,{Icon}])) as R
 function Stat({label,value,sub,Icon}:{label:string,value:string,sub:string,Icon:any}){return <article className="stat"><div><span>{label}</span><Icon/></div><strong>{value}</strong><small>{sub}</small></article>}
 function PageHead({crumb,title,sub,action,onAction}:{crumb:string,title:string,sub:string,action?:string,onAction?:()=>void}){return <div className="page-head"><div><span>{crumb}</span><h1 tabIndex={-1}>{title}</h1><p>{sub}</p></div>{action&&<button className="app-primary" onClick={onAction}><Sparkles/>{action}</button>}</div>}
 
-export default function CustomerWorkspace({back}:{back:()=>void}){
+export default function CustomerWorkspace({back,sessionUser}:{back:()=>void;sessionUser?:any}){
  const [queryClient]=useState(()=>new QueryClient({
   defaultOptions:{
    queries:{
@@ -119,10 +120,10 @@ export default function CustomerWorkspace({back}:{back:()=>void}){
   window.addEventListener('ace-session-state',onSessionState as EventListener)
   return()=>window.removeEventListener('ace-session-state',onSessionState as EventListener)
  },[queryClient])
- return <QueryClientProvider client={queryClient}><CustomerWorkspaceShell back={back} queryClient={queryClient}/></QueryClientProvider>
+ return <QueryClientProvider client={queryClient}><CustomerWorkspaceShell back={back} queryClient={queryClient} sessionUser={sessionUser}/></QueryClientProvider>
 }
 
-function CustomerWorkspaceShell({back,queryClient}:{back:()=>void;queryClient:QueryClient}){
+function CustomerWorkspaceShell({back,queryClient,sessionUser}:{back:()=>void;queryClient:QueryClient;sessionUser?:any}){
  const [workspaceScopeId,setWorkspaceScopeId]=useState(()=>{
   const routed=parseWorkspaceIdFromHash(window.location.hash)
   const existing=window.localStorage.getItem('ace_workspace_id')||'ws_default'
@@ -152,6 +153,7 @@ function CustomerWorkspaceShell({back,queryClient}:{back:()=>void;queryClient:Qu
  })
  const [navFilter,setNavFilter]=useState('')
  const [sectionSummary,setSectionSummary]=useState<any>(null)
+ const [workspaceSettings,setWorkspaceSettings]=useState<any>({})
  const syncTabRoute=(next:AppTab,replace=false)=>{
   const feature=workspaceFeatureByLabel.get(next)
   if(!feature)return
@@ -205,6 +207,11 @@ function CustomerWorkspaceShell({back,queryClient}:{back:()=>void;queryClient:Qu
   const id=window.setInterval(()=>void load(),30_000)
   return()=>{active=false;window.clearInterval(id)}
  },[workspaceGeneration,queryClient])
+ useEffect(()=>{
+  let active=true
+  api.settings().then((settings:any)=>{if(active)setWorkspaceSettings(settings||{})}).catch(()=>{if(active)setWorkspaceSettings({})})
+  return()=>{active=false}
+ },[workspaceGeneration])
  useEffect(()=>{window.localStorage.setItem('ace_active_tab',tab)},[tab])
  useEffect(()=>{
   const onFixture=()=>setFixtureGeneration(value=>value+1)

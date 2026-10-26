@@ -5,7 +5,10 @@ import {getLocalConsent,saveLocalConsent} from '../../lib/tracker'
 
 export function ConsentBanner(){
  const [visible,setVisible]=useState(()=>!getLocalConsent())
- const choose=async(analytics:boolean,marketing:boolean,personalization:boolean)=>{await saveLocalConsent({analytics,marketing,personalization});setVisible(false)}
+ const choose=(analytics:boolean,marketing:boolean,personalization:boolean)=>{
+  setVisible(false)
+  void saveLocalConsent({analytics,marketing,personalization})
+ }
  if(typeof document==='undefined')return null
  const node=!visible
   ?<button className="consent-manage" onClick={()=>setVisible(true)} aria-label="Manage privacy choices"><ShieldCheck/> Privacy</button>

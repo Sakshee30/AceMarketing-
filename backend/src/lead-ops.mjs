@@ -86,8 +86,8 @@ export const upsertLeadProfile=async(workspaceId,input={})=>{
      RETURNING *`,
     [id,workspaceId,externalLeadId,safeText(input.name),emailHash,phoneHash,safeText(input.deviceId||input.device_id,512),safeText(input.devicePlatform||input.device_platform,32),safeText(input.appId||input.app_id,256),safeText(input.source),safeText(input.campaign),
      safeText(input.crmStage||input.stage),safeText(input.intent),scoring.score,scoring.grade,scoring.version,JSON.stringify(scoring.drivers),
-     json(input.attributes),json({journeyDepth:Number(input.journeyDepth||input.pagesViewed||0),pricingPageViews:Number(input.pricingPageViews||0),lastActivity:input.lastActivity||null,conversionPropensity:Number(input.conversionPropensity||0),ltvTier:input.ltvTier||null,whatsappEngaged:Boolean(input.whatsappEngaged),callOutcome:input.callOutcome||null,meetingStatus:input.meetingStatus||null}),
-     safeText(input.callSummary,4000),safeText(input.whatsappSummary,4000)]
+     json(input.attributes),json(incomingJourney),
+     safeText(input.callSummary,4000),safeText(input.whatsappSummary,4000),JSON.stringify(embeddedMergedJourney)]
   )
   await client.query('COMMIT')
   return rows[0]
@@ -97,7 +97,7 @@ export const upsertLeadProfile=async(workspaceId,input={})=>{
 
 export const listLeadProfiles=async(workspaceId,limit=100)=>{
   if(!pool)return []
-  const {rows}=await pool.query(`SELECT * FROM ace_lead_profiles WHERE workspace_id=$1 AND status='active' ORDER BY updated_at DESC LIMIT $2`,[workspaceId,Math.max(1,Math.min(500,Number(limit)||100))])
+  const {rows}=await pool.query(`SELECT * FROM ace_lead_profiles WHERE workspace_id=$1 AND status='active' ORDER BY updated_at DESC LIMIT $2`,[workspaceId,Math.max(1,Math.min(5000,Number(limit)||100))])
   return rows
 }
 
@@ -153,10 +153,11 @@ export const leadOpsStats=async workspaceId=>{
 export const overrideLeadGrade=async(workspaceId,externalLeadId,grade)=>{
   if(!pool)return null
   const score={A:90,B:75,C:55,D:35}[grade]
+  const driver=[{key:'manual_override',label:'Manual override',points:0,evidence:'Workspace operator set grade '+grade}]
   const {rows}=await pool.query(
     `UPDATE ace_lead_profiles SET grade=$3,score=$4,score_drivers=$5::jsonb,updated_at=now()
      WHERE workspace_id=$1 AND (external_lead_id=$2 OR name=$2) RETURNING *`,
-    [workspaceId,externalLeadId,grade,score,JSON.stringify([{key:'manual_override',label:'Manual override',points:0,evidence:'Workspace operator set grade '+grade}])]
+    [workspaceId,externalLeadId,grade,score,JSON.stringify(driver)]
   )
   return rows[0]||null
 }

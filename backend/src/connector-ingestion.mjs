@@ -163,15 +163,18 @@ const saveCheckpoint=async({workspaceId,connector,stream,cursor={},watermark=nul
 
 const persistRaw=async({workspaceId,connector,stream,sourceId,observedAt,payload,runId})=>{
   const hash=sha(payload)
-  const id='raw_'+sha([workspaceId,connector,stream,sourceId,hash]).slice(0,40)
+  // Use an attempt-specific id so embedded pg-mem can distinguish a row it
+  // inserted from the existing row it returns on ON CONFLICT DO NOTHING.
+  const id='raw_'+randomUUID()
   const result=await tenantQuery(workspaceId,
     `INSERT INTO ace_connector_raw_records
       (id,workspace_id,connector,stream,source_id,observed_at,payload_hash,payload,sync_run_id)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9)
-     ON CONFLICT(workspace_id,connector,stream,source_id,payload_hash) DO NOTHING`,
+     ON CONFLICT(workspace_id,connector,stream,source_id,payload_hash) DO NOTHING
+     RETURNING id`,
     [id,workspaceId,connector,stream,String(sourceId),observedAt||null,hash,JSON.stringify(payload),runId]
   )
-  return result.rowCount||0
+  return result.rows?.[0]?.id===id?1:0
 }
 
 const upsertCampaign=async({workspaceId,connector,accountId='',campaignId,campaignName=null,day,currency=null,spend=0,impressions=0,clicks=0,conversions=0,conversionValue=0,sessions=0,users=0,extra={},sourceUpdatedAt=null})=>{
@@ -818,7 +821,7 @@ export const listConnectorCampaignFacts=async({workspaceId,limit=100,days=90})=>
 export const connectorDataSummary=async(workspaceId)=>{
   if(!pool)return {available:false}
   const [campaigns,crm,raw,checkpoints]=await Promise.all([
-    tenantQuery(workspaceId,'SELECT connector,COUNT(*)::int rows,MIN(day) min_day,MAX(day) max_day,SUM(spend)::numeric spend,SUM(conversion_value)::numeric conversion_value FROM ace_campaign_daily WHERE workspace_id=$1 GROUP BY connector ORDER BY connector',[workspaceId]),
+    tenantQuery(workspaceId,'SELECT connector,COUNT(*)::int rows,MIN(day) min_day,MAX(day) max_day,SUM(spend)::numeric spend,SUM(impressions)::bigint impressions,SUM(clicks)::bigint clicks,SUM(conversions)::numeric conversions,SUM(conversion_value)::numeric conversion_value,SUM(sessions)::numeric sessions,SUM(users)::numeric users FROM ace_campaign_daily WHERE workspace_id=$1 GROUP BY connector ORDER BY connector',[workspaceId]),
     tenantQuery(workspaceId,'SELECT connector,object_type,COUNT(*)::int rows,MAX(source_updated_at) max_source_updated_at FROM ace_crm_records WHERE workspace_id=$1 GROUP BY connector,object_type ORDER BY connector,object_type',[workspaceId]),
     tenantQuery(workspaceId,'SELECT connector,stream,COUNT(*)::int rows,MAX(ingested_at) last_ingested_at FROM ace_connector_raw_records WHERE workspace_id=$1 GROUP BY connector,stream ORDER BY connector,stream',[workspaceId]),
     tenantQuery(workspaceId,'SELECT connector,stream,watermark,cursor,updated_at FROM ace_connector_checkpoints WHERE workspace_id=$1 ORDER BY connector,stream',[workspaceId])

@@ -86,5 +86,5 @@ export default function CustomerBootstrap({back}:{back:()=>void}){
       </section>
     </main>
   }
-  return <CustomerWorkspace back={back}/>
+  return <CustomerWorkspace back={back} sessionUser={state.user}/>
 }
